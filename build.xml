@@ -811,7 +811,7 @@
 		<echo>Dev install completed at ${NOW}</echo>
 	</target>
 
-	<target name="build-metacat" depends="install-ecogrid, install-spatial, install-metacat-index"
+	<target name="build-metacat" depends="install-ecogrid, install-spatial, dist-metacat-index"
 		description="Build Metacat">
 	</target>
 
