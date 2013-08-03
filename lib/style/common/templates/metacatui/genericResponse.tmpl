@@ -13,7 +13,7 @@
 		[% IF function == 'deleted' %]
 			<!-- no pointer to deleted content -->
         [%ELSE%]
-            <p>View the <a href="[% metacatUrl %]?action=read&qformat=[% cfg %]&docid=[% docid %]"> data set description</a>.</p> 	   
+            <p>View the <a href="#view/[% docid %]"> data set description</a>.</p>
         [%END%]
     [% ELSE %]
     	[%  IF function == 'cancel' %]
@@ -43,7 +43,7 @@
 	            <p>Click <a href = "javascript:history.back()">here</a> to return
 	            to the previous page, and enter the correct username, organization, and password.</p> 
             [%ELSE%]
-                <p>Or, <a href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]" target="_top">register a new data set</a>.
+                <p>Or, <a href="#share">register a new data set</a>.
 				Otherwise, use the toolbar links above to navigate.</p>
             [%END%]
         [% ELSE %]
