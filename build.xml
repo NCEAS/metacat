@@ -1440,10 +1440,10 @@
 		</copy>
 		<delete file="./${name}-bin-${release}.zip" />
 		<zip zipfile="./${name}-bin-${release}.zip"
-			basedir="${dist.dir}" excludes="metacat-*/**" />
+			basedir="${dist.dir}" />
 		<delete file="./${name}-bin-${release}.tar.gz" />
 		<tar tarfile="./${name}-bin-${release}.tar"
-			basedir="${dist.dir}" excludes="metacat-*/**" />
+			basedir="${dist.dir}" />
 		<gzip zipfile="./${name}-bin-${release}.tar.gz"
 			src="./${name}-bin-${release}.tar" />
 		<delete file="./${name}-bin-${release}.tar" />
