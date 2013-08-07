@@ -46,7 +46,7 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
 
 
 /**
- * A query interface for the solr server
+ * An abstract query service class for the solr server
  * @author tao
  *
  */
@@ -82,15 +82,7 @@ public abstract class SolrQueryService {
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.PYTHON);
         supportedWriterTypes.add(SolrQueryResponseWriterFactory.XML);
     }
-    /**
-     * Query the Solr server with specified query and user's identity. If the Subjects
-     * is null, there will be no access rules for the query. This is the for the http solr server.
-     * @param query the query string
-     * @param subjects the user's identity which sent the query
-     * @return the response
-     * @throws Exception
-     */
-    //public abstract InputStream query(String query, Set<Subject>subjects) throws Exception;
+  
     
     /**
      * Query the Solr server with specified query and user's identity. If the Subjects
