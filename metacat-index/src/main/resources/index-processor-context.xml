@@ -24,7 +24,7 @@
     <import resource="application-context-dryad30.xml" />
     <import resource="application-context-dryad31.xml" />
     
-    <import resource="application-context-resourcemap.xml" />
+    <import resource="application-context-resource-map.xml" />
     <import resource="application-context-systemmeta100.xml" />
 
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
