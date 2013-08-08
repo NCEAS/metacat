@@ -120,12 +120,12 @@ public class SolrIndex {
      * @throws SAXException 
      * @throws IOException 
      */
-    public SolrIndex(List<SolrField> sysmetaSolrFields, XMLNamespaceConfig xmlNamespaceConfig)
+    /*public SolrIndex(List<SolrField> sysmetaSolrFields, XMLNamespaceConfig xmlNamespaceConfig)
                     throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
          this.xmlNamespaceConfig = xmlNamespaceConfig;
          this.sysmetaSolrFields = sysmetaSolrFields;
          init();
-    }
+    }*/
     
     private void init() throws ParserConfigurationException, XPathExpressionException {
         xpath.setNamespaceContext(xmlNamespaceConfig);
