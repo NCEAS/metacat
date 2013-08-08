@@ -39,6 +39,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.context.support.FileSystemXmlApplicationContext;
 
 import com.ibm.icu.util.Calendar;
@@ -60,7 +61,7 @@ public class ApplicationController implements Runnable {
     private List<SolrIndex> solrIndexes = null;
     private List<SystemMetadataEventListener> sysmetaListeners = new ArrayList<SystemMetadataEventListener>();
     private static ApplicationContext context = null;
-    private String springConfigFile = "src/main/resources/index-processor-context.xml";
+    private String springConfigFileURL = "/index-processor-context.xml";
     private String metacatPropertiesFile = null;
     private static int waitingTime = IndexGenerator.WAITTIME;
     private static int maxAttempts = IndexGenerator.MAXWAITNUMBER;
@@ -76,12 +77,12 @@ public class ApplicationController implements Runnable {
     }*/
     
     /**
-     * Set the Spring configuration file and metacat.properties file
+     * Set the Spring configuration file url and metacat.properties file
      * @param springConfigFile  the path of the Spring configuration file
      * @param metacatPropertyFile  the path of the metacat.properties file
      */
-    public ApplicationController(String springConfigFile, String metacatPropertiesFile) throws Exception {
-        this.springConfigFile = springConfigFile;
+    public ApplicationController(String springConfigFileURL, String metacatPropertiesFile) throws Exception {
+        this.springConfigFileURL = springConfigFileURL;
         this.metacatPropertiesFile = metacatPropertiesFile;
         //init();
     }
@@ -182,7 +183,7 @@ public class ApplicationController implements Runnable {
      */
     private ApplicationContext getContext() {
         if (context == null) {
-            context = new FileSystemXmlApplicationContext(springConfigFile);
+            context = new ClassPathXmlApplicationContext(springConfigFileURL);
         }
         return context;
     }
@@ -192,7 +193,7 @@ public class ApplicationController implements Runnable {
      * @return the path of the Spring configuration file.
      */
     public String getSpringConfigFile() {
-        return this.springConfigFile;
+        return this.springConfigFileURL;
     }
     
     /**
