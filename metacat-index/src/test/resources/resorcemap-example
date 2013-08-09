@@ -1,0 +1,37 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:ore="http://www.openarchives.org/ore/terms/"
+    xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:j.0="http://purl.org/spar/cito/" > 
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/urn:uuid:79ed958f-e5e3-438e-b5e0-c347abbe448c">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">urn:uuid:79ed958f-e5e3-438e-b5e0-c347abbe448c</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/liu.100111.1"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A0">
+    <foaf:name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Java libclient</foaf:name>
+    <rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5">
+    <dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2013-06-03T17:00:17.612-07:00</dcterms:modified>
+    <ore:describes rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5#aggregation"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+    <dc:creator rdf:nodeID="A0"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5</dcterms:identifier>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5#aggregation">
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <ore:isDescribedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5"/>
+    <dc:title>DataONE Aggregation</dc:title>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/liu.100111.1"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/urn:uuid:79ed958f-e5e3-438e-b5e0-c347abbe448c"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/liu.100111.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_urn:uuid:04780847-6082-455b-9831-22269c9ec0a5#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">liu.100111.1</dcterms:identifier>
+    <j.0:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/urn:uuid:79ed958f-e5e3-438e-b5e0-c347abbe448c"/>
+  </rdf:Description>
+</rdf:RDF>
