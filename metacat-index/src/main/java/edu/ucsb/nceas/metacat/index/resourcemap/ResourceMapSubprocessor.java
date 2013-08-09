@@ -1,15 +1,4 @@
 /**
- *  '$RCSfile$'
- *    Purpose: A class that gets Accession Number, check for uniqueness
- *             and register it into db
- *  Copyright: 2000 Regents of the University of California and the
- *             National Center for Ecological Analysis and Synthesis
- *    Authors: Jivka Bojilova, Matt Jones
- *
- *   '$Author: leinfelder $'
- *     '$Date: 2011-11-02 20:40:12 -0700 (Wed, 02 Nov 2011) $'
- * '$Revision: 6595 $'
- *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
@@ -114,7 +103,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
     @Override
     public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs,
     Document doc) throws IOException, EncoderException, SAXException,
-    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException {
+    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException {
         SolrDoc resourceMapDoc = docs.get(identifier);
         List<SolrDoc> processedDocs = processResourceMap(resourceMapDoc, doc);
         Map<String, SolrDoc> processedDocsMap = new HashMap<String, SolrDoc>();
@@ -125,7 +114,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
     }
 
     private List<SolrDoc> processResourceMap(SolrDoc indexDocument, Document resourceMapDocument)
-                    throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException{
+                    throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException{
         //ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
         ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
         List<String> documentIds = resourceMap.getAllDocumentIDs();//this list includes the resourceMap id itself.
@@ -145,7 +134,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
         return mergedDocuments;
     }
     
-    private List<SolrDoc> getSolrDocs(String resourceMapId, List<String> ids) throws SolrServerException, IOException, ParserConfigurationException, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType {
+    private List<SolrDoc> getSolrDocs(String resourceMapId, List<String> ids) throws SolrServerException, IOException, ParserConfigurationException, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, ResourceMapException {
         List<SolrDoc> list = new ArrayList<SolrDoc>();
         if(ids != null) {
             for(String id : ids) {
@@ -153,7 +142,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
                 if(doc != null) {
                     list.add(doc);
                 } else if ( !id.equals(resourceMapId)) {
-                    throw new SolrServerException("Solr index doesn't have the information about the id "+id+" which is a component in the resource map "+resourceMapId+". Metacat-Index can't process the resource map prior to its components.");
+                    throw new ResourceMapException("Solr index doesn't have the information about the id "+id+" which is a component in the resource map "+resourceMapId+". Metacat-Index can't process the resource map prior to its components.");
                 }
             }
         }
