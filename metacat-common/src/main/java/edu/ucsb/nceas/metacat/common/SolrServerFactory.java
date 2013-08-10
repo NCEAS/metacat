@@ -1,15 +1,7 @@
 /**
- *  '$RCSfile$'
- *    Purpose: A class that gets Accession Number, check for uniqueness
- *             and register it into db
- *  Copyright: 2000 Regents of the University of California and the
+ *  Copyright: 2013 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
- *    Authors: Jivka Bojilova, Matt Jones
- *
- *   '$Author: tao $'
- *     '$Date: 2013-04-19 17:47:14 -0700 (Fri, 19 Apr 2013) $'
- * '$Revision: 7595 $'
- *
+ *             
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 2 of the License, or
