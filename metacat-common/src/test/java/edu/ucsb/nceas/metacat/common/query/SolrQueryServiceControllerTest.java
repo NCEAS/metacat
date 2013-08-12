@@ -30,8 +30,9 @@ public class SolrQueryServiceControllerTest {
     @Test
     public void testGetSolrSpecVersion() throws UnsupportedType, NotFound, ParserConfigurationException, IOException, SAXException {
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
+        //System.out.println("version is ======================== "+version);
         assertTrue(version != null);
-        assertTrue(!version.equals(""));
+        assertTrue("The version should be 3.4.0.2011.09.09.09.06.42 rather than "+version, version.equals("3.4.0.2011.09.09.09.06.42"));
     }
     
     
@@ -47,7 +48,7 @@ public class SolrQueryServiceControllerTest {
     public void testGetValidSchemaFields() throws Exception {
        List<String> fields = SolrQueryServiceController.getInstance().getValidSchemaFields();
        assertTrue(fields != null);
-       assertTrue(!fields.isEmpty());
+       assertTrue("The number of valid schema fields should be 76 rather than "+fields.size(), fields.size() ==76);
     }
     
     /**
@@ -62,7 +63,7 @@ public class SolrQueryServiceControllerTest {
     public void testgetIndexSchemaFields() throws Exception {
        Map<String, SchemaField> fields = SolrQueryServiceController.getInstance().getIndexSchemaFields();
        assertTrue(fields != null);
-       assertTrue(!fields.isEmpty());
+       assertTrue("The number of index schema fields should be 93 rather than "+fields.size(), fields.size() == 93);
     }
     
     /**
