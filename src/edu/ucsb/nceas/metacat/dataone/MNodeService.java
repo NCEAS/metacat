@@ -51,6 +51,7 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.CNode;
@@ -1568,11 +1569,25 @@ public class MNodeService extends D1NodeService
 	 */
 	public Identifier publish(Session session, Identifier originalIdentifier) throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata {
 		
+		
+		// get the original SM
+		SystemMetadata originalSystemMetadata = this.getSystemMetadata(session, originalIdentifier);
+
+		// make copy of it
+		SystemMetadata sysmeta = new SystemMetadata();
+		try {
+			BeanUtils.copyProperties(sysmeta, originalSystemMetadata);
+		} catch (Exception e) {
+			// report as service failure
+			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+			sf.initCause(e);
+			throw sf;
+		}
+
 		// mint a DOI for the new revision
 		Identifier newIdentifier = this.generateIdentifier(session, MNodeService.DOI_SCHEME, null);
-		
-		// get the original SM and update the values
-		SystemMetadata sysmeta = this.getSystemMetadata(session, originalIdentifier);
+				
+		// set new metadata values
 		sysmeta.setIdentifier(newIdentifier);
 		sysmeta.setObsoletes(originalIdentifier);
 		sysmeta.setObsoletedBy(null);
@@ -1615,7 +1630,17 @@ public class MNodeService extends D1NodeService
 				String resourceMapString = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
 				
 				// get the original ORE SM and update the values
-				SystemMetadata oreSysMeta = this.getSystemMetadata(session, potentialOreIdentifier);
+				SystemMetadata originalOreSysMeta = this.getSystemMetadata(session, potentialOreIdentifier);
+				SystemMetadata oreSysMeta = new SystemMetadata();
+				try {
+					BeanUtils.copyProperties(oreSysMeta, originalOreSysMeta);
+				} catch (Exception e) {
+					// report as service failure
+					ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+					sf.initCause(e);
+					throw sf;
+				}
+
 				oreSysMeta.setIdentifier(newOreIdentifier);
 				oreSysMeta.setObsoletes(potentialOreIdentifier);
 				oreSysMeta.setObsoletedBy(null);
