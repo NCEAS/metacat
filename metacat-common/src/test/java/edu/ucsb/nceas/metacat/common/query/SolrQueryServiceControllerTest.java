@@ -18,7 +18,9 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.junit.Test;
 import org.xml.sax.SAXException;
 
-public class SolrQueryServiceControllerTest {
+import edu.ucsb.nceas.metacat.common.MetacatCommonTestBase;
+
+public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     /**
      * Test get the solr version
      * @throws SAXException 
