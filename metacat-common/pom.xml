@@ -86,8 +86,44 @@
 		</dependency>
 	</dependencies>
 	<build>
-		<plugins>
-			<plugin>
+	   <plugins> 
+	   <plugin>
+        <groupId>org.apache.maven.plugins</groupId> 
+        <artifactId>maven-scm-plugin</artifactId> 
+        <version>1.8.1</version> 
+        <executions>
+           <execution>
+              <phase>validate</phase>
+              <goals>
+                <goal>export</goal>
+              </goals>
+            <configuration> 
+                <connectionType>connection</connectionType> 
+                <connectionUrl>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.1.1/usr/share/dataone-cn-index/index-solr-schema-v1_1.xml</connectionUrl > 
+            </configuration> 
+          </execution>
+         </executions>
+        </plugin> 
+        <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>copy</id>
+                        <phase>validate</phase>
+                         <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target name="copy and rename file">
+                                <copy file="target/export/index-solr-schema-v1_1.xml" tofile="../metacat-index/src/main/resources/solr-home/conf/schema.xml" />
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+        </plugin>
+		<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>2.3</version>
