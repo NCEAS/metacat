@@ -7,6 +7,10 @@
 	<version>2.2.0-SNAPSHOT</version>
 	<name>metacat-common</name>
 	<url>http://maven.apache.org</url>
+	<properties>
+        <d1_solr_index_schema_name>index-solr-schema-v1_1.xml</d1_solr_index_schema_name>
+        <d1_solr_index_schema_url>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.1.1/usr/share/dataone-cn-index/${d1_solr_index_schema_name}</d1_solr_index_schema_url>         
+    </properties>
 	<repositories>
         <repository>
             <id>dataone.org</id>
@@ -99,7 +103,7 @@
               </goals>
             <configuration> 
                 <connectionType>connection</connectionType> 
-                <connectionUrl>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.1.1/usr/share/dataone-cn-index/index-solr-schema-v1_1.xml</connectionUrl > 
+                <connectionUrl>${d1_solr_index_schema_url}</connectionUrl > 
             </configuration> 
           </execution>
          </executions>
@@ -117,7 +121,7 @@
                         </goals>
                         <configuration>
                             <target name="copy and rename file">
-                                <copy file="target/export/index-solr-schema-v1_1.xml" tofile="../metacat-index/src/main/resources/solr-home/conf/schema.xml" />
+                                <copy file="target/export/${d1_solr_index_schema_name}" tofile="../metacat-index/src/main/resources/solr-home/conf/schema.xml" />
                             </target>
                         </configuration>
                     </execution>
