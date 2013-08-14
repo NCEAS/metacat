@@ -121,7 +121,7 @@
                         </goals>
                         <configuration>
                             <target name="copy and rename file">
-                                <copy file="target/export/${d1_solr_index_schema_name}" tofile="../metacat-index/src/main/resources/solr-home/conf/schema.xml" />
+                                <copy file="target/export/${d1_solr_index_schema_name}" tofile="src/main/resources/solr-home/conf/schema.xml" />
                             </target>
                         </configuration>
                     </execution>

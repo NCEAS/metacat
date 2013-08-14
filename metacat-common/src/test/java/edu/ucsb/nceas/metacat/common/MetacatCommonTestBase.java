@@ -24,9 +24,9 @@ public class MetacatCommonTestBase {
         //metacatTestProperties.load(new FileInputStream("../test/test.properties"));
         //String metacatContextDir = metacatTestProperties.getProperty("metacat.contextDir");
         Settings.getConfiguration();
-        File srcDir = new File("../metacat-index/src/main/resources/solr-home");
-        File destDir = new File("target/classes/solr-home");
-        FileUtils.copyDirectory(srcDir, destDir);
+        //File srcDir = new File("../metacat-index/src/main/resources/solr-home");
+        //File destDir = new File("target/classes/solr-home");
+        //FileUtils.copyDirectory(srcDir, destDir);
         //Settings.augmentConfiguration("../lib/metacat.properties");
     }
 }
