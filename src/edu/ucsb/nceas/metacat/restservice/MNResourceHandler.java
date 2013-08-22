@@ -87,6 +87,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -1293,10 +1294,13 @@ public class MNResourceHandler extends D1ResourceHandler {
         id.setValue(pid);
         InputStream is = MNodeService.getInstance(request).getPackage(session, id);
         
-        // TODO: handle special characters in pid and use that for the filename
-        String filename = id.getValue();
-        filename = "dataPackage." + System.currentTimeMillis(); 
-        filename = filename + ".zip";
+        // use the provided filename
+        String filename = null;
+        if (is instanceof DeleteOnCloseFileInputStream) {
+            filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
+        } else {
+        	filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
+        }
         response.setHeader("Content-Disposition", "inline; filename=" + filename);
         response.setContentType("application/zip");
         response.setStatus(200);

@@ -1745,7 +1745,7 @@ public class MNodeService extends D1NodeService
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
 		        String prefix = entryPid.getValue();
 		        prefix = "entry";
-				File tempFile = File.createTempFile(prefix + ".", extension);
+				File tempFile = File.createTempFile(prefix + "-", extension);
 				tempFiles.add(tempFile);
 				InputStream entryInputStream = this.get(session, entryPid);
 				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
@@ -1754,13 +1754,15 @@ public class MNodeService extends D1NodeService
 			}
 			
 			//add the the pid to data file map
-			File pidMappingFile = File.createTempFile("pid-mapping.", ".txt");
+			File pidMappingFile = File.createTempFile("pid-mapping-", ".txt");
 			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
 			bag.addFileAsTag(pidMappingFile);
 			tempFiles.add(pidMappingFile);
 			
 			bag = bag.makeComplete();
-			File bagFile = File.createTempFile("bag.", ".zip");
+			
+			// TODO: consider using mangled-PID for filename
+			File bagFile = File.createTempFile("dataPackage-", ".zip");
 			
 			bag.setFile(bagFile);
 			ZipWriter zipWriter = new ZipWriter(bagFactory);

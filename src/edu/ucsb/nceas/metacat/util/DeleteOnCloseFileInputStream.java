@@ -24,6 +24,16 @@ public class DeleteOnCloseFileInputStream extends FileInputStream {
 		super(file);
 		this.file = file;
 	}
+	
+	/**
+	 * Allow access to the underlying file - careful!
+	 * @return
+	 */
+	public File getFile() {
+		return file;
+	}
+	
+	
 	/**
 	 * Delete the file when the InputStream is closed
 	 */
