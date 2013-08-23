@@ -112,7 +112,7 @@ public class SolrIndex {
      * @throws SAXException 
      * @throws IOException 
      */
-    public SolrIndex(List<SolrField> sysmetaSolrFields, XMLNamespaceConfig xmlNamespaceConfig)
+    public SolrIndex(XMLNamespaceConfig xmlNamespaceConfig, List<SolrField> sysmetaSolrFields)
                     throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
          this.xmlNamespaceConfig = xmlNamespaceConfig;
          this.sysmetaSolrFields = sysmetaSolrFields;
