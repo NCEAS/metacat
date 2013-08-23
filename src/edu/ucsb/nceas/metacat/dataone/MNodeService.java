@@ -1438,6 +1438,9 @@ public class MNodeService extends D1NodeService
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
 			NotFound {
 	    if(engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
+	        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+                throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
 	        QueryEngineDescription qed = new QueryEngineDescription();
 	        qed.setName(EnabledQueryEngines.PATHQUERYENGINE);
 	        qed.setQueryEngineVersion("1.0");
@@ -1518,6 +1521,9 @@ public class MNodeService extends D1NodeService
         //System.out.println("====== user is "+user);
         //System.out.println("====== groups are "+groups);
 		if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
+		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+                throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
 			try {
 				DBQuery queryobj = new DBQuery();
 				
