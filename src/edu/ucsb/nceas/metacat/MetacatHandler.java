@@ -84,6 +84,7 @@ import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.cart.CartManager;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
@@ -2537,6 +2538,12 @@ public class MetacatHandler {
         try {
             response.setContentType("text/xml");
             PrintWriter out = response.getWriter();
+            if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+                out.print("<error>");
+                out.print(DBQuery.XPATHQUERYOFFINFO);
+                out.print("</error>");
+                return;
+            }
             
             // Check that the user is authenticated as an administrator account
             if (!AuthUtil.isAdministrator(username, groups)) {
@@ -2690,6 +2697,10 @@ public class MetacatHandler {
      * @param out the PrintWriter to which output is printed
      */
     private void buildDocumentIndex(String docid, PrintWriter out) {
+        //if the pathquery option is off, we don't need to build index.
+        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
         try {
             DocumentImpl doc = new DocumentImpl(docid, false);
             doc.buildIndex();

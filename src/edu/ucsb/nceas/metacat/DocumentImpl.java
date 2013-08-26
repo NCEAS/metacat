@@ -62,6 +62,7 @@ import javax.xml.bind.DatatypeConverter;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -1705,6 +1706,10 @@ public class DocumentImpl
 	 */
     public void buildIndex() throws McdbException
     {
+        //if the pathquery option is off, we don't need to build the index.
+        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
     	logMetacat.info("DocumentImpl.buildIndex - building index for docid " + docid);
     	double start = System.currentTimeMillis()/1000;
         TreeSet<NodeRecord> nodeRecordLists = getNodeRecordList(rootnodeid);

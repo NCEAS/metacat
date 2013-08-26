@@ -33,6 +33,7 @@ import java.util.TimerTask;
 import java.util.Vector;
 import java.util.Iterator;
 
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -55,6 +56,9 @@ public class IndexingTimerTask extends TimerTask{
 	     */
 	    public void run()
 	    {
+	        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+	            return;
+	        }
 	    	DBConnection dbConn = null;
 	    	int serialNumber = 0;
 	    	try{

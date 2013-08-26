@@ -88,6 +88,7 @@ import edu.ucsb.nceas.utilities.triple.TripleCollection;
 public class DBQuery
 {
 
+    public static final String XPATHQUERYOFFINFO = "The Metacat Path Query Engine is turned off. If you want to turn it on, please contact the administrator.";
     static final int ALL = 1;
 
     static final int WRITE = 2;
@@ -340,7 +341,7 @@ public class DBQuery
               String output = "";
               output += "<?xml version=\"1.0\"?>";
               output += "<error>";
-              output += "The Metacat Path Query is turned off. If you want to turn it on, please contact the administrator.";
+              output += XPATHQUERYOFFINFO;
               output += "</error>";
               out.write(output);
               out.close();

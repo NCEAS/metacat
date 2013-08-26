@@ -33,6 +33,7 @@ import java.util.Vector;
 import java.util.HashMap;
 import java.lang.Comparable;
 
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -65,6 +66,9 @@ public class IndexingQueue {
 	}
 
     private IndexingQueue() {
+        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
 	    for (int i = 0; i < NUMBEROFINDEXINGTHREADS; i++) {
 	    	IndexingTask thread = new IndexingTask();
 	    	thread.start();
@@ -80,6 +84,9 @@ public class IndexingQueue {
 	}//getInstance
 
     public void add(String docid, String rev) {
+        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
     	add(new IndexingQueueObject(docid, rev, 0));
     }
     
@@ -103,6 +110,9 @@ public class IndexingQueue {
 	}
 	
 	public void setMetacatRunning(boolean metacatRunning){
+	    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
 		this.metacatRunning = metacatRunning;
 		
 		if(!metacatRunning){
@@ -143,6 +153,9 @@ public class IndexingQueue {
      * @param rev the docid's rev (ignored)
      */
     public void remove(String docid, String rev) {
+        if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+            return;
+        }
 		synchronized (indexingMap) {
 			if (indexingMap.containsKey(docid)) {
 				logMetacat.debug("Removing indexing queue task for docid: " + docid);
