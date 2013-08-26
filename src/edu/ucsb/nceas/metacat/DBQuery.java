@@ -62,10 +62,13 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
+import org.dataone.service.exceptions.NotImplemented;
 
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -305,6 +308,7 @@ public class DBQuery
    * @param user the user name (it maybe different to the one in param)
    * @param groups the group array
    * @param sessionid  the sessionid
+ * @throws NotImplemented 
    */
   public void findDocuments(HttpServletResponse response,
                                        Writer out, Hashtable params,
@@ -327,11 +331,24 @@ public class DBQuery
      * @param groups the group array
      * @param sessionid  the sessionid
      */
-    public void findDocuments(HttpServletResponse response,
+    private void findDocuments(HttpServletResponse response,
                                          Writer out, Hashtable params,
                                          String user, String[] groups,
-                                         String sessionid, boolean useXMLIndex)
-    {
+                                         String sessionid, boolean useXMLIndex) {
+      if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+          try {
+              String output = "";
+              output += "<?xml version=\"1.0\"?>";
+              output += "<error>";
+              output += "The Metacat Path Query is turned off. If you want to turn it on, please contact the administrator.";
+              output += "</error>";
+              out.write(output);
+              out.close();
+          } catch (IOException e) {
+              logMetacat.warn("DBQuery.findDocuments - metacat can't write the message that the pathquery is off to the client since :"+e.getMessage());
+          } 
+          return;
+      }
       int pagesize = 0;
       int pagestart = 0;
       long transferWarnLimit = 0; 
