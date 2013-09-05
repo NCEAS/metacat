@@ -38,6 +38,7 @@ use MIME::Base64;       # for creating the password hash
 use URI;                # for parsing URL syntax
 use Config::Properties; # for parsing Java .properties files
 use File::Basename;     # for path name parsing
+use Captcha::reCAPTCHA; # for protection against spams
 use Cwd 'abs_path';
 
 # Global configuration paramters
@@ -279,7 +280,12 @@ if ( $stages{$stage} ) {
 sub fullTemplate {
     my $templateList = shift;
     my $templateVars = setVars(shift);
-
+    my $c = Captcha::reCAPTCHA->new;
+    my $captcha = 'captcha';
+    #my $error=null;
+    my $use_ssl= 1;
+    #my $options=null;
+    $templateVars->{$captcha} = $c->get_html('6LcUD-cSAAAAANmwhTdCgmcieFk2IEhYGILR93gz',undef, $use_ssl, undef);
     $template->process( $templates->{'header'}, $templateVars );
     foreach my $tmpl (@{$templateList}) {
         $template->process( $templates->{$tmpl}, $templateVars );
@@ -292,7 +298,6 @@ sub fullTemplate {
 #
 sub handleInitRegister {
   my $vars = shift;
-
   print "Content-type: text/html\n\n";
   # process the template files:
   fullTemplate(['register'], {stage => "register"}); 
@@ -306,7 +311,8 @@ sub handleInitRegister {
 sub handleRegister {
     
     print "Content-type: text/html\n\n";
-
+    
+    
     my $allParams = { 'givenName' => $query->param('givenName'), 
                       'sn' => $query->param('sn'),
                       'o' => $query->param('o'), 
@@ -316,6 +322,30 @@ sub handleRegister {
                       'userPassword2' => $query->param('userPassword2'), 
                       'title' => $query->param('title'), 
                       'telephoneNumber' => $query->param('telephoneNumber') };
+    
+    # Check the recaptcha
+    my $c = Captcha::reCAPTCHA->new;
+    my $challenge = $query->param('recaptcha_challenge_field');
+    my $response = $query->param('recaptcha_response_field');
+    # Verify submission
+    my $result = $c->check_answer(
+        "private google key", $ENV{'REMOTE_ADDR'},
+        $challenge, $response
+    );
+
+    if ( $result->{is_valid} ) {
+        #print "Yes!";
+        #exit();
+    }
+    else {
+        my $errorMessage = "The verification code is wrong. Please input again.";
+        fullTemplate(['register'], { stage => "register",
+                                     allParams => $allParams,
+                                     errorMessage => $errorMessage });
+        exit();
+    }
+    
+    
     # Check that all required fields are provided and not null
     my @requiredParams = ( 'givenName', 'sn', 'o', 'mail', 
                            'uid', 'userPassword', 'userPassword2');
