@@ -181,6 +181,17 @@
             [% END %]
           </td>
         </tr>
+        [% IF stage != 'registerconfirmed' %]
+            <tr>
+                <td align="left" class="label">
+                    *Verification Code:
+                </td>
+                <td align="right">
+                    [% captcha %]
+                </td>
+            </tr>
+        [% END %]
+        
         <tr>
           <td>
           </td>
