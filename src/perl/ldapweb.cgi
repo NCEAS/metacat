@@ -78,6 +78,10 @@ my $cgiPrefix = "/" . $properties->getProperty('application.context') . "/cgi-bi
 my $styleSkinsPath = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
 
+#recaptcha key information
+my $recaptchaPublicKey=$properties->getProperty('ldap.recaptcha.publickey');
+my $recaptchaPrivateKey=$properties->getProperty('ldap.recaptcha.privatekey');
+
 my @errorMessages;
 my $error = 0;
 
@@ -285,7 +289,7 @@ sub fullTemplate {
     #my $error=null;
     my $use_ssl= 1;
     #my $options=null;
-    $templateVars->{$captcha} = $c->get_html('6LcUD-cSAAAAANmwhTdCgmcieFk2IEhYGILR93gz',undef, $use_ssl, undef);
+    $templateVars->{$captcha} = $c->get_html($recaptchaPublicKey,undef, $use_ssl, undef);
     $template->process( $templates->{'header'}, $templateVars );
     foreach my $tmpl (@{$templateList}) {
         $template->process( $templates->{$tmpl}, $templateVars );
@@ -329,7 +333,7 @@ sub handleRegister {
     my $response = $query->param('recaptcha_response_field');
     # Verify submission
     my $result = $c->check_answer(
-        "private google key", $ENV{'REMOTE_ADDR'},
+        $recaptchaPrivateKey, $ENV{'REMOTE_ADDR'},
         $challenge, $response
     );
 
