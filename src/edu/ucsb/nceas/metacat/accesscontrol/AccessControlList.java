@@ -523,16 +523,17 @@ public class AccessControlList extends DefaultHandler
       //Check out DBConnection
       //conn=DBConnectionPool.getDBConnection("AccessControlList.insertPerm");
       //serialNumber=conn.getCheckOutSerialNumber();
-      
+    	// TODO: look up guid? this is for very old pre-release versions of EML
+      String guid = docid;
       pstmt = connection.prepareStatement(
               "INSERT INTO xml_access " + 
-              "(docid, principal_name, permission, perm_type, perm_order," +
+              "(guid, principal_name, permission, perm_type, perm_order," +
               "ticket_count, accessfileid) VALUES " +
               "(?,?,?,?,?,?,?)");
       // Increase DBConnection usage count
       connection.increaseUsageCount(1);
       // Bind the values to the query
-      pstmt.setString(1, docid);
+      pstmt.setString(1, guid);
       pstmt.setInt(3, permission);
       pstmt.setString(4, permType);
       pstmt.setString(5, permOrder);
