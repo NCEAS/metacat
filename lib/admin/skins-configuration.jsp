@@ -59,9 +59,17 @@
 
 <h3>Skins Configuration</h3>
 <hr class="config-line">
+<div class="heading-comment message-text">
+	NOTE: Metacat v2.2.0 includes a new mechanism for customizing the look and feel of your  
+	Metacat deployment. MetacatUI themes can be deployed separately from the Metacat server
+	allowing easier independent user interface customization. See the Metacat documentation 
+	for more information on using this feature.	
+</div>
+<br/>
 <div class="heading-comment">
 	Choose and configure the skins that will be available in this instance of Metacat
-</div><br>
+</div>
+<br/>
 
 <%
 	HashMap<String, HashMap<String, String>> allSkinProperties = 
