@@ -74,6 +74,26 @@
 	        <git command = "pull" dir = "@{dest}" />
 	    </sequential>
 	</macrodef>
+	
+	<!-- get metacatUI project -->
+	<target name="getMetacatUI" depends="init">
+		<git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}" />
+	</target>
+	
+	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" >
+		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
+			<arg value="clean"/>
+		</artifact:mvn>
+		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
+		   <arg value="package"/>
+		</artifact:mvn>
+	</target>
+	
+	<target name="dist-metacat-ui" depends="build-metacat-ui">
+		<copy tofile="${dist.dir}/metacatui.war" >
+			<fileset dir="${metacatui.build.dir}/metacatui/target" includes="*.war"></fileset>
+		</copy>	
+	</target>
     	
 	<taskdef resource="axis-tasks.properties"
 		classpathref="axis.ant.classpath" />
@@ -811,7 +831,7 @@
 		<echo>Dev install completed at ${NOW}</echo>
 	</target>
 
-	<target name="build-metacat" depends="install-ecogrid, install-spatial, dist-metacat-index"
+	<target name="build-metacat" depends="install-ecogrid, install-spatial, dist-metacat-index, dist-metacat-ui"
 		description="Build Metacat">
 	</target>
 
@@ -916,7 +936,7 @@
 		<echo message="Install Skin completed." />
 	</target>
 
-	<target name="war" depends="warPrepare,install-spatial, dist-metacat-index"
+	<target name="war" depends="warPrepare,install-spatial, dist-metacat-index, dist-metacat-ui"
 		description="Create a web archive (WAR) for servlet deployment">
 		<mkdir dir="${dist.dir}" />
 		<war destfile="${dist.dir}/${metacat.context}.war"
