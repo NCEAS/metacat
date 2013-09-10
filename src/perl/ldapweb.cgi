@@ -869,7 +869,7 @@ sub paramsAreValid {
 sub createTemporaryAccount {
     my $allParams = shift;
     #my $org = $query->param('o'); 
-    my $org = 'LTER';
+    my $org = 'unaffiliated';
     my $ou = $query->param('ou');
     #my $ou = 'LTER';
     my $uid = $query->param('uid');
@@ -901,7 +901,7 @@ sub createTemporaryAccount {
         debug("LDAP connection to $ldapurl...");    
         #if main ldap server is down, a html file containing warning message will be returned
         my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
-        
+        my $dn;
         if ($ldap) {
             $ldap->start_tls( verify => 'none');
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
@@ -914,14 +914,16 @@ sub createTemporaryAccount {
                 'o'   => $org,
                 'objectclass' => ['top', 'organization']
                 ];
+                $dn='o=' . $org . ',' . $tmpSearchBase;
              } else {
                 $additions = [ 
                 'ou'   => $ou,
                 'objectclass' => ['top', 'organizationalUnit']
                 ];
+                $dn='ou=' . $ou . ',' . $tmpSearchBase;
              }
             
-            my $result = $ldap->add ( 'dn' => $tmpSearchBase, 'attr' => [ @$additions ]);
+            my $result = $ldap->add ( 'dn' => $dn, 'attr' => [ @$additions ]);
             if ($result->code()) {
                 fullTemplate( ['registerFailed', 'register'], { stage => "register",
                                                             allParams => $allParams,
@@ -975,6 +977,7 @@ sub createAccount {
 
         my $searchBase = $ldapConfig->{$o}{'base'};
         my $dnBase = $ldapConfig->{$o}{'dn'};
+        debug("the dn is " . $dnBase);
         my $ldapUsername = $ldapConfig->{$o}{'user'};
         my $ldapPassword = $ldapConfig->{$o}{'password'};
         debug("LDAP connection to $ldapurl...");    
