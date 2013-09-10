@@ -268,6 +268,7 @@ my %stages = (
               'initchangepass'    => \&handleInitialChangePassword,
               'resetpass'         => \&handleResetPassword,
               'initresetpass'     => \&handleInitialResetPassword,
+              'createtemppass'    => \&createTemporaryAccount,
              );
 
 # call the appropriate routine based on the stage
@@ -859,6 +860,50 @@ sub paramsAreValid {
     }
 
     return $allValid;
+}
+
+#
+# Create a temporary account for a user and send an email with a link which can click for the
+# verification. This is used to protect the ldap server against spams.
+#
+sub createTemporaryAccount {
+    my $allParams = shift;
+    #my $org = $query->param('o'); 
+    my $org = 'LTER';
+    my $ou = $query-param('ou');
+    my $uid = $query->param('uid');
+    
+    #to see if the organizaton exist
+    my $tmpSearchBase = 'dc=tmp,' . $authBase;
+     
+    print "Content-type: text/html\n\n";
+
+
+    # Search LDAP for matching entries that already exist
+    my $filter = "(o" 
+                  . "=" . $org .
+                 ")";
+
+    my @attrs = ['o', 'ou' ];
+    my $found = searchDirectory($ldapurl, $tmpSearchBase, $filter, \@attrs);
+
+    if($found) {
+      print "ldap server ". $ldapurl;
+      print "sesarch base" . $tmpSearchBase;
+      print "find the organization " . $org;
+    } else {
+      print "ldap server ". $ldapurl;
+      print "sesarch base " . $tmpSearchBase;
+      print "not find the organization " . $org;
+    }
+    
+    #$query->param('o','tmp');
+    #createAccount($allParams);
+    #$query->param('o',$org);
+    #constrct url
+    #my $link =
+    #print "Content-type: text/html\n\n";
+    #print $query->param('o');
 }
 
 #
