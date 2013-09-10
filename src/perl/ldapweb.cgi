@@ -870,32 +870,77 @@ sub createTemporaryAccount {
     my $allParams = shift;
     #my $org = $query->param('o'); 
     my $org = 'LTER';
-    my $ou = $query-param('ou');
+    my $ou = $query->param('ou');
+    #my $ou = 'LTER';
     my $uid = $query->param('uid');
     
     #to see if the organizaton exist
-    my $tmpSearchBase = 'dc=tmp,' . $authBase;
-     
+    my $tmpSearchBase = 'dc=tmp,' . $authBase; 
     print "Content-type: text/html\n\n";
 
-
-    # Search LDAP for matching entries that already exist
-    my $filter = "(o" 
+    my $filter;
+    # Search LDAP for matching o or ou that already exist
+    if($org) {
+        $filter = "(o" 
                   . "=" . $org .
                  ")";
-
+    } else {
+        $filter = "(ou" 
+                  . "=" . $ou .
+                 ")";
+    }
+    debug("search filer " . $filter);
+    debug("ldap server ". $ldapurl);
+    debug("sesarch base " . $tmpSearchBase);
     my @attrs = ['o', 'ou' ];
     my $found = searchDirectory($ldapurl, $tmpSearchBase, $filter, \@attrs);
+    if(!$found) {
+        #need to generate the subtree o or ou
+        my $ldapUsername = $ldapConfig->{$org}{'user'};
+        my $ldapPassword = $ldapConfig->{$org}{'password'};
+        debug("LDAP connection to $ldapurl...");    
+        #if main ldap server is down, a html file containing warning message will be returned
+        my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+        
+        if ($ldap) {
+            $ldap->start_tls( verify => 'none');
+            debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
+            $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
 
-    if($found) {
-      print "ldap server ". $ldapurl;
-      print "sesarch base" . $tmpSearchBase;
-      print "find the organization " . $org;
-    } else {
-      print "ldap server ". $ldapurl;
-      print "sesarch base " . $tmpSearchBase;
-      print "not find the organization " . $org;
-    }
+            # Do the insertion
+            my $additions;
+             if($org) {
+                $additions = [ 
+                'o'   => $org,
+                'objectclass' => ['top', 'organization']
+                ];
+             } else {
+                $additions = [ 
+                'ou'   => $ou,
+                'objectclass' => ['top', 'organizationalUnit']
+                ];
+             }
+            
+            my $result = $ldap->add ( 'dn' => $tmpSearchBase, 'attr' => [ @$additions ]);
+            if ($result->code()) {
+                fullTemplate( ['registerFailed', 'register'], { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => $result->error });
+                # TODO SCW was included as separate errors, test this
+                #$templateVars    = setVars({ stage => "register",
+                #                     allParams => $allParams });
+                #$template->process( $templates->{'register'}, $templateVars);
+            } 
+            $ldap->unbind;   # take down session
+         } else {
+            fullTemplate( ['registerFailed', 'register'], { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => "The ldap server is not available now. Please try it later"});
+            exit(0);
+         }
+    } 
+    
+    
     
     #$query->param('o','tmp');
     #createAccount($allParams);
