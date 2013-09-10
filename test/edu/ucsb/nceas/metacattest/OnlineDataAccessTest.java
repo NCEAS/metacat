@@ -422,6 +422,9 @@ public class OnlineDataAccessTest
         suite.addTest(new OnlineDataAccessTest("onlineData201CasesTest_5"));
         suite.addTest(new OnlineDataAccessTest("onlineData201CasesTest_6"));
         suite.addTest(new OnlineDataAccessTest("onlineData210CasesTest_6"));
+        
+        suite.addTest(new OnlineDataAccessTest("onlineData210CasesTest_7"));
+
         return suite;
     }
 
@@ -2119,4 +2122,151 @@ public class OnlineDataAccessTest
         
         return docid.toString();
     }
+
+	/**
+	 * Checking the following cases on 2.1.0 version documents:
+	 * when a data file is uploaded without ALL permissions for other user
+	 * and then the package has ALL permissions granted the [data file] should 
+	 * not prevent a metadata update 
+	 */
+	public void onlineData210CasesTest_7() {
+	    try {
+			debug("\nRunning: onlineData210CasesTest_7");
+			
+	        // insert a document
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("OnlineDataAccessTest: Doing insert",
+	                                     null, null, null,
+	                                     null, getAccessBlock(anotheruser, true,
+	                                     true, false, false, false), null, null,
+	                                     null, null);
+	        newdocid = generateDocid();
+	        insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
+	        m.logout();
+	
+	        // update document
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("OnlineDataAccessTest: Doing update",
+	                                     null, null, null,
+	                                     null, getAccessBlock(anotheruser, true,
+	                                     true, false, false, false), null, null,
+	                                     null, null);
+	        updateDocid(newdocid + ".2", testdocument, SUCCESS, false);
+	        m.logout();
+	
+	        // upload data and update the document
+	        onlineDocid = generateDocid();
+	        m.login(username, password);
+	        uploadDocid(onlineDocid + ".1", onlinetestdatafile1, SUCCESS, false);
+	        m.logout();
+	
+	        // try to read the online data
+	        m.login(anotheruser, anotherpassword);
+	        readDocid(onlineDocid + ".1", FAILURE, true);
+	        m.logout();
+	
+	        // update the document to point at the data
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("OnlineDataAccessTest: Doing update",
+	                                     null, null,
+	                                     "ecogrid://knb/" + onlineDocid + ".1",
+	                                     null, null, null, null,
+	                                     null, null);
+	        updateDocid(newdocid + ".3", testdocument, SUCCESS, false);
+	        m.logout();
+	
+	        // set read for document - nothing for data
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("OnlineDataAccessTest: Doing insert",
+	                                     null, null,
+	                                     "ecogrid://knb/" + onlineDocid + ".1",
+	                                     null, getAccessBlock(anotheruser, true,
+	                                     true, false, false, false), null, null,
+	                                     null, null);
+	        updateDocid(newdocid + ".4", testdocument, SUCCESS, false);
+	        m.logout();
+	
+	        // try to read the online data
+	        m.login(anotheruser, anotherpassword);
+	        readDocid(newdocid + ".4", SUCCESS, false);
+	        readDocid(onlineDocid + ".1", FAILURE, true);
+	        m.logout();
+	        
+	        // try to update the package as the other user (expect failure)
+	        m.login(anotheruser, anotherpassword);
+	        testdocument = get210TestEmlDoc("Doing update as other user", null, null,
+                    "ecogrid://knb/" + onlineDocid + ".1",
+                    null, getAccessBlock(anotheruser, true,
+                    true, false, false, false), null, null,
+                    getAccessBlock(anotheruser, true,
+                    true, false, false, false), null);
+	        updateDocid(newdocid + ".5", testdocument, FAILURE, true);
+	        m.logout();
+	        
+	        // upload updated data
+	        m.login(username, password);
+	        uploadDocid(onlineDocid + ".2", onlinetestdatafile1, SUCCESS, false);
+	        m.logout();
+	        
+	        // update the document
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("OnlineDataAccessTest: Doing update",
+	                                     null, null,
+	                                     "ecogrid://knb/" + onlineDocid + ".2",
+	                                     null, getAccessBlock(anotheruser, true,
+	                                     true, false, false, false), null, null,
+	                                     null, null);
+	        updateDocid(newdocid + ".5", testdocument, SUCCESS, false);
+	        m.logout();
+	        
+	        // try to update the package as the other user (expect failure)
+	        m.login(anotheruser, anotherpassword);
+	        testdocument = get210TestEmlDoc("Doing update as other user", null, null,
+                    "ecogrid://knb/" + onlineDocid + ".2",
+                    null, getAccessBlock(anotheruser, false,
+                    false, false, false, true), null, null,
+                    getAccessBlock(anotheruser, true,
+                    true, true, true, true), null);
+	        updateDocid(newdocid + ".6", testdocument, FAILURE, true);
+	        m.logout();
+
+	        // set  ALL for data package
+	        m.login(username, password);
+	        testdocument = get210TestEmlDoc("Doing update for package ALL", null, null,
+	                                     "ecogrid://knb/" + onlineDocid + ".2",
+	                                     null, getAccessBlock(anotheruser, true,
+	                                     true, true, true, true), null, null,
+	                                     getAccessBlock(anotheruser, true,
+	                                     true, true, true, true), null);
+	        updateDocid(newdocid + ".6", testdocument, SUCCESS, false);
+	        m.logout();
+	        
+	        // try to read the online data
+	        m.login(anotheruser, anotherpassword);
+	        readDocid(newdocid + ".6", SUCCESS, false);
+	        readDocid(onlineDocid + ".2", SUCCESS, false);
+	        m.logout();
+	        
+	        // try to update the package as the other user (success)
+	        m.login(anotheruser, anotherpassword);
+	        testdocument = get210TestEmlDoc("Doing update as other user", null, null,
+                    "ecogrid://knb/" + onlineDocid + ".2",
+                    null, getAccessBlock(anotheruser, true,
+                    true, true, true, true), null, null,
+                    getAccessBlock(anotheruser, true,
+                    true, true, true, true), null);
+	        updateDocid(newdocid + ".7", testdocument, SUCCESS, false);
+	        m.logout();
+	        
+	    }
+	    catch (MetacatAuthException mae) {
+	        fail("Authorization failed:\n" + mae.getMessage());
+	    }
+	    catch (MetacatInaccessibleException mie) {
+	        fail("Metacat Inaccessible:\n" + mie.getMessage());
+	    }
+	    catch (Exception e) {
+	        fail("General exception:\n" + e.getMessage());
+	    }
+	}
 }

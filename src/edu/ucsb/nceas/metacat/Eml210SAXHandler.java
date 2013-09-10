@@ -1421,11 +1421,18 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 							}
 						}
 						
+						// check both the previous and current data permissions
+						// see: https://projects.ecoinformatics.org/ecoinfo/issues/5647
 						PermissionController controller = new PermissionController(previousDocid);
-						
+						PermissionController currentController = new PermissionController(dataDocid);
+
 						if (AccessionNumber.accNumberUsed(docid)
-								&& !controller.hasPermission(user, groups, "WRITE")) {
-							throw new SAXException(UPDATEACCESSERROR);
+								&& 
+								!(controller.hasPermission(user, groups, "WRITE") 
+										|| currentController.hasPermission(user, groups, "WRITE")
+										)
+								) {
+							throw new SAXException(UPDATEACCESSERROR + " id: " + dataDocid);
 						}
 					} catch (SQLException sqle) {
 						throw new SAXException(
@@ -1953,9 +1960,14 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 					}
 					String previousDocid = 
 						docid + PropertyService.getProperty("document.accNumSeparator") + previousRevision;
-					
-					PermissionController controller = new PermissionController(previousDocid);				
-					if (controller.hasPermission(user, groups,AccessControlInterface.ALLSTRING)) {
+
+					// check EITHER previous or current id for access rules
+					// see: https://projects.ecoinformatics.org/ecoinfo/issues/5647
+					PermissionController previousController = new PermissionController(previousDocid);
+					PermissionController currentController = new PermissionController(accessionNumber);				
+					if (previousController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+							|| currentController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+							) {
 						onlineDataFileIdInTopAccessVector.add(guid);
 					} else {
 						throw new SAXException(UPDATEACCESSERROR);
