@@ -80,13 +80,14 @@
 		<git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}" />
 	</target>
 	
-	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" >
+	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" unless="build-metacat-ui-called">
 		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
 			<arg value="clean"/>
 		</artifact:mvn>
 		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
 		   <arg value="package"/>
 		</artifact:mvn>
+		<property name="build-metacat-ui-called" value="true"/>
 	</target>
 	
 	<target name="dist-metacat-ui" depends="build-metacat-ui">
@@ -936,7 +937,7 @@
 		<echo message="Install Skin completed." />
 	</target>
 
-	<target name="war" depends="warPrepare,install-spatial, dist-metacat-index, dist-metacat-ui"
+	<target name="war" depends="warPrepare,install-spatial"
 		description="Create a web archive (WAR) for servlet deployment">
 		<mkdir dir="${dist.dir}" />
 		<war destfile="${dist.dir}/${metacat.context}.war"
