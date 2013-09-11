@@ -923,9 +923,6 @@ sub createTemporaryAccount {
                 $dn='ou=' . $ou . ',' . $tmpSearchBase;
              }
             # Do the insertion
-            debug(" 1-1 here is the additions " . $additions); 
-            debug(" 2-1 here is the additions " . @$additions);
-            debug(" 3-1 here is the additions " . [@$additions]); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [ @$additions ]);
             if ($result->code()) {
                 fullTemplate( ['registerFailed', 'register'], { stage => "register",
@@ -993,7 +990,7 @@ sub createTemporaryAccount {
     
     
     ####################send the verification email to the user
-    my $link = $cgiUrl . 'cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr;
+    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr;
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender =  $properties->getProperty('email.sender');
@@ -1022,7 +1019,7 @@ sub createTemporaryAccount {
     
      $smtp->data($message);
      $smtp->quit;
-    
+    debug("the link is " . $link);
     fullTemplate( ['success'] );
     
 }
