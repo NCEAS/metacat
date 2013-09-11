@@ -268,7 +268,6 @@ my %stages = (
               'initchangepass'    => \&handleInitialChangePassword,
               'resetpass'         => \&handleResetPassword,
               'initresetpass'     => \&handleInitialResetPassword,
-              'createtemppass'    => \&createTemporaryAccount,
              );
 
 # call the appropriate routine based on the stage
@@ -397,7 +396,7 @@ sub handleRegister {
                                                      foundAccounts => $found });
     # Otherwise, create a new user in the LDAP directory
     } else {
-        createAccount($allParams);
+        createTemporaryAccount($allParams);
     }
 
     exit();
@@ -420,7 +419,7 @@ sub handleRegisterConfirmed {
                       'title' => $query->param('title'), 
                       'telephoneNumber' => $query->param('telephoneNumber') };
     print "Content-type: text/html\n\n";
-    createAccount($allParams);
+    createTemporaryAccount($allParams);
     exit();
 }
 
@@ -868,18 +867,14 @@ sub paramsAreValid {
 #
 sub createTemporaryAccount {
     my $allParams = shift;
-    #my $org = $query->param('o'); 
-    my $org = 'unaffiliated';
+    my $org = $query->param('o'); 
+    #my $org = 'unaffiliated';
     my $ou = $query->param('ou');
     #my $ou = 'LTER';
-    my $uid = $query->param('uid');
     
-    #to see if the organizaton exist
+    ################## Search LDAP for matching o or ou that already exist
     my $tmpSearchBase = 'dc=tmp,' . $authBase; 
-    print "Content-type: text/html\n\n";
-
-    my $filter;
-    # Search LDAP for matching o or ou that already exist
+    my $filter;   
     if($org) {
         $filter = "(o" 
                   . "=" . $org .
@@ -892,22 +887,25 @@ sub createTemporaryAccount {
     debug("search filer " . $filter);
     debug("ldap server ". $ldapurl);
     debug("sesarch base " . $tmpSearchBase);
+    print "Content-type: text/html\n\n";
     my @attrs = ['o', 'ou' ];
     my $found = searchDirectory($ldapurl, $tmpSearchBase, $filter, \@attrs);
+    
+    my $ldapUsername = $ldapConfig->{$org}{'user'};
+    my $ldapPassword = $ldapConfig->{$org}{'password'};
+    debug("LDAP connection to $ldapurl...");    
+    
+        
     if(!$found) {
+        debug("generate the subtree in the dc=tmp===========================");
         #need to generate the subtree o or ou
-        my $ldapUsername = $ldapConfig->{$org}{'user'};
-        my $ldapPassword = $ldapConfig->{$org}{'password'};
-        debug("LDAP connection to $ldapurl...");    
+        my $dn;
         #if main ldap server is down, a html file containing warning message will be returned
         my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
-        my $dn;
         if ($ldap) {
             $ldap->start_tls( verify => 'none');
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
-
-            # Do the insertion
             my $additions;
              if($org) {
                 $additions = [ 
@@ -922,35 +920,137 @@ sub createTemporaryAccount {
                 ];
                 $dn='ou=' . $ou . ',' . $tmpSearchBase;
              }
-            
+            # Do the insertion
+            debug(" 1-1 here is the additions " . $additions); 
+            debug(" 2-1 here is the additions " . @$additions);
+            debug(" 3-1 here is the additions " . [@$additions]); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [ @$additions ]);
             if ($result->code()) {
                 fullTemplate( ['registerFailed', 'register'], { stage => "register",
                                                             allParams => $allParams,
                                                             errorMessage => $result->error });
+                $ldap->unbind;   # take down session
+                exist(0)
                 # TODO SCW was included as separate errors, test this
                 #$templateVars    = setVars({ stage => "register",
                 #                     allParams => $allParams });
                 #$template->process( $templates->{'register'}, $templateVars);
             } 
             $ldap->unbind;   # take down session
-         } else {
+        } else {
             fullTemplate( ['registerFailed', 'register'], { stage => "register",
                                                             allParams => $allParams,
                                                             errorMessage => "The ldap server is not available now. Please try it later"});
             exit(0);
-         }
+        }
+
     } 
     
+    ################create an account under tmp subtree 
     
+    #generate a randomstr for matching the email.
+    my $randomStr = getRandomPassword(16);
+    # Create a hashed version of the password
+    my $shapass = createSeededPassHash($query->param('userPassword'));
+    my $additions = [ 
+                'uid'   => $query->param('uid'),
+                'cn'   => join(" ", $query->param('givenName'), 
+                                    $query->param('sn')),
+                'sn'   => $query->param('sn'),
+                'givenName'   => $query->param('givenName'),
+                'mail' => $query->param('mail'),
+                'userPassword' => $shapass,
+                'employeeNumber' => $randomStr,
+                'objectclass' => ['top', 'person', 'organizationalPerson', 
+                                'inetOrgPerson', 'uidObject' ]
+                ];
+    if (defined($query->param('telephoneNumber')) && 
+                $query->param('telephoneNumber') &&
+                ! $query->param('telephoneNumber') =~ /^\s+$/) {
+                $$additions[$#$additions + 1] = 'telephoneNumber';
+                $$additions[$#$additions + 1] = $query->param('telephoneNumber');
+    }
+    if (defined($query->param('title')) && 
+                $query->param('title') &&
+                ! $query->param('title') =~ /^\s+$/) {
+                $$additions[$#$additions + 1] = 'title';
+                $$additions[$#$additions + 1] = $query->param('title');
+    }
+    my $dn;
+    if($org) {
+        $$additions[$#$additions + 1] = 'o';
+        $$additions[$#$additions + 1] = $org;
+        $dn='uid=' . $query->param('uid') . ',' . 'o=' . $org . ',' . $tmpSearchBase;
+    } else {
+        $$additions[$#$additions + 1] = 'ou';
+        $$additions[$#$additions + 1] = $ou;
+        $dn='uid=' . $query->param('uid') . ',' . 'ou=' . $ou . ',' . $tmpSearchBase;
+    }
+    my $tmp = 1;
+    createAccount2($dn, $ldapUsername, $ldapPassword, $additions, $tmp, $allParams);
+    
+    
+    ####################send the verification email to the user
     
     #$query->param('o','tmp');
-    #createAccount($allParams);
     #$query->param('o',$org);
     #constrct url
     #my $link =
     #print "Content-type: text/html\n\n";
     #print $query->param('o');
+}
+
+#
+# Bind to LDAP and create a new account using the information provided
+# by the user
+#
+sub createAccount2 {
+    my $dn = shift;
+    my $ldapUsername = shift;
+    my $ldapPassword = shift;
+    my $additions = shift;
+    my $temp = shift; #if it is for a temporary account.
+    my $allParams = shift;
+    
+    my @failureTemplate;
+    if($temp){
+        @failureTemplate = ['registerFailed', 'register'];
+    } else {
+        @failureTemplate = ['registerFailed'];
+    }
+    print "Content-type: text/html\n\n";
+    debug("the dn is " . $dn);
+    debug("LDAP connection to $ldapurl...");    
+    #if main ldap server is down, a html file containing warning message will be returned
+    my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    if ($ldap) {
+            $ldap->start_tls( verify => 'none');
+            debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
+            $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
+            debug(" 1 here is the additions " . $additions); 
+            debug(" 2 here is the additions " . @$additions);
+            debug(" 3 here is the additions " . [@$additions]);  
+            my $result = $ldap->add ( 'dn' => $dn, 'attr' => [@$additions ]);
+            if ($result->code()) {
+                fullTemplate(@failureTemplate, { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => $result->error });
+                # TODO SCW was included as separate errors, test this
+                #$templateVars    = setVars({ stage => "register",
+                #                     allParams => $allParams });
+                #$template->process( $templates->{'register'}, $templateVars);
+            } else {
+                fullTemplate( ['success'] );
+            }
+            $ldap->unbind;   # take down session
+            
+    } else {   
+         fullTemplate(@failureTemplate, { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => "The ldap server is not available now. Please try it later"});
+         exit(0);
+    }
+  
 }
 
 #
@@ -1223,3 +1323,4 @@ sub setVars {
     
     return $templateVars;
 } 
+
