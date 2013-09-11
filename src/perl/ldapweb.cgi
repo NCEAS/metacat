@@ -85,6 +85,8 @@ my $recaptchaPrivateKey=$properties->getProperty('ldap.recaptcha.privatekey');
 my @errorMessages;
 my $error = 0;
 
+my $emailVerification= 'emailverification';
+
 # Import all of the HTML form fields as variables
 import_names('FORM');
 
@@ -991,13 +993,38 @@ sub createTemporaryAccount {
     
     
     ####################send the verification email to the user
+    my $link = $cgiUrl . 'cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr;
     
-    #$query->param('o','tmp');
-    #$query->param('o',$org);
-    #constrct url
-    #my $link =
-    #print "Content-type: text/html\n\n";
-    #print $query->param('o');
+    my $mailhost = $properties->getProperty('email.mailhost');
+    my $sender =  $properties->getProperty('email.sender');
+    my $recipient = $query->param('mail');
+    # Send the email message to them
+    my $smtp = Net::SMTP->new($mailhost);
+    $smtp->mail($sender);
+    $smtp->to($recipient);
+
+    my $message = <<"     ENDOFMESSAGE";
+    To: $recipient
+    From: $sender
+    Subject: KNB Password Reset
+        
+    Somebody (hopefully you) registered a KNB account.  
+    Please click the following link to activate your account.
+    If the link doesn't work, please copy the link to your browser:
+    
+    $link
+
+    Thanks,
+        The KNB Development Team
+    
+     ENDOFMESSAGE
+     $message =~ s/^[ \t\r\f]+//gm;
+    
+     $smtp->data($message);
+     $smtp->quit;
+    
+    fullTemplate( ['success'] );
+    
 }
 
 #
@@ -1040,7 +1067,7 @@ sub createAccount2 {
                 #                     allParams => $allParams });
                 #$template->process( $templates->{'register'}, $templateVars);
             } else {
-                fullTemplate( ['success'] );
+                #fullTemplate( ['success'] );
             }
             $ldap->unbind;   # take down session
             
