@@ -364,6 +364,13 @@ sub handleRegister {
                                      errorMessage => $errorMessage });
         exit();
     } else {
+         if ($query->param('userPassword') ne $query->param('userPassword2')) {
+            my $errorMessage = "The passwords do not match. Try again.";
+            fullTemplate( ['registerFailed', 'register'], { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => $errorMessage });
+            exit();
+        }
         my $o = $query->param('o');    
         $searchBase = $ldapConfig->{$o}{'base'};  
     }
@@ -1235,7 +1242,7 @@ sub handleEmailVerification {
                             newrdn => "uid=" . $uid,
                             newsuperior  => $orgAttributeName . "=" . $ldaporg . "," . $orgAuthBase);
                 $ldap->unbind;   # take down session
-                if(mesg->code()) {
+                if($mesg->code()) {
                     fullTemplate( ['registerFailed'], {errorMessage => "Cannot move the account from the inactive area to the ative area since " . $mesg->error()});
                     exit(0);
                 } else {
