@@ -38,6 +38,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateSystemMetadata;
+import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 
 /**
  * A JUnit test for testing system metadata generation
@@ -77,6 +78,9 @@ public class GenerateSystemMetadataTest
         //suite.addTest(new GenerateSystemMetadataTest("upgrade"));
         // test ORE generation
         suite.addTest(new GenerateSystemMetadataTest("testCreateResourceMap"));
+
+        // requires manual configuration to actually pass
+        //suite.addTest(new GenerateSystemMetadataTest("testOreExistsFor"));
 
         return suite;
     }
@@ -152,6 +156,20 @@ public class GenerateSystemMetadataTest
 			e.printStackTrace();
 			fail();
 		}
+	}
+	
+	/**
+	 * Requires ORE to be present and parsed in the solr index to pass
+	 */
+	public void testOreExistsFor() {
+		String pid = "tao.1.1";
+		Identifier guid = new Identifier();
+		guid.setValue(pid);
+		boolean exists = SystemMetadataFactory.oreExistsFor(guid);
+		assertTrue(exists);
+		guid.setValue("BAD");
+		exists = SystemMetadataFactory.oreExistsFor(guid);
+		assertFalse(exists);
 	}
     
 }
