@@ -131,11 +131,6 @@ build-file has an "install" target that will build and deploy the WAR for you.
 
 Check Out Metacat Source Code from SVN (for Developers)
 .......................................................
-If you wish to work with the most recent Metacat code, or you'd like to extend
-the Metacat code yourself, you may wish to check out the Metacat source code
-from SVN. You will need a Subversion (SVN) client installed and configured on
-your system (see the end of this section for information about obtaining an SVN
-client). 
 
 .. sidebar:: Installing an SVN Client:
 
@@ -148,6 +143,12 @@ client).
 
     Otherwise, you can get the SVN client from The Subversion homepage
     (http://subversion.tigris.org/).
+    
+If you wish to work with the most recent Metacat code, or you'd like to extend
+the Metacat code yourself, you may wish to check out the Metacat source code
+from SVN. You will need a Subversion (SVN) client installed and configured on
+your system (see the end of this section for information about obtaining an SVN
+client). 
 
 To check out the code from SVN, go to the directory where you would like the
 code to live and type::
@@ -951,7 +952,7 @@ To download and install PostgreSQL:
 
   ::
   
-    Psql ���U metacat ���W ���h localhost metacat
+    Psql ���������U metacat ���������W ���������h localhost metacat
 
 10. Exit PostgreSQL:
 

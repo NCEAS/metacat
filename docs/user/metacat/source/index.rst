@@ -4,7 +4,7 @@ Metacat Administrator's Guide
 
 .. sidebar:: Version: 2.1.1
 
-    .. image:: themes/readable/static/metacat-logo.png
+    .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
 
     Send feedback and bugs to: 

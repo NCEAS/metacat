@@ -83,6 +83,7 @@ exclude_trees = []
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = 'sphinx'
 
+
 # A list of ignored prefixes for module index sorting.
 #modindex_common_prefix = []
 
@@ -92,7 +93,7 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  Major themes that come with
 # Sphinx are currently 'default' and 'sphinxdoc'.
 #html_theme = 'default'
-html_theme = 'readable'
+html_theme = 'metacatui'
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -161,6 +162,7 @@ html_domain_indices = False
 
 # Output file base name for HTML help builder.
 htmlhelp_basename = 'Metacatdoc'
+
 
 
 # -- Options for LaTeX output --------------------------------------------------

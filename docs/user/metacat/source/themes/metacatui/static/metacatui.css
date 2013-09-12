@@ -1,0 +1,418 @@
+
+/* Import font families */
+@import url(http://fonts.googleapis.com/css?family=Oswald:400,300,700);
+/* Oswald weights:
+Light 300
+Normal 400
+Bold 700
+*/
+@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,400italic);
+/* Source Sans Pro weights:
+Light 300
+Normal 400
+Normal italic 400
+Semi-bold 600
+Bold 700
+*/
+
+@import url('font-awesome.min.css');
+@import url('bootstrap-responsive.min.css');
+@import url('font-awesome.min.css');
+
+
+/* BANNER/HEADER CSS
+---------------------------------------------------- */
+.banner{
+	width: 100%;
+	height: 100px;
+}
+
+.banner > img{
+	float: left;
+	width: auto;
+	margin: 20px 10px;
+	max-height: 100%;
+	height: 60px;
+}
+
+.banner > .title{
+	font: 300 18px/18px Oswald;
+	color: #CCCCCC;
+	float: left;
+	margin: 38px 10px;
+}
+
+/* RELATED/NAVIGATION CSS
+---------------------------------------------------- */
+body > .related{
+	width: 100%;
+	position: relative;
+	top: -80px;
+	left: -20px;
+}
+
+ .related > h3{
+	display: none;
+}
+
+ .related > ul {
+	list-style: none;
+	float: right;
+}
+
+.related > ul > li.right > a{
+	color: #FFFFFF;
+	font: 400 30px/30px Oswald;	
+	text-decoration: none;
+	text-transform: uppercase;	
+}
+
+.related > ul > li.right{
+	margin-right: 20px;
+	float:left;
+}
+
+
+.related > ul > li > a:hover,
+.related > ul > li > a:focus{
+      color: #FFFFFF;
+      text-decoration: none;
+      opacity: 0.7;
+}
+
+.related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
+	position: relative;
+	left: -10px;
+	top: 1px;
+	height: 27px;
+	border-radius: 0 4px 4px 0;
+	-webkit-border-radius: 0 4px 4px 0;
+	-moz-border-radius: 0 4px 4px 0;
+	border-left: 1px solid #CCCCCC;
+	font: 300 16px/16px "Oswald", sans-serif;
+}
+
+.related > ul input[type="submit"]:hover{	/*"Go" button on navigation search bar */
+	background-color: #166194;
+	color: #FFFFFF;
+	cursor: pointer;
+}
+
+.related > ul > li > span#searchbox{
+	display: block;
+	margin-right: 0px;
+}
+
+.related > ul > li > span#searchbox > form{
+	display: inline;
+	vertical-align: top;
+}
+
+
+.related .breadcrumb{
+	float: left;
+	margin:10px 0px 0px 10px;
+	clear: none;
+}
+
+.related .breadcrumb,
+.related .breadcrumb > a{
+	font: 300 16px/16px Oswald;
+	color: #CCCCCC;
+}
+
+.related .breadcrumb.first{
+	clear: left;
+}
+
+.footerNav > .related li.right{
+
+	
+}
+
+.footerNav > .related li.breadcrumb:last-child{
+	margin-right: 20px;
+}
+
+
+
+
+
+/* DOCUMENT / MAIN CONTENT AREA
+------------------------------------------------------*/
+.document{
+	background: rgba(255, 255, 255, 0.8);
+	margin: 20px auto;
+	padding: 20px 30px;
+	width: 1170px;
+	padding-bottom: 360px;
+	border-radius: 20px;
+	-webkit-border-radius: 20px;
+	-moz-border-radius: 20px;
+}
+
+/* Permalink icons */
+.document .headerlink{
+	display: none;
+	margin-left: 10px;
+}
+
+.document h1:hover > .headerlink,
+.document h2:hover > .headerlink,
+.document h3:hover > .headerlink{
+	display: inline;
+	color: #166194;
+}
+
+
+/* SIDEBAR
+---------------------------------------------------- */
+.sidebar{
+	float: right;
+	margin: 20px 0px 30px 20px;
+	background: rgba(255,255,255, 0.5);
+	border-radius: 20px;
+	padding: 20px;
+	max-width:60%;
+}
+
+.sidebar .sidebar-title{
+	font: 300 24px/24px Oswald;
+	margin-top: 0;
+}
+
+.sidebar img{
+	margin: 0;
+}
+
+/* FOOTER
+---------------------------------------------------- */
+.footer{
+	height: 100px;
+	color: #fdfdfd;
+	bottom: 0;
+	width: 100%;
+	margin: 50px auto 0 auto;
+	
+}
+
+.footer > .small-print{
+	width: 550px;
+	display: block;
+	float: none;
+	margin: 0 auto;
+	color: #CCCCCC;
+	font: 300 14px/14px Source Sans Pro;
+}
+
+.footer > .footerNav{
+	width: 100%;
+	display: block;
+	height: 40px;
+	margin-bottom: 10px;
+}
+
+
+/* Body CSS
+-------------------------------------------------- */
+    html, body {
+    	margin: 0;
+    	padding: 0;
+    	height: 100%;
+    }
+    
+    body {
+      color: #333333;
+      font: 400 15px/20px "Source Sans Pro", "Helvetica Nueue", "Helvetica", "sans serif";
+      background: #FFFFFF;
+      background: url(bg.jpg) no-repeat center center fixed;
+      -webkit-background-size: cover;
+	  -moz-background-size: cover;
+	  -o-background-size: cover;
+	  background-size: cover;
+    }
+    
+/* TABLES 
+ -----------------------------------------------*/
+    table, tr, th, td, thead, tbody{
+    	border: 0px;
+    	border-collapse: collapse;
+    	padding: 8px;
+    }
+    
+    table{
+    	background: rgba(255,255,255, 0.8);
+    	margin: 40px auto;
+    	
+    }
+    
+    thead, th{
+    	background-color: #555555;
+    	color: #FFFFFF;
+    	font: 300 16px/20px Source Sans Pro;
+    }
+    
+    td{
+    	font: 400 15px/20px Source Sans Pro;
+    }
+    
+    tr.row-odd{
+    	background: rgba(103, 184, 229, 0.2);
+    }
+    
+    
+/* TAG STYLING
+-------------------------------------------------------- */
+    
+	h3 {
+		font: 400 24.5px/40px "Source Sans Pro" sans-serif;
+	}
+	
+	h2{
+		font: 400 27.5px/40px "Oswald" sans-serif;
+	}
+	
+	h1 > a, 
+	h2 > a,
+	h3 > a,
+	h4 > a{
+		color: #333333;
+	}
+	
+	h1{
+		font: 400 32px/40px "Oswald" sans-serif;
+	}
+	
+    
+    article, aside, figure, footer, header, hgroup, menu, nav, section { 
+      display:block;   
+    }
+    
+    img{
+       	max-width: 100%;
+    	display: block;
+    }
+    
+    input {
+		-webkit-appearance: none;
+		background-color: white;
+		border-radius: 4px;
+		height: 25px;
+		width: 200px;
+		box-shadow: none;
+		border: 0;
+    }
+    
+    input[type="submit"]{
+    	width: auto;
+    }
+    
+    a{
+    	color: #166194;
+    	text-decoration: none;
+    }
+        
+    a:hover{
+    	color: #3399CC;
+    	text-decoration: none;
+    }
+    
+        
+    ul, ol{
+    	margin: 0px;
+    }
+    
+    select{
+    	font: 300 16px/16px "Oswald" Arial sans-serif;
+    }
+    
+   dt{
+   		font: 300 18px/40px Oswald;
+   }
+
+
+
+
+/* HIGHLIGHTING
+ -----------------------------------------------*/
+  .highlight{
+ 	padding-left: 10px;
+ 	padding-right: 10px;
+ 	word-wrap: break-word;
+ 	color: #FFFFFF;
+ 	background: none;
+ 	clear: right;
+ }
+ 
+ .highlight-python{
+ 	word-wrap: break-word;
+ 	color: #FFFFFF;
+ 	clear: right;
+ }
+ 
+ pre{
+	 padding: 10px;
+	background: rgba(22,97,148,0.7);
+	color: #FFFFFF;
+	font-size: 15px;
+	border-radius: 5px;
+	-moz-border-radius: 5px;
+	-webkit-border-radius: 5px;
+	margin: 20px auto;
+ }
+ 
+    
+ /* MISC
+ -----------------------------------------------*/
+ .align-center{
+ 	margin-left: auto;
+ 	margin-right: auto;
+ }
+ 
+ .figure{
+ 	max-width: 80%;
+ 	background-color: #FFFFFF;
+ 	padding: 10px;
+ 	display: block;
+ 	border: 1px solid #666666;
+ 	margin-top: 20px;
+ }
+ 
+ .figure > img{
+ 	max-width: 90%;
+ 	margin: 10px auto;
+ }
+ 
+ .figure > .caption{
+	 margin-bottom: 0px;
+	text-align: center;
+	font: 400 14px/14px Source Sans Pro;
+	color: #666;
+	padding-top: 10px;
+ }
+ 
+ 
+ .topic{
+ 	background: rgba(255,255,255,0.5);
+ 	padding: 10px;
+ 	border-radius: 20px;
+ 	-webkit-border-radius: 20px;
+ 	-moz-border-radius: 20px;
+ }
+ 
+ .topic-title{
+ 	font: 300 24px/24px Oswald;
+	margin-top: 0;
+ }
+ 
+ #license pre{
+ 	width: 700px;
+ 	margin: 0 auto;
+ }
+ 
+ #installing-the-registry .sidebar{
+ 	max-width: 100%;
+ }
+ 
+ 
+ 
