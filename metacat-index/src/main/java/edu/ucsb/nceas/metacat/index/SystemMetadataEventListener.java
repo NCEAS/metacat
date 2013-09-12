@@ -189,6 +189,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 	        try {
 	            data = new FileInputStream(objectPath);
 	            solrIndex.update(pid.getValue(), obsoletesChain, systemMetadata, data);
+                EventlogFactory.createIndexEventLog().remove(pid);
 	        } catch (Exception e) {
 	            String error = "SystemMetadataEventListener.itemAdded - could not comit the index into the solr server since " + e.getMessage();
 	            writeEventLog(systemMetadata, pid, error);
