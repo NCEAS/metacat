@@ -270,6 +270,7 @@ my %stages = (
               'initchangepass'    => \&handleInitialChangePassword,
               'resetpass'         => \&handleResetPassword,
               'initresetpass'     => \&handleInitialResetPassword,
+              'emailverification' => \&handleEmailVerification,
              );
 
 # call the appropriate routine based on the stage
@@ -870,22 +871,24 @@ sub paramsAreValid {
 sub createTemporaryAccount {
     my $allParams = shift;
     my $org = $query->param('o'); 
-    #my $org = 'unaffiliated';
     my $ou = $query->param('ou');
-    #my $ou = 'LTER';
+
     
     ################## Search LDAP for matching o or ou that already exist
-    my $tmpSearchBase = 'dc=tmp,' . $authBase; 
+    my $orgAuthBase; 
     my $filter;   
     if($org) {
         $filter = "(o" 
                   . "=" . $org .
                  ")";
+        $orgAuthBase = $ldapConfig->{$org}{'base'};
     } else {
         $filter = "(ou" 
                   . "=" . $ou .
                  ")";
+        $orgAuthBase = $ldapConfig->{$ou}{'base'};
     }
+    my $tmpSearchBase = 'dc=tmp,' . $orgAuthBase; 
     debug("search filer " . $filter);
     debug("ldap server ". $ldapurl);
     debug("sesarch base " . $tmpSearchBase);
@@ -976,21 +979,24 @@ sub createTemporaryAccount {
                 $$additions[$#$additions + 1] = $query->param('title');
     }
     my $dn;
+    my $orgStr;
     if($org) {
         $$additions[$#$additions + 1] = 'o';
         $$additions[$#$additions + 1] = $org;
         $dn='uid=' . $query->param('uid') . ',' . 'o=' . $org . ',' . $tmpSearchBase;
+        $orgStr='o=' . $org;
     } else {
         $$additions[$#$additions + 1] = 'ou';
         $$additions[$#$additions + 1] = $ou;
         $dn='uid=' . $query->param('uid') . ',' . 'ou=' . $ou . ',' . $tmpSearchBase;
+        $orgStr='ou=' . $ou;
     }
     my $tmp = 1;
     createAccount2($dn, $ldapUsername, $ldapPassword, $additions, $tmp, $allParams);
     
     
     ####################send the verification email to the user
-    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr;
+    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&' . $orgStr . '&uid=' . $query->param('uid');
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender =  $properties->getProperty('email.sender');
@@ -1050,10 +1056,7 @@ sub createAccount2 {
     if ($ldap) {
             $ldap->start_tls( verify => 'none');
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
-            $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
-            debug(" 1 here is the additions " . $additions); 
-            debug(" 2 here is the additions " . @$additions);
-            debug(" 3 here is the additions " . [@$additions]);  
+            $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [@$additions ]);
             if ($result->code()) {
                 fullTemplate(@failureTemplate, { stage => "register",
@@ -1161,6 +1164,96 @@ sub createAccount {
         	$ldap->unbind;   # take down session
         }
     }
+}
+
+#
+# This subroutine will handle a email verification:
+# If the hash string matches the one store in the ldap, the account will be
+# copied from the temporary space to the permanent tree and the account in 
+# the temporary space will be removed.
+sub handleEmailVerification {
+
+    my $cfg = $query->param('cfg');
+    my $dn = $query->param('dn');
+    my $hash = $query->param('hash');
+    my $org = $query->param('o');
+    my $ou = $query->param('ou');
+    my $uid = $query->param('uid');
+    
+    my $orgAttributeName;
+    my $ldapUsername;
+    my $ldapPassword;
+    my $ldaporg;
+    my $orgAuthBase;
+    if($org) {
+        $ldapUsername = $ldapConfig->{$org}{'user'};
+        $ldapPassword = $ldapConfig->{$org}{'password'};
+        $orgAttributeName = 'o';
+        $ldaporg = $org;
+        $orgAuthBase = $ldapConfig->{$org}{'base'};
+    } else {
+        $ldapUsername = $ldapConfig->{$ou}{'user'};
+        $ldapPassword = $ldapConfig->{$ou}{'password'};
+        $orgAttributeName = 'ou';
+        $ldaporg = $ou;
+        $orgAuthBase = $ldapConfig->{$org}{'base'};
+    }
+    debug("LDAP connection to $ldapurl...");    
+    
+
+   print "Content-type: text/html\n\n";
+   #if main ldap server is down, a html file containing warning message will be returned
+   my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+   if ($ldap) {
+        $ldap->start_tls( verify => 'none');
+        $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
+        my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)');
+        my $max = $mesg->count;
+        debug("the count is " . $max);
+        if($max < 1) {
+            $ldap->unbind;   # take down session
+            fullTemplate( ['registerFailed'], {errorMessage => "No record was founded to matche the dn " . $dn . " for the verification."});
+            #handleLDAPBindFailure($ldapurl);
+            exit(0);
+        } else {
+            #check if the hash string match
+            my $entry = $mesg->entry (0);
+            my $hashStrFromLdap = $entry->get_value('employeeNumber');
+            if( $hashStrFromLdap eq $hash) {
+                #my $additions = [ ];
+                #foreach my $attr ( $entry->attributes ) {
+                    #if($attr ne 'employeeNumber') {
+                        #$$additions[$#$additions + 1] = $attr;
+                        #$$additions[$#$additions + 1] = $entry->get_value( $attr );
+                    #}
+                #}
+                #my $tmp=0;
+                #my $allParams="";
+                $mesg = $ldap->moddn(
+                            dn => $dn,
+                            deleteoldrdn => 1,
+                            newrdn => "uid=" . $uid,
+                            newsuperior  => $orgAttributeName . "=" . $ldaporg . "," . $orgAuthBase);
+                $ldap->unbind;   # take down session
+                if(mesg->code()) {
+                    fullTemplate( ['registerFailed'], {errorMessage => "Cannot move the account from the inactive area to the ative area since " . $mesg->error()});
+                    exit(0);
+                } else {
+                    fullTemplate( ['success'] );
+                }
+                #createAccount2($dn, $ldapUsername, $ldapPassword, $additions, $tmp, $allParams);
+            } else {
+                $ldap->unbind;   # take down session
+                fullTemplate( ['registerFailed'], {errorMessage => "The hash string " . $hash . " from your link doesn't match our record."});
+                exit(0);
+            }
+            
+        }
+    } else {   
+        handleLDAPBindFailure($ldapurl);
+        exit(0);
+    }
+
 }
 
 sub handleResponseMessage {
