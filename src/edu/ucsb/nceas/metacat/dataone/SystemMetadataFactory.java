@@ -28,7 +28,6 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
@@ -71,8 +70,6 @@ import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dspace.foresite.ResourceMap;
 import org.jibx.runtime.JiBXException;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import java.util.Calendar;
@@ -96,7 +93,6 @@ import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class SystemMetadataFactory {
 
@@ -610,7 +606,18 @@ public class SystemMetadataFactory {
 		return sysMeta;
 	}
 
-    /**
+	/**
+	 * Checks for potential ORE object existence 
+	 * @param identifier
+	 * @return
+	 */
+    public static boolean oreExistsFor(Identifier identifier) {
+    	MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
+		List<Identifier> ids = MNodeService.getInstance(request).lookupOreFor(identifier);
+		return (ids != null && ids.size() > 0);
+	}
+
+	/**
      * Generate SystemMetadata for any object in the object store that does
      * not already have it.  SystemMetadata documents themselves, are, of course,
      * exempt.  This is a utility method for migration of existing object 
@@ -661,33 +668,6 @@ public class SystemMetadataFactory {
         }
         logMetacat.info("done generating system metadata for given list");
     }
-    
-	/**
-	 * Determines if we already have registered an ORE map for this package
-	 * NOTE: uses a solr query to locate OREs for the object
-	 * @param guid of the EML/packaging object
-	 * @return true if there is an ORE map for the given package
-	 */
-	public static boolean oreExistsFor(Identifier guid) {
-		// Search for the ORE if we can find it
-		String pid = guid.getValue();
-		MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-		String query = "fl=id,resourceMap&wt=xml&q=formatType:METADATA+-obsoletedBy:*+resourceMap:*+id:\"" + pid + "\"";
-		try {
-			InputStream results = MNodeService.getInstance(request).query("solr", query);
-			Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
-			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
-			NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
-			if (nodeList != null && nodeList.getLength() > 0) {
-				//String found = nodeList.item(0).getFirstChild().getNodeValue();
-				return true;
-			}
-		} catch (Exception e) {
-			logMetacat.error("Error checking for resourceMap[s] on pid " + pid + ". " + e.getMessage(), e);
-		}
-		
-		return false;
-	}
 
 	/**
 	 * Find the size (in bytes) of a stream. Note: This needs to refactored out

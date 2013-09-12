@@ -30,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
@@ -54,6 +55,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
 import org.dataone.client.MNode;
@@ -137,6 +139,7 @@ import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.XMLUtilities;
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.writer.impl.ZipWriter;
@@ -1605,7 +1608,7 @@ public class MNodeService extends D1NodeService
 		this.update(session, originalIdentifier, inputStream, newIdentifier, sysmeta);
 		
 		// update ORE that references the scimeta
-		// TODO: better ORE location algorithm -- this is just convention for generated resource maps and is fragile
+		// first try the naive method, then check the SOLR index
 		try {
 			String localId = IdentifierManager.getInstance().getLocalId(originalIdentifier.getValue());
 			
@@ -1618,6 +1621,17 @@ public class MNodeService extends D1NodeService
 			} catch (NotFound nf) {
 				// this is probably okay for many sci meta data docs
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
+				// try the SOLR index
+				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier);
+				if (potentialOreIdentifiers != null) {
+					potentialOreIdentifier = potentialOreIdentifiers.get(0);
+					try {
+						oreInputStream = this.get(session, potentialOreIdentifier);
+					} catch (NotFound nf2) {
+						// this is probably okay for many sci meta data docs
+						logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
+					}
+				}
 			}
 			if (oreInputStream != null) {
 				Identifier newOreIdentifier = MNodeService.getInstance(request).generateIdentifier(session, MNodeService.UUID_SCHEME, null);
@@ -1700,6 +1714,39 @@ public class MNodeService extends D1NodeService
 		}
 		
 		return newIdentifier;
+	}
+	
+	/**
+	 * Determines if we already have registered an ORE map for this package
+	 * NOTE: uses a solr query to locate OREs for the object
+	 * @param guid of the EML/packaging object
+	 * @return list of resource map identifiers for the given pid
+	 */
+	public List<Identifier> lookupOreFor(Identifier guid) {
+		// Search for the ORE if we can find it
+		String pid = guid.getValue();
+		List<Identifier> retList = null;
+		try {
+			MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
+			String query = "fl=id,resourceMap&wt=xml&q=formatType:METADATA+-obsoletedBy:*+resourceMap:*+id:\"" + pid + "\"";
+			InputStream results = this.query("solr", query);
+			org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
+			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
+			org.w3c.dom.NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
+			if (nodeList != null && nodeList.getLength() > 0) {
+				retList = new ArrayList<Identifier>();
+				for (int i = 0; i < nodeList.getLength(); i++) {
+					String found = nodeList.item(i).getFirstChild().getNodeValue();
+					Identifier oreId = new Identifier();
+					oreId.setValue(found);
+					retList.add(oreId);
+				}
+			}
+		} catch (Exception e) {
+			logMetacat.error("Error checking for resourceMap[s] on pid " + pid + ". " + e.getMessage(), e);
+		}
+		
+		return retList;
 	}
 	
 	/**
