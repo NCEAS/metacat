@@ -1622,7 +1622,7 @@ public class MNodeService extends D1NodeService
 				// this is probably okay for many sci meta data docs
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
 				// try the SOLR index
-				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier);
+				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier, false);
 				if (potentialOreIdentifiers != null) {
 					potentialOreIdentifier = potentialOreIdentifiers.get(0);
 					try {
@@ -1722,13 +1722,16 @@ public class MNodeService extends D1NodeService
 	 * @param guid of the EML/packaging object
 	 * @return list of resource map identifiers for the given pid
 	 */
-	public List<Identifier> lookupOreFor(Identifier guid) {
+	public List<Identifier> lookupOreFor(Identifier guid, boolean includeObsolete) {
 		// Search for the ORE if we can find it
 		String pid = guid.getValue();
 		List<Identifier> retList = null;
 		try {
-			MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-			String query = "fl=id,resourceMap&wt=xml&q=formatType:METADATA+-obsoletedBy:*+resourceMap:*+id:\"" + pid + "\"";
+			String query = "fl=id,resourceMap&wt=xml&q=-obsoletedBy:*+resourceMap:*+id:\"" + pid + "\"";;
+			if (includeObsolete) {
+				query = "fl=id,resourceMap&wt=xml&q=resourceMap:*+id:\"" + pid + "\"";
+			}
+			
 			InputStream results = this.query("solr", query);
 			org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
 			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);

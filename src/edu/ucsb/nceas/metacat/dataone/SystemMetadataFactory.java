@@ -613,7 +613,7 @@ public class SystemMetadataFactory {
 	 */
     public static boolean oreExistsFor(Identifier identifier) {
     	MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-		List<Identifier> ids = MNodeService.getInstance(request).lookupOreFor(identifier);
+		List<Identifier> ids = MNodeService.getInstance(request).lookupOreFor(identifier, true);
 		return (ids != null && ids.size() > 0);
 	}
 

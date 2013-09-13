@@ -87,18 +87,22 @@ public class GenerateORE implements UpgradeUtilityInterface {
             List<String> idList = null;
             
             idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_0NAMESPACE, true, serverLocation);
+            filterOutExisting(idList);
             Collections.sort(idList);
             SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
             
             idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_1NAMESPACE, true, serverLocation);
+            filterOutExisting(idList);
             Collections.sort(idList);
             SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
             
             idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_0NAMESPACE, true, serverLocation);
+            filterOutExisting(idList);
             Collections.sort(idList);
             SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
             
             idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_1NAMESPACE, true, serverLocation);
+            filterOutExisting(idList);
             Collections.sort(idList);
             SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
             
@@ -109,6 +113,22 @@ public class GenerateORE implements UpgradeUtilityInterface {
 			throw new AdminException(msg);
 		}
     	return success;
+    }
+    
+    private List<String> filterOutExisting(List<String> idList) {
+    	List<String> toRemove = new ArrayList<String>();
+    	for (String id: idList) {
+    		Identifier identifier = new Identifier();
+    		identifier.setValue(id);
+			boolean exists = SystemMetadataFactory.oreExistsFor(identifier);
+			if (exists) {
+				toRemove.add(id);
+			}
+    	}
+    	for (String id: toRemove) {
+    		idList.remove(id);
+    	}
+    	return idList;
     }
     
     public int getServerLocation() {
