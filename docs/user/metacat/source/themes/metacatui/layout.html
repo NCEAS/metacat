@@ -170,58 +170,60 @@
 {%- block extrahead %} {% endblock %}
   </head>
   <body>
-  <div class="banner">
-      <img class="logo" src="_static/metacat-logo-white.png" />
-      <img class="logo-right" src="_static/nceas-logo-white.png" />
-      <p class="title">Metacat: Metadata and Data Management Server</p>
-  </div>
+  <div id="metacatDocs">
+	  <div class="banner">
+	      <img class="logo" src="_static/metacat-logo-white.png" />
+	      <img class="logo-right" src="_static/nceas-logo-white.png" />
+	      <p class="title">Metacat: Metadata and Data Management Server</p>
+	  </div>
+			
+	{%- block header %}{% endblock %}
 
-{%- block header %}{% endblock %}
+	{%- block relbar1 %}{{ relbar() }}{% endblock %}
 
-{%- block relbar1 %}{{ relbar() }}{% endblock %}
-
-{# Comment out the sidebar
-  {%- block sidebar1 %} {# possible location for sidebar  {% endblock %}
-#}
+	{# Comment out the sidebar
+  		{%- block sidebar1 %} {# possible location for sidebar  {% endblock %}
+	#}
     <div class="document">
-{%- block document %}
-      <div class="documentwrapper">
-      {%- if not embedded %}{% if not theme_nosidebar|tobool %}
-        <div class="bodywrapper">
-      {%- endif %}{% endif %}
-          <div class="body">
-            {% block body %} {% endblock %}
-          </div>
-      {%- if not embedded %}{% if not theme_nosidebar|tobool %}
-        </div>
-      {%- endif %}{% endif %}
-      </div>
-{%- endblock %}
+	{%- block document %}
+     	 <div class="documentwrapper">
+	      	{%- if not embedded %}{% if not theme_nosidebar|tobool %}
+	        <div class="bodywrapper">
+	     	 {%- endif %}{% endif %}
+	          <div class="body">
+	            {% block body %} {% endblock %}
+	          </div>
+	      	{%- if not embedded %}{% if not theme_nosidebar|tobool %}
+	        </div>
+	      {%- endif %}{% endif %}
+      	</div>
+	{%- endblock %}
 
-{# {%- block sidebar2 %}{{ sidebar() }}{% endblock %} #}
-      <div class="clearer"></div>
-    </div>
+	{# {%- block sidebar2 %}{{ sidebar() }}{% endblock %} #}
+	      <div class="clearer"></div>
+	    </div>
 
 
-{%- block footer %}
-    <div class="footer">
-    	<div class="footerNav">
-			{{ relbar() }}
-		</div>
-    	<div class="small-print">
-		    {%- if hasdoc('copyright') %}
-		      {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}
-		    {%- else %}
-		      {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}.{% endtrans %}
-		    {%- endif %}
-		    {%- if last_updated %}
-		      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
-		    {%- endif %}
-		    {%- if show_sphinx %}
-		      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
-		    {%- endif %}
-		</div>
-    </div>
-{%- endblock %}
+	{%- block footer %}
+	    <div class="footer">
+	    	<div class="footerNav">
+				{{ relbar() }}
+			</div>
+	    	<div class="small-print">
+			    {%- if hasdoc('copyright') %}
+			      {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}
+			    {%- else %}
+			      {% trans copyright=copyright|e %}&copy; Copyright {{ copyright }}.{% endtrans %}
+			    {%- endif %}
+			    {%- if last_updated %}
+			      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+			    {%- endif %}
+			    {%- if show_sphinx %}
+			      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}.{% endtrans %}
+			    {%- endif %}
+			</div>
+	    </div>
+	{%- endblock %}
+	</div>
   </body>
 </html>
