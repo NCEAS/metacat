@@ -746,7 +746,8 @@ sub sendPasswordNotification {
     my $errorMessage = "";
     if ($recipient) {
         my $mailhost = $properties->getProperty('email.mailhost');
-        my $sender =  $properties->getProperty('email.sender');
+        my $sender;
+        $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
         # Send the email message to them
         my $smtp = Net::SMTP->new($mailhost);
         $smtp->mail($sender);
@@ -1006,7 +1007,9 @@ sub createTemporaryAccount {
     my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&' . $orgStr . '&uid=' . $query->param('uid');
     
     my $mailhost = $properties->getProperty('email.mailhost');
-    my $sender =  $properties->getProperty('email.sender');
+    my $sender;
+    $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+    debug("the sender is " . $sender);
     my $recipient = $query->param('mail');
     # Send the email message to them
     my $smtp = Net::SMTP->new($mailhost) or do {  
