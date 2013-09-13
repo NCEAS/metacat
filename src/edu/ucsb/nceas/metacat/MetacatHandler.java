@@ -1820,7 +1820,7 @@ public class MetacatHandler {
                   // handle inserts
                   try {
                 	// create the system metadata  
-                    sysMeta = SystemMetadataFactory.createSystemMetadata(newdocid, false, false);
+                    sysMeta = SystemMetadataFactory.createSystemMetadata(newdocid, true, false);
                     
                     // save it to the map
                     HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
