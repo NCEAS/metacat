@@ -1009,14 +1009,18 @@ sub createTemporaryAccount {
     my $sender =  $properties->getProperty('email.sender');
     my $recipient = $query->param('mail');
     # Send the email message to them
-    my $smtp = Net::SMTP->new($mailhost);
+    my $smtp = Net::SMTP->new($mailhost) or do {  
+                                                  fullTemplate( ['registerFailed'], {errorMessage => "The temporary account " . $dn . " was created successfully. However, the vertification email can't be sent to you because the email server has some issues. Please contact " . 
+                                                  $skinProperties->getProperty("email.recipient") . "." });  
+                                                  exit(0);
+                                               };
     $smtp->mail($sender);
     $smtp->to($recipient);
 
     my $message = <<"     ENDOFMESSAGE";
     To: $recipient
     From: $sender
-    Subject: KNB Password Reset
+    Subject: Activate the New KNB Account
         
     Somebody (hopefully you) registered a KNB account.  
     Please click the following link to activate your account.
