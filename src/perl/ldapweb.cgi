@@ -1223,7 +1223,7 @@ sub handleEmailVerification {
         debug("the count is " . $max);
         if($max < 1) {
             $ldap->unbind;   # take down session
-            fullTemplate( ['registerFailed'], {errorMessage => "No record was founded to matche the dn " . $dn . " for the verification."});
+            fullTemplate( ['registerFailed'], {errorMessage => "No record matched the dn " . $dn . " for the verification. You probably already verified the account."});
             #handleLDAPBindFailure($ldapurl);
             exit(0);
         } else {
