@@ -1278,6 +1278,11 @@ public class MNodeService extends D1NodeService
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
 			InvalidRequest {
 		
+		// check for null session
+        if (session == null) {
+          throw new InvalidToken("2190", "Session is required to generate an Identifier at this Node.");
+        }
+		
 		Identifier identifier = new Identifier();
 		
 		// handle different schemes
