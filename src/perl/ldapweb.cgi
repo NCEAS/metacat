@@ -253,12 +253,15 @@ foreach my $o (@orgList) {
 ### Determine the display organization list (such as NCEAS, Account ) in the ldap template files
 my $displayOrgListStr;
 $displayOrgListStr = $skinProperties->getProperty("ldap.templates.organizationList") or $displayOrgListStr = $properties->getProperty('ldap.templates.organizationList');
-my @displayOrgList = split(':', $displayOrgListStr);
+debug("the string of the org from properties : " . $displayOrgListStr);
+my @displayOrgList = split(';', $displayOrgListStr);
+
 my @validDisplayOrgList; #this array contains the org list which will be shown in the templates files.
 
 my %orgNamesHash = %$orgNames;
 foreach my $element (@displayOrgList) {
     if(exists $orgNamesHash{$element}) {
+         debug("push the organization " . $element . " into the dispaly array");
          #if the name is found in the organization part of metacat.properties, put it into the valid array
          push(@validDisplayOrgList, $element);
     } 
@@ -451,7 +454,7 @@ sub handleRegisterConfirmed {
   
     my $allParams = { 'givenName' => $query->param('givenName'), 
                       'sn' => $query->param('sn'),
-                      'o' => 'unaffiliated', # only accept unaffiliated registration
+                      'o' => $query->param('o'), 
                       'mail' => $query->param('mail'), 
                       'uid' => $query->param('uid'), 
                       'userPassword' => $query->param('userPassword'), 
@@ -941,11 +944,21 @@ sub createTemporaryAccount {
             $ldap->start_tls( verify => 'none');
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
-            my $additions; 
-            $additions = [ 
-                $organization   => $organizationName,
-                'objectclass' => ['top', 'organization']
-                ];
+            my $additions;
+            if($organization eq 'ou') {
+                $additions = [ 
+                    $organization   => $organizationName,
+                    'objectclass' => ['top', 'organizationalUnit']
+                    ];
+            
+            } else {
+                $additions = [ 
+                    $organization   => $organizationName,
+                    'objectclass' => ['top', 'organization']
+                    ];
+            
+            } 
+            
             $dn=$ldapConfig->{$org}{'org'} . ',' . $tmpSearchBase;
             # Do the insertion
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [ @$additions ]);
