@@ -32,6 +32,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.log4j.Logger;
+
 import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -41,6 +43,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.StringUtil;
 
 public class AuthUtil {
+	
+    public static Logger logMetacat = Logger.getLogger(AuthUtil.class);
 
 	private static Vector<String> administrators = null;
 	private static Vector<String> moderators = null;
@@ -116,6 +120,17 @@ public class AuthUtil {
 							+ pnfe.getMessage());
 		}
 		administrators = StringUtil.toVector(administratorString, ':');
+		
+		String d1NodeAdmin = null;
+		try {
+			d1NodeAdmin = PropertyService.getProperty("dataone.subject");
+			administrators.add(d1NodeAdmin);
+		} catch (PropertyNotFoundException e) {
+			String msg = "Could not get metacat property: dataone.subject "
+					+ "There will be no registered DataONE adminstrator";
+			logMetacat.error(msg, e);
+			
+		}
 	}
 	
 	/**
