@@ -251,8 +251,29 @@ foreach my $o (@orgList) {
 }
 
 ### Determine the display organization list (such as NCEAS, Account ) in the ldap template files
-my $displayOrgList;
-$displayOrgList = $skinProperties->getProperty("ldap.templates.organizationList") or $displayOrgList = $properties->getProperty('ldap.templates.organizationList');
+my $displayOrgListStr;
+$displayOrgListStr = $skinProperties->getProperty("ldap.templates.organizationList") or $displayOrgListStr = $properties->getProperty('ldap.templates.organizationList');
+my @displayOrgList = split(':', $displayOrgListStr);
+my @validDisplayOrgList; #this array contains the org list which will be shown in the templates files.
+
+my %orgNamesHash = %$orgNames;
+foreach my $element (@displayOrgList) {
+    if(exists $orgNamesHash{$element}) {
+         #if the name is found in the organization part of metacat.properties, put it into the valid array
+         push(@validDisplayOrgList, $element);
+    } 
+    
+}
+
+if(!@validDisplayOrgList) {
+     my $sender;
+     $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+    print "Content-type: text/html\n\n";
+    print "The value of property ldap.templates.organizationList in " 
+     . $skinName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
+     . $skinName . ".properties file) is invalid. Please send the information to ". $sender;
+    exit(0);
+}
 
 
 #--------------------------------------------------------------------------80c->
@@ -906,7 +927,7 @@ sub createTemporaryAccount {
     my $ldapPassword = $ldapConfig->{$org}{'password'};
     debug("LDAP connection to $ldapurl...");    
     
-     my @organizationInfo = split(/=/, $ldapConfig->{$org}{'org'}); #split 'o=NCEAS' or something like that
+     my @organizationInfo = split('=', $ldapConfig->{$org}{'org'}); #split 'o=NCEAS' or something like that
      my $organization = $organizationInfo[0]; # This will be 'o' or 'ou'
      my $organizationName = $organizationInfo[1]; # This will be 'NCEAS' or 'Account'
         
@@ -1429,7 +1450,7 @@ sub setVars {
                          styleCommonPath => $contextUrl . "/style/common",
                          contextUrl => $contextUrl,
                          cgiPrefix => $cgiPrefix,
-                         orgList => \@orgList,
+                         orgList => \@validDisplayOrgList,
                          config  => $config,
     };
     
