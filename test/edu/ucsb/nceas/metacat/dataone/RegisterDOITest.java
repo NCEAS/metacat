@@ -46,6 +46,7 @@ import org.junit.Before;
 
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
+import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
@@ -177,10 +178,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			// add the actual object for the newly-minted DOI
 			SystemMetadata sysmeta = null;
 			InputStream object = null;
+			boolean isMetadata = false;
 			if (inputStream != null) {
 				sysmeta = createSystemMetadata(guid, session.getSubject(), null);
 				object = inputStream;
 		        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+		        isMetadata = true;
 			} else {
 				object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 				sysmeta = createSystemMetadata(guid, session.getSubject(), object);
@@ -193,6 +196,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			metadata = ezid.getMetadata(pid.getValue());
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+			
+			// check that the target URI was updated
+			if (isMetadata) {
+				String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+				assertTrue(registeredTarget.endsWith("/#view/" + pid.getValue()));
+			}
 			
 			System.out.println("tested with DOI: " + pid.getValue());
 			
