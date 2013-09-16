@@ -183,12 +183,15 @@ my $template = Template->new($ttConfig) || handleGeneralServerFailure($Template:
 # custom LDAP properties hash
 my $ldapCustom = $properties->splitToTree(qr/\./, 'ldap');
 
+# This is a hash which has the keys of the organization's properties 'name', 'base', 'organization'.
 my $orgProps = $properties->splitToTree(qr/\./, 'organization');
+
+#This is a hash which has the keys of the ldap sub tree names of the organizations, such as 'NCEAS', 'LTER' and 'KU', and values are real name of the organization.
 my $orgNames = $properties->splitToTree(qr/\./, 'organization.name');
 # pull out properties available e.g. 'name', 'base'
 my @orgData = keys(%$orgProps);
 
-my @orgList;
+my @orgList; #An array has the names (i.e, sub tree names, such as 'NCEAS', 'LTER' and 'KU')  of the all organizations in the metacat.properties. 
 while (my ($oKey, $oVal) = each(%$orgNames)) {
     push(@orgList, $oKey);
 }
@@ -221,7 +224,8 @@ foreach my $o (@orgList) {
             $ldapConfig->{$o}{'org'} = $filter;
         }
         if (!$ldapConfig->{$o}{'filter'}) {
-            $ldapConfig->{$o}{'filter'} = $filter;
+            #$ldapConfig->{$o}{'filter'} = $filter;
+            $ldapConfig->{$o}{'filter'} = $ldapConfig->{$o}{'org'};
         }
         # also include DN, which is just org + base
         if ($ldapConfig->{$o}{'org'}) {
@@ -245,6 +249,11 @@ foreach my $o (@orgList) {
         $ldapConfig->{$o}{'password'} = $ldapConfig->{'unaffiliated'}{'password'};
     }
 }
+
+### Determine the display organization list (such as NCEAS, Account ) in the ldap template files
+my $displayOrgList;
+$displayOrgList = $skinProperties->getProperty("ldap.templates.organizationList") or $displayOrgList = $properties->getProperty('ldap.templates.organizationList');
+
 
 #--------------------------------------------------------------------------80c->
 # Define the main program logic that calls subroutines to do the work
@@ -879,23 +888,12 @@ sub paramsAreValid {
 sub createTemporaryAccount {
     my $allParams = shift;
     my $org = $query->param('o'); 
-    my $ou = $query->param('ou');
+ 
 
     
     ################## Search LDAP for matching o or ou that already exist
-    my $orgAuthBase; 
-    my $filter;   
-    if($org) {
-        $filter = "(o" 
-                  . "=" . $org .
-                 ")";
-        $orgAuthBase = $ldapConfig->{$org}{'base'};
-    } else {
-        $filter = "(ou" 
-                  . "=" . $ou .
-                 ")";
-        $orgAuthBase = $ldapConfig->{$ou}{'base'};
-    }
+    my $orgAuthBase = $ldapConfig->{$org}{'base'};; 
+    my $filter = $ldapConfig->{$org}{'filter'};   
     my $tmpSearchBase = 'dc=tmp,' . $orgAuthBase; 
     debug("search filer " . $filter);
     debug("ldap server ". $ldapurl);
@@ -908,6 +906,9 @@ sub createTemporaryAccount {
     my $ldapPassword = $ldapConfig->{$org}{'password'};
     debug("LDAP connection to $ldapurl...");    
     
+     my @organizationInfo = split(/=/, $ldapConfig->{$org}{'org'}); #split 'o=NCEAS' or something like that
+     my $organization = $organizationInfo[0]; # This will be 'o' or 'ou'
+     my $organizationName = $organizationInfo[1]; # This will be 'NCEAS' or 'Account'
         
     if(!$found) {
         debug("generate the subtree in the dc=tmp===========================");
@@ -919,20 +920,12 @@ sub createTemporaryAccount {
             $ldap->start_tls( verify => 'none');
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
-            my $additions;
-             if($org) {
-                $additions = [ 
-                'o'   => $org,
+            my $additions; 
+            $additions = [ 
+                $organization   => $organizationName,
                 'objectclass' => ['top', 'organization']
                 ];
-                $dn='o=' . $org . ',' . $tmpSearchBase;
-             } else {
-                $additions = [ 
-                'ou'   => $ou,
-                'objectclass' => ['top', 'organizationalUnit']
-                ];
-                $dn='ou=' . $ou . ',' . $tmpSearchBase;
-             }
+            $dn=$ldapConfig->{$org}{'org'} . ',' . $tmpSearchBase;
             # Do the insertion
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [ @$additions ]);
             if ($result->code()) {
@@ -972,7 +965,8 @@ sub createTemporaryAccount {
                 'userPassword' => $shapass,
                 'employeeNumber' => $randomStr,
                 'objectclass' => ['top', 'person', 'organizationalPerson', 
-                                'inetOrgPerson', 'uidObject' ]
+                                'inetOrgPerson', 'uidObject' ],
+                $organization   => $organizationName
                 ];
     if (defined($query->param('telephoneNumber')) && 
                 $query->param('telephoneNumber') &&
@@ -986,25 +980,17 @@ sub createTemporaryAccount {
                 $$additions[$#$additions + 1] = 'title';
                 $$additions[$#$additions + 1] = $query->param('title');
     }
-    my $dn;
-    my $orgStr;
-    if($org) {
-        $$additions[$#$additions + 1] = 'o';
-        $$additions[$#$additions + 1] = $org;
-        $dn='uid=' . $query->param('uid') . ',' . 'o=' . $org . ',' . $tmpSearchBase;
-        $orgStr='o=' . $org;
-    } else {
-        $$additions[$#$additions + 1] = 'ou';
-        $$additions[$#$additions + 1] = $ou;
-        $dn='uid=' . $query->param('uid') . ',' . 'ou=' . $ou . ',' . $tmpSearchBase;
-        $orgStr='ou=' . $ou;
-    }
+
+    
+    #$$additions[$#$additions + 1] = 'o';
+    #$$additions[$#$additions + 1] = $org;
+    my $dn='uid=' . $query->param('uid') . ',' . $ldapConfig->{$org}{'org'} . ',' . $tmpSearchBase;
     my $tmp = 1;
     createAccount2($dn, $ldapUsername, $ldapPassword, $additions, $tmp, $allParams);
     
     
     ####################send the verification email to the user
-    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&' . $orgStr . '&uid=' . $query->param('uid');
+    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&' . $ldapConfig->{$org}{'org'} . '&uid=' . $query->param('uid');
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
