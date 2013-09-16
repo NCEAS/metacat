@@ -40,7 +40,7 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Metacat Properties Configuration</h2>
 
 <p>Enter Metacat System properties here.  All Fields must be filled in before saving.
@@ -83,7 +83,6 @@
 			} else {		
 %>
 		<h3><%= metaDataGroup.getName()  %></h3>
-		<hr class="config-line">
 <%
 			// get all the properties in this group
 			Map<Integer, MetaDataProperty> propertyMap = 
@@ -96,9 +95,7 @@
     			if (fieldType.equals("select")) {
 %> 
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png"  
-							onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
-     				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>
+   				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>
 					<select class="textinput" name="<%= metaDataProperty.getKey() %>">
 <%
 					Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
@@ -118,18 +115,20 @@
 				}
 %>
 					</select>
+					<img class="question-mark" src="style/images/help.png"  
+							onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>
 <%		
 				} else if (fieldType.equals("password")) {
 %>
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png"  
-	           		       onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>" ><%= metaDataProperty.getLabel() %></label></div>
 					<input class="textinput" id="<%= metaDataProperty.getKey() %>" 
 							name="<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
 	           		    	value="<%= request.getAttribute(metaDataProperty.getKey()) %>"
 	           		    	type="<%= fieldType %>"/> 
+					<img class="question-mark" src="style/images/help.png"  
+	           		       onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>
 <%
 				} else if (fieldType.equals("hidden")) {
@@ -142,14 +141,14 @@
 				} else {
 %>
 				<div class="form-row">
-					<img class="question-mark" class=question-mark 
-					     src="style/images/help.png" 
-					     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %> "><%= metaDataProperty.getLabel() %></label>	</div>					
 					<input class="textinput" id="<%= metaDataProperty.getKey() %>" 
 							name="<%= metaDataProperty.getKey() %>" 
 	    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
 	           		    	type="<%= fieldType %> "/>	
+					<img class="question-mark" class=question-mark 
+					     src="style/images/help.png" 
+					     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>          		    
 <%   			
 				}

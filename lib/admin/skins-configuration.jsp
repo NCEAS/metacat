@@ -46,7 +46,7 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Skins Configuration</h2>
 
 <br class="skins-header">
@@ -58,7 +58,6 @@
 
 
 <h3>Skins Configuration</h3>
-<hr class="config-line">
 <div class="heading-comment message-text">
 	NOTE: Metacat v2.2.0 includes a new mechanism for customizing the look and feel of your  
 	Metacat deployment. MetacatUI themes can be deployed separately from the Metacat server
@@ -142,8 +141,6 @@
 				if (fieldType.equals("select")) {
 %>
 				<div class="form-row"> 
-					<img class="question-mark" src="style/images/help.png" 
-						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')""/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>" title="<%= metaDataProperty.getDescription() %>"><%= metaDataProperty.getLabel() %></label>  		
 					<select class="textinput" name="<%= skinName %>.<%= metaDataProperty.getKey() %>">
 
@@ -157,6 +154,8 @@
 					}
 %>
 					</select>
+					<img class="question-mark" src="style/images/help.png" 
+						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')""/>
 				</div>
 <%
 					if (metaDataProperty.getDescription() != null) {
@@ -167,11 +166,11 @@
 				} else if (fieldType.equals("password")) {
 %>	
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png" 
-						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>" title="<%= metaDataProperty.getDescription() %>"><%= metaDataProperty.getLabel() %></label></div>
 					<input class="textinput" id="<%= skinName %>.<%= metaDataProperty.getKey() %>" name="<%= skinName %>.<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
 							type="<%= fieldType %>"/> 
+					<img class="question-mark" src="style/images/help.png" 
+						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>
 <%
 					if (metaDataProperty.getDescription() != null) {
@@ -182,9 +181,6 @@
 				} else if (fieldType.equals("checkbox")) {
 %>
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png" 
-						 alt="<%= metaDataProperty.getDescription() %>" 
-						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<input class="checkradio" id="<%= skinName %>.<%= metaDataProperty.getKey() %>" name="<%= skinName %>.<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
 						   type="<%= fieldType %>"
 <%
@@ -196,6 +192,9 @@
 %>
 						   /> 
 					<label class="checkradio-label" for="<%= metaDataProperty.getKey() %>" title="<%= metaDataProperty.getDescription() %>"><%= metaDataProperty.getLabel() %></label>
+					<img class="question-mark" src="style/images/help.png" 
+						 alt="<%= metaDataProperty.getDescription() %>" 
+						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>
 <%
 					if (metaDataProperty.getDescription() != null) {
@@ -206,12 +205,12 @@
 				} else {
 %>
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png" 
-						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<label class="textinput-label" for="<%= metaDataProperty.getKey() %>" title="<%= metaDataProperty.getDescription() %>"><%= metaDataProperty.getLabel() %></label>
 					<input class="textinput" id="<%= skinName %>.<%= metaDataProperty.getKey() %>" name="<%= skinName %>.<%= metaDataProperty.getKey() %>" 
 							value="<%= skinProperties.get(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
 							type="<%= fieldType %>"/>	
+					<img class="question-mark" src="style/images/help.png" 
+						 onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>  
 <%
 					if (metaDataProperty.getDescription() != null) {

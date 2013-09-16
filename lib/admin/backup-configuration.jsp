@@ -39,7 +39,7 @@
 
 </head>
 <body>
-<img src="<%= request.getContextPath() %>/metacat-logo.png"
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png"
 	width="100px" align="right" />
 <h2>Backup Directory Configuration</h2>
 
@@ -78,8 +78,6 @@ Metacat.  <br><br>
 <br class="auth-header">
 
 <%@ include file="./page-message-section.jsp"%>
-<hr class="config-line">
-<br>
 
 <form name="backupform" method="post"
 	action="<%= request.getContextPath() %>/admin" target="_top"
@@ -99,8 +97,6 @@ Metacat.  <br><br>
 	</tr>
 </table>
 
-<br>
-<hr class="config-line">
 
 <input type="hidden" name="configureType" value="backup"/>
 <input type="hidden" name="processForm" value="true"/>

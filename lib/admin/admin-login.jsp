@@ -41,7 +41,7 @@
 
 </head>
 <body>
-<img src="<%= request.getContextPath() %>/metacat-logo.png"
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png"
 	width="100px" align="right" />
 <h2>Administrator Login</h2>
 
@@ -49,8 +49,6 @@ Account login page.
 <br class="auth-header">
 
 <%@ include file="./page-message-section.jsp"%>
-<hr class="config-line">
-<br>
 
 <form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
 	target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform">
@@ -85,8 +83,6 @@ Account login page.
 	</tr>
 </table>
 
-<br>
-<hr class="config-line">
 
 	<input class="left-button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
 	<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 

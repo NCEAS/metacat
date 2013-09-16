@@ -40,7 +40,7 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>DataONE Configuration</h2>
 
 <p> 
@@ -75,10 +75,7 @@
 	<h3>Member Node Services</h3>
 	Enable or disable DataONE Member Node Services for this deployment
 	
-	<hr class="config-line">
 	<div class="form-row">
-		<img class="question-mark" src="style/images/help.png" 
-			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 		<div class="textinput-label"><label for="dataone.mn.services.enabled" title="Enable DataONE Member Node Services">Enable DataONE Services</label></div>
 
 		<%
@@ -104,18 +101,16 @@
 				name="dataone.mn.services.enabled" 	             		    	    	           		    	             			
 				value="true"/>
 		<% } %>
-
+		
+		<img class="question-mark" src="style/images/help.png" 
+			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 	</div>
-
+	<div class="clear"></div>
 	<h3>Member Node Configuration</h3>
 	General information identifiying this node, its owner, and contents.  You will need
 	   a certificate to identify the node, and a DataONE account to act as a node contact.
 	
-	<hr class="config-line">
-	
 	<div class="form-row">
-		<img class="question-mark" src="style/images/help.png" 
-			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 		<div class="textinput-label">
 			<label for="dataone.nodeName" title="A short, human-readable name for this node">Node Name</label>
 		</div>
@@ -123,10 +118,10 @@
 			id="dataone.nodeName" 
 			name="dataone.nodeName" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeName") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeDescription" title="A brief description of the node and its holdings">Node Description</label>
 		</div>
@@ -134,10 +129,10 @@
 			id="dataone.nodeDescription" 
 			name="dataone.nodeDescription" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeDescription") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeId" title="The DataONE-assigned unique identifier for this node">Node Identifier</label>
 		</div>
@@ -145,10 +140,10 @@
 			id="dataone.nodeId" 
 			name="dataone.nodeId" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeId") %>"/>
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.subject" title="The account in Distinguished Name (DN) format that represents this node in all service interactions">Node Subject</label>
 		</div>
@@ -156,10 +151,10 @@
 			id="dataone.subject" 
 			name="dataone.subject" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.subject") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.contactSubject" title="A verified account in DN format to be used as the primary node contact for this node">Contact Subject</label>
 		</div>
@@ -167,10 +162,10 @@
 			id="dataone.contactSubject" 
 			name="dataone.contactSubject" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.contactSubject") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="D1Client.certificate.file" title="The absolute path to the X.509 certificate used to authenticate this node">Node Certificate Path</label>
 		</div>
@@ -178,10 +173,10 @@
 			id="D1Client.certificate.file" 
 			name="D1Client.certificate.file" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("D1Client.certificate.file") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label"><label for="dataone.nodeSynchronize" title="Enable DataONE metadata synchronization">Enable Metadata Synchronization</label></div>
 
 		<%
@@ -207,16 +202,17 @@
 				name="dataone.nodeSynchronize" 	             		    	    	           		    	             			
 				value="true"/>
 		<% } %>
-
+		<img class="question-mark" src="style/images/help.png" 
+			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 	</div>
     <p>&nbsp;</p>
     
+   	<div class="clear"></div>
+   	 
 	<h3>Synchronization Schedule</h3>
 	The schedule on which metadata should be synchronized with DataONE, expressed as a crontab entry.
-	<hr class="config-line">
+	
 	<div class="form-row">
-		<img class="question-mark" src="style/images/help.png" 
-			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.year" title="Year">Year</label>
 		</div>
@@ -224,21 +220,21 @@
 			id="dataone.nodeSynchronization.schedule.year" 
 			name="dataone.nodeSynchronization.schedule.year" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.year") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.mon" title="Month">Month</label>
 		</div>
 		<input class="textinput" 
 			id="dataone.nodeSynchronization.schedule.mon" 
 			name="dataone.nodeSynchronization.schedule.mon" 	             		    	    	           		    	             			
-			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.mon") %>"/> 
+			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.mon") %>"/>
+		<img class="question-mark" src="style/images/help.png" 
+			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/> 
 	</div>
 	<div class="form-row">
-		<img class="question-mark" src="style/images/help.png" 
-			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.mday" title="Day of Month">Day of Month</label>
 		</div>
@@ -246,10 +242,10 @@
 			id="dataone.nodeSynchronization.schedule.mday" 
 			name="dataone.nodeSynchronization.schedule.mday" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.mday") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.wday" title="Day of Week">Day of Week</label>
 		</div>
@@ -257,10 +253,10 @@
 			id="dataone.nodeSynchronization.schedule.wday" 
 			name="dataone.nodeSynchronization.schedule.wday" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.wday") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.hour" title="Hours">Hours</label>
 		</div>
@@ -268,10 +264,10 @@
 			id="dataone.nodeSynchronization.schedule.hour" 
 			name="dataone.nodeSynchronization.schedule.hour" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.hour") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.min" title="Minutes">Minutes</label>
 		</div>
@@ -279,10 +275,10 @@
 			id="dataone.nodeSynchronization.schedule.min" 
 			name="dataone.nodeSynchronization.schedule.min" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.min") %>"/> 
-	</div>
-	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.nodeSynchronization.schedule.sec" title="Seconds">Seconds</label>
 		</div>
@@ -290,16 +286,18 @@
 			id="dataone.nodeSynchronization.schedule.sec" 
 			name="dataone.nodeSynchronization.schedule.sec" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.nodeSynchronization.schedule.sec") %>"/> 
+		<img class="question-mark" src="style/images/help.png" 
+			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 	</div>
+	
+	<div class="clear"></div>
 
 	<h3>Replication</h3>
 	Configuration for replication, including whether this node can be used to house replicas of
 	objects from other nodes, as well as default replication policies for the objects originating
 	on this Member Node.
-	<hr class="config-line">
+	
 	<div class="form-row">
-		<img class="question-mark" src="style/images/help.png" 
-			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 		<div class="textinput-label"><label for="dataone.nodeReplicate" title="Store replicas from other Member Nodes">Accept and Store Replicas</label></div>
 
 		<%
@@ -323,13 +321,13 @@
 				name="dataone.nodeReplicate" 	             		    	    	           		    	             			
 				value="true"/>
 		<% } %>
-	</div>
-	
-	<hr class="config-line">
-
- 	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+	
+	
+
+ 	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.replicationpolicy.default.numreplicas" title="Default Number of Replicas to be created for local objects">Default Number of Replicas</label>
 		</div>
@@ -337,10 +335,10 @@
 			id="dataone.replicationpolicy.default.numreplicas" 
 			name="dataone.replicationpolicy.default.numreplicas" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.replicationpolicy.default.numreplicas") %>"/> 
-	</div>
-  	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+  	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.replicationpolicy.default.preferredNodeList" title="A comma-separated list of preferred nodes to house replicas">Default Preferred Nodes</label>
 		</div>
@@ -348,10 +346,10 @@
 			id="dataone.replicationpolicy.default.preferredNodeList" 
 			name="dataone.replicationpolicy.default.preferredNodeList" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.replicationpolicy.default.preferredNodeList") %>"/> 
-	</div>
-   	<div class="form-row">
 		<img class="question-mark" src="style/images/help.png" 
 			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
+	</div>
+   	<div class="form-row">
 		<div class="textinput-label">
 			<label for="dataone.replicationpolicy.default.blockedNodeList" title="A comma-separated list of blocked nodes never to house replicas">Default Blocked Nodes</label>
 		</div>
@@ -359,45 +357,48 @@
 			id="dataone.replicationpolicy.default.blockedNodeList" 
 			name="dataone.replicationpolicy.default.blockedNodeList" 	             		    	    	           		    	             			
 			value="<%= request.getAttribute("dataone.replicationpolicy.default.blockedNodeList") %>"/> 
+		<img class="question-mark" src="style/images/help.png" 
+			onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"/>
 	</div>
  
-	<input type="hidden" name="configureType" value="dataone"/>
-	<input type="hidden" name="processForm" value="true"/>
-
-	<%
-		// do we know if it is an update or a new registration?
-		boolean isUpdate = false;
-		String isUpdateString = (String) request.getAttribute("dataone.isUpdate");
-		if (isUpdateString != null) {
-			isUpdate = Boolean.parseBoolean(isUpdateString);
-		}
-		// do we know if it is pending approval?
-		boolean isSubmitted = false;
-		String isSubmittedString = (String) request.getAttribute("dataone.mn.registration.submitted");
-		if (isSubmittedString != null) {
-			isSubmitted = Boolean.parseBoolean(isSubmittedString);
-		}
-	%>
-	<%if (isUpdate) { %>
-		<input class=button type="submit" value="Update"/>
-	<%} else if (isSubmitted) { %>
-		<input class=button type="submit" value="Update" disabled="disabled"/>
-	<%} else { %>
-		<input class=button type="submit" value="Register"/>
-	<%} %>
-	<%
-		// if have we already configured this section, then we cannot skip it
-		boolean previouslyConfigured = false;
-		String previouslyConfiguredString = (String) request.getAttribute("configutil.dataoneConfigured");
-		if (previouslyConfiguredString != null) {
-			previouslyConfigured = Boolean.parseBoolean(previouslyConfiguredString);
-		}
-	%>
-	<%if (!previouslyConfigured) { %>
-		<input class=button type="button" value="Skip" onClick="forward('./admin?configureType=dataone&bypass=true&processForm=true')">
-	<%} %>
-	<input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
-
+ 	<div class="buttons-wrapper">
+		<input type="hidden" name="configureType" value="dataone"/>
+		<input type="hidden" name="processForm" value="true"/>
+	
+		<%
+			// do we know if it is an update or a new registration?
+			boolean isUpdate = false;
+			String isUpdateString = (String) request.getAttribute("dataone.isUpdate");
+			if (isUpdateString != null) {
+				isUpdate = Boolean.parseBoolean(isUpdateString);
+			}
+			// do we know if it is pending approval?
+			boolean isSubmitted = false;
+			String isSubmittedString = (String) request.getAttribute("dataone.mn.registration.submitted");
+			if (isSubmittedString != null) {
+				isSubmitted = Boolean.parseBoolean(isSubmittedString);
+			}
+		%>
+		<%if (isUpdate) { %>
+			<input class=button type="submit" value="Update"/>
+		<%} else if (isSubmitted) { %>
+			<input class=button type="submit" value="Update" disabled="disabled"/>
+		<%} else { %>
+			<input class=button type="submit" value="Register"/>
+		<%} %>
+		<%
+			// if have we already configured this section, then we cannot skip it
+			boolean previouslyConfigured = false;
+			String previouslyConfiguredString = (String) request.getAttribute("configutil.dataoneConfigured");
+			if (previouslyConfiguredString != null) {
+				previouslyConfigured = Boolean.parseBoolean(previouslyConfiguredString);
+			}
+		%>
+		<%if (!previouslyConfigured) { %>
+			<input class=button type="button" value="Skip" onClick="forward('./admin?configureType=dataone&bypass=true&processForm=true')">
+		<%} %>
+		<input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
+	</div>
 </form>
 
 <%@ include file="./footer-section.jsp"%>

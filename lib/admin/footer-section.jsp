@@ -26,24 +26,23 @@
  */
 %>
 
-<hr class="config-line">
 
 <%
 if( request.getSession().getAttribute("userId") != null) {  
 %>
   <div class=small-message>
     <p>You are logged in as: <%= request.getSession().getAttribute("userId") %></p>
-    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in as different user</a> |
-    <a href="<%= request.getContextPath() %>/metacat?action=logout">logout</a> |
-    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">view metacat user documentation</a>
+    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in as different user</a>
+    <a href="<%= request.getContextPath() %>/metacat?action=logout">logout</a>
+    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat user documentation</a>
   </div>
 <% 
 } else {
 %>
   <div class=small-message>
     <p>You are not logged in.</p>
-    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in</a> |
-    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">view metacat user documentation</a>
+    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in</a>
+    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat user documentation</a>
   </div>
 <%
 }

@@ -43,7 +43,7 @@
 
 </head>
 <body>
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Organization Configuration</h2>
 Enter organization specific properties here. 
 <br class="ldap-header">
@@ -63,7 +63,6 @@ Enter organization specific properties here.
 			MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
 %>
 			<h3><%= metaDataGroup.getName()  %></h3>
-			<hr class="config-line">
 <%
  			if (metaDataGroup.getComment() != null) {
 %>

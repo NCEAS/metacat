@@ -44,7 +44,7 @@ body {
 </style>
 </head>
 <body>
-<p><img src="metacat-logo.png" width="100px" align="right"/> 
+<p><img src="metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Metacat Configuration Succeeded</h2>
 </p>
 

@@ -54,14 +54,13 @@
 
 <body>
 <%@ include file="./header-section.jsp"%>
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Metacat Configuration</h2>
 
 All of the following sections must be in a configured state for Metacat to run properly:
 <br class="main-header">
 
 <%@ include file="page-message-section.jsp"%>
-<hr class="config-line">
 
 <table class="configuration-table">
 
@@ -281,8 +280,6 @@ All of the following sections must be in a configured state for Metacat to run p
 <%
 	if (metacatConfigured != null && metacatConfigured) {
 %>
-	
-	<hr class="config-line">
 	<br clear="right"/>
 <%
 		if (metacatServletInitialized != null && metacatServletInitialized) {
@@ -299,8 +296,8 @@ All of the following sections must be in a configured state for Metacat to run p
 <%
 		} else {
 %> 	
-			Configuration of Metacat is complete.  You can <a href="<%= request.getContextPath() %>">go to metacat</a> 
-			now.  Note that this may take some time while the system initializes with the new configuration values.
+			<div class="success-text">Configuration of Metacat is complete.  You can <a href="<%= request.getContextPath() %>">go to metacat</a> 
+			now.  Note that this may take some time while the system initializes with the new configuration values.</div>
 <%
 		}
 	}

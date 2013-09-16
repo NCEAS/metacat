@@ -47,7 +47,7 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Database Install/Upgrade Utility</h2>
 
 <%@ include file="page-message-section.jsp"%>
@@ -91,13 +91,17 @@ if (databaseVersion != null && databaseVersion.getVersionString().equals("0.0.0"
         }
 %>
         </ul>
-		<input class="left-button" type="button" value="Continue" onClick="forward('./admin?configureType=database&processForm=true')">
-		<input class="button" type="button" value="Cancel" onClick="forward('./admin?configureType=configure&processForm=false')"> 
+        <div class="buttons-wrapper">
+			<input class="left-button" type="button" value="Continue" onClick="forward('./admin?configureType=database&processForm=true')">
+			<input class="button" type="button" value="Cancel" onClick="forward('./admin?configureType=configure&processForm=false')"> 
+		</div>
 <%
 } else {
 %>
-	<input class="left-button" disabled type="button" value="Continue" onClick="forward('./admin?configureType=database&processForm=true')">
-	<input class="button" type="button" value="Cancel" onClick="forward('./admin?configureType=configure&processForm=false')"> 
+        <div class="buttons-wrapper">
+			<input class="left-button" disabled type="button" value="Continue" onClick="forward('./admin?configureType=database&processForm=true')">
+			<input class="button" type="button" value="Cancel" onClick="forward('./admin?configureType=configure&processForm=false')"> 
+		</div>
 <%
 } 
 %>

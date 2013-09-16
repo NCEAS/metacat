@@ -34,7 +34,7 @@
       Vector<String> processingSuccesses = (Vector<String>)request.getAttribute("processingSuccess");
       for (String processingSuccess : processingSuccesses) { 
 %>
-    	  -- &nbsp;<%= processingSuccess %> <br> 
+    	  <%= processingSuccess %> <br> 
 <%     
        }   
 %>
@@ -49,7 +49,7 @@
       Vector<String> processingMessages = (Vector<String>)request.getAttribute("processingMessage");
       for (String processingMessage : processingMessages) { 
 %>
-    	   -- &nbsp;<%= processingMessage %> <br> 
+    	   <%= processingMessage %> <br> 
 <%     
        } 
 %>
@@ -67,7 +67,7 @@
       Vector<String> formErrors = (Vector<String>)request.getAttribute("formFieldErrors");
       for (String formError : formErrors) { 
 %>
-    	  -- &nbsp;<%= formError %> <br> 
+    	  <%= formError %> <br> 
 <%     
        }     
 %>      
@@ -83,7 +83,7 @@
       Vector<String> processingErrors = (Vector<String>)request.getAttribute("processingErrors");
       for (String processingError : processingErrors) { 
 %>
-    	  -- &nbsp;<%= processingError %> <br> 
+    	  <%= processingError %> <br> 
 <%     
        }     
 %>      

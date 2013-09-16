@@ -46,7 +46,7 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo.png" width="100px" align="right"/> 
+<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
 <h2>Authentication Configuration</h2>
 Enter authentication service properties here. 
 <br class="auth-header">
@@ -72,7 +72,6 @@ Enter authentication service properties here.
 %>
 		<h3><%= metaDataGroup.getName()  %></h3>
 		<%= metaDataGroup.getDescription()  %>
-		<hr class="config-line">
 <%
 			// get all the properties in this group
 			Map<Integer, MetaDataProperty> propertyMap = 
@@ -94,8 +93,6 @@ Enter authentication service properties here.
     			if (fieldType.equals("select")) {
 %> 
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png" 
-	           		       onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
      				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	   	
 					<select class="textinput" name="<%= metaDataProperty.getKey() %>">
 <%
@@ -108,6 +105,8 @@ Enter authentication service properties here.
 					}
 %>
 					</select>
+					<img class="question-mark" src="style/images/help.png" 
+	           		       onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div> 
 <%
 					if (metaDataProperty.getDescription() != null) {
@@ -118,12 +117,12 @@ Enter authentication service properties here.
 				} else if (fieldType.equals("password")) {
 %>
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png"  
-	           		     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
 					<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
 	           		    	value="<%= request.getAttribute(metaDataProperty.getKey()) %>"
 	           		    	type="<%= fieldType %>"/> 
+	           		<img class="question-mark" src="style/images/help.png"  
+	           		     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div> 
 <%
 					if (metaDataProperty.getDescription() != null) {
@@ -134,12 +133,12 @@ Enter authentication service properties here.
 				} else {
 %>
 				<div class="form-row">
-					<img class="question-mark" src="style/images/help.png"  
-					     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>					
 					<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
 	    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
 	           		    	type="<%= fieldType %>	"/>	
+	           		<img class="question-mark" src="style/images/help.png"  
+					     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
 				</div>    		    
 <%
 					if (metaDataProperty.getDescription() != null) {
