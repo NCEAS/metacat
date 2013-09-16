@@ -1013,6 +1013,43 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 
     }
   }
+  
+  /**
+   * Test if node admin is authorized to read a known object
+   */
+  public void testIsAdminAuthorized() {
+    printTestHeader("testIsAdminAuthorized");
+    
+    try {
+      Session session = getTestSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testIsAdminAuthorized." + System.currentTimeMillis());
+      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      Identifier pid = 
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+      
+      // test as public - read
+      boolean isAuthorized = 
+        MNodeService.getInstance(request).isAuthorized(null, pid, Permission.READ);
+      assertEquals(isAuthorized, true);
+      
+      // test as public - change perm
+      isAuthorized = 
+        MNodeService.getInstance(request).isAuthorized(null, pid, Permission.CHANGE_PERMISSION);
+      assertEquals(isAuthorized, false);
+      
+      // test as admin
+      isAuthorized = 
+    	        MNodeService.getInstance(request).isAuthorized(getMNSession(), pid, Permission.CHANGE_PERMISSION);
+    	      assertEquals(isAuthorized, true);
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } 
+  }
 
   
   public void testIsEquivIdentityAuthorized() {
