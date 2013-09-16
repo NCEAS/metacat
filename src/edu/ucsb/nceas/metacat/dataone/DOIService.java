@@ -59,6 +59,7 @@ import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -186,6 +187,23 @@ public class DOIService {
 				
 				// target (URL)
 				String target = node.getBaseURL() + "/v1/object/" + identifier;
+				String uriTemplate = null;
+				String uriTemplateKey = "guid.ezid.uritemplate.data";
+				ObjectFormat objectFormat = null;
+				try {
+					objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
+				} catch (NotFound e1) {
+					logMetacat.warn("Could not check format type for: " + sysMeta.getFormatId());
+				}
+				if (objectFormat != null && objectFormat.getFormatType().equals("METADATA")) {
+					uriTemplateKey = "guid.ezid.uritemplate.metadata";
+				}
+				try {
+					uriTemplate = PropertyService.getProperty(uriTemplateKey);
+					target =  SystemUtil.getSecureContextURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
+				} catch (PropertyNotFoundException e) {
+					logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
+				}
 				
 				// status and export fields for public/protected data
 				String status = InternalProfileValues.UNAVAILABLE.toString();
