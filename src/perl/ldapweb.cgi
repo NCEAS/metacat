@@ -1235,7 +1235,7 @@ sub handleEmailVerification {
         debug("the count is " . $max);
         if($max < 1) {
             $ldap->unbind;   # take down session
-            fullTemplate( ['registerFailed'], {errorMessage => "No record matched the dn " . $dn . " for the verification. You probably already verified the account."});
+            fullTemplate( ['verificationFailed'], {errorMessage => "No record matched the dn " . $dn . " for the activation. You probably already activated the account."});
             #handleLDAPBindFailure($ldapurl);
             exit(0);
         } else {
@@ -1260,15 +1260,15 @@ sub handleEmailVerification {
                             newsuperior  =>  $orgDn);
                 $ldap->unbind;   # take down session
                 if($mesg->code()) {
-                    fullTemplate( ['registerFailed'], {errorMessage => "Cannot move the account from the inactive area to the ative area since " . $mesg->error()});
+                    fullTemplate( ['verificationFailed'], {errorMessage => "Cannot move the account from the inactive area to the ative area since " . $mesg->error()});
                     exit(0);
                 } else {
-                    fullTemplate( ['success'] );
+                    fullTemplate( ['verificationSuccess'] );
                 }
                 #createAccount2($dn, $ldapUsername, $ldapPassword, $additions, $tmp, $allParams);
             } else {
                 $ldap->unbind;   # take down session
-                fullTemplate( ['registerFailed'], {errorMessage => "The hash string " . $hash . " from your link doesn't match our record."});
+                fullTemplate( ['verificationFailed'], {errorMessage => "The hash string " . $hash . " from your link doesn't match our record."});
                 exit(0);
             }
             
