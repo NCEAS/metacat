@@ -317,6 +317,17 @@
 		<helpFile>docs/metacat-properties.html#application-solr-home</helpFile>
 	</config>
 	
+	<config>
+		<key>ui.context</key>
+		<label>UI Context</label>
+		<group>3</group>
+		<index>12</index>
+		<description>
+			The context name for the deployed Metacat UI webapp.
+		</description>
+		<helpFile>docs/metacat-properties.html#ui-context</helpFile>
+	</config>
+	
 	<!-- START Data Manager configuration -->
 	<config>
 		<key>datamanager.server</key>

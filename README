@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.1.1 Release
+Version: 2.2.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -30,6 +30,7 @@ Contributors: Matt Jones (jones@nceas.ucsb.edu)
               Chris Barteau (barteau@nceas.ucsb.edu)
               Shaun Walbridge (walbridge@nceas.ucsb.edu)
               Michael Daigle (daigle@nceas.ucsb.edu) 
+              Lauren Walker (walker@nceas.ucsb.edu) 
 
 Patch contributors:
               Andrea Chadden (chadden@nceas.ucsb.edu)
@@ -52,6 +53,11 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+Release Notes for 2.2.0:
+------------------------
+This is a major release of Metacat that includes a new customizable UI and 
+improved LDAP account management features
 
 Release Notes for 2.1.1:
 ------------------------
