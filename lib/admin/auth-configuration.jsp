@@ -46,119 +46,119 @@
 <body>
 <%@ include file="./header-section.jsp"%>
 
-<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png" width="100px" align="right"/> 
-<h2>Authentication Configuration</h2>
-Enter authentication service properties here. 
-<br class="auth-header">
-
-<%@ include file="./page-message-section.jsp"%>
-
-
-<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
-                                        onsubmit="return validateAndSubmitForm(this);">
-<% 
-	// metadata holds all group and properties metadata
-    PropertiesMetaData metadata = (PropertiesMetaData)request.getAttribute("metadata");
-	if (metadata != null) {
-		// each group describes a section of properties
-		Map<Integer, MetaDataGroup> groupMap = metadata.getGroups();
-		Set<Integer> groupIdSet = groupMap.keySet();
-		for (Integer groupId : groupIdSet) {
-			if (groupId == 0) {
-				continue;
-			}
-			// for this group, display the header (group name)
-			MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
-%>
-		<h3><%= metaDataGroup.getName()  %></h3>
-		<%= metaDataGroup.getDescription()  %>
-<%
-			// get all the properties in this group
-			Map<Integer, MetaDataProperty> propertyMap = 
-				metadata.getPropertiesInGroup(metaDataGroup.getIndex());
-			Set<Integer> propertyIndexes = propertyMap.keySet();
-			// iterate through each property and display appropriately
-			for (Integer propertyIndex : propertyIndexes) {
-				MetaDataProperty metaDataProperty = propertyMap.get(propertyIndex);
-    			String fieldType = metaDataProperty.getFieldType(); 
-    			if (metaDataProperty.getIsRequired()) {
-%>
-				<SCRIPT LANGUAGE="JavaScript" TYPE="TEXT/JAVASCRIPT">
-				<!--
-					addExclusion("<%= metaDataProperty.getKey() %>");
-				//-->
-				</SCRIPT> 		
-<% 		
-    			}
-    			if (fieldType.equals("select")) {
-%> 
-				<div class="form-row">
-     				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	   	
-					<select class="textinput" name="<%= metaDataProperty.getKey() %>">
-<%
-					Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
-					Vector<String> fieldOptionNames = metaDataProperty.getFieldOptionNames();
-					for (int i = 0; i < fieldOptionNames.size(); i++) {
-%>
-						<option value="<%= fieldOptionValues.elementAt(i) %>"> <%= fieldOptionNames.elementAt(i) %>
-<%
+<div class="document">
+		<h2>Authentication Configuration</h2>
+		<p>Enter authentication service properties here.</p>
+		 
+		<br class="auth-header">
+		
+		<%@ include file="./page-message-section.jsp"%>
+		
+		
+		<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
+		                                        onsubmit="return validateAndSubmitForm(this);">
+		<% 
+			// metadata holds all group and properties metadata
+		    PropertiesMetaData metadata = (PropertiesMetaData)request.getAttribute("metadata");
+			if (metadata != null) {
+				// each group describes a section of properties
+				Map<Integer, MetaDataGroup> groupMap = metadata.getGroups();
+				Set<Integer> groupIdSet = groupMap.keySet();
+				for (Integer groupId : groupIdSet) {
+					if (groupId == 0) {
+						continue;
 					}
-%>
-					</select>
-					<img class="question-mark" src="style/images/help.png" 
-	           		       onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
-				</div> 
-<%
-					if (metaDataProperty.getDescription() != null) {
-%>
-						<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
-<%		
-					}
-				} else if (fieldType.equals("password")) {
-%>
-				<div class="form-row">
-					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
-					<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
-	           		    	value="<%= request.getAttribute(metaDataProperty.getKey()) %>"
-	           		    	type="<%= fieldType %>"/> 
-	           		<img class="question-mark" src="style/images/help.png"  
-	           		     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
-				</div> 
-<%
-					if (metaDataProperty.getDescription() != null) {
-%>
-						<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
-<%		
-					}
-				} else {
-%>
-				<div class="form-row">
-					<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>					
-					<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
-	    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
-	           		    	type="<%= fieldType %>	"/>	
-	           		<img class="question-mark" src="style/images/help.png"  
-					     onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"/>
-				</div>    		    
-<%
-					if (metaDataProperty.getDescription() != null) {
-%>
-						<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
-<%		
+					// for this group, display the header (group name)
+					MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
+		%>
+				<h3><%= metaDataGroup.getName()  %></h3>
+				<p><%= metaDataGroup.getDescription()  %></p>
+		<%
+					// get all the properties in this group
+					Map<Integer, MetaDataProperty> propertyMap = 
+						metadata.getPropertiesInGroup(metaDataGroup.getIndex());
+					Set<Integer> propertyIndexes = propertyMap.keySet();
+					// iterate through each property and display appropriately
+					for (Integer propertyIndex : propertyIndexes) {
+						MetaDataProperty metaDataProperty = propertyMap.get(propertyIndex);
+		    			String fieldType = metaDataProperty.getFieldType(); 
+		    			if (metaDataProperty.getIsRequired()) {
+		%>
+						<SCRIPT LANGUAGE="JavaScript" TYPE="TEXT/JAVASCRIPT">
+						<!--
+							addExclusion("<%= metaDataProperty.getKey() %>");
+						//-->
+						</SCRIPT> 		
+		<% 		
+		    			}
+		    			if (fieldType.equals("select")) {
+		%> 
+						<div class="form-row">
+		     				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	   	
+							<select class="textinput" name="<%= metaDataProperty.getKey() %>">
+		<%
+							Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
+							Vector<String> fieldOptionNames = metaDataProperty.getFieldOptionNames();
+							for (int i = 0; i < fieldOptionNames.size(); i++) {
+		%>
+								<option value="<%= fieldOptionValues.elementAt(i) %>"> <%= fieldOptionNames.elementAt(i) %>
+		<%
+							}
+		%>
+							</select>
+							<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
+							
+						</div> 
+		<%
+							if (metaDataProperty.getDescription() != null) {
+		%>
+								<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+		<%		
+							}
+						} else if (fieldType.equals("password")) {
+		%>
+						<div class="form-row">
+							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
+							<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 	             		    	    	           		    	             			
+			           		    	value="<%= request.getAttribute(metaDataProperty.getKey()) %>"
+			           		    	type="<%= fieldType %>"/> 
+							<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
+						</div> 
+		<%
+							if (metaDataProperty.getDescription() != null) {
+		%>
+								<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+		<%		
+							}
+						} else {
+		%>
+						<div class="form-row">
+							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>					
+							<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
+			    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
+			           		    	type="<%= fieldType %>	"/>	
+							<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
+									</div>    		    
+		<%
+							if (metaDataProperty.getDescription() != null) {
+		%>
+								<div class="textinput-description">[<%= metaDataProperty.getDescription() %>]</div>
+		<%		
+							}
+						}
 					}
 				}
 			}
-		}
-	}
-%>
-
-  <input type="hidden" name="configureType" value="auth"/>
-  <input type="hidden" name="processForm" value="true"/>
-  <input class="left-button" type="submit" value="Save"/>
-  <input class="button" type="button" value="Cancel" onClick="forward('./admin')"> 
-
-</form>
-
+		%>
+		
+		  <div class="buttons-wrapper">
+		  	<input type="hidden" name="configureType" value="auth"/>
+		  	<input type="hidden" name="processForm" value="true"/>
+		  	<input class="button" type="submit" value="Save"/>
+		  	<input class="button" type="button" value="Cancel" onClick="forward('./admin')"> 
+		 </div>
+		</form>
+</div>
 <%@ include file="./footer-section.jsp"%>
 
 </body>

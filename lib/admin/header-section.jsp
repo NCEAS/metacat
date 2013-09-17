@@ -29,17 +29,23 @@
 <%
 if( request.getSession().getAttribute("userId") != null) {  
 %>
-  <div class=small-message>
-    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in as different user</a>
-    <a href="<%= request.getContextPath() %>/metacat?action=logout">logout</a>
-    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat user documentation</a>
+  <div class="header">
+  	<ul>
+  		<li><img src="<%= request.getContextPath() %>/metacat-logo-white.png" width="100px" align="right"/></li>
+	    <li><a href="<%= request.getContextPath() %>/admin?configureType=login">log in as different user</a></li>
+	    <li><a href="<%= request.getContextPath() %>/metacat?action=logout">logout</a></li>
+	    <li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user documentation</a></li>
+	</ul>
   </div>
 <% 
 } else {
 %>
-  <div class=small-message>
-    <a href="<%= request.getContextPath() %>/admin?configureType=login">log in</a>
-    <a href="<%= request.getContextPath() %>/docs/user/index.html" target="_blank">metacat user documentation</a>
+  <div class="header">
+  	<ul>
+  		<li><img src="<%= request.getContextPath() %>/metacat-logo-white.png" width="100px" align="right"/></li>
+    	<li><a href="<%= request.getContextPath() %>/admin?configureType=login">log in</a></li>
+    	<li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user documentation</a></li>
+   	</ul>
   </div>
 <%
 }

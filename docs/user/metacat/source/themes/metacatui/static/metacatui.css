@@ -32,7 +32,7 @@ Bold 700
 	width: auto;
 	margin: 20px 10px;
 	max-height: 100%;
-	height: 60px;
+	height: 80px;
 }
 
 .banner > .title{
@@ -44,7 +44,7 @@ Bold 700
 
 /* RELATED/NAVIGATION CSS
 ---------------------------------------------------- */
-#metacatDocs > .related{
+#metacatDocs > .related {
 	width: 100%;
 	position: relative;
 	top: -80px;
@@ -55,26 +55,31 @@ Bold 700
 	display: none;
 }
 
- .related > ul {
+ .related > ul,
+ .header > ul {
 	list-style: none;
 	float: right;
 }
 
-.related > ul > li.right > a{
+.related > ul > li.right > a
+.header > ul > li > a{
 	color: #FFFFFF;
 	font: 400 30px/30px Oswald;	
 	text-decoration: none;
 	text-transform: uppercase;	
 }
 
-.related > ul > li.right{
+.related > ul > li.right,
+.header > ul > li{
 	margin-right: 20px;
 	float:left;
 }
 
 
 .related > ul > li > a:hover,
-.related > ul > li > a:focus{
+.related > ul > li > a:focus
+.header > ul > li > a:hover,
+.header > ul > li > a:focus{
       color: #FFFFFF;
       text-decoration: none;
       opacity: 0.7;
@@ -83,7 +88,7 @@ Bold 700
 .related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
 	position: relative;
 	left: -10px;
-	top: 2px;
+	top: 1px;
 	height: 27px;
 	border-radius: 0 4px 4px 0;
 	-webkit-border-radius: 0 4px 4px 0;
@@ -98,6 +103,12 @@ Bold 700
 	cursor: pointer;
 }
 
+.related > ul > li > a{
+	color: #FFFFFF;
+	font: 400 2em/1em Oswald, Arial;
+	text-transform: uppercase;
+}
+
 .related > ul > li > span#searchbox{
 	display: block;
 	margin-right: 0px;
@@ -110,29 +121,9 @@ Bold 700
 
 
 .related .breadcrumb{
-	float: left;
-	margin:10px 0px 0px 10px;
-	clear: none;
+	display: none;
 }
 
-.related .breadcrumb,
-.related .breadcrumb > a{
-	font: 300 16px/16px Oswald;
-	color: #CCCCCC;
-}
-
-.related .breadcrumb.first{
-	clear: left;
-}
-
-.footerNav > .related li.right{
-
-	
-}
-
-.footerNav > .related li.breadcrumb:last-child{
-	margin-right: 20px;
-}
 
 
 
@@ -193,16 +184,15 @@ Bold 700
 	bottom: 0;
 	width: 100%;
 	margin: 50px auto 0 auto;
-	
 }
 
 .footer > .small-print{
-	width: 550px;
+	width: 600px;
 	display: block;
 	float: none;
 	margin: 0 auto;
-	color: #CCCCCC;
-	font: 300 14px/14px Source Sans Pro;
+	color: #FFFFFF;
+	font: 400 14px/14px Source Sans Pro;
 }
 
 .footer > .footerNav{

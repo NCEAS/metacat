@@ -41,57 +41,55 @@
 
 </head>
 <body>
-<img src="<%= request.getContextPath() %>/metacat-logo-darkgray.png"
-	width="100px" align="right" />
-<h2>Administrator Login</h2>
-
-Account login page.
-<br class="auth-header">
-
-<%@ include file="./page-message-section.jsp"%>
-
-<form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
-	target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform">
-
-<table class="admin-login">
-	<tr>
-		<td>username:</td>
-		<td>
-			<select class="username-input" name="username">
-<%
-			for(String adminName : adminList) {
-%>
-				<option><%= adminName %></option>
-<%
-	}
-%>
-		    
-		  </select>
-		</td>
-	</tr>
-	<tr>
-	    <td></td>
-	    <td class="textinput-description">[Fully qualified administrator username]</td>
-	</tr>
-	<tr>
-		<td>password:</td>
-		<td><input class="login-input" name="password" type="password" maxlength="50" value=""></td>
-	</tr>
-	<tr>
-	    <td></td>
-	    <td class="textinput-description">[Administrator password]</td>
-	</tr>
-</table>
-
-
-	<input class="left-button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
-	<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 
-
-
-<input type="hidden" name="configureType" value="login"/>
-<input type="hidden" name="processForm" value="true"/>
-
-</form>
-
+<%@ include file="./header-section.jsp"%>
+	
+<div class="document">
+	<h2>Administrator Login</h2>
+	
+	<p>Account login page.</p>
+	
+	<%@ include file="./page-message-section.jsp"%>
+	
+	<form name="loginform" method="post" action="<%= request.getContextPath() %>/admin"
+		target="_top" onsubmit="return validateAndSubmitForm(this);" id="loginform">
+	
+	<table class="admin-login">
+		<tr>
+			<td><h4>Username</h4></td>
+			<td>
+				<select class="username-input" name="username">
+	<%
+				for(String adminName : adminList) {
+	%>
+					<option><%= adminName %></option>
+	<%
+		}
+	%>
+			    
+			  </select>
+			</td>
+		</tr>
+		<tr>
+		    <td></td>
+		    <td class="textinput-description">[Fully qualified administrator username]</td>
+		</tr>
+		<tr>
+			<td><h4>Password</h4></td>
+			<td><input class="login-input" name="password" type="password" maxlength="50" value=""></td>
+		</tr>
+		<tr>
+		    <td></td>
+		    <td class="textinput-description">[Administrator password]</td>
+		</tr>
+	</table>
+	
+	<div class="buttons-wrapper">
+		<input class="button" input type="submit" name="loginAction" value="Login" class="button_login"></td>
+		<input class="button" type="button" value="Cancel" onClick="forward('<%= request.getContextPath() %>')"> 
+		<input type="hidden" name="configureType" value="login"/>
+		<input type="hidden" name="processForm" value="true"/>
+	</div>
+	</form>
+</div>
 </body>
 </html>

@@ -43,6 +43,11 @@ Semi-bold 600
 Bold 700
 */
 
+/* Import the Metacat documentation stylesheet */
+@import url(../docs/_static/metacatui.css);
+
+/*Import the Bootstrap stylesheet */
+@import url(bootstrap.min.css);
 
 /* THE BASICS
 -------------------------------------------------- */
@@ -53,21 +58,12 @@ html{
 	height: 100%;
 }
 body{
-	font: 400 1em/1em "Source Sans Pro", Arial, sans-serif;
-	color: #333333;
-	margin: 20px 20px 20px 40px;
-	padding: 0px;
-	width: 90%;
-}
-
-a{
-	color: #166194;
-	text-decoration: none;
-}
-
-a:hover{
-	color: #3399CC;
-	text-decoration: none;
+	background: url(../docs/_static/bg.jpg) no-repeat center center fixed;
+	background-size: cover;
+     -webkit-background-size: cover;
+	 -moz-background-size: cover;
+	 -o-background-size: cover;
+	 font: 400 1em/1.2em Source Sans Pro, Arial, sans-serif;
 }
 
 h1{
@@ -124,6 +120,7 @@ input[type="radio"] {
 	margin-bottom: 4px;
 	width: 15px;
 	height: 15px;
+	float: left;
 }
 
 input[type="checkbox"] {
@@ -141,31 +138,64 @@ label {
 
 
 
-/* NAVIGATION AND HEADER
+/* NAVIGATION AND HEADER AND FOOTER
 ------------------------------------- */
-.small-message{
-	margin-top: 20px;
-	float: right;
+.footer{
+	width: 100%;
+	padding: 20px 20px 0 0;
+	bottom: 0;
 }
 
-.small-message a{
-	font: 400 20px/20px Oswald;
-	color: #166194;
+.footer > p{
+	font: 400 1em/1em Source Sans Pro, Arial;
+	float: right;
+	clear: both;
+	display: block;
+	text-transform: none;
+	margin-right: 20px;
+}
+
+.footer > ul{
+	clear: both;
+	float: right;
+	margin-right: 20px;
+}
+
+.footer li {
+	list-style: none;
+	float: left;
+	margin-left: 20px;
+}
+
+.footer li > a,
+.header li > a{
+	color: #FFFFFF;
+	font: 400 2em/2em Oswald, Arial;
 	text-transform: uppercase;
-	margin: 0 10px;
+}
+
+.footer li > a:hover,
+.header li > a:hover{
+	opacity: 0.6;
 	text-decoration: none;
 }
 
-body > img {
-	float: right;
-	max-height: 70px;
-	width: auto;
+.document{
+	position: relative;
+	margin-top: 20px;
+	padding-bottom: 10px;
+	min-height: 800px;
+}
+
+.header{
+	height: 100px;
+	margin: 10px;
 }
 
 /* FORMS
 ----------------------------------------*/
-.textinput {
-	margin-left: 1em;
+.textinput,
+input[type="password"] {
 	vertical-align: middle;
 	width: 30em;
 	height: 2.2em;
@@ -180,47 +210,53 @@ body > img {
 	text-align: right;
 	float: left;
 	width: 200px;
+	clear: left;
 }
 
 .textinput-description {
 	margin-left: 215px;
-	color: #777777;
+	color: #666666;
 	font-size: 0.8em;
 	margin-top: 5px;
 	clear: both;
 }
 
-.button, input[type="submit"] {
+.button, input[type="submit"], input[type="button"] {
 	width: 100px;
 	margin-right: 5px;
 	margin-top: 20px;
 	font: 400 1.2em/1.5em Oswald, Arial;
 	cursor: pointer;
+	height: 1.7em;
 }
 
 
 .checkradio-label-inline {
  	display: inline;
- 	
 	vertical-align: middle;
 }
 
-.checkradio-description {
-	margin-left: 4.25em;
-	color: gray;
-	font-size: 11;
-}
-
-.question-mark {
+.checkradio-label{
+	margin: 0px 0px 0px 10px;
 	float: left;
-	vertical-align: middle;
-	margin-left: 10px;
-	height: 20px;
+}
+.checkradio-description {
+	font: 400 .8em/.8em Source Sans Pro;
+	color: #666666;
+	clear: both;
+	margin: 8px 0px 10px 38px;
+}
+
+.icon-question-sign {
+	color: #166194;
+	font-size: 1.2em;
 	cursor: pointer;
+	margin-left: 10px;
+	margin-top: 0.5em;
 }
 
 .form-row {
-	margin-top: .5em;
+	height: 2.7em;
 	clear: both;
 }
 
@@ -228,49 +264,8 @@ body > img {
 .form-row select,
 .form-row span{
 	float: left;
+	margin-left: 1em;
 }
-
-
-/* MESSAGES
-----------------------------------------*/
-
-.message-text {
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	color: #003366;
-	margin: 10px 0px;
-	background-color: #B4C6CC;
-	border: 1px solid #003366;
-	padding: 10px;
-}
-
-.success-text {
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	color: #003300;
-	margin: 10px 0px;
-	padding: 10px;
-	background-color: #99CC99;
-	border: 1px solid #003300;
-}
-
-.error-text,
-.formfield-error-text {
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	color: #660000;
-	margin: 10px 0px;
-	padding: 10px;
-	background-color: #CC9999;
-	border: 1px solid #660000;
-}
-
-.formfield-error-header {
-	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
-	color: #A52A2A;
-}
-
-.warning {
-	color: red;
-}
-
 
 /* OTHER
 ----------------------------------------*/
@@ -279,27 +274,26 @@ body > img {
 	clear: both;
 }
 
-.username-input {
-	width: 500px;
+.admin-login > tbody > tr > td{
+	padding: 0px 10px 0px 0px;
 }
 
-.login-input {
-	width: 300px;
+.admin-login > tbody > tr{
+	padding: 0px;
+}
+
+.username-input, login-input {
+	width: auto;
+	margin-bottom: 0px;
 }
 
 .buttons-wrapper{
 	clear:both;
-	margin-top: 20px;
+	margin: auto;
+	max-width: 350px;
 }
 .heading-comment {
 	margin-bottom: 0px;
-}
-
-
-.error-header {
-	font-size: 9pt;
-	font-weight: bold;
-	color: red;
 }
 
 
@@ -339,6 +333,22 @@ body > img {
 	display: none;
 	width: 100%;
 	margin-left: 2em;
+}
+
+frame[name="bottom"] table
+{
+	border-collapse: collapse;
+	border: 1px solid #333;
+	font: 400 1em/1em Source Sans Pro, Arial, sans-serif;
+}
+
+frame[name="bottom"] table > tbody > td
+{
+	padding: 5px;
+}
+
+i{
+	margin-right: 10px;
 }
 
 
