@@ -1,0 +1,68 @@
+
+    <h3>Forgot Your UserName?</h3>
+    
+    <table class="intro" cellpadding="3" cellspacing="0">   
+       <tr><td align="left">
+       <span class="regtext">
+       Please enter the E-mail address you provided when you registered. You will receive an E-mail with UserName (uid). Please check your incoming and junk E-mail folders for this E-mail.</td></tr>
+
+       <!-- <tr><td align="left"><span class="label">Required fields are denoted by an asterisk (*).</td></tr>-->
+       
+    </table>
+    <p>&nbsp;</p>
+    
+    <p class="label text-error">[% errorMessage %]<p>
+    <p>
+    <script type="text/javascript" language="JavaScript1.2">
+    
+    <!--
+      document.loginForm.givenName.focus();
+      document.loginForm.givenName.select();
+
+      if(window.document.captureEvents != null)
+      {
+        window.document.captureEvents(Event.KEYPRESS);
+        window.document.onKeyPress = doSubmit;
+      }
+
+      function doSubmit(event)
+      {
+        var key;
+        if(document.all) // IE
+          key = String.fromCharCode(window.events.keyCode);
+        else
+          key = String.fromCharCode(event.which);
+
+        if(key == "\r" || key == "\n")
+          document.loginForm.submit();
+      }
+    // -->
+    </script>
+
+    <form name="loginForm" action="[% cgiurl %]" method="post">
+      <input type="hidden" name="stage" value="searchnamesbyemail"/>
+      <input type="hidden" name="cfg" value="[% cfg %]"/>
+      <table hspace="20" border="0">
+        
+         
+        
+        <tr>
+          <td align="right" class="label">
+            E-mail:
+          </td>
+          <td align="right">
+            <input name="mail" type="[% fieldType %]" 
+                   value="[% allParams.mail %]"/>
+          </td>
+        </tr>
+        
+        <tr>
+          <td>
+          </td>
+          <td align="left">
+               <input name="action" type="submit" value="Submit"/>
+          </td>
+        </tr>
+      </table>
+    </form>
+
