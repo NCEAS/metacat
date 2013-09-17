@@ -304,6 +304,7 @@ my %stages = (
               'resetpass'         => \&handleResetPassword,
               'initresetpass'     => \&handleInitialResetPassword,
               'emailverification' => \&handleEmailVerification,
+              'lookupname' => \&handleLookupName,
              );
 
 # call the appropriate routine based on the stage
@@ -333,6 +334,82 @@ sub fullTemplate {
     $template->process( $templates->{'footer'}, $templateVars );
 }
 
+
+
+#
+# Handle the user's request to look up account names with a specified email address.
+# This relates to "Forget your user name"
+#
+sub handleLookupName {
+
+    print "Content-type: text/html\n\n";
+   
+    my $allParams = {'mail' => $query->param('mail')};
+    my @requiredParams = ('mail');
+    if (! paramsAreValid(@requiredParams)) {
+        my $errorMessage = "Required information is missing. " .
+            "Please fill in all required fields and resubmit the form.";
+        fullTemplate(['lookupname'], { stage => "lookupname",
+                                     allParams => $allParams,
+                                     errorMessage => $errorMessage });
+        exit();
+    }
+    my $mail = $query->param('mail');
+    
+    #search accounts with the specified emails 
+    $searchBase = $authBase; 
+    my $filter = "(mail=" . $mail . ")";
+    my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
+    my $notHtmlFormat = 1;
+    my $found = findExistingAccounts($ldapurl, $searchBase, $filter, \@attrs, $notHtmlFormat);
+    my $accountInfo;
+    if($found) {
+        $accountInfo = $found;
+    } else {
+        my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName;
+        $accountInfo = "There are no KNB accounts associated with the email " . $mail . ".\n" .
+                       "You may create a new one by the following link: \n" . $link
+    }
+    
+    
+    
+    my $mailhost = $properties->getProperty('email.mailhost');
+    my $sender;
+    $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+    debug("the sender is " . $sender);
+    my $recipient = $query->param('mail');
+    # Send the email message to them
+    my $smtp = Net::SMTP->new($mailhost) or do {  
+                                                  fullTemplate( ['lookupNameFailed'], {errorMessage => "Our mail server currently is experiencing some difficulties. Please contact " . 
+                                                  $skinProperties->getProperty("email.recipient") . "." });  
+                                                  exit(0);
+                                               };
+    $smtp->mail($sender);
+    $smtp->to($recipient);
+
+    my $message = <<"     ENDOFMESSAGE";
+    To: $recipient
+    From: $sender
+    Subject: KNB Account
+        
+    Somebody (hopefully you) looked up the KNB accounts associated with the email address.  
+    Here is the accounts information:
+    
+    $accountInfo
+
+    Thanks,
+        The KNB Development Team
+    
+     ENDOFMESSAGE
+     $message =~ s/^[ \t\r\f]+//gm;
+    
+     $smtp->data($message);
+     $smtp->quit;
+     fullTemplate( ['lookupNameSuccess'] );
+    
+}
+
+
 #
 # create the initial registration form 
 #
@@ -343,6 +420,8 @@ sub handleInitRegister {
   fullTemplate(['register'], {stage => "register"}); 
   exit();
 }
+
+
 
 #
 # process input from the register stage, which occurs when
@@ -827,6 +906,7 @@ sub findExistingAccounts {
     my $base = shift;
     my $filter = shift;
     my $attref = shift;
+    my $notHtmlFormat = shift;
     my $ldap;
     my $mesg;
 
@@ -851,16 +931,33 @@ sub findExistingAccounts {
                 # a fix to ignore 'ou=Account' properties which are not usable accounts within Metacat.
                 # this could be done directly with filters on the LDAP connection, instead.
                 #if ($entry->dn !~ /ou=Account/) {
-                    $foundAccounts .= "<p>\n<b><u>Account:</u> ";
+                    if($notHtmlFormat) {
+                        $foundAccounts .= "\nAccount: ";
+                    } else {
+                        $foundAccounts .= "<p>\n<b><u>Account:</u> ";
+                    }
                     $foundAccounts .= $entry->dn();
-                    $foundAccounts .= "</b><br />\n";
+                    if($notHtmlFormat) {
+                        $foundAccounts .= "\n";
+                    } else {
+                        $foundAccounts .= "</b><br />\n";
+                    }
                     foreach my $attribute ($entry->attributes()) {
                         my $value = $entry->get_value($attribute);
                         $foundAccounts .= "$attribute: ";
                         $foundAccounts .= $value;
-                        $foundAccounts .= "<br />\n";
+                         if($notHtmlFormat) {
+                            $foundAccounts .= "\n";
+                        } else {
+                            $foundAccounts .= "<br />\n";
+                        }
                     }
-                    $foundAccounts .= "</p>\n";
+                    if($notHtmlFormat) {
+                        $foundAccounts .= "\n";
+                    } else {
+                        $foundAccounts .= "</p>\n";
+                    }
+                    
                 #}
 			}
         }
