@@ -1024,7 +1024,7 @@ sub createTemporaryAccount {
     
     
     ####################send the verification email to the user
-    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&' . $ldapConfig->{$org}{'org'} . '&uid=' . $query->param('uid');
+    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&o=' . $org . '&uid=' . $query->param('uid'); #even though we use o=something. The emailVerification will figure the real o= or ou=something.
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
@@ -1211,27 +1211,16 @@ sub handleEmailVerification {
     my $dn = $query->param('dn');
     my $hash = $query->param('hash');
     my $org = $query->param('o');
-    my $ou = $query->param('ou');
     my $uid = $query->param('uid');
     
-    my $orgAttributeName;
     my $ldapUsername;
     my $ldapPassword;
-    my $ldaporg;
-    my $orgAuthBase;
-    if($org) {
-        $ldapUsername = $ldapConfig->{$org}{'user'};
-        $ldapPassword = $ldapConfig->{$org}{'password'};
-        $orgAttributeName = 'o';
-        $ldaporg = $org;
-        $orgAuthBase = $ldapConfig->{$org}{'base'};
-    } else {
-        $ldapUsername = $ldapConfig->{$ou}{'user'};
-        $ldapPassword = $ldapConfig->{$ou}{'password'};
-        $orgAttributeName = 'ou';
-        $ldaporg = $ou;
-        $orgAuthBase = $ldapConfig->{$org}{'base'};
-    }
+    #my $orgAuthBase;
+
+    $ldapUsername = $ldapConfig->{$org}{'user'};
+    $ldapPassword = $ldapConfig->{$org}{'password'};
+    #$orgAuthBase = $ldapConfig->{$org}{'base'};
+    
     debug("LDAP connection to $ldapurl...");    
     
 
@@ -1241,7 +1230,7 @@ sub handleEmailVerification {
    if ($ldap) {
         $ldap->start_tls( verify => 'none');
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
-        my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)');
+        my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)'); #This dn is with the dc=tmp. So it will find out the temporary account registered in registration step.
         my $max = $mesg->count;
         debug("the count is " . $max);
         if($max < 1) {
@@ -1261,13 +1250,14 @@ sub handleEmailVerification {
                         #$$additions[$#$additions + 1] = $entry->get_value( $attr );
                     #}
                 #}
-                #my $tmp=0;
-                #my $allParams="";
+
+                
+                my $orgDn = $ldapConfig->{$org}{'dn'}; #the DN for the organization.
                 $mesg = $ldap->moddn(
                             dn => $dn,
                             deleteoldrdn => 1,
                             newrdn => "uid=" . $uid,
-                            newsuperior  => $orgAttributeName . "=" . $ldaporg . "," . $orgAuthBase);
+                            newsuperior  =>  $orgDn);
                 $ldap->unbind;   # take down session
                 if($mesg->code()) {
                     fullTemplate( ['registerFailed'], {errorMessage => "Cannot move the account from the inactive area to the ative area since " . $mesg->error()});
