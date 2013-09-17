@@ -83,7 +83,7 @@ Bold 700
 .related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
 	position: relative;
 	left: -10px;
-	top: 1px;
+	top: 2px;
 	height: 27px;
 	border-radius: 0 4px 4px 0;
 	-webkit-border-radius: 0 4px 4px 0;
