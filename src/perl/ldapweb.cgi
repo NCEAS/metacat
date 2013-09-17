@@ -429,7 +429,7 @@ sub handleRegister {
                 ")";
     }
 
-    my @attrs = [ 'uid', 'o', 'cn', 'mail', 'telephoneNumber', 'title' ];
+    my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
     my $found = findExistingAccounts($ldapurl, $searchBase, $filter, \@attrs);
 
     # If entries match, send back a request to confirm new-user creation
@@ -847,7 +847,7 @@ sub findExistingAccounts {
 			foreach $entry ($mesg->all_entries) { 
                 # a fix to ignore 'ou=Account' properties which are not usable accounts within Metacat.
                 # this could be done directly with filters on the LDAP connection, instead.
-                if ($entry->dn !~ /ou=Account/) {
+                #if ($entry->dn !~ /ou=Account/) {
                     $foundAccounts .= "<p>\n<b><u>Account:</u> ";
                     $foundAccounts .= $entry->dn();
                     $foundAccounts .= "</b><br />\n";
@@ -858,7 +858,7 @@ sub findExistingAccounts {
                         $foundAccounts .= "<br />\n";
                     }
                     $foundAccounts .= "</p>\n";
-                }
+                #}
 			}
         }
     	$ldap->unbind;   # take down session
