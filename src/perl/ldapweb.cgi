@@ -1139,9 +1139,9 @@ sub createTemporaryAccount {
     my $message = <<"     ENDOFMESSAGE";
     To: $recipient
     From: $sender
-    Subject: Activate the New Account
+    Subject: New Account Activation
         
-    Somebody (hopefully you) registered a account on $metacatUrl .  
+    Somebody (hopefully you) registered an account on $metacatUrl .  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
