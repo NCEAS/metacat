@@ -304,7 +304,8 @@ my %stages = (
               'resetpass'         => \&handleResetPassword,
               'initresetpass'     => \&handleInitialResetPassword,
               'emailverification' => \&handleEmailVerification,
-              'lookupname' => \&handleLookupName,
+              'lookupname'        => \&handleLookupName,
+              'searchnamesbyemail'=> \&handleSearchNameByEmail,
              );
 
 # call the appropriate routine based on the stage
@@ -335,12 +336,22 @@ sub fullTemplate {
 }
 
 
+#
+# Initialize a form for a user to request the account name associated with an email address
+#
+sub handleLookupName {
+    
+    print "Content-type: text/html\n\n";
+    # process the template files:
+    fullTemplate(['lookupName']); 
+    exit();
+}
 
 #
 # Handle the user's request to look up account names with a specified email address.
 # This relates to "Forget your user name"
 #
-sub handleLookupName {
+sub handleSearchNameByEmail{
 
     print "Content-type: text/html\n\n";
    
@@ -349,8 +360,7 @@ sub handleLookupName {
     if (! paramsAreValid(@requiredParams)) {
         my $errorMessage = "Required information is missing. " .
             "Please fill in all required fields and resubmit the form.";
-        fullTemplate(['lookupname'], { stage => "lookupname",
-                                     allParams => $allParams,
+        fullTemplate(['lookupName'], { allParams => $allParams,
                                      errorMessage => $errorMessage });
         exit();
     }
@@ -380,8 +390,9 @@ sub handleLookupName {
     my $recipient = $query->param('mail');
     # Send the email message to them
     my $smtp = Net::SMTP->new($mailhost) or do {  
-                                                  fullTemplate( ['lookupNameFailed'], {errorMessage => "Our mail server currently is experiencing some difficulties. Please contact " . 
-                                                  $skinProperties->getProperty("email.recipient") . "." });  
+                                                  fullTemplate( ['lookupName'], {allParams => $allParams, 
+                                                                errorMessage => "Our mail server currently is experiencing some difficulties. Please contact " . 
+                                                                $skinProperties->getProperty("email.recipient") . "." });  
                                                   exit(0);
                                                };
     $smtp->mail($sender);
