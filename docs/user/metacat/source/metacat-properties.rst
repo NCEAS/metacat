@@ -490,6 +490,8 @@ Additional configuration properties are described below, though there are many m
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 | Property              | Description                                                      | Example                                           |
 +=======================+==================================================================+===================================================+
+| .. _plugin.handlers:  |                                                                  |                                                   |
+|                       |                                                                  |                                                   |
 | plugin.handlers       | Implementations of the plugin interface:                         | org.example.CustomActionHandler                   |
 |                       | edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin can be listed |                                                   |
 |                       |                                                                  |                                                   |
