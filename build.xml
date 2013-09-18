@@ -64,6 +64,7 @@
 	<macrodef name = "git-clone-pull">
 	    <attribute name = "repository" />
 	    <attribute name = "dest" />
+	    <attribute name = "refname" />
 	    <sequential>
 	        <git command = "clone">
 	            <args>
@@ -71,13 +72,23 @@
 	                <arg value = "@{dest}" />
 	            </args>
 	        </git>
-	        <git command = "pull" dir = "@{dest}" />
+	        <git command = "pull" dir = "@{dest}" >
+	        	<args>
+	                <arg value = "@{repository}" />
+	                <arg value = "@{refname}" />
+	            </args>
+	        </git>
+	        <git command = "checkout" dir = "@{dest}">
+	        	<args>
+	                <arg value = "@{refname}" />
+	            </args>
+	        </git>
 	    </sequential>
 	</macrodef>
 	
 	<!-- get metacatUI project -->
 	<target name="getMetacatUI" depends="init">
-		<git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}" />
+		<git-clone-pull repository="${metacatui.git.repository.url}" dest="${metacatui.build.dir}" refname="${metacatui.git.repository.refname}" />
 	</target>
 	
 	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" unless="build-metacat-ui-called">
@@ -404,6 +415,8 @@
 		<!-- the git repo -->
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
+		<property name="metacatui.git.repository.refname"
+							value="master" />
 		<property name="metacatui.build.dir"
 					value="metacatui_build" />
 		<property name="metacatui.resources.dir"
