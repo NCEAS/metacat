@@ -31,7 +31,7 @@ if( request.getSession().getAttribute("userId") != null) {
 %>
   <div class="header">
   	<ul>
-  		<li><img src="<%= request.getContextPath() %>/metacat-logo-white.png" width="100px" align="right"/></li>
+  		<li><img src="<%= request.getContextPath() %>/docs/_static/metacat-logo-white.png" width="100px" align="right"/></li>
 	    <li><a href="<%= request.getContextPath() %>/admin?configureType=login">log in as different user</a></li>
 	    <li><a href="<%= request.getContextPath() %>/metacat?action=logout">logout</a></li>
 	    <li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user documentation</a></li>
@@ -42,7 +42,7 @@ if( request.getSession().getAttribute("userId") != null) {
 %>
   <div class="header">
   	<ul>
-  		<li><img src="<%= request.getContextPath() %>/metacat-logo-white.png" width="100px" align="right"/></li>
+  		<li><img src="<%= request.getContextPath() %>/docs/_static/metacat-logo-white.png" width="100px" align="right"/></li>
     	<li><a href="<%= request.getContextPath() %>/admin?configureType=login">log in</a></li>
     	<li><a href="<%= request.getContextPath() %>/docs" target="_blank">metacat user documentation</a></li>
    	</ul>

@@ -27,27 +27,8 @@
   * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
   */
 
-/* Import font families */
-@import url(http://fonts.googleapis.com/css?family=Oswald:400,300,700);
-/* Oswald weights:
-Light 300
-Normal 400
-Bold 700
-*/
-@import url(http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,400italic);
-/* Source Sans Pro weights:
-Light 300
-Normal 400
-Normal italic 400
-Semi-bold 600
-Bold 700
-*/
-
 /* Import the Metacat documentation stylesheet */
 @import url(../docs/_static/metacatui.css);
-
-/*Import the Bootstrap stylesheet */
-@import url(bootstrap.min.css);
 
 /* THE BASICS
 -------------------------------------------------- */
