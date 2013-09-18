@@ -20,31 +20,31 @@ each is included below.
 
 Metacat Server Properties
 
-+--------------------+------------------------------------------------------------------------------------------+------------------------+
-| Property           | Description                                                                              | Example                |
-+====================+==========================================================================================+========================+
-| .. _server-name:   |                                                                                          |                        |
-|                    |                                                                                          |                        |
-| server.name        | The network host name used to access Metacat. Note that this is not necessarily          | knb.ecoinformatics.org |
-|                    | the physical name of the server running Metacat. The host name should not                |                        |
-|                    | include the protocol prefix (http://).                                                   |                        |
-|                    |                                                                                          |                        |
-|                    | Default Value: localhost                                                                 |                        |
-+--------------------+------------------------------------------------------------------------------------------+------------------------+
-| .. _server-httpPort:   |                                                                                          |                        |
-|                    |                                                                                          |                        |
-| server.httpPort    | The network port used to access Metacat for non-secure (standard) connections.           | 80                     |
-|                    | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
-|                    |                                                                                          |                        |
-|                    | Default Value: 80                                                                        |                        |
-+--------------------+------------------------------------------------------------------------------------------+------------------------+
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| Property                  | Description                                                                              | Example                |
++===========================+==========================================================================================+========================+
+| .. _server-name:          |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.name               | The network host name used to access Metacat. Note that this is not necessarily          | knb.ecoinformatics.org |
+|                           | the physical name of the server running Metacat. The host name should not                |                        |
+|                           | include the protocol prefix (http://).                                                   |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: localhost                                                                 |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-httpPort:      |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.httpPort           | The network port used to access Metacat for non-secure (standard) connections.           | 80                     |
+|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: 80                                                                        |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | .. _server-httpSSLPort:   |                                                                                          |                        |
-|                    |                                                                                          |                        |
-| server.httpSSLPort | The network port used to access Metacat for secure connections. This is usually          | 443                    |
-|                    | 443 if Apache Web server is running, and 8443 if Tomcat is running alone.                |                        |
-|                    |                                                                                          |                        |
-|                    | Default Value: 443                                                                       |                        |
-+--------------------+------------------------------------------------------------------------------------------+------------------------+
+|                           |                                                                                          |                        |
+| server.httpSSLPort        | The network port used to access Metacat for secure connections. This is usually          | 443                    |
+|                           | 443 if Apache Web server is running, and 8443 if Tomcat is running alone.                |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: 443                                                                       |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
 
 Application Properties
 ----------------------
@@ -53,85 +53,104 @@ Metacat's application properties are described below. Properties that can only
 be edited manually in the ``metacat.properties`` file are marked. All 
 others are managed with the properties configuration utility.
 
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| Property                       | Description                                                                 | Example                       |
-+================================+=============================================================================+===============================+
-| application.metacatVersion*    | The Metacat version number. It is set by the build engineer                 | 1.9.0                         |
-|                                | at build time. Usually, the value should never be changed.                  |                               |
-|                                |                                                                             |                               |
-|                                | Default Value: X.X.X (where X.X.X is the current version of Metacat)        |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| application.metacatReleaseInfo*| Release information for display purposes. Typically the property            | Release Candidate 1           |
-|                                | is set during the release candidate cycle to let users know which           |                               |
-|                                | candidate they are downloading.                                             |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.deployDir:     |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.deployDir          | The directory where Web applications are deployed. Usually, the value       | /usr/local/tomcat/webapps     |
-|                                | is a directory named "webapps" in the Tomcat installation directory.        |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.context:       |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.context            | The name of the Metacat application directory in                            | knb                           |
-|                                | the deployment directory. This corresponds to the first part of the         |                               |
-|                                | WAR file name (the part before .war). Most commonly, this                   |                               |
-|                                | is "knb", but it can be changed to other things.                            |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.default-style: |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.default-style      | A custom Metacat Web skin usually associated with                           | default                       |
-|                                | an organizational theme. If your organization has no                        |                               |
-|                                | custom skin, leave the value as "default".                                  |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.knbSiteURL:    |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.knbSiteURL         | The main KNB website.                                                       | http://knb.ecoinformatics.org |
-|                                |                                                                             |                               |
-|                                | Default Value: http://knb.ecoinformatics.org                                |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.datafilepath:  |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.datafilepath       | The directory in which to store data files. The directory should            | /var/metacat/data             |
-|                                | be outside the Metacat installation directories so data files will not      |                               |
-|                                | be lost when Metacat is upgraded. The data file directory must be           |                               |
-|                                | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
-|                                |                                                                             |                               |
-|                                | Default Value: /var/metacat/data                                            |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.inlinedatafilepath:             |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.inlinedatafilepath | The directory where inline data files will be stored. Inline                | /var/metacat/inline-data      |
-|                                | data files are created from data that is embedded in EML                    |                               |
-|                                | metadata. The directory should be outside the Metacat installation          |                               |
-|                                | directories so data files will not be lost when Metacat is upgraded.        |                               |
-|                                | For clarity of data, this should probably not be the same as                |                               |
-|                                | ``application.datafilepath``. The data file directory must be               |                               |
-|                                | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
-|                                |                                                                             |                               |
-|                                | Default Value: /var/metacat/inline-data                                     |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.documentfilepath:             |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.documentfilepath   | The directory where metadata files will be stored.                          | /var/metacat/documents        |
-|                                | The directory should be outside the Metacat installation directories        |                               |
-|                                | so document files will not be lost when Metacat is upgraded. For            |                               |
-|                                | clarity of organization, this should probably not be the same as            |                               |
-|                                | ``application.datafilepath`` or ``application.inlinedatafilepath``.         |                               |
-|                                | The data file directory must be writable by the user that                   |                               |
-|                                | starts Tomcat (and thus Metacat).                                           |                               |
-|                                |                                                                             |                               |
-|                                | Default Value: /var/metacat/documents                                       |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _application.tempDir:       |                                                                             |                               |
-|                                |                                                                             |                               |
-| application.tempDir            | The directory where the Metacat data registry stores temporary              | /var/metacat/temporary        |
-|                                | files. The directory should not be the same as ``application.datafilepath`` |                               |
-|                                | or ``application.inlinedatafilepath`` (or any other persistent file path)   |                               |
-|                                | because all files in this may be purged programmatically. The temporary     |                               |
-|                                | file directory must be writable by the user that starts Apache.             |                               |
-|                                |                                                                             |                               |
-|                                | Default Value: /var/metacat/temporary                                       |                               |
-+--------------------------------+-----------------------------------------------------------------------------+-------------------------------+
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| Property                             | Description                                                                 | Example                       |
++======================================+=============================================================================+===============================+
+| application.metacatVersion*          | The Metacat version number. It is set by the build engineer                 | 1.9.0                         |
+|                                      | at build time. Usually, the value should never be changed.                  |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: X.X.X (where X.X.X is the current version of Metacat)        |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| application.metacatReleaseInfo*      | Release information for display purposes. Typically the property            | Release Candidate 1           |
+|                                      | is set during the release candidate cycle to let users know which           |                               |
+|                                      | candidate they are downloading.                                             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.deployDir:           |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.deployDir                | The directory where Web applications are deployed. Usually, the value       | /usr/local/tomcat/webapps     |
+|                                      | is a directory named "webapps" in the Tomcat installation directory.        |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.context:             |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.context                  | The name of the Metacat application directory in                            | knb                           |
+|                                      | the deployment directory. This corresponds to the first part of the         |                               |
+|                                      | WAR file name (the part before .war). Most commonly, this                   |                               |
+|                                      | is "knb", but it can be changed to other things.                            |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _index.context:                   |                                                                             |                               |
+|                                      |                                                                             |                               |
+| index.context                        | The name of the Metacat index webapp in                                     | metacat-index                 |
+|                                      | the deployment directory. Most commonly, this                               |                               |
+|                                      | is "metacat-index", but it can be changed if needed.                        |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _ui.context:                      |                                                                             |                               |
+|                                      |                                                                             |                               |
+| ui.context                           | The name of the Metacat UI directory in                                     | metacatui                     |
+|                                      | the deployment directory. Often the UI is deployed                          |                               |
+|                                      | as the ROOT webapp, in which case the property should be blank ("").        |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.default-style:       |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.default-style            | A custom Metacat Web skin usually associated with                           | default                       |
+|                                      | an organizational theme. If your organization has no                        |                               |
+|                                      | custom skin, leave the value as "default".                                  |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.knbSiteURL:          |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.knbSiteURL               | The main KNB website.                                                       | http://knb.ecoinformatics.org |
+|                                      |                                                                             |                               |
+|                                      | Default Value: http://knb.ecoinformatics.org                                |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.datafilepath:        |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.datafilepath             | The directory in which to store data files. The directory should            | /var/metacat/data             |
+|                                      | be outside the Metacat installation directories so data files will not      |                               |
+|                                      | be lost when Metacat is upgraded. The data file directory must be           |                               |
+|                                      | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/data                                            |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.inlinedatafilepath:  |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.inlinedatafilepath       | The directory where inline data files will be stored. Inline                | /var/metacat/inline-data      |
+|                                      | data files are created from data that is embedded in EML                    |                               |
+|                                      | metadata. The directory should be outside the Metacat installation          |                               |
+|                                      | directories so data files will not be lost when Metacat is upgraded.        |                               |
+|                                      | For clarity of data, this should probably not be the same as                |                               |
+|                                      | ``application.datafilepath``. The data file directory must be               |                               |
+|                                      | writable by the user that starts Tomcat (and thus Metacat).                 |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/inline-data                                     |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.documentfilepath:    |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.documentfilepath         | The directory where metadata files will be stored.                          | /var/metacat/documents        |
+|                                      | The directory should be outside the Metacat installation directories        |                               |
+|                                      | so document files will not be lost when Metacat is upgraded. For            |                               |
+|                                      | clarity of organization, this should probably not be the same as            |                               |
+|                                      | ``application.datafilepath`` or ``application.inlinedatafilepath``.         |                               |
+|                                      | The data file directory must be writable by the user that                   |                               |
+|                                      | starts Tomcat (and thus Metacat).                                           |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/documents                                       |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _application.tempDir:             |                                                                             |                               |
+|                                      |                                                                             |                               |
+| application.tempDir                  | The directory where the Metacat data registry stores temporary              | /var/metacat/temporary        |
+|                                      | files. The directory should not be the same as ``application.datafilepath`` |                               |
+|                                      | or ``application.inlinedatafilepath`` (or any other persistent file path)   |                               |
+|                                      | because all files in this may be purged programmatically. The temporary     |                               |
+|                                      | file directory must be writable by the user that starts Apache.             |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/temporary                                       |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _solr.homeDir:                    |                                                                             |                               |
+|                                      |                                                                             |                               |
+| solr.homeDir                         | The directory where the Metacat index component stores the SOLR index.      | /var/metacat/solr-home        |
+|                                      | The directory must be writable by the user that starts Tomcat.              |                               |
+|                                      |                                                                             |                               |
+|                                      | Default Value: /var/metacat/solr-home                                       |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 
 Database Properties
 -------------------
@@ -177,7 +196,7 @@ Metacat Database Properties
 | database.adapter                           | The adapter class that allows Metacat to access your database type.                                      | edu.ucsb.nceas.dbadapter.PostgresqlAdapter              |
 |                                            | There is one adapter associated with each type of database.                                              |                                                         |
 +--------------------------------------------+----------------------------------------------------------------------------------------------------------+---------------------------------------------------------+
-| .. _database-scriptsuf                     |                                                                                                          |                                                         |
+| .. _database-scriptsuf:                    |                                                                                                          |                                                         |
 |                                            |                                                                                                          |                                                         |
 | database.scriptsuffix.<database_type>      | The script suffix tells the system which database scripts to run                                         | postgres.sql                                            |
 |                                            | (postgres or oracle) when installing or updating database schema.                                        |                                                         |
@@ -434,4 +453,46 @@ XML/EML Properties
 |                       | Default Value: -//ecoinformatics.org//eml-access-2.0.0beta6//EN  |                                                   |
 +-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 
+
+Data Manager Properties
+------------------------
+The EML Data Manager is also included for extended data-query operations. Note that this feature is still experimental. 
+
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| Property                          | Description                                                                   | Example                                       |
++===================================+===============================================================================+===============================================+
+| .. _datamanager.server:           |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| datamanager.server                | The server for the Datamanager library to use for temporary db storage        | localhost                                     |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _datamanager.database:         |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| datamanager.database              | The database name for the Datamanager                                         | datamananger                                  |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _datamanager.user:             |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| datamanager.user                  | The username for the Datamanager DB                                           | datamananger                                  |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _datamanager.password:         |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| datamanager.password              | The password for the Datamanager user                                         | datamananger                                  |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+
+
+Additional Properties
+----------------------
+Additional configuration properties are described below, though there are many more that can be manually edited in the properties file directly. 
+
++-----------------------+------------------------------------------------------------------+---------------------------------------------------+
+| Property              | Description                                                      | Example                                           |
++=======================+==================================================================+===================================================+
+| plugin.handlers       | Implementations of the plugin interface:                         | org.example.CustomActionHandler                   |
+|                       | edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin can be listed |                                                   |
+|                       |                                                                  |                                                   |
+|                       | Default Value: blank                                             |                                                   |
++-----------------------+------------------------------------------------------------------+---------------------------------------------------+
 

@@ -303,7 +303,7 @@
 		<description>
 			The context name for the deployed Metacat index webapp.
 		</description>
-		<helpFile>docs/metacat-properties.html#application-index-context</helpFile>
+		<helpFile>docs/metacat-properties.html#index-context</helpFile>
 	</config>
 	
 	<config>
@@ -314,7 +314,7 @@
 		<description>
 			The directory where replication log should be located.
 		</description>
-		<helpFile>docs/metacat-properties.html#application-solr-home</helpFile>
+		<helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
 	</config>
 	
 	<config>
