@@ -37,10 +37,7 @@
 <head>
 
 <title>Organization Configuration</title>
-<link rel="stylesheet" type="text/css" 
-        href="<%= request.getContextPath() %>/admin/admin.css"></link>
-<script language="JavaScript" type="text/JavaScript" src="<%= request.getContextPath() %>/admin/admin.js"></script>
-
+<%@ include file="./head-section.jsp"%>
 </head>
 <body>
 <div class="document">

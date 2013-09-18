@@ -1,6 +1,4 @@
 <%@ page language="java" %>
-<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.PropertiesMetaData" %>
-<%@ page import="edu.ucsb.nceas.utilities.MetaDataGroup,edu.ucsb.nceas.utilities.MetaDataProperty" %>
 <% 
 /**
  *  '$RCSfile$'
@@ -8,9 +6,9 @@
  *               National Center for Ecological Analysis and Synthesis
  *  For Details: http://www.nceas.ucsb.edu/
  *
- *   '$Author$'
- *     '$Date$'
- * '$Revision$'
+ *   '$Author: daigle $'
+ *     '$Date: 2008-07-06 21:25:34 -0700 (Sun, 06 Jul 2008) $'
+ * '$Revision: 4080 $'
  * 
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,19 +26,10 @@
  */
 %>
 
-<html>
-<head>
-
-<title>Replication Configuration</title>
-<%@ include file="./head-section.jsp"%>
-</head>
-
-<FRAMESET ROWS="*,150"  FRAMEBORDER=0 BORDER=0>
-  
-  <FRAME SRC="<%= request.getContextPath() %>/admin/replication-configuration-include.jsp" BORDER=0 NAME="top">
-
-  <FRAME SRC="<%= request.getContextPath() %>/admin?configureType=replication&action=servercontrol&subaction=list" name="bottom">
-
-</FRAMESET>
-
-</html>
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css" type="text/css" />
+<link rel="stylesheet" href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" type="text/css" />
+<script language="JavaScript" type="text/JavaScript"
+	src="<%= request.getContextPath() %>/admin/admin.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="<%= request.getContextPath() %>/admin/admin.css"></link>
+	

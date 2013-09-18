@@ -15,11 +15,6 @@ Semi-bold 600
 Bold 700
 */
 
-/*Importing external stylesheets */
-@import url('//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.2/css/bootstrap-combined.no-icons.min.css');
-@import url('//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css');
-
-
 /* BANNER/HEADER CSS
 ---------------------------------------------------- */
 .banner{
@@ -88,7 +83,7 @@ Bold 700
 .related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
 	position: relative;
 	left: -30px;
-	top: 2px;
+	top: 0px;
 	height: 27px;
 	background: none;
 	border-radius: 0 4px 4px 0;
@@ -163,7 +158,7 @@ Bold 700
 	margin: 20px 0px 30px 20px;
 	background: rgba(255,255,255, 0.5);
 	border-radius: 20px;
-	padding: 20px;
+	padding: 10px;
 	max-width:60%;
 }
 
@@ -310,6 +305,10 @@ Bold 700
         
     ul, ol{
     	margin: 0px;
+    }
+    
+    li{
+    	margin-left: 10px;
     }
     
     select{

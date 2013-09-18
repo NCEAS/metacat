@@ -117,6 +117,10 @@ label {
 	margin-top: 10px;
 }
 
+table{
+	background: none;
+}
+
 
 
 /* NAVIGATION AND HEADER AND FOOTER
@@ -200,7 +204,7 @@ input[type="password"] {
 	font-size: 0.8em;
 	margin-top: 5px;
 	clear: both;
-	height: 2em;
+	min-height: 2em;
 }
 
 .button, input[type="submit"], input[type="button"] {
@@ -304,6 +308,7 @@ input[type="password"] {
 .configuration-table{
 	border-collapse: separate;
 	border-spacing: 6px;
+	background: none;
 }
 
 .configure-link {

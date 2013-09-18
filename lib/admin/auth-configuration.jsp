@@ -31,9 +31,7 @@
 <head>
 
 <title>Authentication Configuration</title>
-<link rel="stylesheet" type="text/css" 
-        href="<%= request.getContextPath() %>/admin/admin.css"></link>
-<script language="JavaScript" type="text/JavaScript" src="<%= request.getContextPath() %>/admin/admin.js"></script>
+<%@ include file="./head-section.jsp"%>
 
 <SCRIPT LANGUAGE="JavaScript" TYPE="TEXT/JAVASCRIPT">
 <!--
