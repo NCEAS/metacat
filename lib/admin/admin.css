@@ -219,6 +219,7 @@ input[type="password"] {
 	font-size: 0.8em;
 	margin-top: 5px;
 	clear: both;
+	height: 2em;
 }
 
 .button, input[type="submit"], input[type="button"] {
@@ -256,7 +257,7 @@ input[type="password"] {
 }
 
 .form-row {
-	height: 2.7em;
+	height: 2em;
 	clear: both;
 }
 
@@ -306,14 +307,8 @@ input[type="password"] {
 .unconfigured-tag {
 	color: red;
 	width: 125px;
-	height: 30px;
 }
 
-.property-title {
-	font-weight: bolder;
-	font-size: 12pt;
-	width: 300px;
-}
 
 .skin-name {
 	font-size: 14pt;
@@ -325,8 +320,42 @@ input[type="password"] {
 	display: inline;
 }
 
+.configuration-table{
+	border-collapse: separate;
+	border-spacing: 6px;
+}
+
 .configure-link {
-	font-size: 11pt;
+	background: rgba(255, 255, 255, 0.7);
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	color: #333333;
+}
+
+.configure-link.inactive{
+	background: none;
+}
+
+.configure-link.inactive:hover{
+	background: none;
+	cursor: default;
+	color: #333333;
+}
+
+.configure-link > i,
+.configure-link > a{
+	color: inherit;
+	vertical-align: middle;
+}
+
+.configure-link:hover,
+.configure-link:hover > a,
+.configure-link:hover > i{
+	background: rgba(255, 255, 255, 1);
+	color: #166194;
+	text-decoration: none;
+	cursor: pointer;
 }
 
 .hiding-section {

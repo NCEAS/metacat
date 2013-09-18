@@ -86,19 +86,18 @@ Bold 700
 
 .related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
 	position: relative;
-	left: -10px;
-	top: 1px;
+	left: -30px;
+	top: 2px;
 	height: 27px;
+	background: none;
 	border-radius: 0 4px 4px 0;
 	-webkit-border-radius: 0 4px 4px 0;
 	-moz-border-radius: 0 4px 4px 0;
-	border-left: 1px solid #CCCCCC;
 	font: 300 16px/16px "Oswald", sans-serif;
 }
 
 .related > ul input[type="submit"]:hover{	/*"Go" button on navigation search bar */
-	background-color: #166194;
-	color: #FFFFFF;
+	color: #166194;
 	cursor: pointer;
 }
 
@@ -106,6 +105,7 @@ Bold 700
 	color: #FFFFFF;
 	font: 400 2em/1em Oswald, Arial;
 	text-transform: uppercase;
+	line-height: 25px;
 }
 
 .related > ul > li > span#searchbox{

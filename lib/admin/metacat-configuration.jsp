@@ -70,7 +70,7 @@
 	        <tr>
 	        <td class="configured-tag">[configured] </td>
 			<td class="property-title"> Metacat Global Properties </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=properties">Reconfigure Now</a> </td>
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=properties">Reconfigure Now</a> </td>
 	        </tr>
 	<%
 		} else {
@@ -78,7 +78,7 @@
 	        <tr>
 	 		<td class="unconfigured-tag">[unconfigured] </td>  
 	 		<td class="property-title"> Metacat Global Properties </td>
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=properties">Configure Now</a> </td>			
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=properties">Configure Now</a> </td>			
 	    	</tr>
 	<%
 		}
@@ -88,7 +88,7 @@
 	        <tr>
 	        <td class="configured-tag">[configured] </td>
 			<td class="property-title"> Authentication Configuration </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=auth">Reconfigure Now</a> </td>
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=auth">Reconfigure Now</a> </td>
 	        </tr>
 	<%
 		} else {
@@ -96,7 +96,7 @@
 	        <tr>
 	 		<td class=unconfigured-tag>[unconfigured] </td>  
 	 		<td class=property-title> Authentication Configuration </td>
-			<td class=configure-link> <a href="<%= request.getContextPath() %>/admin?configureType=auth">Configure Now</a> </td>			
+			<td class=configure-link> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=auth">Configure Now</a> </td>			
 	    	</tr>
 	<%
 		}
@@ -106,7 +106,7 @@
 	        <tr>
 	        <td class="configured-tag">[configured] </td>
 			<td class="property-title"> Skins Specific Properties </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=skins">Reconfigure Now</a> </td>
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=skins">Reconfigure Now</a> </td>
 	        </tr>
 	<%
 		} else {
@@ -114,7 +114,7 @@
 	        <tr>
 	 		<td class="unconfigured-tag">[unconfigured] </td>  
 	 		<td class="property-title"> Skins Specific Properties </td>
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=skins">Configure Now</a> </td>			
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=skins">Configure Now</a> </td>			
 	    	</tr>
 	<%
 		}  
@@ -126,7 +126,7 @@
 	    	<tr>
 	    	<td class="configured-tag">[configured] </td>
 	    	<td class="property-title"> Database Installation/Upgrade </td> 
-			<td class="configure-link"> Version: <%=databaseVersion.getVersionString()%> </td>    		
+			<td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%> </td>    		
 	    	</tr>
 	<%
 		} else {
@@ -138,12 +138,12 @@
 		if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=database">Configure Now</a> </td>			
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=database">Configure Now</a> </td>			
 	        	
 	<%
 				        		} else {
 				        	%> 
-			<td class="configure-link"> Configure Global Properties First </td>
+			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 		}
 	%>     	
@@ -156,7 +156,7 @@
 	    	<tr>
 	    	<td class="configured-tag">[configured] </td>
 	    	<td class="property-title"> Geoserver Configuration </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Reconfigure Now</a> </td>   		
+			<td class="configure-link"> <i class="icon-cogs"></i> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Reconfigure Now</a> </td>   		
 	    	</tr>
 	<%
 		} else if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.BYPASSED)){
@@ -168,11 +168,11 @@
 			if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Reconfigure Now</a> </td>			       	
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Reconfigure Now</a> </td>			       	
 	<%
 			} else {
 	%> 
-			<td class="configure-link"> Configure Global Properties First </td>
+			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 			}
 				%>     	
@@ -187,12 +187,12 @@
 			if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Configure Now</a> </td>			
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Configure Now</a> </td>			
 	        	
 	<%
 			} else {
 	%> 
-			<td class="configure-link"> Configure Global Properties First </td>
+			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 			}
 	%>     	
@@ -208,7 +208,7 @@
 	    	<tr>
 	    	<td class="configured-tag">[configured] </td>
 	    	<td class="property-title"> Dataone Configuration </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=dataone">Reconfigure Now</a> </td>   		
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=dataone">Reconfigure Now</a> </td>   		
 	    	</tr>
 	<%
 		} else if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.BYPASSED)){
@@ -220,11 +220,11 @@
 			if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=dataone">Reconfigure Now</a> </td>			       	
+			<td class="configure-link"> <i class="icon-cogs"></i> <a href="<%= request.getContextPath() %>/admin?configureType=dataone">Reconfigure Now</a> </td>			       	
 	<%
 			} else {
 	%> 
-			<td class="configure-link"> Configure Global Properties First </td>
+			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 			}
 				%>     	
@@ -239,12 +239,12 @@
 			if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=dataone">Configure Now</a> </td>			
+			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=dataone">Configure Now</a> </td>			
 	        	
 	<%
 			} else {
 	%> 
-			<td class="configure-link"> Configure Global Properties First </td>
+			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 			}
 	%>     	
@@ -261,12 +261,12 @@
 		if (propsConfigured != null && propsConfigured) {
 	%>
 	        	
-		<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=replication">Reconfigure Now</a> </td>			
+		<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=replication">Reconfigure Now</a> </td>			
 	        	
 	<%
 		} else {
 	%> 
-		<td class="configure-link"> Configure Global Properties First </td>
+		<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
 		}
 	%>     	
@@ -296,7 +296,7 @@
 	<%
 			} else {
 	%> 	
-				<div class="alert alert-success">Configuration of Metacat is complete.  You can <a href="<%= request.getContextPath() %>">go to metacat</a> 
+				<div class="alert alert-success"><i class="icon-thumbs-up"></i>Configuration of Metacat is complete.  You can <a href="<%= request.getContextPath() %>">go to metacat</a> 
 				now.  Note that this may take some time while the system initializes with the new configuration values.</div>
 	<%
 			}
