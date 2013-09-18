@@ -377,7 +377,7 @@ sub handleSearchNameByEmail{
         $accountInfo = $found;
     } else {
         my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName;
-        $accountInfo = "There are no KNB accounts associated with the email " . $mail . ".\n" .
+        $accountInfo = "There are no accounts associated with the email " . $mail . ".\n" .
                        "You may create a new one by the following link: \n" . $link
     }
     
@@ -401,15 +401,15 @@ sub handleSearchNameByEmail{
     my $message = <<"     ENDOFMESSAGE";
     To: $recipient
     From: $sender
-    Subject: KNB Account
+    Subject: Your Account Information
         
-    Somebody (hopefully you) looked up the KNB accounts associated with the email address.  
-    Here is the accounts information:
+    Somebody (hopefully you) looked up the account information associated with the email address.  
+    Here is the account information:
     
     $accountInfo
 
     Thanks,
-        The KNB Development Team
+        $sender
     
      ENDOFMESSAGE
      $message =~ s/^[ \t\r\f]+//gm;
@@ -882,9 +882,9 @@ sub sendPasswordNotification {
         my $message = <<"        ENDOFMESSAGE";
         To: $recipient
         From: $sender
-        Subject: KNB Password Reset
+        Subject: Your Account Password Reset
         
-        Somebody (hopefully you) requested that your KNB password be reset.  
+        Somebody (hopefully you) requested that your account password be reset.  
         This is generally done when somebody forgets their password.  Your 
         password can be changed by visiting the following URL:
 
@@ -895,7 +895,7 @@ sub sendPasswordNotification {
         New Password: $newPass
 
         Thanks,
-            The KNB Development Team
+            $sender
     
         ENDOFMESSAGE
         $message =~ s/^[ \t\r\f]+//gm;
@@ -1139,16 +1139,16 @@ sub createTemporaryAccount {
     my $message = <<"     ENDOFMESSAGE";
     To: $recipient
     From: $sender
-    Subject: Activate the New KNB Account
+    Subject: Activate the New Account
         
-    Somebody (hopefully you) registered a KNB account.  
+    Somebody (hopefully you) registered a account on $metacatUrl .  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
     $link
 
     Thanks,
-        The KNB Development Team
+        $sender
     
      ENDOFMESSAGE
      $message =~ s/^[ \t\r\f]+//gm;
