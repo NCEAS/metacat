@@ -136,6 +136,8 @@ function trim(stringToTrim) {
   Dont have an account yet? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]">Create a new account</a>
   <br />
   Forgot your password? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]&amp;stage=resetpass">Reset your password</a>
+  <br />
+  Forgot your username? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]&amp;stage=lookupname">Look up your username</a>
 
 [% IF cfg == 'nceas' %]
   [% INCLUDE "nceasFooter.tmpl" %]
