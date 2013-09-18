@@ -405,7 +405,7 @@
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.build.dir"
-					value="${build.dir}/metacatui" />
+					value="metacatui_build" />
 		<property name="metacatui.resources.dir"
 					value="${metacatui.build.dir}/metacatui/src/main/webapp" />
 		
@@ -1377,6 +1377,7 @@
 			<fileset dir="lib/dtd"/>
 			<fileset dir="lib/schema"/>
 			<fileset dir="${utilitiesdir}"/>
+			<fileset dir="${metacatui.build.dir}"/>
 			<fileset dir="${libdir.mvn}"/>
 		</delete>
 		<!-- clean up the distribution files if they exist-->
