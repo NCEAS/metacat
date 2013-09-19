@@ -99,7 +99,7 @@
 					value="true"/>
 			<% } %>
 			
-			<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
+			<i class="icon-question-sign checkbox-help" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
 		</div>
 		<div class="clear"></div>
 		<h3>Member Node Configuration</h3>
@@ -192,7 +192,7 @@
 					name="dataone.nodeSynchronize" 	             		    	    	           		    	             			
 					value="true"/>
 			<% } %>
-			<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
+			<i class="icon-question-sign checkbox-help" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
 		</div>
 	    <p>&nbsp;</p>
 	    
@@ -303,7 +303,7 @@
 					name="dataone.nodeReplicate" 	             		    	    	           		    	             			
 					value="true"/>
 			<% } %>
-			<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
+			<i class="icon-question-sign checkbox-help" onClick="helpWindow('<%= request.getContextPath() %>','docs/dataone.html#configuring-metacat-as-a-member-node')"></i>
 		</div>
 		
 		

@@ -54,7 +54,7 @@
 	%>
 	     The system has detected that this is a new database. <br><br>
 	     Please hit the Continue button to upgrade your database to version: <%= metacatVersion.getVersionString() %>. <br><br>
-	     <div class=warning>Warning: this will reinitialize your database.  If this is not a new database, hit the Cancel button and contact support at <%= supportEmail %>. </div><br><br>
+	     <div class="alert alert-error">Warning: this will reinitialize your database.  If this is not a new database, hit the Cancel button and contact support at <%= supportEmail %>. </div><br><br>
 	     The following scripts will be run:
 	
 	        <ul>
@@ -75,7 +75,7 @@
 	%>
 	     The system has detected the following database version: <%= databaseVersion.getVersionString() %> <br><br>
 	     Please hit the Continue button to upgrade your database to version: <%= metacatVersion.getVersionString() %> <br>
-	    <div class=warning>Warning: this will update your database.  If the detected versions do not seem correct, hit the Cancel button and contact support at <%= supportEmail %> </div><br><br> 
+	    <div class="alert alert-error">Warning: this will update your database.  If the detected versions do not seem correct, hit the Cancel button and contact support at <%= supportEmail %> </div><br><br> 
 	     The following scripts will be run:  <br>
 	        <ul>
 	<%

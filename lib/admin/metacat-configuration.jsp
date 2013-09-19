@@ -48,8 +48,7 @@
 <html>
 <head>
 <title>Metacat Configuration</title>
-<link rel="stylesheet" type="text/css" 
-        href="<%= request.getContextPath() %>/admin/admin.css"></link>
+<%@ include file="./head-section.jsp"%>
 </head>
 
 <body>
@@ -68,7 +67,7 @@
 		if (propsConfigured != null && propsConfigured) {
 	%>
 	        <tr>
-	        <td class="configured-tag">[configured] </td>
+	        <td class="configured-tag"><i class="icon-ok"></i> configured </td>
 			<td class="property-title"> Metacat Global Properties </td> 
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=properties">Reconfigure Now</a> </td>
 	        </tr>
@@ -76,7 +75,7 @@
 		} else {
 	%>    		
 	        <tr>
-	 		<td class="unconfigured-tag">[unconfigured] </td>  
+	 		<td class="unconfigured-tag">unconfigured </td>  
 	 		<td class="property-title"> Metacat Global Properties </td>
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=properties">Configure Now</a> </td>			
 	    	</tr>
@@ -86,7 +85,7 @@
 		if (authConfigured != null && authConfigured) {
 	%>
 	        <tr>
-	        <td class="configured-tag">[configured] </td>
+	        <td class="configured-tag"><i class="icon-ok"></i>configured </td>
 			<td class="property-title"> Authentication Configuration </td> 
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=auth">Reconfigure Now</a> </td>
 	        </tr>
@@ -94,7 +93,7 @@
 		} else {
 	%>    		
 	        <tr>
-	 		<td class=unconfigured-tag>[unconfigured] </td>  
+	 		<td class=unconfigured-tag>unconfigured</td>  
 	 		<td class=property-title> Authentication Configuration </td>
 			<td class=configure-link> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=auth">Configure Now</a> </td>			
 	    	</tr>
@@ -104,7 +103,7 @@
 	    if (skinsConfigured != null && skinsConfigured) {
 	%>
 	        <tr>
-	        <td class="configured-tag">[configured] </td>
+	        <td class="configured-tag"><i class="icon-ok"></i>configured</td>
 			<td class="property-title"> Skins Specific Properties </td> 
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=skins">Reconfigure Now</a> </td>
 	        </tr>
@@ -112,7 +111,7 @@
 		} else {
 	%>    		
 	        <tr>
-	 		<td class="unconfigured-tag">[unconfigured] </td>  
+	 		<td class="unconfigured-tag">unconfigured </td>  
 	 		<td class="property-title"> Skins Specific Properties </td>
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=skins">Configure Now</a> </td>			
 	    	</tr>
@@ -124,7 +123,7 @@
 	    				metacatVersion.compareTo(databaseVersion) == 0)) {
 	%>
 	    	<tr>
-	    	<td class="configured-tag">[configured] </td>
+	    	<td class="configured-tag"><i class="icon-ok"></i> configured </td>
 	    	<td class="property-title"> Database Installation/Upgrade </td> 
 			<td class="configure-link inactive"> Version: <%=databaseVersion.getVersionString()%> </td>    		
 	    	</tr>
@@ -132,7 +131,7 @@
 		} else {
 	%>    		
 	    	<tr>
-	    	<td class="unconfigured-tag">[unconfigured] </td>  
+	    	<td class="unconfigured-tag">unconfigured </td>  
 	    	<td class="property-title"> Database Installation/Upgrade </td>
 	<%
 		if (propsConfigured != null && propsConfigured) {
@@ -154,7 +153,7 @@
 	    if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.CONFIGURED)) {
 	%>
 	    	<tr>
-	    	<td class="configured-tag">[configured] </td>
+	    	<td class="configured-tag"><i class="icon-ok"></i> configured </td>
 	    	<td class="property-title"> Geoserver Configuration </td> 
 			<td class="configure-link"> <i class="icon-cogs"></i> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver">Reconfigure Now</a> </td>   		
 	    	</tr>
@@ -162,7 +161,7 @@
 		} else if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.BYPASSED)){
 	%>    		
 	    	<tr>
-	    	<td class="configured-tag">[bypassed] </td>  
+	    	<td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
 			<td class="property-title"> Geoserver Configuration </td>  
 	<%
 			if (propsConfigured != null && propsConfigured) {
@@ -181,7 +180,7 @@
 		} else {
 	%>    		
 	    	<tr>
-	    	<td class="unconfigured-tag">[unconfigured] </td>  
+	    	<td class="unconfigured-tag">unconfigured </td>  
 	    	<td class="property-title"> Geoserver Configuration </td>   
 	<%
 			if (propsConfigured != null && propsConfigured) {
@@ -206,7 +205,7 @@
 	    if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.CONFIGURED)) {
 	%>
 	    	<tr>
-	    	<td class="configured-tag">[configured] </td>
+	    	<td class="configured-tag"><i class="icon-ok"></i> configured</td>
 	    	<td class="property-title"> Dataone Configuration </td> 
 			<td class="configure-link"> <i class="icon-cogs"></i><a href="<%= request.getContextPath() %>/admin?configureType=dataone">Reconfigure Now</a> </td>   		
 	    	</tr>
@@ -214,7 +213,7 @@
 		} else if (dataoneConfigured != null && dataoneConfigured.equals(PropertyService.BYPASSED)){
 	%>    		
 	    	<tr>
-	    	<td class="configured-tag">[bypassed] </td>  
+	    	<td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
 			<td class="property-title"> Dataone Configuration </td>  
 	<%
 			if (propsConfigured != null && propsConfigured) {
@@ -233,7 +232,7 @@
 		} else {
 	%>    		
 	    	<tr>
-	    	<td class="unconfigured-tag">[unconfigured] </td>  
+	    	<td class="unconfigured-tag">unconfigured </td>  
 	    	<td class="property-title"> Dataone Configuration </td>   
 	<%
 			if (propsConfigured != null && propsConfigured) {
@@ -255,7 +254,7 @@
 	
 	<!-- replication -->
 	   	<tr>
-	   	<td class="configured-tag">[configured] </td>  
+	   	<td class="configured-tag"><i class="icon-ok"></i> configured </td>  
 	   	<td class="property-title"> Replication Configuration </td>   
 	<%
 		if (propsConfigured != null && propsConfigured) {

@@ -102,12 +102,15 @@ input[type="radio"] {
 	width: 15px;
 	height: 15px;
 	float: left;
+	-webkit-appearance: radio;
 }
 
 input[type="checkbox"] {
 	width: 15px;
 	height: 15px;
 	float: left;
+	-webkit-appearance: checkbox;
+	margin-top: 1em;
 }
 
 label {
@@ -180,7 +183,8 @@ table{
 /* FORMS
 ----------------------------------------*/
 .textinput,
-input[type="password"] {
+input[type="password"],
+input[type="text"] {
 	vertical-align: middle;
 	width: 30em;
 	height: 2.2em;
@@ -202,15 +206,16 @@ input[type="password"] {
 	margin-left: 215px;
 	color: #666666;
 	font-size: 0.8em;
-	margin-top: 5px;
 	clear: both;
 	min-height: 2em;
+	max-width: 500px;
+	position: relative;
+	top: -5px;
 }
 
 .button, input[type="submit"], input[type="button"] {
 	width: 100px;
-	margin-right: 5px;
-	margin-top: 20px;
+	margin: 20px 5px 10px 0px;
 	font: 400 1.2em/1.5em Oswald, Arial;
 	cursor: pointer;
 	height: 1.7em;
@@ -223,7 +228,7 @@ input[type="password"] {
 }
 
 .checkradio-label{
-	margin: 0px 0px 0px 10px;
+	margin: 0.7em 0px 0px 10px;
 	float: left;
 }
 .checkradio-description {
@@ -233,12 +238,20 @@ input[type="password"] {
 	margin: 8px 0px 10px 38px;
 }
 
+.radiowrapper{
+	padding-top: 10px;
+}
 .icon-question-sign {
 	color: #166194;
 	font-size: 1.2em;
 	cursor: pointer;
 	margin-left: 10px;
 	margin-top: 0.5em;
+	display: inline-block;
+}
+
+.checkbox-help{			/*For question mark icons next to checkboxes (need different vertical positioning) */
+	margin-top: 0.7em;	
 }
 
 .form-row {
@@ -251,6 +264,7 @@ input[type="password"] {
 .form-row span{
 	float: left;
 	margin-left: 1em;
+	margin-bottom: 10px;
 }
 
 /* OTHER

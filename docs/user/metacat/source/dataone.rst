@@ -142,7 +142,7 @@ and ``<context>`` is the name of the web context in which Metacat was installed.
 Once at the administrative utility, click on the DataONE configuration link, which
 should show the following screen:
 
-.. figure:: images/screenshots/screen-dataone-config.png
+.. figure:: images/screenshots/image068.png
    :align: center
    
    The configuration screen for configuring Metacat as a DataONE node.
@@ -316,7 +316,7 @@ In cases where Metacat has participated in replication with other Metacat server
 for those replica records as well. Please consult both the replication partner's administrator and the DataONE administrators before 
 generating System Metadata for replica content.
 
-.. figure:: images/screenshots/screen-dataone-replication.png
+.. figure:: images/screenshots/image069.png
    :align: center
    
    The replication configuration screen for generating System Metadata.

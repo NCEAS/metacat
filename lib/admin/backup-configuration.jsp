@@ -35,9 +35,7 @@
 <%@ include file="./head-section.jsp"%>
 </head>
 <body>
-	<img src="<%= request.getContextPath() %>/metacat-logo-white.png"
-		width="100px" align="right" />
-		
+<%@ include file="./header-section.jsp"%>		
 <div class="document">
 	<h2>Backup Directory Configuration</h2>
 	

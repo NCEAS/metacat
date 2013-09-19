@@ -8,8 +8,8 @@ Metacat Administrator's Guide
        :height: 130pt
 
     Send feedback and bugs to: 
-        metacat-dev@ecoinformatics.org
-        http://bugzilla.ecoinformatics.org
+        * metacat-dev@ecoinformatics.org
+        * http://bugzilla.ecoinformatics.org
 
     License: GPL
     

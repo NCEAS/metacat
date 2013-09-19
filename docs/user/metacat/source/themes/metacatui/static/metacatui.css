@@ -157,7 +157,9 @@ Bold 700
 	float: right;
 	margin: 20px 0px 30px 20px;
 	background: rgba(255,255,255, 0.5);
-	border-radius: 20px;
+	border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
 	padding: 10px;
 	max-width:60%;
 }
@@ -250,11 +252,15 @@ Bold 700
 -------------------------------------------------------- */
     
 	h3 {
-		font: 400 24.5px/40px "Source Sans Pro" sans-serif;
+		font: 400 24.5px/40px "Source Sans Pro", Arial, sans-serif;
 	}
 	
 	h2{
-		font: 400 27.5px/40px "Oswald" sans-serif;
+		font: 400 27.5px/40px "Oswald", Arial, sans-serif;
+	}
+	
+	h1{
+		font: 400 32px/40px "Oswald" sans-serif;
 	}
 	
 	h1 > a, 
@@ -262,10 +268,6 @@ Bold 700
 	h3 > a,
 	h4 > a{
 		color: #333333;
-	}
-	
-	h1{
-		font: 400 32px/40px "Oswald" sans-serif;
 	}
 	
     
@@ -364,11 +366,11 @@ Bold 700
  	padding: 10px;
  	display: block;
  	border: 1px solid #666666;
- 	margin-top: 20px;
+ 	margin: 20px auto;
  }
  
  .figure > img{
- 	max-width: 90%;
+ 	max-width: 95%;
  	margin: 10px auto;
  }
  

@@ -97,17 +97,16 @@ that have been created by others. Specifically,
 * Metacat's Web interface facilitates the input and retrieval of data 
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers
-* The Metacat interface can be easily extended and customized via Web forms, skins, and/or user-developed client tools in Java and other languages
+* The Metacat interface can be easily extended and customized via Web forms, themes, and/or user-developed client tools in Java and other languages
 * The Metacat harvester automates the process of retrieving and storing EML documents from one or more sites
 * Metacat can be customized to use Life Sciences Identifiers (LSIDs), uniquely identifying every data record
 * Metacat has a built-in logging system for tracking events such as document insertions, updates, deletes, and reads
-* The appearance of Metacat's Web interface can be customized via skins. 
+* The appearance of Metacat's Web interface can be customized via themes. 
 * Metacat fully supports the DataONE Member Node interface, allowing Metacat deployments to easily participate in the DataONE federation
 
 .. figure:: images/screenshots/image007.png
-   :align: center
 
-   Metacat's default home page. Users can customize the appearance using skins.
+   Metacat's default home page. Users can customize the appearance using themes.
 
 
 

@@ -147,9 +147,9 @@ each of which is listed with its current status (see table).
 ==============  =============================================================
 Status          Description
 ==============  =============================================================
-[unconfigured]  The section has yet to be configured 
-[configured]    The section has been configured. 
-[bypassed]      The administrator 
+unconfigured    The section has yet to be configured 
+configured      The section has been configured. 
+bypassed        The administrator 
                 can choose not to configure or skip the section.
 ==============  =============================================================
  
@@ -221,8 +221,8 @@ them in the admin interface. If you wish to change the authentication settings,
 you must restart Metacat to put the changes into effect. For more information 
 about the Authentication configurations, please see Initial Configurations.
 
-Skins Configuration
-~~~~~~~~~~~~~~~~~~~
+Skins Configuration 
+~~~~~~~~~~~~~~~~~~~   
 Customizing the look and feel of Metacat's Web interface is done via skins, 
 which are applied in the Skins Configuration section. If you have installed 
 the optional Registry, which provides a Web interface for creating, editing, 
