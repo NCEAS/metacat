@@ -75,7 +75,7 @@ To install and run the Registry:
 
     ::
     
-      sudo yum install gcc libxml2-devel libxslt-devel ant –y
+      sudo yum install gcc libxml2-devel libxslt-devel ant -y
 
   * Install CPAN, which allows us to install the Perl dependencies for the 
     registry and account management parts of Metacat. If asked to manually 
@@ -331,8 +331,8 @@ please see :doc:`replication`.
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | squery                   | Perform a structured query. For an example, please see Searching Metacat.                                                                                                                                                                                          |
 |                          |                                                                                                                                                                                                                                                                    |
-|                          | ``query`` - the text of the pathquery document sent to the server  																																																																																																																																																																								|
-|                          | ``qformat`` - the format to return the results in. Possible values are:  ``xml``, or the name of the a skin.                                                                                                                  |                                                                              |
+|                          | ``query`` - the text of the pathquery document sent to the server  																																																|
+|                          | ``qformat`` - the format to return the results in. Possible values are:  ``xml``, or the name of the a skin.                                                                                                                                                       |
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | update                   | Overwrite an XML document with a new one and give the new one the same docid but with                                                                                                                                                                              |
 |                          | the next revision number. For an example, please see Inserting, Updating, and                                                                                                                                                                                      |
