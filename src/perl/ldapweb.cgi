@@ -874,17 +874,6 @@ sub sendPasswordNotification {
 
     my $errorMessage = "";
     if ($recipient) {
-    	
-    	# use the appropriate link
-		my $link = '/' . $context . '/cgi-bin/ldapweb.cgi?stage=changepass&cfg=' . $cfg;
-		my $overrideURL;
-	    $overrideURL = $skinProperties->getProperty("email.overrideURL");
-	    debug("the overrideURL is " . $overrideURL);
-	    if (defined($overrideURL) && !($overrideURL eq '')) {
-	    	$link = $serverUrl . $overrideURL . $link;
-	    } else {
-	    	$link = $serverUrl . $link;
-	    }
     
         my $mailhost = $properties->getProperty('email.mailhost');
         my $sender;
@@ -900,10 +889,8 @@ sub sendPasswordNotification {
         Subject: Your Account Password Reset
         
         Somebody (hopefully you) requested that your account password be reset.  
-        Your temporary password is below. Please update your password to 
-        something permanent by visiting the following URL:
-
-        $link
+        Your temporary password is below. Please change it as soon as possible 
+        at: $contextUrl.
 
             Username: $username
         Organization: $org
