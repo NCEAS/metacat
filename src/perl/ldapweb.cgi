@@ -327,7 +327,9 @@ sub fullTemplate {
     #my $error=null;
     my $use_ssl= 1;
     #my $options=null;
-    $templateVars->{$captcha} = $c->get_html($recaptchaPublicKey,undef, $use_ssl, undef);
+    # use the AJAX style, only need to provide the public key to the template
+    $templateVars->{'recaptchaPublicKey'} = $recaptchaPublicKey;
+    #$templateVars->{$captcha} = $c->get_html($recaptchaPublicKey,undef, $use_ssl, undef);
     $template->process( $templates->{'header'}, $templateVars );
     foreach my $tmpl (@{$templateList}) {
         $template->process( $templates->{$tmpl}, $templateVars );
