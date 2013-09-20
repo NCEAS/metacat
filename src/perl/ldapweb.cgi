@@ -376,16 +376,12 @@ sub handleSearchNameByEmail{
     my $notHtmlFormat = 1;
     my $found = findExistingAccounts($ldapurl, $searchBase, $filter, \@attrs, $notHtmlFormat);
     my $accountInfo;
-    if($found) {
+    if ($found) {
         $accountInfo = $found;
     } else {
-        my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName;
-        $accountInfo = "There are no accounts associated with the email " . $mail . ".\n" .
-                       "You may create a new one by the following link: \n" . $link
+        $accountInfo = "There are no accounts associated with the email " . $mail . ".\n";
     }
-    
-    
-    
+
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
     $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
@@ -874,6 +870,18 @@ sub sendPasswordNotification {
 
     my $errorMessage = "";
     if ($recipient) {
+    	
+    	# use the appropriate link
+		my $link = '/' . $context . '/cgi-bin/ldapweb.cgi?stage=changepass&cfg=' . $cfg;
+		my $overrideURL;
+	    $overrideURL = $skinProperties->getProperty("email.overrideURL");
+	    debug("the overrideURL is " . $overrideURL);
+	    if (defined($overrideURL) && !($overrideURL eq '')) {
+	    	$link = $serverUrl . $overrideURL . $link;
+	    } else {
+	    	$link = $serverUrl . $link;
+	    }
+    
         my $mailhost = $properties->getProperty('email.mailhost');
         my $sender;
         $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
@@ -888,10 +896,10 @@ sub sendPasswordNotification {
         Subject: Your Account Password Reset
         
         Somebody (hopefully you) requested that your account password be reset.  
-        This is generally done when somebody forgets their password.  Your 
-        password can be changed by visiting the following URL:
+        Your temporary password is below. Please update your password to 
+        something permanent by visiting the following URL:
 
-        $contextUrl/cgi-bin/ldapweb.cgi?stage=changepass&cfg=$cfg
+        $link
 
             Username: $username
         Organization: $org
@@ -984,7 +992,7 @@ sub findExistingAccounts {
         	my $host = $uri->host();
         	my $path = $uri->path();
         	$path =~ s/^\///;
-        	my $refFound = &findExistingAccounts($host, $path, $filter, $attref);
+        	my $refFound = &findExistingAccounts($host, $path, $filter, $attref, $notHtmlFormat);
         	if ($refFound) {
             	$foundAccounts .= $refFound;
         	}
@@ -1153,7 +1161,7 @@ sub createTemporaryAccount {
     From: $sender
     Subject: New Account Activation
         
-    Somebody (hopefully you) registered an account on $metacatUrl.  
+    Somebody (hopefully you) registered an account on $contextUrl.  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
