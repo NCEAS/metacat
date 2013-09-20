@@ -530,6 +530,7 @@ sub handleRegister {
 
     # If entries match, send back a request to confirm new-user creation
     if ($found) {
+      print "Content-type: text/html\n\n";
       fullTemplate( ['registerMatch', 'register'], { stage => "registerconfirmed",
                                                      allParams => $allParams,
                                                      foundAccounts => $found });
