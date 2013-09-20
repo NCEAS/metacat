@@ -439,8 +439,9 @@ sub handleInitRegister {
 #
 sub handleRegister {
     
-    print "Content-type: text/html\n\n";
+    #print "Content-type: text/html\n\n";
     if ($query->param('o') =~ "LTER") {
+      print "Content-type: text/html\n\n";
       fullTemplate( ['registerLter'] );
       exit(0);
     } 
@@ -470,6 +471,7 @@ sub handleRegister {
         #exit();
     }
     else {
+        print "Content-type: text/html\n\n";
         my $errorMessage = "The verification code is wrong. Please input again.";
         fullTemplate(['register'], { stage => "register",
                                      allParams => $allParams,
@@ -482,6 +484,7 @@ sub handleRegister {
     my @requiredParams = ( 'givenName', 'sn', 'o', 'mail', 
                            'uid', 'userPassword', 'userPassword2');
     if (! paramsAreValid(@requiredParams)) {
+        print "Content-type: text/html\n\n";
         my $errorMessage = "Required information is missing. " .
             "Please fill in all required fields and resubmit the form.";
         fullTemplate(['register'], { stage => "register",
@@ -490,6 +493,7 @@ sub handleRegister {
         exit();
     } else {
          if ($query->param('userPassword') ne $query->param('userPassword2')) {
+            print "Content-type: text/html\n\n";
             my $errorMessage = "The passwords do not match. Try again.";
             fullTemplate( ['registerFailed', 'register'], { stage => "register",
                                                             allParams => $allParams,
@@ -553,7 +557,7 @@ sub handleRegisterConfirmed {
                       'userPassword2' => $query->param('userPassword2'), 
                       'title' => $query->param('title'), 
                       'telephoneNumber' => $query->param('telephoneNumber') };
-    print "Content-type: text/html\n\n";
+    #print "Content-type: text/html\n\n";
     createTemporaryAccount($allParams);
     exit();
 }
