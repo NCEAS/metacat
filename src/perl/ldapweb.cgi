@@ -1141,7 +1141,7 @@ sub createTemporaryAccount {
     From: $sender
     Subject: New Account Activation
         
-    Somebody (hopefully you) registered an account on $metacatUrl .  
+    Somebody (hopefully you) registered an account on $metacatUrl.  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
