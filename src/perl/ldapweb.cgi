@@ -67,14 +67,15 @@ my $protocol = 'http://';
 if ( $properties->getProperty('server.httpPort') eq '443' ) {
 	$protocol = 'https://';
 }
-my $contextUrl = $protocol . $properties->getProperty('server.name');
+my $serverUrl = $protocol . $properties->getProperty('server.name');
 if ($properties->getProperty('server.httpPort') ne '80') {
-        $contextUrl = $contextUrl . ':' . $properties->getProperty('server.httpPort');
+        $serverUrl = $serverUrl . ':' . $properties->getProperty('server.httpPort');
 }
-$contextUrl = $contextUrl . '/' .  $properties->getProperty('application.context');
+my $context = $properties->getProperty('application.context');
+my $contextUrl = $serverUrl . '/' .  $context;
 
 my $metacatUrl = $contextUrl . "/metacat";
-my $cgiPrefix = "/" . $properties->getProperty('application.context') . "/cgi-bin";
+my $cgiPrefix = "/" . $context . "/cgi-bin";
 my $styleSkinsPath = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
 
@@ -1122,7 +1123,16 @@ sub createTemporaryAccount {
     
     
     ####################send the verification email to the user
-    my $link = $contextUrl. '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&o=' . $org . '&uid=' . $query->param('uid'); #even though we use o=something. The emailVerification will figure the real o= or ou=something.
+    my $link = '/' . $context . '/cgi-bin/ldapweb.cgi?cfg=' . $skinName . '&' . 'stage=' . $emailVerification . '&' . 'dn=' . $dn . '&' . 'hash=' . $randomStr . '&o=' . $org . '&uid=' . $query->param('uid'); #even though we use o=something. The emailVerification will figure the real o= or ou=something.
+    
+    my $overrideURL;
+    $overrideURL = $skinProperties->getProperty("email.overrideURL");
+    debug("the overrideURL is " . $overrideURL);
+    if (defined($overrideURL) && !($overrideURL eq '')) {
+    	$link = $serverUrl . $overrideURL . $link;
+    } else {
+    	$link = $serverUrl . $link;
+    }
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
