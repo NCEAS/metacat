@@ -1054,7 +1054,7 @@ sub createTemporaryAccount {
     debug("search filer " . $filter);
     debug("ldap server ". $ldapurl);
     debug("sesarch base " . $tmpSearchBase);
-    print "Content-type: text/html\n\n";
+    #print "Content-type: text/html\n\n";
     my @attrs = ['o', 'ou' ];
     my $found = searchDirectory($ldapurl, $tmpSearchBase, $filter, \@attrs);
 
