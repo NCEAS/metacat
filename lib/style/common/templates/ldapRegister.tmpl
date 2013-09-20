@@ -194,16 +194,18 @@
                     *Verification Code:
                 </td>
                 <td align="right">
-                	<script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
-                	<script type="text/javascript">
-						function showRecaptcha(element) {
-							Recaptcha.create("[% recaptchaPublicKey %]", element, {
-							theme: "clean",
-							callback: Recaptcha.focus_response_field});
-						}
-						showRecaptcha("captchaArea");
-					</script>
-					<div id="captchaArea"></div>
+                	<div id="captchaArea">
+                            <a onclick="showRecaptcha('captchaArea');">Show Code</a>
+                    </div>
+                    <script type="text/javascript" src="http://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
+                    <script type="text/javascript">
+	                    function showRecaptcha(element) {
+	                            Recaptcha.create("[% recaptchaPublicKey %]", element, {
+	                            theme: "clean",
+	                            callback: Recaptcha.focus_response_field});
+	                            return false;
+	                    }
+                    </script>
                 </td>
             </tr>
         [% END %]
