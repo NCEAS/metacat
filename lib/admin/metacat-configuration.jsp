@@ -296,7 +296,8 @@
 			} else {
 	%> 	
 				<div class="alert alert-success"><i class="icon-thumbs-up"></i>Configuration of Metacat is complete.  You can <a href="<%= request.getContextPath() %>">go to metacat</a> 
-				now.  Note that this may take some time while the system initializes with the new configuration values.</div>
+				now, or, if you are using the Metacat indexing component, restart Tomcat so that both webapps are initialized with these settings.  
+				Note that this may take some time while the system initializes with the new configuration values.</div>
 	<%
 			}
 		}
