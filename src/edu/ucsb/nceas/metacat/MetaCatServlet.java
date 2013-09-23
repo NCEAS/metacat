@@ -646,6 +646,10 @@ public class MetaCatServlet extends HttpServlet {
 		Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
 
 		String requestEncoding = request.getCharacterEncoding();
+		if (requestEncoding == null) {
+			logMetacat.debug("null requestEncoding, setting to application default: " + DEFAULT_ENCODING);
+			request.setCharacterEncoding(DEFAULT_ENCODING);
+		}
 		logMetacat.debug("requestEncoding: " + requestEncoding);
 		
 		// Update the last update time for this user if they are not new
