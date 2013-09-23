@@ -39,9 +39,11 @@
 <div class="document">
 	<h2>Backup Directory Configuration</h2>
 	
-	Metacat will back up configuration values in a location outside of the application installation 
-	directories.  In this way, you won't have to re-enter the entire configuration every time you reinstall 
-	Metacat.  <br><br>
+	<p>
+		Metacat will back up configuration values in a location outside of the application installation 
+		directories.  In this way, you won't have to re-enter the entire configuration every time you reinstall 
+		Metacat. 
+	</p>
 	
 	<%
 	  String backupDir = (String)request.getAttribute("backupBaseDir");
@@ -49,29 +51,32 @@
 	
 	  if (backupDirStatus.equals("hiddenExistsPopulated")) {
 	%>
-	  The following directory was discovered with existing backup files.  If this is not the 
-	  correct backup directory, please correct below.<br><br>
+	  <p>
+	  	The following directory was discovered with existing backup files.  If this is not the 
+	  	correct backup directory, please correct below.
+	  </p>
 	  
-	  <%= backupDir %>
+	  <h5><%= backupDir %></h5>
 	  
 	<%
 	  } else if (backupDirStatus.equals("unknown")) {
 	%>
+	  <p>
 	  The system could not discover an optimal backup location.  Please enter a location that you have
-	  permissions to below.<br><br>
+	  permissions to below.
+	  </p>
 	
 	<%
 	  } else {
 	%>  
-	  The following directory was determined to be optimal for creating backup directories.  If 
-	  this is not correct, please correct below.<br><br>
-	  
-	   <%= backupDir %>
+	  <p>
+	  	The following directory was determined to be optimal for creating backup directories.  If 
+	  	this is not correct, please correct below.
+	  </p>
+	   <h5><%= backupDir %></h5>
 	<%
 	  }
 	%>
-	
-	<br class="auth-header">
 	
 	<%@ include file="./page-message-section.jsp"%>
 	
@@ -93,10 +98,11 @@
 		</tr>
 	</table>
 	
-	
-	<input type="hidden" name="configureType" value="backup"/>
-	<input type="hidden" name="processForm" value="true"/>
-	<input class=button type="submit" value="Save"/>
+	<div class="buttons-wrapper">
+		<input type="hidden" name="configureType" value="backup"/>
+		<input type="hidden" name="processForm" value="true"/>
+		<input class=button type="submit" value="Save"/>
+	</div>
 	</form>
 </div>
 </body>

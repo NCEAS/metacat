@@ -385,10 +385,11 @@ Bold 700
  
  .topic{
  	background: rgba(255,255,255,0.5);
- 	padding: 10px;
+ 	padding: 20px;
  	border-radius: 20px;
  	-webkit-border-radius: 20px;
  	-moz-border-radius: 20px;
+ 	margin-bottom: 20px;
  }
  
  .topic-title{
@@ -408,6 +409,30 @@ Bold 700
  .note{
  margin-left: 20px;
  color: #555555;
+ }
+ 
+ .deprecated{
+ 	color: #b94A48;
+ 	background-color: #F2DEDE;
+ 	padding: 8px 35px 8px 14px;
+ 	margin-bottom: 20px;
+ 	text-shadow: 0 1px 0 rga(255, 255, 255, 0.5);
+ 	border:1px solid #EED3D7;
+ 	border-radius: 4px;
+ 	-moz-border-radius: 4px;
+ 	-webkit-border-radius: 4px;
+ }
+ 
+ #content > div > ul{
+ 	font-weight: 700;
+ }
+ 
+ #content > div > ul > li{
+ 	margin-top:7px;
+ }
+ 
+ #content > div > ul ul{
+ 	font-weight: 400;
  }
  
  

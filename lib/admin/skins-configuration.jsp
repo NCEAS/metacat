@@ -46,8 +46,6 @@
 <div class="document"> 
 	<h2>Skins Configuration</h2>
 	
-	<br class="skins-header">
-	
 	<%@ include file="./page-message-section.jsp"%>
 	
 	<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 

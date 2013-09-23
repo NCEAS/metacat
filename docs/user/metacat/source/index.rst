@@ -63,6 +63,7 @@ Contents
    dataone
    submitting
    query-index
+   themes
    geoserver
    replication
    harvester

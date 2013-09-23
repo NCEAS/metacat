@@ -1,0 +1,227 @@
+Modifying and Creating Themes
+===================
+.. versionadded:: 2.2.0
+
+.. contents::
+  
+MetacatUI's theming system, MetacatUI, is deployed separately from Metacat, allowing more 
+independent user interface customization. MetacatUI is structured in a Model-view-controller
+architecture using `Backbone.js <http://www.backbonejs.org>`_. Some background knowledge on Backbone.js may be helpful for 
+advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML of 
+the included Metacat views. 
+
+.. figure:: images/screenshots/image007.png
+
+   Metacat's default home page. Users can customize the appearance using themes. 
+
+Quick Start Using the Default Theme
+---------------------
+To use the default theme, shown in the figure above, follow these steps for a quick start with MetacatUI:
+
+1. Copy the ``js/themes/default`` directory and rename it to your organization's name or choose a unique theme name.
+
+2. In the ``js/themes/<yourtheme>/config.js`` file, change the theme name on line 1, ``default``, to your chosen new theme name.
+
+3. In the ``js/themes/<yourtheme>/img`` directory, add the following image files:
+
+	* Your organization's logo
+	* Any supporter or donor logos to use in the footer
+
+4. Create a ``templates`` directory in ``js/themes/<yourtheme>`` and copy the following files from ``js/templates`` into
+that new directory:
+
+	* footer.html
+	* navbar.html
+
+5. Open the ``js/themes/<yourtheme>/templates/footer.html`` file and change the footer logo image paths and the link paths to direct to 
+your new footer images and their corresponding web addresses. For example, 
+
+	::
+	
+	  <a href="http://nceas.ucsb.edu" target="_blank"><img alt="NCEAS" src="./js/themes/themename/img/nceas-logo-white.png"></a>
+	  
+	You can also add or modify the "Help" email addresses displayed in the footer.
+
+6. Open the ``js/themes/<yourtheme>/templates/navbar.html`` file and replace the Metacat logo file with your organization's logo file.
+
+
+7. Open ``index.html``. Edit the following line to reflect your theme name (``data-theme``) and your Metacat
+   context (``data-metacat-context``):
+
+	::
+	 
+	  <script data-theme="default" data-metacat-context="knb" id="loader" type="text/javascript" src="loader.js"></script>
+
+
+Creating a Custom Theme
+---------------------
+All themes share the same CSS, HTML, JavaScript and image files. Any of these files can be customized by creating
+a new theme. By creating a new theme, these shared default files
+are overridden by your custom theme files.
+
+1. Copy an existing theme directory, found in ``js/themes``, and rename that directory after your new theme.
+Notice that each theme directory looks something like this:
+
+	::
+	
+	  css/
+	  img/
+	  routers/
+	  templates/
+	  config.js
+		
+
+2. To start fresh, delete everything from all directories except the ``config.js`` file.
+
+3. Add a CSS file to your theme by creating a CSS file in the ``js/themes/<yourtheme>/css/`` directory
+   named ``metacatui.css``
+
+4. Add your custom images to the ``js/themes/<yourtheme>/img`` directory.
+
+5. Add HTML templates to the ``js/themes/<yourtheme>/templates`` directory.
+
+6. Open the ``js/themes/<yourtheme>/config.js`` file. In here you will define your theme and themeMap.
+	
+  ::
+	
+	var theme = theme || "default";
+	var themeMap = 
+	{
+		'*': {
+			// example overrides are provided here
+			//'views/AboutView' : 'themes/' + theme + '/views/AboutView.js',
+			//'templates/navbar.html' : 'themes/' + theme + '/templates/navbar.html'
+			}
+	};
+		
+Give your theme a name on the first line. Then follow the commented out examples in ``themeMap`` to
+explicitly tell MetacatUI which default shared files should be overridden with your custom theme 
+files. The pattern is:
+	
+	``path/originalFile.html : 'themes/' + theme + '/path/newFile.html'``
+	
+**Note: You do not have to override the CSS or image files.**
+
+7. Open ``index.html``. Edit the following line to reflect your theme name (``data-theme``) and your Metacat
+context (``data-metacat-context``):
+
+	::
+	 
+	  <script data-theme="default" data-metacat-context="knb" id="loader" type="text/javascript" src="loader.js"></script>
+
+
+Changing the background images on the default theme
+~~~~~~~~~~~~~
+The ``js/templates/app.html`` file contains the ``<img>`` element for the background image:
+
+	::
+	
+	  <img src="" class="bg" id="bg_image" data-image-count="9" />
+	  
+Change the ``data-image-count`` attribute to the number of images you would like to cycle through in your custom
+theme. To have the same background image on all views, change this value to 1.
+
+Store the background image files in ``img/backgrounds``. Keep the naming convention of ``bg1.jpg``, ``bg2.jpg``, etc.
+with all numbers from 1 to your chosen total present (i.e. do not skip any numbers, such as ``bg1.jpg``, ``bg3.jpg`` ...)
+
+
+Advanced options for custom themes
+~~~~~~~~~~~~~
+Advanced users can choose to override the JavaScript files for even more customization of MetcatUI.
+
+
+The ``router.js`` file can be modified to render different views based on the URL. For example,
+a theme which has no home page and routes users to the ``DataCatalogView`` view instead, would modify ``router.js``
+like so:
+
+	::
+	 
+	  	// MetacatUI Router
+		// ----------------
+		var UIRouter = Backbone.Router.extend({
+			routes: {
+				'' 					: 'routeToData',    // default is data search page
+				'about'                     : 'renderAbout',  // about page
+				'about(/:anchorId)'         : 'renderAbout',  // about page anchors
+				'plans'                     : 'renderPlans',  // plans page
+				'tools(/:anchorId)'         : 'renderTools',  // tools page
+				'data(/search/:searchTerm)(/page/:page)' : 'renderData',    // data search page
+				'view/*pid'                 : 'renderMetadata',    // metadata page
+				'external(/*url)'           : 'renderExternal',    // renders the content of the given url in our UI
+				'logout'                    : 'logout',    // logout the user
+				'signup'          			: 'renderLdap',    // use ldapweb for registration
+				'account(/:stage)'          : 'renderLdap',    // use ldapweb for different stages
+				'share'                     : 'renderRegistry'    // registry page
+			},
+			
+In this example, the index path, ``''``, was changed from
+the value ``renderIndex`` which renders the ``IndexView.js`` view, to ``routeToData`` which reroutes to ``data``,
+in turn rendering the ``DataCatalogView`` view.
+
+	::
+	  		
+	  	routeToData: function () {
+			console.log('Called UIRouter.routeToData()');
+			this.navigate("data", {trigger: true});
+		},
+		
+	**Note: Remember to include any views or router.js in your list of overrides in js/themes/<yourtheme>/config.js
+	for each file you modify**
+
+
+For more information about ``Backbone.js``, see the Backbone.js documentation at `www.backbonejs.org <http://www.backbonejs.org>`_
+
+
+
+Creating a Custom Skin
+----------------------
+.. deprecated:: 2.2.0
+   Use themes instead
+	
+Skins are used in Metacat to customize the appearance of the search and display
+web interface that is presented by Metacat.  Skins can be used to make a Metacat
+instance exactly integrate into an existing web site, and are fully customizable.
+
+To create and customize your own Metacat skin, you must first create a skin 
+directory. This is most easily accomplished by copying one of the existing skin 
+directories. Step-by-step directions for creating and installing a custom skin 
+are included below:
+
+1. Copy an exisiting skin directory. We recommend using the "default" directory.
+
+  ::
+  
+    sudo cp -r <CONTEXT_DIR>/style/skins/default/ <CONTEXT_DIR>/style/skins/[yourSkin]/
+
+  Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application 
+  code lives  and ``[yourSkin]`` is the name you wish to apply to your skin.
+
+2. In ``[yourSkin]`` directory, change all files named ``default.xxx`` to 
+   ``yourSkin.xxx``. The following files should be changed:
+
+  ::
+  
+    default.css
+    default.js
+    default.properties
+    default.properties.metadata.xml
+    default.xml
+
+3. In the metacat.properties file(``<CONTEXT_DIR>/WEB_INF/metacat.properties``), 
+   add ``[yourSkin]`` to the value of the skin.names property.
+
+4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type:
+
+  ::
+  
+    /etc/init.d/tomcat6 restart
+
+Navigate to Metacat's Configuration utility  and select the Configure Skins 
+option. Your custom skin should appear as a choice in the skins list. Change 
+the layout and style by modifying the header, footer, css, and other files in 
+your new skin directory.
+
+It is important to note that all customized skins will be overwritten when 
+Metacat is reinstalled or upgraded. Please remember to back up your skins before
+reinstalling or upgrading Metacat.
+	
