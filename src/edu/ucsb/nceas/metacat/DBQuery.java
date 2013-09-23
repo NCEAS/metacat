@@ -414,7 +414,7 @@ public class DBQuery
       }//if
       else
       {
-        //knb format, in this case we will get whole result and sent it out
+        //skin format, in this case we will get whole result and sent it out
         response.setContentType("text/html");
         Writer nonout = null;
         StringBuffer xml = createResultDocument(xmlquery, qspec, nonout, user,

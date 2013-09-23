@@ -53,7 +53,7 @@ public class LSIDDataLookup
 
     public String getDocType(LSID lsid) {
       // example
-      //http://metacat.nceas.ucsb.edu/knb/metacat?action=getrevisionanddoctype&docid=knb-lter-gce.109.6
+      //http://metacat.nceas.ucsb.edu/metacat/metacat?action=getrevisionanddoctype&docid=knb-lter-gce.109.6
       // returns rev;doctype
 
       String _docType = null;
@@ -105,7 +105,7 @@ public class LSIDDataLookup
         InputStream docStream = null;
 
         // example metacat query
-        // http://metacat.nceas.ucsb.edu/knb/metacat?action=read&qformat=xml&docid=knb-lter-gce.109.6
+        // http://metacat.nceas.ucsb.edu/metacat/metacat?action=read&qformat=xml&docid=knb-lter-gce.109.6
         //
 
         ResourceBundle rb = ResourceBundle.getBundle("metacat-lsid");

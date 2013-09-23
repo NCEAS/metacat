@@ -48,7 +48,7 @@ is already aware of Metacat's spatial cache. The Metacat configuration interface
 is used to configure GeoServer to use this shared data directory. To further 
 configure GeoServer, use the Web-based configuration utility, 
 which is available at: http://your.server.com/context/geoserver.jsp 
-(e.g., http://knb.ecoinformatics.org/knb/geoserver.jsp). 
+(e.g., http://knb.ecoinformatics.org/metacat/geoserver.jsp). 
 
 Common configuration tasks include:
 
@@ -106,10 +106,10 @@ Adding a Map to a Web Page or Skin
 To add a map to a Web page, simply include the map interface using an iframe:: 
 
   <iframe scrolling="no" frameborder="0" width="780" height="420" 
-          src="/knb/style/common/spatial/map.jsp">
+          src="/metacat/style/common/spatial/map.jsp">
   </iframe>
 
-The map URL, ``/knb/style/common/spatial/map.jsp``, is 
+The map URL, ``/metacat/style/common/spatial/map.jsp``, is 
 the default map interface. If you plan to customize the map interface, copy
 the map.jsp file into your skin's directory (either the default or 
 customized skin directory). 
@@ -118,7 +118,7 @@ customized skin directory).
 
   cp -r style/common/spatial/map.jsp /style/skins/<myskin>/spatial
 
-You can access the customized map with the URL: ``/knb/style/skins/<myskin>/spatial/map.jsp`` 
+You can access the customized map with the URL: ``/metacat/style/skins/<myskin>/spatial/map.jsp`` 
 
 Configuring the Size and Initial Extent of the Map
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -127,7 +127,7 @@ have copied the map layout page into your skin's directory (See
 :doc:`configuration` for directions). Once the file has been copied, you can 
 modify the map's initial extent in: ``${skin.dir}/spatial/map.jsp``.
 
-To change the map’s initial extent, edit the bounding box. The default is to 
+To change the map's initial extent, edit the bounding box. The default is to 
 show the entire globe. The ``initMap()`` function should also be given the skin 
 name so that spatial search results can be correctly styled.
 
@@ -160,7 +160,7 @@ HTML ``<option/>`` tag. Edit the value and label to edit or add new locations.
 
 ::
 
-  <option value=“-149.725,68.475 -149.3254,68.725”> Arctic LTER (ARC)</option>
+  <option value="-149.725,68.475 -149.3254,68.725"> Arctic LTER (ARC)</option>
 
 Configuring the Visual Portrayal of Geospatial Data (e.g., symbology and color)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -188,7 +188,7 @@ To register the data set and add it to the map:
 
 1. Point your browser to ``http://your.server/geoserver``, log in to GeoServer, 
    and navigate to the "Data Stores" configuration page under ``Data > Stores``. 
-2. Create a new vector data source from a Shapefile in the “metacat” workspace.
+2. Create a new vector data source from a Shapefile in the "metacat" workspace.
 
 .. figure:: images/screenshots/image055.png
    :align: center
@@ -219,8 +219,8 @@ To register the data set and add it to the map:
    GeoServer's Layer Preview allows you to see an OpenLayer rendering of the new layer.
 
 8. Copy the default ``map.js`` file that assembles the map in OpenLayers 
-   (``style/common/spatial/map.js``) to your skin’s spatial directory.
-9. Edit the init() method to include your new layer in the map – either as an 
+   (``style/common/spatial/map.js``) to your skin's spatial directory.
+9. Edit the init() method to include your new layer in the map - either as an 
    overlay or as a base layer.
 10. Point your browser to the map interface. Your new layer should appear with 
     the existing ones.
@@ -229,7 +229,7 @@ Adding External Spatial Data Made Publically Available through WMS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 There are hundreds of sources of spatial data made publically available 
 through WMS (check out http://wms-sites.com for a good catalog). To add these 
-data sources to your map, add the layers in your skin’s ``spatial/map.js`` file.
+data sources to your map, add the layers in your skin's ``spatial/map.js`` file.
 
 Spatial Queries
 ---------------
@@ -239,7 +239,7 @@ Metacat can perform any query supported by the WFS/WMS standards.
 
 An example of a spatial query string is::
 
-  http://localhost/knb/metacat?action=spatial_query&xmin=-117.5&xmax=-64&ymin=3&ymax=46&skin=default
+  http://localhost/metacat/metacat?action=spatial_query&xmin=-117.5&xmax=-64&ymin=3&ymax=46&skin=default
 
 Where ``xmin``, ``xmax``, ``ymin`` and ``ymax`` represent the western, eastern, 
 southern and northern bounding coordinates (the "bounding box"), respectively. 

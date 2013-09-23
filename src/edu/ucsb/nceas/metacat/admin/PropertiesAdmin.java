@@ -354,7 +354,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 	 * In the web.xml of the Metacat-index context, there is a parameter:
 	 * <context-param>
      * <param-name>metacat.properties.path</param-name>
-     * <param-value>/knb/WEB-INF/metacat.properties</param-value>
+     * <param-value>/metacat/WEB-INF/metacat.properties</param-value>
      * <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
      *  </context-param>
      *  It points to the default metacat context - knb. If we rename the context, we need to change the value of there.

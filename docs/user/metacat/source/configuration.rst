@@ -95,7 +95,7 @@ To edit the authentication configuration file:
 
 1. Stop Tomcat and edit the Metacat properties (``metacat.properties``) file in the
    Metacat context directory inside the Tomcat application directory. The 
-   Metacat context directory is the name of the application (usually knb):
+   Metacat context directory is the name of the application (usually metacat):
 
   ::
   
@@ -205,7 +205,7 @@ these values are correct.
 Property          Description
 ================  ============================================================
 Metacat Context   The name of the deployed Metacat WAR file (minus the .war 
-                  extension). E.g., "knb"
+                  extension). E.g., "metacat"
 Server Name       The DNS name of the server hosting Metacat, not including 
                   port numbers or the protocol ("http://"). 
 HTTP Port         The non-secure port where Metacat will be available.
@@ -413,9 +413,9 @@ optional properties that are only relevant when optional Metacat features
   <CONTEXT_DIR>/WEB_INF/metacat.properties
 
 Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat6/webapps/knb``). The path is a combination 
+lives (e.g., ``/var/lib/tomcat6/webapps/metacat``). The path is a combination 
 of the Web application directory (e.g., ``/var/lib/tomcat6/webapps/``) and 
-the Metacat context directory (e.g., ``knb``). Both values depend upon how your 
+the Metacat context directory (e.g., ``metacat``). Both values depend upon how your 
 system was set up during installation.
 
 For information about each property and default or example settings, please 

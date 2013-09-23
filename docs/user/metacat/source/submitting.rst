@@ -139,12 +139,12 @@ To install and run the Registry:
 3. Double-check that Metacat's temporary folder, application.tempDir, is 
    writable by the apache user, usually www-data or apache. 
 
-4. Make sure that the following scripts (found in ``<tomcat-home>/webapps/knb/cgi-bin``) 
+4. Make sure that the following scripts (found in ``<tomcat-home>/webapps/metacat/cgi-bin``) 
    are executable: register-dataset.cgi and ldapweb.cgi.
 
   ::
   
-    sudo chmod +x <tomcat-home>/webapps/knb/cgi-bin/*.cgi
+    sudo chmod +x <tomcat-home>/webapps/metacat/cgi-bin/*.cgi
 
 5. Restart Apache.
 
@@ -173,7 +173,7 @@ Skins Configuration settings. If you are using the default skin, you must
 disable the 'show site list' setting before you can submit the form without 
 errors. You may also wish to remove (or modify) the list of NCEAS-specific 
 projects that appear in the default registry. To remove these form fields, 
-open Metacat's administrative interface (http://<your.context.url>/knb/admin) 
+open Metacat's administrative interface (http://<your.context.url>/metacat/admin) 
 and select the Skins Specific Properties Configuration option. On the skins 
 configuration page, uncheck the boxes beside any form elements that you do not 
 wish to appear in the registry.
@@ -576,7 +576,7 @@ using an squery action.
   <title>Search</title>
   </head>
   <body>
-  <form method="POST" action="http://panucci.nceas.ucsb.edu/knb/servlet/metacat">
+  <form method="POST" action="http://panucci.nceas.ucsb.edu/metacat/metacat">
 
   Search for:
 
@@ -831,7 +831,7 @@ updated metadata and data back to the grid nodes.
 
 For more information about each EarthGrid service and its WSDL file, navigate 
 to the "services" page on your Metacat server 
-(e.g., http://knb.ecoinformatics.org/knb/services). 
+(e.g., http://knb.ecoinformatics.org/metacat/services). 
 Note that the AdminService and Version service that appear on this page are 
 not part of EarthGrid.
 
@@ -884,7 +884,7 @@ Morpho Preferences to point to your Metacat server.
    
    Set the Metacat URL in the Morpho preferences to point to your Metacat.
 
-For more information about Morpho, please see: http://knb.ecoinformatics.org/morphoportal.jsp
+For more information about Morpho, please see: http://knb.ecoinformatics.org/
 
 Creating Your Own Client
 ------------------------

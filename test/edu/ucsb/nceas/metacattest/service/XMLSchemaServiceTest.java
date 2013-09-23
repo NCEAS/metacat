@@ -63,14 +63,14 @@ public class XMLSchemaServiceTest extends TestCase
   
   public void testGetBaseUrlFromSchemaURL()
   {
-      String url="http://www.example.com/knb/example.xsd";
-      String base = "http://www.example.com/knb/";
+      String url="http://www.example.com/metacat/example.xsd";
+      String base = "http://www.example.com/metacat/";
       String baseURL = XMLSchemaService.getBaseUrlFromSchemaURL(url);
       assertTrue("The base url should be "+base, baseURL.equals(base));
       url = "www.example.com/example.xsd";
       baseURL = XMLSchemaService.getBaseUrlFromSchemaURL(url);
       assertTrue("The base url should be "+null, baseURL==null);
-      url="http://www.example.com/knb/";
+      url="http://www.example.com/metacat/";
       baseURL = XMLSchemaService.getBaseUrlFromSchemaURL(url);
       assertTrue("The base url should be "+url, baseURL.equals(url));
   }

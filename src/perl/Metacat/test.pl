@@ -40,7 +40,7 @@ print "ok 1\n";
 # Insert your test code below (better if it prints "ok 13"
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
-my $metacatUrl = "http://snow.joneseckert.org:8080/knb/servlet/metacat";
+my $metacatUrl = "http://snow.joneseckert.org:8080/metacat/metacat";
 my $username = 'uid=jones,o=NCEAS,dc=ecoinformatics,dc=org';
 my $password = 'your-pw-goes-here';
 

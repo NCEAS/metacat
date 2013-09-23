@@ -40,7 +40,7 @@ except:
     sys.exit(1)
 
 print "Logging into destination server"
-dest = metacat.MetacatClient('localhost:8080','/knb/metacat')
+dest = metacat.MetacatClient('localhost:8080','/metacat/metacat')
 dest.login('username','password','NCEAS')
 
 print "Open docid list and loop"

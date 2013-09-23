@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <config>
 	<client>
-		<callbackUri>https://mn-demo-4.test.dataone.org/knb/ready</callbackUri>
+		<callbackUri>https://mn-demo-4.test.dataone.org/metacat/ready</callbackUri>
 		<serviceUri>https://cilogon.org/oauth</serviceUri>
 		<authorizeUri>https://cilogon.org/delegate</authorizeUri>
 		<skin>DataONE</skin>
@@ -13,7 +13,7 @@
 		<id>myproxy:oa4mp,2012:/client/14866728c43d90adfe6dbd7682c35aba</id>		
 
 		<!-- file store -->
-        <fileStore path="/var/lib/tomcat6/webapps/knb/WEB-INF/oa4mp">
+        <fileStore path="/var/lib/tomcat6/webapps/metacat/WEB-INF/oa4mp">
 			<assetStore/>
 			<transactions/>
 			<clients/>

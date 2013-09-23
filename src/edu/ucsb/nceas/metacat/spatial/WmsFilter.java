@@ -35,7 +35,7 @@ public final class WmsFilter implements Filter {
       long before = System.currentTimeMillis();
       
       // Attributes != Paramters but there is no setParameter
-      //request.setAttribute("SLD", "http://pmark.msi.ucsb.edu:8180/knb/style/skins/ebm/spatial/data_bounds_style.sld");
+      //request.setAttribute("SLD", "http://pmark.msi.ucsb.edu:8180/metacat/style/skins/ebm/spatial/data_bounds_style.sld");
 
       Enumeration e = request.getParameterNames();
       while( e.hasMoreElements() ) {

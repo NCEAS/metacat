@@ -33,7 +33,7 @@ import httplib, urllib
 
 class MetacatClient:
 
-    def __init__(self, server="knb.ecoinformatics.org", urlPath="/knb/metacat"):
+    def __init__(self, server="localhost:8080", urlPath="/metacat/metacat"):
         self.metacatUrlPath = urlPath
         self.metacatServer = server
         self.sessionid = None

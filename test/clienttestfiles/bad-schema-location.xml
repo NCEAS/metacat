@@ -2,8 +2,8 @@
    xmlns:prod="http://example.org/prod"
    xmlns:xs="http://www.w3.org/2001/XMLSchema"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-   xsi:schemaLocation="http://example.org/prod http://gorfdsdas/knb/test/chapter05prod.xsd
-                       http://example.org/ord http://gorfdsdas/knb/test/chapter05ord.xsd">
+   xsi:schemaLocation="http://example.org/prod http://gorfdsdas/metacat/test/chapter05prod.xsd
+                       http://example.org/ord http://gorfdsdas/metacat/test/chapter05ord.xsd">
   <items>
     <prod:product>
       <number xsi:type="xs:short">557</number>

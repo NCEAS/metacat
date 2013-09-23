@@ -41,8 +41,8 @@ my $response;
 
 my $listname = "list_of_docids";
 
-my $metacat1_url = "https://mn-stage-ucsb-1.dataone.org/knb/metacat";
-my $metacat2_url = "https://demo2.test.dataone.org/knb/metacat";
+my $metacat1_url = "https://mn-stage-ucsb-1.dataone.org/metacat/metacat";
+my $metacat2_url = "https://demo2.test.dataone.org/metacat/metacat";
 my $username = "uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org";
 my $password = "xxx";
 

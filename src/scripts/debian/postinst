@@ -15,38 +15,38 @@ echo "Stopping Tomcat"
 /etc/init.d/tomcat6 stop
 
 ## backup the old war file
-if [ -e ${TOMCAT_HOME}/webapps/knb.war ]
+if [ -e ${TOMCAT_HOME}/webapps/metacat.war ]
 then
-  echo "Backing up ${TOMCAT_HOME}/webapps/knb.war to ${TOMCAT_HOME}/webapps/knb.war.${LONG_DATE}"
-  mv ${TOMCAT_HOME}/webapps/knb.war ${TOMCAT_HOME}/webapps/knb.war.${LONG_DATE}
+  echo "Backing up ${TOMCAT_HOME}/webapps/metacat.war to ${TOMCAT_HOME}/webapps/metacat.war.${LONG_DATE}"
+  mv ${TOMCAT_HOME}/webapps/metacat.war ${TOMCAT_HOME}/webapps/metacat.war.${LONG_DATE}
 fi  
 
 ## remove the knb application directory
-if [ -d ${TOMCAT_HOME}/webapps/knb ]
+if [ -d ${TOMCAT_HOME}/webapps/metacat ]
 then
   echo "Removing the old metacat application directorties"
-  rm -rf ${TOMCAT_HOME}/webapps/knb
+  rm -rf ${TOMCAT_HOME}/webapps/metacat
 fi 
 
 ## copy the new war file into the webapps directory
-echo copying new knb.war file to ${TOMCAT_HOME}/webapps/knb.war
-cp ${SOURCE_DIR}/knb.war ${TOMCAT_HOME}/webapps/knb.war
+echo copying new metacat.war file to ${TOMCAT_HOME}/webapps/metacat.war
+cp ${SOURCE_DIR}/metacat.war ${TOMCAT_HOME}/webapps/metacat.war
 
 ## expand the war file
 CURR_DIR=`pwd`
 
-## make knb directory and extract knb.war into it.
-echo "Making knb application directory: ${TOMCAT_HOME}/webapps/knb"
-mkdir ${TOMCAT_HOME}/webapps/knb
-cd ${TOMCAT_HOME}/webapps/knb
+## make knb directory and extract metacat.war into it.
+echo "Making knb application directory: ${TOMCAT_HOME}/webapps/metacat"
+mkdir ${TOMCAT_HOME}/webapps/metacat
+cd ${TOMCAT_HOME}/webapps/metacat
 
-echo "extracting knb.war into ${TOMCAT_HOME}/webapps/knb"
-jar -xvf ${TOMCAT_HOME}/webapps/knb.war > /dev/null
-chown -R ${TOMCAT_USER} ${TOMCAT_HOME}/webapps/knb
+echo "extracting metacat.war into ${TOMCAT_HOME}/webapps/metacat"
+jar -xvf ${TOMCAT_HOME}/webapps/metacat.war > /dev/null
+chown -R ${TOMCAT_USER} ${TOMCAT_HOME}/webapps/metacat
 echo cd to $CURR_DIR
 cd $CURR_DIR
 
-chmod -R  +x ${TOMCAT_HOME}/webapps/knb/cgi-bin
+chmod -R  +x ${TOMCAT_HOME}/webapps/metacat/cgi-bin
 
 ###############################################################################
 # Create Metacat External File Space
@@ -116,17 +116,17 @@ a2dismod jk
 a2enmod jk
 
 ## copy in knb site file
-if [ -e /etc/apache2/sites-available/knb ]
+if [ -e /etc/apache2/sites-available/metacat ]
 then 
-  KNB_SITE_DIFF=`diff ${SOURCE_DIR}/knb /etc/apache2/sites-available/knb`
+  KNB_SITE_DIFF=`diff ${SOURCE_DIR}/metacat /etc/apache2/sites-available/metacat`
   if [ "${KNB_SITE_DIFF}" != "" ]
   then
-    echo "Backing up /etc/apache2/sites-available/knb to /etc/apache2/sites-available/knb.${LONG_DATE}"
-    mv /etc/apache2/sites-available/knb /etc/apache2/sites-available/knb.${LONG_DATE}
+    echo "Backing up /etc/apache2/sites-available/metacat to /etc/apache2/sites-available/metacat.${LONG_DATE}"
+    mv /etc/apache2/sites-available/metacat /etc/apache2/sites-available/metacat.${LONG_DATE}
   fi
 fi
 echo "Copying knb site file to /etc/apache2/sites-available/"
-cp ${SOURCE_DIR}/knb /etc/apache2/sites-available/
+cp ${SOURCE_DIR}/metacat /etc/apache2/sites-available/
 
 ## enable knb site
 echo "Enabling knb site"

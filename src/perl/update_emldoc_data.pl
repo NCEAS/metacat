@@ -43,7 +43,7 @@ my $listname = "kruger_docids";
 my $metacat1_url = "http://dataknp.sanparks.org/sanparks/metacat";
 my $username = "uid=judithk,o=SANParks,dc=ecoinformatics,dc=org";
 my $password = "xxxxxx";
-#my $metacat1_url = "http://fred.msi.ucsb.edu/knb/metacat";
+#my $metacat1_url = "http://fred.msi.ucsb.edu/metacat/metacat";
 #my $username = "uid=leinfelder,o=NCEAS,dc=ecoinformatics,dc=org";
 #my $password = "xxxxxx";
 

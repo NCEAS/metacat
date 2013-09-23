@@ -1,8 +1,8 @@
 Enabling Web Searches: Sitemaps
 ===============================
 
-Sitemaps are XML files that tell search engines—such as Google, which is 
-discussed in this section--which URLs on your websites are available for 
+Sitemaps are XML files that tell search engines - such as Google, which is 
+discussed in this section - which URLs on your websites are available for 
 crawling. Currently, the only way for a search engine to crawl and index 
 Metacat so that individual metadata entries are available via Web searches 
 is with a sitemap. Metacat automatically creates sitemaps for all public 
@@ -33,7 +33,7 @@ Because Metacat limits the number of sitemap entries in each sitemap file to
 Verify that your sitemap files are available to the Web by browsing to::
 
   <your_web_context>/sitemaps/metacat<X>.xml 
-  (e.g., your.server.org/knb/sitemaps/metacat1.xml)
+  (e.g., your.server.org/metacat/sitemaps/metacat1.xml)
 
 Registering a Sitemap
 ---------------------

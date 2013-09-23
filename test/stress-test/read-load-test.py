@@ -55,7 +55,7 @@ debug("************************************************** ")
 
 # Initialize a metacat client connection and log in as test user
 t1 = time()
-mc = metacat.MetacatClient(host,'/knb/metacat')
+mc = metacat.MetacatClient(host,'/metacat/metacat')
 debug("[test] -- Processing Login")
 response = mc.login('test', 'test', 'NCEAS')
 t2 = time()

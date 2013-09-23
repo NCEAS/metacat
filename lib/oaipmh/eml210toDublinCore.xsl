@@ -20,7 +20,7 @@
        to be carried out once.
     -->     
   <xsl:variable name="ids" select="//*[@id!='']"/>
-  <xsl:variable name="metacat-server">http://metacat.lternet.edu/knb/metacat</xsl:variable>
+  <xsl:variable name="metacat-server">http://metacat.lternet.edu/metacat/metacat</xsl:variable>
 
   <xsl:template match="/">
     <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" 

@@ -1,0 +1,22 @@
+NameVirtualHost *:80
+<VirtualHost *:80>
+        DocumentRoot /var/lib/tomcat6/webapps/metacat
+        ServerName <your_hostname_here>
+
+        ScriptAlias /metacat/cgi-bin/ /var/lib/tomcat6/webapps/metacat/cgi-bin/
+        <Directory "/var/lib/tomcat6/webapps/metacat/cgi-bin/">
+                AllowOverride All
+                Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+                Order allow,deny
+                Allow from all
+        </Directory>
+
+        <IfModule mod_jk.c>
+                JkMount /metacat ajp13
+                JkMount /metacat/* ajp13
+                JkMount /metacat/metacat ajp13
+                JkMount /*.jsp ajp13
+                JkUnMount /metacat/cgi-bin/* ajp13
+        </IfModule>
+</VirtualHost>
+

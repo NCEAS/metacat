@@ -715,8 +715,8 @@ public class MetaCatServlet extends HttpServlet {
 			// Check if this is a simple read request that doesn't use the
 			// "action" syntax
 			// These URLs are of the form:
-			// http://localhost:8180/knb/metacat/docid/skinname
-			// e.g., http://localhost:8180/knb/metacat/test.1.1/knb
+			// http://localhost:8180/metacat/metacat/docid/skinname
+			// e.g., http://localhost:8180/metacat/metacat/test.1.1/knb
 			String pathInfo = request.getPathInfo();
 			if (pathInfo != null) {
 				String[] path = pathInfo.split("/");

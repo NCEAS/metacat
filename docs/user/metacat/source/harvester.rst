@@ -126,13 +126,13 @@ how it should be harvested.
 
    ::
    
-     http://somehost.somelocation.edu:8080/knb/index.jsp
+     http://somehost.somelocation.edu:8080/metacat/index.jsp
 
    then the Harvester Registration page would be accessed at: 
 
    ::
    
-     http://somehost.somelocation.edu:8080/knb/style/skins/default/harvesterRegistrationLogin.jsp
+     http://somehost.somelocation.edu:8080/metacat/style/skins/default/harvesterRegistrationLogin.jsp
 
 .. figure:: images/screenshots/image065.jpg
    :align: center
@@ -267,7 +267,7 @@ source code is installed:
 
    ::
    
-     set METACAT_HOME=C:\somePath\knb
+     set METACAT_HOME=C:\somePath\metacat
 
    On Linux/Unix (bash shell): 
    
@@ -494,13 +494,13 @@ To unregister:
 
    ::
    
-     http://somehost.somelocation.edu:8080/knb/index.jsp
+     http://somehost.somelocation.edu:8080/metacat/index.jsp
 
    then the Harvester Registration page would be accessed at: 
 
    ::
 
-     http://somehost.somelocation.edu:8080/knb/style/skins/default/harvesterRegistrationLogin.jsp
+     http://somehost.somelocation.edu:8080/metacat/style/skins/default/harvesterRegistrationLogin.jsp
 
 2. Enter and submit your Metacat account information. On the subsequent screen, 
    click Unregister to remove your site and discontinue harvests. 

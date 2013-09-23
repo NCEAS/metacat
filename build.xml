@@ -828,17 +828,19 @@
 	</target>
 
 	<target name="install" depends="build-metacat"
-		description="* Full Install For Development *">
+		description="* Install Metacat For Development *">
 		<copy file="${dist.dir}/${metacat.context}.war"
 			todir="${app.deploy.dir}" />
-               <!-- <copy file="${dist.dir}/${metacat.context}.war"
-                        todir="${app.deploy.dir2}" />-->
 		<delete dir="${app.deploy.dir}/${metacat.context}" />
-		<!--<delete dir="${app.deploy.dir2}/${metacat.context}" />-->
 		<copy file="${dist.dir}/geoserver.war"
 					todir="${app.deploy.dir}" />
+		<delete dir="${app.deploy.dir}/geoserver" />
 		<copy file="${dist.dir}/metacat-index.war"
 					todir="${app.deploy.dir}" />
+		<delete dir="${app.deploy.dir}/metacat-index" />
+		<copy file="${dist.dir}/metacatui.war"
+					todir="${app.deploy.dir}" />
+		<delete dir="${app.deploy.dir}/metacatui" />
 		<tstamp>
 			<format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa" />
 		</tstamp>
@@ -1533,7 +1535,7 @@
 		</copy>
 		<chmod file="${deb.pkg.dir}/DEBIAN/postinst" perm="755" />
 
-		<copy file="${dist.dir}/knb.war"
+		<copy file="${dist.dir}/${metacat.context}.war"
 			todir="${deb.pkg.dir}/usr/share/metacat-${metacat.version}" />
 		<copy file="./metacat-bin-${metacat.version}.tar.gz"
 			tofile="${deb.pkg.dir}/metacat_${metacat.version}.orig.tar.gz" />

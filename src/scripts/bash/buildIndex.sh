@@ -12,7 +12,7 @@ if  [ $# -ne 1 ]
     echo "USAGE: $0 docidfile"
     exit 1
 fi 
-echo 'Please type metacat url (It should look like "http://pacific.msi.ucsb.edu:8080/knb/metacat")'
+echo 'Please type metacat url (It should look like "http://pacific.msi.ucsb.edu:8080/metacat/metacat")'
 read metacatBaseURL
 echo 'Please type KNB user name (It should look like "uid=tao,o=NCEAS,dc=ecoinformatics,dc=org")'
 read username

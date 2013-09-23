@@ -13,12 +13,12 @@ transport layer and specifies six query methods (called verbs) that must be
 supported by an OAI-PMH compliant data provider (also referred to as a 
 repository). These methods are:
 
-1. ``GetRecord`` – retrieves zero or one complete metadata record from a repository;
-2. ``Identify`` – retrieves information about a repository;
-3. ``ListIdentifiers`` – retrieves zero or more metadata record “headers” (not the complete metadata record) from a repository;
-4. ``ListMetadataFormats`` – retrieves a list of available metadata record formats supported by a repository;
-5. ``ListRecords`` – retrieves zero or more complete metadata records from a respository; and
-6. ``ListSets`` – retrieves the set structure from a repository.
+1. ``GetRecord`` - retrieves zero or one complete metadata record from a repository;
+2. ``Identify`` - retrieves information about a repository;
+3. ``ListIdentifiers`` - retrieves zero or more metadata record "headers" (not the complete metadata record) from a repository;
+4. ``ListMetadataFormats`` - retrieves a list of available metadata record formats supported by a repository;
+5. ``ListRecords`` - retrieves zero or more complete metadata records from a repository; and
+6. ``ListSets`` - retrieves the set structure from a repository.
 
 The OAI-PMH compliant data provider must accept requests from both HTTP GET 
 and HTTP POST request methods. Responses from the data provider must be 
@@ -105,17 +105,17 @@ Metacat.
 
 Users of the Metacat OAI-PMH Data Provider should be aware of the following issues:
 
-* 'Deleted' Status – OAI-PMH repositories can optionally flag records with 
+* 'Deleted' Status - OAI-PMH repositories can optionally flag records with 
   a 'deleted' status, indicating that a record in the metadata format 
   specified by the metadataPrefix is no longer available. Since Metacat does 
   not provide a mechanism for retrieving a list of deleted documents, the use 
   of the 'deleted' status is not supported in this implementation of the 
   OAI-PMH Data Provider. This represents a possible future enhancement.
-* Sets – OAI-PMH repositories can optionally support set hierarchies. Since it 
+* Sets - OAI-PMH repositories can optionally support set hierarchies. Since it 
   has not been determined how set hierarchies should be structured in 
   Metacat, this implementation of the OAI-PMH repository does not support 
   set hierarchies. This represents a possible future enhancement.
-* Datestamp Granularity – When expressing datestamps for repository documents, 
+* Datestamp Granularity - When expressing datestamps for repository documents, 
   OAI-PMH allows two levels of granularity: day granularity and seconds 
   granularity. Since the Metacat database stores the value of its 
   ``xml_documents.date_updated`` field in day granularity, it is the level 
@@ -133,11 +133,11 @@ as needed to support integration with Metacat.
 
 Users of the Metacat OAI-PMH Harvester should be aware of the following issues:
 
-* Handling of 'Deleted' status –  The Metacat OAI-PMH Harvester program does 
+* Handling of 'Deleted' status -  The Metacat OAI-PMH Harvester program does 
   check to see whether a 'deleted' status is flagged for a harvested document, 
   and if it is, the document is correspondingly deleted from the Metacat repository.
-* Datestamp Granularity – When expressing datestamps for repository documents, 
-  OAI-PMH allows two levels of granularity – day granularity and seconds 
+* Datestamp Granularity - When expressing datestamps for repository documents, 
+  OAI-PMH allows two levels of granularity - day granularity and seconds 
   granularity. Since the Metacat database stores the value of its 
   ``xml_documents.last_updated`` field in day granularity, it is also the 
   level that is supported by both the Metacat OAI-PMH Data Provider and the 
@@ -175,12 +175,12 @@ To configure and enable the Data Provider servlet:
 
    ::
    
-     ``oaipmh.repositoryIdentifier`` – A string that identifies this repository
-     ``Identify.adminEmail`` – The email address of the repository administrator
+     ``oaipmh.repositoryIdentifier`` - A string that identifies this repository
+     ``Identify.adminEmail`` - The email address of the repository administrator
 
 3. Edit the deployment descriptor (``web.xml``) file, also in the WEB-INF 
    directory. Uncomment the servlet-name and servlet-mapping entries for the 
-   DataProvider servlet by removing the surrounding “<!--“ and “-->” strings:
+   DataProvider servlet by removing the surroundin "<!--" and "-->" strings:
 
    ::
    
@@ -213,14 +213,14 @@ settings that are used by the DataProvider servlet.
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
 | AbstractCatalog.secondsToLive          | 3600                                                                       | The lifetime, in seconds, of the resumptionToken.                                                                                               |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| AbstractCatalog.granularity            | YYYY-MM-DD or                                                              | Granularity of datestamps. Either ‘days granularity’ or ‘seconds granularity’ values can be used.                                               |
+| AbstractCatalog.granularity            | YYYY-MM-DD or                                                              | Granularity of datestamps. Either "days granularity" or "seconds granularity" values can be used.                                               |
 |                                        | YYYY-MM-DDThh:mm:ssZ                                                       |                                                                                                                                                 |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
 | Identify.repositoryName                | Metacat OAI-PMH Data Provider                                              | A name for the repository.                                                                                                                      |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
 | Identify.earliestDatestamp             | 2000-01-01T00:00:00Z                                                       | Earliest datestamp supported by this repository                                                                                                 |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
-| Identify.deletedRecord                 | yes or no                                                                  | Use ‘yes’ if the repository indicates the status of deleted records; use ‘no’ if it doesn’t.                                                    |
+| Identify.deletedRecord                 | yes or no                                                                  | Use "yes" if the repository indicates the status of deleted records; use "no" if it doesn't.                                                    |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
 | Identify.adminEmail                    | mailto:tech_support@someplace.org                                          | Email address of the repository administrator.                                                                                                  |
 +----------------------------------------+----------------------------------------------------------------------------+-------------------------------------------------------------------------------------------------------------------------------------------------+
@@ -316,7 +316,7 @@ The following example illustrates how the Metacat OAI-PMH Harvester is run from 
          -dn uid=jdoe,o=myorg,dc=ecoinformatics,dc=org \
          -password some_password \
          -metadataPrefix oai_dc \
-         http://baseurl.repository.org/knb/dataProvider
+         http://baseurl.repository.org/metacat/dataProvider
 
    On Linux/Unix: 
 
@@ -326,7 +326,7 @@ The following example illustrates how the Metacat OAI-PMH Harvester is run from 
          -dn uid=jdoe,o=myorg,dc=ecoinformatics,dc=org \
          -password some_password \
          -metadataPrefix oai_dc \
-         http://baseurl.repository.org/knb/dataProvider
+         http://baseurl.repository.org/metacat/dataProvider
 
                         
 Command line options and parameters are described in the following table:
@@ -346,7 +346,7 @@ Command line options and parameters are described in the following table:
 +-----------------------------+----------------------------------------------------+-----------------------------------------------------------------------------------------------------+
 | -setSpec                    | ``-setSpec someSet``                               | Harvest documents belonging to this set. (Optional)                                                 |
 +-----------------------------+----------------------------------------------------+-----------------------------------------------------------------------------------------------------+
-| base_url                    | ``http://baseurl.repository.org/knb/dataProvider`` | Base URL of the remote repository                                                                   |
+| base_url                    | ``http://baseurl.repository.org/metacat/dataProvider`` | Base URL of the remote repository                                                                   |
 +-----------------------------+----------------------------------------------------+-----------------------------------------------------------------------------------------------------+
 
 

@@ -93,7 +93,7 @@ public class UploadIPCCDataTest extends TestCase
 	  /**Constants*/
 	  private static String SRBDATAFILEDIR = "/home/tao/data-file/IPCC"; // Dir for storing srb data file
 	  private static String DOCLISTFILE       = "docidList"; // File name which stores IPCC document id
-	  private static String METACATURL      = "http://chico.dyndns.org/knb/metacat";
+	  private static String METACATURL      = "http://chico.dyndns.org/metacat/metacat";
 	  private static String USERNAME          = "uid=dpennington,o=LTER,dc=ecoinformatics,dc=org";
 	  private static String PASSWORD           = "password";
 	  private static String TABLEONLINEURL= "/eml:eml/dataset/dataTable/physical/distribution/online/url";

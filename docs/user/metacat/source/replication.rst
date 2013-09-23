@@ -167,17 +167,17 @@ Note: Instructions are for Ubuntu/Debian systems.
      sudo cp <hostname>-apache.key /etc/ssl/private 
 
 4. Apache needs to be configured to request a client certificate when the 
-   replication API is utilized. The helper file named "knb-ssl" has default 
+   replication API is utilized. The helper file named "metacat-site-ssl" has default 
    rules that configure Apache for SSL and client certificate authentication. 
-   Set up these SSL settings by copying the knb-ssl file into the ``sites-available`` 
+   Set up these SSL settings by copying the metacat-site-ssl file into the ``sites-available`` 
    directory, editing pertinent values to match your system and running 
-   ``a2ensite`` to enable the site. (Note: some settings in knb-ssl need to be 
+   ``a2ensite`` to enable the site. (Note: some settings in metacat-site-ssl need to be 
    changed to match the specifics of your system and Metacat deployment.) 
 
    ::
    
-     sudo cp <metacat_helper_dir>/knb-ssl <apache_install_dir>/sites-available
-     sudo a2ensite knb-ssl
+     sudo cp <metacat_helper_dir>/metacat-site-ssl <apache_install_dir>/sites-available
+     sudo a2ensite metacat-site-ssl
 
 5. Enable the ssl module: 
 

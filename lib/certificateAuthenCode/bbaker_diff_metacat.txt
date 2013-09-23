@@ -226,7 +226,7 @@ diff -r1.20 metacatinstall.html
 > org.ietf.jgss.<span class="tooltip" title="included in standard JRE/JDK libraries">GSSCredential</span> credential = server.get(<span class="tooltip" title="MyProxy username">username</span>, <span class="tooltip" title="MyProxy passphrase">passphrase</span>, <span class="tooltip" title="Credential lifetime in seconds">lifetime</span>);
 > 
 > // 2. Connect to Metacat via GSI+HTTPS
-> String metacatUrl = "https://&lt;metacat server&gt;:8443/knb/metacat/";
+> String metacatUrl = "https://&lt;metacat server&gt;:8443/metacat/metacat/";
 > edu.ucsb.nceas.metacat.client.Metacat client 
 >     = edu.ucsb.nceas.metacat.client.MetacatFactory.createMetacatConnection(metacatUrl);
 > String loginResult = client.login(credential);
@@ -243,7 +243,7 @@ diff -r1.20 metacatinstall.html
 >       IDs, which will generally be LDAP DNs.  You can do this in a map
 >       file that starts out in
 >       <code>metacat/src/gsimap.properties</code> and gets deployed to
->       Tomcat's <code>webapps/knb/WEB-INF/</code> directory.  You can
+>       Tomcat's <code>webapps/metacat/WEB-INF/</code> directory.  You can
 >       modify it in either place, but it will be overwritten each time
 >       you redeploy Metacat if you change it in Tomcat's installation
 >       directory.</p>
@@ -275,12 +275,12 @@ diff -r1.20 metacatinstall.html
 > 
 >       <p>Short answer: replace "<code>https</code>" with
 >       "<code>httpg</code>".</p>
->       <blockquote><pre><code><i>https</i>://&lt;metacat server&gt;:8443/knb/metacat/</code></pre></blockquote>
+>       <blockquote><pre><code><i>https</i>://&lt;metacat server&gt;:8443/metacat/metacat/</code></pre></blockquote>
 >       <p>becomes</p>
->       <blockquote><pre><i>httpg</i>://&lt;metacat server&gt;:8443/knb/metacat/</pre></blockquote>
+>       <blockquote><pre><i>httpg</i>://&lt;metacat server&gt;:8443/metacat/metacat/</pre></blockquote>
 > 
 >       <p>Long answer: The URL in the example above,
->       <code>https://&lt;metacat server&gt;:8443/knb/metacat/</code>,
+>       <code>https://&lt;metacat server&gt;:8443/metacat/metacat/</code>,
 >       uses the <code>HTTPS</code> protocol.  However, actually
 >       handling that connection requires a protocol handler that
 >       understands GSI+HTTPS instead of plain HTTPS.  Fortunately,

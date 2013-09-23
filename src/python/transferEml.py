@@ -38,7 +38,7 @@ except:
     sys.exit(1)
 
 print "Logging into destination server"
-dest = metacat.MetacatClient('yourserver:8180','/knb/metacat')
+dest = metacat.MetacatClient('yourserver:8180','/metacat/metacat')
 dest.login('user','password','NCEAS')
 
 print "Logging into source server"

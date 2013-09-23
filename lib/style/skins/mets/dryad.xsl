@@ -147,7 +147,7 @@
 		
 		<!-- General, non-citation, metadata display-->
 		<html xmlns="http://www.w3.org/1999/xhtml" xmlns:dri="http://di.tamu.edu/DRI/1.0/" xmlns:i18n="http://apache.org/cocoon/i18n/2.1">
-		<!--<link type="text/css" rel="stylesheet" media="screen" href="/knb/style/skins/default/default.css" />-->
+		<!--<link type="text/css" rel="stylesheet" media="screen" href="/metacat/style/skins/default/default.css" />-->
 		<xsl:call-template name="documenthead"/>
 		<body id="Overview">
 		<div id="main_wrapper">
@@ -479,7 +479,7 @@
 								<img src="knb/style/skins/mets/cc-zero.png"/>
 							</a>
 							<a href="http://opendefinition.org/">
-								<img src="/knb/style/skins/mets/opendata.png"/>
+								<img src="/metacat/style/skins/mets/opendata.png"/>
 							</a>
 						</div>
 					</xsl:if>
@@ -489,10 +489,10 @@
 						<i18n:text>xmlui.dri2xhtml.METS-1.0.license-cc0</i18n:text>
 						<xsl:text> &#160; </xsl:text>
 						<a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">
-							<img src="/knb/style/skins/mets/cc-zero.png"/>
+							<img src="/metacat/style/skins/mets/cc-zero.png"/>
 						</a>
 						<a href="http://opendefinition.org/">
-							<img src="/knb/style/skins/mets/opendata.png"/>
+							<img src="/metacat/style/skins/mets/opendata.png"/>
 						</a>
 					</div>
 				</xsl:otherwise>

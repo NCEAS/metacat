@@ -41,11 +41,11 @@
 			<head>
 				<title>Search Results</title>
 				<link rel="stylesheet" type="text/css"
-					href="/knb/style/skins/{$qformat}/{$qformat}.css" />
+					href="/metacat/style/skins/{$qformat}/{$qformat}.css" />
 				<script language="Javascript" type="text/JavaScript"
-					src="/knb/style/skins/{$qformat}/{$qformat}.js" />
+					src="/metacat/style/skins/{$qformat}/{$qformat}.js" />
 				<script language="Javascript" type="text/JavaScript"
-					src="/knb/style/common/branding.js" />
+					src="/metacat/style/common/branding.js" />
 				<script language="JavaScript">
 					<![CDATA[
 					function submitform(action,form_ref) {
@@ -143,7 +143,7 @@
 					</xsl:attribute>
 	
 					<td class="text_plain">
-						<form action="/knb/metacat"
+						<form action="/metacat/metacat"
 							method="POST">
 							<xsl:attribute name="name">
 								<xsl:value-of select="translate(./docid, '()-.', '____')" />
@@ -224,7 +224,7 @@
 				<tr class="searchresultsdivider">
 					<td colspan="5">
 						<img
-							src="/knb/style/skins/default/images/transparent1x1.gif"
+							src="/metacat/style/skins/default/images/transparent1x1.gif"
 							width="1" height="1" />
 					</td>
 				</tr>

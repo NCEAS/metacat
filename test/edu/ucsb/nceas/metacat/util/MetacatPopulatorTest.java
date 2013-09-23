@@ -77,8 +77,8 @@ public class MetacatPopulatorTest extends MCTestCase
             MetacatPopulator mp = new MetacatPopulator(
                     "http://knb.ecoinformatics.org/knb",  
                     /*"http://localhost:8080/knb"*/
-                    "https://demo1.test.dataone.org/knb/d1/mn", 
-                    //"https://knb-test-1.test.dataone.org/knb/d1/mn", 
+                    "https://demo1.test.dataone.org/metacat/d1/mn", 
+                    //"https://knb-test-1.test.dataone.org/metacat/d1/mn", 
                     /*"msucci"*//*"connolly.301"*/ 
                     "tao.1.1", //"frog", 
                     "uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org", 

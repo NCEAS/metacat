@@ -54,7 +54,7 @@ debug("       interval: $interval ")
 debug("       host: $host ")
 debug("************************************************** ")
 
-mc = metacat.MetacatClient(host,'/knb/metacat')
+mc = metacat.MetacatClient(host,'/metacat/metacat')
 
 query_template_file = open('squery.xml.tmpl', 'r')
 query_template = query_template_file.read()

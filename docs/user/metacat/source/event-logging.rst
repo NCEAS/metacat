@@ -7,7 +7,7 @@ event reports can be output from Metacat in XML format, and/or customized to
 include only certain events: events from a particular IP address, user, event 
 type, or that occurred after a specified start date or before an end date. 
 
-The following URL is used to return the basic log—an XML-formatted log of all 
+The following URL is used to return the basic log- an XML-formatted log of all 
 events since the log was initiated::
 
   http://some.metacat.host/context/metacat?action=getlog 

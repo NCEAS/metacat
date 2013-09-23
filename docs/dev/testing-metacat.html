@@ -149,7 +149,7 @@
   <div class="code">&lt;workspace&gt;/metacat/test/test.properties</div>
   This should only hold one property: metacat.contextDir.  This should point to 
   the context directory for the metacat server you are testing.  For example:
-  <div class="code">metacat.contextDir=/var/lib/tomcat6/webapps/knb</div>
+  <div class="code">metacat.contextDir=/var/lib/tomcat6/webapps/metacat</div>
   The test classes will use this to determine where to look for the server
   metacat.properties file.</p>
   
@@ -159,9 +159,9 @@
   You will need to verify that all test.* properties are set correctly:
   <ul>
     <li>test.printdebug - true if you want debug output, false otherwise </li>
-    <li>test.metacatUrl - the url for the metacat servlet (i.e. http://localhost:8080/knb/metacat)</li>
-    <li>test.contextUrl - the url for the metacat web service (i.e. http://localhost:8080/knb)</li>
-    <li>test.metacatDeployDir - the directory where metacat is physically deployed (i.e. /usr/local/tomcat/webapps/knb)</li>
+    <li>test.metacatUrl - the url for the metacat servlet (i.e. http://localhost:8080/metacat/metacat)</li>
+    <li>test.contextUrl - the url for the metacat web service (i.e. http://localhost:8080/metacat)</li>
+    <li>test.metacatDeployDir - the directory where metacat is physically deployed (i.e. /usr/local/tomcat/webapps/metacat)</li>
     <li>test.mcUser - the first metacat test user ("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org" should be fine)</li>
     <li>test.mcPassword - the first metacat test password ("kepler" should be fine)</li>
     <li>test.mcAnotherUser - the second metacat test user.  This user must be a member of the knb-usr 
@@ -264,7 +264,7 @@
   <p>For each Skin:</p>
   <ul>
   <li>View main skin page by going to:
-    <div class="code">http://dev.nceas.ucsb.edu/knb/style/skins/&lt;skin_name&gt;</div>
+    <div class="code">http://dev.nceas.ucsb.edu/metacat/style/skins/&lt;skin_name&gt;</div>
   for each skin, where &lt;skin_name&gt; is in:
     <div class="code">default, nceas, esa, knb, lter, ltss, obfs, nrs, sanparks, saeon</div>  
   Note that the kepler skin is installed on a different metacat instance and can be found at:
@@ -299,7 +299,7 @@
      <li>Use your search to find a document</li>
      <li>Choose the link to a document - you should see document details
      <li>In a separate browser, try the shortcut to the doc:
-       <div class="code">http://dev.nceas.ucsb.edu/knb/metacat/&lt;doc_id&gt;/&lt;skin_name&gt;</div>
+       <div class="code">http://dev.nceas.ucsb.edu/metacat/metacat/&lt;doc_id&gt;/&lt;skin_name&gt;</div>
      You should see the same results as going to the doc via search.</li>
      </ul>
   </li>

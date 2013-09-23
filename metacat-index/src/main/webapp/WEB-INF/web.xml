@@ -15,7 +15,7 @@
     
     <context-param>
       <param-name>metacat.properties.path</param-name>
-      <param-value>/knb/WEB-INF/metacat.properties</param-value>
+      <param-value>/metacat/WEB-INF/metacat.properties</param-value>
       <description>The metacat.properties file for sibling metacat deployment. Note that the context can change</description>
     </context-param>
 

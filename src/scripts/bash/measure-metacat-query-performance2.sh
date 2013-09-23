@@ -9,7 +9,7 @@
 #variables
 JUNIT=/usr/local/devtools/apache-ant/lib/junit-4.3.1.jar
 PROJECT=/home/tao/project/metacat
-METACATURL=http://chico.dyndns.org:8081/knb/metacat
+METACATURL=http://chico.dyndns.org:8081/metacat/metacat
 TOMCATUSER=tao
 
 
