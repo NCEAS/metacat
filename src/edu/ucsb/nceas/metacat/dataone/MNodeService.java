@@ -335,16 +335,6 @@ public class MNodeService extends D1NodeService
             	throw new InvalidRequest("1202", 
             			"The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
             }
-            
-            // add the newPid to the obsoletedBy list for the existing sysmeta
-            existingSysMeta.setObsoletedBy(newPid);
-
-            // then update the existing system metadata
-            updateSystemMetadata(existingSysMeta);
-
-            // prep the new system metadata, add pid to the affected lists
-            sysmeta.setObsoletes(pid);
-            //sysmeta.addDerivedFrom(pid);
 
             isScienceMetadata = isScienceMetadata(sysmeta);
 
@@ -378,6 +368,16 @@ public class MNodeService extends D1NodeService
                 localId = insertDataObject(object, newPid, session);
 
             }
+            
+            // add the newPid to the obsoletedBy list for the existing sysmeta
+            existingSysMeta.setObsoletedBy(newPid);
+
+            // then update the existing system metadata
+            updateSystemMetadata(existingSysMeta);
+
+            // prep the new system metadata, add pid to the affected lists
+            sysmeta.setObsoletes(pid);
+            //sysmeta.addDerivedFrom(pid);
 
             // and insert the new system metadata
             insertSystemMetadata(sysmeta);
