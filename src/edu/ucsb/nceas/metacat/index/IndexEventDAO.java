@@ -42,6 +42,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 public class IndexEventDAO {
 	
 	private static IndexEventDAO instance = null;
+	private static String DELETESQL = "delete from index_event where guid = ?";
 	
 	private IndexEventDAO() {}
 	
@@ -59,8 +60,17 @@ public class IndexEventDAO {
 		try {
 			// Get a database connection from the pool
 			dbConn = DBConnectionPool.getDBConnection("IndexEventDAO.add");
+			dbConn.setAutoCommit(false);
 			serialNumber = dbConn.getCheckOutSerialNumber();
-
+			//delete the existing event first, because we don't want the table keeps expanding.
+			if(event != null && event.getIdentifier() != null && 
+			             event.getIdentifier().getValue() != null && 
+			             !event.getIdentifier().getValue().trim().equals("")) {
+			    PreparedStatement deleteStmt = dbConn.prepareStatement(DELETESQL);
+			    deleteStmt.setString(1, event.getIdentifier().getValue());
+			    deleteStmt.execute();
+			    deleteStmt.close();	    
+			}
 			// Execute the statement
 			PreparedStatement stmt = dbConn.prepareStatement(sql);
 			stmt.setString(1, event.getIdentifier().getValue());
@@ -70,14 +80,26 @@ public class IndexEventDAO {
 
 			stmt.executeUpdate();
 			stmt.close();
+			dbConn.commit();
+		} catch (SQLException sqle) {
+            try {
+                if(dbConn != null) {
+                    //roll back if something happens
+                    dbConn.rollback();
+                } 
+            } catch (SQLException sqle2) {
+               throw new SQLException("Metacat can't roll back the change since " +sqle2.getMessage(), sqle);
+            }
+            throw sqle;
 		} finally {
 			// Return database connection to the pool
+		    dbConn.setAutoCommit(true);
 			DBConnectionPool.returnDBConnection(dbConn, serialNumber);
 		}
 	}
 	
 	public void remove(Identifier identifier) throws SQLException {
-		String sql = "delete from index_event where guid = ?";
+		
 		DBConnection dbConn = null;
 		int serialNumber = -1;
 		try {
@@ -86,7 +108,7 @@ public class IndexEventDAO {
 			serialNumber = dbConn.getCheckOutSerialNumber();
 
 			// Execute the statement
-			PreparedStatement stmt = dbConn.prepareStatement(sql);
+			PreparedStatement stmt = dbConn.prepareStatement(DELETESQL);
 			stmt.setString(1, identifier.getValue());
 			stmt.execute();
 			stmt.close();
