@@ -115,6 +115,7 @@ To install and run the Registry:
       install Template 
       install URI
       install MSERGEANT/XML-LibXSLT-1.58.tar.gz
+      install Captcha:reCAPTCHA
 
 2. Install the required system libraries using Ubuntu/Debian (instructions 
    Red Hat in sidebar)
@@ -134,6 +135,7 @@ To install and run the Registry:
     
       sudo cpan -i Config::Properties
       sudo cpan -i Scalar::Util
+      sudo cpan -i Captcha:reCAPTCHA
 
 
 3. Double-check that Metacat's temporary folder, application.tempDir, is 
@@ -189,6 +191,24 @@ equivalent command appropriate to your operating system.
    the example, the "Show Site List" and "Show Work Group" form fields, 
    corresponding to the "Station Name" and "NCEAS Project" drop-down lists in 
    the registry form, have been removed.
+   
+LDAP account management
+~~~~~~~~~~~~~~~~~~~~~~~~
+If you intend to use Metacat's built-in LDAP account management feature, 
+you will need public and private keys for the reCaptcha widget.
+
+1. Get private and public recaptcha keys from Google using your Google account:
+https://www.google.com/recaptcha/admin/create
+
+2. Configure Metacat to use those keys in the metacat.properties file:
+
+  ::
+  
+	ldap.recaptcha.publickey=<your public key>
+	ldap.recaptcha.privatekey=<your private key>
+
+3. Restart Tomcat
+
    
 Using HTML Forms (the HTTP Interface)
 -------------------------------------
