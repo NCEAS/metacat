@@ -416,7 +416,7 @@
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.git.repository.refname"
-							value="master" />
+							value="METACATUI_1_1_BRANCH" />
 		<property name="metacatui.build.dir"
 					value="metacatui_build" />
 		<property name="metacatui.resources.dir"
@@ -1392,9 +1392,10 @@
 			<fileset dir="lib/dtd"/>
 			<fileset dir="lib/schema"/>
 			<fileset dir="${utilitiesdir}"/>
-			<fileset dir="${metacatui.build.dir}"/>
 			<fileset dir="${libdir.mvn}"/>
 		</delete>
+		<!-- remove the entire directory -->
+		<delete includeemptydirs="true" dir="${metacatui.build.dir}" />
 		<!-- clean up the distribution files if they exist-->
 		<delete file="./${name}-bin-${release}.tar.gz" />
 		<delete file="./${name}-src-${release}.tar.gz" />
