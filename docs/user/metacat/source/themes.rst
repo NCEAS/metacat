@@ -1,21 +1,21 @@
 Modifying and Creating Themes
-===================
+=============================
 .. versionadded:: 2.2.0
 
 .. contents::
   
-MetacatUI's theming system, MetacatUI, is deployed separately from Metacat, allowing more 
-independent user interface customization. MetacatUI is structured in a Model-view-controller
+Metacat's theming system, MetacatUI, is deployed separately from Metacat, allowing more 
+independent user interface customization. MetacatUI is structured in a model-view-controller
 architecture using `Backbone.js <http://www.backbonejs.org>`_. Some background knowledge on Backbone.js may be helpful for 
 advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML of 
-the included Metacat views. 
+the included MetacatUI views. 
 
 .. figure:: images/screenshots/image007.png
 
-   Metacat's default home page. Users can customize the appearance using themes. 
+   MetacatUI's default home page. Users can customize the appearance using themes. 
 
 Quick Start Using the Default Theme
----------------------
+-----------------------------------
 To use the default theme, shown in the figure above, follow these steps for a quick start with MetacatUI:
 
 1. Copy the ``js/themes/default`` directory and rename it to your organization's name or choose a unique theme name.
@@ -50,16 +50,16 @@ your new footer images and their corresponding web addresses. For example,
 
 	::
 	 
-	  <script data-theme="default" data-metacat-context="knb" id="loader" type="text/javascript" src="loader.js"></script>
+	  <script data-theme="default" data-metacat-context="metacat" id="loader" type="text/javascript" src="loader.js"></script>
 
 
 Creating a Custom Theme
----------------------
+-----------------------
 All themes share the same CSS, HTML, JavaScript and image files. Any of these files can be customized by creating
 a new theme. By creating a new theme, these shared default files
 are overridden by your custom theme files.
 
-1. Copy an existing theme directory, found in ``js/themes``, and rename that directory after your new theme.
+1. Copy an existing theme directory structure, found in ``js/themes``, and rename that directory after your new theme.
 Notice that each theme directory looks something like this:
 
 	::
@@ -71,7 +71,7 @@ Notice that each theme directory looks something like this:
 	  config.js
 		
 
-2. To start fresh, delete everything from all directories except the ``config.js`` file.
+2. Only the ``config.js`` file is required for your theme - overrides are added to this configuration file as needed.
 
 3. Add a CSS file to your theme by creating a CSS file in the ``js/themes/<yourtheme>/css/`` directory
    named ``metacatui.css``
@@ -107,11 +107,11 @@ context (``data-metacat-context``):
 
 	::
 	 
-	  <script data-theme="default" data-metacat-context="knb" id="loader" type="text/javascript" src="loader.js"></script>
+	  <script data-theme="default" data-metacat-context="metacat" id="loader" type="text/javascript" src="loader.js"></script>
 
 
 Changing the background images on the default theme
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 The ``js/templates/app.html`` file contains the ``<img>`` element for the background image:
 
 	::
@@ -126,7 +126,7 @@ with all numbers from 1 to your chosen total present (i.e. do not skip any numbe
 
 
 Advanced options for custom themes
-~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Advanced users can choose to override the JavaScript files for even more customization of MetcatUI.
 
 
@@ -176,7 +176,12 @@ For more information about ``Backbone.js``, see the Backbone.js documentation at
 Creating a Custom Skin
 ----------------------
 .. deprecated:: 2.2.0
-   Use themes instead
+   Use MetacatUI themes for any new UI development. Metacat's original skinning 
+   mechanism is still included and used for aspects of rendering metadata, but is 
+   not the preferred method for building web clients for Metacat.
+   
+   To MetacatUI themes, select ``metacatui`` as the default skin during skin configuration
+   in the administration interface.
 	
 Skins are used in Metacat to customize the appearance of the search and display
 web interface that is presented by Metacat.  Skins can be used to make a Metacat
@@ -187,7 +192,7 @@ directory. This is most easily accomplished by copying one of the existing skin
 directories. Step-by-step directions for creating and installing a custom skin 
 are included below:
 
-1. Copy an exisiting skin directory. We recommend using the "default" directory.
+1. Copy an existing skin directory. We recommend using the "default" directory.
 
   ::
   
