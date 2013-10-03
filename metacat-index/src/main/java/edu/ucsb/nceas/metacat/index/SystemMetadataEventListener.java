@@ -45,6 +45,8 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 	private static Log log = LogFactory.getLog(SystemMetadataEventListener.class);
 	
 	private SolrIndex solrIndex = null;
+	
+	private ISet<SystemMetadata> source = null;
 	        
     /**
      * Default constructor - caller needs to initialize manually
@@ -94,6 +96,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
         IMap<Identifier, String> objectPathMap = DistributedMapsFactory.getObjectPathMap();
         ISet<SystemMetadata> indexQueue = DistributedMapsFactory.getIndexQueue();
         indexQueue.addItemListener(this, true);
+        this.source = indexQueue;
         log.info("System Metadata size: " + indexQueue.size());
         log.info("Object path size:" + objectPathMap.size());
     }
@@ -152,11 +155,10 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 		}
 		
 		// make sure we remove this object so that it can be re-added in the future
-		Object source = entryEvent.getSource();
-		if (source instanceof ISet<?>) {
-			((ISet<SystemMetadata>) source).remove(systemMetadata);
+		if (source != null) {
+			source.remove(systemMetadata);
 		}
-		
+				
 		Identifier obsoletes = systemMetadata.getObsoletes();
 		List<String> obsoletesChain = null;
 		if (obsoletes != null) {
