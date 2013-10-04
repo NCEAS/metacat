@@ -45,6 +45,8 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 	private static Log log = LogFactory.getLog(SystemMetadataEventListener.class);
 	
 	private SolrIndex solrIndex = null;
+	
+	private ISet<SystemMetadata> source = null;
 	        
     /**
      * Default constructor - caller needs to initialize manually
@@ -94,6 +96,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
         IMap<Identifier, String> objectPathMap = DistributedMapsFactory.getObjectPathMap();
         ISet<SystemMetadata> indexQueue = DistributedMapsFactory.getIndexQueue();
         indexQueue.addItemListener(this, true);
+        this.source = indexQueue;
         log.info("System Metadata size: " + indexQueue.size());
         log.info("Object path size:" + objectPathMap.size());
     }
@@ -135,20 +138,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
     
 
 	public void itemRemoved(ItemEvent<SystemMetadata> entryEvent) {
-		// remove from the index
-		Identifier pid = entryEvent.getItem().getIdentifier();
-		if(pid != null) {
-		    try {
-	            solrIndex.remove(pid.getValue());
-	        } catch (Exception e) {
-	            String error = "SystemMetadataEventListener.itemRemoved - couldn't remove the index for the pid "+pid.getValue()+" since "+e.getMessage();
-	            SystemMetadata systemMetadata = entryEvent.getItem();
-	            writeEventLog(systemMetadata, pid, error);
-	            log.error(error, e);
-	        }
-		}
-		
-		
+		// do nothing - indexing acts on added objects, even if they need to be deleted
 	}
 
 	public void itemAdded(ItemEvent<SystemMetadata> entryEvent) {
@@ -163,6 +153,12 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
 		    return;
 		}
+		
+		// make sure we remove this object so that it can be re-added in the future
+		if (source != null) {
+			source.remove(systemMetadata);
+		}
+				
 		Identifier obsoletes = systemMetadata.getObsoletes();
 		List<String> obsoletesChain = null;
 		if (obsoletes != null) {
