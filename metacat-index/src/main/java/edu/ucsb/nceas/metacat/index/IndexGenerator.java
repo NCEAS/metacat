@@ -85,8 +85,6 @@ public class IndexGenerator extends TimerTask {
     public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
     public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
     
-    private static int waitingTime = WAITTIME;
-    private static int maxAttempts = MAXWAITNUMBER;
     
     private SolrIndex solrIndex = null;
     //private SystemMetadataEventListener systemMetadataListener = null;
@@ -106,14 +104,7 @@ public class IndexGenerator extends TimerTask {
         resourceMapNamespaces = Settings.getConfiguration().getList(RESOURCEMAPPROPERYNAME);
         //this.systemMetadataListener = systemMetadataListener;
         //this.mNode = new MNode(buildMNBaseURL());
-        try {
-            waitingTime = Settings.getConfiguration().getInt(WAITIMEPOPERTYNAME);
-            maxAttempts = Settings.getConfiguration().getInt(MAXATTEMPTSPROPERTYNAME);
-        } catch (Exception e) {
-            log.warn("IndexGenerator.constructor - couldn't read the waiting time or maxattempts from the metacat.properties file since : "+e.getMessage()+". Default values will be used");
-            waitingTime = WAITTIME;
-            maxAttempts = MAXWAITNUMBER;
-        }
+      
     }
     
     /**
@@ -720,28 +711,6 @@ public class IndexGenerator extends TimerTask {
         int times = 0;
         if(systemMetadataMap == null) {
             systemMetadataMap = DistributedMapsFactory.getSystemMetadataMap();
-            /*while(true) {
-                try {
-                    systemMetadataMap = DistributedMapsFactory.getSystemMetadataMap();
-                    break;
-                } catch (FileNotFoundException e) {
-                    throw e;
-                } catch (ServiceFailure e) {
-                    if(times <= maxAttempts) {
-                        log.warn("IndexGenerator.initSystemMetadataMap - the hazelcast service is not ready : "
-                                         +e.getMessage()+"\nWe will try to access it "+waitingTime/1000+" seconds later ");
-                        try {
-                            Thread.sleep(waitingTime);
-                        } catch (Exception ee) {
-                            log.warn("IndexGenerator.initSystemMetadataMap - the thread can't sleep for "+waitingTime/1000+" seconds to wait the hazelcast service");
-                        }
-                       
-                    } else {
-                        throw new ServiceFailure("0000", "IndexGenerator.initSystemMetadataMap - the hazelcast service is not ready even though Metacat-index wailted for "+maxAttempts*waitingTime/1000+" seconds. We can't get the system metadata from it and the building index can't happen this time");
-                    }
-                }
-                times++;
-            }*/
         }
     }
     

@@ -202,7 +202,7 @@ public class ApplicationController implements Runnable {
      * It will create a timer to run this task periodically. 
      * If the property of "index.regenerate.interval" is less than 0, the thread would NOT run.
      */
-    private void startIndex() {
+    private void startIndexGenerator() {
         if(period > 0) {
             SolrIndex index = solrIndexes.get(FIRST);
             //SystemMetadataEventListener listener = sysmetaListeners.get(FIRST);
@@ -222,7 +222,7 @@ public class ApplicationController implements Runnable {
      * @throws ServiceFailure 
      * @throws FileNotFoundException 
      */
-    public void startSysmetaListener() throws FileNotFoundException, ServiceFailure {
+    private void startSysmetaListener() throws FileNotFoundException, ServiceFailure {
         if(sysmetaListeners != null) {
             //only expects one listener.
             for(SystemMetadataEventListener listener : sysmetaListeners) {
@@ -254,7 +254,7 @@ public class ApplicationController implements Runnable {
             }
             initialize();
             startSysmetaListener();
-            startIndex();//it will create another thread.
+            startIndexGenerator();//it will create another thread.
         } catch (Exception e) {
             log.error("Application.run "+e.getMessage());
         }
