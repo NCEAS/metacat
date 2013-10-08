@@ -36,6 +36,7 @@ NameVirtualHost *:443
         #   SSLCertificateFile directive is needed.
         SSLCertificateFile /etc/ssl/certs/<your_cert_name>.crt
         SSLCertificateKeyFile /etc/ssl/private/<your_cert_name>.key
+        SSLCertificateChainFile /etc/ssl/certs/<CA chain file>.crt
         
         #   Certificate Authority (CA):
         #   Set the CA certificate verification path where to find CA
