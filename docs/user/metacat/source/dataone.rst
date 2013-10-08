@@ -337,6 +337,7 @@ These Apache directives are crucial for Metacat to function as a Tier 2+ Member 
   SSLVerifyDepth 10
   SSLCertificateFile /etc/ssl/certs/<your_server_certificate>
   SSLCertificateKeyFile /etc/ssl/private/<your_server_key>
+  SSLCertificateChainFile /etc/ssl/certs/<CA_chain_file>.crt
   SSLCACertificatePath /etc/ssl/certs/
   ...
   
