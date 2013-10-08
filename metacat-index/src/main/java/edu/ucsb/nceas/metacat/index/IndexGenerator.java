@@ -661,12 +661,12 @@ public class IndexGenerator extends TimerTask {
                 //only update none-archived id.
                 if(sysmeta != null && !sysmeta.getArchived() && sysmeta.getObsoletedBy() == null) {
                         InputStream data = getDataObject(id);
-                        Identifier obsolete = sysmeta.getObsoletes();
+                        /*Identifier obsolete = sysmeta.getObsoletes();
                         List<String> obsoleteChain = null;
                         if(obsolete != null) {
                             obsoleteChain = getObsoletes(id);
-                        } 
-                        solrIndex.update(id, obsoleteChain, sysmeta, data);
+                        }*/
+                        solrIndex.update(id, sysmeta, data);
                 } else {
                     throw new Exception("IndexGenerator.generate - there is no found SystemMetadata associated with the id "+id);
                 }

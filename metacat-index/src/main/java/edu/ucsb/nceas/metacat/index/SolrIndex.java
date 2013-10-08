@@ -426,11 +426,9 @@ public class SolrIndex {
     
     /**
      * Update the solr index. This method handles the three scenarios:
-     * 1. Archive (or delete) - if the the system metadata shows the value of the archive is true,
-     *    remove the index for the document and its previous versions if it has.
-     * 2. Update an existing doc - if the the system metadata shows the value of the archive is false and it has an obsoletes,
+     * 1. Update an existing doc - if the the system metadata shows the value of the archive is false and it has an obsoletes,
      *    remove the index for the previous version(s) and generate new index for the doc.
-     * 3. Add a new doc - if the system metadata shows the value of the archive is false and it hasn't an obsoletes, generate the
+     * 2. Add a new doc - if the system metadata shows the value of the archive is false and it hasn't an obsoletes, generate the
      *    index for the doc.
      * @param pid  the id of the document
      * @param obsoleteIds  the chain of the obsoletes by this id
@@ -445,13 +443,13 @@ public class SolrIndex {
      * @throws ServiceFailure 
      * @throws OREParserException 
      */
-    public void update(String pid, List<String> obsoleteIds, SystemMetadata systemMetadata, InputStream data) 
+    public void update(String pid, SystemMetadata systemMetadata, InputStream data) 
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, SolrServerException, JiBXException, EncoderException, NotImplemented, NotFound, UnsupportedType, ServiceFailure, OREParserException {
         checkParams(pid, systemMetadata, data);
-            //generate index for either add or update.
-            insert(pid, systemMetadata, data);
-            log.info("============================= update index for the identifier "+pid);
+        //generate index for either add or update.
+        insert(pid, systemMetadata, data);
+        log.info("============================= update index for the identifier "+pid);
        
     }
     

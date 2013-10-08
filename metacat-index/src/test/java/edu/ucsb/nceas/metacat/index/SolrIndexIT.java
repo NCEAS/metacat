@@ -69,8 +69,8 @@ public class SolrIndexIT  {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
-       List<String> chain = null;
-       solrIndex.update(id, chain, systemMetadata, emlInputStream);
+       //List<String> chain = null;
+       solrIndex.update(id, systemMetadata, emlInputStream);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        //assertTrue(ids.size() == 1);
@@ -93,10 +93,9 @@ public class SolrIndexIT  {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAUPDATEFILEPATH);
        InputStream emlInputStream = new FileInputStream(new File(EMLUPDATEFILEPATH));  
-       ArrayList<String> obsoletes = new ArrayList<String>();
-       obsoletes.add(id);
-       obsoletes.add("tao");
-       solrIndex.update(newId, obsoletes, systemMetadata, emlInputStream);
+       /*obsoletes.add(id);
+       obsoletes.add("tao");*/
+       solrIndex.update(newId, systemMetadata, emlInputStream);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version2"));
     }
@@ -111,13 +110,13 @@ public class SolrIndexIT  {
        //System metadata's archive is true.
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAARCHIVEFILEPATH);
        InputStream emlInputStream = new FileInputStream(new File(EMLUPDATEFILEPATH));    
-       ArrayList<String> obsoletes = new ArrayList<String>();
+       /*ArrayList<String> obsoletes = new ArrayList<String>();
        obsoletes.add(id);
-       obsoletes.add("tao");
-       solrIndex.update(newId, obsoletes, systemMetadata, emlInputStream);
+       obsoletes.add("tao");*/
+       solrIndex.update(newId, systemMetadata, emlInputStream);
        String result = doQuery(solrIndex.getSolrServer());
-       assertTrue(!result.contains("version1"));
-       assertTrue(!result.contains("version2"));
+       assertTrue(result.contains("version1"));
+       assertTrue(result.contains("version2"));
     }
     
     

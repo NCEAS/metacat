@@ -159,9 +159,9 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 			source.remove(systemMetadata);
 		}
 				
-		Identifier obsoletes = systemMetadata.getObsoletes();
-		List<String> obsoletesChain = null;
-		if (obsoletes != null) {
+		//Identifier obsoletes = systemMetadata.getObsoletes();
+		//List<String> obsoletesChain = null;
+		/*if (obsoletes != null) {
 		    try {
 				obsoletesChain = getObsoletes(pid.getValue());
 			} catch (Exception e) {
@@ -170,7 +170,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 	            log.error(error, e);
 	            return;
 			}
-		}
+		}*/
 		String objectPath = null;
 		try {
 			objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
@@ -184,7 +184,7 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 		    InputStream data = null;
 	        try {
 	            data = new FileInputStream(objectPath);
-	            solrIndex.update(pid.getValue(), obsoletesChain, systemMetadata, data);
+	            solrIndex.update(pid.getValue(), systemMetadata, data);
                 EventlogFactory.createIndexEventLog().remove(pid);
 	        } catch (Exception e) {
 	            String error = "SystemMetadataEventListener.itemAdded - could not comit the index into the solr server since " + e.getMessage();
