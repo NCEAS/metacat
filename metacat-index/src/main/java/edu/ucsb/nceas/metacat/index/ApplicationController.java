@@ -211,7 +211,7 @@ public class ApplicationController implements Runnable {
             //indexThread.start();
             Timer indexTimer = new Timer();
             //indexTimer.scheduleAtFixedRate(generator, Calendar.getInstance().getTime(), period);
-            indexTimer.schedule(generator, Calendar.getInstance().getTime(), period);
+            indexTimer.schedule(generator, 60000, period);
         }
         
     }

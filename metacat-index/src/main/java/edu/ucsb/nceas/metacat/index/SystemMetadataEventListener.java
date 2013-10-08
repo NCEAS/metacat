@@ -205,8 +205,8 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
             event.setAction(Event.CREATE);
 	    }
 	    else if(systemMetadata.getArchived() || systemMetadata.getObsoletedBy() != null) {
-            action = Event.DELETE.xmlValue();
-            event.setAction(Event.DELETE);
+            action = Event.UPDATE.xmlValue();
+            event.setAction(Event.UPDATE);
         } else {
             action = Event.CREATE.xmlValue();
             event.setAction(Event.CREATE);
