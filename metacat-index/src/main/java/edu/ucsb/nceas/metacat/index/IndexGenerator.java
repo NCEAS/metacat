@@ -708,7 +708,7 @@ public class IndexGenerator extends TimerTask {
      */
     private void removeIndex(String id) throws ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, IOException, SolrServerException, SAXException, ParserConfigurationException, OREParserException  {
         if(id != null) {
-            solrIndex.remove(id);
+            //solrIndex.remove(id);
         }
     }
     
