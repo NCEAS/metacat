@@ -1276,6 +1276,7 @@ public class ReplicationService extends BaseService {
 		String urlString = null;
 		String documentPath = null;
 		String errorMsg = null;
+		FileOutputStream fos = null;
 		try {
 			// try to open a https stream to test if the request server's public
 			// key
@@ -1307,8 +1308,10 @@ public class ReplicationService extends BaseService {
 			// it to disk.
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
-				FileOutputStream fos = new FileOutputStream(documentPath);
+				fos = new FileOutputStream(documentPath);
 				di.toXml(fos, null, null, true);
+				fos.close();
+				fos = null;
 			}
 
 			// read the file from disk and send it to outputstream
@@ -1352,6 +1355,14 @@ public class ReplicationService extends BaseService {
 							+ me.getMessage());
 			// e.printStackTrace(System.out);
 			errorMsg = me.getMessage();
+		} finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (IOException ioe) {
+                    // Do nothing
+                }
+            }
 		}
 		
 		// report any errors if we got here
