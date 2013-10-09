@@ -50,7 +50,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     public void testGetValidSchemaFields() throws Exception {
        List<String> fields = SolrQueryServiceController.getInstance().getValidSchemaFields();
        assertTrue(fields != null);
-       assertTrue("The number of valid schema fields should be 76 rather than "+fields.size(), fields.size() ==76);
+       assertTrue("The number of valid schema fields should be 85 rather than "+fields.size(), fields.size() ==85);
     }
     
     /**
@@ -65,7 +65,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     public void testgetIndexSchemaFields() throws Exception {
        Map<String, SchemaField> fields = SolrQueryServiceController.getInstance().getIndexSchemaFields();
        assertTrue(fields != null);
-       assertTrue("The number of index schema fields should be 93 rather than "+fields.size(), fields.size() == 93);
+       assertTrue("The number of index schema fields should be 102 rather than "+fields.size(), fields.size() == 102);
     }
     
     /**

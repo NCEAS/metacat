@@ -9,7 +9,7 @@
 	<url>http://maven.apache.org</url>
 	<properties>
         <d1_solr_index_schema_name>index-solr-schema-v1_1.xml</d1_solr_index_schema_name>
-        <d1_solr_index_schema_url>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.1.1/usr/share/dataone-cn-index</d1_solr_index_schema_url>         
+        <d1_solr_index_schema_url>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.2.0/usr/share/dataone-cn-index</d1_solr_index_schema_url>         
     </properties>
 	<repositories>
         <repository>
