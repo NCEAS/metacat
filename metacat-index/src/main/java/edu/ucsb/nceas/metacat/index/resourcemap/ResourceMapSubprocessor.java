@@ -58,6 +58,7 @@ import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.cn.indexer.parser.AbstractDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.resourcemap.ResourceMap;
+import org.dataone.cn.indexer.resourcemap.ResourceMapFactory;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
@@ -116,7 +117,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
     private List<SolrDoc> processResourceMap(SolrDoc indexDocument, Document resourceMapDocument)
                     throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException{
         //ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
-        ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
+        ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourceMapDocument);
         List<String> documentIds = resourceMap.getAllDocumentIDs();//this list includes the resourceMap id itself.
         //List<SolrDoc> updateDocuments = getHttpService().getDocuments(getSolrQueryUri(), documentIds);
         List<SolrDoc> updateDocuments = getSolrDocs(resourceMap.getIdentifier(), documentIds);
