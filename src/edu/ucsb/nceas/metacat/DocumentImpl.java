@@ -1075,7 +1075,6 @@ public class DocumentImpl
 				fos = new FileOutputStream(documentPath);
 				toXmlFromDb(fos, user, groups, true);
 				fos.close();
-				fos = null;
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			throw new McdbException("Could not write file: " + documentPath + " : "
@@ -1084,13 +1083,7 @@ public class DocumentImpl
 			throw new McdbException("Could not write file: " + documentPath + " : "
 					+ ioe.getMessage());
         } finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException ioe) {
-                    // Do nothing
-                }
-            }
+            IOUtils.closeQuietly(fos);
         }
 		
 		if (FileUtil.getFileSize(documentPath) == 0) {
@@ -1534,17 +1527,10 @@ public class DocumentImpl
 
                     fos.flush();
                     fos.close();
-                    fos = null;
                 } catch (IOException ioe) {
                     throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
                 } finally {
-                    if (fos != null) {
-                        try {
-                            fos.close();
-                        } catch (IOException ioe) {
-                            // Do nothing
-                        }
-                    }
+                    IOUtils.closeQuietly(fos);
                 }
 			}			
 

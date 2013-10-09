@@ -55,6 +55,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
@@ -1311,7 +1312,6 @@ public class ReplicationService extends BaseService {
 				fos = new FileOutputStream(documentPath);
 				di.toXml(fos, null, null, true);
 				fos.close();
-				fos = null;
 			}
 
 			// read the file from disk and send it to outputstream
@@ -1356,13 +1356,7 @@ public class ReplicationService extends BaseService {
 			// e.printStackTrace(System.out);
 			errorMsg = me.getMessage();
 		} finally {
-            if (fos != null) {
-                try {
-                    fos.close();
-                } catch (IOException ioe) {
-                    // Do nothing
-                }
-            }
+            IOUtils.closeQuietly(fos);
 		}
 		
 		// report any errors if we got here
