@@ -1527,20 +1527,25 @@ public class DocumentImpl
 					&& (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST 
 							|| FileUtil.getFileSize(documentPath) == 0)) {
 
-			    try
-			    {
-			        
-			        FileOutputStream fos = new FileOutputStream(documentPath);
-			        IOUtils.write(xml.getBytes(encoding), fos);
-			  
-			        fos.flush();
-			        fos.close();
-			    }
-			    catch(IOException ioe)
-			    {
-			        throw new McdbException("Could not write file: " + documentPath + " : "
-		                    + ioe.getMessage());
-			    }
+			    FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(documentPath);
+                    IOUtils.write(xml.getBytes(encoding), fos);
+
+                    fos.flush();
+                    fos.close();
+                    fos = null;
+                } catch (IOException ioe) {
+                    throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
+                } finally {
+                    if (fos != null) {
+                        try {
+                            fos.close();
+                        } catch (IOException ioe) {
+                            // Do nothing
+                        }
+                    }
+                }
 			}			
 
 		} catch (PropertyNotFoundException pnfe) {
