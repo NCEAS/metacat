@@ -90,6 +90,7 @@ public class IndexGenerator extends TimerTask {
     //private SystemMetadataEventListener systemMetadataListener = null;
     private IMap<Identifier, SystemMetadata> systemMetadataMap;
     private IMap<Identifier, String> objectPathMap;
+    private ISet<SystemMetadata> indexQueue;
     private Log log = LogFactory.getLog(IndexGenerator.class);
     //private MNode mNode = null;
     private static List<String> resourceMapNamespaces = null;
@@ -208,6 +209,7 @@ public class IndexGenerator extends TimerTask {
         List<String> solrIds = null;
         initSystemMetadataMap();
         initObjectPathMap();
+        initIndexQueue();
         List[] metacatIds = getMetacatIds(since, until);
         List<String> otherMetacatIds = metacatIds[FIRST];
         List<String> resourceMapIds =  metacatIds[SECOND];
@@ -269,8 +271,8 @@ public class IndexGenerator extends TimerTask {
         
         //add the failedPids 
         List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
-        List<IndexEvent> failedOtherIds = new ArrayList<IndexEvent>();
-        List<IndexEvent> failedResourceMapIds = new ArrayList<IndexEvent>();
+        List<String> failedOtherIds = new ArrayList<String>();
+        List<String> failedResourceMapIds = new ArrayList<String>();
         if(failedEvents != null) {
             for(IndexEvent event : failedEvents) {
             	String id = event.getIdentifier().getValue();
@@ -278,15 +280,18 @@ public class IndexGenerator extends TimerTask {
                 if(sysmeta != null) {
                     ObjectFormatIdentifier formatId =sysmeta.getFormatId();
                     if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
-                        failedResourceMapIds.add(event);
+                        failedResourceMapIds.add(id);
                     } else {
-                        failedOtherIds.add(event);
+                        failedOtherIds.add(id);
                     }
                 }
             }
         }
-        indexFailedIds(failedOtherIds);
-        indexFailedIds(failedResourceMapIds);
+        //indexFailedIds(failedOtherIds);
+        //indexFailedIds(failedResourceMapIds);
+        
+        index(failedOtherIds);
+        index(failedResourceMapIds);
         
         /*if(!failedOtherIds.isEmpty()) {
             failedOtherIds.addAll(otherMetacatIds);
@@ -299,7 +304,8 @@ public class IndexGenerator extends TimerTask {
         } else {
             failedResourceMapIds = resourceMapIds;
         }*/
-        
+        //log.info("the ids in index_event for reindex ( except the resourcemap)=====================================\n "+failedOtherIds);
+        //log.info("the resourcemap ids in index_event for reindex =====================================\n "+failedResourceMapIds);
         log.info("the metacat ids (except the resource map ids)-----------------------------"+otherMetacatIds);
         //logFile(otherMetacatIds, "ids-for-timed-indexing-log");
         //log.info("the deleted metacat ids (except the resource map ids)-----------------------------"+otherDeletedMetacatIds);
@@ -352,26 +358,7 @@ public class IndexGenerator extends TimerTask {
         if(metacatIds != null) {
             for(String metacatId : metacatIds) {
                 if(metacatId != null) {
-                        try {
-                            generateIndex(metacatId);
-                        } catch (Exception e) {
-                            IndexEvent event = new IndexEvent();
-                            Identifier pid = new Identifier();
-                            pid.setValue(metacatId);
-                            event.setIdentifier(pid);
-                            event.setDate(Calendar.getInstance().getTime());
-                            event.setAction(Event.CREATE);
-                            String error = "IndexGenerator.index - Metacat Index couldn't generate the index for the id - "+metacatId+" because "+e.getMessage();
-                            event.setDescription(error);
-                            try {
-                                EventlogFactory.createIndexEventLog().write(event);
-                            } catch (Exception ee) {
-                                log.error("SolrIndex.insertToIndex - IndexEventLog can't log the index inserting event :"+ee.getMessage());
-                            }
-                            log.error(error);
-                        }
-                        
-                   
+                     generateIndex(metacatId);
                 }
             }
         }
@@ -380,7 +367,7 @@ public class IndexGenerator extends TimerTask {
     /*
      * Index those ids which failed in the process (We got them from the EventLog)
      */
-    private void indexFailedIds(List<IndexEvent> events) {
+    /*private void indexFailedIds(List<IndexEvent> events) {
         if(events != null) {
             for(IndexEvent event : events) {
                 if(event != null) {
@@ -396,20 +383,13 @@ public class IndexGenerator extends TimerTask {
                                 } catch (Exception e) {
                                     log.error("IndexGenerator.indexFailedIds - Metacat Index couldn't generate the index for the id - "+id+" because "+e.getMessage());
                                 }
-                            /*} else if (action != null && action.equals(Event.DELETE)) {
-                                try {
-                                    removeIndex(id);
-                                    EventlogFactory.createIndexEventLog().remove(identifier);
-                                } catch (Exception e) {
-                                    log.error("IndexGenerator.indexFailedIds - Metacat Index couldn't remove the index for the id - "+id+" because "+e.getMessage());
-                                }
-                            }*/
+                            
                         }
                     }
                 }
             }
         }
-    }
+    }*/
     
     public void run() {
         /*IndexEvent event = new IndexEvent();
@@ -493,14 +473,7 @@ public class IndexGenerator extends TimerTask {
         }
     }
     
-    /*
-     * Get the indexed ids list from the solr server.
-     * An empty list will be returned if there is no ids.
-     */
-    private List<String> getSolrDocIds() throws SolrServerException {
-        List<String> ids = solrIndex.getSolrIds();
-        return ids;
-    }
+   
     
     /*
      * Get an array of the list of ids of the metacat which has the systemmetadata modification in the range.
@@ -646,12 +619,13 @@ public class IndexGenerator extends TimerTask {
     /*
      * Generate index for the id.
      */
-    private void generateIndex(String id) throws Exception {
+    private void generateIndex(String id)  {
         if(id != null)  {
                 SystemMetadata sysmeta = getSystemMetadata(id);
                 //only update none-archived id.
                 //if(sysmeta != null && !sysmeta.getArchived() && sysmeta.getObsoletedBy() == null) {
-                 if(sysmeta != null) {
+                try {
+                    if(sysmeta != null) {
                         InputStream data = getDataObject(id);
                         /*Identifier obsolete = sysmeta.getObsoletes();
                         List<String> obsoleteChain = null;
@@ -659,9 +633,33 @@ public class IndexGenerator extends TimerTask {
                             obsoleteChain = getObsoletes(id);
                         }*/
                         solrIndex.update(id, sysmeta, data);
-                } else {
-                    throw new Exception("IndexGenerator.generate - there is no found SystemMetadata associated with the id "+id);
+                        try {
+                            Identifier identifier = new Identifier();
+                            identifier.setValue(id);
+                            EventlogFactory.createIndexEventLog().remove(identifier);
+                        } catch (Exception ee) {
+                            log.error("IndexGenerator.index - can't remove the id "+id +" from the index_event table since - "+ee.getMessage());
+                        }
+                    } else {
+                        throw new Exception("IndexGenerator.generate - there is no found SystemMetadata associated with the id "+id);
+                    }
+                } catch (Exception e) {
+                    IndexEvent event = new IndexEvent();
+                    Identifier pid = new Identifier();
+                    pid.setValue(id);
+                    event.setIdentifier(pid);
+                    event.setDate(Calendar.getInstance().getTime());
+                    event.setAction(Event.CREATE);
+                    String error = "IndexGenerator.index - Metacat Index couldn't generate the index for the id - "+id+" because "+e.getMessage();
+                    event.setDescription(error);
+                    try {
+                        EventlogFactory.createIndexEventLog().write(event);
+                    } catch (Exception ee) {
+                        log.error("SolrIndex.insertToIndex - IndexEventLog can't log the index inserting event :"+ee.getMessage());
+                    }
+                    log.error(error);
                 }
+                 
            
         }
     }
@@ -720,6 +718,17 @@ public class IndexGenerator extends TimerTask {
     private void initObjectPathMap() throws FileNotFoundException, ServiceFailure {
         if(objectPathMap == null) {
             objectPathMap = DistributedMapsFactory.getObjectPathMap();
+        }
+    }
+    
+    
+    
+    /*
+     * Initialize the index queue
+     */
+    private void initIndexQueue() throws FileNotFoundException, ServiceFailure {
+        if(indexQueue == null) {
+            indexQueue = DistributedMapsFactory.getIndexQueue();
         }
     }
     /**
