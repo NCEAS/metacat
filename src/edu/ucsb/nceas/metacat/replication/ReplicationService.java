@@ -1278,6 +1278,8 @@ public class ReplicationService extends BaseService {
 		String documentPath = null;
 		String errorMsg = null;
 		FileOutputStream fos = null;
+		InputStream is = null;
+		OutputStream outputStream = null;
 		try {
 			// try to open a https stream to test if the request server's public
 			// key
@@ -1310,13 +1312,16 @@ public class ReplicationService extends BaseService {
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
 				fos = new FileOutputStream(documentPath);
-				di.toXml(fos, null, null, true);
+				is = di.toXml(fos, null, null, true);
 				fos.close();
+				is.close();
 			}
 
 			// read the file from disk and send it to outputstream
-			OutputStream outputStream = response.getOutputStream();
-			di.readFromFileSystem(outputStream, null, null, documentPath);
+			outputStream = response.getOutputStream();
+			is = di.readFromFileSystem(outputStream, null, null, documentPath);
+			is.close();
+			outputStream.close();
 
 			logReplication.info("ReplicationService.handleGetDocumentRequest - document " + docid + " sent");
 
@@ -1357,6 +1362,8 @@ public class ReplicationService extends BaseService {
 			errorMsg = me.getMessage();
 		} finally {
             IOUtils.closeQuietly(fos);
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(outputStream);
 		}
 		
 		// report any errors if we got here
