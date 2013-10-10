@@ -65,6 +65,7 @@ import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 /**
@@ -976,9 +977,9 @@ public class DBAdmin extends MetacatAdmin {
 					} while ((fileLine = reader.readLine()) != null);
 				}
 			}
-		} finally {
-			// Close our input stream
 			fin.close();
+		} finally {
+			IOUtils.closeQuietly(fin);
 		}
 
 		return sqlCommands;

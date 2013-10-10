@@ -37,6 +37,7 @@ import java.util.Hashtable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 
 import edu.ucsb.nceas.metacat.shared.BaseException;
@@ -113,6 +114,8 @@ public class ResponseUtil {
 	public static void writeFileToOutput(HttpServletResponse response, String fileDir, String fileName, int bufferSize)
 			throws MetacatUtilException {
 		String filePath = "";
+		InputStream inputStream = null;
+		OutputStream outputStream = null;
 		try {
 			filePath = fileDir + FileUtil.getFS() + fileName;
 			
@@ -120,15 +123,17 @@ public class ResponseUtil {
 			String shortFileName = fileName.substring(lastFileSep + 1, fileName.length());
 			response.setHeader("Content-Disposition", "attachment; filename=\"" + shortFileName + "\"");
 			
-			InputStream inputStream = new FileInputStream(filePath);
-			OutputStream outputStream = response.getOutputStream();
+			inputStream = new FileInputStream(filePath);
+			outputStream = response.getOutputStream();
 			
 			byte[] byteBuffer = new byte[bufferSize]; 
 
 			int b = 0;
 			while ((b = inputStream.read(byteBuffer)) != -1) {
 				outputStream.write(byteBuffer, 0, b);
-			}	
+			}
+			outputStream.close();
+			inputStream.close();
 			
 		} catch (FileNotFoundException fnfe) {
 			throw new MetacatUtilException("Error finding file: " + filePath 
@@ -136,6 +141,9 @@ public class ResponseUtil {
 		} catch (IOException ioe) {
 			throw new MetacatUtilException("I/O Error when writing: " + filePath 
 					+ "  to output");
+		} finally {
+		    IOUtils.closeQuietly(inputStream);
+		    IOUtils.closeQuietly(outputStream);
 		}
 	}
 	

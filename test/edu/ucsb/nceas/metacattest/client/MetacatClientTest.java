@@ -113,11 +113,15 @@ public class MetacatClientTest extends MCTestCase
      */
     public void setUp()
     {
+        FileInputStream fis = null;
         try {
-        	FileInputStream fis = new FileInputStream(testfile);
+        	fis = new FileInputStream(testfile);
             testdocument = IOUtils.toString(fis);
+            fis.close();
         } catch (IOException ioe) {
             fail("Can't read test data to run the test: " + testfile);
+        } finally {
+            IOUtils.closeQuietly(fis);
         }
 
         try {
@@ -390,33 +394,35 @@ public class MetacatClientTest extends MCTestCase
      * Test to get access control part of a document
      */
     public void getAccessControl() {
-      try {
-        FileInputStream fis = new FileInputStream(testEMLWithAccess);
-        String document = IOUtils.toString(fis);
-        String identifier = newdocid + ".1";
-        m.login(username, password);
-        String response = m.insert(identifier,
-                new StringReader(document), null);
-        assertTrue(response.indexOf("<success>") != -1);
-        assertTrue(response.indexOf(identifier) != -1);
-        response = m.getAccessControl(identifier);
-        //System.out.println("reponse is "+reponse);
-        assertTrue(response.indexOf("<permission>read</permission>") != -1);
-        assertTrue(response.indexOf("<principal>public</principal>") != -1);
-    } catch (MetacatAuthException mae) {
-        fail("Authorization failed:\n" + mae.getMessage());
-    } catch (MetacatInaccessibleException mie) {
-        fail("Metacat Inaccessible:\n" + mie.getMessage());
-    } catch (InsufficientKarmaException ike) {
-        assertTrue(1 == 1);
-        fail("Insufficient karma:\n" + ike.getMessage());
-    } catch (MetacatException me) {
-        fail("Metacat Error:\n" + me.getMessage());
-    } catch (Exception e) {
-        fail("General exception:\n" + e.getMessage());
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(testEMLWithAccess);
+            String document = IOUtils.toString(fis);
+            String identifier = newdocid + ".1";
+            m.login(username, password);
+            String response = m.insert(identifier, new StringReader(document), null);
+            assertTrue(response.indexOf("<success>") != -1);
+            assertTrue(response.indexOf(identifier) != -1);
+            response = m.getAccessControl(identifier);
+            //System.out.println("reponse is "+reponse);
+            assertTrue(response.indexOf("<permission>read</permission>") != -1);
+            assertTrue(response.indexOf("<principal>public</principal>") != -1);
+            fis.close();
+        } catch (MetacatAuthException mae) {
+            fail("Authorization failed:\n" + mae.getMessage());
+        } catch (MetacatInaccessibleException mie) {
+            fail("Metacat Inaccessible:\n" + mie.getMessage());
+        } catch (InsufficientKarmaException ike) {
+            assertTrue(1 == 1);
+            fail("Insufficient karma:\n" + ike.getMessage());
+        } catch (MetacatException me) {
+            fail("Metacat Error:\n" + me.getMessage());
+        } catch (Exception e) {
+            fail("General exception:\n" + e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
     }
-     
-  }
     
     /**
      * Test to get access control part of a document

@@ -1258,13 +1258,14 @@ public class ReplicationService extends BaseService {
 			// close file input stream
 			fin.close();
 
-		}//try
-		catch (Exception e) {
+		} catch (Exception e) {
 			logMetacat.error("ReplicationService.handleGetDataFileRequest - " + ReplicationService.METACAT_REPL_ERROR_MSG);                         
 			logReplication.error("ReplicationService.handleGetDataFileRequest - error getting data file from MetacatReplication."
 					+ "handlGetDataFileRequest " + e.getMessage());
 			e.printStackTrace(System.out);
-		}//catch
+		} finally {
+		    IOUtils.closeQuietly(fin);
+		}
 
 	}
 

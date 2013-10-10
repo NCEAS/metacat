@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.Identifier;
@@ -1279,8 +1280,9 @@ public class MetacatHandler {
                         out.write(buf, 0, b);
                         b = fin.read(buf);
                     }
+                    fin.close();
                 } finally {
-                    if (fin != null) fin.close();
+                    IOUtils.closeQuietly(fin);
                 }
                 
             } else {
@@ -1549,8 +1551,9 @@ public class MetacatHandler {
                             zout.write(buf, 0, b);
                             b = fin.read(buf);
                         }
+                        fin.close();
                     } finally {
-                        if (fin != null) fin.close();
+                        IOUtils.closeQuietly(fin);
                     }
                     zout.closeEntry();
                     

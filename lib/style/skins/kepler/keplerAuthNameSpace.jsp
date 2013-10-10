@@ -83,6 +83,7 @@ try {
 					ObjectOutputStream oos = new ObjectOutputStream(os);
 					oos.writeObject( inc );
 					oos.flush();
+					oos.close();
 
 					/*
 					 * Print out the incremented Integer as the namespace output

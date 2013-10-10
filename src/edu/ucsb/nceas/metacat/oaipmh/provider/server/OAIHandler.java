@@ -36,6 +36,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -358,6 +359,7 @@ public class OAIHandler extends HttpServlet {
       TransformerFactory tFactory = TransformerFactory.newInstance();
       Transformer transformer = tFactory.newTransformer(xslSource);
       attributes.put("OAIHandler.transformer", transformer);
+      is.close();
     }
 
     return attributes;
@@ -524,76 +526,72 @@ public class OAIHandler extends HttpServlet {
    *              there was a problem with initialization
    */
   //public void init_debug(ServletConfig config) throws ServletException {
-  public void init(ServletConfig config) throws ServletException {
-    super.init(config);
+    public void init(ServletConfig config) throws ServletException {
+        super.init(config);
 
-    if (isIntegratedWithMetacat()) {
-      try {
-        PropertyService.getInstance();
-      } 
-      catch (ServiceException se) {
-        System.err.println("Error in loading properties: " + se.getMessage());
-      }
+        if (isIntegratedWithMetacat()) {
+            try {
+                PropertyService.getInstance();
+            } catch (ServiceException se) {
+                System.err.println("Error in loading properties: " + se.getMessage());
+            }
+        }
+
+        ServletContext servletContext = config.getServletContext();
+        String configDirPath = servletContext.getRealPath(CONFIG_DIR);
+        String configPath = configDirPath + "/" + CONFIG_NAME;
+
+        // Initialize the properties file for log4j
+        String log4jPath = configDirPath + "/" + LOG4J_NAME;
+        PropertyConfigurator.configureAndWatch(log4jPath);
+
+        // Initialize the directory path to the crosswalk XSLT files
+        String xsltDirPath = servletContext.getRealPath(XSLT_DIR);
+        Eml2oai_dc.setDirPath(xsltDirPath);
+        InputStream in = null;
+
+        try {
+            HashMap attributes = null;
+            Properties properties = null;
+            
+            try {
+                log.debug("configPath=" + configPath);
+                in = new FileInputStream(configPath);
+            } catch (FileNotFoundException e) {
+                log.debug("configPath not found. Try the classpath: " + configPath);
+                Thread thread = Thread.currentThread();
+                ClassLoader classLoader = thread.getContextClassLoader();
+                in = classLoader.getResourceAsStream(configPath);
+            }
+
+            if (in != null) {
+                log.debug("configPath '" + configPath + "' found. Loading properties");
+                properties = new Properties();
+                properties.load(in);
+                attributes = getAttributes(properties);
+            }
+
+            attributesMap.put("global", attributes);
+            in.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            throw new ServletException(e.getMessage());
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+            throw new ServletException(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            throw new ServletException(e.getMessage());
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new ServletException(e.getMessage());
+        } catch (Throwable e) {
+            e.printStackTrace();
+            throw new ServletException(e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(in);
+        }
     }
-    
-    ServletContext servletContext = config.getServletContext();
-    String configDirPath = servletContext.getRealPath(CONFIG_DIR);
-    String configPath = configDirPath + "/" + CONFIG_NAME;
-
-    // Initialize the properties file for log4j
-    String log4jPath = configDirPath + "/" + LOG4J_NAME;
-    PropertyConfigurator.configureAndWatch(log4jPath);
-    
-    // Initialize the directory path to the crosswalk XSLT files
-    String xsltDirPath = servletContext.getRealPath(XSLT_DIR);
-    Eml2oai_dc.setDirPath(xsltDirPath);
-
-    try {
-      HashMap attributes = null;
-      Properties properties = null;
-      InputStream in;
-
-      try {
-        log.debug("configPath=" + configPath);
-        in = new FileInputStream(configPath);
-      } 
-      catch (FileNotFoundException e) {
-        log.debug("configPath not found. Try the classpath: " + configPath);
-        Thread thread = Thread.currentThread();
-        ClassLoader classLoader = thread.getContextClassLoader();
-        in = classLoader.getResourceAsStream(configPath);
-      }
-
-      if (in != null) {
-        log.debug("configPath '" + configPath + "' found. Loading properties");
-        properties = new Properties();
-        properties.load(in);
-        attributes = getAttributes(properties);
-      }
-
-      attributesMap.put("global", attributes);
-    }
-    catch (FileNotFoundException e) {
-      e.printStackTrace();
-      throw new ServletException(e.getMessage());
-    } 
-    catch (ClassNotFoundException e) {
-      e.printStackTrace();
-      throw new ServletException(e.getMessage());
-    } 
-    catch (IllegalArgumentException e) {
-      e.printStackTrace();
-      throw new ServletException(e.getMessage());
-    } 
-    catch (IOException e) {
-      e.printStackTrace();
-      throw new ServletException(e.getMessage());
-    } 
-    catch (Throwable e) {
-      e.printStackTrace();
-      throw new ServletException(e.getMessage());
-    }
-  }
 
 
   /**
