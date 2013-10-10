@@ -60,7 +60,7 @@ import edu.ucsb.nceas.utilities.UtilException;
  */
 public class PropertiesAdmin extends MetacatAdmin {
     private static String BACKSLASH = "/";
-    private static String DEFAULTMETACATCONTEXT = "knb";
+    private static String DEFAULTMETACATCONTEXT = "metacat";
     private static String METACATPROPERTYAPPENDIX = "/WEB-INF/metacat.properties";
 	private static PropertiesAdmin propertiesAdmin = null;
 	private static Logger logMetacat = Logger.getLogger(PropertiesAdmin.class);
