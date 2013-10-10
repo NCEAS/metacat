@@ -2598,7 +2598,7 @@ public class MetacatHandler {
     /**
      * Rebuild the index for one or more documents. If the "pid" parameter is
      * provided, rebuild for just that one document (or list of documents). If
-     * not, then rebuild the index for all documents in the systemMetadata table.
+     * not, an error message will be returned.
      * 
      * @param params
      *            the parameters from the web request
@@ -2616,11 +2616,13 @@ public class MetacatHandler {
         
         // Get all of the parameters in the correct formats
         String[] pid = params.get("pid");
-        
+        PrintWriter out = null;
+        // Process the documents
+        StringBuffer results = new StringBuffer();
         // Rebuild the indices for appropriate documents
         try {
             response.setContentType("text/xml");
-            PrintWriter out = response.getWriter();
+            out = response.getWriter();
             
             // Check that the user is authenticated as an administrator account
             if (!AuthUtil.isAdministrator(username, groups)) {
@@ -2628,39 +2630,21 @@ public class MetacatHandler {
                 out.print("The user \"" + username +
                         "\" is not authorized for this action.");
                 out.print("</error>");
+                out.close();
                 return;
             }
             
-            // Process the documents
-            StringBuffer results = new StringBuffer();
+           
             if (pid == null || pid.length == 0) {
-                // Process all of the documents
-                logMetacat.info("queueing doc index for all documents");
-                try {
-                    List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
-                    Iterator<String> it = allIdentifiers.iterator();
-                    results.append("<success>");
-                    while (it.hasNext()) {
-                        String id = it.next();
-                        Identifier identifier = new Identifier();
-                        identifier.setValue(id);
-						SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-						HazelcastService.getInstance().getIndexQueue().add(sysMeta);
-						results.append("<pid>" + id + "</pid>\n");
-                        logMetacat.debug("queued SystemMetadata for index on pid: " + id);
-                    }
-                    results.append("</success>");
-
-                    logMetacat.info("done queueing index for all documents");
-                } catch (Exception e) {
-                	// report the error
-                	results = new StringBuffer();
-                	results.append("<error>");
-                	results.append(e.getMessage());
-                	results.append("</error>");
-                }
+                //report the error
+                results = new StringBuffer();
+                results.append("<error>");
+                results.append("The parameter - pid is missing. Please check your parameter list.");
+                results.append("</error>");
             } else {
-                results.append("<success>\n");
+                Vector<String> successList = new Vector<String>();
+                Vector<String> failedList = new Vector<String>();
+                
                 // Only process the requested documents
                 for (int i = 0; i < pid.length; i++) {
                     String id = pid[i];
@@ -2668,14 +2652,33 @@ public class MetacatHandler {
                     Identifier identifier = new Identifier();
                     identifier.setValue(id);
 					SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-					HazelcastService.getInstance().getIndexQueue().add(sysMeta);
-					results.append("<pid>" + id + "</pid>\n");
-					logMetacat.info("done queueing doc index for pid " + id);
+					if(sysMeta == null) {
+					     failedList.add(id);
+					     logMetacat.info("no system metadata was found for pid " + id);
+					} else {
+					    HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+					    successList.add(id);
+					    logMetacat.info("done queueing doc index for pid " + id);
+					}
                 }
-                results.append("</success>");
+                results.append("<results>\n");
+                if(successList.size() >0) {
+                    results.append("<success>\n");
+                    for(String id : successList) {
+                        results.append("<pid>" + id + "</pid>\n");
+                    }
+                    results.append("</success>");
+                }
+                
+                if(failedList.size()>0) {
+                    results.append("<error>\n");
+                    for(String id : failedList) {
+                        results.append("<pid>" + id + "</pid>\n");
+                    }
+                    results.append("</error>");
+                }
+                results.append("</results>\n");
             }
-            out.print(results.toString());
-            out.close();
         } catch (IOException e) {
             logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
             		         "Could not open http response for writing: " + 
@@ -2686,6 +2689,96 @@ public class MetacatHandler {
             		         "Could not determine if user is administrator: " + 
             		         ue.getMessage());
             ue.printStackTrace();
+        } finally {
+            if(out != null) {
+                out.print(results.toString());
+                out.close();
+            }
+        }
+    }
+    
+    
+    /**
+     *Rebuild the index for all documents in the systemMetadata table.
+     * 
+     * @param params
+     *            the parameters from the web request
+     * @param request
+     *            the http request object for getting request details
+     * @param response
+     *            the http response object for writing output
+     * @param username
+     *            the username of the authenticated user
+     */
+    protected void handleReindexAllAction(Hashtable<String, String[]> params,
+            HttpServletRequest request, HttpServletResponse response,
+            String username, String[] groups) {
+        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        
+      
+        
+        // Rebuild the indices for all documents which are in the systemmetadata table
+        PrintWriter out = null;
+     // Process the documents
+        StringBuffer results = new StringBuffer();
+        try {
+            response.setContentType("text/xml");
+            out = response.getWriter();
+            
+            // Check that the user is authenticated as an administrator account
+            if (!AuthUtil.isAdministrator(username, groups)) {
+                out.print("<error>");
+                out.print("The user \"" + username +
+                        "\" is not authorized for this action.");
+                out.print("</error>");
+                out.close();
+                return;
+            }
+          
+           // Process all of the documents
+           logMetacat.info("queueing doc index for all documents");
+           try {
+                    List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
+                    Iterator<String> it = allIdentifiers.iterator();
+                    results.append("<success>");
+                    while (it.hasNext()) {
+                        String id = it.next();
+                        Identifier identifier = new Identifier();
+                        identifier.setValue(id);
+                        SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                        if(sysMeta != null) {
+                            HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                            results.append("<pid>" + id + "</pid>\n");
+                            logMetacat.debug("queued SystemMetadata for index on pid: " + id);
+                        }
+                        
+                    }
+                    results.append("</success>");
+                    logMetacat.info("done queueing index for all documents");
+           } catch (Exception e) {
+                    // report the error
+                    results = new StringBuffer();
+                    results.append("<error>");
+                    results.append(e.getMessage());
+                    results.append("</error>");
+           }
+          
+        } catch (IOException e) {
+            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
+                             "Could not open http response for writing: " + 
+                             e.getMessage());
+            e.printStackTrace();
+        } catch (MetacatUtilException ue) {
+            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
+                             "Could not determine if user is administrator: " + 
+                             ue.getMessage());
+            ue.printStackTrace();
+        } finally {
+            if(out != null) {
+                out.print(results.toString());
+                out.close();
+            }
+           
         }
     }
     

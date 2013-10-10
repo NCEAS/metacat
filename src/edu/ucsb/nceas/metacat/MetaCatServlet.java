@@ -234,7 +234,9 @@ import edu.ucsb.nceas.utilities.UtilException;
  *     forwardto -- If provided, forward to this page when processing is done.
  *     qformat -- If provided, render results using the stylesheets associated with
  *                this skin.  Default is xml.
- *     
+ * action=reindex -- rebuild the solr index for the specified pids.
+ *     pid -- the id of the document which will be rebuilt slor index.
+ * action=reindexall -- rebuild the solr index for all objects in the systemmetadata table.
  *     
  * Here are some of the common parameters for actions
  *     doctype -- document type list returned by the query (publicID) 
@@ -1001,7 +1003,9 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleBuildIndexAction(params, request, response, userName, groupNames);
 			} else if (action.equals("reindex")) {
 				handler.handleReindexAction(params, request, response, userName, groupNames);
-			} else if (action.equals("login") || action.equals("logout")) {
+			} else if (action.equals("reindexall")) {
+                handler.handleReindexAllAction(params, request, response, userName, groupNames);
+            } else if (action.equals("login") || action.equals("logout")) {
 				/*
 				 * } else if (action.equals("protocoltest")) { String testURL =
 				 * "metacat://dev.nceas.ucsb.edu/NCEAS.897766.9"; try { testURL =
