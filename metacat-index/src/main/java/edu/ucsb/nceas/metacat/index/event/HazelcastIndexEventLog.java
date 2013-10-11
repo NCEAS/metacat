@@ -37,13 +37,14 @@ import org.dataone.service.types.v1.Identifier;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
 
+
 /**
  * @author leinfelder
  *
  */
 public class HazelcastIndexEventLog implements IndexEventLog {
     
-    private static final String LASTPROCESSEDDATEFILENAME = "solr-last-proccessed-date";
+    
     private File lastProcessedDateFile = null;
     private SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
     
@@ -57,7 +58,7 @@ public class HazelcastIndexEventLog implements IndexEventLog {
             path = System.getProperty("user.home");
         }
         File pathDir = new File(path);
-        lastProcessedDateFile = new File(pathDir, LASTPROCESSEDDATEFILENAME);
+        lastProcessedDateFile = new File(pathDir, edu.ucsb.nceas.metacat.common.Settings.LASTPROCESSEDDATEFILENAME);
         if(!lastProcessedDateFile.exists()) {
             lastProcessedDateFile.createNewFile();
         }
