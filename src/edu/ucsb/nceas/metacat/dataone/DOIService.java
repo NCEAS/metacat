@@ -200,7 +200,7 @@ public class DOIService {
 				}
 				try {
 					uriTemplate = PropertyService.getProperty(uriTemplateKey);
-					target =  SystemUtil.getSecureContextURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
+					target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
 				} catch (PropertyNotFoundException e) {
 					logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
 				}
