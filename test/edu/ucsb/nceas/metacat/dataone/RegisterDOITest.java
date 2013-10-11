@@ -29,6 +29,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
@@ -151,7 +152,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			fail(e.getMessage());
-		} finally {
+		} catch (IOException e) {
+		    e.printStackTrace();
+            fail(e.getMessage());
+	    } finally {
 		    IOUtils.closeQuietly(content);
 		}
 	}
