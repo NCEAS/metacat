@@ -1081,7 +1081,7 @@ public abstract class D1NodeService {
     		List<Group> groupList = session.getSubjectInfo().getGroupList();
     		if (groupList != null) {
     			groupnames = new String[groupList.size()];
-    			for (int i = 0; i > groupList.size(); i++ ) {
+    			for (int i = 0; i < groupList.size(); i++ ) {
     				groupnames[i] = groupList.get(i).getGroupName();
     			}
     		}
@@ -1123,7 +1123,7 @@ public abstract class D1NodeService {
     		List<Group> groupList = session.getSubjectInfo().getGroupList();
     		if (groupList != null) {
     			groupnames = new String[groupList.size()];
-    			for (int i = 0; i > groupList.size(); i++ ) {
+    			for (int i = 0; i < groupList.size(); i++ ) {
     				groupnames[i] = groupList.get(i).getGroupName();
     			}
     		}
@@ -1332,7 +1332,7 @@ public abstract class D1NodeService {
               List<Group> groupList = session.getSubjectInfo().getGroupList();
               if (groupList != null) {
                   groupnames = new String[groupList.size()];
-                  for (int i = 0; i > groupList.size(); i++) {
+                  for (int i = 0; i < groupList.size(); i++) {
                       groupnames[i] = groupList.get(i).getGroupName();
                   }
               }
