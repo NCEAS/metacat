@@ -36,7 +36,8 @@ and sm.obsoleted_by is null;
 -- update them
 BEGIN;
 update systemmetadata sm
-set archived = true
+set archived = true,
+date_modified = now()
 from identifier id
 where sm.guid = id.guid
 and not exists (select * from xml_documents doc where doc.docid = id.docid and doc.rev = id.rev)

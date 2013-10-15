@@ -1064,6 +1064,7 @@ public class DocumentImpl
 			throws McdbException {
 		String documentDir = null;
 		String documentPath = null;
+		FileOutputStream fos = null;
 		try {
 			String separator = PropertyService.getProperty("document.accNumSeparator");
 			documentDir = PropertyService.getProperty("application.documentfilepath");
@@ -1071,8 +1072,9 @@ public class DocumentImpl
 
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
-				FileOutputStream fos = new FileOutputStream(documentPath);
+				fos = new FileOutputStream(documentPath);
 				toXmlFromDb(fos, user, groups, true);
+				fos.close();
 			}
 		} catch (PropertyNotFoundException pnfe) {
 			throw new McdbException("Could not write file: " + documentPath + " : "
@@ -1080,7 +1082,9 @@ public class DocumentImpl
 		} catch (IOException ioe) {
 			throw new McdbException("Could not write file: " + documentPath + " : "
 					+ ioe.getMessage());
-		}
+        } finally {
+            IOUtils.closeQuietly(fos);
+        }
 		
 		if (FileUtil.getFileSize(documentPath) == 0) {
 			throw new McdbException("Attempting to read a zero length document from disk: " + documentPath);
@@ -1516,20 +1520,18 @@ public class DocumentImpl
 					&& (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST 
 							|| FileUtil.getFileSize(documentPath) == 0)) {
 
-			    try
-			    {
-			        
-			        FileOutputStream fos = new FileOutputStream(documentPath);
-			        IOUtils.write(xml.getBytes(encoding), fos);
-			  
-			        fos.flush();
-			        fos.close();
-			    }
-			    catch(IOException ioe)
-			    {
-			        throw new McdbException("Could not write file: " + documentPath + " : "
-		                    + ioe.getMessage());
-			    }
+			    FileOutputStream fos = null;
+                try {
+                    fos = new FileOutputStream(documentPath);
+                    IOUtils.write(xml.getBytes(encoding), fos);
+
+                    fos.flush();
+                    fos.close();
+                } catch (IOException ioe) {
+                    throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
+                } finally {
+                    IOUtils.closeQuietly(fos);
+                }
 			}			
 
 		} catch (PropertyNotFoundException pnfe) {

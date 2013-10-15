@@ -29,12 +29,14 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.IOUtils;
 import org.dataone.client.ObjectFormatCache;
 import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
@@ -144,12 +146,18 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		String emlFile = "test/tao.14563.1.xml";
 		InputStream content = null;
 		try {
-			content = new FileInputStream(emlFile);
+		    content = new FileInputStream(emlFile);
+		    testMintAndCreateDOI(content);
+		    content.close(); 
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			fail(e.getMessage());
+		} catch (IOException e) {
+		    e.printStackTrace();
+            fail(e.getMessage());
+	    } finally {
+		    IOUtils.closeQuietly(content);
 		}
-		testMintAndCreateDOI(content);
 	}
 	
 	/**
@@ -267,26 +275,30 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			InputStream content = null;
 			try {
 				content = new FileInputStream(emlFile);
+	            
+	            // create the initial version without DOI
+	            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), null);
+	            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+	            Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+	            assertEquals(guid.getValue(), pid.getValue());
+
+	            // now publish it
+	            Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
+	            
+	            // check for the metadata explicitly, using ezid service
+	            EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+	            ezid.login(ezidUsername, ezidPassword);
+	            HashMap<String, String> metadata = ezid.getMetadata(publishedIdentifier.getValue());
+	            assertNotNull(metadata);
+	            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+	            content.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
 				fail(e.getMessage());
+			} finally {
+			    IOUtils.closeQuietly(content);
 			}
-			
-			// create the initial version without DOI
-			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), null);
-	        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
-			Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
-			assertEquals(guid.getValue(), pid.getValue());
 
-			// now publish it
-			Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
-			
-			// check for the metadata explicitly, using ezid service
-			EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
-			ezid.login(ezidUsername, ezidPassword);
-			HashMap<String, String> metadata = ezid.getMetadata(publishedIdentifier.getValue());
-			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
 			
 		} catch (Exception e) {
 			e.printStackTrace();

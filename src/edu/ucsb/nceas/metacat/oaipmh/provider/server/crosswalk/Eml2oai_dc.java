@@ -21,6 +21,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.io.IOUtils;
+
 import ORG.oclc.oai.server.crosswalk.Crosswalk;
 import ORG.oclc.oai.server.verb.CannotDisseminateFormatException;
 import ORG.oclc.oai.server.verb.OAIInternalServerError;
@@ -69,27 +71,37 @@ public class Eml2oai_dc extends Crosswalk {
     String xsltPath200 = dirPath + "/" + XSLT_NAME_200;
     String xsltPath201 = dirPath + "/" + XSLT_NAME_201;
     String xsltPath210 = dirPath + "/" + XSLT_NAME_210;
+    FileInputStream fileInputStream200 = null;
+    FileInputStream fileInputStream201 = null;
+    FileInputStream fileInputStream210 = null;
     
     try {
       TransformerFactory tFactory200 = TransformerFactory.newInstance();
-      FileInputStream fileInputStream200 = new FileInputStream(xsltPath200);
+      fileInputStream200 = new FileInputStream(xsltPath200);
       StreamSource xslSource200 = new StreamSource(fileInputStream200);
       this.transformer200 = tFactory200.newTransformer(xslSource200);
-
+      fileInputStream200.close();
+      
       TransformerFactory tFactory201 = TransformerFactory.newInstance();
-      FileInputStream fileInputStream201 = new FileInputStream(xsltPath201);
+      fileInputStream201 = new FileInputStream(xsltPath201);
       StreamSource xslSource201 = new StreamSource(fileInputStream201);
       this.transformer201 = tFactory201.newTransformer(xslSource201);
-
+      fileInputStream201.close();
+      
       TransformerFactory tFactory210 = TransformerFactory.newInstance();
-      FileInputStream fileInputStream210 = new FileInputStream(xsltPath210);
+      fileInputStream210 = new FileInputStream(xsltPath210);
       StreamSource xslSource210 = new StreamSource(fileInputStream210);
       this.transformer210 = tFactory210.newTransformer(xslSource210);
+      fileInputStream210.close();
 
     } 
     catch (Exception e) {
       e.printStackTrace();
       throw new OAIInternalServerError(e.getMessage());
+    } finally {
+        IOUtils.closeQuietly(fileInputStream200);
+        IOUtils.closeQuietly(fileInputStream201);
+        IOUtils.closeQuietly(fileInputStream210);
     }
   }
   

@@ -65,6 +65,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.Identifier;
@@ -1279,8 +1280,9 @@ public class MetacatHandler {
                         out.write(buf, 0, b);
                         b = fin.read(buf);
                     }
+                    fin.close();
                 } finally {
-                    if (fin != null) fin.close();
+                    IOUtils.closeQuietly(fin);
                 }
                 
             } else {
@@ -1549,8 +1551,9 @@ public class MetacatHandler {
                             zout.write(buf, 0, b);
                             b = fin.read(buf);
                         }
+                        fin.close();
                     } finally {
-                        if (fin != null) fin.close();
+                        IOUtils.closeQuietly(fin);
                     }
                     zout.closeEntry();
                     
@@ -2616,11 +2619,13 @@ public class MetacatHandler {
         
         // Get all of the parameters in the correct formats
         String[] pid = params.get("pid");
-        
+        PrintWriter out = null;
+        // Process the documents
+        StringBuffer results = new StringBuffer();
         // Rebuild the indices for appropriate documents
         try {
             response.setContentType("text/xml");
-            PrintWriter out = response.getWriter();
+            out = response.getWriter();
             
             // Check that the user is authenticated as an administrator account
             if (!AuthUtil.isAdministrator(username, groups)) {
@@ -2628,11 +2633,11 @@ public class MetacatHandler {
                 out.print("The user \"" + username +
                         "\" is not authorized for this action.");
                 out.print("</error>");
+                out.close();
                 return;
             }
             
             // Process the documents
-            StringBuffer results = new StringBuffer();
             if (pid == null || pid.length == 0) {
                 // Process all of the documents
                 logMetacat.info("queueing doc index for all documents");
@@ -2674,8 +2679,6 @@ public class MetacatHandler {
                 }
                 results.append("</success>");
             }
-            out.print(results.toString());
-            out.close();
         } catch (IOException e) {
             logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
             		         "Could not open http response for writing: " + 
@@ -2686,6 +2689,11 @@ public class MetacatHandler {
             		         "Could not determine if user is administrator: " + 
             		         ue.getMessage());
             ue.printStackTrace();
+        } finally {
+            if (out != null) {
+                out.print(results.toString());
+                out.close();
+            }
         }
     }
     

@@ -55,6 +55,7 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
@@ -1257,13 +1258,14 @@ public class ReplicationService extends BaseService {
 			// close file input stream
 			fin.close();
 
-		}//try
-		catch (Exception e) {
+		} catch (Exception e) {
 			logMetacat.error("ReplicationService.handleGetDataFileRequest - " + ReplicationService.METACAT_REPL_ERROR_MSG);                         
 			logReplication.error("ReplicationService.handleGetDataFileRequest - error getting data file from MetacatReplication."
 					+ "handlGetDataFileRequest " + e.getMessage());
 			e.printStackTrace(System.out);
-		}//catch
+		} finally {
+		    IOUtils.closeQuietly(fin);
+		}
 
 	}
 
@@ -1276,6 +1278,9 @@ public class ReplicationService extends BaseService {
 		String urlString = null;
 		String documentPath = null;
 		String errorMsg = null;
+		FileOutputStream fos = null;
+		InputStream is = null;
+		OutputStream outputStream = null;
 		try {
 			// try to open a https stream to test if the request server's public
 			// key
@@ -1307,13 +1312,17 @@ public class ReplicationService extends BaseService {
 			// it to disk.
 			if (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST
 					|| FileUtil.getFileSize(documentPath) == 0) {
-				FileOutputStream fos = new FileOutputStream(documentPath);
-				di.toXml(fos, null, null, true);
+				fos = new FileOutputStream(documentPath);
+				is = di.toXml(fos, null, null, true);
+				fos.close();
+				is.close();
 			}
 
 			// read the file from disk and send it to outputstream
-			OutputStream outputStream = response.getOutputStream();
-			di.readFromFileSystem(outputStream, null, null, documentPath);
+			outputStream = response.getOutputStream();
+			is = di.readFromFileSystem(outputStream, null, null, documentPath);
+			is.close();
+			outputStream.close();
 
 			logReplication.info("ReplicationService.handleGetDocumentRequest - document " + docid + " sent");
 
@@ -1352,6 +1361,10 @@ public class ReplicationService extends BaseService {
 							+ me.getMessage());
 			// e.printStackTrace(System.out);
 			errorMsg = me.getMessage();
+		} finally {
+            IOUtils.closeQuietly(fos);
+            IOUtils.closeQuietly(is);
+            IOUtils.closeQuietly(outputStream);
 		}
 		
 		// report any errors if we got here

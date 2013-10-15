@@ -60,6 +60,7 @@ import java.util.zip.ZipOutputStream;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.exceptions.NotImplemented;
@@ -2326,13 +2327,16 @@ public class DBQuery
             while (b != -1) {
                 zipOut.write(buf, 0, b);
                 b = fin.read(buf);
-            }//while
+            }
+            fin.close();
             zipOut.closeEntry();
         }//try
         catch (IOException ioe) {
             logMetacat.error("DBQuery.addDataFileToZipOutputStream - I/O error: "
                     + ioe.getMessage());
-        }//catch
+        } finally {
+            IOUtils.closeQuietly(fin);
+        }
     }//addDataFileToZipOutputStream()
 
     /**
