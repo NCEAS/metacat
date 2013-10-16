@@ -55,7 +55,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
  *    didn't customize the schema ), we will overwrite the schema.xml and remove the solr-last-proccessed-date file. The removal
  *    of the solr-last-proccessed-date file will force the metacat-index to rebuild all solr index when the administrator restart
  *    the tomcat at next time.
- * 2. If the hash value of the xisting schema.xml isn't in the list, an exception will be throw.  
+ * 2. If the hash value of the existing schema.xml isn't in the list, an exception will be throw.  
  * @author tao
  *
  */

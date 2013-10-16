@@ -47,7 +47,13 @@ public class Upgrade2_2_2 implements UpgradeUtilityInterface {
         try {
             SolrSchemaUpgrader upgrader = new SolrSchemaUpgrader();
             upgrader.upgrade();
-        } catch (PropertyNotFoundException | ServiceException | NoSuchAlgorithmException | IOException e) {
+        } catch (PropertyNotFoundException e) {
+            throw new AdminException(e.getMessage());
+        } catch (IOException e){
+            throw new AdminException(e.getMessage());
+        } catch(NoSuchAlgorithmException  e) {
+            throw new AdminException(e.getMessage());
+        } catch (ServiceException  e) {
             throw new AdminException(e.getMessage());
         } catch ( SolrSchemaModificationException e) {
             throw e;
