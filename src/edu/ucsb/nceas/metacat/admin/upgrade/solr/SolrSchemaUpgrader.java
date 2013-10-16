@@ -152,10 +152,10 @@ public class SolrSchemaUpgrader {
                         String error1 = "SolrSchemaUpdator.update - couldn't determine if the schema.xml in the "+solrHomePath+"/conf"+
                                         " was modified or not. If you did modify it, please manually merge the change to the file "+metacatIndexSolrHome+SCHEMAFILERELATIVEPATH +" and copy it to "+
                                         solrHomePath+"/conf; otherwise, just copy the file "+metacatIndexSolrHome+SCHEMAFILERELATIVEPATH +" to "+solrHomePath+"/conf.";
-                        String error2 ="\nAfter copying the schema file, you have to issue a 'reindexall' action as an administrator.";
-                        String error3 = "SolrSchemaUpdator.update - Metacat determined the schema.xml in the "+solrHomePath+"/conf"+
-                                        " was modified. Please manually merge the change to the file "+metacatIndexSolrHome+SCHEMAFILERELATIVEPATH +" and copy it to overwrite "+
-                                        solrHomePath+"/conf/schema.xml.";
+                        //String error2 ="After configuring Metacat and restarting Tomcat, you have to issue a 'reindexall' action as an administrator to rebuild the Solr index.";
+                        String error3 = "Metacat determined the schema.xml in the "+solrHomePath+"/conf"+
+                                        " was customized. You have to manually fix the issue - merge the change to the file "+metacatIndexSolrHome+SCHEMAFILERELATIVEPATH +" and copy it to overwrite the schema.xml in the "+
+                                        solrHomePath+"/conf. You may click the OK button When you finish the merging. ";
                         if(checkSum != null) {
                             String checksumValue = checkSum.getValue();
                             //System.out.println("the existing schema.xml in the solr home has the checksum ================== "+checksumValue);
@@ -183,14 +183,14 @@ public class SolrSchemaUpgrader {
                                         
                                     } else {
                                         //users changed the schema, we have to throw an exception to ask the administrator to manually merge and overwrite.
-                                        throw new SolrSchemaModificationException(error3+error2);
+                                        throw new SolrSchemaModificationException(error3);
                                     }
                                 }
                             } else {
-                                throw new SolrSchemaModificationException(error1+error2);
+                                throw new SolrSchemaModificationException(error1);
                             }
                         } else {
-                            throw new SolrSchemaModificationException(error1+error2);
+                            throw new SolrSchemaModificationException(error1);
                         }
                     }
                 }

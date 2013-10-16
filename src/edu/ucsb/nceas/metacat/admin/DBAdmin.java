@@ -51,6 +51,7 @@ import javax.servlet.http.HttpSession;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
+import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DBVersion;
@@ -90,6 +91,7 @@ public class DBAdmin extends MetacatAdmin {
 	private HashSet<String> sqlCommandSet = new HashSet<String>();
 	private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
 	private static DBVersion databaseVersion = null;
+	private SolrSchemaModificationException solrSchemaException = null;
 
 	/**
 	 * private constructor since this is a singleton
@@ -145,6 +147,7 @@ public class DBAdmin extends MetacatAdmin {
 		String processForm = request.getParameter("processForm");
 		String formErrors = (String) request.getAttribute("formErrors");
 		HttpSession session = request.getSession();
+		String supportEmail = null;
 
 		if (processForm == null || !processForm.equals("true") || formErrors != null) {
 			// The servlet configuration parameters have not been set, or there
@@ -174,7 +177,7 @@ public class DBAdmin extends MetacatAdmin {
 				request.setAttribute("databaseVersion", dbVersionString);
 				Vector<String> updateScriptList = getUpdateScripts();
 				request.setAttribute("updateScriptList", updateScriptList);
-				String supportEmail = PropertyService.getProperty("email.recipient");
+				supportEmail = PropertyService.getProperty("email.recipient");
 				request.setAttribute("supportEmail", supportEmail);
 
 				// Forward the request to the JSP page
@@ -204,26 +207,42 @@ public class DBAdmin extends MetacatAdmin {
 				// there is no other easy way to go back to the configure form
 				// and
 				// preserve their entries.
+			    supportEmail = PropertyService.getProperty("email.recipient");
 				validationErrors.addAll(validateOptions(request));
-
+				
+				
 				upgradeDatabase();
+				
+				
 
 				// Now that the options have been set, change the
 				// 'databaseConfigured' option to 'true' so that normal metacat
 				// requests will go through
 				PropertyService.setProperty("configutil.databaseConfigured",
 						PropertyService.CONFIGURED);
-
-				// Reload the main metacat configuration page
-				processingSuccess.add("Database successfully upgraded");
-				RequestUtil.clearRequestMessages(request);
-				RequestUtil.setRequestSuccess(request, processingSuccess);
-				RequestUtil.forwardRequest(request, response,
-						"/admin?configureType=configure&processForm=false", null);
-				// Write out the configurable properties to a backup file
-				// outside the install directory.
-
 				PropertyService.persistMainBackupProperties();
+                if(solrSchemaException != null) {
+                    //Show the warning message
+                    Vector<String> errorVector = new Vector<String>();
+                    errorVector.add(solrSchemaException.getMessage());
+                    RequestUtil.clearRequestMessages(request);
+                    request.setAttribute("supportEmail", supportEmail);
+                    RequestUtil.setRequestErrors(request, errorVector);
+                    RequestUtil.forwardRequest(request, response,
+                                    "/admin/solr-schema-warn.jsp", null);
+                } else {
+                    // Reload the main metacat configuration page
+                    processingSuccess.add("Database successfully upgraded");
+                    RequestUtil.clearRequestMessages(request);
+                    RequestUtil.setRequestSuccess(request, processingSuccess);
+                    RequestUtil.forwardRequest(request, response,
+                            "/admin?configureType=configure&processForm=false", null);
+                    // Write out the configurable properties to a backup file
+                    // outside the install directory.
+
+                    
+                }
+			
 			} catch (GeneralPropertyException gpe) {
 				throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " +
 						"property while upgrading database: " + gpe.getMessage());
@@ -803,6 +822,10 @@ public class DBAdmin extends MetacatAdmin {
 				try {
 					utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
 					utility.upgrade();
+				} catch (SolrSchemaModificationException e) {
+				    //don't throw the exception and continue 
+				    solrSchemaException = e;
+				    continue;
 				} catch (Exception e) {
 					throw new AdminException("DBAdmin.upgradeDatabase - error getting utility class: " 
 							+ className + ". Error message: "
