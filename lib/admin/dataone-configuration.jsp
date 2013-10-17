@@ -373,7 +373,7 @@
 				}
 			%>
 			<%if (!previouslyConfigured) { %>
-				<input class=button type="button" value="Skip" onClick="forward('./admin?configureType=dataone&bypass=true&processForm=true')">
+				<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=dataone&bypass=true&processForm=true')">
 			<%} %>
 			<input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
 		</div>
