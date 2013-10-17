@@ -62,7 +62,8 @@ public class ConfigurationUtil
 					&& SkinUtil.areSkinsConfigured()
 					&& DatabaseUtil.isDatabaseConfigured()
 					&& GeoserverUtil.isGeoserverConfigured()
-					&& isBackupDirConfigured();
+					&& isBackupDirConfigured()
+					&& DataONEConfigUtil.isGeoserverConfigured();
 		} catch (MetacatUtilException ue) {
 			logMetacat.error("Could not determine if metacat is configured due to utility exception: "
 					+ ue.getMessage());
