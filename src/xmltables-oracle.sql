@@ -303,6 +303,8 @@ CREATE INDEX xml_access_idx3 ON xml_access (perm_type);
 CREATE INDEX xml_access_idx4 ON xml_access (perm_order);
 CREATE INDEX xml_access_idx5 ON xml_access (subtreeid);
 CREATE INDEX xml_access_idx6 on xml_access(guid);
+CREATE INDEX identifier_docid_rev_log ON identifier((docid||'.'||rev));
+
 
 
 /*
@@ -551,6 +553,7 @@ CREATE TABLE access_log (
   date_logged   DATE,           -- the datetime on which the event occurred
   CONSTRAINT access_log_pk PRIMARY KEY (entryid)
 );
+CREATE INDEX access_log_docid ON access_log(docid);
 
 CREATE SEQUENCE access_log_id_seq;
 CREATE TRIGGER access_log_before_insert

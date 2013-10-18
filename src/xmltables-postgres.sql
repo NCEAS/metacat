@@ -289,6 +289,7 @@ CREATE INDEX identifier_guid on identifier(guid);
 CREATE INDEX identifier_docid on identifier(docid);
 CREATE INDEX identifier_rev on identifier(rev);
 CREATE INDEX identifier_docid_rev on identifier(docid, rev);
+CREATE INDEX identifier_docid_rev_log ON identifier((docid||'.'||rev));
 
 /*
  * Table used to store all document identifiers for system metadata objects
@@ -401,6 +402,8 @@ CREATE TABLE access_log (
   date_logged   TIMESTAMP,      -- the datetime on which the event occurred
   CONSTRAINT access_log_pk PRIMARY KEY (entryid)
 );
+CREATE INDEX access_log_docid ON access_log(docid);
+
 
 /*
  * the index_event table for solr-based indexing
