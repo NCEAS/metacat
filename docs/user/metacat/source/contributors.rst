@@ -26,6 +26,7 @@ Contributors
   - Chris Barteau (barteau@nceas.ucsb.edu)
   - Shaun Walbridge (walbridge@nceas.ucsb.edu)
   - Michael Daigle (daigle@nceas.ucsb.edu)
+  - Lauren Walker (walker@nceas.ucsb.edu) 
 
 Patch contributors
 ------------------
