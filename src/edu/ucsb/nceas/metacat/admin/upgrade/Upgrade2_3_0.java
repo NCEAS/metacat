@@ -36,11 +36,11 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
 /**
- * Upgrade the application to version 2.2.2. 
+ * Upgrade the application to version 2.3.0. 
  * @author tao
  *
  */
-public class Upgrade2_2_2 implements UpgradeUtilityInterface {
+public class Upgrade2_3_0 implements UpgradeUtilityInterface {
     
     public boolean upgrade() throws AdminException {
         boolean success = true;

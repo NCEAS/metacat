@@ -240,7 +240,7 @@ a custom theme AND you are not using the Registry, you can simply save the
 To use the new MetacatUI theming system, select ``metacatui`` and click the 
 ``Make metacatui default`` radio button. Metacat will open a list of options 
 that apply to the Registry interface. For more information about creating 
-custom themes, see the section called :doc:`themes </Modifying and Creating Themes>`.
+custom themes, see the section called :doc:`themes`.
 
 .. figure:: images/screenshots/image070.png
    :align: center
@@ -259,7 +259,7 @@ If you do not have a custom skin, select the ``default`` skin.
 
 Once you have selected a skin, Metacat will open a list of options that apply to the Registry 
 interface. For more information about creating skins, see the Creating a Custom Skin
-section in :doc:`themes </Modifying and Creating Themes>`.
+section in :doc:`themes`.
 
 .. figure:: images/screenshots/image023.png
    :align: center
