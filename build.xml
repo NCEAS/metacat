@@ -1777,4 +1777,21 @@
 		<copy todir="${app.deploy.dir}" file="${dist.dir}/metacat-index.war" />
 	</target>
 	
+	<!-- Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password -->
+	<target name="war-account" depends="warPrepare" description="Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password">
+		  <property name="war-name" value="account" />
+		  <mkdir dir="${dist.dir}" />
+		     <war destfile="${dist.dir}/${war-name}.war"
+		            webxml="${build.war}/web.xml">
+		      <webinf dir="${war.webinf}">
+		        <include name="metacat.properties"/>
+		      </webinf>
+		      <fileset dir="${war.context}">
+		        <include name="cgi-bin/**"/>
+		      	<include name="style/**"/>  
+		      </fileset>
+		      
+		   </war>
+	</target>
+	
 </project>
