@@ -108,24 +108,7 @@ public class IndexGenerator extends TimerTask {
       
     }
     
-    /**
-     * Build the index for all documents in Metacat without overwriting.
-     * @throws SolrServerException 
-     * @throws ServiceFailure 
-     * @throws NotImplemented 
-     * @throws NotAuthorized 
-     * @throws InvalidToken 
-     * @throws InvalidRequest 
-     * @throws IndexEventLogException 
-     * @throws IllegalAccessException 
-     * @throws InstantiationException 
-     * @throws ClassNotFoundException 
-     */
-    /*public void indexAll() throws InvalidRequest, InvalidToken, NotAuthorized, 
-                            NotImplemented, ServiceFailure, SolrServerException, FileNotFoundException, ClassNotFoundException, InstantiationException, IllegalAccessException, IndexEventLogException {
-        boolean force = false;
-        indexAll(force);
-    }*/
+   
     
     /**
      * Build the index for all documents.
@@ -392,15 +375,7 @@ public class IndexGenerator extends TimerTask {
     }*/
     
     public void run() {
-        /*IndexEvent event = new IndexEvent();
-        event.setDate(Calendar.getInstance().getTime());
-        event.setType(IndexEvent.STARTTIMEDINDEX);
-        event.setDescription("Start the timed index job");
-        try {
-            EventlogFactory.createIndexEventLog().write(event);
-        } catch (Exception e) {
-            log.error("IndexGenerator.run - IndexEventLog can't log the timed indexing start event :"+e.getMessage());
-        }*/
+    
         try {
             Date since = EventlogFactory.createIndexEventLog().getLastProcessDate();
             index(since);
@@ -429,15 +404,7 @@ public class IndexGenerator extends TimerTask {
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
         } catch (FileNotFoundException e) {
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
-        }
-        /*event.setDate(Calendar.getInstance().getTime());
-        event.setType(IndexEvent.FINISHTIMEDINDEX);
-        event.setDescription("Finish the timed index job");
-        try {
-            EventlogFactory.createIndexEventLog().write(event);
-        } catch (Exception e) {
-            log.error("IndexGenerator.run - IndexEventLog can't log the timed indexing finish event :"+e.getMessage());
-        }*/ catch (ClassNotFoundException e) {
+        } catch (ClassNotFoundException e) {
             // TODO Auto-generated catch block
             log.error("IndexGenerator.run - Metadata-Index couldn't generate indexes for those documents which haven't been indexed : "+e.getMessage());
         } catch (InstantiationException e) {
@@ -620,48 +587,12 @@ public class IndexGenerator extends TimerTask {
      * Generate index for the id.
      */
     private void generateIndex(String id)  {
-        if(id != null)  {
-                SystemMetadata sysmeta = getSystemMetadata(id);
-                //only update none-archived id.
-                //if(sysmeta != null && !sysmeta.getArchived() && sysmeta.getObsoletedBy() == null) {
-                try {
-                    if(sysmeta != null) {
-                        InputStream data = getDataObject(id);
-                        /*Identifier obsolete = sysmeta.getObsoletes();
-                        List<String> obsoleteChain = null;
-                        if(obsolete != null) {
-                            obsoleteChain = getObsoletes(id);
-                        }*/
-                        solrIndex.update(id, sysmeta, data);
-                        try {
-                            Identifier identifier = new Identifier();
-                            identifier.setValue(id);
-                            EventlogFactory.createIndexEventLog().remove(identifier);
-                        } catch (Exception ee) {
-                            log.error("IndexGenerator.index - can't remove the id "+id +" from the index_event table since - "+ee.getMessage());
-                        }
-                    } else {
-                        throw new Exception("IndexGenerator.generate - there is no found SystemMetadata associated with the id "+id);
-                    }
-                } catch (Exception e) {
-                    IndexEvent event = new IndexEvent();
-                    Identifier pid = new Identifier();
-                    pid.setValue(id);
-                    event.setIdentifier(pid);
-                    event.setDate(Calendar.getInstance().getTime());
-                    event.setAction(Event.CREATE);
-                    String error = "IndexGenerator.index - Metacat Index couldn't generate the index for the id - "+id+" because "+e.getMessage();
-                    event.setDescription(error);
-                    try {
-                        EventlogFactory.createIndexEventLog().write(event);
-                    } catch (Exception ee) {
-                        log.error("SolrIndex.insertToIndex - IndexEventLog can't log the index inserting event :"+ee.getMessage());
-                    }
-                    log.error(error);
-                }
-                 
-           
-        }
+        //if id is null and sysmeta will be null. If sysmeta is null, it will be caught in solrIndex.update
+        SystemMetadata sysmeta = getSystemMetadata(id);
+        Identifier pid = new Identifier();
+        pid.setValue(id);
+        solrIndex.update(pid, sysmeta);
+ 
     }
     
     /*

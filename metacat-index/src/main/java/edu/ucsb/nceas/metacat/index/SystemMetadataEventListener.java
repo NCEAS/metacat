@@ -149,15 +149,17 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 		//System.out.println("===================================update the document "+pid.getValue());
 		log.info("===================================adding the document "+pid.getValue());
 		SystemMetadata systemMetadata = entryEvent.getItem();
-		if(systemMetadata == null) {
+		
+		/*if(systemMetadata == null) {
 		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
 		    return;
-		}
+		}*/
 		
 		// make sure we remove this object so that it can be re-added in the future
-		if (source != null) {
+		if (source != null && systemMetadata != null) {
 			source.remove(systemMetadata);
 		}
+		solrIndex.update(pid, systemMetadata);
 				
 		//Identifier obsoletes = systemMetadata.getObsoletes();
 		//List<String> obsoletesChain = null;
@@ -171,52 +173,22 @@ public class SystemMetadataEventListener implements ItemListener<SystemMetadata>
 	            return;
 			}
 		}*/
-		String objectPath = null;
-		try {
-			objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-		} catch (Exception e) {
-		    String error = "SystemMetadataEventListener.itemAdded - could not look up object path" + e.getMessage();
-		    writeEventLog(systemMetadata, pid, error);
-			log.error(error, e);
-			return;
-		}
-		if(objectPath != null) {
+		
+		/*if(objectPath != null) {
 		    InputStream data = null;
 	        try {
 	            data = new FileInputStream(objectPath);
 	            solrIndex.update(pid.getValue(), systemMetadata, data);
-                EventlogFactory.createIndexEventLog().remove(pid);
+	            EventlogFactory.createIndexEventLog().remove(pid);
 	        } catch (Exception e) {
 	            String error = "SystemMetadataEventListener.itemAdded - could not comit the index into the solr server since " + e.getMessage();
 	            writeEventLog(systemMetadata, pid, error);
 	            log.error(error, e);
 	        }
-		}
+		}*/
 		
 	}
 	
-	private void writeEventLog(SystemMetadata systemMetadata, Identifier pid, String error) {
-	    IndexEvent event = new IndexEvent();
-        event.setIdentifier(pid);
-	    event.setDate(Calendar.getInstance().getTime());
-	    String action = null;
-	    if (systemMetadata == null ) {
-	        action = Event.CREATE.xmlValue();
-            event.setAction(Event.CREATE);
-	    }
-	    else if(systemMetadata.getArchived() || systemMetadata.getObsoletedBy() != null) {
-            action = Event.UPDATE.xmlValue();
-            event.setAction(Event.UPDATE);
-        } else {
-            action = Event.CREATE.xmlValue();
-            event.setAction(Event.CREATE);
-        }
-        event.setDescription("Failed to "+action+"the solr index for the id "+pid.getValue()+" since "+error);
-        try {
-            EventlogFactory.createIndexEventLog().write(event);
-        } catch (Exception ee) {
-            log.error("SolrIndex.insertToIndex - IndexEventLog can't log the index inserting event :"+ee.getMessage());
-        }
-	}
+	
     
 }

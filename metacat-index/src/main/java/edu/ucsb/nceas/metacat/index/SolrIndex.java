@@ -19,6 +19,7 @@
 package edu.ucsb.nceas.metacat.index;
 
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,6 +56,7 @@ import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.resourcemap.ResourceEntry;
 import org.dataone.cn.indexer.resourcemap.ResourceMap;
+import org.dataone.cn.indexer.resourcemap.ResourceMapFactory;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
@@ -320,15 +322,15 @@ public class SolrIndex {
      * @param data
      * @throws SolrServerException
      */
-    private void checkParams(String pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException {
-        if(pid == null || pid.trim().equals("")) {
+    private void checkParams(Identifier pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException {
+        if(pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
             throw new SolrServerException("The identifier of the indexed document should not be null or blank.");
         }
         if(systemMetadata == null) {
-            throw new SolrServerException("The system metadata of the indexed document should not be null.");
+            throw new SolrServerException("The system metadata of the indexed document "+pid.getValue()+ " should not be null.");
         }
         if(data == null) {
-            throw new SolrServerException("The indexed document itself should not be null.");
+            throw new SolrServerException("The indexed document itself for pid "+pid.getValue()+" should not be null.");
         }
     }
     
@@ -344,11 +346,11 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private synchronized void insert(String pid, SystemMetadata systemMetadata, InputStream data) 
+    private synchronized void insert(Identifier pid, SystemMetadata systemMetadata, InputStream data) 
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, SolrServerException, JiBXException, EncoderException, NotImplemented, NotFound, UnsupportedType {
         checkParams(pid, systemMetadata, data);
-        Map<String, SolrDoc> docs = process(pid, systemMetadata, data);
+        Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, data);
         
         //transform the Map to the SolrInputDocument which can be used by the solr server
         if(docs != null) {
@@ -426,43 +428,73 @@ public class SolrIndex {
     
     /**
      * Update the solr index. This method handles the three scenarios:
-     * 1. Update an existing doc - if the the system metadata shows the value of the archive is false and it has an obsoletes,
+     * 1. Remove an existing doc - if the the system metadata shows the value of the archive is true,
      *    remove the index for the previous version(s) and generate new index for the doc.
-     * 2. Add a new doc - if the system metadata shows the value of the archive is false and it hasn't an obsoletes, generate the
+     * 2. Add a new doc - if the system metadata shows the value of the archive is false, generate the
      *    index for the doc.
-     * @param pid  the id of the document
-     * @param obsoleteIds  the chain of the obsoletes by this id
-     * @param systemMetadata  the system metadata associated with the data object
-     * @param data  the data object itself
-     * @throws SolrServerException 
-     * @throws JiBXException 
-     * @throws EncoderException 
-     * @throws UnsupportedType 
-     * @throws NotFound 
-     * @throws NotImplemented 
-     * @throws ServiceFailure 
-     * @throws OREParserException 
      */
-    public void update(String pid, SystemMetadata systemMetadata, InputStream data) 
-                    throws IOException, SAXException, ParserConfigurationException,
-                    XPathExpressionException, SolrServerException, JiBXException, EncoderException, NotImplemented, NotFound, UnsupportedType, ServiceFailure, OREParserException {
-        checkParams(pid, systemMetadata, data);
-        //generate index for either add or update.
-        insert(pid, systemMetadata, data);
-        log.info("============================= update index for the identifier "+pid);
-       
+    public void update(Identifier pid, SystemMetadata systemMetadata) {
+        String objectPath = null;
+        InputStream data = null;
+        try {
+            objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
+            data = new FileInputStream(objectPath);
+            update(pid, systemMetadata, data);
+            EventlogFactory.createIndexEventLog().remove(pid);
+        } catch (Exception e) {
+            String error = "SolrIndex.update - could not update the solr index since " + e.getMessage();
+            writeEventLog(systemMetadata, pid, error);
+            log.error(error, e);
+        }
     }
     
     
+    /**
+     * Update the solr index. This method handles the three scenarios:
+     * 1. Remove an existing doc - if the the system metadata shows the value of the archive is true,
+     *    remove the index for the previous version(s) and generate new index for the doc.
+     * 2. Add a new doc - if the system metadata shows the value of the archive is false, generate the
+     *    index for the doc.
+     * @param pid
+     * @param systemMetadata
+     * @param data
+     * @throws SolrServerException
+     * @throws ServiceFailure
+     * @throws XPathExpressionException
+     * @throws NotImplemented
+     * @throws NotFound
+     * @throws UnsupportedType
+     * @throws IOException
+     * @throws SAXException
+     * @throws ParserConfigurationException
+     * @throws OREParserException
+     * @throws JiBXException
+     * @throws EncoderException
+     */
+    void update(Identifier pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException, 
+                                ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, 
+                                IOException, SAXException, ParserConfigurationException, OREParserException, JiBXException, EncoderException {
+        checkParams(pid, systemMetadata, data);
+        boolean isArchive = systemMetadata.getArchived();
+        if(isArchive ) {
+            //delete the index for the archived objects
+            remove(pid.getValue(), systemMetadata);
+            log.info("SolrIndex.update============================= archive the idex for the identifier "+pid);
+        } else {
+            //generate index for either add or update.
+            insert(pid, systemMetadata, data);
+            log.info("SolrIndex.update============================= insert index for the identifier "+pid);
+        }
+    }
     
    
 
     /*
      * Is the pid a resource map
      */
-    private boolean isDataPackage(String pid) throws FileNotFoundException, ServiceFailure {
+    private boolean isDataPackage(String pid, SystemMetadata sysmeta) throws FileNotFoundException, ServiceFailure {
         boolean isDataPackage = false;
-        SystemMetadata sysmeta = DistributedMapsFactory.getSystemMetadata(pid);
+        //SystemMetadata sysmeta = DistributedMapsFactory.getSystemMetadata(pid);
         if(sysmeta != null) {
             isDataPackage = IndexGenerator.isResourceMap(sysmeta.getFormatId());
         }
@@ -477,6 +509,154 @@ public class SolrIndex {
             return StringUtils.isNotEmpty(resourceMapId);
         } else {
             return false;
+        }
+    }
+    /**
+     * Remove the indexed associated with specified pid.
+     * @param pid  the pid which the indexes are associated with
+     * @throws IOException
+     * @throws SolrServerException
+     * @throws ParserConfigurationException 
+     * @throws SAXException 
+     * @throws UnsupportedType 
+     * @throws NotFound 
+     * @throws NotImplemented 
+     * @throws XPathExpressionException 
+     * @throws ServiceFailure 
+     * @throws OREParserException 
+     */
+    private void remove(String pid, SystemMetadata sysmeta) throws IOException, SolrServerException, ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SAXException, ParserConfigurationException, OREParserException {
+        if (isDataPackage(pid, sysmeta)) {
+            removeDataPackage(pid);
+        } else if (isPartOfDataPackage(pid)) {
+            removeFromDataPackage(pid);
+        } else {
+            removeFromIndex(pid);
+        }
+    }
+    
+    /*
+     * Remove a resource map pid
+     */
+    private void removeDataPackage(String pid) throws ServiceFailure, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, OREParserException  {
+        Document resourceMapDoc = generateXmlDocument(DistributedMapsFactory.getDataObject(pid));
+        //ResourceMap resourceMap = new ResourceMap(resourceMapDoc);
+        ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourceMapDoc);
+        List<String> documentIds = resourceMap.getAllDocumentIDs();
+        List<SolrDoc> indexDocuments =ResourceMapSubprocessor.getSolrDocs(documentIds);
+        removeFromIndex(pid);
+        //List<SolrDoc> docsToUpdate = new ArrayList<SolrDoc>();
+        // for each document in data package:
+        for (SolrDoc indexDoc : indexDocuments) {
+
+            if (indexDoc.getIdentifier().equals(pid)) {
+                continue; // skipping the resource map, no need update
+                          // it.
+                          // will
+                          // be removed.
+            }
+
+            // Remove resourceMap reference
+            indexDoc.removeFieldsWithValue(SolrElementField.FIELD_RESOURCEMAP,
+                    resourceMap.getIdentifier());
+
+            // // Remove documents/documentedby values for this resource
+            // map
+            for (ResourceEntry entry : resourceMap.getMappedReferences()) {
+                if (indexDoc.getIdentifier().equals(entry.getIdentifier())) {
+                    for (String documentedBy : entry.getDocumentedBy()) {
+                        // Using removeOneFieldWithValue in-case same
+                        // documents
+                        // are in more than one data package. just
+                        // remove
+                        // one
+                        // instance of data package info.
+                        indexDoc.removeOneFieldWithValue(SolrElementField.FIELD_ISDOCUMENTEDBY,
+                                documentedBy);
+                    }
+                    for (String documents : entry.getDocuments()) {
+                        indexDoc.removeOneFieldWithValue(SolrElementField.FIELD_DOCUMENTS,
+                                documents);
+                    }
+                    break;
+                }
+            }
+            removeFromIndex(indexDoc.getIdentifier());
+            insertToIndex(indexDoc);
+            //docsToUpdate.add(indexDoc);
+        }
+        //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
+        //httpService.sendUpdate(solrIndexUri, addCommand);
+    }
+
+    private void removeFromDataPackage(String pid) throws XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, SAXException  {
+        SolrDoc indexedDoc = ResourceMapSubprocessor.getSolrDoc(pid);
+        removeFromIndex(pid);
+        List<SolrDoc> docsToUpdate = new ArrayList<SolrDoc>();
+
+        List<String> documents = indexedDoc.getAllFieldValues(SolrElementField.FIELD_DOCUMENTS);
+        for (String documentsValue : documents) {
+            SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentsValue);
+            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_ISDOCUMENTEDBY, pid);
+            removeFromIndex(documentsValue);
+            insertToIndex(solrDoc);
+        }
+
+        List<String> documentedBy = indexedDoc
+                .getAllFieldValues(SolrElementField.FIELD_ISDOCUMENTEDBY);
+        for (String documentedByValue : documentedBy) {
+            SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentedByValue);
+            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, documentedByValue);
+            //docsToUpdate.add(solrDoc);
+            removeFromIndex(documentedByValue);
+            insertToIndex(solrDoc);
+        }
+
+        //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
+        //httpService.sendUpdate(solrIndexUri, addCommand);
+    }
+
+    /*
+     * Remove a pid from the solr index
+     */
+    private void removeFromIndex(String pid) throws SolrServerException, IOException {
+        if(pid != null && !pid.trim().equals("")) {
+            /*IndexEvent event = new IndexEvent();
+            event.setDate(Calendar.getInstance().getTime());
+            Identifier identifier = new Identifier();
+            identifier.setValue(pid);
+            event.setIdentifier(identifier);*/
+            try {
+                solrServer.deleteById(pid);
+                solrServer.commit();
+                /*event.setType(IndexEvent.SUCCESSDELETE);
+                event.setDescription("Successfully remove the solr index for the id "+identifier.getValue());
+                try {
+                    EventlogFactory.createIndexEventLog().write(event);
+                } catch (Exception e) {
+                    log.error("SolrIndex.removeFromIndex - IndexEventLog can't log the index deleting event :"+e.getMessage());
+                }*/
+            } catch (SolrServerException e) {
+                /*event.setAction(Event.DELETE);
+                event.setDescription("Failurely remove the solr index for the id "+identifier.getValue()+" since "+e.getMessage());
+                try {
+                    EventlogFactory.createIndexEventLog().write(event);
+                } catch (Exception ee) {
+                    log.error("SolrIndex.removeFromIndex - IndexEventLog can't log the index deleting event :"+ee.getMessage());
+                }*/
+                throw e;
+                
+            } catch (IOException e) {
+                /*event.setAction(Event.DELETE);
+                event.setDescription("Failurely remove the solr index for the id "+identifier.getValue()+" since "+e.getMessage());
+                try {
+                    EventlogFactory.createIndexEventLog().write(event);
+                } catch (Exception ee) {
+                    log.error("SolrIndex.removeFromIndex - IndexEventLog can't log the index deleting event :"+ee.getMessage());
+                }*/
+                throw e;
+            }
+            
         }
     }
 
@@ -516,5 +696,29 @@ public class SolrIndex {
             }
         }
         return list;
+    }
+    
+    private void writeEventLog(SystemMetadata systemMetadata, Identifier pid, String error) {
+        IndexEvent event = new IndexEvent();
+        event.setIdentifier(pid);
+        event.setDate(Calendar.getInstance().getTime());
+        String action = null;
+        if (systemMetadata == null ) {
+            action = Event.CREATE.xmlValue();
+            event.setAction(Event.CREATE);
+        }
+        else if(systemMetadata.getArchived()) {
+            action = Event.DELETE.xmlValue();
+            event.setAction(Event.DELETE);
+        } else {
+            action = Event.CREATE.xmlValue();
+            event.setAction(Event.CREATE);
+        }
+        event.setDescription("Failed to "+action+"the solr index for the id "+pid.getValue()+" since "+error);
+        try {
+            EventlogFactory.createIndexEventLog().write(event);
+        } catch (Exception ee) {
+            log.error("SolrIndex.insertToIndex - IndexEventLog can't log the index inserting event :"+ee.getMessage());
+        }
     }
 }
