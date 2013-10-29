@@ -589,6 +589,9 @@ public class SolrIndex {
         //httpService.sendUpdate(solrIndexUri, addCommand);
     }
 
+    /*
+     * Remove a pid which is part of resource map.
+     */
     private void removeFromDataPackage(String pid) throws XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, SAXException  {
         SolrDoc indexedDoc = ResourceMapSubprocessor.getSolrDoc(pid);
         removeFromIndex(pid);
@@ -619,7 +622,7 @@ public class SolrIndex {
     /*
      * Remove a pid from the solr index
      */
-    private void removeFromIndex(String pid) throws SolrServerException, IOException {
+    private synchronized void removeFromIndex(String pid) throws SolrServerException, IOException {
         if(pid != null && !pid.trim().equals("")) {
             /*IndexEvent event = new IndexEvent();
             event.setDate(Calendar.getInstance().getTime());
