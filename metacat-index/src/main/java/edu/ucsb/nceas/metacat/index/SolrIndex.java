@@ -609,7 +609,7 @@ public class SolrIndex {
                 .getAllFieldValues(SolrElementField.FIELD_ISDOCUMENTEDBY);
         for (String documentedByValue : documentedBy) {
             SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentedByValue);
-            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, documentedByValue);
+            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, pid);
             //docsToUpdate.add(solrDoc);
             removeFromIndex(documentedByValue);
             insertToIndex(solrDoc);
