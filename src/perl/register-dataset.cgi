@@ -1751,7 +1751,8 @@ sub creatorElement() {
 	else {
 		$creators .= creatorNode($FORM::site);
 	}
-	if ( $skinName ne 'knb' ) {
+	# only use configured organization for certain skins
+	if ( $skinName ne 'knb' && $skinName ne 'metacatui' ) {
 		$creators .= creatorNode();
 	}
 
