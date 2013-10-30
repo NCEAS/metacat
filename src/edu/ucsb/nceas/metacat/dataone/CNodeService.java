@@ -398,7 +398,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  boolean allowed = isAdminAuthorized(session);
 	  
 	  if (!allowed) {
-		  String msg = "The subject is not allowed to call delete() on a Coordinating Node.";
+		  String msg = "The subject is not allowed to call archive() on a Coordinating Node.";
 		  logMetacat.info(msg);
 		  throw new NotAuthorized("1320", msg);
 	  }
