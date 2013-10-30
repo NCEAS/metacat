@@ -56,7 +56,15 @@ for your OS.
 
 Release Notes for 2.3.0:
 ------------------------
-This release adds additional solr indexing features to metacat-index.
+This release adds solr indexing features to metacat-index 
+for querying and sorting by authors and taxonomic coverage.
+Also includes:
+* Control over the log level from the SOLR libraries using Metacat's
+log4j file.
+* access_log DB indexes for better log reporting performance 
+via the DataONE API
+* Provide 'reindexall' action instead of 'reindex' without a 'pid' parameter.
+
 
 Release Notes for 2.2.1:
 ------------------------
