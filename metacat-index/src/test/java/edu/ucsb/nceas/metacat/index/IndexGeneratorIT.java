@@ -36,7 +36,7 @@ public class IndexGeneratorIT {
         SolrIndex solrIndex = generateSolrIndex();
         SystemMetadataEventListener systeMetaListener = new SystemMetadataEventListener(solrIndex);
         systeMetaListener.start();
-        IndexGenerator generator = new IndexGenerator(solrIndex);
+        IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask(solrIndex);
         generator.indexAll();
         String result = SolrIndexIT.doQuery(solrIndex.getSolrServer());
         systeMetaListener.stop();

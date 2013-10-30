@@ -71,7 +71,7 @@ import edu.ucsb.nceas.metacat.index.event.IndexEventLogException;
  * @author tao
  *
  */
-public class IndexGenerator extends TimerTask {
+public class IndexGeneratorTimerTask extends TimerTask {
     
     private static final int FIRST =0;
     private static final int SECOND =1;
@@ -91,7 +91,7 @@ public class IndexGenerator extends TimerTask {
     private IMap<Identifier, SystemMetadata> systemMetadataMap;
     private IMap<Identifier, String> objectPathMap;
     private ISet<SystemMetadata> indexQueue;
-    private Log log = LogFactory.getLog(IndexGenerator.class);
+    private Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
     //private MNode mNode = null;
     private static List<String> resourceMapNamespaces = null;
     
@@ -100,7 +100,7 @@ public class IndexGenerator extends TimerTask {
      * @param solrIndex
      * @param systemMetadataListener
      */
-    public IndexGenerator(SolrIndex solrIndex) {
+    public IndexGeneratorTimerTask(SolrIndex solrIndex) {
         this.solrIndex = solrIndex;
         resourceMapNamespaces = Settings.getConfiguration().getList(RESOURCEMAPPROPERYNAME);
         //this.systemMetadataListener = systemMetadataListener;

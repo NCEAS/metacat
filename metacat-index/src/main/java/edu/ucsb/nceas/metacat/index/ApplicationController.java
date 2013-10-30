@@ -55,8 +55,8 @@ public class ApplicationController implements Runnable {
     private static ApplicationContext context = null;
     private String springConfigFileURL = "/index-processor-context.xml";
     private String metacatPropertiesFile = null;
-    private static int waitingTime = IndexGenerator.WAITTIME;
-    private static int maxAttempts = IndexGenerator.MAXWAITNUMBER;
+    private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
+    private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static long period = DEFAULTINTERVAL;
     Log log = LogFactory.getLog(ApplicationController.class);
     
@@ -206,7 +206,7 @@ public class ApplicationController implements Runnable {
         if(period > 0) {
             SolrIndex index = solrIndexes.get(FIRST);
             //SystemMetadataEventListener listener = sysmetaListeners.get(FIRST);
-            IndexGenerator generator = new IndexGenerator(index);
+            IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask(index);
             //Thread indexThread = new Thread(generator);
             //indexThread.start();
             Timer indexTimer = new Timer();

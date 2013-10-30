@@ -52,8 +52,8 @@ public class DistributedMapsFactory {
     private static String hzSystemMetadata = null;
     private static String hzObjectPath = null;
     private static String hzIndexQueue = null;
-    private static int waitingTime = IndexGenerator.WAITTIME;
-    private static int maxAttempts = IndexGenerator.MAXWAITNUMBER;
+    private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
+    private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static IMap<Identifier, SystemMetadata> systemMetadataMap = null;
     private static IMap<Identifier, String> objectPathMap = null;
     private static ISet<SystemMetadata> indexQueue = null;
@@ -72,12 +72,12 @@ public class DistributedMapsFactory {
     private static void startHazelCastClient() throws FileNotFoundException, ServiceFailure{
         
         try {
-            waitingTime = Settings.getConfiguration().getInt(IndexGenerator.WAITIMEPOPERTYNAME);
-            maxAttempts = Settings.getConfiguration().getInt(IndexGenerator.MAXATTEMPTSPROPERTYNAME);
+            waitingTime = Settings.getConfiguration().getInt(IndexGeneratorTimerTask.WAITIMEPOPERTYNAME);
+            maxAttempts = Settings.getConfiguration().getInt(IndexGeneratorTimerTask.MAXATTEMPTSPROPERTYNAME);
         } catch (Exception e) {
             log.warn("DistributedMapFactory.startHazelCastClient - couldn't read the waiting time or maxattempts from the metacat.properties file since : "+e.getMessage()+". Default values will be used");
-            waitingTime = IndexGenerator.WAITTIME;
-            maxAttempts = IndexGenerator.MAXWAITNUMBER;
+            waitingTime = IndexGeneratorTimerTask.WAITTIME;
+            maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
         }
         try {
             identifiersSetName = Settings.getConfiguration().getString("dataone.hazelcast.storageCluster.identifiersSet");

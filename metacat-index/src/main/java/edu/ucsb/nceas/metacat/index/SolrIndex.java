@@ -496,7 +496,7 @@ public class SolrIndex {
         boolean isDataPackage = false;
         //SystemMetadata sysmeta = DistributedMapsFactory.getSystemMetadata(pid);
         if(sysmeta != null) {
-            isDataPackage = IndexGenerator.isResourceMap(sysmeta.getFormatId());
+            isDataPackage = IndexGeneratorTimerTask.isResourceMap(sysmeta.getFormatId());
         }
         return isDataPackage;
     }
