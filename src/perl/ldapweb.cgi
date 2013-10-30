@@ -38,6 +38,8 @@ use MIME::Base64;       # for creating the password hash
 use URI;                # for parsing URL syntax
 use Config::Properties; # for parsing Java .properties files
 use File::Basename;     # for path name parsing
+use DateTime;			# for parsing dates
+use DateTime::Duration; # for substracting
 use Captcha::reCAPTCHA; # for protection against spams
 use Cwd 'abs_path';
 
@@ -320,6 +322,55 @@ if ( $stages{$stage} ) {
 # Define the subroutines to do the work
 #--------------------------------------------------------------------------80c->
 
+sub clearTemporaryAccounts {
+	
+    #search accounts that have expired
+	my $org = $query->param('o'); 
+    my $ldapUsername = $ldapConfig->{$org}{'user'};
+    my $ldapPassword = $ldapConfig->{$org}{'password'};
+    my $orgAuthBase = $ldapConfig->{$org}{'base'};
+    my $orgExpiration = $ldapConfig->{$org}{'expiration'};
+    my $tmpSearchBase = 'dc=tmp,' . $orgAuthBase; 
+	
+	my $dt = DateTime->now;
+	$dt->subtract( hours => $orgExpiration );
+	my $expirationDate = $dt->ymd() . $dt->hms() . "Z";
+    my $filter = "(createTimestamp <= " . $expirationDate . ")";
+    debug("Clearing expired accounts with filter: " . $filter);
+    my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
+
+    my $ldap;
+    my $mesg;
+    
+    my $dn;
+
+    #if main ldap server is down, a html file containing warning message will be returned
+    debug("clearTempAccounts: connecting to $ldapurl, $timeout");
+    $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    if ($ldap) {
+    	$ldap->start_tls( verify => 'none');
+        $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
+		$mesg = $ldap->search (
+			base   => $base,
+			filter => $filter,
+			attrs => \@attrs,
+		);
+
+	    if ($mesg->count() > 0) {
+			my $entry;
+			foreach $entry ($mesg->all_entries) { 
+            	$dn = $entry->dn();
+            	# remove the entry
+   				debug("DRY RUN: Removing expired account: " . $dn);
+            	#$ldap->delete($dn);
+			}
+        }
+    	$ldap->unbind;   # take down session
+    }
+
+    return $foundAccounts;
+}
+
 sub fullTemplate {
     my $templateList = shift;
     my $templateVars = setVars(shift);
@@ -503,6 +554,9 @@ sub handleRegister {
         my $o = $query->param('o');    
         $searchBase = $ldapConfig->{$o}{'base'};  
     }
+    
+    # Remove any expired temporary accounts for this subtree before continuing
+    clearTemporaryAccounts();
 
     # Search LDAP for matching entries that already exist
     # Some forms use a single text search box, whereas others search per
