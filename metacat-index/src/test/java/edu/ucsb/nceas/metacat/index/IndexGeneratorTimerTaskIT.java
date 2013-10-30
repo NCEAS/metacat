@@ -27,7 +27,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;
 
-public class IndexGeneratorIT {
+public class IndexGeneratorTimerTaskIT {
     /**
      * Test building index for an insert.
      */
