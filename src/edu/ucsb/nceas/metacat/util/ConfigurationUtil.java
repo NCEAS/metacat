@@ -63,7 +63,7 @@ public class ConfigurationUtil
 					&& DatabaseUtil.isDatabaseConfigured()
 					&& GeoserverUtil.isGeoserverConfigured()
 					&& isBackupDirConfigured()
-					&& DataONEConfigUtil.isGeoserverConfigured();
+					&& DataONEConfigUtil.isDataOneConfigured();
 		} catch (MetacatUtilException ue) {
 			logMetacat.error("Could not determine if metacat is configured due to utility exception: "
 					+ ue.getMessage());

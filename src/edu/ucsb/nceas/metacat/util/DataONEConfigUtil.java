@@ -40,7 +40,7 @@ public class DataONEConfigUtil {
      * 
      * @return a boolean that is true if dataONE setting is configured or bypassed
      */
-    public static boolean isGeoserverConfigured() throws MetacatUtilException {
+    public static boolean isDataOneConfigured() throws MetacatUtilException {
         String dataoneConfiguredString = PropertyService.UNCONFIGURED;
         try {
             dataoneConfiguredString = PropertyService.getProperty("configutil.dataoneConfigured");
