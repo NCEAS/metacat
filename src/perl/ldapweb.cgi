@@ -334,7 +334,7 @@ sub clearTemporaryAccounts {
 	
 	my $dt = DateTime->now;
 	$dt->subtract( hours => $orgExpiration );
-	my $expirationDate = $dt->ymd() . $dt->hms() . "Z";
+	my $expirationDate = $dt->ymd("") . $dt->hms("") . "Z";
     my $filter = "(createTimestamp <= " . $expirationDate . ")";
     debug("Clearing expired accounts with filter: " . $filter);
     my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
@@ -351,7 +351,7 @@ sub clearTemporaryAccounts {
     	$ldap->start_tls( verify => 'none');
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
 		$mesg = $ldap->search (
-			base   => $base,
+			base   => $orgAuthBase,
 			filter => $filter,
 			attrs => \@attrs,
 		);
@@ -368,7 +368,7 @@ sub clearTemporaryAccounts {
     	$ldap->unbind;   # take down session
     }
 
-    return $foundAccounts;
+    return 0;
 }
 
 sub fullTemplate {
