@@ -232,6 +232,12 @@ public class MNodeService extends D1NodeService
     	// only admin of  the MN or the CN is allowed a full delete
         boolean allowed = false;
         allowed = isAdminAuthorized(session);
+        
+        //check if it is the authoritative member node
+        if(!allowed) {
+            allowed = isAuthoritativeMNodeAdmin(session, pid);
+        }
+        
         if (!allowed) { 
             throw new NotAuthorized("1320", "The provided identity does not have " + "permission to delete objects on the Node.");
         }

@@ -715,6 +715,86 @@ public abstract class D1NodeService {
         return systemMetadata;
     }
      
+    
+    /**
+     * Test if the specified session represents the authoritative member node for the
+     * given object specified by the identifier. According the the DataONE documentation, 
+     * the authoritative member node has all the rights of the *rightsHolder*.
+     * @param session - the Session object containing the credentials for the Subject
+     * @param pid - the Identifier of the data object
+     * @return true if the session represents the authoritative mn.
+     * @throws ServiceFailure 
+     * @throws NotImplemented 
+     */
+    public boolean isAuthoritativeMNodeAdmin(Session session, Identifier pid) {
+        boolean allowed = false;
+        //check the parameters
+        if(session == null) {
+            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the session object is null and return false.");
+            return allowed;
+        } else if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
+            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the Identifier object is null (not being specified) and return false.");
+            return allowed;
+        }
+        
+        //Get the subject from the session
+        Subject subject = session.getSubject();
+        if(subject != null) {
+            //Get the authoritative member node info from the system metadata
+            SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+            if(sysMeta != null) {
+                NodeReference authoritativeMNode = sysMeta.getAuthoritativeMemberNode();
+                if(authoritativeMNode != null) {
+                        CNode cn = null;
+                        try {
+                            cn = D1Client.getCN();
+                        } catch (ServiceFailure e) {
+                            logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't connect to the CN since "+
+                                            e.getDescription()+ ". The false value will be returned for the AuthoritativeMNodeAdmin.");
+                            return allowed;
+                        }
+                        
+                        if(cn != null) {
+                            List<Node> nodes = null;
+                            try {
+                                nodes = cn.listNodes().getNodeList();
+                            } catch (NotImplemented e) {
+                                logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't get the member nodes list from the CN since "+e.getDescription()+ 
+                                                ". The false value will be returned for the AuthoritativeMNodeAdmin.");
+                                return allowed;
+                            } catch (ServiceFailure ee) {
+                                logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't get the member nodes list from the CN since "+ee.getDescription()+ 
+                                                ". The false value will be returned for the AuthoritativeMNodeAdmin.");
+                                return allowed;
+                            }
+                            if(nodes != null) {
+                                for(Node node : nodes) {
+                                    //find the authoritative node and get its subjects
+                                    if (node.getType() == NodeType.MN && node.getIdentifier() != null && node.getIdentifier().equals(authoritativeMNode)) {
+                                        List<Subject> nodeSubjects = node.getSubjectList();
+                                        if(nodeSubjects != null) {
+                                            // check if the session subject is in the node subject list
+                                            for (Subject nodeSubject : nodeSubjects) {
+                                                logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin(), comparing subjects: " +
+                                                    nodeSubject.getValue() + " and " + subject.getValue());
+                                                if ( nodeSubject != null && nodeSubject.equals(subject) ) {
+                                                    allowed = true; // subject of session == target node subject
+                                                    break;
+                                                }
+                                            }              
+                                        }
+                                      
+                                    }
+                                }
+                            }
+                        }
+                }
+            }
+        }
+        return allowed;
+    }
+    
+    
   /**
    * Test if the user identified by the provided token has administrative authorization 
    * 
@@ -866,6 +946,12 @@ public abstract class D1NodeService {
         allowed = true;
         return allowed;
         
+    }
+    
+    // the authoritative member node of the pid always has the access as well.
+    if (isAuthoritativeMNodeAdmin(session, pid)) {
+        allowed = true;
+        return allowed;
     }
     
     // get the subject[s] from the session

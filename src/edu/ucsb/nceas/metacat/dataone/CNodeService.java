@@ -346,6 +346,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
 	  
+	  // additional check if it is the authoritative node if it is not the admin
+      if(!allowed) {
+          allowed = isAuthoritativeMNodeAdmin(session, pid);
+      }
+	  
 	  if (!allowed) {
 		  String msg = "The subject is not allowed to call delete() on a Coordinating Node.";
 		  logMetacat.info(msg);
@@ -396,6 +401,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
+	  
+	  //check if it is the authoritative member node
+	  if(!allowed) {
+	      allowed = isAuthoritativeMNodeAdmin(session, pid);
+	  }
 	  
 	  if (!allowed) {
 		  String msg = "The subject is not allowed to call archive() on a Coordinating Node.";
@@ -1345,6 +1355,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // are we allowed?
           boolean isAllowed = false;
           isAllowed = isAdminAuthorized(session);
+          
+          // additional check if it is the authoritative node if it is not the admin
+          if(!isAllowed) {
+              isAllowed = isAuthoritativeMNodeAdmin(session, pid);
+          }
 
           // proceed if we're called by a CN
           if ( isAllowed ) {
