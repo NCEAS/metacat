@@ -335,8 +335,8 @@ sub clearTemporaryAccounts {
 	my $dt = DateTime->now;
 	$dt->subtract( hours => $orgExpiration );
 	my $expirationDate = $dt->ymd("") . $dt->hms("") . "Z";
-    my $filter = "(createTimestamp <= " . $expirationDate . ")";
-    debug("Clearing expired accounts with filter: " . $filter);
+    my $filter = "(&(objectClass=inetOrgPerson)(createTimestamp<=" . $expirationDate . "))";
+    debug("Clearing expired accounts with filter: " . $filter . ", base: " . $tmpSearchBase);    
     my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
 
     my $ldap;
@@ -345,17 +345,16 @@ sub clearTemporaryAccounts {
     my $dn;
 
     #if main ldap server is down, a html file containing warning message will be returned
-    debug("clearTempAccounts: connecting to $ldapurl, $timeout");
+    debug("clearTemporaryAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
     	$ldap->start_tls( verify => 'none');
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
 		$mesg = $ldap->search (
-			base   => $orgAuthBase,
+			base   => $tmpSearchBase,
 			filter => $filter,
 			attrs => \@attrs,
 		);
-
 	    if ($mesg->count() > 0) {
 			my $entry;
 			foreach $entry ($mesg->all_entries) { 
