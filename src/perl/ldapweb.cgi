@@ -360,8 +360,8 @@ sub clearTemporaryAccounts {
 			foreach $entry ($mesg->all_entries) { 
             	$dn = $entry->dn();
             	# remove the entry
-   				debug("DRY RUN: Removing expired account: " . $dn);
-            	#$ldap->delete($dn);
+   				debug("Removing expired account: " . $dn);
+            	$ldap->delete($dn);
 			}
         }
     	$ldap->unbind;   # take down session
