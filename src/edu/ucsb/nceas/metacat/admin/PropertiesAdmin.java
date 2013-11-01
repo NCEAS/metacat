@@ -34,6 +34,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
@@ -50,7 +51,6 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertiesMetaData;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 import edu.ucsb.nceas.utilities.UtilException;
 
@@ -298,6 +298,27 @@ public class PropertiesAdmin extends MetacatAdmin {
 				
 				// make sure hazelcast.xml uses a unique group name
 				this.modifyHazelcastConfig();
+				
+				// set permissions on the registry cgi scripts, least on *nix systems
+				try {
+					String cgiFiles = 
+							PropertyService.getProperty("application.deployDir") 
+							+ FileUtil.getFS() 
+							+ PropertyService.getProperty("application.context") 
+							+ PropertyService.getProperty("application.cgiDir")
+							+ FileUtil.getFS() 
+							+ "*.cgi";
+					String [] command = {"sh", "-c", "chmod +x " + cgiFiles};
+					Runtime rt = Runtime.getRuntime();
+					Process pr = rt.exec(command);
+					int ret = pr.waitFor();
+					if (ret > 0) {
+						logMetacat.error(IOUtils.toString(pr.getErrorStream()));
+					}
+				} catch (Exception ignorable) {
+					/// just a warning
+					logMetacat.warn("Could not set permissions on the registry scripts: " + ignorable.getMessage(), ignorable);
+				}
 				
 				// write the backup properties to a location outside the 
 				// application directories so they will be available after
