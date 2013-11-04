@@ -26,7 +26,6 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,7 +54,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
 import org.dataone.client.MNode;
@@ -1686,6 +1684,21 @@ public class MNodeService extends D1NodeService
 						newOreIdentifier, 
 						oreSysMeta);
 				
+			} else {
+				// create a new ORE for them
+				// https://projects.ecoinformatics.org/ecoinfo/issues/6194
+				try {
+					// find the local id for the NEW package.
+					String newLocalId = IdentifierManager.getInstance().getLocalId(newIdentifier.getValue());
+	
+					@SuppressWarnings("unused")
+					SystemMetadata extraSysMeta = SystemMetadataFactory.createSystemMetadata(newLocalId, true, false);
+					// should be done generating the ORE here
+					
+				} catch (Exception e) {
+					// oops, guess there was a problem - no package for you
+					logMetacat.error("Could not generate new ORE for published object: " + newIdentifier.getValue(), e);
+				}
 			}
 		} catch (McdbDocNotFoundException e) {
 			// report as service failure
