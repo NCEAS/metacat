@@ -3587,36 +3587,37 @@ sub handleLogoutRequest() {
 
 	# Check if the session exists
 	debug("Stage is logout");
+	my $uname;
 	my $session = CGI::Session->load();
 	if ( $session->is_empty || $session->is_expired ) {
 
 		# no session found ... send back to index.html page ...
 		debug("Session empty or not found");
-		my $url = "/";
-		redirect($url);
+		# just show the logout form without other info
+		#my $url = "/";
+		#redirect($url);
 
-		# should logout request be sent to metacat???
 	}
 	else {
 
 		# get the user name and delete the session
 		debug("Session found");
-		my $uname = $session->param("username");
+		$uname = $session->param("username");
 		$session->delete();
-
-		# send redirect to metacat and action = login
-		my $html = "<html><head>";
-		$html .= "</head><body onload=\"document.loginForm.submit()\">";
-		$html .= "<form name=\"loginForm\" method=\"post\" action=\""
-		  . $metacatUrl . "\">";
-		$html .= "<input type=\"hidden\" name=\"action\" value=\"logout\" />";
-		$html .= "<input type=\"hidden\" name=\"username\" value=\"" 
-		  . $uname . "\" />";
-		$html .= "<input type=\"hidden\" name=\"qformat\" value=\""
-		  . $skinName . "\" />";
-		$html .= "</form></body></html>";
-		print($html);
 	}
+	
+	# send redirect form to metacat and action = logout
+	my $html = "<html><head>";
+	$html .= "</head><body onload=\"document.loginForm.submit()\">";
+	$html .= "<form name=\"loginForm\" method=\"post\" action=\""
+	  . $metacatUrl . "\">";
+	$html .= "<input type=\"hidden\" name=\"action\" value=\"logout\" />";
+	$html .= "<input type=\"hidden\" name=\"username\" value=\"" 
+	  . $uname . "\" />";
+	$html .= "<input type=\"hidden\" name=\"qformat\" value=\""
+	  . $skinName . "\" />";
+	$html .= "</form></body></html>";
+	print($html);
 }
 
 ################################################################################
