@@ -1785,7 +1785,7 @@
 		  <property name="war-name" value="account" />
 		  <mkdir dir="${dist.dir}" />
 		     <war destfile="${dist.dir}/${war-name}.war"
-		            webxml="${build.war}/web.xml">
+		            webxml="lib/account-web-info/web.xml">
 		      <webinf dir="${war.webinf}">
 		        <include name="metacat.properties"/>
 		      </webinf>
