@@ -35,31 +35,6 @@
     [% END %]
     <p class="label text-error">[% errorMessage %]<p>
     <p>
-    <script type="text/javascript" language="JavaScript1.2">
-    
-    <!--
-      document.loginForm.givenName.focus();
-      document.loginForm.givenName.select();
-
-      if(window.document.captureEvents != null)
-      {
-        window.document.captureEvents(Event.KEYPRESS);
-        window.document.onKeyPress = doSubmit;
-      }
-
-      function doSubmit(event)
-      {
-        var key;
-        if(document.all) // IE
-          key = String.fromCharCode(window.events.keyCode);
-        else
-          key = String.fromCharCode(event.which);
-
-        if(key == "\r" || key == "\n")
-          document.loginForm.submit();
-      }
-    // -->
-    </script>
 
     <form name="loginForm" action="[% cgiurl %]" method="post">
       <input type="hidden" name="stage" value="[% stage %]"/>
@@ -205,6 +180,7 @@
 	                            callback: Recaptcha.focus_response_field});
 	                            return false;
 	                    }
+	                    showRecaptcha('captchaArea');
                     </script>
                 </td>
             </tr>
