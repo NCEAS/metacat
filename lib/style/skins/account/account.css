@@ -81,7 +81,7 @@ font-weight: bold;
  */ 
 .templatecontentareaclass {
   border:   0px;
-  padding:  0px;
+  padding-left:  20px;
   margin:   0px;
 }
 
