@@ -412,4 +412,8 @@ div#newHeader {
 	position: relative;
 	z-index: 5;
 }
+ul {
+	list-style-type: none;
+}
+}
 
