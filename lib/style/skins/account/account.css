@@ -34,6 +34,7 @@
  */
 
 @import url("../../../style/common/eml_xsl.css");
+
 b {
 font-weight: bold;
 }
@@ -46,10 +47,9 @@ font-weight: bold;
  */  
 .iframeheaderclass {
   height:   155px; 
-  width:    98%;
+  width:    100%;
   border:   0px;
   margin:   0px;
-  margin-left: 10px;
 }
 
 .iframesearchboxclass { /* not used */ }
@@ -58,10 +58,12 @@ font-weight: bold;
 .iframefooterclass   { /* not used */ }
 
 /**
- *  create a left margin for the document
+ *  create a left margin for the main content
  */
 
-body { margin-left: 70px; }
+#Content { 
+	margin-left: 70px;
+}
 
 /**
  *  set the size and alignment etc of the top-level layout table
@@ -393,4 +395,21 @@ textarea {
        width:  24%;
        text-align: right;
     }
+    
+/**
+NEW NCEAS L+F
+***/
+div#newHeader {
+	background: url("./images/headerBG.png");
+	width: 100%;
+	height: 129px;
+	min-width: 882px;
+	margin: 0px;
+	padding: 0px;
+	box-shadow: 0px 0px 5px black;
+	margin-bottom: 38px;
+	max-height: 129px;
+	position: relative;
+	z-index: 5;
+}
 
