@@ -47,8 +47,8 @@ This includes a world-countries base layer and a default configuration that
 is already aware of Metacat's spatial cache. The Metacat configuration interface 
 is used to configure GeoServer to use this shared data directory. To further 
 configure GeoServer, use the Web-based configuration utility, 
-which is available at: http://your.server.com/context/geoserver.jsp 
-(e.g., http://knb.ecoinformatics.org/metacat/geoserver.jsp). 
+which is available at: http://your.server.com/<geoserver_context>
+(e.g., http://knb.ecoinformatics.org/geoserver). 
 
 Common configuration tasks include:
 
