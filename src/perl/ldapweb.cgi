@@ -80,6 +80,7 @@ my $metacatUrl = $contextUrl . "/metacat";
 my $cgiPrefix = "/" . $context . "/cgi-bin";
 my $styleSkinsPath = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
+my $ldapServerCACertFile = $workingDirectory. "/../" . $properties->getProperty('ldap.server.ca.certificate');
 
 #recaptcha key information
 my $recaptchaPublicKey=$properties->getProperty('ldap.recaptcha.publickey');
@@ -348,7 +349,8 @@ sub clearTemporaryAccounts {
     debug("clearTemporaryAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
 		$mesg = $ldap->search (
 			base   => $tmpSearchBase,
@@ -811,9 +813,8 @@ sub changePassword {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-        #$ldap->start_tls( verify => 'require',
-                      #cafile => '/usr/share/ssl/ldapcerts/cacert.pem');
-        $ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         debug("changePassword: attempting to bind to $bindDN");
         my $bindresult = $ldap->bind( version => 3, dn => $bindDN, 
                                   password => $bindPass );
@@ -877,7 +878,8 @@ sub getLdapEntry {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	my $bindresult = $ldap->bind;
     	if ($bindresult->code) {
         	return $entry;
@@ -983,7 +985,9 @@ sub findExistingAccounts {
     debug("findExistingAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	#$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	$ldap->bind( version => 3, anonymous => 1);
 		$mesg = $ldap->search (
 			base   => $base,
@@ -1249,7 +1253,8 @@ sub createItem {
     #if main ldap server is down, a html file containing warning message will be returned
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-            $ldap->start_tls( verify => 'none');
+            $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [@$additions ]);
@@ -1309,7 +1314,8 @@ sub handleEmailVerification {
    #if main ldap server is down, a html file containing warning message will be returned
    my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
    if ($ldap) {
-        $ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
         my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)'); #This dn is with the dc=tmp. So it will find out the temporary account registered in registration step.
         my $max = $mesg->count;
@@ -1453,7 +1459,8 @@ sub searchDirectory {
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	$ldap->bind( version => 3, anonymous => 1);
     	my $mesg = $ldap->search (
         	base   => $base,
