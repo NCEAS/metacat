@@ -1010,6 +1010,11 @@
 		<copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml" />
 		<copy file="lib/metacat.properties" todir="${war.webinf}"
 			filtering="yes" />
+		<copy todir="${war.webinf}" filtering="yes">
+		    <fileset dir="lib/account-web-info">
+		       <exclude name="web.xml" />
+		    </fileset>
+		</copy>
 		<copy file="lib/solrQueryFieldDescriptions.properties" todir="${war.webinf}"/>
 		<copy file="lib/metacat.properties.metadata.xml"
 			todir="${war.webinf}" filtering="no" />
@@ -1788,6 +1793,7 @@
 		            webxml="lib/account-web-info/web.xml">
 		      <webinf dir="${war.webinf}">
 		        <include name="metacat.properties"/>
+		        <include name="gd_intermediate_bundle_ldap_dev.crt"/>
 		      </webinf>
 		      <fileset dir="${war.context}">
 		        <include name="cgi-bin/**"/>
