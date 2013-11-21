@@ -1556,9 +1556,9 @@ sub setVars {
 
 #Method to get the next avaliable uid number. We use the mechanism - http://www.rexconsulting.net/ldap-protocol-uidNumber.html
 sub getNextUidNumber {
-    my $base="cn=uidNext,dc=ecoinformatics,dc=org";
-    my $uid_attribute_name = "description";
-    my $maxAttempt = 300;
+    my $base=$properties->getProperty('ldap.nextuid.storing.dn');
+    my $uid_attribute_name = $properties->getProperty('ldap.nextuid.storing.attributename');
+    my $maxAttempt = $properties->getProperty('ldap.nextuid.maxattempt');
     
     my $ldapUsername = $ldapConfig->{'unaffiliated'}{'user'};
     my $ldapPassword = $ldapConfig->{'unaffiliated'}{'password'};
