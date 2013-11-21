@@ -1143,29 +1143,53 @@ sub createTemporaryAccount {
     
     ################create an account under tmp subtree 
     
+    #get the next avaliable uid number. If it fails, the program will exist.
+    my $nextUidNumber = getNextUidNumber($ldapUsername, $ldapPassword);
+    if(!$nextUidNumber) {
+        print "Content-type: text/html\n\n";
+         my $sender;
+        $sender = $skinProperties->getProperty("email.recipient") or $sender = $properties->getProperty('email.recipient');
+        my $errorMessage = "The Identity Service can't get the next avaliable uid number.  Please try again.  If the issue persists, please contact the administrator - $sender.";
+        fullTemplate(['register'], { stage => "register",
+                                     allParams => $allParams,
+                                     errorMessage => $errorMessage });
+        exit(0);
+    }
+    my $cn = join(" ", $query->param('givenName'), $query->param('sn')); 
     #generate a randomstr for matching the email.
     my $randomStr = getRandomPassword(16);
     # Create a hashed version of the password
     my $shapass = createSeededPassHash($query->param('userPassword'));
     my $additions = [ 
                 'uid'   => $query->param('uid'),
-                'cn'   => join(" ", $query->param('givenName'), 
-                                    $query->param('sn')),
+                'cn'   => $cn,
                 'sn'   => $query->param('sn'),
                 'givenName'   => $query->param('givenName'),
                 'mail' => $query->param('mail'),
                 'userPassword' => $shapass,
                 'employeeNumber' => $randomStr,
+                'uidNumber' => $nextUidNumber,
+                'gidNumber' => $nextUidNumber,
+                'loginShell' => '/sbin/nologin',
+                'homeDirectory' => '/dev/null',
                 'objectclass' => ['top', 'person', 'organizationalPerson', 
-                                'inetOrgPerson', 'uidObject' ],
+                                'inetOrgPerson', 'posixAccount', 'shadowAccount' ],
                 $organization   => $organizationName
                 ];
+    my $gecos;
     if (defined($query->param('telephoneNumber')) && 
                 $query->param('telephoneNumber') &&
                 ! $query->param('telephoneNumber') =~ /^\s+$/) {
                 $$additions[$#$additions + 1] = 'telephoneNumber';
                 $$additions[$#$additions + 1] = $query->param('telephoneNumber');
+                $gecos = $cn . ',,'. $query->param('telephoneNumber'). ',';
+    } else {
+        $gecos = $cn . ',,,';
     }
+    
+    $$additions[$#$additions + 1] = 'gecos';
+    $$additions[$#$additions + 1] = $gecos;
+    
     if (defined($query->param('title')) && 
                 $query->param('title') &&
                 ! $query->param('title') =~ /^\s+$/) {
@@ -1185,7 +1209,7 @@ sub createTemporaryAccount {
     
     my $overrideURL;
     $overrideURL = $skinProperties->getProperty("email.overrideURL");
-    debug("the overrideURL is " . $overrideURL);
+    debug("the overrideURL is $overrideURL");
     if (defined($overrideURL) && !($overrideURL eq '')) {
     	$link = $serverUrl . $overrideURL . $link;
     } else {
@@ -1560,11 +1584,11 @@ sub getNextUidNumber {
     my $uid_attribute_name = $properties->getProperty('ldap.nextuid.storing.attributename');
     my $maxAttempt = $properties->getProperty('ldap.nextuid.maxattempt');
     
-    my $ldapUsername = $ldapConfig->{'unaffiliated'}{'user'};
-    my $ldapPassword = $ldapConfig->{'unaffiliated'}{'password'};
+    my $ldapUsername = shift;
+    my $ldapPassword = shift;
     
-    my $realUidNumber="";
-    my $uidNumber="";
+    my $realUidNumber;
+    my $uidNumber;
     my $entry;
     my $mesg;
     my $ldap;
