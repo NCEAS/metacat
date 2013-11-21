@@ -310,6 +310,7 @@ my %stages = (
               'emailverification' => \&handleEmailVerification,
               'lookupname'        => \&handleLookupName,
               'searchnamesbyemail'=> \&handleSearchNameByEmail,
+              #'getnextuid'        => \&getNextUidNumber,
              );
 
 # call the appropriate routine based on the stage
@@ -1552,4 +1553,63 @@ sub setVars {
     
     return $templateVars;
 } 
+
+#Method to get the next avaliable uid number. We use the mechanism - http://www.rexconsulting.net/ldap-protocol-uidNumber.html
+sub getNextUidNumber {
+    my $base="cn=uidNext,dc=ecoinformatics,dc=org";
+    my $uid_attribute_name = "description";
+    my $maxAttempt = 300;
+    
+    my $ldapUsername = $ldapConfig->{'unaffiliated'}{'user'};
+    my $ldapPassword = $ldapConfig->{'unaffiliated'}{'password'};
+    
+    my $realUidNumber="";
+    my $uidNumber="";
+    my $entry;
+    my $mesg;
+    my $ldap;
+    
+    debug("ldap server: $ldapurl");
+    
+    #if main ldap server is down, a html file containing warning message will be returned
+    $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    
+    if ($ldap) {
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
+        my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
+        #read the uid value stored in uidObject class
+        for(my $index=0; $index<$maxAttempt; $index++) {
+            $mesg = $ldap->search(base  => $base, filter => '(objectClass=*)');
+            if ($mesg->count() > 0) {
+                debug("Find the cn - $base");
+                $entry = $mesg->pop_entry;
+                $uidNumber = $entry->get_value($uid_attribute_name);
+                if($uidNumber) {
+                    debug("uid number is $uidNumber");
+                    #remove the uid attribute with the read value
+                    my $delMesg = $ldap->modify($base, delete => { $uid_attribute_name => $uidNumber});
+                    if($delMesg->is_error()) {
+                        my $error=$delMesg->error();
+                        my $errorName = $delMesg->error_name();
+                        debug("can't remove the attribute - $error");
+                        debug("can't remove the attribute and the error name - $errorName");
+                        #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
+                    } else {
+                        debug("Remove the attribute successfully and write a new increased value back");
+                        my $newValue = $uidNumber +1;
+                        $delMesg = $ldap->modify($base, add => {$uid_attribute_name => $newValue});
+                        $realUidNumber = $uidNumber;
+                        last;
+                    }
+               } else {
+                 debug("can't find the attribute - $uid_attribute_name in the $base and we will try again");
+               }
+            } 
+        }
+        $ldap->unbind;   # take down session
+    }
+    return $realUidNumber;
+}
+
 
