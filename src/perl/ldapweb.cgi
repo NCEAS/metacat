@@ -888,7 +888,7 @@ sub getLdapEntry {
 
     	if($ldapConfig->{$org}{'filter'}){
             debug("getLdapEntry: filter set, searching for base=$base, " .
-                  "(&(uid=$username)($ldapConfig->{$org}{'filter'})");
+                  "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
         	$mesg = $ldap->search ( base   => $base,
                 filter => "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
     	} else {
