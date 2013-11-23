@@ -42,6 +42,7 @@ use DateTime;			# for parsing dates
 use DateTime::Duration; # for substracting
 use Captcha::reCAPTCHA; # for protection against spams
 use Cwd 'abs_path';
+use Scalar::Util qw(looks_like_number);
 
 # Global configuration paramters
 # This entire block (including skin parsing) could be pushed out to a separate .pm file
@@ -90,6 +91,9 @@ my @errorMessages;
 my $error = 0;
 
 my $emailVerification= 'emailverification';
+
+ my $dn_store_next_uid=$properties->getProperty('ldap.nextuid.storing.dn');
+ my $attribute_name_store_next_uid = $properties->getProperty('ldap.nextuid.storing.attributename');
 
 # Import all of the HTML form fields as variables
 import_names('FORM');
@@ -947,7 +951,7 @@ sub sendPasswordNotification {
         
         Somebody (hopefully you) requested that your account password be reset.  
         Your temporary password is below. Please change it as soon as possible 
-        at: $contextUrl.
+        at: $contextUrl/style/skins/account/.
 
             Username: $username
         Organization: $org
@@ -1143,13 +1147,17 @@ sub createTemporaryAccount {
     
     ################create an account under tmp subtree 
     
+     my $dn_store_next_uid=$properties->getProperty('ldap.nextuid.storing.dn');
+    my $attribute_name_store_next_uid = $properties->getProperty('ldap.nextuid.storing.attributename');
     #get the next avaliable uid number. If it fails, the program will exist.
     my $nextUidNumber = getNextUidNumber($ldapUsername, $ldapPassword);
     if(!$nextUidNumber) {
         print "Content-type: text/html\n\n";
          my $sender;
         $sender = $skinProperties->getProperty("email.recipient") or $sender = $properties->getProperty('email.recipient');
-        my $errorMessage = "The Identity Service can't get the next avaliable uid number.  Please try again.  If the issue persists, please contact the administrator - $sender.";
+        my $errorMessage = "The Identity Service can't get the next avaliable uid number. Please try again.  If the issue persists, please contact the administrator - $sender.
+                           The possible reasons are: the dn - $dn_store_next_uid or its attribute - $attribute_name_store_next_uid don't exist; the value of the attribute - $attribute_name_store_next_uid
+                           is not a number; or lots of users were registering and you couldn't get a lock on the dn - $dn_store_next_uid.";
         fullTemplate(['register'], { stage => "register",
                                      allParams => $allParams,
                                      errorMessage => $errorMessage });
@@ -1235,7 +1243,7 @@ sub createTemporaryAccount {
     From: $sender
     Subject: New Account Activation
         
-    Somebody (hopefully you) registered an account on $contextUrl.  
+    Somebody (hopefully you) registered an account on $contextUrl/style/skins/account/.  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
@@ -1580,8 +1588,7 @@ sub setVars {
 
 #Method to get the next avaliable uid number. We use the mechanism - http://www.rexconsulting.net/ldap-protocol-uidNumber.html
 sub getNextUidNumber {
-    my $base=$properties->getProperty('ldap.nextuid.storing.dn');
-    my $uid_attribute_name = $properties->getProperty('ldap.nextuid.storing.attributename');
+
     my $maxAttempt = $properties->getProperty('ldap.nextuid.maxattempt');
     
     my $ldapUsername = shift;
@@ -1604,30 +1611,33 @@ sub getNextUidNumber {
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
         #read the uid value stored in uidObject class
         for(my $index=0; $index<$maxAttempt; $index++) {
-            $mesg = $ldap->search(base  => $base, filter => '(objectClass=*)');
+            $mesg = $ldap->search(base  => $dn_store_next_uid, filter => '(objectClass=*)');
             if ($mesg->count() > 0) {
-                debug("Find the cn - $base");
+                debug("Find the cn - $dn_store_next_uid");
                 $entry = $mesg->pop_entry;
-                $uidNumber = $entry->get_value($uid_attribute_name);
+                $uidNumber = $entry->get_value($attribute_name_store_next_uid);
                 if($uidNumber) {
-                    debug("uid number is $uidNumber");
-                    #remove the uid attribute with the read value
-                    my $delMesg = $ldap->modify($base, delete => { $uid_attribute_name => $uidNumber});
-                    if($delMesg->is_error()) {
-                        my $error=$delMesg->error();
-                        my $errorName = $delMesg->error_name();
-                        debug("can't remove the attribute - $error");
-                        debug("can't remove the attribute and the error name - $errorName");
-                        #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
-                    } else {
-                        debug("Remove the attribute successfully and write a new increased value back");
-                        my $newValue = $uidNumber +1;
-                        $delMesg = $ldap->modify($base, add => {$uid_attribute_name => $newValue});
-                        $realUidNumber = $uidNumber;
-                        last;
+                    if (looks_like_number($uidNumber)) {
+                        debug("uid number is $uidNumber");
+                        #remove the uid attribute with the read value
+                        my $delMesg = $ldap->modify($dn_store_next_uid, delete => { $attribute_name_store_next_uid => $uidNumber});
+                        if($delMesg->is_error()) {
+                            my $error=$delMesg->error();
+                            my $errorName = $delMesg->error_name();
+                            debug("can't remove the attribute - $error");
+                            debug("can't remove the attribute and the error name - $errorName");
+                            #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
+                        } else {
+                            debug("Remove the attribute successfully and write a new increased value back");
+                            my $newValue = $uidNumber +1;
+                            $delMesg = $ldap->modify($dn_store_next_uid, add => {$attribute_name_store_next_uid => $newValue});
+                            $realUidNumber = $uidNumber;
+                            last;
+                        }
                     }
+                    
                } else {
-                 debug("can't find the attribute - $uid_attribute_name in the $base and we will try again");
+                 debug("can't find the attribute - $attribute_name_store_next_uid in the $dn_store_next_uid and we will try again");
                }
             } 
         }
