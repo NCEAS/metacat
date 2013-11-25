@@ -513,7 +513,7 @@ public class MNodeService extends D1NodeService
         if (session == null || session.getSubject() == null) {
             String msg = "No session was provided to replicate identifier " +
             sysmeta.getIdentifier().getValue();
-            logMetacat.info(msg);
+            logMetacat.error(msg);
             throw new NotAuthorized("2152", msg);
             
         }
@@ -528,9 +528,10 @@ public class MNodeService extends D1NodeService
         } catch (PropertyNotFoundException e1) {
             String msg = "Couldn't get dataone.nodeId property: " + e1.getMessage();
             failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+            //setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
             logMetacat.error(msg);
-            return true;
+            //return true;
+            throw new ServiceFailure("2151", msg);
 
         }
         
@@ -586,6 +587,30 @@ public class MNodeService extends D1NodeService
             logMetacat.error(msg);
             throw new ServiceFailure("2151", msg);
 
+        } catch (NotAuthorized e) {
+            String msg = "Could not retrieve object to replicate (NotAuthorized): "+ e.getMessage();
+            failure = new ServiceFailure("2151", msg);
+            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+            logMetacat.error(msg);
+            throw new ServiceFailure("2151", msg);
+        } catch (NotImplemented e) {
+            String msg = "Could not retrieve object to replicate (mn.getReplica NotImplemented): "+ e.getMessage();
+            failure = new ServiceFailure("2151", msg);
+            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+            logMetacat.error(msg);
+            throw new ServiceFailure("2151", msg);
+        } catch (ServiceFailure e) {
+            String msg = "Could not retrieve object to replicate (ServiceFailure): "+ e.getMessage();
+            failure = new ServiceFailure("2151", msg);
+            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+            logMetacat.error(msg);
+            throw new ServiceFailure("2151", msg);
+        } catch (InsufficientResources e) {
+            String msg = "Could not retrieve object to replicate (InsufficientResources): "+ e.getMessage();
+            failure = new ServiceFailure("2151", msg);
+            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+            logMetacat.error(msg);
+            throw new ServiceFailure("2151", msg);
         }
 
         // verify checksum on the object, if supported
@@ -601,6 +626,7 @@ public class MNodeService extends D1NodeService
                 logMetacat.error(msg);
                 ServiceFailure sf = new ServiceFailure("2151", msg);
                 sf.initCause(e);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, sf);
                 throw sf;
             }
             if (!givenChecksum.getValue().equals(computedChecksum.getValue())) {
@@ -608,8 +634,10 @@ public class MNodeService extends D1NodeService
                     "is " + givenChecksum.getValue());
                 logMetacat.error("Computed checksum for " + pid.getValue() + 
                     "is " + computedChecksum.getValue());
-                throw new ServiceFailure("2151",
-                        "Computed checksum does not match declared checksum");
+                String msg = "Computed checksum does not match declared checksum";
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                throw new ServiceFailure("2151", msg);
             }
         }
 
