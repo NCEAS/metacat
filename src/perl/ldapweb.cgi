@@ -890,15 +890,18 @@ sub getLdapEntry {
         	return $entry;
     	}
 
-    	if($ldapConfig->{$org}{'filter'}){
-            debug("getLdapEntry: filter set, searching for base=$base, " .
-                  "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
-        	$mesg = $ldap->search ( base   => $base,
-                filter => "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
-    	} else {
-            debug("getLdapEntry: no filter, searching for $base, (uid=$username)");
-        	$mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
-    	}
+        $base = $ldapConfig->{$org}{'org'} . ',' . $base;
+        debug("getLdapEntry, searching for $base, (uid=$username)");
+        $mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
+    	#if($ldapConfig->{$org}{'filter'}){
+            #debug("getLdapEntry: filter set, searching for base=$base, " .
+                  #"(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
+        	#$mesg = $ldap->search ( base   => $base,
+                #filter => "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
+    	#} else {
+            #debug("getLdapEntry: no filter, searching for $base, (uid=$username)");
+        	#$mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
+    	#}
     
     	if ($mesg->count > 0) {
         	$entry = $mesg->pop_entry;
