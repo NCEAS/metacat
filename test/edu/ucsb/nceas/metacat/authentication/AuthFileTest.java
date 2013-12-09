@@ -26,6 +26,8 @@ import edu.ucsb.nceas.MCTestCase;
 public class AuthFileTest extends MCTestCase {
     private static final String PASSWORDFILEPATH = "build/password";
     private static final String GROUPNAME = "nceas-dev";
+    private static final String USERNAME = "uid=tao,o=NCEAS,dc=ecoinformatics,dc=org";
+    private static final String PASSWORD = "ecoinformatics";
     /**
      * consstructor for the test
      */
@@ -55,8 +57,8 @@ public class AuthFileTest extends MCTestCase {
      public static Test suite() 
      {
          TestSuite suite = new TestSuite();
-         //suite.addTest(new AuthFileTest(""));
          suite.addTest(new AuthFileTest("testAddGroup"));
+         suite.addTest(new AuthFileTest("testAddUser"));
          return suite;
      }
      
@@ -70,6 +72,23 @@ public class AuthFileTest extends MCTestCase {
          try {
              authFile.addGroup(GROUPNAME);
              assertTrue("We can't reach here since we can't add the group twice", false);
+         } catch (AuthenticationException e) {
+             
+         }
+         
+     }
+     
+     /**
+      * Test the addGroup method
+      * @throws Exception
+      */
+     public void testAddUser() throws Exception{
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         String[]groups = {GROUPNAME};
+         authFile.addUser(USERNAME, groups, PASSWORD);
+         try {
+             authFile.addUser(USERNAME, groups, PASSWORD);
+             assertTrue("We can't reach here since we can't add the user twice", false);
          } catch (AuthenticationException e) {
              
          }
