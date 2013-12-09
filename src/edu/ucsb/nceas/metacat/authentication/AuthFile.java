@@ -297,8 +297,8 @@ public class AuthFile implements AuthInterface {
         if(userName == null || userName.trim().equals("")) {
             throw new AuthenticationException("AuthFile.userExist - can't judge if a user exists when its name is null or blank.");
         }
-        List<Object> users = userpassword.getList(SLASH+SLASH+USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']");
-        if(users != null && users.size() >0) {
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+NAME);
+        if(users != null && users.contains(userName)) {
             return true;
         } else {
             return false;
