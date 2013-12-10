@@ -29,7 +29,6 @@ import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.Vector;
 
 import javax.crypto.Cipher;
@@ -42,7 +41,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.AuthInterface;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -80,15 +80,16 @@ public class AuthFile implements AuthInterface {
     private static final String GROUP = "group";
     private static final String INITCONTENT = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
                                     "<"+SUBJECTS+">\n"+"<"+USERS+">\n"+"</"+USERS+">\n"+"<"+GROUPS+">\n"+"</"+GROUPS+">\n"+"</"+SUBJECTS+">\n";
-    private static final char[] MASTER = "enfldsgbnlsngdlksdsgm".toCharArray();
+    
     private static final byte[] SALT = {
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
         (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
     };
-    
+    private static Log log = LogFactory.getLog(AuthFile.class);
     private static AuthFile authFile = null;
     private XMLConfiguration userpassword = null;
     private static String passwordFilePath = null;
+    private static  char[] masterPass = "enfldsgbnlsngdlksdsgm".toCharArray();
     /**
      * Get the instance of the AuthFile
      * @return
@@ -134,6 +135,15 @@ public class AuthFile implements AuthInterface {
             passwordFilePath  = PropertyService.getProperty("auth.file.path");
         }
         File passwordFile = new File(passwordFilePath);
+        try {
+            String password = PropertyService.getProperty("auth.file.pass");
+            if(password != null && !password.trim().equals("")) {
+                masterPass = password.toCharArray();
+            }
+        }catch(PropertyNotFoundException e) {
+            log.warn("AuthFile.init - can't find the auth.file.pass in the metacat.properties. Metacat will use the default one as password.");
+        }
+       
         //if the password file doesn't exist, create a new one and set the initial content
         if(!passwordFile.exists()) {
             passwordFile.createNewFile();
@@ -353,7 +363,8 @@ public class AuthFile implements AuthInterface {
      */
     private static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(MASTER));
+        //System.out.println("===================== tha master password "+masterPass);
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(masterPass));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
         return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
@@ -371,7 +382,7 @@ public class AuthFile implements AuthInterface {
      */
     private static String decrypt(String property) throws GeneralSecurityException, IOException {
         SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(MASTER));
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(masterPass));
         Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
         pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
         return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
