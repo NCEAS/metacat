@@ -59,6 +59,7 @@ public class AuthFileTest extends MCTestCase {
          TestSuite suite = new TestSuite();
          suite.addTest(new AuthFileTest("testAddGroup"));
          suite.addTest(new AuthFileTest("testAddUser"));
+         suite.addTest(new AuthFileTest("testAuthenticate"));
          return suite;
      }
      
@@ -93,5 +94,25 @@ public class AuthFileTest extends MCTestCase {
              
          }
          
+     }
+     
+     /**
+      * Test the authentication method
+      * @throws Exception
+      */
+     public void testAuthenticate() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         boolean success = authFile.authenticate(USERNAME, PASSWORD);
+         if(!success) {
+             assertTrue("The authentication should succeed.", false);
+         }
+         success = authFile.authenticate(USERNAME, "hello");
+         if(success) {
+             assertTrue("The authentication should NOT succeed.", false);
+         }
+         success = authFile.authenticate("hello", PASSWORD);
+         if(success) {
+             assertTrue("The authentication should NOT succeed.", false);
+         }
      }
 }
