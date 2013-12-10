@@ -24,15 +24,25 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
+import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.Vector;
 
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
+import javax.crypto.spec.PBEParameterSpec;
+
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
+
 
 import edu.ucsb.nceas.metacat.AuthInterface;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -70,6 +80,11 @@ public class AuthFile implements AuthInterface {
     private static final String GROUP = "group";
     private static final String INITCONTENT = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
                                     "<"+SUBJECTS+">\n"+"<"+USERS+">\n"+"</"+USERS+">\n"+"<"+GROUPS+">\n"+"</"+GROUPS+">\n"+"</"+SUBJECTS+">\n";
+    private static final char[] MASTER = "enfldsgbnlsngdlksdsgm".toCharArray();
+    private static final byte[] SALT = {
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
+    };
     
     private static AuthFile authFile = null;
     private XMLConfiguration userpassword = null;
@@ -145,6 +160,11 @@ public class AuthFile implements AuthInterface {
                     throws AuthenticationException {
         String passwordRecord = userpassword.getString(USERS+SLASH+USER+"["+AT+NAME+"='"+user+"']"+SLASH+PASSWORD);
         if(passwordRecord != null) {
+            try {
+                passwordRecord = decrypt(passwordRecord);
+            } catch (Exception e) {
+                throw new AuthenticationException("AuthFile.authenticate - can't decrypt the password for the user "+user+" since "+e.getMessage());
+            }
             if(passwordRecord.equals(password)) {
                 return true;
             }
@@ -221,6 +241,12 @@ public class AuthFile implements AuthInterface {
         if(password == null || password.trim().equals("")) {
             throw new AuthenticationException("AuthFile.addUser - can't add a user whose password is null or blank.");
         }
+        try {
+            password = encrypt(password);
+        } catch (Exception e) {
+            throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
+        }
+        
         if(!userExists(userName)) {
             if(userpassword != null) {
               userpassword.addProperty(USERS+" "+USER+AT+NAME, userName);
@@ -321,4 +347,41 @@ public class AuthFile implements AuthInterface {
             return false;
         }
     }
+    
+    /*
+     * Encrypt a string
+     */
+    private static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(MASTER));
+        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+        pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+        return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
+    }
+
+    /*
+     * Transform a byte array to a string
+     */
+    private static String base64Encode(byte[] bytes) {
+        return Base64.encodeBase64String(bytes);
+    }
+
+    /*
+     * Decrypt a string
+     */
+    private static String decrypt(String property) throws GeneralSecurityException, IOException {
+        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
+        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(MASTER));
+        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
+        pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
+        return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
+    }
+
+    /*
+     * Transform a string to a byte array
+     */
+    private static byte[] base64Decode(String property) throws IOException {
+        return Base64.decodeBase64(property);
+    }
+
 }
