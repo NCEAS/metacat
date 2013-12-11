@@ -60,6 +60,7 @@ public class AuthFileTest extends MCTestCase {
          suite.addTest(new AuthFileTest("testAddGroup"));
          suite.addTest(new AuthFileTest("testAddUser"));
          suite.addTest(new AuthFileTest("testAuthenticate"));
+         suite.addTest(new AuthFileTest("testGetUsers"));
          return suite;
      }
      
@@ -114,5 +115,19 @@ public class AuthFileTest extends MCTestCase {
          if(success) {
              assertTrue("The authentication should NOT succeed.", false);
          }
+     }
+     
+     /**
+      * Test the getUsers method
+      * @throws Exception
+      */
+     public void testGetUsers() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         String[][] users = authFile.getUsers(null, null);
+         assertTrue("The file should have one user "+USERNAME, users[0][0].equals(USERNAME));
+         String[]userInGroup = authFile.getUsers(null, null, GROUPNAME);
+         assertTrue("There should be at least one user in the group "+GROUPNAME, userInGroup[0].equals(USERNAME));
+         userInGroup = authFile.getUsers(null, null, "group1");
+         assertTrue("There shouldn't have any users in the group1 ", userInGroup==null);
      }
 }
