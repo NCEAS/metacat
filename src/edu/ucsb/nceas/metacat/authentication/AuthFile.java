@@ -183,9 +183,20 @@ public class AuthFile implements AuthInterface {
     }
     
     @Override
+    /**
+     * Get all users. This is two-dimmention array. Each row is a user. The first element of
+     * a row is the user name.
+     */
     public String[][] getUsers(String user, String password)
                     throws ConnectException {
-        // TODO Auto-generated method stub
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+NAME);
+        if(users != null && users.size() > 0) {
+            String[][] usersArray = new String[users.size()][1];
+            for(int i=0; i<users.size(); i++) {
+                usersArray[i][0] = (String) users.get(i);
+            }
+            return usersArray;
+        }
         return null;
     }
     
@@ -196,24 +207,65 @@ public class AuthFile implements AuthInterface {
         return null;
     }
     
+    
     @Override
+    /**
+     * Get the users for a particular group from the authentication service
+     * The null will return if there is no user.
+     * @param user
+     *            the user for authenticating against the service
+     * @param password
+     *            the password for authenticating against the service
+     * @param group
+     *            the group whose user list should be returned
+     * @returns string array of the user names belonging to the group
+     */
     public String[] getUsers(String user, String password, String group)
                     throws ConnectException {
-        // TODO Auto-generated method stub
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+NAME);
+        if(users != null && users.size() > 0) {
+            String[] usersArray = new String[users.size()];
+            for(int i=0; i<users.size(); i++) {
+                usersArray[i] = (String) users.get(i);
+            }
+            return usersArray;
+        }
         return null;
     }
     
     @Override
+    /**
+     * Get all groups from the authentication service. It returns a two dimmension array. Each row is a
+     * group. The first column is the group name. The null will return if no group found.
+     */
     public String[][] getGroups(String user, String password)
                     throws ConnectException {
-        // TODO Auto-generated method stub
+        List<Object> groups = userpassword.getList(GROUPS+SLASH+GROUP+SLASH+AT+NAME);
+        if(groups!= null && groups.size() >0) {
+            String[][] groupsArray = new String[groups.size()][1];
+            for(int i=0; i<groups.size(); i++) {
+                groupsArray[i][0] = (String) groups.get(i);
+            }
+            return groupsArray;
+        }
         return null;
     }
     
     @Override
+    /**
+     * Get groups from a specified user. It returns two dimmension array. Each row is a
+     * group. The first column is the group name. The null will return if no group found.
+     */
     public String[][] getGroups(String user, String password, String foruser)
                     throws ConnectException {
-        // TODO Auto-generated method stub
+        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+NAME+"='"+foruser+"']"+SLASH+GROUP);
+        if(groups != null && groups.size() > 0) {
+            String[][] groupsArray = new String[groups.size()][1];
+            for(int i=0; i<groups.size(); i++) {
+                groupsArray[i][0] = (String) groups.get(i);
+            }
+            return groupsArray;
+        }
         return null;
     }
     
