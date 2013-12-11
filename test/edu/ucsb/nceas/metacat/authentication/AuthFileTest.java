@@ -61,6 +61,8 @@ public class AuthFileTest extends MCTestCase {
          suite.addTest(new AuthFileTest("testAddUser"));
          suite.addTest(new AuthFileTest("testAuthenticate"));
          suite.addTest(new AuthFileTest("testGetUsers"));
+         suite.addTest(new AuthFileTest("testGetGroups"));
+         suite.addTest(new AuthFileTest("testChangePassword"));
          return suite;
      }
      
@@ -129,5 +131,43 @@ public class AuthFileTest extends MCTestCase {
          assertTrue("There should be at least one user in the group "+GROUPNAME, userInGroup[0].equals(USERNAME));
          userInGroup = authFile.getUsers(null, null, "group1");
          assertTrue("There shouldn't have any users in the group1 ", userInGroup==null);
+     }
+     
+     /**
+      * Test the getGroups method
+      * @throws Exception
+      */
+     public void testGetGroups() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         String[][] groups = authFile.getGroups(null, null);
+         assertTrue("The file should have one group associated with "+USERNAME, groups[0][0].equals(GROUPNAME));
+         String[][]groupForUser = authFile.getGroups(null, null, USERNAME);
+         assertTrue("There should be at least one group for user "+USERNAME, groupForUser[0][0].equals(GROUPNAME));
+         groupForUser = authFile.getGroups(null, null, "user1");
+         assertTrue("There shouldn't have any groups assoicated with user1 ", groupForUser==null);
+     }
+     
+     /**
+      * Test the change password methods
+      * @throws Exception
+      */
+     public void testChangePassword() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         String password = authFile.resetPassword(USERNAME);
+         String newPassword = "hello";
+         authFile.modifyPassword(USERNAME, password, newPassword);
+         
+         try {
+             authFile.resetPassword("user1");
+             assertTrue("Can't reach here since we tried to reset the password for an unexisting user ", false);
+         } catch (AuthenticationException e) {
+             
+         }
+         try {
+             authFile.modifyPassword("user1", "old", "new");
+             assertTrue("Can't reach here since we tried to change the password for an unexisting user ", false);
+         } catch (AuthenticationException e) {
+             
+         }
      }
 }
