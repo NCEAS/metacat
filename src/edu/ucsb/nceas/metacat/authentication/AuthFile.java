@@ -29,6 +29,7 @@ import java.net.ConnectException;
 import java.security.GeneralSecurityException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Random;
 import java.util.Vector;
 
 import javax.crypto.Cipher;
@@ -354,8 +355,23 @@ public class AuthFile implements AuthInterface {
      * @param password  the password of the user.
      * @return
      */
-    public String modifyUserPassword(String userName, String password) {
+    public String resetPassword(String userName) throws AuthenticationException {
+        String password = new String(RandomPasswordGenerator.generatePswd(10, 12, 4, 3, 2));
+        changePassword(userName, password);
         return password;
+    }
+    
+    /**
+     * Change the password of the user to the new one. But we need to know the old password
+     * @param usrName the specified user.   
+     * @param oldPassword the old password of the user      
+     * @param newPassword the new password which will be set
+     */
+    public void modifyPassword(String userName, String oldPassword, String newPassword) throws AuthenticationException {
+        if(!authenticate(userName, oldPassword)) {
+            throw new AuthenticationException("AuthFile.modifyUserPassword - the username or the old password is not correct");
+        }
+        changePassword(userName, newPassword);
     }
     
     /**
@@ -374,6 +390,24 @@ public class AuthFile implements AuthInterface {
      */
     public void removeUserFromGroup(String userName, String group) {
         
+    }
+    
+    /**
+     * Change the password of the user to the specified one
+     * @param userName
+     * @param password
+     */
+    private void changePassword(String userName, String password) throws AuthenticationException{
+        if(!userExists(userName)) {
+            throw new AuthenticationException("AuthFile.changePassword - can't change the password for the user "+userName+" since it doesn't eixt.");
+        }
+        String encryped = null;
+        try {
+            encryped = encrypt(password);
+        } catch (Exception e) {
+            throw new AuthenticationException("AuthFile.changepassword - can't encrype the new password for the user "+userName+" since "+e.getMessage());
+        }
+        userpassword.setProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+PASSWORD, encryped);
     }
     
     /**
@@ -445,6 +479,55 @@ public class AuthFile implements AuthInterface {
      */
     private static byte[] base64Decode(String property) throws IOException {
         return Base64.decodeBase64(property);
+    }
+    
+    /**
+     * A internal class to generate random passowrd
+     * @author tao
+     *
+     */
+    static class RandomPasswordGenerator {
+        private static final String ALPHA_CAPS  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        private static final String ALPHA   = "abcdefghijklmnopqrstuvwxyz";
+        private static final String NUM     = "0123456789";
+        private static final String SPL_CHARS   = "!$^_-/";
+     
+        public static char[] generatePswd(int minLen, int maxLen, int noOfCAPSAlpha,
+                int noOfDigits, int noOfSplChars) {
+            if(minLen > maxLen)
+                throw new IllegalArgumentException("Min. Length > Max. Length!");
+            if( (noOfCAPSAlpha + noOfDigits + noOfSplChars) > minLen )
+                throw new IllegalArgumentException
+                ("Min. Length should be atleast sum of (CAPS, DIGITS, SPL CHARS) Length!");
+            Random rnd = new Random();
+            int len = rnd.nextInt(maxLen - minLen + 1) + minLen;
+            char[] pswd = new char[len];
+            int index = 0;
+            for (int i = 0; i < noOfCAPSAlpha; i++) {
+                index = getNextIndex(rnd, len, pswd);
+                pswd[index] = ALPHA_CAPS.charAt(rnd.nextInt(ALPHA_CAPS.length()));
+            }
+            for (int i = 0; i < noOfDigits; i++) {
+                index = getNextIndex(rnd, len, pswd);
+                pswd[index] = NUM.charAt(rnd.nextInt(NUM.length()));
+            }
+            for (int i = 0; i < noOfSplChars; i++) {
+                index = getNextIndex(rnd, len, pswd);
+                pswd[index] = SPL_CHARS.charAt(rnd.nextInt(SPL_CHARS.length()));
+            }
+            for(int i = 0; i < len; i++) {
+                if(pswd[i] == 0) {
+                    pswd[i] = ALPHA.charAt(rnd.nextInt(ALPHA.length()));
+                }
+            }
+            return pswd;
+        }
+     
+        private static int getNextIndex(Random rnd, int len, char[] pswd) {
+            int index = rnd.nextInt(len);
+            while(pswd[index = rnd.nextInt(len)] != 0);
+            return index;
+        }
     }
 
 }
