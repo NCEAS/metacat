@@ -76,6 +76,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class AuthFile implements AuthInterface {
     private static final String ORGANIZATION = "UNkown";
     private static final String NAME = "name";
+    private static final String UID = "uid";
+    private static final String DESCRIPTION = "description";
     private static final String PASSWORD = "password";
     private static final String SLASH = "/";
     private static final String AT = "@";
@@ -176,7 +178,7 @@ public class AuthFile implements AuthInterface {
     @Override
     public boolean authenticate(String user, String password)
                     throws AuthenticationException {
-        String passwordRecord = userpassword.getString(USERS+SLASH+USER+"["+AT+NAME+"='"+user+"']"+SLASH+PASSWORD);
+        String passwordRecord = userpassword.getString(USERS+SLASH+USER+"["+AT+UID+"='"+user+"']"+SLASH+PASSWORD);
         if(passwordRecord != null) {
             try {
                 passwordRecord = decrypt(passwordRecord);
@@ -197,7 +199,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[][] getUsers(String user, String password)
                     throws ConnectException {
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+NAME);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+UID);
         if(users != null && users.size() > 0) {
             String[][] usersArray = new String[users.size()][1];
             for(int i=0; i<users.size(); i++) {
@@ -230,7 +232,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[] getUsers(String user, String password, String group)
                     throws ConnectException {
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+NAME);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+UID);
         if(users != null && users.size() > 0) {
             String[] usersArray = new String[users.size()];
             for(int i=0; i<users.size(); i++) {
@@ -266,7 +268,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[][] getGroups(String user, String password, String foruser)
                     throws ConnectException {
-        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+NAME+"='"+foruser+"']"+SLASH+GROUP);
+        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+UID+"='"+foruser+"']"+SLASH+GROUP);
         if(groups != null && groups.size() > 0) {
             String[][] groupsArray = new String[groups.size()][1];
             for(int i=0; i<groups.size(); i++) {
@@ -388,14 +390,14 @@ public class AuthFile implements AuthInterface {
         
         if(!userExists(userName)) {
             if(userpassword != null) {
-              userpassword.addProperty(USERS+" "+USER+AT+NAME, userName);
-              userpassword.addProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+" "+PASSWORD, password);
+              userpassword.addProperty(USERS+" "+USER+AT+UID, userName);
+              userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+PASSWORD, password);
               if(groups != null) {
                   for(int i=0; i<groups.length; i++) {
                       String group = groups[i];
                       if(group != null && !group.trim().equals("")) {
                           if(groupExists(group)) {
-                              userpassword.addProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+" "+GROUP, group);
+                              userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+GROUP, group);
                           }
                       }
                   }
@@ -462,11 +464,11 @@ public class AuthFile implements AuthInterface {
         if(!groupExists(group)) {
             throw new AuthenticationException("AuthFile.addUserToGroup - the group "+group+ " doesn't exist.");
         }
-        List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+GROUP);
+        List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+GROUP);
         if(existingGroups.contains(group)) {
             throw new AuthenticationException("AuthFile.addUserToGroup - the user "+userName+ " already is the memember of the group "+group);
         }
-        userpassword.addProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+" "+GROUP, group);
+        userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+GROUP, group);
     }
     
     /**
@@ -481,7 +483,7 @@ public class AuthFile implements AuthInterface {
         if(!groupExists(group)) {
             throw new AuthenticationException("AuthFile.removeUserFromGroup - the group "+group+ " doesn't exist.");
         }
-        String key = USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+GROUP;
+        String key = USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+GROUP;
         List<Object> existingGroups = userpassword.getList(key);
         if(!existingGroups.contains(group)) {
             throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+userName+ " isn't the memember of the group "+group);
@@ -505,7 +507,7 @@ public class AuthFile implements AuthInterface {
         } catch (Exception e) {
             throw new AuthenticationException("AuthFile.changepassword - can't encrype the new password for the user "+userName+" since "+e.getMessage());
         }
-        userpassword.setProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+PASSWORD, encryped);
+        userpassword.setProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+PASSWORD, encryped);
     }
     
     /**
@@ -517,7 +519,7 @@ public class AuthFile implements AuthInterface {
         if(userName == null || userName.trim().equals("")) {
             throw new AuthenticationException("AuthFile.userExist - can't judge if a user exists when its name is null or blank.");
         }
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+NAME);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+UID);
         if(users != null && users.contains(userName)) {
             return true;
         } else {
