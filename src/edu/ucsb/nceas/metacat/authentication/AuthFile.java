@@ -27,7 +27,9 @@ import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
 import java.security.GeneralSecurityException;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
@@ -46,7 +48,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.AuthInterface;
+import edu.ucsb.nceas.metacat.AuthLdap;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -70,6 +74,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class AuthFile implements AuthInterface {
+    private static final String ORGANIZATION = "UNkown";
     private static final String NAME = "name";
     private static final String PASSWORD = "password";
     private static final String SLASH = "/";
@@ -89,6 +94,7 @@ public class AuthFile implements AuthInterface {
     private static Log log = LogFactory.getLog(AuthFile.class);
     private static AuthFile authFile = null;
     private XMLConfiguration userpassword = null;
+    private String authURI = null;
     private static String passwordFilePath = null;
     private static  char[] masterPass = "enfldsgbnlsngdlksdsgm".toCharArray();
     /**
@@ -141,6 +147,7 @@ public class AuthFile implements AuthInterface {
             if(password != null && !password.trim().equals("")) {
                 masterPass = password.toCharArray();
             }
+            authURI = SystemUtil.getContextURL();
         }catch(PropertyNotFoundException e) {
             log.warn("AuthFile.init - can't find the auth.file.pass in the metacat.properties. Metacat will use the default one as password.");
         }
@@ -287,8 +294,77 @@ public class AuthFile implements AuthInterface {
     @Override
     public String getPrincipals(String user, String password)
                     throws ConnectException {
-        // TODO Auto-generated method stub
-        return null;
+            StringBuffer out = new StringBuffer();
+
+            out.append("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n");
+            out.append("<principals>\n");
+            out.append("  <authSystem URI=\"" +authURI
+                    + "\" organization=\"" + ORGANIZATION + "\">\n");
+
+            // get all groups for directory context
+            String[][] groups = getGroups(user, password);
+            String[][] users = getUsers(user, password);
+            int userIndex = 0;
+
+            // for the groups and users that belong to them
+            if (groups != null && users != null && groups.length > 0) {
+                for (int i = 0; i < groups.length; i++) {
+                    out.append("    <group>\n");
+                    out.append("      <groupname>" + groups[i][0] + "</groupname>\n");
+                    if(groups[i].length > 1) {
+                        out.append("      <description>" + groups[i][1] + "</description>\n");
+                    }
+                    String[] usersForGroup = getUsers(user, password, groups[i][0]);
+                    if(usersForGroup != null) {
+                        for (int j = 0; j < usersForGroup.length; j++) {
+                            userIndex = AuthLdap.searchUser(usersForGroup[j], users);
+                            out.append("      <user>\n");
+
+                            if (userIndex < 0) {
+                                out.append("        <username>" + usersForGroup[j]
+                                        + "</username>\n");
+                            } else {
+                                out.append("        <username>" + users[userIndex][0]
+                                        + "</username>\n");
+                                if(users[userIndex].length >=2) {
+                                    out.append("        <name>" + users[userIndex][1]
+                                                    + "</name>\n");
+                                }
+                                if(users[userIndex].length >=3) {
+                                    out.append("        <email>" + users[userIndex][2]
+                                                    + "</email>\n");
+                                }
+                               
+                            }
+
+                            out.append("      </user>\n");
+                        }
+                    }
+                   
+                    out.append("    </group>\n");
+                }
+            }
+
+            if (users != null) {
+                // for the users not belonging to any grou8p
+                for (int j = 0; j < users.length; j++) {
+                    out.append("    <user>\n");
+                    out.append("      <username>" + users[j][0] + "</username>\n");
+                    if(users[userIndex].length >=2) {
+                        out.append("      <name>" + users[j][1] + "</name>\n");
+                    }
+                    if(users[userIndex].length >=3) {
+                        out.append("      <email>" + users[j][2] + "</email>\n");
+                    }
+                   
+                    out.append("    </user>\n");
+                }
+            }
+
+            out.append("  </authSystem>\n");
+        
+        out.append("</principals>");
+        return out.toString();
     }
     
     /**
@@ -324,7 +400,7 @@ public class AuthFile implements AuthInterface {
                       }
                   }
               }
-              userpassword.reload();
+              //userpassword.reload();
              }
         } else {
             throw new AuthenticationException("AuthFile.addUser - can't add the user "+userName+" since it already exists.");
@@ -342,7 +418,7 @@ public class AuthFile implements AuthInterface {
         if(!groupExists(groupName)) {
             if(userpassword != null) {
               userpassword.addProperty(GROUPS+" "+GROUP+AT+NAME, groupName);
-              userpassword.reload();
+              //userpassword.reload();
              }
         } else {
             throw new AuthenticationException("AuthFile.addGroup - can't add the group "+groupName+" since it already exists.");
@@ -379,8 +455,18 @@ public class AuthFile implements AuthInterface {
      * @param userName  the name of the user. the user should already exist
      * @param group  the name of the group. the group should already exist
      */
-    public void addUserToGroup(String userName, String group) {
-        
+    public void addUserToGroup(String userName, String group) throws AuthenticationException {
+        if(!userExists(userName)) {
+            throw new AuthenticationException("AuthFile.addUserToGroup - the user "+userName+ " doesn't exist.");
+        }
+        if(!groupExists(group)) {
+            throw new AuthenticationException("AuthFile.addUserToGroup - the group "+group+ " doesn't exist.");
+        }
+        List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+GROUP);
+        if(existingGroups.contains(group)) {
+            throw new AuthenticationException("AuthFile.addUserToGroup - the user "+userName+ " already is the memember of the group "+group);
+        }
+        userpassword.addProperty(USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+" "+GROUP, group);
     }
     
     /**
@@ -388,8 +474,20 @@ public class AuthFile implements AuthInterface {
      * @param userName  the name of the user. the user should already exist.
      * @param group the name of the group
      */
-    public void removeUserFromGroup(String userName, String group) {
-        
+    public void removeUserFromGroup(String userName, String group) throws AuthenticationException{
+        if(!userExists(userName)) {
+            throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+userName+ " doesn't exist.");
+        }
+        if(!groupExists(group)) {
+            throw new AuthenticationException("AuthFile.removeUserFromGroup - the group "+group+ " doesn't exist.");
+        }
+        String key = USERS+SLASH+USER+"["+AT+NAME+"='"+userName+"']"+SLASH+GROUP;
+        List<Object> existingGroups = userpassword.getList(key);
+        if(!existingGroups.contains(group)) {
+            throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+userName+ " isn't the memember of the group "+group);
+        } else {
+            userpassword.clearProperty(key+"[.='"+group+"']");
+        }
     }
     
     /**

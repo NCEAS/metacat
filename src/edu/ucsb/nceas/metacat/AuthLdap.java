@@ -1243,7 +1243,7 @@ public class AuthLdap implements AuthInterface {
 	/**
 	 * Method for getting index of user DN in User info array
 	 */
-	int searchUser(String user, String userGroup[][]) {
+	public static int searchUser(String user, String userGroup[][]) {
 		for (int j = 0; j < userGroup.length; j++) {
 			if (user.compareTo(userGroup[j][0]) == 0) {
 				return j;
