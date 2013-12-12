@@ -26,7 +26,9 @@ import edu.ucsb.nceas.MCTestCase;
 public class AuthFileTest extends MCTestCase {
     private static final String PASSWORDFILEPATH = "build/password";
     private static final String GROUPNAME = "nceas-dev";
-    private static final String USERNAME = "uid=tao,o=NCEAS,dc=ecoinformatics,dc=org";
+    private static final String GROUPNAME2 = "dataone-dev";
+    private static final String GROUPNAME3 = "dev";
+    private static final String USERNAME = "uid=john,o=NCEAS,dc=ecoinformatics,dc=org";
     private static final String PASSWORD = "ecoinformatics";
     /**
      * consstructor for the test
@@ -63,6 +65,8 @@ public class AuthFileTest extends MCTestCase {
          suite.addTest(new AuthFileTest("testGetUsers"));
          suite.addTest(new AuthFileTest("testGetGroups"));
          suite.addTest(new AuthFileTest("testChangePassword"));
+         suite.addTest(new AuthFileTest("testAddRemoveUserToFromGroup"));
+         suite.addTest(new AuthFileTest("testGetPrincipals"));
          return suite;
      }
      
@@ -154,20 +158,88 @@ public class AuthFileTest extends MCTestCase {
      public void testChangePassword() throws Exception {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String password = authFile.resetPassword(USERNAME);
+         authFile.authenticate(USERNAME, password);
          String newPassword = "hello";
          authFile.modifyPassword(USERNAME, password, newPassword);
-         
+         authFile.authenticate(USERNAME, newPassword);
          try {
              authFile.resetPassword("user1");
              assertTrue("Can't reach here since we tried to reset the password for an unexisting user ", false);
          } catch (AuthenticationException e) {
-             
+             System.out.println("Failed to reset the password for a user: "+e.getMessage());
          }
          try {
              authFile.modifyPassword("user1", "old", "new");
              assertTrue("Can't reach here since we tried to change the password for an unexisting user ", false);
          } catch (AuthenticationException e) {
-             
+             System.out.println("Failed to change the password for a user: "+e.getMessage());
          }
+     }
+     
+     /**
+      * Test the addUserToGroup and removeUserFromGroup methods
+      * @throws Exception
+      */
+     public void testAddRemoveUserToFromGroup() throws Exception{
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         try {
+             authFile.addUserToGroup("user1", GROUPNAME);
+             assertTrue("Can't reach here since we tried to add an unexisting user to a group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to add a user to a group "+e.getMessage());
+         }
+         
+         try {
+             authFile.addUserToGroup(USERNAME, "group2");
+             assertTrue("Can't reach here since we tried to add a user to an unexisting group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to add a user to a group "+e.getMessage());
+         }
+         try {
+             authFile.addUserToGroup(USERNAME, GROUPNAME);
+             assertTrue("Can't reach here since the user is already in the group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to add a user to a group "+e.getMessage());
+         }
+         authFile.addGroup(GROUPNAME2);
+         authFile.addUserToGroup(USERNAME, GROUPNAME2);
+         String[][]groups = authFile.getGroups(null, null, USERNAME);
+         assertTrue("The user "+USERNAME+" should be in the group "+GROUPNAME2, groups[0][0].equals(GROUPNAME2)||groups[1][0].equals(GROUPNAME2));
+         
+         
+         try {
+             authFile.removeUserFromGroup("user1", GROUPNAME);
+             assertTrue("Can't reach here since we tried to remove an unexisting user from a group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to remove a user from a group "+e.getMessage());
+         }
+         
+         try {
+             authFile.removeUserFromGroup(USERNAME, "group2");
+             assertTrue("Can't reach here since we tried to remove a user from an unexisting group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to remove a user from a group "+e.getMessage());
+         }
+         authFile.addGroup(GROUPNAME3);
+         try {
+             authFile.removeUserFromGroup(USERNAME, GROUPNAME3);
+             assertTrue("Can't reach here since the user is not in the group", false);
+         } catch(AuthenticationException e) {
+             System.out.println("Failed to remove a user from a group "+e.getMessage());
+         }
+         authFile.removeUserFromGroup(USERNAME, GROUPNAME2);
+         groups = authFile.getGroups(null, null, USERNAME);
+         assertTrue("The size of groups of the user "+USERNAME+" shouldn be one rather than "+groups.length, groups.length ==1);
+         assertTrue("The user "+USERNAME+" shouldn't be in the group "+GROUPNAME2, !groups[0][0].equals(GROUPNAME2));
+         assertTrue("The user "+USERNAME+" should still be in the group "+GROUPNAME, groups[0][0].equals(GROUPNAME));
+     }
+     
+     /**
+      * Test the getPrincipal
+      * @throws Exception
+      */
+     public void testGetPrincipals() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         System.out.println(""+authFile.getPrincipals(null, null));
      }
 }
