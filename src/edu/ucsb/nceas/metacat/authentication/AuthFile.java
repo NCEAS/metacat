@@ -413,13 +413,16 @@ public class AuthFile implements AuthInterface {
      * Add a group into the file
      * @param groupName the name of group
      */
-    public void addGroup(String groupName) throws AuthenticationException{
+    public void addGroup(String groupName, String description) throws AuthenticationException{
         if(groupName == null || groupName.trim().equals("")) {
             throw new AuthenticationException("AuthFile.addGroup - can't add a group whose name is null or blank.");
         }
         if(!groupExists(groupName)) {
             if(userpassword != null) {
               userpassword.addProperty(GROUPS+" "+GROUP+AT+NAME, groupName);
+              if(description != null && !description.trim().equals("")) {
+                  userpassword.addProperty(GROUPS+SLASH+GROUP+"["+AT+NAME+"='"+groupName+"']"+" "+DESCRIPTION, description);
+              }
               //userpassword.reload();
              }
         } else {
