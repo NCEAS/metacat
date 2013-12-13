@@ -1844,33 +1844,49 @@ public class MNodeService extends D1NodeService
 				// just the lone pid in this package
 				packagePids.add(pid);
 			}
-	
+			
+			//Create a temp directory in the default temp directory
+			String defaultTempDir = System.getProperty("java.io.tmpdir");
+			File tempDir = new File(defaultTempDir + "/" + System.nanoTime());
+			tempFiles.add(tempDir);
+			tempDir.mkdir();
+			
 			// track the pid-to-file mapping
 			StringBuffer pidMapping = new StringBuffer();
+			
 			// loop through the package contents
 			for (Identifier entryPid: packagePids) {
+				//Get the system metadata for each item
 				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+				
+				//Create the temp file extension and prefix
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-		        String prefix = entryPid.getValue();
-		        prefix = "entry";
-				File tempFile = File.createTempFile(prefix + "-", extension);
+				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
+				String fileName = entryPid.getValue().replaceAll("\\W+", "_") + "-" + objectFormatType;			
+				
+		        //Create a new file for this item and add to the list
+				File tempFile = new File(tempDir, fileName+extension);
 				tempFiles.add(tempFile);
-				InputStream entryInputStream = this.get(session, entryPid);
+				
+				InputStream entryInputStream = this.get(session, entryPid);			
 				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
 				bag.addFileToPayload(tempFile);
 				pidMapping.append(entryPid.getValue() + "\t" + "data/" + tempFile.getName() + "\n");
 			}
 			
 			//add the the pid to data file map
-			File pidMappingFile = File.createTempFile("pid-mapping-", ".txt");
+			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
 			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
 			bag.addFileAsTag(pidMappingFile);
 			tempFiles.add(pidMappingFile);
 			
 			bag = bag.makeComplete();
 			
-			// TODO: consider using mangled-PID for filename
-			File bagFile = File.createTempFile("dataPackage-", ".zip");
+			///Now create the zip file
+			//Use the pid as the file name prefix, replacing illegal characters with a hyphen
+			String zipName = pid.getValue().replaceAll("\\W+", "_");
+			
+			File bagFile = new File(tempDir, zipName+".zip");
 			
 			bag.setFile(bagFile);
 			ZipWriter zipWriter = new ZipWriter(bagFactory);
@@ -1880,11 +1896,14 @@ public class MNodeService extends D1NodeService
 			bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
 			// also mark for deletion on shutdown in case the stream is never closed
 			bagFile.deleteOnExit();
+			tempFiles.add(bagFile);
 			
 			// clean up other temp files
-			for (File tf: tempFiles) {
+			for(int i=tempFiles.size()-1; i>=0; i--){
+				File tf = new File(tempFiles.get(i).getPath());
 				tf.delete();
 			}
+			
 		} catch (IOException e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
