@@ -29,6 +29,7 @@ public class AuthFileTest extends MCTestCase {
     private static final String GROUPNAME2 = "dataone-dev";
     private static final String GROUPNAME3 = "dev";
     private static final String USERNAME = "uid=john,o=NCEAS,dc=ecoinformatics,dc=org";
+    private static final String USERNAME2="uid=smith,o=unaffiliated,dc=ecoinformatics,dc=org";
     private static final String PASSWORD = "ecoinformatics";
     /**
      * consstructor for the test
@@ -76,9 +77,9 @@ public class AuthFileTest extends MCTestCase {
       */
      public void testAddGroup() throws Exception{
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
-         authFile.addGroup(GROUPNAME);
+         authFile.addGroup(GROUPNAME, "Developers at NCEAS");
          try {
-             authFile.addGroup(GROUPNAME);
+             authFile.addGroup(GROUPNAME, "Developers at NCEAS");
              assertTrue("We can't reach here since we can't add the group twice", false);
          } catch (AuthenticationException e) {
              
@@ -94,6 +95,7 @@ public class AuthFileTest extends MCTestCase {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[]groups = {GROUPNAME};
          authFile.addUser(USERNAME, groups, PASSWORD);
+         authFile.addUser(USERNAME2, null, PASSWORD);
          try {
              authFile.addUser(USERNAME, groups, PASSWORD);
              assertTrue("We can't reach here since we can't add the user twice", false);
@@ -201,7 +203,7 @@ public class AuthFileTest extends MCTestCase {
          } catch(AuthenticationException e) {
              System.out.println("Failed to add a user to a group "+e.getMessage());
          }
-         authFile.addGroup(GROUPNAME2);
+         authFile.addGroup(GROUPNAME2, null);
          authFile.addUserToGroup(USERNAME, GROUPNAME2);
          String[][]groups = authFile.getGroups(null, null, USERNAME);
          assertTrue("The user "+USERNAME+" should be in the group "+GROUPNAME2, groups[0][0].equals(GROUPNAME2)||groups[1][0].equals(GROUPNAME2));
@@ -220,7 +222,7 @@ public class AuthFileTest extends MCTestCase {
          } catch(AuthenticationException e) {
              System.out.println("Failed to remove a user from a group "+e.getMessage());
          }
-         authFile.addGroup(GROUPNAME3);
+         authFile.addGroup(GROUPNAME3, "Developers");
          try {
              authFile.removeUserFromGroup(USERNAME, GROUPNAME3);
              assertTrue("Can't reach here since the user is not in the group", false);
