@@ -40,6 +40,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
@@ -54,6 +55,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
 import org.dataone.client.MNode;
@@ -116,16 +118,21 @@ import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREParserException;
 import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
+import org.ecoinformatics.datamanager.parser.DataPackage;
+import org.ecoinformatics.datamanager.parser.Entity;
+import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
+import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
+import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
-
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -1827,14 +1834,70 @@ public class MNodeService extends D1NodeService
 		
 		// catch non-D1 service errors and throw as ServiceFailures
 		try {
+			//Create a map of dataone ids and file names
+			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
 			
 			// find the package contents
 			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
 			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
+				//Get the resource map as a map of Identifiers
 				InputStream oreInputStream = this.get(session, pid);
 				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
 				packagePids.addAll(resourceMapStructure.keySet());
+				//Loop through each object in this resource map
 				for (Map<Identifier, List<Identifier>> entries: resourceMapStructure.values()) {
+					//Loop through each metadata object in this entry
+					Set<Identifier> metadataIdentifiers = entries.keySet();
+					for(Identifier metadataID: metadataIdentifiers){
+						try{
+							//Get the system metadata for this metadata object
+							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
+							
+							//If this is in eml format, extract the filename and GUID from each entity in its package
+							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://")) {
+								//Get the package
+								DataPackageParserInterface parser = new Eml200DataPackageParser();
+								InputStream emlStream = this.get(session, metadataID);
+								parser.parse(emlStream);
+								DataPackage dataPackage = parser.getDataPackage();
+								
+								//Get all the entities in this package and loop through each to extract its ID and file name
+								Entity[] entities = dataPackage.getEntityList();
+								for(Entity entity: entities){
+									try{
+										//Get the file name from the metadata
+										String fileNameFromMetadata = entity.getName();
+										
+										//Get the ecogrid URL from the metadata
+										String ecogridIdentifier = entity.getEntityIdentifier();
+										//Parse the ecogrid URL to get the local id
+										String idFromMetadata = DocumentUtil.getAccessionNumberFromEcogridIdentifier(ecogridIdentifier);
+										
+										//Get the docid and rev pair
+										String docid = DocumentUtil.getDocIdFromString(idFromMetadata);
+										String rev = DocumentUtil.getRevisionStringFromString(idFromMetadata);
+										
+										//Get the GUID
+										String guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(rev));
+										Identifier dataIdentifier = new Identifier();
+										dataIdentifier.setValue(guid);
+										
+										//Add the GUID to our GUID & file name map
+										fileNames.put(dataIdentifier, fileNameFromMetadata);
+									}
+									catch(Exception e){
+										//Prevent just one entity error
+										e.printStackTrace();
+										logMetacat.debug(e.getMessage(), e);
+									}
+								}
+							}
+						}
+						catch(Exception e){
+							//Catch errors that would prevent package download
+							logMetacat.debug(e.toString());
+						}
+					}
 					packagePids.addAll(entries.keySet());
 					for (List<Identifier> dataPids: entries.values()) {
 						packagePids.addAll(dataPids);
@@ -1845,11 +1908,12 @@ public class MNodeService extends D1NodeService
 				packagePids.add(pid);
 			}
 			
-			//Create a temp directory in the default temp directory
-			String defaultTempDir = System.getProperty("java.io.tmpdir");
-			File tempDir = new File(defaultTempDir + "/" + System.nanoTime());
+			//Create a temp file, then delete it and make a directory with that name
+			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
+			tempDir.delete();
+			tempDir = new File(tempDir.getPath() + "_dir");
+			tempDir.mkdir();			
 			tempFiles.add(tempDir);
-			tempDir.mkdir();
 			
 			// track the pid-to-file mapping
 			StringBuffer pidMapping = new StringBuffer();
@@ -1857,15 +1921,27 @@ public class MNodeService extends D1NodeService
 			// loop through the package contents
 			for (Identifier entryPid: packagePids) {
 				//Get the system metadata for each item
-				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
 				
-				//Create the temp file extension and prefix
-				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
 				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-				String fileName = entryPid.getValue().replaceAll("\\W+", "_") + "-" + objectFormatType;			
+				String fileName = null;
+				
+				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
+				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
+				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
+
+				if(fileNames.containsKey(entryPid)){
+					//Let's use the file name and extension from the metadata is we have it
+					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+				}
+				else{
+					//If we couldn't find a given file name, use the system metadata extension
+					String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
+					fileName += extension;
+				}
 				
 		        //Create a new file for this item and add to the list
-				File tempFile = new File(tempDir, fileName+extension);
+				File tempFile = new File(tempDir, fileName);
 				tempFiles.add(tempFile);
 				
 				InputStream entryInputStream = this.get(session, entryPid);			
@@ -1883,8 +1959,8 @@ public class MNodeService extends D1NodeService
 			bag = bag.makeComplete();
 			
 			///Now create the zip file
-			//Use the pid as the file name prefix, replacing illegal characters with a hyphen
-			String zipName = pid.getValue().replaceAll("\\W+", "_");
+			//Use the pid as the file name prefix, replacing all non-word characters
+			String zipName = pid.getValue().replaceAll("\\W", "_");
 			
 			File bagFile = new File(tempDir, zipName+".zip");
 			
