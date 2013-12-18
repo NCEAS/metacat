@@ -34,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
+import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 
@@ -61,6 +62,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
  */
 public class SolrSchemaUpgrader {
     
+    private static Logger logMetacat = Logger.getLogger(SolrSchemaUpgrader.class);
     private static final String SCHEMAFILERELATIVEPATH = "/conf/schema.xml";
     private static final String MD5 = "MD5";
     private Vector<String> releasedSchemaHashList = new Vector<String>();
@@ -80,7 +82,7 @@ public class SolrSchemaUpgrader {
             hashString = 
                 PropertyService.getProperty("index.schema.previous.hash");
             currentHash = PropertyService.getProperty("index.schema.current.hash");
-            //System.out.println("the current hash is ================== "+currentHash);
+            logMetacat.info("the current hash is ================== "+currentHash);
             solrHomePath = PropertyService.getProperty("solr.homeDir");
             String indexContext = PropertyService.getProperty("index.context");
             String metacatWebInf = ServiceService.getRealConfigDir();
@@ -90,7 +92,7 @@ public class SolrSchemaUpgrader {
                             + pnfe.getMessage());
         }
         releasedSchemaHashList = StringUtil.toVector(hashString, ';');
-        //System.out.println("the released hash is ================== "+releasedSchemaHashList);
+        logMetacat.info("the released hash is ================== "+releasedSchemaHashList);
     }
     
     /**
@@ -158,11 +160,11 @@ public class SolrSchemaUpgrader {
                                         solrHomePath+"/conf. You may click the OK button When you finish the merging. ";
                         if(checkSum != null) {
                             String checksumValue = checkSum.getValue();
-                            //System.out.println("the existing schema.xml in the solr home has the checksum ================== "+checksumValue);
+                            logMetacat.info("the existing schema.xml in the solr home has the checksum ================== "+checksumValue);
                             if(checksumValue != null) {
                                 if(checksumValue.equals(currentHash)) {
                                     //it has the newest schema, do nothing
-                                    //System.out.println("=====the existing schema.xml in the solr home has the same checksum as our current release, do nothing") ;
+                                    logMetacat.info("=====the existing schema.xml in the solr home has the same checksum as our current release, do nothing") ;
                                 } else {
                                     boolean found = false;
                                     for(String value : releasedSchemaHashList) {
