@@ -729,7 +729,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
 			  // update the replica nodes about the completed replica when complete
               if (status.equals(ReplicationStatus.COMPLETED)) {
-				broadcastSystemMetadataChange(systemMetadata);
+				notifyReplicaNodes(systemMetadata);
 			}
           
           } catch (RuntimeException e) {
@@ -751,62 +751,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       return true;
   }
   
-  /*
-   * Inform each replica node that system metadata has changed
-   * 
-   * @param systemMetadata  the system metadata object with the replica list
-   */
-  private void broadcastSystemMetadataChange(SystemMetadata systemMetadata) {
-	  
-      CNode cn = null;
-      NodeList nodeList = new NodeList();
-      List<Node> nodes = new ArrayList<Node>();
-
-	  List<Replica> replicaList = systemMetadata.getReplicaList();
-
-	  // get the node list so we know the node type
-	  try {
-		cn = D1Client.getCN();
-		nodeList = cn.listNodes();
-	    nodes = nodeList.getNodeList();
-		
-	    // iterate through the replica list and inform each MN of the system metadata change
-		for (Replica replica : replicaList) {
-		    NodeReference nodeId = replica.getReplicaMemberNode();
-		    try {
-		        for (Node node : nodes) {
-		      	    if ( node.getIdentifier().equals(nodeId) ) {
-		      		    if ( node.getType().equals(NodeType.MN) ) {
-		      		        MNode replicaNode = D1Client.getMN(nodeId);
-		      		        // call MN.systemMetadataChanged();
-		      		        replicaNode.systemMetadataChanged(null, 
-		      		            systemMetadata.getIdentifier(), 
-		      		            systemMetadata.getSerialVersion().longValue(), 
-		      		            systemMetadata.getDateSysMetadataModified());
-		      		        if (logMetacat.isDebugEnabled()) {
-								logMetacat.debug("Called systemMetadataChanged() for identifier " + 
-		      		                systemMetadata.getIdentifier().getValue() + 
-		      		                " for node " + nodeId.getValue());
-							}
-		      		    }
-		      	    }
-		        }
-		        
-		    } catch (BaseException e) {
-			    logMetacat.error("Couldn't contact " + nodeId.getValue() + 
-		            " to inform it of the system metadata change for identifier " + 
-			  	  systemMetadata.getIdentifier().getValue());
-		    }     
-		}
-
-	  } catch (BaseException e1) {
-		  logMetacat.error("Couldn't get the node list from the CN to broadcast the system " +
-				    "metadata change for identifier " + systemMetadata.getIdentifier().getValue());
-	  }
-	  
-	  
-}
-
 /**
    * Return the checksum of the object given the identifier 
    * 
@@ -1609,7 +1553,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
               // inform replica nodes of the change if the status is complete
               if ( replicaStatus.equals(ReplicationStatus.COMPLETED) ) {
-            	  broadcastSystemMetadataChange(systemMetadata);
+            	  notifyReplicaNodes(systemMetadata);
             	  
               }
           } catch (RuntimeException e) {
