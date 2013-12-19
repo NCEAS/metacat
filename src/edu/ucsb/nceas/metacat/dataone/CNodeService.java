@@ -82,6 +82,7 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 
 /**
@@ -324,8 +325,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   }
   
   /**
-   * Deletes an object from the Coordinating Node, where the object is a 
-   * a science metadata object.
+   * Deletes an object from the Coordinating Node
    * 
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - The object identifier to be deleted
@@ -342,6 +342,21 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   @Override
   public Identifier delete(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+      
+      String localId = null; // The corresponding docid for this pid
+	  Lock lock = null;      // The lock to be used for this identifier
+
+      // check for a valid session
+      if (session == null) {
+        	throw new InvalidToken("4963", "No session has been provided");
+        	
+      }
+
+      // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new ServiceFailure("4960", "The provided identifier was invalid.");
+          
+      }
 
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
@@ -349,16 +364,62 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  // additional check if it is the authoritative node if it is not the admin
       if(!allowed) {
           allowed = isAuthoritativeMNodeAdmin(session, pid);
+          
       }
 	  
 	  if (!allowed) {
-		  String msg = "The subject is not allowed to call delete() on a Coordinating Node.";
+		  String msg = "The subject " + session.getSubject().getValue() + 
+			  " is not allowed to call delete() on a Coordinating Node.";
 		  logMetacat.info(msg);
-		  throw new NotAuthorized("1320", msg);
+		  throw new NotAuthorized("4960", msg);
+		  
 	  }
 	  
-	  // defer to superclass implementation
-	  Identifier retId =  super.delete(session, pid);
+	  // Don't defer to superclass implementation without a locally registered identifier
+	  
+      // Check for the existing identifier
+      try {
+          localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+          super.delete(session, pid);
+          
+      } catch (McdbDocNotFoundException e) {
+          // This object is not registered in the identifier table. Assume it is of formatType DATA,
+    	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
+    	  
+          try {
+  			  lock = HazelcastService.getInstance().getLock(pid.getValue());
+  			  lock.lock();
+  			  logMetacat.debug("Locked identifier " + pid.getValue());
+
+			  SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+			  if ( sysMeta != null ) {
+				sysMeta.setArchived(true);
+				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+				
+			  } else {
+				  throw new ServiceFailure("4962", "Couldn't delete the object " + pid.getValue() +
+					  ". Couldn't obtain the system metadata record.");
+				  
+			  }
+			  
+		  } catch (RuntimeException re) {
+			  throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
+				  ". The error message was: " + re.getMessage());
+			  
+		  } finally {
+			  lock.unlock();
+			  logMetacat.debug("Unlocked identifier " + pid.getValue());
+
+		  }
+
+          // Log the delete
+          EventLog.getInstance().log(request.getRemoteAddr(), 
+                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
+                  pid.getValue(), Event.DELETE.xmlValue());
+
+      }
+
       
 	  // notify the replicas
 	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
@@ -375,13 +436,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 		  }
 	  }
 	  
-	  return retId;
+	  return pid;
       
   }
   
   /**
-   * Deletes an object from the Coordinating Node, where the object is a 
-   * a science metadata object.
+   * Archives an object from the Coordinating Node
    * 
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - The object identifier to be deleted
@@ -399,6 +459,21 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   public Identifier archive(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
+      String localId = null; // The corresponding docid for this pid
+	  Lock lock = null;      // The lock to be used for this identifier
+
+      // check for a valid session
+      if (session == null) {
+        	throw new InvalidToken("4973", "No session has been provided");
+        	
+      }
+
+      // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new ServiceFailure("4972", "The provided identifier was invalid.");
+          
+      }
+
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
 	  
@@ -408,13 +483,54 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  }
 	  
 	  if (!allowed) {
-		  String msg = "The subject is not allowed to call archive() on a Coordinating Node.";
+		  String msg = "The subject " + session.getSubject().getValue() + 
+				  " is not allowed to call archive() on a Coordinating Node.";
 		  logMetacat.info(msg);
-		  throw new NotAuthorized("1320", msg);
+		  throw new NotAuthorized("4970", msg);
 	  }
 	  
-	  // defer to superclass implementation
-	  Identifier retId =  super.archive(session, pid);
+      // Check for the existing identifier
+      try {
+          localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+          super.archive(session, pid);
+          
+      } catch (McdbDocNotFoundException e) {
+          // This object is not registered in the identifier table. Assume it is of formatType DATA,
+    	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
+    	  
+          try {
+  			  lock = HazelcastService.getInstance().getLock(pid.getValue());
+  			  lock.lock();
+  			  logMetacat.debug("Locked identifier " + pid.getValue());
+
+			  SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+			  if ( sysMeta != null ) {
+				sysMeta.setArchived(true);
+				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+				
+			  } else {
+				  throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+					  ". Couldn't obtain the system metadata record.");
+				  
+			  }
+			  
+		  } catch (RuntimeException re) {
+			  throw new ServiceFailure("4972", "Couldn't archive " + pid.getValue() + 
+				  ". The error message was: " + re.getMessage());
+			  
+		  } finally {
+			  lock.unlock();
+			  logMetacat.debug("Unlocked identifier " + pid.getValue());
+
+		  }
+
+          // Log the archive
+          EventLog.getInstance().log(request.getRemoteAddr(), 
+                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
+                  pid.getValue(), Event.DELETE.xmlValue());
+
+      }
       
 	  // notify the replicas
 	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
@@ -432,7 +548,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 		  }
 	  }
 	  
-	  return retId;
+	  return pid;
       
   }
   
@@ -729,7 +845,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
 			  // update the replica nodes about the completed replica when complete
               if (status.equals(ReplicationStatus.COMPLETED)) {
-				broadcastSystemMetadataChange(systemMetadata);
+				notifyReplicaNodes(systemMetadata);
 			}
           
           } catch (RuntimeException e) {
@@ -751,62 +867,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       return true;
   }
   
-  /*
-   * Inform each replica node that system metadata has changed
-   * 
-   * @param systemMetadata  the system metadata object with the replica list
-   */
-  private void broadcastSystemMetadataChange(SystemMetadata systemMetadata) {
-	  
-      CNode cn = null;
-      NodeList nodeList = new NodeList();
-      List<Node> nodes = new ArrayList<Node>();
-
-	  List<Replica> replicaList = systemMetadata.getReplicaList();
-
-	  // get the node list so we know the node type
-	  try {
-		cn = D1Client.getCN();
-		nodeList = cn.listNodes();
-	    nodes = nodeList.getNodeList();
-		
-	    // iterate through the replica list and inform each MN of the system metadata change
-		for (Replica replica : replicaList) {
-		    NodeReference nodeId = replica.getReplicaMemberNode();
-		    try {
-		        for (Node node : nodes) {
-		      	    if ( node.getIdentifier().equals(nodeId) ) {
-		      		    if ( node.getType().equals(NodeType.MN) ) {
-		      		        MNode replicaNode = D1Client.getMN(nodeId);
-		      		        // call MN.systemMetadataChanged();
-		      		        replicaNode.systemMetadataChanged(null, 
-		      		            systemMetadata.getIdentifier(), 
-		      		            systemMetadata.getSerialVersion().longValue(), 
-		      		            systemMetadata.getDateSysMetadataModified());
-		      		        if (logMetacat.isDebugEnabled()) {
-								logMetacat.debug("Called systemMetadataChanged() for identifier " + 
-		      		                systemMetadata.getIdentifier().getValue() + 
-		      		                " for node " + nodeId.getValue());
-							}
-		      		    }
-		      	    }
-		        }
-		        
-		    } catch (BaseException e) {
-			    logMetacat.error("Couldn't contact " + nodeId.getValue() + 
-		            " to inform it of the system metadata change for identifier " + 
-			  	  systemMetadata.getIdentifier().getValue());
-		    }     
-		}
-
-	  } catch (BaseException e1) {
-		  logMetacat.error("Couldn't get the node list from the CN to broadcast the system " +
-				    "metadata change for identifier " + systemMetadata.getIdentifier().getValue());
-	  }
-	  
-	  
-}
-
 /**
    * Return the checksum of the object given the identifier 
    * 
@@ -1609,7 +1669,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
               // inform replica nodes of the change if the status is complete
               if ( replicaStatus.equals(ReplicationStatus.COMPLETED) ) {
-            	  broadcastSystemMetadataChange(systemMetadata);
+            	  notifyReplicaNodes(systemMetadata);
             	  
               }
           } catch (RuntimeException e) {
