@@ -92,4 +92,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '/schema/RegistryService/RegistryEntryType.xsd', '/schema/RegistryService/RegistryEntryType.xsd'); 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.3.0',1,CURRENT_DATE);
+  VALUES ('2.3.1',1,CURRENT_DATE);

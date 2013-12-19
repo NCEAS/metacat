@@ -1010,6 +1010,11 @@
 		<copy file="lib/web.xml.tomcat6" tofile="${build.war}/web.xml" />
 		<copy file="lib/metacat.properties" todir="${war.webinf}"
 			filtering="yes" />
+		<copy todir="${war.webinf}" filtering="yes">
+		    <fileset dir="lib/account-web-info">
+		       <exclude name="web.xml" />
+		    </fileset>
+		</copy>
 		<copy file="lib/solrQueryFieldDescriptions.properties" todir="${war.webinf}"/>
 		<copy file="lib/metacat.properties.metadata.xml"
 			todir="${war.webinf}" filtering="no" />
@@ -1781,13 +1786,14 @@
 	</target>
 	
 	<!-- Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password -->
-	<target name="war-account" depends="warPrepare" description="Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password">
-		  <property name="war-name" value="account" />
+	<target name="war-identity" depends="warPrepare" description="Generate a light war file which only is used to manage the ldap user accounts - register a new user, reset and change the password">
+		  <property name="war-name" value="identity" />
 		  <mkdir dir="${dist.dir}" />
 		     <war destfile="${dist.dir}/${war-name}.war"
 		            webxml="lib/account-web-info/web.xml">
 		      <webinf dir="${war.webinf}">
 		        <include name="metacat.properties"/>
+		        <include name="gd_intermediate_bundle_nceas_ldap.crt"/>
 		      </webinf>
 		      <fileset dir="${war.context}">
 		        <include name="cgi-bin/**"/>

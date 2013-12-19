@@ -42,6 +42,7 @@ use DateTime;			# for parsing dates
 use DateTime::Duration; # for substracting
 use Captcha::reCAPTCHA; # for protection against spams
 use Cwd 'abs_path';
+use Scalar::Util qw(looks_like_number);
 
 # Global configuration paramters
 # This entire block (including skin parsing) could be pushed out to a separate .pm file
@@ -80,6 +81,7 @@ my $metacatUrl = $contextUrl . "/metacat";
 my $cgiPrefix = "/" . $context . "/cgi-bin";
 my $styleSkinsPath = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
+my $ldapServerCACertFile = $workingDirectory. "/../" . $properties->getProperty('ldap.server.ca.certificate');
 
 #recaptcha key information
 my $recaptchaPublicKey=$properties->getProperty('ldap.recaptcha.publickey');
@@ -89,6 +91,9 @@ my @errorMessages;
 my $error = 0;
 
 my $emailVerification= 'emailverification';
+
+ my $dn_store_next_uid=$properties->getProperty('ldap.nextuid.storing.dn');
+ my $attribute_name_store_next_uid = $properties->getProperty('ldap.nextuid.storing.attributename');
 
 # Import all of the HTML form fields as variables
 import_names('FORM');
@@ -309,6 +314,7 @@ my %stages = (
               'emailverification' => \&handleEmailVerification,
               'lookupname'        => \&handleLookupName,
               'searchnamesbyemail'=> \&handleSearchNameByEmail,
+              #'getnextuid'        => \&getNextUidNumber,
              );
 
 # call the appropriate routine based on the stage
@@ -348,7 +354,8 @@ sub clearTemporaryAccounts {
     debug("clearTemporaryAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
 		$mesg = $ldap->search (
 			base   => $tmpSearchBase,
@@ -811,9 +818,8 @@ sub changePassword {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-        #$ldap->start_tls( verify => 'require',
-                      #cafile => '/usr/share/ssl/ldapcerts/cacert.pem');
-        $ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         debug("changePassword: attempting to bind to $bindDN");
         my $bindresult = $ldap->bind( version => 3, dn => $bindDN, 
                                   password => $bindPass );
@@ -877,21 +883,25 @@ sub getLdapEntry {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	my $bindresult = $ldap->bind;
     	if ($bindresult->code) {
         	return $entry;
     	}
 
-    	if($ldapConfig->{$org}{'filter'}){
-            debug("getLdapEntry: filter set, searching for base=$base, " .
-                  "(&(uid=$username)($ldapConfig->{$org}{'filter'})");
-        	$mesg = $ldap->search ( base   => $base,
-                filter => "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
-    	} else {
-            debug("getLdapEntry: no filter, searching for $base, (uid=$username)");
-        	$mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
-    	}
+        $base = $ldapConfig->{$org}{'org'} . ',' . $base;
+        debug("getLdapEntry, searching for $base, (uid=$username)");
+        $mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
+    	#if($ldapConfig->{$org}{'filter'}){
+            #debug("getLdapEntry: filter set, searching for base=$base, " .
+                  #"(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
+        	#$mesg = $ldap->search ( base   => $base,
+                #filter => "(&(uid=$username)($ldapConfig->{$org}{'filter'}))");
+    	#} else {
+            #debug("getLdapEntry: no filter, searching for $base, (uid=$username)");
+        	#$mesg = $ldap->search ( base   => $base, filter => "(uid=$username)");
+    	#}
     
     	if ($mesg->count > 0) {
         	$entry = $mesg->pop_entry;
@@ -944,7 +954,7 @@ sub sendPasswordNotification {
         
         Somebody (hopefully you) requested that your account password be reset.  
         Your temporary password is below. Please change it as soon as possible 
-        at: $contextUrl.
+        at: $contextUrl/style/skins/account/.
 
             Username: $username
         Organization: $org
@@ -983,7 +993,9 @@ sub findExistingAccounts {
     debug("findExistingAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	#$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	$ldap->bind( version => 3, anonymous => 1);
 		$mesg = $ldap->search (
 			base   => $base,
@@ -1138,29 +1150,57 @@ sub createTemporaryAccount {
     
     ################create an account under tmp subtree 
     
+     my $dn_store_next_uid=$properties->getProperty('ldap.nextuid.storing.dn');
+    my $attribute_name_store_next_uid = $properties->getProperty('ldap.nextuid.storing.attributename');
+    #get the next avaliable uid number. If it fails, the program will exist.
+    my $nextUidNumber = getNextUidNumber($ldapUsername, $ldapPassword);
+    if(!$nextUidNumber) {
+        print "Content-type: text/html\n\n";
+         my $sender;
+        $sender = $skinProperties->getProperty("email.recipient") or $sender = $properties->getProperty('email.recipient');
+        my $errorMessage = "The Identity Service can't get the next avaliable uid number. Please try again.  If the issue persists, please contact the administrator - $sender.
+                           The possible reasons are: the dn - $dn_store_next_uid or its attribute - $attribute_name_store_next_uid don't exist; the value of the attribute - $attribute_name_store_next_uid
+                           is not a number; or lots of users were registering and you couldn't get a lock on the dn - $dn_store_next_uid.";
+        fullTemplate(['register'], { stage => "register",
+                                     allParams => $allParams,
+                                     errorMessage => $errorMessage });
+        exit(0);
+    }
+    my $cn = join(" ", $query->param('givenName'), $query->param('sn')); 
     #generate a randomstr for matching the email.
     my $randomStr = getRandomPassword(16);
     # Create a hashed version of the password
     my $shapass = createSeededPassHash($query->param('userPassword'));
     my $additions = [ 
                 'uid'   => $query->param('uid'),
-                'cn'   => join(" ", $query->param('givenName'), 
-                                    $query->param('sn')),
+                'cn'   => $cn,
                 'sn'   => $query->param('sn'),
                 'givenName'   => $query->param('givenName'),
                 'mail' => $query->param('mail'),
                 'userPassword' => $shapass,
                 'employeeNumber' => $randomStr,
+                'uidNumber' => $nextUidNumber,
+                'gidNumber' => $nextUidNumber,
+                'loginShell' => '/sbin/nologin',
+                'homeDirectory' => '/dev/null',
                 'objectclass' => ['top', 'person', 'organizationalPerson', 
-                                'inetOrgPerson', 'uidObject' ],
+                                'inetOrgPerson', 'posixAccount', 'shadowAccount' ],
                 $organization   => $organizationName
                 ];
+    my $gecos;
     if (defined($query->param('telephoneNumber')) && 
                 $query->param('telephoneNumber') &&
                 ! $query->param('telephoneNumber') =~ /^\s+$/) {
                 $$additions[$#$additions + 1] = 'telephoneNumber';
                 $$additions[$#$additions + 1] = $query->param('telephoneNumber');
+                $gecos = $cn . ',,'. $query->param('telephoneNumber'). ',';
+    } else {
+        $gecos = $cn . ',,,';
     }
+    
+    $$additions[$#$additions + 1] = 'gecos';
+    $$additions[$#$additions + 1] = $gecos;
+    
     if (defined($query->param('title')) && 
                 $query->param('title') &&
                 ! $query->param('title') =~ /^\s+$/) {
@@ -1180,7 +1220,7 @@ sub createTemporaryAccount {
     
     my $overrideURL;
     $overrideURL = $skinProperties->getProperty("email.overrideURL");
-    debug("the overrideURL is " . $overrideURL);
+    debug("the overrideURL is $overrideURL");
     if (defined($overrideURL) && !($overrideURL eq '')) {
     	$link = $serverUrl . $overrideURL . $link;
     } else {
@@ -1206,7 +1246,7 @@ sub createTemporaryAccount {
     From: $sender
     Subject: New Account Activation
         
-    Somebody (hopefully you) registered an account on $contextUrl.  
+    Somebody (hopefully you) registered an account on $contextUrl/style/skins/account/.  
     Please click the following link to activate your account.
     If the link doesn't work, please copy the link to your browser:
     
@@ -1249,7 +1289,8 @@ sub createItem {
     #if main ldap server is down, a html file containing warning message will be returned
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-            $ldap->start_tls( verify => 'none');
+            $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [@$additions ]);
@@ -1309,7 +1350,8 @@ sub handleEmailVerification {
    #if main ldap server is down, a html file containing warning message will be returned
    my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
    if ($ldap) {
-        $ldap->start_tls( verify => 'none');
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
         my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)'); #This dn is with the dc=tmp. So it will find out the temporary account registered in registration step.
         my $max = $mesg->count;
@@ -1453,7 +1495,8 @@ sub searchDirectory {
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
+    	$ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
     	$ldap->bind( version => 3, anonymous => 1);
     	my $mesg = $ldap->search (
         	base   => $base,
@@ -1545,4 +1588,65 @@ sub setVars {
     
     return $templateVars;
 } 
+
+#Method to get the next avaliable uid number. We use the mechanism - http://www.rexconsulting.net/ldap-protocol-uidNumber.html
+sub getNextUidNumber {
+
+    my $maxAttempt = $properties->getProperty('ldap.nextuid.maxattempt');
+    
+    my $ldapUsername = shift;
+    my $ldapPassword = shift;
+    
+    my $realUidNumber;
+    my $uidNumber;
+    my $entry;
+    my $mesg;
+    my $ldap;
+    
+    debug("ldap server: $ldapurl");
+    
+    #if main ldap server is down, a html file containing warning message will be returned
+    $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    
+    if ($ldap) {
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
+        my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
+        #read the uid value stored in uidObject class
+        for(my $index=0; $index<$maxAttempt; $index++) {
+            $mesg = $ldap->search(base  => $dn_store_next_uid, filter => '(objectClass=*)');
+            if ($mesg->count() > 0) {
+                debug("Find the cn - $dn_store_next_uid");
+                $entry = $mesg->pop_entry;
+                $uidNumber = $entry->get_value($attribute_name_store_next_uid);
+                if($uidNumber) {
+                    if (looks_like_number($uidNumber)) {
+                        debug("uid number is $uidNumber");
+                        #remove the uid attribute with the read value
+                        my $delMesg = $ldap->modify($dn_store_next_uid, delete => { $attribute_name_store_next_uid => $uidNumber});
+                        if($delMesg->is_error()) {
+                            my $error=$delMesg->error();
+                            my $errorName = $delMesg->error_name();
+                            debug("can't remove the attribute - $error");
+                            debug("can't remove the attribute and the error name - $errorName");
+                            #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
+                        } else {
+                            debug("Remove the attribute successfully and write a new increased value back");
+                            my $newValue = $uidNumber +1;
+                            $delMesg = $ldap->modify($dn_store_next_uid, add => {$attribute_name_store_next_uid => $newValue});
+                            $realUidNumber = $uidNumber;
+                            last;
+                        }
+                    }
+                    
+               } else {
+                 debug("can't find the attribute - $attribute_name_store_next_uid in the $dn_store_next_uid and we will try again");
+               }
+            } 
+        }
+        $ldap->unbind;   # take down session
+    }
+    return $realUidNumber;
+}
+
 
