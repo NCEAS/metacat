@@ -58,7 +58,9 @@ Release Notes for 2.3.1:
 ------------------------
 This is a minor patch release to fix an issue that arises when
 Metacat is operating as a DataONE Coordinating Node.
-See: https://projects.ecoinformatics.org/ecoinfo/issues/6315
+* See: https://projects.ecoinformatics.org/ecoinfo/issues/6315
+* Updated MetacatUI with support for spatial query criteria
+* Updated account/identity management script
 
 Release Notes for 2.3.0:
 ------------------------
