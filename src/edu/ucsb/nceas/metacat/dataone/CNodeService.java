@@ -343,8 +343,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   public Identifier delete(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
       
-      String localId = null; // The corresponding docid for this pid
-	  Lock lock = null;      // The lock to be used for this identifier
+      String localId = null;      // The corresponding docid for this pid
+	  Lock lock = null;           // The lock to be used for this identifier
+      CNode cn = null;            // a reference to the CN to get the node list    
+      NodeType nodeType = null;   // the nodeType of the replica node being contacted
+      List<Node> nodeList = null; // the list of nodes in this CN environment
 
       // check for a valid session
       if (session == null) {
@@ -420,17 +423,45 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       }
 
-      
+      // get the node list
+      try {
+          cn = D1Client.getCN();
+          nodeList = cn.listNodes().getNodeList();
+          
+      } catch (Exception e) { // handle BaseException and other I/O issues
+          
+          // swallow errors since the call is not critical
+          logMetacat.error("Can't inform MNs of the deletion of " + pid.getValue() + 
+              " due to communication issues with the CN: " + e.getMessage());
+          
+      }
+
 	  // notify the replicas
 	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	  if (systemMetadata.getReplicaList() != null) {
 		  for (Replica replica: systemMetadata.getReplicaList()) {
 			  NodeReference replicaNode = replica.getReplicaMemberNode();
 			  try {
-				  Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
+                  if (nodeList != null) {
+                      // find the node type
+                      for (Node node : nodeList) {
+                          if ( node.getIdentifier().getValue().equals(replicaNode.getValue()) ) {
+                              nodeType = node.getType();
+                              break;
+              
+                          }
+                      }
+                  }
+                  
+                  // only send call MN.delete() to avoid an infinite loop with the CN
+                  if (nodeType != null && nodeType == NodeType.MN) {
+				      Identifier mnRetId = D1Client.getMN(replicaNode).delete(null, pid);
+                  }
+                  
 			  } catch (Exception e) {
 				  // all we can really do is log errors and carry on with life
-				  logMetacat.error("Error deleting pid: " +  pid.getValue() + " from replica MN: " + replicaNode.getValue(), e);
+				  logMetacat.error("Error deleting pid: " +  pid.getValue() + 
+					  " from replica MN: " + replicaNode.getValue(), e);
 			}
 			  
 		  }
@@ -461,6 +492,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       String localId = null; // The corresponding docid for this pid
 	  Lock lock = null;      // The lock to be used for this identifier
+      CNode cn = null;            // a reference to the CN to get the node list    
+      NodeType nodeType = null;   // the nodeType of the replica node being contacted
+      List<Node> nodeList = null; // the list of nodes in this CN environment
+      
 
       // check for a valid session
       if (session == null) {
@@ -531,18 +566,47 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   pid.getValue(), Event.DELETE.xmlValue());
 
       }
-      
+
+      // get the node list
+      try {
+          cn = D1Client.getCN();
+          nodeList = cn.listNodes().getNodeList();
+          
+      } catch (Exception e) { // handle BaseException and other I/O issues
+          
+          // swallow errors since the call is not critical
+          logMetacat.error("Can't inform MNs of the archive of " + pid.getValue() + 
+              " due to communication issues with the CN: " + e.getMessage());
+          
+      }
+
 	  // notify the replicas
 	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	  if (systemMetadata.getReplicaList() != null) {
 		  for (Replica replica: systemMetadata.getReplicaList()) {
 			  NodeReference replicaNode = replica.getReplicaMemberNode();
 			  try {
-				  // TODO: implement in the clients
-				  //Identifier mnRetId = D1Client.getMN(replicaNode).archive(null, pid);
+                  if (nodeList != null) {
+                      // find the node type
+                      for (Node node : nodeList) {
+                          if ( node.getIdentifier().getValue().equals(replicaNode.getValue()) ) {
+                              nodeType = node.getType();
+                              break;
+              
+                          }
+                      }
+                  }
+                  
+                  // only send call MN.archive() to avoid an infinite loop with the CN
+                  if (nodeType != null && nodeType == NodeType.MN) {
+				      Identifier mnRetId = D1Client.getMN(replicaNode).archive(null, pid);
+				      
+                  }
+                  
 			  } catch (Exception e) {
 				  // all we can really do is log errors and carry on with life
-				  logMetacat.error("Error archiving pid: " +  pid.getValue() + " from replica MN: " + replicaNode.getValue(), e);
+				  logMetacat.error("Error archiving pid: " +  pid.getValue() + 
+					  " from replica MN: " + replicaNode.getValue(), e);
 			}
 			  
 		  }
@@ -1770,8 +1834,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   if (nodeList != null) {
                       // find the node type
                       for (Node node : nodeList) {
-                          if (node.getIdentifier().getValue() == 
-                              replicaNodeRef.getValue()) {
+                          if ( node.getIdentifier().getValue().equals(replicaNodeRef.getValue()) ) {
                               nodeType = node.getType();
                               break;
               
