@@ -40,7 +40,6 @@ import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
-import java.math.BigInteger;
 import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -3441,8 +3440,7 @@ public class DocumentImpl
         	guid.setValue(pid);
             SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
             if (sysMeta != null) {
-				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-				sysMeta.setArchived(true);
+            	sysMeta.setArchived(true);
             	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
 				// submit for indexing
