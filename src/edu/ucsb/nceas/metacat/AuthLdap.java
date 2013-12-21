@@ -304,6 +304,27 @@ public class AuthLdap implements AuthInterface {
 		return authenticated;
 	}
 	
+	/*
+	 * Get the aliasedDN (the real DN) for a specified an alias name
+	 */
+	public String getAliasedDn(String alias, Hashtable<String, String> env) throws NamingException  {
+	    String aliasedDn = null;
+        DirContext sctx = new InitialDirContext(env);
+        SearchControls ctls = new SearchControls();
+        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+        String filter = "(objectClass=*)";
+        NamingEnumeration answer  = sctx.search(alias, filter, ctls);
+        while(answer.hasMore()) {
+            SearchResult result = (SearchResult) answer.next();
+            if(!result.isRelative()) {
+                //if is not relative, this will be alias.
+                aliasedDn = result.getNameInNamespace();
+                break;
+            }
+        }
+        return aliasedDn;
+	    
+	}
 	private boolean authenticateTLS(Hashtable<String, String> env, String userDN, String password)
 			throws AuthTLSException{	
 		logMetacat.info("AuthLdap.authenticateTLS - Trying to authenticate with TLS");
