@@ -304,12 +304,36 @@ public class AuthLdap implements AuthInterface {
 		return authenticated;
 	}
 	
+	
+	/*
+	 * Get the aliased dn through a TLS connection
+	 */
+	private String getAliasedDnTLS(String alias, Hashtable<String, String> env) throws NamingException, IOException {
+	    boolean useTLS = true;
+	    return getAliasedDn(alias, env, useTLS);
+	}
+	
+	/*
+     * Get the aliased dn through a non-TLS connection
+     */
+    private String getAliasedDnNonTLS(String alias, Hashtable<String, String> env) throws NamingException, IOException {
+        boolean useTLS = false;
+        return getAliasedDn(alias, env, useTLS);
+    }
+	
 	/*
 	 * Get the aliasedDN (the real DN) for a specified an alias name
 	 */
-	public String getAliasedDn(String alias, Hashtable<String, String> env) throws NamingException  {
+	public String getAliasedDn(String alias, Hashtable<String, String> env, boolean useTLS) throws NamingException, IOException  {
 	    String aliasedDn = null;
-        DirContext sctx = new InitialDirContext(env);
+        LdapContext sctx = new InitialLdapContext(env, null);
+        StartTlsResponse tls = null;
+        if(useTLS) {
+            tls = (StartTlsResponse) sctx.extendedOperation(new StartTlsRequest());
+            // Open a TLS connection (over the existing LDAP association) and get details
+            // of the negotiated TLS session: cipher suite, peer certificate, etc.
+            SSLSession session = tls.negotiate();
+        }
         SearchControls ctls = new SearchControls();
         ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
         String filter = "(objectClass=*)";
@@ -322,9 +346,14 @@ public class AuthLdap implements AuthInterface {
                 break;
             }
         }
+        if(useTLS && tls != null) {
+            tls.close();
+        }
+        sctx.close();
         return aliasedDn;
 	    
 	}
+	
 	private boolean authenticateTLS(Hashtable<String, String> env, String userDN, String password)
 			throws AuthTLSException{	
 		logMetacat.info("AuthLdap.authenticateTLS - Trying to authenticate with TLS");
