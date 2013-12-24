@@ -280,15 +280,47 @@ public class AuthLdap implements AuthInterface {
 			
 			try {
 				authenticated = authenticateTLS(env, userDN, password);
+			} catch (AuthenticationException ee) {
+			    logMetacat.info("AuthLdap.ldapAuthenticate - failed to login : "+ee.getMessage());
+			    String aliasedDn = null;
+			    try {
+			        aliasedDn = getAliasedDnTLS(userDN, env);
+			        if(aliasedDn != null) {
+			            logMetacat.warn("AuthLdap.ldapAuthenticate - an aliased object " + aliasedDn + " was found for the DN "+userDN+". We will try to authenticate this new DN "+aliasedDn+".");
+			            authenticated = authenticateTLS(env, aliasedDn, password);
+			        }
+			    } catch (NamingException e) {
+			        logMetacat.error("AuthLdap.ldapAuthenticate - NamingException "+e.getMessage()+" happend when the ldap server authenticated the aliased object "+aliasedDn);
+			    } catch (IOException e) {
+			        logMetacat.error("AuthLdap.ldapAuthenticate - IOException "+e.getMessage()+" happend when the ldap server authenticated the aliased object "+aliasedDn);
+			    } catch (AuthTLSException e) {
+			        logMetacat.error("AuthLdap.ldapAuthenticate - AuthTLSException "+e.getMessage()+" happend when the ldap server authenticated the aliased object "+aliasedDn);
+			    }
 			} catch (AuthTLSException ate) {
 				logMetacat.info("AuthLdap.ldapAuthenticate - error while negotiating TLS: "
 						+ ate.getMessage());
-
 				if (secureConnectionOnly) {
 					return authenticated;
-
 				} else {
-					authenticated = authenticateNonTLS(env, userDN, password);
+				    try {
+                        authenticated = authenticateNonTLS(env, userDN, password);
+                    } catch (AuthenticationException ae) {
+                        logMetacat.warn("Authentication exception for (nonTLS): " + ae.getMessage());
+                        String aliasedDn = null;
+                        try {
+                            aliasedDn = getAliasedDnNonTLS(userDN, env);
+                            if(aliasedDn != null) {
+                                logMetacat.warn("AuthLdap.ldapAuthenticate(NonTLS) - an aliased object " + aliasedDn + " was found for the DN "+userDN+". We will try to authenticate this new DN "+aliasedDn+" again.");
+                                authenticated = authenticateNonTLS(env, aliasedDn, password);
+                            }
+                            
+                        } catch (NamingException e) {
+                            logMetacat.error("AuthLdap.ldapAuthenticate(NonTLS) - NamingException "+e.getMessage()+" happend when the ldap server authenticated the aliased object "+aliasedDn);
+                        } catch (IOException e) {
+                            logMetacat.error("AuthLdap.ldapAuthenticate(NonTLS) - IOException "+e.getMessage()+" happend when the ldap server authenticated the aliased object "+aliasedDn);
+                        } 
+                    }
+
 				}
 			}
 		} catch (AuthenticationException ae) {
@@ -324,7 +356,7 @@ public class AuthLdap implements AuthInterface {
 	/*
 	 * Get the aliasedDN (the real DN) for a specified an alias name
 	 */
-	public String getAliasedDn(String alias, Hashtable<String, String> env, boolean useTLS) throws NamingException, IOException  {
+	private String getAliasedDn(String alias, Hashtable<String, String> env, boolean useTLS) throws NamingException, IOException  {
 	    String aliasedDn = null;
         LdapContext sctx = new InitialLdapContext(env, null);
         StartTlsResponse tls = null;
@@ -355,7 +387,7 @@ public class AuthLdap implements AuthInterface {
 	}
 	
 	private boolean authenticateTLS(Hashtable<String, String> env, String userDN, String password)
-			throws AuthTLSException{	
+			throws AuthTLSException, AuthenticationException{	
 		logMetacat.info("AuthLdap.authenticateTLS - Trying to authenticate with TLS");
 		try {
 			LdapContext ctx = null;
@@ -376,6 +408,10 @@ public class AuthLdap implements AuthInterface {
 			stopTime = System.currentTimeMillis();
 			logMetacat.info("AuthLdap.authenticateTLS - Connection time thru "
 					+ ldapsUrl + " was: " + (stopTime - startTime) / 1000 + " seconds.");
+		} catch (AuthenticationException ae) {
+            logMetacat.warn("AuthLdap.authenticateTLS - Authentication exception: " + ae.getMessage());
+            throw ae;
+            
 		} catch (NamingException ne) {
 			throw new AuthTLSException("AuthLdap.authenticateTLS - Naming error when athenticating via TLS: " + ne.getMessage());
 		} catch (IOException ioe) {
