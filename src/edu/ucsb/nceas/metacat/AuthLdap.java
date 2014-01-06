@@ -338,7 +338,7 @@ public class AuthLdap implements AuthInterface {
 	
 	
 	/*
-	 * Get the aliased dn through a TLS connection
+	 * Get the aliased dn through a TLS connection. The null will be returned if there is no real name associated with the alias
 	 */
 	private String getAliasedDnTLS(String alias, Hashtable<String, String> env) throws NamingException, IOException {
 	    boolean useTLS = true;
@@ -346,7 +346,7 @@ public class AuthLdap implements AuthInterface {
 	}
 	
 	/*
-     * Get the aliased dn through a non-TLS connection
+     * Get the aliased dn through a non-TLS connection. The null will be returned if there is no real name associated with the alias
      */
     private String getAliasedDnNonTLS(String alias, Hashtable<String, String> env) throws NamingException, IOException {
         boolean useTLS = false;
@@ -634,6 +634,17 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		env.put(Context.REFERRAL, referral);
 		env.put(Context.PROVIDER_URL, ldapUrl);
+		String realName = null;
+		try {
+		    realName = getAliasedDnNonTLS(user,env);
+		} catch(Exception e) {
+		    logMetacat.warn("AuthLdap.getUserInfo - can't get the alias name for the user "+user+" since "+e.getMessage());
+		}
+		
+		if(realName != null) {
+		    //the the user is an alias name. we need to use the the real name
+		    user = realName;
+		}
 
 		try {
 
@@ -814,7 +825,17 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.REFERRAL, "throw");
 		env.put(Context.PROVIDER_URL, ldapUrl);
 		env.put("com.sun.jndi.ldap.connect.timeout", ldapConnectTimeLimit);
-
+		String realName = null;
+		try {
+            realName = getAliasedDnNonTLS(foruser,env);
+        } catch(Exception e) {
+            logMetacat.warn("AuthLdap.getGroups - can't get the alias name for the user "+user+" since "+e.getMessage());
+        }
+        
+        if(realName != null) {
+            //the the user is an alias name. we need to use the the real name
+            foruser = realName;
+        }
 		// Iterate through the referrals, handling NamingExceptions in the
 		// outer catch statement, ReferralExceptions in the inner catch
 		// statement
