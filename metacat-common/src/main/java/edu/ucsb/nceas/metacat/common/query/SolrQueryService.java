@@ -96,7 +96,11 @@ public abstract class SolrQueryService {
      */
     public abstract Map<String, SchemaField> getIndexSchemaFields() throws Exception;
     
-    /**
+    public IndexSchema getSchema() {
+		return schema;
+	}
+
+	/**
      * Get the version of the solr server.
      * @return
      */

@@ -85,6 +85,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -427,7 +428,8 @@ public abstract class D1NodeService {
     	// lock and unlock of the pid happens in the subclass
     	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
     	// submit for indexing
-        HazelcastService.getInstance().getIndexQueue().add(sysmeta);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null);
+        
     } catch (Exception e) {
     	logMetacat.error("Problem creating system metadata: " + pid.getValue(), e);
         throw new ServiceFailure("1190", e.getMessage());
@@ -1258,7 +1260,7 @@ public abstract class D1NodeService {
         // note: the calling subclass handles the map hazelcast lock/unlock
       	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
       	// submit for indexing
-        HazelcastService.getInstance().getIndexQueue().add(sysmeta);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null);
       } catch (Exception e) {
           throw new ServiceFailure("1190", e.getMessage());
           
@@ -1279,7 +1281,7 @@ public abstract class D1NodeService {
             HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
             HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
             // submit for indexing
-            HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
 

@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.index;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
@@ -10,7 +11,9 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -128,13 +131,68 @@ public class SolrIndexIT  {
     }
     
     
-    /*
-     * Do query
+    /**
+     * Test building index for dynamic fields.
+     */
+    @Test
+    public void testDynamicFields() throws Exception {
+    	
+       SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
+       InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
+       Identifier pid = new Identifier();
+       pid.setValue(id);
+       solrIndex.update(pid, systemMetadata, emlInputStream);
+       String result = doQuery(solrIndex.getSolrServer());
+       List<String> ids = solrIndex.getSolrIds();
+       boolean foundId = false;
+       for(String identifiers :ids) {
+           if (id.equals(identifiers)) {
+               foundId = true;
+           }
+       }
+       assertTrue(foundId);
+       assertTrue(result.contains("version1"));
+       
+       // augment with the dynamic field
+       String fieldName = "test_count_i";
+       Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
+       List<Object> values = new ArrayList<Object>();
+       values.add(6);
+       fields.put(fieldName, values);
+       solrIndex.insertFields(pid, fields);
+       result = doQuery(solrIndex.getSolrServer(), "&fq=" + fieldName + ":[0 TO 5]");
+       assertFalse(result.contains(id));
+       result = doQuery(solrIndex.getSolrServer(), "&fq=" + fieldName + ":[6 TO 6]");
+       assertTrue(result.contains(id));
+       
+       // now update the value
+       values.clear();
+       values.add(7);
+       fields.put(fieldName, values);
+       solrIndex.insertFields(pid, fields);
+       result = doQuery(solrIndex.getSolrServer(), "&fq=" + fieldName + ":[7 TO 7]");
+       assertTrue(result.contains(id));
+       
+    }
+    
+    /**
+     * Do query - with no additional params
      */
     public static String doQuery(SolrServer server)
                     throws SolrServerException {
+    	return doQuery(server, null);
+    }
+    
+    /**
+     * Do query, allowing additional parameters
+     */
+    public static String doQuery(SolrServer server, String moreParams)
+                    throws SolrServerException {
                 StringBuffer request = new StringBuffer();
                 request.append("q=" + "*:*");
+                if (moreParams != null) {
+                    request.append(moreParams);
+                }
                 SolrParams solrParams = SolrRequestParsers.parseQueryString(request
                         .toString());
                 QueryResponse reponse = server.query(solrParams);
@@ -146,7 +204,7 @@ public class SolrIndexIT  {
                 return result;
     }
     
-    /*
+    /**
      * Transform the query response to the xml format.
      */
     private static String toXML(SolrParams request, QueryResponse response) {

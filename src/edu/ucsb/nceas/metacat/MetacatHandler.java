@@ -68,6 +68,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
@@ -93,6 +94,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -1829,7 +1831,7 @@ public class MetacatHandler {
                     HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
                     
                     // submit for indexing
-                    HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
                     
                   } catch ( McdbDocNotFoundException dnfe ) {
                     logMetacat.debug(
@@ -2655,11 +2657,19 @@ public class MetacatHandler {
                     Identifier identifier = new Identifier();
                     identifier.setValue(id);
 					SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-					if(sysMeta == null) {
+					if (sysMeta == null) {
 					     failedList.add(id);
 					     logMetacat.info("no system metadata was found for pid " + id);
 					} else {
-					    HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+						try {
+							// submit for indexing
+						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields);
+						} catch (Exception e) {
+							failedList.add(id);
+						    logMetacat.info("Error submitting to index for pid " + id);
+						    continue;
+						}
 					    successList.add(id);
 					    logMetacat.info("done queueing doc index for pid " + id);
 					}
@@ -2749,9 +2759,13 @@ public class MetacatHandler {
                         Identifier identifier = new Identifier();
                         identifier.setValue(id);
                         SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                        if(sysMeta != null) {
-                            HazelcastService.getInstance().getIndexQueue().add(sysMeta);
-                            results.append("<pid>" + id + "</pid>\n");
+                        if (sysMeta != null) {
+                        	
+                            // submit for indexing
+    					    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                            MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields);
+
+    					    results.append("<pid>" + id + "</pid>\n");
                             logMetacat.debug("queued SystemMetadata for index on pid: " + id);
                         }
                         
@@ -3214,7 +3228,7 @@ public class MetacatHandler {
                             HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
                             
                             // submit for indexing
-                            HazelcastService.getInstance().getIndexQueue().add(sm);
+                            MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null);
 					        
                         } catch (Exception ee) {
                             // If the file did not exist before this method was 

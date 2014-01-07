@@ -33,6 +33,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
+import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
@@ -141,22 +142,20 @@ public class SolrQueryServiceController {
             return httpQueryService.getIndexSchemaFields();
         }
     }
-    
-   
-    
+
     /**
-     * Get the list of the valid field name (moved the fields names of the CopyFieldTarget).
+     * Access the SOLR index schema
      * @return
      * @throws SAXException 
      * @throws IOException 
      * @throws ParserConfigurationException 
      * @throws MalformedURLException 
      */
-    public List<String> getValidSchemaFields() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
+    public IndexSchema getSchema() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         if(isEmbeddedSolrServer) {
-            return embeddedQueryService.getValidSchemaFields();
+            return embeddedQueryService.getSchema();
         } else{
-            return httpQueryService.getValidSchemaField();
+            return httpQueryService.getSchema();
         }
        
     }

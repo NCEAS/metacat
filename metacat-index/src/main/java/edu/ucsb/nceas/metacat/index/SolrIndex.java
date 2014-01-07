@@ -23,8 +23,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +53,9 @@ import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.apache.solr.schema.IndexSchema;
 import org.dataone.cn.indexer.XMLNamespaceConfig;
+import org.dataone.cn.indexer.convert.SolrDateConverter;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.resourcemap.ResourceEntry;
@@ -66,6 +70,7 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.OREParserException;
 import org.jibx.runtime.JiBXException;
@@ -73,6 +78,7 @@ import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
+import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
 import edu.ucsb.nceas.metacat.index.resourcemap.ResourceMapSubprocessor;
 
@@ -261,6 +267,9 @@ public class SolrIndex {
         List<SolrDoc> indexedDocuments = ResourceMapSubprocessor.getSolrDocs(ids);
         SolrDoc indexedDocument = indexedDocuments == null || indexedDocuments.size() <= 0 ? null
                 : indexedDocuments.get(0);
+        
+        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+
         if (indexedDocument == null || indexedDocument.getFieldList().size() <= 0) {
             return indexDocument;
         } else {
@@ -269,6 +278,8 @@ public class SolrIndex {
                         || field.getName().equals(SolrElementField.FIELD_DOCUMENTS) || field
                         .getName().equals(SolrElementField.FIELD_RESOURCEMAP))
                         && !indexDocument.hasFieldWithValue(field.getName(), field.getValue())) {
+                    indexDocument.addField(field);
+                } else if (!indexSchema.isCopyFieldTarget(indexSchema.getField(field.getName())) && !indexDocument.hasField(field.getName())) {
                     indexDocument.addField(field);
                 }
             }
@@ -363,6 +374,58 @@ public class SolrIndex {
                 
             }
         }
+    }
+    
+    /**
+     * Adds the given fields to the solr index for the given pid, preserving the index values
+     * that previously existed
+     * @param pid
+     * @param fields
+     */
+    public void insertFields(Identifier pid, Map<String, List<Object>> fields) {
+    	
+    	try {
+			// copy the original values already indexed for this document	
+	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
+	    	QueryResponse res = solrServer.query(query);
+	    	SolrDocument orig = res.getResults().get(0);
+	    	SolrDoc doc = new SolrDoc();
+	        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+	    	for (String fieldName: orig.getFieldNames()) {
+	        	//  don't transfer the copyTo fields, otherwise there are errors
+	        	if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+	        		continue;
+	        	}
+	        	for (Object value: orig.getFieldValues(fieldName)) {
+	        		String stringValue = value.toString();
+	        		// special handling for dates in ISO 8601
+	        		if (value instanceof Date) {
+	        			stringValue = DateTimeMarshaller.serializeDateToUTC((Date)value);
+	        			SolrDateConverter converter = new SolrDateConverter();
+	        			stringValue = converter.convert(stringValue);
+	        		}
+					SolrElementField field = new SolrElementField(fieldName, stringValue);
+					log.debug("Adding field: " + fieldName);
+					doc.addField(field);
+	        	}
+	        }
+	    	
+	        // add the additional fields we are trying to include in the index
+	        for (String fieldName: fields.keySet()) {
+	    		List<Object> values = fields.get(fieldName);
+	    		for (Object value: values) {
+	    	    	doc.updateOrAddField(fieldName, value.toString());
+	    		}
+	    	}
+	        
+	        // insert the whole thing
+	        insertToIndex(doc);
+    	} catch (Exception e) {
+    		String error = "SolrIndex.insetFields - could not update the solr index: " + e.getMessage();
+            writeEventLog(null, pid, error);
+            log.error(error, e);
+    	}
+
     }
     
     /*

@@ -62,6 +62,7 @@ import com.hazelcast.partition.PartitionService;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -75,8 +76,6 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class HazelcastService extends BaseService
   implements EntryListener<Identifier, SystemMetadata>, MembershipListener, LifecycleListener, ItemListener<Identifier> {
   
-  private static final String SINCE_PROPERTY = "dateSysMetadataModified";
-
   private static final String MISSING_PID_PREFIX = "missing-";
 
 /* The instance of the logging class */
@@ -105,7 +104,7 @@ public class HazelcastService extends BaseService
   
   /* The Hazelcast distributed index queue */
   private String hzIndexQueue;
-  private ISet<SystemMetadata> indexQueue;
+  private IMap<Identifier, IndexTask> indexQueue;
   
   /* The Hazelcast distributed index event map */
   private String hzIndexEventMap;
@@ -202,7 +201,7 @@ public class HazelcastService extends BaseService
 
       // for index tasks
       hzIndexQueue = PropertyService.getProperty("index.hazelcast.indexqueue");
-      indexQueue = this.hzInstance.getSet(hzIndexQueue);
+      indexQueue = this.hzInstance.getMap(hzIndexQueue);
 
       // for index events (failures)
       hzIndexEventMap = PropertyService.getProperty("index.hazelcast.indexeventmap");
@@ -259,7 +258,7 @@ public class HazelcastService extends BaseService
    * Get the index queue
    * @return the set of SystemMetadata to be indexed
    */
-  public ISet<SystemMetadata> getIndexQueue() {
+  public IMap<Identifier, IndexTask> getIndexQueue() {
       return indexQueue;
   }
   

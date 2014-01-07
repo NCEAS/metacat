@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.index;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,6 +37,7 @@ import com.hazelcast.config.FileSystemXmlConfig;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISet;
 
+import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 
 
@@ -56,7 +59,7 @@ public class DistributedMapsFactory {
     private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static IMap<Identifier, SystemMetadata> systemMetadataMap = null;
     private static IMap<Identifier, String> objectPathMap = null;
-    private static ISet<SystemMetadata> indexQueue = null;
+    private static IMap<Identifier, IndexTask> indexQueue = null;
     /* The name of the identifiers set */
     private static String identifiersSetName = IDENTIFIERSETNAME;
     /* The Hazelcast distributed identifiers set */
@@ -243,11 +246,11 @@ public class DistributedMapsFactory {
      * @throws FileNotFoundException
      * @throws ServiceFailure
      */
-    public static ISet<SystemMetadata> getIndexQueue() throws FileNotFoundException, ServiceFailure {
+    public static IMap<Identifier, IndexTask> getIndexQueue() throws FileNotFoundException, ServiceFailure {
         if(hzClient== null) {
             startHazelCastClient();
         }
-        indexQueue = hzClient.getSet(hzIndexQueue);
+        indexQueue = hzClient.getMap(hzIndexQueue);
         return indexQueue;
     }
     

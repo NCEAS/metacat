@@ -57,6 +57,7 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISet;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
+import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
 import edu.ucsb.nceas.metacat.index.event.IndexEventLogException;
@@ -90,7 +91,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
     //private SystemMetadataEventListener systemMetadataListener = null;
     private IMap<Identifier, SystemMetadata> systemMetadataMap;
     private IMap<Identifier, String> objectPathMap;
-    private ISet<SystemMetadata> indexQueue;
+    private IMap<Identifier, IndexTask> indexQueue;
     private Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
     //private MNode mNode = null;
     private static List<String> resourceMapNamespaces = null;

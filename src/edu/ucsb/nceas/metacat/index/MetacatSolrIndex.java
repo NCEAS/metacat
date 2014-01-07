@@ -30,6 +30,8 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Hashtable;
+import java.util.List;
+import java.util.Map;
 
 import java.util.Set;
 
@@ -46,14 +48,18 @@ import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SystemMetadata;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DBTransform;
+import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryService;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
+import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
@@ -162,5 +168,13 @@ public class MetacatSolrIndex {
         return inputStream;
      
     }
+    
+    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields) {
+    	IndexTask task = new IndexTask();
+    	task.setSystemMetadata(systemMetadata);
+    	task.setFields(fields);
+		HazelcastService.getInstance().getIndexQueue().put(pid, task );
+    }
+    
 
 }

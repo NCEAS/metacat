@@ -87,6 +87,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -591,7 +592,7 @@ public class ReplicationService extends BaseService {
 				// save the system metadata
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
 			}
       
 			// dates
@@ -888,7 +889,7 @@ public class ReplicationService extends BaseService {
 	      	  // save the system metadata
 	      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 	      	  // submit for indexing
-              HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
 	        }
 	        
 	        // process the access control
@@ -1160,7 +1161,7 @@ public class ReplicationService extends BaseService {
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
 			}
       
 			logReplication.info("ReplicationService.handleForceReplicateSystemMetadataRequest - processed guid: " + guid);

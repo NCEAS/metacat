@@ -29,7 +29,9 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
@@ -44,6 +46,7 @@ import org.dataone.service.util.DateTimeMarshaller;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -114,6 +117,47 @@ public class EventLog
     public void log(String ipAddress, String userAgent, String principal, String docid, String event) {
         EventLogData logData = new EventLogData(ipAddress, principal, docid, event);
         insertLogEntry(logData);
+        
+        // update the event information in the index
+        try {
+	        String localId = DocumentUtil.getSmartDocId(docid);
+			int rev = DocumentUtil.getRevisionFromAccessionNumber(docid);
+			
+	        String guid = IdentifierManager.getInstance().getGUID(localId, rev);
+	        Identifier pid = new Identifier();
+	        pid.setValue(guid);
+	        
+	        // submit for indexing
+	        MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event));
+	        
+        } catch (Exception e) {
+        	logMetacat.error("Could not update event index information", e);
+        }
+    }
+    
+    public Map<String, List<Object>> getIndexFields(Identifier pid, String event) {
+    	// update the search index for the event
+        try {
+        	
+        	Event d1Event = Event.convert(event);
+        	String fieldName = d1Event.xmlValue() + "_count_i";
+        	int eventCount = 0;
+        	
+        	String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, d1Event, null, null, false, 0, 0);
+        	eventCount = eventLog.getTotal();
+
+	        List<Object> values = new ArrayList<Object>();
+			values.add(eventCount);
+	        Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
+	        fields.put(fieldName, values);
+	        
+	        return fields;
+	        
+        } catch (Exception e) {
+        	logMetacat.error("Could not update event index information", e);
+        	return null;
+        }
     }
     
     /**

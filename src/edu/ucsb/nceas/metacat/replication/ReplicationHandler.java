@@ -69,6 +69,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -402,7 +403,7 @@ public class ReplicationHandler extends TimerTask
     	  logReplication.debug("Saving SystemMetadata to shared map: " + sysMeta.getIdentifier().getValue());
       	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
       	  // submit for indexing
-          HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
       }
    	  
       docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
@@ -581,7 +582,7 @@ public class ReplicationHandler extends TimerTask
     	  // save the system metadata
     	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
     	  // submit for indexing
-          HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
 
       }
    	  
@@ -880,7 +881,7 @@ public class ReplicationHandler extends TimerTask
 										.getBytes("UTF-8")));
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
 			}
 
 			logReplication.info("ReplicationHandler.handleSystemMetadata - Successfully replicated system metadata for guid: "

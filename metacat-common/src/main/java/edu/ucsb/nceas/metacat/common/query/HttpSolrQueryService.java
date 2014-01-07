@@ -202,7 +202,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         //System.out.println("get filed map from server (downloading files) ==========================");
         SolrConfig config = new SolrConfig("dataone", new InputSource(getSolrConfig())); 
-        schema = new IndexSchema(config, "dataone", new InputSource(getSchema()));
+        schema = new IndexSchema(config, "dataone", new InputSource(lookupSchema()));
         fieldMap = schema.getFields();
     }
     
@@ -255,7 +255,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     /*
      * Get the schema InputStream from the url which is specified in the metacat.properties and transform it to a Document.
      */
-    private InputStream getSchema() throws MalformedURLException, IOException {
+    private InputStream lookupSchema() throws MalformedURLException, IOException {
         String schemaURLAppendix = Settings.getConfiguration().getString(SOLR_SCHEMA_URLAPPENDIX);
         String schemaURL = solrServerBaseURL+schemaURLAppendix;
         return (new URL(schemaURL)).openStream();

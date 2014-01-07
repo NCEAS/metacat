@@ -68,6 +68,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
@@ -3445,8 +3446,7 @@ public class DocumentImpl
 				sysMeta.setArchived(true);
             	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
-				// submit for indexing
-                HazelcastService.getInstance().getIndexQueue().add(sysMeta);
+                MetacatSolrIndex.getInstance().submit(guid, sysMeta, null);
             }
             
             // clear cache after inserting or updating a document

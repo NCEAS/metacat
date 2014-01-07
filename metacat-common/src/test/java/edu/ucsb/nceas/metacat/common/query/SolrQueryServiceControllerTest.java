@@ -4,8 +4,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.util.List;
 import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,21 +35,6 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         assertTrue("The version should be 3.4.0.2011.09.09.09.06.42 rather than "+version, version.equals("3.4.0.2011.09.09.09.06.42"));
     }
     
-    
-    /**
-     * Test get get valid schema fields.
-     * @throws SAXException 
-     * @throws IOException 
-     * @throws ParserConfigurationException 
-     * @throws NotFound 
-     * @throws UnsupportedType 
-     */
-    @Test
-    public void testGetValidSchemaFields() throws Exception {
-       List<String> fields = SolrQueryServiceController.getInstance().getValidSchemaFields();
-       assertTrue(fields != null);
-       assertTrue("The number of valid schema fields should be 85 rather than "+fields.size(), fields.size() ==85);
-    }
     
     /**
      * Test get get valid schema fields.

@@ -32,9 +32,7 @@ import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
-import org.springframework.context.support.FileSystemXmlApplicationContext;
 
-import com.ibm.icu.util.Calendar;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -51,7 +49,7 @@ public class ApplicationController implements Runnable {
     private static short FIRST = 0;
 
     private List<SolrIndex> solrIndexes = null;
-    private List<SystemMetadataEventListener> sysmetaListeners = new ArrayList<SystemMetadataEventListener>();
+    private List<Runnable> sysmetaListeners = new ArrayList<Runnable>();
     private static ApplicationContext context = null;
     private String springConfigFileURL = "/index-processor-context.xml";
     private String metacatPropertiesFile = null;
@@ -165,7 +163,6 @@ public class ApplicationController implements Runnable {
         	SystemMetadataEventListener smel = new SystemMetadataEventListener();
         	smel.setSolrIndex(solrIndex);
         	sysmetaListeners.add(smel);
-        	//smel.start();
         }
         
     }
@@ -225,9 +222,9 @@ public class ApplicationController implements Runnable {
     private void startSysmetaListener() throws FileNotFoundException, ServiceFailure {
         if(sysmetaListeners != null) {
             //only expects one listener.
-            for(SystemMetadataEventListener listener : sysmetaListeners) {
+            for(Runnable listener : sysmetaListeners) {
                 if(listener != null) {
-                    listener.start();
+                    listener.run();
                 }
             }
         }

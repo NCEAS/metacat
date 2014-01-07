@@ -55,7 +55,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
 import org.dataone.client.MNode;
@@ -126,11 +125,9 @@ import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
-import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -1257,8 +1254,6 @@ public class MNodeService extends D1NodeService
             // update the local copy of system metadata for the pid
             try {
                 HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
-                // submit for indexing
-                HazelcastService.getInstance().getIndexQueue().add(newSysMeta);
                 logMetacat.info("Updated local copy of system metadata for pid " +
                     pid.getValue() + " after change notification from the CN.");
                 
@@ -1271,6 +1266,13 @@ public class MNodeService extends D1NodeService
                 sf.initCause(e);
                 throw sf;
             }
+            
+            // submit for indexing
+            try {
+				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null);
+			} catch (Exception e) {
+                logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
+			}
         }
         
         return true;
