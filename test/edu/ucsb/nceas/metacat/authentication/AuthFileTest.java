@@ -94,10 +94,10 @@ public class AuthFileTest extends MCTestCase {
      public void testAddUser() throws Exception{
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[]groups = {GROUPNAME};
-         authFile.addUser(USERNAME, groups, PASSWORD);
-         authFile.addUser(USERNAME2, null, PASSWORD);
+         authFile.addUser(USERNAME, groups, PASSWORD, null, null, null, null);
+         authFile.addUser(USERNAME2, null, PASSWORD, null, null, null,null);
          try {
-             authFile.addUser(USERNAME, groups, PASSWORD);
+             authFile.addUser(USERNAME, groups, PASSWORD, null, null, null, null);
              assertTrue("We can't reach here since we can't add the user twice", false);
          } catch (AuthenticationException e) {
              
@@ -159,19 +159,12 @@ public class AuthFileTest extends MCTestCase {
       */
      public void testChangePassword() throws Exception {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
-         String password = authFile.resetPassword(USERNAME);
          authFile.authenticate(USERNAME, password);
          String newPassword = "hello";
-         authFile.modifyPassword(USERNAME, password, newPassword);
+         authFile.modifyPassWithHash(USERNAME,newPassword);
          authFile.authenticate(USERNAME, newPassword);
          try {
-             authFile.resetPassword("user1");
-             assertTrue("Can't reach here since we tried to reset the password for an unexisting user ", false);
-         } catch (AuthenticationException e) {
-             System.out.println("Failed to reset the password for a user: "+e.getMessage());
-         }
-         try {
-             authFile.modifyPassword("user1", "old", "new");
+             authFile.modifyPassWithPlain("user1", "new");
              assertTrue("Can't reach here since we tried to change the password for an unexisting user ", false);
          } catch (AuthenticationException e) {
              System.out.println("Failed to change the password for a user: "+e.getMessage());
