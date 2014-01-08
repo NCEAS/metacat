@@ -383,6 +383,8 @@ public class AuthFile implements AuthInterface {
        User user = new User();
        user.setDN(dn);
        user.setGroups(groups);
+       user.setPlainPass(plainPass);
+       user.setHashedPass(hashedPass);
        user.setEmail(email);
        user.setSurName(surName);
        user.setGivenName(givenName);
@@ -666,17 +668,17 @@ public class AuthFile implements AuthInterface {
          */
         public void addToGroup(String group) throws AuthenticationException {
             if(group == null || group.trim().equals("")) {
-                throw new IllegalArgumentException("AuthFile.User.addGroup - the group can't be null or blank");
+                throw new IllegalArgumentException("AuthFile.User.addToGroup - the group can't be null or blank");
             }
             if(!userExists(dn)) {
-                throw new AuthenticationException("AuthFile.addUserToGroup - the user "+dn+ " doesn't exist.");
+                throw new AuthenticationException("AuthFile.User.addUserToGroup - the user "+dn+ " doesn't exist.");
             }
             if(!groupExists(group)) {
-                throw new AuthenticationException("AuthFile.addUserToGroup - the group "+group+ " doesn't exist.");
+                throw new AuthenticationException("AuthFile.User.addUserToGroup - the group "+group+ " doesn't exist.");
             }
             List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP);
             if(existingGroups != null && existingGroups.contains(group)) {
-                throw new AuthenticationException("AuthFile.addUserToGroup - the user "+dn+ " already is the memember of the group "+group);
+                throw new AuthenticationException("AuthFile.User.addUserToGroup - the user "+dn+ " already is the memember of the group "+group);
             }
             userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GROUP, group);
             //add information to the memory
@@ -710,15 +712,15 @@ public class AuthFile implements AuthInterface {
          */
         public void removeFromGroup(String group) throws AuthenticationException {
             if(!userExists(dn)) {
-                throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+dn+ " doesn't exist.");
+                throw new AuthenticationException("AuthFile.User.removeUserFromGroup - the user "+dn+ " doesn't exist.");
             }
             if(!groupExists(group)) {
-                throw new AuthenticationException("AuthFile.removeUserFromGroup - the group "+group+ " doesn't exist.");
+                throw new AuthenticationException("AuthFile.User.removeUserFromGroup - the group "+group+ " doesn't exist.");
             }
             String key = USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP;
             List<Object> existingGroups = userpassword.getList(key);
             if(!existingGroups.contains(group)) {
-                throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+dn+ " isn't the memember of the group "+group);
+                throw new AuthenticationException("AuthFile.User.removeUserFromGroup - the user "+dn+ " isn't the memember of the group "+group);
             } else {
                 userpassword.clearProperty(key+"[.='"+group+"']");
             }
@@ -753,7 +755,7 @@ public class AuthFile implements AuthInterface {
                 throw new AuthenticationException("AuthFile.User.modifyHashPass - can't change the password to the null or blank.");
             }
             if(!userExists(dn)) {
-                throw new AuthenticationException("AuthFile.modifyHashPass - can't change the password for the user "+dn+" since it doesn't eixt.");
+                throw new AuthenticationException("AuthFile.User.modifyHashPass - can't change the password for the user "+dn+" since it doesn't eixt.");
             }
             userpassword.setProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+PASSWORD, hashPass);
             setHashedPass(hashPass);
@@ -770,13 +772,13 @@ public class AuthFile implements AuthInterface {
                 throw new AuthenticationException("AuthFile.User.modifyPlainPass - can't change the password to the null or blank.");
             }
             if(!userExists(dn)) {
-                throw new AuthenticationException("AuthFile.modifyPlainPass - can't change the password for the user "+dn+" since it doesn't eixt.");
+                throw new AuthenticationException("AuthFile.User.modifyPlainPass - can't change the password for the user "+dn+" since it doesn't eixt.");
             }
             String hashPassword = null;
             try {
                 hashPassword = encrypt(plainPass);
             } catch (Exception e) {
-                throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
+                throw new AuthenticationException("AuthFile.User.modifyPlainPass - can't encript the password since "+e.getMessage());
             }
             userpassword.setProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+PASSWORD, hashPassword);
             setPlainPass(plainPass);
@@ -787,16 +789,16 @@ public class AuthFile implements AuthInterface {
          */
         public void serialize() throws AuthenticationException {
             if(dn == null || dn.trim().equals("")) {
-                throw new AuthenticationException("AuthFile.addUser - can't add a user whose name is null or blank.");
+                throw new AuthenticationException("AuthFile.User.serialize - can't add a user whose name is null or blank.");
             }
             if(hashedPass == null || hashedPass.trim().equals("")) {
                 if(plainPass == null || plainPass.trim().equals("")) {
-                    throw new AuthenticationException("AuthFile.addUser - can't add a user whose password is null or blank.");
+                    throw new AuthenticationException("AuthFile.User.serialize - can't add a user whose password is null or blank.");
                 } else {
                     try {
                         hashedPass = encrypt(plainPass);
                     } catch (Exception e) {
-                        throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
+                        throw new AuthenticationException("AuthFile.User.serialize - can't encript the password since "+e.getMessage());
                     }
                 }
             }
@@ -831,7 +833,7 @@ public class AuthFile implements AuthInterface {
                   //userpassword.reload();
                  }
             } else {
-                throw new AuthenticationException("AuthFile.addUser - can't add the user "+dn+" since it already exists.");
+                throw new AuthenticationException("AuthFile.User.serialize - can't add the user "+dn+" since it already exists.");
             }
         }
     }
