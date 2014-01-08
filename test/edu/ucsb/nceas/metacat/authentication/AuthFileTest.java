@@ -30,7 +30,14 @@ public class AuthFileTest extends MCTestCase {
     private static final String GROUPNAME3 = "dev";
     private static final String USERNAME = "uid=john,o=NCEAS,dc=ecoinformatics,dc=org";
     private static final String USERNAME2="uid=smith,o=unaffiliated,dc=ecoinformatics,dc=org";
-    private static final String PASSWORD = "ecoinformatics";
+    private static final String PLAINPASSWORD = "ecoinformatics";
+    private static final String PLAINPASSWORD2 = "n%cea4s";
+    private static final String HASHEDPASSWORD2 = "$2a$10$iMZXvVYs8nEUAWDFfcCF8ePEvzcnak32tx7TQAecsZcPGRouqSdse";
+    private static final String PLAINPASSWORD3 = "q8w*er";
+    private static final String HASHEDPASSWORD3 = "$2a$10$zO4Cw1p38xWeUh4DneMGCecg67yo2SN25m0wzWCJ9zu7FfRwLTvue";
+    private static final String EMAILADDRESS = "john@nceas.ucsb.edu";
+    private static final String SURNAME = "John";
+    private static final String GIVENNAME = "Joe";
     /**
      * consstructor for the test
      */
@@ -63,9 +70,9 @@ public class AuthFileTest extends MCTestCase {
          suite.addTest(new AuthFileTest("testAddGroup"));
          suite.addTest(new AuthFileTest("testAddUser"));
          suite.addTest(new AuthFileTest("testAuthenticate"));
+         suite.addTest(new AuthFileTest("testChangePassword"));
          suite.addTest(new AuthFileTest("testGetUsers"));
          suite.addTest(new AuthFileTest("testGetGroups"));
-         suite.addTest(new AuthFileTest("testChangePassword"));
          suite.addTest(new AuthFileTest("testAddRemoveUserToFromGroup"));
          suite.addTest(new AuthFileTest("testGetPrincipals"));
          return suite;
@@ -94,10 +101,11 @@ public class AuthFileTest extends MCTestCase {
      public void testAddUser() throws Exception{
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[]groups = {GROUPNAME};
-         authFile.addUser(USERNAME, groups, PASSWORD, null, null, null, null);
-         authFile.addUser(USERNAME2, null, PASSWORD, null, null, null,null);
+         authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, EMAILADDRESS, SURNAME, GIVENNAME);
+         //user a hash value of the PASSWORD
+         authFile.addUser(USERNAME2, null, null, HASHEDPASSWORD2, null, null,null);
          try {
-             authFile.addUser(USERNAME, groups, PASSWORD, null, null, null, null);
+             authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, null, null, null);
              assertTrue("We can't reach here since we can't add the user twice", false);
          } catch (AuthenticationException e) {
              
@@ -111,7 +119,7 @@ public class AuthFileTest extends MCTestCase {
       */
      public void testAuthenticate() throws Exception {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
-         boolean success = authFile.authenticate(USERNAME, PASSWORD);
+         boolean success = authFile.authenticate(USERNAME, PLAINPASSWORD);
          if(!success) {
              assertTrue("The authentication should succeed.", false);
          }
@@ -119,7 +127,15 @@ public class AuthFileTest extends MCTestCase {
          if(success) {
              assertTrue("The authentication should NOT succeed.", false);
          }
-         success = authFile.authenticate("hello", PASSWORD);
+         success = authFile.authenticate("hello", PLAINPASSWORD);
+         if(success) {
+             assertTrue("The authentication should NOT succeed.", false);
+         }
+         success = authFile.authenticate(USERNAME2, PLAINPASSWORD2);
+         if(!success) {
+             assertTrue("The authentication for "+USERNAME2 +" should succeed.", false);
+         }
+         success = authFile.authenticate(USERNAME2, HASHEDPASSWORD2);
          if(success) {
              assertTrue("The authentication should NOT succeed.", false);
          }
@@ -133,6 +149,15 @@ public class AuthFileTest extends MCTestCase {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[][] users = authFile.getUsers(null, null);
          assertTrue("The file should have one user "+USERNAME, users[0][0].equals(USERNAME));
+         assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, users[0][1].equals(GIVENNAME+" "+SURNAME));
+         assertTrue("The org name for the user "+USERNAME+" should be null ", users[0][2]== null);
+         assertTrue("The org unit name for the user "+USERNAME+" should be null ", users[0][3]== null);
+         assertTrue("The email address for the user "+USERNAME+" should be "+EMAILADDRESS, users[0][4].equals(EMAILADDRESS));
+         assertTrue("The file should have one user "+USERNAME2, users[1][0].equals(USERNAME2));
+         assertTrue("The common name for the user "+USERNAME2+" should be null", users[1][1]==null);
+         assertTrue("The org name for the user "+USERNAME2+" should be null ", users[1][2]== null);
+         assertTrue("The org unit name for the user "+USERNAME2+" should be null ", users[1][3]== null);
+         assertTrue("The email address for the user "+USERNAME2+" should be null.", users[1][4]==null);
          String[]userInGroup = authFile.getUsers(null, null, GROUPNAME);
          assertTrue("There should be at least one user in the group "+GROUPNAME, userInGroup[0].equals(USERNAME));
          userInGroup = authFile.getUsers(null, null, "group1");
@@ -151,6 +176,8 @@ public class AuthFileTest extends MCTestCase {
          assertTrue("There should be at least one group for user "+USERNAME, groupForUser[0][0].equals(GROUPNAME));
          groupForUser = authFile.getGroups(null, null, "user1");
          assertTrue("There shouldn't have any groups assoicated with user1 ", groupForUser==null);
+         groupForUser = authFile.getGroups(null, null, USERNAME2);
+         assertTrue("There shouldn't have any groups assoicated with user "+USERNAME2, groupForUser==null);
      }
      
      /**
@@ -159,16 +186,29 @@ public class AuthFileTest extends MCTestCase {
       */
      public void testChangePassword() throws Exception {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
-         authFile.authenticate(USERNAME, password);
+         authFile.authenticate(USERNAME, PLAINPASSWORD);
          String newPassword = "hello";
-         authFile.modifyPassWithHash(USERNAME,newPassword);
-         authFile.authenticate(USERNAME, newPassword);
+         authFile.modifyPassWithPlain(USERNAME,newPassword);
+         boolean success = authFile.authenticate(USERNAME, newPassword);
+         assertTrue("The authentication should be successful with the new password", success);
          try {
              authFile.modifyPassWithPlain("user1", "new");
              assertTrue("Can't reach here since we tried to change the password for an unexisting user ", false);
          } catch (AuthenticationException e) {
-             System.out.println("Failed to change the password for a user: "+e.getMessage());
+             //System.out.println("Failed to change the password for a user: "+e.getMessage());
          }
+         
+         success = authFile.authenticate(USERNAME, "qws");
+         assertTrue("The authentication should fail with a wrong password", !success);
+         
+         //test change the password with hashed version
+         authFile.modifyPassWithHash(USERNAME, HASHEDPASSWORD3);
+         success = authFile.authenticate(USERNAME, PLAINPASSWORD3);
+         assertTrue("The authentication should be successful with the new password (after modifying the password with a hashed value", success);
+         success = authFile.authenticate(USERNAME, HASHEDPASSWORD3);
+         assertTrue("The authentication should faile when the user directly use the hash password.", !success);
+         success = authFile.authenticate(USERNAME, newPassword);
+         assertTrue("The authentication should be successful with a wrong password", !success);
      }
      
      /**
