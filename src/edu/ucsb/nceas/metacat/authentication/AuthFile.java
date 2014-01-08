@@ -199,15 +199,41 @@ public class AuthFile implements AuthInterface {
     @Override
     /**
      * Get all users. This is two-dimmention array. Each row is a user. The first element of
-     * a row is the user name.
+     * a row is the user name. The second element is common name. The third one is the organization name (null).
+     * The fourth one is the organization unit name (null). The fifth one is the email address.
      */
     public String[][] getUsers(String user, String password)
                     throws ConnectException {
         List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+DN);
         if(users != null && users.size() > 0) {
-            String[][] usersArray = new String[users.size()][1];
+            String[][] usersArray = new String[users.size()][5];
             for(int i=0; i<users.size(); i++) {
-                usersArray[i][0] = (String) users.get(i);
+                User aUser = new User();
+                String dn = (String)users.get(i);
+                aUser.setDN(dn);
+                usersArray[i][0] = dn; //dn
+                String surname = null;
+                List<Object> surNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+SURNAME);
+                if(surNames != null && !surNames.isEmpty()) {
+                    surname = (String)surNames.get(0);
+                }
+                aUser.setSurName(surname);
+                String givenName = null;
+                List<Object> givenNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GIVENNAME);
+                if(givenNames != null && !givenNames.isEmpty()) {
+                    givenName = (String)givenNames.get(0);
+                }
+                aUser.setGivenName(givenName);
+                usersArray[i][1] = aUser.getCn();//common name
+                usersArray[i][2] = null;//organization name. We set null
+                usersArray[i][3] = null;//organization ou name. We set null.
+                List<Object> emails = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+EMAIL);
+                String email = null;
+                if(emails != null && !emails.isEmpty() ) {
+                    email = (String)emails.get(0);
+                }
+                usersArray[i][4] = email;
+               
             }
             return usersArray;
         }
