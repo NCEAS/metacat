@@ -60,13 +60,18 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *<?xml version="1.0" encoding="UTF-8" ?>
  * <subjects>
  *  <users>
- *      <user name="uid=tao,o=NCEAS,dc=ecoinformatics,dc=org">
+ *      <user dn="uid=tao,o=NCEAS,dc=ecoinformatics,dc=org">
  *          <password>*******</password>
+ *          <email>foo@foo.com</email>
+ *          <surName>Smith</surName>
+ *          <givenName>John</givenName>
  *          <group>nceas-dev</group>
  *      </user>
  *  </users>
  *  <groups>
- *    <group name="nceas-dev"/>
+ *    <group name="nceas-dev">
+ *        <description>developers at NCEAS</description>
+ *    </group>
  *  </groups>
  * </subjects>
  * http://commons.apache.org/proper/commons-configuration/userguide/howto_xml.html
@@ -76,7 +81,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class AuthFile implements AuthInterface {
     private static final String ORGANIZATION = "UNkown";
     private static final String NAME = "name";
-    private static final String UID = "uid";
+    private static final String DN = "dn";
     private static final String DESCRIPTION = "description";
     private static final String PASSWORD = "password";
     private static final String SLASH = "/";
@@ -86,6 +91,9 @@ public class AuthFile implements AuthInterface {
     private static final String USER = "user";
     private static final String GROUPS = "groups";
     private static final String GROUP = "group";
+    private static final String EMAIL = "email";
+    private static final String SURNAME = "surName";
+    private static final String GIVENNAME = "givenName";
     private static final String INITCONTENT = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
                                     "<"+SUBJECTS+">\n"+"<"+USERS+">\n"+"</"+USERS+">\n"+"<"+GROUPS+">\n"+"</"+GROUPS+">\n"+"</"+SUBJECTS+">\n";
     
@@ -95,10 +103,10 @@ public class AuthFile implements AuthInterface {
     };
     private static Log log = LogFactory.getLog(AuthFile.class);
     private static AuthFile authFile = null;
-    private XMLConfiguration userpassword = null;
+    private static XMLConfiguration userpassword = null;
     private String authURI = null;
     private static String passwordFilePath = null;
-    private static  char[] masterPass = "enfldsgbnlsngdlksdsgm".toCharArray();
+    private static AuthFileHashInterface hashClass = null;
     /**
      * Get the instance of the AuthFile
      * @return
@@ -139,21 +147,18 @@ public class AuthFile implements AuthInterface {
     /*
      * Initialize the user/password configuration
      */
-    private void init() throws PropertyNotFoundException, IOException, ConfigurationException {
+    private void init() throws PropertyNotFoundException, IOException, ConfigurationException, ClassNotFoundException, InstantiationException, IllegalAccessException {
         if(passwordFilePath == null) {
             passwordFilePath  = PropertyService.getProperty("auth.file.path");
         }
         File passwordFile = new File(passwordFilePath);
-        try {
-            String password = PropertyService.getProperty("auth.file.pass");
-            if(password != null && !password.trim().equals("")) {
-                masterPass = password.toCharArray();
-            }
-            authURI = SystemUtil.getContextURL();
-        }catch(PropertyNotFoundException e) {
-            log.warn("AuthFile.init - can't find the auth.file.pass in the metacat.properties. Metacat will use the default one as password.");
-        }
-       
+        
+        authURI = SystemUtil.getContextURL();
+        String hashClassName = PropertyService.getProperty("auth.file.hashClassName");
+        Class classDefinition = Class.forName(hashClassName);
+        Object object = classDefinition.newInstance();
+        hashClass = (AuthFileHashInterface) object;
+        
         //if the password file doesn't exist, create a new one and set the initial content
         if(!passwordFile.exists()) {
             passwordFile.createNewFile();
@@ -178,18 +183,17 @@ public class AuthFile implements AuthInterface {
     @Override
     public boolean authenticate(String user, String password)
                     throws AuthenticationException {
-        String passwordRecord = userpassword.getString(USERS+SLASH+USER+"["+AT+UID+"='"+user+"']"+SLASH+PASSWORD);
+        boolean match = false;
+        String passwordRecord = userpassword.getString(USERS+SLASH+USER+"["+AT+DN+"='"+user+"']"+SLASH+PASSWORD);
         if(passwordRecord != null) {
             try {
-                passwordRecord = decrypt(passwordRecord);
+                match = hashClass.match(password, passwordRecord);
             } catch (Exception e) {
-                throw new AuthenticationException("AuthFile.authenticate - can't decrypt the password for the user "+user+" since "+e.getMessage());
+                throw new AuthenticationException(e.getMessage());
             }
-            if(passwordRecord.equals(password)) {
-                return true;
-            }
+            
         }
-        return false;
+        return match;
     }
     
     @Override
@@ -199,7 +203,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[][] getUsers(String user, String password)
                     throws ConnectException {
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+UID);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+DN);
         if(users != null && users.size() > 0) {
             String[][] usersArray = new String[users.size()][1];
             for(int i=0; i<users.size(); i++) {
@@ -232,7 +236,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[] getUsers(String user, String password, String group)
                     throws ConnectException {
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+UID);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+DN);
         if(users != null && users.size() > 0) {
             String[] usersArray = new String[users.size()];
             for(int i=0; i<users.size(); i++) {
@@ -268,7 +272,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[][] getGroups(String user, String password, String foruser)
                     throws ConnectException {
-        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+UID+"='"+foruser+"']"+SLASH+GROUP);
+        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+foruser+"']"+SLASH+GROUP);
         if(groups != null && groups.size() > 0) {
             String[][] groupsArray = new String[groups.size()][1];
             for(int i=0; i<groups.size(); i++) {
@@ -375,38 +379,14 @@ public class AuthFile implements AuthInterface {
      * @param groups  the groups the user belong to. The group should exist in the file
      * @param password  the password of the user
      */
-    public void addUser(String userName, String[] groups, String password) throws AuthenticationException{
-        if(userName == null || userName.trim().equals("")) {
-            throw new AuthenticationException("AuthFile.addUser - can't add a user whose name is null or blank.");
-        }
-        if(password == null || password.trim().equals("")) {
-            throw new AuthenticationException("AuthFile.addUser - can't add a user whose password is null or blank.");
-        }
-        try {
-            password = encrypt(password);
-        } catch (Exception e) {
-            throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
-        }
-        
-        if(!userExists(userName)) {
-            if(userpassword != null) {
-              userpassword.addProperty(USERS+" "+USER+AT+UID, userName);
-              userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+PASSWORD, password);
-              if(groups != null) {
-                  for(int i=0; i<groups.length; i++) {
-                      String group = groups[i];
-                      if(group != null && !group.trim().equals("")) {
-                          if(groupExists(group)) {
-                              userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+GROUP, group);
-                          }
-                      }
-                  }
-              }
-              //userpassword.reload();
-             }
-        } else {
-            throw new AuthenticationException("AuthFile.addUser - can't add the user "+userName+" since it already exists.");
-        }
+    public void addUser(String dn, String[] groups, String plainPass, String hashedPass, String email, String surName, String givenName) throws AuthenticationException{
+       User user = new User();
+       user.setDN(dn);
+       user.setGroups(groups);
+       user.setEmail(email);
+       user.setSurName(surName);
+       user.setGivenName(givenName);
+       user.serialize();
     }
     
     /**
@@ -430,30 +410,30 @@ public class AuthFile implements AuthInterface {
         }
     }
     
+   
+    
     /**
-     * Reset the password for the user
-     * @param userName  the name of the user. The user should already exist
-     * @param password  the password of the user.
-     * @return
+     * Change the password of the user to the new one which is hashed
+     * @param usrName the specified user.   
+     * @param newPassword the new password which will be set
      */
-    public String resetPassword(String userName) throws AuthenticationException {
-        String password = new String(RandomPasswordGenerator.generatePswd(10, 12, 4, 3, 2));
-        changePassword(userName, password);
-        return password;
+    public void modifyPassWithHash(String userName, String newHashPassword) throws AuthenticationException {
+       User user = new User();
+       user.setDN(userName);
+       user.modifyHashPass(newHashPassword);
     }
     
     /**
-     * Change the password of the user to the new one. But we need to know the old password
+     * Change the password of the user to the new one which is plain. However, only the hashed version will be serialized.
      * @param usrName the specified user.   
-     * @param oldPassword the old password of the user      
      * @param newPassword the new password which will be set
      */
-    public void modifyPassword(String userName, String oldPassword, String newPassword) throws AuthenticationException {
-        if(!authenticate(userName, oldPassword)) {
-            throw new AuthenticationException("AuthFile.modifyUserPassword - the username or the old password is not correct");
-        }
-        changePassword(userName, newPassword);
+    public void modifyPassWithPlain(String userName, String newPlainPassword) throws AuthenticationException {
+        User user = new User();
+        user.setDN(userName);
+        user.modifyPlainPass(newPlainPassword);
     }
+    
     
     /**
      * Add a user to a group
@@ -461,17 +441,9 @@ public class AuthFile implements AuthInterface {
      * @param group  the name of the group. the group should already exist
      */
     public void addUserToGroup(String userName, String group) throws AuthenticationException {
-        if(!userExists(userName)) {
-            throw new AuthenticationException("AuthFile.addUserToGroup - the user "+userName+ " doesn't exist.");
-        }
-        if(!groupExists(group)) {
-            throw new AuthenticationException("AuthFile.addUserToGroup - the group "+group+ " doesn't exist.");
-        }
-        List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+GROUP);
-        if(existingGroups.contains(group)) {
-            throw new AuthenticationException("AuthFile.addUserToGroup - the user "+userName+ " already is the memember of the group "+group);
-        }
-        userpassword.addProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+" "+GROUP, group);
+        User user = new User();
+        user.setDN(userName);
+        user.addToGroup(group);
     }
     
     /**
@@ -480,49 +452,23 @@ public class AuthFile implements AuthInterface {
      * @param group the name of the group
      */
     public void removeUserFromGroup(String userName, String group) throws AuthenticationException{
-        if(!userExists(userName)) {
-            throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+userName+ " doesn't exist.");
-        }
-        if(!groupExists(group)) {
-            throw new AuthenticationException("AuthFile.removeUserFromGroup - the group "+group+ " doesn't exist.");
-        }
-        String key = USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+GROUP;
-        List<Object> existingGroups = userpassword.getList(key);
-        if(!existingGroups.contains(group)) {
-            throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+userName+ " isn't the memember of the group "+group);
-        } else {
-            userpassword.clearProperty(key+"[.='"+group+"']");
-        }
+        User user = new User();
+        user.setDN(userName);
+        user.removeFromGroup(group);
     }
     
-    /**
-     * Change the password of the user to the specified one
-     * @param userName
-     * @param password
-     */
-    private void changePassword(String userName, String password) throws AuthenticationException{
-        if(!userExists(userName)) {
-            throw new AuthenticationException("AuthFile.changePassword - can't change the password for the user "+userName+" since it doesn't eixt.");
-        }
-        String encryped = null;
-        try {
-            encryped = encrypt(password);
-        } catch (Exception e) {
-            throw new AuthenticationException("AuthFile.changepassword - can't encrype the new password for the user "+userName+" since "+e.getMessage());
-        }
-        userpassword.setProperty(USERS+SLASH+USER+"["+AT+UID+"='"+userName+"']"+SLASH+PASSWORD, encryped);
-    }
+  
     
     /**
      * If the specified user name exist or not
      * @param userName the name of the user
      * @return true if the user eixsit
      */
-    private boolean userExists(String userName) throws AuthenticationException{
+    private synchronized boolean userExists(String userName) throws AuthenticationException{
         if(userName == null || userName.trim().equals("")) {
             throw new AuthenticationException("AuthFile.userExist - can't judge if a user exists when its name is null or blank.");
         }
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+UID);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+SLASH+AT+DN);
         if(users != null && users.contains(userName)) {
             return true;
         } else {
@@ -535,7 +481,7 @@ public class AuthFile implements AuthInterface {
      * @param groupName the name of the group
      * @return true if the user exists
      */
-    private boolean groupExists(String groupName) throws AuthenticationException{
+    private synchronized boolean groupExists(String groupName) throws AuthenticationException{
         if(groupName == null || groupName.trim().equals("")) {
             throw new AuthenticationException("AuthFile.groupExist - can't judge if a group exists when its name is null or blank.");
         }
@@ -548,88 +494,345 @@ public class AuthFile implements AuthInterface {
     }
     
     /*
-     * Encrypt a string
+     * Encrypt a plain text
      */
-    private static String encrypt(String property) throws GeneralSecurityException, UnsupportedEncodingException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        //System.out.println("===================== tha master password "+masterPass);
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(masterPass));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.ENCRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return base64Encode(pbeCipher.doFinal(property.getBytes("UTF-8")));
-    }
-
-    /*
-     * Transform a byte array to a string
-     */
-    private static String base64Encode(byte[] bytes) {
-        return Base64.encodeBase64String(bytes);
-    }
-
-    /*
-     * Decrypt a string
-     */
-    private static String decrypt(String property) throws GeneralSecurityException, IOException {
-        SecretKeyFactory keyFactory = SecretKeyFactory.getInstance("PBEWithMD5AndDES");
-        SecretKey key = keyFactory.generateSecret(new PBEKeySpec(masterPass));
-        Cipher pbeCipher = Cipher.getInstance("PBEWithMD5AndDES");
-        pbeCipher.init(Cipher.DECRYPT_MODE, key, new PBEParameterSpec(SALT, 20));
-        return new String(pbeCipher.doFinal(base64Decode(property)), "UTF-8");
-    }
-
-    /*
-     * Transform a string to a byte array
-     */
-    private static byte[] base64Decode(String property) throws IOException {
-        return Base64.decodeBase64(property);
+    private static String encrypt(String plain)  {
+      return hashClass.hash(plain);
     }
     
+
+    
     /**
-     * A internal class to generate random passowrd
+     * An class represents the information for a user. 
      * @author tao
      *
      */
-    static class RandomPasswordGenerator {
-        private static final String ALPHA_CAPS  = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        private static final String ALPHA   = "abcdefghijklmnopqrstuvwxyz";
-        private static final String NUM     = "0123456789";
-        private static final String SPL_CHARS   = "!$^_-/";
-     
-        public static char[] generatePswd(int minLen, int maxLen, int noOfCAPSAlpha,
-                int noOfDigits, int noOfSplChars) {
-            if(minLen > maxLen)
-                throw new IllegalArgumentException("Min. Length > Max. Length!");
-            if( (noOfCAPSAlpha + noOfDigits + noOfSplChars) > minLen )
-                throw new IllegalArgumentException
-                ("Min. Length should be atleast sum of (CAPS, DIGITS, SPL CHARS) Length!");
-            Random rnd = new Random();
-            int len = rnd.nextInt(maxLen - minLen + 1) + minLen;
-            char[] pswd = new char[len];
-            int index = 0;
-            for (int i = 0; i < noOfCAPSAlpha; i++) {
-                index = getNextIndex(rnd, len, pswd);
-                pswd[index] = ALPHA_CAPS.charAt(rnd.nextInt(ALPHA_CAPS.length()));
-            }
-            for (int i = 0; i < noOfDigits; i++) {
-                index = getNextIndex(rnd, len, pswd);
-                pswd[index] = NUM.charAt(rnd.nextInt(NUM.length()));
-            }
-            for (int i = 0; i < noOfSplChars; i++) {
-                index = getNextIndex(rnd, len, pswd);
-                pswd[index] = SPL_CHARS.charAt(rnd.nextInt(SPL_CHARS.length()));
-            }
-            for(int i = 0; i < len; i++) {
-                if(pswd[i] == 0) {
-                    pswd[i] = ALPHA.charAt(rnd.nextInt(ALPHA.length()));
+    private class User {
+        private String dn = null;//the distinguish name
+        private String plainPass = null;
+        private String hashedPass = null;
+        private String email = null;
+        private String surName = null;
+        private String givenName = null;
+        private String cn = null;//the common name
+        private String[] groups = null;
+        
+        /**
+         * Get the distinguish name of the user
+         * @return the distinguish name 
+         */
+        public String getDN() {
+            return this.dn;
+        }
+        
+        /**
+         * Set the distinguish name for the user
+         * @param dn the specified dn
+         */
+        public void setDN(String dn) {
+            this.dn = dn;
+        }
+        
+        /**
+         * Get the plain password for the user. This value will NOT be serialized to
+         * the password file
+         * @return the plain password for the user
+         */
+        public String getPlainPass() {
+            return plainPass;
+        }
+        
+        /**
+         * Set the plain password for the user.
+         * @param plainPass the plain password will be set.
+         */
+        public void setPlainPass(String plainPass) {
+            this.plainPass = plainPass;
+        }
+        
+        /**
+         * Get the hashed password of the user
+         * @return the hashed password of the user
+         */
+        public String getHashedPass() {
+            return hashedPass;
+        }
+        
+        /**
+         * Set the hashed the password for the user.
+         * @param hashedPass the hashed password will be set.
+         */
+        public void setHashedPass(String hashedPass) {
+            this.hashedPass = hashedPass;
+        }
+        
+        /**
+         * Get the email of the user
+         * @return the email of the user
+         */
+        public String getEmail() {
+            return email;
+        }
+        
+        /**
+         * Set the email address for the user
+         * @param email the eamil address will be set
+         */
+        public void setEmail(String email) {
+            this.email = email;
+        }
+        
+        /**
+         * Get the surname of the user
+         * @return the surname of the user
+         */
+        public String getSurName() {
+            return surName;
+        }
+        
+        /**
+         * Set the surname of the user
+         * @param surName
+         */
+        public void setSurName(String surName) {
+            this.surName = surName;
+        }
+        
+        /**
+         * Get the given name of the user
+         * @return the given name of the user
+         */
+        public String getGivenName() {
+            return givenName;
+        }
+        
+        /**
+         * Set the GivenName of the user
+         * @param givenName
+         */
+        public void setGivenName(String givenName) {
+            this.givenName = givenName;
+        }
+        
+        /**
+         * Get the common name of the user. If the cn is null, the GivenName +SurName will
+         * be returned
+         * @return the common name
+         */
+        public String getCn() {
+            if(cn != null) {
+                return cn;
+            } else {
+                if (givenName != null && surName != null) {
+                    return givenName+" "+surName;
+                } else if (givenName != null) {
+                    return givenName;
+                } else if (surName != null ) {
+                    return surName;
+                } else {
+                    return null;
                 }
             }
-            return pswd;
         }
-     
-        private static int getNextIndex(Random rnd, int len, char[] pswd) {
-            int index = rnd.nextInt(len);
-            while(pswd[index = rnd.nextInt(len)] != 0);
-            return index;
+        
+        /**
+         * Set the common name for the user
+         * @param cn
+         */
+        public void setCn(String cn) {
+            this.cn = cn;
+        }
+        
+        /**
+         * Get the groups of the user belong to
+         * @return
+         */
+        public String[] getGroups() {
+            return groups;
+        }
+        
+        /**
+         * Set the groups of the user belong to
+         * @param groups
+         */
+        public void setGroups(String[] groups) {
+            this.groups = groups;
+        }
+        
+        /**
+         * Add the user to a group and serialize the change to the password file.
+         * @param group the group which the user will join
+         * @throws AuthenticationException 
+         */
+        public void addToGroup(String group) throws AuthenticationException {
+            if(group == null || group.trim().equals("")) {
+                throw new IllegalArgumentException("AuthFile.User.addGroup - the group can't be null or blank");
+            }
+            if(!userExists(dn)) {
+                throw new AuthenticationException("AuthFile.addUserToGroup - the user "+dn+ " doesn't exist.");
+            }
+            if(!groupExists(group)) {
+                throw new AuthenticationException("AuthFile.addUserToGroup - the group "+group+ " doesn't exist.");
+            }
+            List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP);
+            if(existingGroups != null && existingGroups.contains(group)) {
+                throw new AuthenticationException("AuthFile.addUserToGroup - the user "+dn+ " already is the memember of the group "+group);
+            }
+            userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GROUP, group);
+            //add information to the memory
+            if(groups == null) {
+                if(existingGroups == null || existingGroups.isEmpty()) {
+                    groups = new String[1];
+                    groups[0] = group;
+                } else {
+                    groups = new String[existingGroups.size()+1];
+                    for(int i=0; i<existingGroups.size(); i++) {
+                        groups[i] = (String)existingGroups.get(i);
+                    }
+                    groups[existingGroups.size()] = group;
+                }
+                
+            } else {
+                String[] oldGroups = groups;
+                groups = new String[oldGroups.length+1];
+                for(int i=0; i<oldGroups.length; i++) {
+                    groups[i]= oldGroups[i];
+                }
+                groups[oldGroups.length] = group;
+                
+            }
+        }
+        
+        /**
+         * Remove the user from a group and serialize the change to the password file
+         * @param group
+         * @throws AuthenticationException
+         */
+        public void removeFromGroup(String group) throws AuthenticationException {
+            if(!userExists(dn)) {
+                throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+dn+ " doesn't exist.");
+            }
+            if(!groupExists(group)) {
+                throw new AuthenticationException("AuthFile.removeUserFromGroup - the group "+group+ " doesn't exist.");
+            }
+            String key = USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP;
+            List<Object> existingGroups = userpassword.getList(key);
+            if(!existingGroups.contains(group)) {
+                throw new AuthenticationException("AuthFile.removeUserFromGroup - the user "+dn+ " isn't the memember of the group "+group);
+            } else {
+                userpassword.clearProperty(key+"[.='"+group+"']");
+            }
+            //change the value in the memory.
+            if(groups != null) {
+                boolean contains = false;
+                for(int i=0; i<groups.length; i++) {
+                    if(groups[i].equals(group)) {
+                        contains = true;
+                        break;
+                    }
+                }
+                String[] newGroups = new String[groups.length-1];
+                int k =0;
+                for(int i=0; i<groups.length; i++) {
+                    if(!groups[i].equals(group)) {
+                       newGroups[k] = groups[i];
+                       k++;
+                    }
+                }
+                groups = newGroups;
+            }
+        }
+        
+        /**
+         * Modify the hash password and serialize it to the password file
+         * @param hashPass
+         * @throws AuthenticationException
+         */
+        public void modifyHashPass(String hashPass) throws AuthenticationException {
+            if(hashPass == null || hashPass.trim().equals("")) {
+                throw new AuthenticationException("AuthFile.User.modifyHashPass - can't change the password to the null or blank.");
+            }
+            if(!userExists(dn)) {
+                throw new AuthenticationException("AuthFile.modifyHashPass - can't change the password for the user "+dn+" since it doesn't eixt.");
+            }
+            userpassword.setProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+PASSWORD, hashPass);
+            setHashedPass(hashPass);
+      
+        }
+        
+        /**
+         * Modify the plain password and serialize its hash version to the password file
+         * @param plainPass
+         * @throws AuthenticationException 
+         */
+        public void modifyPlainPass(String plainPass) throws AuthenticationException {
+            if(plainPass == null || plainPass.trim().equals("")) {
+                throw new AuthenticationException("AuthFile.User.modifyPlainPass - can't change the password to the null or blank.");
+            }
+            if(!userExists(dn)) {
+                throw new AuthenticationException("AuthFile.modifyPlainPass - can't change the password for the user "+dn+" since it doesn't eixt.");
+            }
+            String hashPassword = null;
+            try {
+                hashPassword = encrypt(plainPass);
+            } catch (Exception e) {
+                throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
+            }
+            userpassword.setProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+PASSWORD, hashPassword);
+            setPlainPass(plainPass);
+        }
+        
+        /**
+         * Add the user to the password file. 
+         */
+        public void serialize() throws AuthenticationException {
+            if(dn == null || dn.trim().equals("")) {
+                throw new AuthenticationException("AuthFile.addUser - can't add a user whose name is null or blank.");
+            }
+            if(hashedPass == null || hashedPass.trim().equals("")) {
+                if(plainPass == null || plainPass.trim().equals("")) {
+                    throw new AuthenticationException("AuthFile.addUser - can't add a user whose password is null or blank.");
+                } else {
+                    try {
+                        hashedPass = encrypt(plainPass);
+                    } catch (Exception e) {
+                        throw new AuthenticationException("AuthFile.addUser - can't encript the password since "+e.getMessage());
+                    }
+                }
+            }
+
+            if(!userExists(dn)) {
+                if(userpassword != null) {
+                  userpassword.addProperty(USERS+" "+USER+AT+DN, dn);
+                  userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+PASSWORD, hashedPass);
+                  
+                  if(email != null && !email.trim().equals("")) {
+                      userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+EMAIL, email);
+                  }
+                  
+                  if(surName != null && !surName.trim().equals("")) {
+                      userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+SURNAME, surName);
+                  }
+                  
+                  if(givenName != null && !givenName.trim().equals("")) {
+                      userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GIVENNAME, givenName);
+                  }
+
+                  if(groups != null) {
+                      for(int i=0; i<groups.length; i++) {
+                          String group = groups[i];
+                          if(group != null && !group.trim().equals("")) {
+                              if(groupExists(group)) {
+                                  userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GROUP, group);
+                              }
+                          }
+                      }
+                  }
+                  //userpassword.reload();
+                 }
+            } else {
+                throw new AuthenticationException("AuthFile.addUser - can't add the user "+dn+" since it already exists.");
+            }
         }
     }
 
