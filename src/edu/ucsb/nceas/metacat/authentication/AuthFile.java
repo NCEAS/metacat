@@ -79,7 +79,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class AuthFile implements AuthInterface {
-    private static final String ORGANIZATION = "UNkown";
+    private static final String ORGANIZATIONNAME = "UNkown";
+    private static final String ORGANIZATION = "organization";
     private static final String NAME = "name";
     private static final String DN = "dn";
     private static final String DESCRIPTION = "description";
@@ -206,31 +207,14 @@ public class AuthFile implements AuthInterface {
         if(users != null && users.size() > 0) {
             String[][] usersArray = new String[users.size()][5];
             for(int i=0; i<users.size(); i++) {
-                User aUser = new User();
+                
                 String dn = (String)users.get(i);
-                aUser.setDN(dn);
                 usersArray[i][AuthInterface.USERDNINDEX] = dn; //dn
-                String surname = null;
-                List<Object> surNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+SURNAME);
-                if(surNames != null && !surNames.isEmpty()) {
-                    surname = (String)surNames.get(0);
-                }
-                aUser.setSurName(surname);
-                String givenName = null;
-                List<Object> givenNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GIVENNAME);
-                if(givenNames != null && !givenNames.isEmpty()) {
-                    givenName = (String)givenNames.get(0);
-                }
-                aUser.setGivenName(givenName);
-                usersArray[i][AuthInterface.USERCNINDEX] = aUser.getCn();//common name
-                usersArray[i][AuthInterface.USERORGINDEX] = null;//organization name. We set null
+                String[] userInfo = getUserInfo(dn, password);
+                usersArray[i][AuthInterface.USERCNINDEX] = userInfo[AuthInterface.USERINFOCNINDEX];//common name
+                usersArray[i][AuthInterface.USERORGINDEX] = userInfo[AuthInterface.USERINFOORGANIDEX];//organization name. We set null
                 usersArray[i][AuthInterface.USERORGUNITINDEX] = null;//organization ou name. We set null.
-                List<Object> emails = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+EMAIL);
-                String email = null;
-                if(emails != null && !emails.isEmpty() ) {
-                    email = (String)emails.get(0);
-                }
-                usersArray[i][AuthInterface.USEREMAILINDEX] = email;
+                usersArray[i][AuthInterface.USEREMAILINDEX] = userInfo[AuthInterface.USERINFOEMAILINDEX];
                
             }
             return usersArray;
@@ -239,10 +223,43 @@ public class AuthFile implements AuthInterface {
     }
     
     @Override
+    /**
+     * Get an array about the user. The first column is the common name, the second column is the organization name.
+     * The third column is the email address. It always returns an array. But the elements of the array can be null.
+     */
     public String[] getUserInfo(String user, String password)
                     throws ConnectException {
-        // TODO Auto-generated method stub
-        return null;
+        String[] userinfo = new String[3];
+        User aUser = new User();
+        aUser.setDN(user);
+        String surname = null;
+        List<Object> surNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+user+"']"+SLASH+SURNAME);
+        if(surNames != null && !surNames.isEmpty()) {
+            surname = (String)surNames.get(0);
+        }
+        aUser.setSurName(surname);
+        String givenName = null;
+        List<Object> givenNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+user+"']"+SLASH+GIVENNAME);
+        if(givenNames != null && !givenNames.isEmpty()) {
+            givenName = (String)givenNames.get(0);
+        }
+        aUser.setGivenName(givenName);
+        userinfo[AuthInterface.USERINFOCNINDEX] = aUser.getCn();//common name
+        String organization = null;
+        List<Object> organizations = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+user+"']"+SLASH+ORGANIZATION);
+        if(organizations != null && !organizations.isEmpty()) {
+            organization = (String)organizations.get(0);
+        }
+        userinfo[AuthInterface.USERINFOORGANIDEX] = organization;//organization name.
+        aUser.setOrganization(organization);
+        List<Object> emails = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+user+"']"+SLASH+EMAIL);
+        String email = null;
+        if(emails != null && !emails.isEmpty() ) {
+            email = (String)emails.get(0);
+        }
+        aUser.setEmail(email);
+        userinfo[AuthInterface.USERINFOEMAILINDEX] = email;
+        return userinfo;
     }
     
     
@@ -343,7 +360,7 @@ public class AuthFile implements AuthInterface {
             out.append("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n");
             out.append("<principals>\n");
             out.append("  <authSystem URI=\"" +authURI
-                    + "\" organization=\"" + ORGANIZATION + "\">\n");
+                    + "\" organization=\"" + ORGANIZATIONNAME + "\">\n");
 
             // get all groups for directory context
             String[][] groups = getGroups(user, password);
@@ -578,7 +595,23 @@ public class AuthFile implements AuthInterface {
         private String givenName = null;
         private String cn = null;//the common name
         private String[] groups = null;
+        private String organization = null;
         
+        /**
+         * Get the organization of the user
+         * @return
+         */
+        public String getOrganization() {
+            return organization;
+        }
+        
+        /**
+         * Set the organization for the user.
+         * @param organization
+         */
+        public void setOrganization(String organization) {
+            this.organization = organization;
+        }
         /**
          * Get the distinguish name of the user
          * @return the distinguish name 

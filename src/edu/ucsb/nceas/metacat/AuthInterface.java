@@ -44,7 +44,10 @@ public interface AuthInterface {
     public static final short USERORGUNITINDEX = 3;
     public static final short USEREMAILINDEX = 4;
     public static final short GROUPNAMEINDEX = 0;
-    public static final short GROUPDESINDEX =1;
+    public static final short GROUPDESINDEX = 1;
+    public static final short USERINFOCNINDEX = 0;
+    public static final short USERINFOORGANIDEX = 1;
+    public static final short USERINFOEMAILINDEX = 2;
 
   /**
    * Determine if a user/password are valid according to the authentication
