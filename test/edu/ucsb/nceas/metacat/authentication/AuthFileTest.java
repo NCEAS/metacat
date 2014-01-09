@@ -26,8 +26,11 @@ import edu.ucsb.nceas.MCTestCase;
 public class AuthFileTest extends MCTestCase {
     private static final String PASSWORDFILEPATH = "build/password";
     private static final String GROUPNAME = "nceas-dev";
+    private static final String DESCRIPITION = "Developers at NCEAS";
     private static final String GROUPNAME2 = "dataone-dev";
+    private static final String DESCRIPITION2 = null;
     private static final String GROUPNAME3 = "dev";
+    private static final String DESCRIPITION3 = "Developers";
     private static final String USERNAME = "uid=john,o=NCEAS,dc=ecoinformatics,dc=org";
     private static final String USERNAME2="uid=smith,o=unaffiliated,dc=ecoinformatics,dc=org";
     private static final String PLAINPASSWORD = "ecoinformatics";
@@ -71,6 +74,7 @@ public class AuthFileTest extends MCTestCase {
          suite.addTest(new AuthFileTest("testAddUser"));
          suite.addTest(new AuthFileTest("testAuthenticate"));
          suite.addTest(new AuthFileTest("testChangePassword"));
+         suite.addTest(new AuthFileTest("testGetUserInfo"));
          suite.addTest(new AuthFileTest("testGetUsers"));
          suite.addTest(new AuthFileTest("testGetGroups"));
          suite.addTest(new AuthFileTest("testAddRemoveUserToFromGroup"));
@@ -84,7 +88,7 @@ public class AuthFileTest extends MCTestCase {
       */
      public void testAddGroup() throws Exception{
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
-         authFile.addGroup(GROUPNAME, "Developers at NCEAS");
+         authFile.addGroup(GROUPNAME, DESCRIPITION);
          try {
              authFile.addGroup(GROUPNAME, "Developers at NCEAS");
              assertTrue("We can't reach here since we can't add the group twice", false);
@@ -142,6 +146,22 @@ public class AuthFileTest extends MCTestCase {
      }
      
      /**
+      * Test the method getUserInfo
+      * @throws Exception
+      */
+     public void testGetUserInfo() throws Exception {
+         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         String[] userInfo = authFile.getUserInfo(USERNAME, null);
+         assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, userInfo[0].equals(GIVENNAME+" "+SURNAME));
+         assertTrue("The org name for the user "+USERNAME+" should be null ", userInfo[1]== null);
+         assertTrue("The email address for the user "+USERNAME+" should be "+EMAILADDRESS, userInfo[2].equals(EMAILADDRESS));
+         userInfo = authFile.getUserInfo(USERNAME2, null);
+         assertTrue("The common name for the user "+USERNAME2+" should be null.", userInfo[0] == null);
+         assertTrue("The org name for the user "+USERNAME+" should be null.", userInfo[1]== null);
+         assertTrue("The email address for the user "+USERNAME+" should be null.", userInfo[2]==null);
+     }
+     
+     /**
       * Test the getUsers method
       * @throws Exception
       */
@@ -172,8 +192,10 @@ public class AuthFileTest extends MCTestCase {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[][] groups = authFile.getGroups(null, null);
          assertTrue("The file should have one group associated with "+USERNAME, groups[0][0].equals(GROUPNAME));
+         assertTrue("The group "+groups[0][0]+" should have the description "+DESCRIPITION, groups[0][1].equals(DESCRIPITION));
          String[][]groupForUser = authFile.getGroups(null, null, USERNAME);
          assertTrue("There should be at least one group for user "+USERNAME, groupForUser[0][0].equals(GROUPNAME));
+         assertTrue("The group "+groups[0][0]+" should have the description "+DESCRIPITION, groups[0][1].equals(DESCRIPITION));
          groupForUser = authFile.getGroups(null, null, "user1");
          assertTrue("There shouldn't have any groups assoicated with user1 ", groupForUser==null);
          groupForUser = authFile.getGroups(null, null, USERNAME2);
@@ -240,6 +262,12 @@ public class AuthFileTest extends MCTestCase {
          authFile.addUserToGroup(USERNAME, GROUPNAME2);
          String[][]groups = authFile.getGroups(null, null, USERNAME);
          assertTrue("The user "+USERNAME+" should be in the group "+GROUPNAME2, groups[0][0].equals(GROUPNAME2)||groups[1][0].equals(GROUPNAME2));
+         if(groups[0][0].equals(GROUPNAME2)) {
+             assertTrue("The description of the group "+GROUPNAME2+" should be null.", groups[0][1]==null);
+         }
+         if(groups[1][0].equals(GROUPNAME2)) {
+             assertTrue("The description of the group "+GROUPNAME2+" should be null.", groups[1][1]==null);
+         }
          
          
          try {
@@ -255,7 +283,7 @@ public class AuthFileTest extends MCTestCase {
          } catch(AuthenticationException e) {
              System.out.println("Failed to remove a user from a group "+e.getMessage());
          }
-         authFile.addGroup(GROUPNAME3, "Developers");
+         authFile.addGroup(GROUPNAME3, DESCRIPITION3);
          try {
              authFile.removeUserFromGroup(USERNAME, GROUPNAME3);
              assertTrue("Can't reach here since the user is not in the group", false);
@@ -264,9 +292,24 @@ public class AuthFileTest extends MCTestCase {
          }
          authFile.removeUserFromGroup(USERNAME, GROUPNAME2);
          groups = authFile.getGroups(null, null, USERNAME);
-         assertTrue("The size of groups of the user "+USERNAME+" shouldn be one rather than "+groups.length, groups.length ==1);
+         assertTrue("The size of groups of the user "+USERNAME+" should be one rather than "+groups.length, groups.length ==1);
          assertTrue("The user "+USERNAME+" shouldn't be in the group "+GROUPNAME2, !groups[0][0].equals(GROUPNAME2));
          assertTrue("The user "+USERNAME+" should still be in the group "+GROUPNAME, groups[0][0].equals(GROUPNAME));
+         assertTrue("The group "+groups[0][0]+" should have the description "+DESCRIPITION, groups[0][1].equals(DESCRIPITION));
+         
+         authFile.addUserToGroup(USERNAME2, GROUPNAME3);
+         groups = authFile.getGroups(null, null, USERNAME2);
+         assertTrue("The user "+USERNAME2+" should be in the group "+GROUPNAME3, groups[0][0].equals(GROUPNAME3));
+         assertTrue("The group "+groups[0][0]+" should have the description "+DESCRIPITION3, groups[0][1].equals(DESCRIPITION3));
+         String[] users = authFile.getUsers(null, null, GROUPNAME3);
+         assertTrue("The user "+USERNAME2+" should be a member of the group "+GROUPNAME3, users[0].equals(USERNAME2));
+         try {
+             authFile.removeUserFromGroup(USERNAME2, GROUPNAME);
+             assertTrue("We can't reach here since the user "+USERNAME2+" is not in the group "+GROUPNAME, false);
+         } catch (Exception e) {
+             
+         }
+         
      }
      
      /**
