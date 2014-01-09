@@ -41,6 +41,7 @@ public class AuthFileTest extends MCTestCase {
     private static final String EMAILADDRESS = "john@nceas.ucsb.edu";
     private static final String SURNAME = "John";
     private static final String GIVENNAME = "Joe";
+    private static final String ORGANIZATIONNAME = "NCEAS";
     /**
      * consstructor for the test
      */
@@ -105,11 +106,11 @@ public class AuthFileTest extends MCTestCase {
      public void testAddUser() throws Exception{
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[]groups = {GROUPNAME};
-         authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, EMAILADDRESS, SURNAME, GIVENNAME);
+         authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, EMAILADDRESS, SURNAME, GIVENNAME, ORGANIZATIONNAME);
          //user a hash value of the PASSWORD
-         authFile.addUser(USERNAME2, null, null, HASHEDPASSWORD2, null, null,null);
+         authFile.addUser(USERNAME2, null, null, HASHEDPASSWORD2, null, null,null, null);
          try {
-             authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, null, null, null);
+             authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, null, null, null, null);
              assertTrue("We can't reach here since we can't add the user twice", false);
          } catch (AuthenticationException e) {
              
@@ -153,7 +154,7 @@ public class AuthFileTest extends MCTestCase {
          AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
          String[] userInfo = authFile.getUserInfo(USERNAME, null);
          assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, userInfo[0].equals(GIVENNAME+" "+SURNAME));
-         assertTrue("The org name for the user "+USERNAME+" should be null ", userInfo[1]== null);
+         assertTrue("The org name for the user "+USERNAME+" should be "+ORGANIZATIONNAME, userInfo[1].equals(ORGANIZATIONNAME));
          assertTrue("The email address for the user "+USERNAME+" should be "+EMAILADDRESS, userInfo[2].equals(EMAILADDRESS));
          userInfo = authFile.getUserInfo(USERNAME2, null);
          assertTrue("The common name for the user "+USERNAME2+" should be null.", userInfo[0] == null);
@@ -170,7 +171,7 @@ public class AuthFileTest extends MCTestCase {
          String[][] users = authFile.getUsers(null, null);
          assertTrue("The file should have one user "+USERNAME, users[0][0].equals(USERNAME));
          assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, users[0][1].equals(GIVENNAME+" "+SURNAME));
-         assertTrue("The org name for the user "+USERNAME+" should be null ", users[0][2]== null);
+         assertTrue("The org name for the user "+USERNAME+" should be "+ORGANIZATIONNAME, users[0][2].equals(ORGANIZATIONNAME));
          assertTrue("The org unit name for the user "+USERNAME+" should be null ", users[0][3]== null);
          assertTrue("The email address for the user "+USERNAME+" should be "+EMAILADDRESS, users[0][4].equals(EMAILADDRESS));
          assertTrue("The file should have one user "+USERNAME2, users[1][0].equals(USERNAME2));
