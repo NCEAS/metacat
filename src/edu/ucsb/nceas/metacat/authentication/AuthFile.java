@@ -276,15 +276,22 @@ public class AuthFile implements AuthInterface {
     @Override
     /**
      * Get all groups from the authentication service. It returns a two dimmension array. Each row is a
-     * group. The first column is the group name. The null will return if no group found.
+     * group. The first column is the group name. The second column is the description. The null will return if no group found.
      */
     public String[][] getGroups(String user, String password)
                     throws ConnectException {
         List<Object> groups = userpassword.getList(GROUPS+SLASH+GROUP+SLASH+AT+NAME);
         if(groups!= null && groups.size() >0) {
-            String[][] groupsArray = new String[groups.size()][1];
+            String[][] groupsArray = new String[groups.size()][2];
             for(int i=0; i<groups.size(); i++) {
-                groupsArray[i][0] = (String) groups.get(i);
+                String groupName = (String) groups.get(i);
+                groupsArray[i][0] = groupName;
+                String description = null;
+                List<Object>descriptions = userpassword.getList(GROUPS+SLASH+GROUP+"["+AT+NAME+"='"+groupName+"']"+SLASH+DESCRIPTION);
+                if(descriptions != null && !descriptions.isEmpty()) {
+                    description = (String)descriptions.get(0);
+                }
+                groupsArray[i][1] = description; 
             }
             return groupsArray;
         }
@@ -300,9 +307,16 @@ public class AuthFile implements AuthInterface {
                     throws ConnectException {
         List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+foruser+"']"+SLASH+GROUP);
         if(groups != null && groups.size() > 0) {
-            String[][] groupsArray = new String[groups.size()][1];
+            String[][] groupsArray = new String[groups.size()][2];
             for(int i=0; i<groups.size(); i++) {
-                groupsArray[i][0] = (String) groups.get(i);
+                String groupName = (String) groups.get(i);
+                groupsArray[i][0] = groupName;
+                String description = null;
+                List<Object>descriptions = userpassword.getList(GROUPS+SLASH+GROUP+"["+AT+NAME+"='"+groupName+"']"+SLASH+DESCRIPTION);
+                if(descriptions != null && !descriptions.isEmpty()) {
+                    description = (String)descriptions.get(0);
+                }
+                groupsArray[i][1] = description; 
             }
             return groupsArray;
         }
