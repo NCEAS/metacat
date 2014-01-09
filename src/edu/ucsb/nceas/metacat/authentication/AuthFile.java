@@ -96,11 +96,9 @@ public class AuthFile implements AuthInterface {
     private static final String GIVENNAME = "givenName";
     private static final String INITCONTENT = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
                                     "<"+SUBJECTS+">\n"+"<"+USERS+">\n"+"</"+USERS+">\n"+"<"+GROUPS+">\n"+"</"+GROUPS+">\n"+"</"+SUBJECTS+">\n";
+   
     
-    private static final byte[] SALT = {
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-        (byte) 0xde, (byte) 0x33, (byte) 0x10, (byte) 0x12,
-    };
+    
     private static Log log = LogFactory.getLog(AuthFile.class);
     private static AuthFile authFile = null;
     private static XMLConfiguration userpassword = null;
@@ -211,7 +209,7 @@ public class AuthFile implements AuthInterface {
                 User aUser = new User();
                 String dn = (String)users.get(i);
                 aUser.setDN(dn);
-                usersArray[i][0] = dn; //dn
+                usersArray[i][AuthInterface.USERDNINDEX] = dn; //dn
                 String surname = null;
                 List<Object> surNames = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+SURNAME);
                 if(surNames != null && !surNames.isEmpty()) {
@@ -224,15 +222,15 @@ public class AuthFile implements AuthInterface {
                     givenName = (String)givenNames.get(0);
                 }
                 aUser.setGivenName(givenName);
-                usersArray[i][1] = aUser.getCn();//common name
-                usersArray[i][2] = null;//organization name. We set null
-                usersArray[i][3] = null;//organization ou name. We set null.
+                usersArray[i][AuthInterface.USERCNINDEX] = aUser.getCn();//common name
+                usersArray[i][AuthInterface.USERORGINDEX] = null;//organization name. We set null
+                usersArray[i][AuthInterface.USERORGUNITINDEX] = null;//organization ou name. We set null.
                 List<Object> emails = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+EMAIL);
                 String email = null;
                 if(emails != null && !emails.isEmpty() ) {
                     email = (String)emails.get(0);
                 }
-                usersArray[i][4] = email;
+                usersArray[i][AuthInterface.USEREMAILINDEX] = email;
                
             }
             return usersArray;
@@ -285,13 +283,13 @@ public class AuthFile implements AuthInterface {
             String[][] groupsArray = new String[groups.size()][2];
             for(int i=0; i<groups.size(); i++) {
                 String groupName = (String) groups.get(i);
-                groupsArray[i][0] = groupName;
+                groupsArray[i][AuthInterface.GROUPNAMEINDEX] = groupName;
                 String description = null;
                 List<Object>descriptions = userpassword.getList(GROUPS+SLASH+GROUP+"["+AT+NAME+"='"+groupName+"']"+SLASH+DESCRIPTION);
                 if(descriptions != null && !descriptions.isEmpty()) {
                     description = (String)descriptions.get(0);
                 }
-                groupsArray[i][1] = description; 
+                groupsArray[i][AuthInterface.GROUPDESINDEX] = description; 
             }
             return groupsArray;
         }
@@ -310,13 +308,13 @@ public class AuthFile implements AuthInterface {
             String[][] groupsArray = new String[groups.size()][2];
             for(int i=0; i<groups.size(); i++) {
                 String groupName = (String) groups.get(i);
-                groupsArray[i][0] = groupName;
+                groupsArray[i][AuthInterface.GROUPNAMEINDEX] = groupName;
                 String description = null;
                 List<Object>descriptions = userpassword.getList(GROUPS+SLASH+GROUP+"["+AT+NAME+"='"+groupName+"']"+SLASH+DESCRIPTION);
                 if(descriptions != null && !descriptions.isEmpty()) {
                     description = (String)descriptions.get(0);
                 }
-                groupsArray[i][1] = description; 
+                groupsArray[i][AuthInterface.GROUPDESINDEX] = description; 
             }
             return groupsArray;
         }
@@ -356,9 +354,9 @@ public class AuthFile implements AuthInterface {
             if (groups != null && users != null && groups.length > 0) {
                 for (int i = 0; i < groups.length; i++) {
                     out.append("    <group>\n");
-                    out.append("      <groupname>" + groups[i][0] + "</groupname>\n");
+                    out.append("      <groupname>" + groups[i][AuthInterface.GROUPNAMEINDEX] + "</groupname>\n");
                     if(groups[i].length > 1) {
-                        out.append("      <description>" + groups[i][1] + "</description>\n");
+                        out.append("      <description>" + groups[i][AuthInterface.GROUPDESINDEX] + "</description>\n");
                     }
                     String[] usersForGroup = getUsers(user, password, groups[i][0]);
                     if(usersForGroup != null) {
@@ -372,12 +370,22 @@ public class AuthFile implements AuthInterface {
                             } else {
                                 out.append("        <username>" + users[userIndex][0]
                                         + "</username>\n");
-                                if(users[userIndex].length >=2) {
-                                    out.append("        <name>" + users[userIndex][1]
+                                if(users[userIndex][AuthInterface.USERCNINDEX] != null) {
+                                    out.append("        <name>" + users[userIndex][AuthInterface.USERCNINDEX]
                                                     + "</name>\n");
                                 }
-                                if(users[userIndex].length >=3) {
-                                    out.append("        <email>" + users[userIndex][2]
+                                if(users[userIndex][AuthInterface.USERORGINDEX] != null) {
+                                    out.append("        <organization>" + users[userIndex][AuthInterface.USERORGINDEX]
+                                                    + "</organization>\n");
+                                }
+                                
+                                if(users[userIndex][AuthInterface.USERORGUNITINDEX] != null) {
+                                    out.append("      <organizationUnitName>"
+                                                    + users[userIndex][AuthInterface.USERORGUNITINDEX]
+                                                    + "</organizationUnitName>\n");
+                                }
+                                if(users[userIndex][AuthInterface.USEREMAILINDEX] != null) {
+                                    out.append("        <email>" + users[userIndex][AuthInterface.USEREMAILINDEX]
                                                     + "</email>\n");
                                 }
                                
@@ -396,11 +404,23 @@ public class AuthFile implements AuthInterface {
                 for (int j = 0; j < users.length; j++) {
                     out.append("    <user>\n");
                     out.append("      <username>" + users[j][0] + "</username>\n");
-                    if(users[userIndex].length >=2) {
-                        out.append("      <name>" + users[j][1] + "</name>\n");
+                    if(users[j][AuthInterface.USERCNINDEX] != null) {
+                        out.append("        <name>" + users[j][AuthInterface.USERCNINDEX]
+                                        + "</name>\n");
                     }
-                    if(users[userIndex].length >=3) {
-                        out.append("      <email>" + users[j][2] + "</email>\n");
+                    if(users[j][AuthInterface.USERORGINDEX] != null) {
+                        out.append("        <organization>" + users[j][AuthInterface.USERORGINDEX]
+                                        + "</organization>\n");
+                    }
+                    
+                    if(users[j][AuthInterface.USERORGUNITINDEX] != null) {
+                        out.append("      <organizationUnitName>"
+                                        + users[j][AuthInterface.USERORGUNITINDEX]
+                                        + "</organizationUnitName>\n");
+                    }
+                    if(users[j][AuthInterface.USEREMAILINDEX] != null) {
+                        out.append("        <email>" + users[j][AuthInterface.USEREMAILINDEX]
+                                        + "</email>\n");
                     }
                    
                     out.append("    </user>\n");
