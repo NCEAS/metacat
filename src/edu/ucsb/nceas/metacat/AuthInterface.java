@@ -38,6 +38,13 @@ import java.util.Vector;
  * of a particular group.
  */
 public interface AuthInterface {
+    public static final short USERDNINDEX = 0;
+    public static final short USERCNINDEX = 1;
+    public static final short USERORGINDEX = 2;
+    public static final short USERORGUNITINDEX = 3;
+    public static final short USEREMAILINDEX = 4;
+    public static final short GROUPNAMEINDEX = 0;
+    public static final short GROUPDESINDEX =1;
 
   /**
    * Determine if a user/password are valid according to the authentication
