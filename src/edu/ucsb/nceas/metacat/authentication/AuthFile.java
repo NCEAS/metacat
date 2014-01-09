@@ -456,7 +456,7 @@ public class AuthFile implements AuthInterface {
      * @param groups  the groups the user belong to. The group should exist in the file
      * @param password  the password of the user
      */
-    public void addUser(String dn, String[] groups, String plainPass, String hashedPass, String email, String surName, String givenName) throws AuthenticationException{
+    public void addUser(String dn, String[] groups, String plainPass, String hashedPass, String email, String surName, String givenName, String organization) throws AuthenticationException{
        User user = new User();
        user.setDN(dn);
        user.setGroups(groups);
@@ -465,6 +465,7 @@ public class AuthFile implements AuthInterface {
        user.setEmail(email);
        user.setSurName(surName);
        user.setGivenName(givenName);
+       user.setOrganization(organization);
        user.serialize();
     }
     
@@ -911,6 +912,10 @@ public class AuthFile implements AuthInterface {
                   
                   if(givenName != null && !givenName.trim().equals("")) {
                       userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GIVENNAME, givenName);
+                  }
+                  
+                  if(organization != null && !organization.trim().equals("")) {
+                      userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+ORGANIZATION, organization);
                   }
 
                   if(groups != null) {
