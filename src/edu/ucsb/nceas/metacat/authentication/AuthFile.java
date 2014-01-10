@@ -20,27 +20,19 @@
  */
 package edu.ucsb.nceas.metacat.authentication;
 
+import java.io.Console;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.ConnectException;
-import java.security.GeneralSecurityException;
-import java.util.Enumeration;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Random;
 import java.util.Vector;
 
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import javax.crypto.SecretKeyFactory;
-import javax.crypto.spec.PBEKeySpec;
-import javax.crypto.spec.PBEParameterSpec;
 
-import org.apache.commons.codec.binary.Base64;
+
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
@@ -664,7 +656,10 @@ public class AuthFile implements AuthInterface {
     /*
      * Handle the userAdd action in the main method
      */
-    private static void  handleUserAdd(AuthFile authFile,String[]argus) {
+    private static void  handleUserAdd(AuthFile authFile,String[]argus) throws UnsupportedEncodingException{
+        boolean inputPassword = false;
+        boolean passingHashedPassword = false;
+        boolean hasDN = false;
         String I = "-i";
         String H = "-h";
         String DN = "-dn";
@@ -673,10 +668,121 @@ public class AuthFile implements AuthInterface {
         String S = "-s";
         String F = "-f";
         String O= "-o";
-        HashMap<String, String> map = new <String, String>HashMap();
+        Vector<String> possibleOptions = new <String>Vector();
+        possibleOptions.add(I);
+        possibleOptions.add(H);
+        possibleOptions.add(DN);
+        possibleOptions.add(G);
+        possibleOptions.add(E);
+        possibleOptions.add(S);
+        possibleOptions.add(F);
+        possibleOptions.add(O);
         
+        HashMap<String, String> map = new <String, String>HashMap();
+        for(int i=2; i<argus.length; i++) {
+            String arg = argus[i];
+            
+            if(map.containsKey(arg)) {
+                System.out.println("Error: the command line for useradd can't have the duplicated options "+arg+".");
+                System.exit(1);
+            }
+            
+            //this is the scenario that "-i" is at the end of the arguments.
+            if(arg.equals(I) && i==argus.length-1) {
+                map.put(I, I);//we need to input password.
+                inputPassword = true;
+            } 
+            
+            if(possibleOptions.contains(arg) && i<argus.length-1) {
+                //System.out.println("find the option "+arg);
+                if(arg.equals(I)) {
+                    //this is the scenario that "-i" is NOT at the end of the arguments.
+                    if(!possibleOptions.contains(argus[i+1])) {
+                        System.out.println("Error: The option \"-i\" means the user will input a password in the useradd command. So it can't be followed by a value. It only can be followed by another option.");
+                        System.exit(1);
+                    }
+                    map.put(I, I);//we need to input password.
+                    inputPassword = true;
+                } else {
+                    if(arg.equals(H)) {
+                        passingHashedPassword = true;
+                    } else if (arg.equals(DN)) {
+                        hasDN = true;
+                    }
+                    map.put(arg, argus[i+1]);
+                }
+                
+            } else if(!possibleOptions.contains(arg)) {
+                //check if the previous argument is an option
+                if(!possibleOptions.contains(argus[i-1])) {
+                    System.out.println("Error: an illegal argument "+arg+" in the useradd command ");
+                    System.exit(1);
+                }
+            }
+        } 
+        
+        if(!hasDN) {
+            System.out.println("The \"-dn user-distinguish-name\" is requried in the useradd command ."); 
+            System.exit(1);
+        }
+        
+        String plainPassword = null;
+        if(inputPassword && passingHashedPassword) {
+            System.out.println("Error: you can choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the useradd command.");
+            System.exit(1);
+        } else if (!inputPassword && !passingHashedPassword) {
+            System.out.println("Error: you must choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the useradd command.");
+            System.exit(1);
+        } else if(inputPassword) {
+            plainPassword = inputPassword();
+        }
+        //System.out.println("============the plain password is "+plainPassword);
     }
     
+    
+    /*
+     * Input the password
+     */
+    private static String inputPassword() throws UnsupportedEncodingException {
+        String password = null;
+        String quit = "q";
+        Console console = System.console();
+        if (console == null) {
+            System.out.println("Sorry, we can't fetch the console from the system. You can't use the option \"-i\" to input a password. You have to use the option \"-d dashed-passpwrd\" to pass through a hashed passwprd in the useradd command. ");
+            System.exit(1);
+        }
+  
+        while(true) {
+                System.out.print("Enter your password(input 'q' to quite): ");
+                String password1 = new String(console.readPassword());
+                if(password1== null || password1.trim().equals("")) {
+                    System.out.println("Eorror: the password can't be blank or null. Please try again.");
+                    continue;
+                } else if (password1.equals(quit)) {
+                    System.exit(0);
+                }
+                System.out.print("Confirm your password(input 'q' to quite): ");
+                String password2 = new String(console.readPassword());
+                if(password2 == null || password2.trim().equals("")) {
+                    System.out.println("Eorror: the password can't be blank or null. Please try again.");
+                    continue;
+                }  else if (password2.equals(quit)) {
+                    System.exit(0);
+                }
+                
+                if(!password1.equals(password2)) {
+                    System.out.println("Eorror: The second passwords does't match the first one. Please try again.");
+                } else {
+                    password = password1;
+                    break;
+                }
+                
+            
+        }
+        
+        return password;
+        
+    }
     /*
      * Print out the usage statement
      */
