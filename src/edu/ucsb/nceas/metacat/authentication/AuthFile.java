@@ -90,6 +90,7 @@ public class AuthFile implements AuthInterface {
     private static final String EMAIL = "email";
     private static final String SURNAME = "surName";
     private static final String GIVENNAME = "givenName";
+    private static final String MEMBEROF = "memberof";
     private static final String INITCONTENT = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n"+
                                     "<"+SUBJECTS+">\n"+"<"+USERS+">\n"+"</"+USERS+">\n"+"<"+GROUPS+">\n"+"</"+GROUPS+">\n"+"</"+SUBJECTS+">\n";
    
@@ -277,7 +278,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[] getUsers(String user, String password, String group)
                     throws ConnectException {
-        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+GROUP+"='"+group+"']"+SLASH+AT+DN);
+        List<Object> users = userpassword.getList(USERS+SLASH+USER+"["+MEMBEROF+"='"+group+"']"+SLASH+AT+DN);
         if(users != null && users.size() > 0) {
             String[] usersArray = new String[users.size()];
             for(int i=0; i<users.size(); i++) {
@@ -320,7 +321,7 @@ public class AuthFile implements AuthInterface {
      */
     public String[][] getGroups(String user, String password, String foruser)
                     throws ConnectException {
-        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+foruser+"']"+SLASH+GROUP);
+        List<Object> groups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+foruser+"']"+SLASH+MEMBEROF);
         if(groups != null && groups.size() > 0) {
             String[][] groupsArray = new String[groups.size()][2];
             for(int i=0; i<groups.size(); i++) {
@@ -618,8 +619,11 @@ public class AuthFile implements AuthInterface {
      */
     private static void handleGroupAdd(AuthFile authFile, String[]argus) throws AuthenticationException {
         HashMap<String, String> map = new <String, String>HashMap();
-        String DASHG = "-g";
-        String DASHD = "-d";
+        String G = "-g";
+        String D = "-d";
+        Vector<String> possibleOptions = new <String>Vector();
+        possibleOptions.add(G);
+        possibleOptions.add(D);
         for(int i=2; i<argus.length; i++) {
             String arg = argus[i];
             
@@ -628,13 +632,18 @@ public class AuthFile implements AuthInterface {
                 System.exit(1);
             }
             
-            if(arg.equals(DASHG) && i<argus.length-1) {
-                map.put(arg, argus[i+1]);
-            } else if (arg.equals(DASHD) && i<argus.length-1) {
-                map.put(arg, argus[i+1]);
-            } else if(!arg.equals(DASHG) && !arg.equals(DASHD)) {
-                //check if the previous argument is -g or -d
-                if(!argus[i-1].equals(DASHG) && !argus[i-1].equals(DASHD)) {
+            
+            if(possibleOptions.contains(arg) && i<argus.length-1) {
+                if(possibleOptions.contains(argus[i+1])) {
+                    //scenario that -d follows -g
+                    System.out.println("Error: the \""+arg+"\" must be followed by a value rather than an option \""+argus[i+1]+"\"");
+                    System.exit(1);
+                } else {
+                    map.put(arg, argus[i+1]);
+                }
+            } else if(!possibleOptions.contains(arg)) {
+                //when the argu is not a switch check if the previous argument is a switch
+                if(!possibleOptions.contains(argus[i-1])) {
                     System.out.println("Error: an illegal argument "+arg+" in the groupadd command ");
                     System.exit(1);
                 }
@@ -643,16 +652,16 @@ public class AuthFile implements AuthInterface {
         String groupName = null;
         String description = null;
         if(map.keySet().size() == 0) {
-            System.out.println("Error: the "+DASHG+" group-name is required in the groupadd command line.");
+            System.out.println("Error: the "+G+" group-name is required in the groupadd command line.");
             System.exit(1);
         }
         else if(map.keySet().size() ==1 || map.keySet().size() ==2) {
-            groupName = map.get(DASHG);
+            groupName = map.get(G);
             if(groupName == null) {
-                System.out.println("Error: the "+DASHG+" group-name is required in the groupadd command line.");
+                System.out.println("Error: the "+G+" group-name is required in the groupadd command line.");
                 System.exit(1);
             }
-            description = map.get(DASHD);
+            description = map.get(D);
             authFile.addGroup(groupName, description);
             System.out.println("Successfully added a group "+groupName+" to the file authentication system");
         } else {
@@ -903,7 +912,7 @@ public class AuthFile implements AuthInterface {
                 if(arg.equals(A) || arg.equals(R)) {
                     //this is the scenario that "-a" or "-r" is NOT at the end of the arguments.
                     if(!possibleOptions.contains(argus[i+1])) {
-                        System.out.println("Error: The option \"-i\" means the user will input a password in the usermod -group command. So it can't be followed by a value. It only can be followed by another option.");
+                        System.out.println("Error: the option \"-a\" or \"-d\" shouldn't follow any value.");
                         System.exit(1);
                     }
                     map.put(arg, arg);
@@ -963,7 +972,7 @@ public class AuthFile implements AuthInterface {
         }
   
         while(true) {
-                System.out.print("Enter your password(input 'q' to quite): ");
+                System.out.print("Enter your new password(input 'q' to quite): ");
                 String password1 = new String(console.readPassword());
                 if(password1== null || password1.trim().equals("")) {
                     System.out.println("Eorror: the password can't be blank or null. Please try again.");
@@ -971,7 +980,7 @@ public class AuthFile implements AuthInterface {
                 } else if (password1.equals(quit)) {
                     System.exit(0);
                 }
-                System.out.print("Confirm your password(input 'q' to quite): ");
+                System.out.print("Confirm your new password(input 'q' to quite): ");
                 String password2 = new String(console.readPassword());
                 if(password2 == null || password2.trim().equals("")) {
                     System.out.println("Eorror: the password can't be blank or null. Please try again.");
@@ -1217,11 +1226,11 @@ public class AuthFile implements AuthInterface {
             if(!groupExists(group)) {
                 throw new AuthenticationException("AuthFile.User.addUserToGroup - the group "+group+ " doesn't exist.");
             }
-            List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP);
+            List<Object> existingGroups = userpassword.getList(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+MEMBEROF);
             if(existingGroups != null && existingGroups.contains(group)) {
                 throw new AuthenticationException("AuthFile.User.addUserToGroup - the user "+dn+ " already is the memember of the group "+group);
             }
-            userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GROUP, group);
+            userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+MEMBEROF, group);
             //add information to the memory
             if(groups == null) {
                 if(existingGroups == null || existingGroups.isEmpty()) {
@@ -1258,7 +1267,7 @@ public class AuthFile implements AuthInterface {
             if(!groupExists(group)) {
                 throw new AuthenticationException("AuthFile.User.removeUserFromGroup - the group "+group+ " doesn't exist.");
             }
-            String key = USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+GROUP;
+            String key = USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+SLASH+MEMBEROF;
             List<Object> existingGroups = userpassword.getList(key);
             if(!existingGroups.contains(group)) {
                 throw new AuthenticationException("AuthFile.User.removeUserFromGroup - the user "+dn+ " isn't the memember of the group "+group);
@@ -1370,7 +1379,7 @@ public class AuthFile implements AuthInterface {
                           String group = groups[i];
                           if(group != null && !group.trim().equals("")) {
                               if(groupExists(group)) {
-                                  userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+GROUP, group);
+                                  userpassword.addProperty(USERS+SLASH+USER+"["+AT+DN+"='"+dn+"']"+" "+MEMBEROF, group);
                               }
                           }
                       }
