@@ -33,6 +33,9 @@ import java.util.Vector;
 
 
 
+
+
+
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
@@ -602,7 +605,7 @@ public class AuthFile implements AuthInterface {
             } else if (argus[1] != null && argus[1].equals(USERADD)) {
                 handleUserAdd(authFile,argus);
             } else if (argus[1] != null && argus[1].equals(USERMOD)) {
-                
+                handleUserMod(authFile, argus);
             } else if (argus[1] != null && argus[1].equals(USAGE)) {
                 printUsage();
             } else {
@@ -639,10 +642,15 @@ public class AuthFile implements AuthInterface {
         } 
         String groupName = null;
         String description = null;
-        if(map.keySet().size() ==1 || map.keySet().size() ==2) {
+        if(map.keySet().size() == 0) {
+            System.out.println("Error: the "+DASHG+" group-name is required in the groupadd command line.");
+            System.exit(1);
+        }
+        else if(map.keySet().size() ==1 || map.keySet().size() ==2) {
             groupName = map.get(DASHG);
             if(groupName == null) {
                 System.out.println("Error: the "+DASHG+" group-name is required in the groupadd command line.");
+                System.exit(1);
             }
             description = map.get(DASHD);
             authFile.addGroup(groupName, description);
@@ -759,6 +767,188 @@ public class AuthFile implements AuthInterface {
         System.out.println("Successfully added a user "+dn+" to the file authentication system ");
     }
     
+    /*
+     * Handle modify a user's password or group information.
+     */
+    private static void handleUserMod(AuthFile authFile, String[] argus) throws AuthenticationException, UnsupportedEncodingException {
+        String PASSWORD = "-password";
+        String GROUP = "-group";
+        if(argus.length < 3) {
+            System.out.println("Error: the sub action \"-password\" or \"-group\" should follow the action \"usermod\"");
+            System.exit(1);
+        } else {
+            if(argus[2] != null && argus[2].equals(PASSWORD)) {
+                handleModifyPass(authFile, argus);
+            } else if (argus[2] != null && argus[2].equals(GROUP)) {
+                handleModifyGroup(authFile, argus);
+            } else {
+                System.out.println("Error: the sub action \""+argus[2]+"\" is unkown in the action \"usermod\"");
+                System.exit(1);
+            }
+        }
+    }
+    
+    /*
+     * Handle the action to modify the password of a user
+     */
+    private static void handleModifyPass(AuthFile authFile, String[] argus) throws UnsupportedEncodingException, AuthenticationException {
+        String DN = "-dn";
+        String I= "-i";
+        String H = "-h";
+        Vector<String> possibleOptions = new <String>Vector();
+        possibleOptions.add(I);
+        possibleOptions.add(H);
+        possibleOptions.add(DN);
+        boolean inputPassword = false;
+        boolean passingHashedPassword = false;
+        boolean hasDN = false;
+        HashMap<String, String> map = new <String, String>HashMap();
+        for(int i=3; i<argus.length; i++) {
+            String arg = argus[i];
+            if(map.containsKey(arg)) {
+                System.out.println("Error: the command line for usermod -password can't have the duplicated options "+arg+".");
+                System.exit(1);
+            }
+            
+            //this is the scenario that "-i" is at the end of the arguments.
+            if(arg.equals(I) && i==argus.length-1) {
+                map.put(I, I);//we need to input password.
+                inputPassword = true;
+            } 
+            
+            if(possibleOptions.contains(arg) && i<argus.length-1) {
+                //System.out.println("find the option "+arg);
+                if(arg.equals(I)) {
+                    //this is the scenario that "-i" is NOT at the end of the arguments.
+                    if(!possibleOptions.contains(argus[i+1])) {
+                        System.out.println("Error: The option \"-i\" means the user will input a password in the usermod -password command. So it can't be followed by a value. It only can be followed by another option.");
+                        System.exit(1);
+                    }
+                    map.put(I, I);//we need to input password.
+                    inputPassword = true;
+                } else {
+                    if(arg.equals(H)) {
+                        passingHashedPassword = true;
+                    } else if (arg.equals(DN)) {
+                        hasDN = true;
+                    }
+                    map.put(arg, argus[i+1]);
+                }
+                
+            } else if(!possibleOptions.contains(arg)) {
+                //check if the previous argument is an option
+                if(!possibleOptions.contains(argus[i-1])) {
+                    System.out.println("Error: an illegal argument "+arg+" in the usermod -password command ");
+                    System.exit(1);
+                }
+            }
+        } 
+        
+        String dn = null;
+        String plainPassword = null;
+        String hashedPassword = null;
+        if(!hasDN) {
+            System.out.println("The \"-dn user-distinguish-name\" is requried in the usermod -password command ."); 
+            System.exit(1);
+        } else {
+            dn = map.get(DN);
+        }
+
+        if(inputPassword && passingHashedPassword) {
+            System.out.println("Error: you can choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the usermod -password command.");
+            System.exit(1);
+        } else if (!inputPassword && !passingHashedPassword) {
+            System.out.println("Error: you must choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the usermod -password command.");
+            System.exit(1);
+        } else if(inputPassword) {
+            plainPassword = inputPassword();
+            authFile.modifyPassWithPlain(dn, plainPassword);
+            System.out.println("Successfully modified the password for the user "+dn);
+            //System.out.println("============the plain password is "+plainPassword);
+        } else if(passingHashedPassword) {
+            hashedPassword = map.get(H);
+            authFile.modifyPassWithHash(dn, hashedPassword);
+            System.out.println("Successfully modified the password for the user "+dn);
+        }
+    }
+    
+    /*
+     * Handle the action adding/removing a user to/from a group
+     */
+    private static void handleModifyGroup(AuthFile authFile, String[] argus) throws AuthenticationException {
+        String DN = "-dn";
+        String A= "-a";
+        String R = "-r";
+        String G = "-g";
+        Vector<String> possibleOptions = new <String>Vector();
+        possibleOptions.add(DN);
+        possibleOptions.add(A);
+        possibleOptions.add(R);
+        possibleOptions.add(G);
+        HashMap<String, String> map = new <String, String>HashMap();
+        for(int i=3; i<argus.length; i++) {
+            String arg = argus[i];
+            if(map.containsKey(arg)) {
+                System.out.println("Error: the command line for the usermod -group can't have the duplicated options "+arg+".");
+                System.exit(1);
+            }
+            
+            //this is the scenario that "-a" or "-r" is at the end of the arguments.
+            if((arg.equals(A) || arg.equals(R)) && i==argus.length-1) {
+                map.put(arg, arg);//we need to input password.
+            } 
+            
+            if(possibleOptions.contains(arg) && i<argus.length-1) {
+                //System.out.println("find the option "+arg);
+                if(arg.equals(A) || arg.equals(R)) {
+                    //this is the scenario that "-a" or "-r" is NOT at the end of the arguments.
+                    if(!possibleOptions.contains(argus[i+1])) {
+                        System.out.println("Error: The option \"-i\" means the user will input a password in the usermod -group command. So it can't be followed by a value. It only can be followed by another option.");
+                        System.exit(1);
+                    }
+                    map.put(arg, arg);
+                    
+                } else {
+                    map.put(arg, argus[i+1]);
+                }
+                
+            } else if(!possibleOptions.contains(arg)) {
+                //check if the previous argument is an option
+                if(!possibleOptions.contains(argus[i-1])) {
+                    System.out.println("Error: an illegal argument "+arg+" in the usermod -group command ");
+                    System.exit(1);
+                }
+            }
+        }
+        
+        String add = map.get(A);
+        String remove = map.get(R);
+        String group = map.get(G);
+        String dn = map.get(DN);
+        if(dn == null || dn.trim().equals("")) {
+            System.out.println("Erorr: the \"-dn user-distinguish-name\" is required in the usermod -group command");
+            System.exit(1);
+        }
+        
+        if(group == null || group.trim().equals("")) {
+            System.out.println("Erorr: the \"-g group-name\" is required in the usermod -group command");
+            System.exit(1);
+        }
+        
+        if(add != null && remove!= null) {
+            System.out.println("Erorr: You can only choose either \"-a\"(add the user to the group or \"-d\"(remove the user from the group in the usermod -group command");
+            System.exit(1);
+        } else if (add == null && remove == null) {
+            System.out.println("Erorr: You must only choose either \"-a\"(add the user to the group or \"-d\"(remove the user from the group in the usermod -group command");
+            System.exit(1);
+        } else if (remove != null) {
+            authFile.removeUserFromGroup(dn, group);
+            System.out.println("Successfully removed the user "+dn+" from the group "+group);
+        } else {
+            authFile.addUserToGroup(dn, group);
+            System.out.println("Successfully added the user "+dn+" to the group "+group);
+        }
+    }
     
     /*
      * Input the password
@@ -827,7 +1017,7 @@ public class AuthFile implements AuthInterface {
      */
     private static void printError(String[] argus) {
         if(argus != null) {
-            System.out.println("Error: it is an illegal command: ");
+            System.out.println("Error: it is an illegal command (probably with some illegal options): ");
             for(int i=0; i<argus.length; i++) {
                 if(i!= 0) {
                     System.out.print(argus[i]+" ");
