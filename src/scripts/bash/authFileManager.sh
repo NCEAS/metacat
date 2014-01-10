@@ -3,8 +3,10 @@
 #in the AuthFile mechanism.
 
 #variables
-BASE=../../../build/war
-BASE_LIB=$BASE/lib
+#BASE=../../../build/war
+#BASE_LIB=$BASE/lib
+BASE=../../../
+BASE_LIB=$BASE/WEB-INF/lib
 BASE_WEB_INF=$BASE/WEB-INF
 METACAT=$BASE_LIB/metacat.jar
 COMMONS_CONFIG=$BASE_LIB/commons-configuration-1.7.jar
