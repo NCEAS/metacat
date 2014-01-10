@@ -614,7 +614,7 @@ public class AuthFile implements AuthInterface {
             } else if (argus[1] != null && argus[1].equals(USAGE)) {
                 printUsage();
             } else {
-                System.out.print("The unknown action "+argus[1]);
+                System.out.print("Error: the unknown action "+argus[1]);
             }
     }
     
@@ -629,7 +629,7 @@ public class AuthFile implements AuthInterface {
             String arg = argus[i];
             
             if(map.containsKey(arg)) {
-                System.out.println("The command line for groupadd can't have the duplicated options "+arg+".");
+                System.out.println("Error: the command line for groupadd can't have the duplicated options "+arg+".");
                 System.exit(1);
             }
             
@@ -639,8 +639,9 @@ public class AuthFile implements AuthInterface {
                 map.put(arg, argus[i+1]);
             } else if(!arg.equals(DASHG) && !arg.equals(DASHD)) {
                 //check if the previous argument is -g or -d
-                if(!argus[i-1].equals(DASHG) || !argus[i-1].equals(DASHD)) {
-                    System.out.println("An illegal argument "+arg+" in the groupadd command ");
+                if(!argus[i-1].equals(DASHG) && !argus[i-1].equals(DASHD)) {
+                    System.out.println("Error: an illegal argument "+arg+" in the groupadd command ");
+                    System.exit(1);
                 }
             }
         } 
@@ -649,7 +650,7 @@ public class AuthFile implements AuthInterface {
         if(map.keySet().size() ==1 || map.keySet().size() ==2) {
             groupName = map.get(DASHG);
             if(groupName == null) {
-                System.out.println("The "+DASHG+" group-name is required in the groupadd command line.");
+                System.out.println("Error: the "+DASHG+" group-name is required in the groupadd command line.");
             }
             description = map.get(DASHD);
             authFile.addGroup(groupName, description);
@@ -700,7 +701,7 @@ public class AuthFile implements AuthInterface {
      */
     private static void printError(String[] argus) {
         if(argus != null) {
-            System.out.println("It is an illegal command: ");
+            System.out.println("Error: it is an illegal command: ");
             for(int i=0; i<argus.length; i++) {
                 if(i!= 0) {
                     System.out.print(argus[i]+" ");
