@@ -138,6 +138,7 @@ public class AuthFile implements AuthInterface {
         try {
             init();
         } catch (Exception e) {
+            e.printStackTrace();
             throw new AuthenticationException(e.getMessage());
         }
         
@@ -160,6 +161,10 @@ public class AuthFile implements AuthInterface {
         
         //if the password file doesn't exist, create a new one and set the initial content
         if(!passwordFile.exists()) {
+            File parent = passwordFile.getParentFile();
+            if(!parent.exists()) {
+                parent.mkdirs();
+            }
             passwordFile.createNewFile();
             OutputStreamWriter writer = null;
             FileOutputStream output = null;
@@ -580,6 +585,131 @@ public class AuthFile implements AuthInterface {
       return hashClass.hash(plain);
     }
     
+    
+    /**
+     * A method is used to help administrator to manage users and groups
+     * @param argus
+     * @throws Exception
+     */
+    public static void main(String[] argus) throws Exception {
+            String USERADD = "useradd";
+            String USERMOD = "usermod";
+            String GROUPADD = "groupadd";
+            String USAGE = "usage";
+            if(argus == null || argus.length ==0) {
+              System.out.println("Please make sure that there are two arguments - \"$BASE_WEB_INF\" and\" $@\" after the class name edu.ucsb.nceas.metacat.authentication.AuthFile in the script file.");
+              System.exit(1);
+            } else if(argus.length ==1) {
+                printUsage();
+                System.exit(1);
+            }
+            PropertyService.getInstance(argus[0]);
+            AuthFile authFile = AuthFile.getInstance();
+            if(argus[1] != null && argus[1].equals(GROUPADD)) {
+                handleGroupAdd(authFile,argus);
+            } else if (argus[1] != null && argus[1].equals(USERADD)) {
+                handleUserAdd(authFile,argus);
+            } else if (argus[1] != null && argus[1].equals(USERMOD)) {
+                
+            } else if (argus[1] != null && argus[1].equals(USAGE)) {
+                printUsage();
+            } else {
+                System.out.print("The unknown action "+argus[1]);
+            }
+    }
+    
+    /*
+     * Handle the groupAdd action in the main method
+     */
+    private static void handleGroupAdd(AuthFile authFile, String[]argus) throws AuthenticationException {
+        HashMap<String, String> map = new <String, String>HashMap();
+        String DASHG = "-g";
+        String DASHD = "-d";
+        for(int i=2; i<argus.length; i++) {
+            String arg = argus[i];
+            
+            if(map.containsKey(arg)) {
+                System.out.println("The command line for groupadd can't have the duplicated options "+arg+".");
+                System.exit(1);
+            }
+            
+            if(arg.equals(DASHG) && i<argus.length-1) {
+                map.put(arg, argus[i+1]);
+            } else if (arg.equals(DASHD) && i<argus.length-1) {
+                map.put(arg, argus[i+1]);
+            } else if(!arg.equals(DASHG) && !arg.equals(DASHD)) {
+                //check if the previous argument is -g or -d
+                if(!argus[i-1].equals(DASHG) || !argus[i-1].equals(DASHD)) {
+                    System.out.println("An illegal argument "+arg+" in the groupadd command ");
+                }
+            }
+        } 
+        String groupName = null;
+        String description = null;
+        if(map.keySet().size() ==1 || map.keySet().size() ==2) {
+            groupName = map.get(DASHG);
+            if(groupName == null) {
+                System.out.println("The "+DASHG+" group-name is required in the groupadd command line.");
+            }
+            description = map.get(DASHD);
+            authFile.addGroup(groupName, description);
+            System.out.println("Successfully add a group "+groupName+" to the file authentication system");
+        } else {
+            printError(argus);
+            System.exit(1);
+        }
+    }
+    
+    /*
+     * Handle the userAdd action in the main method
+     */
+    private static void  handleUserAdd(AuthFile authFile,String[]argus) {
+        String I = "-i";
+        String H = "-h";
+        String DN = "-dn";
+        String G = "-g";
+        String E = "-e";
+        String S = "-s";
+        String F = "-f";
+        String O= "-o";
+        HashMap<String, String> map = new <String, String>HashMap();
+        
+    }
+    
+    /*
+     * Print out the usage statement
+     */
+    private static void printUsage() {
+        System.out.println("Usage:\n"+
+                        "./authFileManager.sh useradd -i -dn user-distinguish-name -g groupname -e email-address -s surname -f given-name -o organizationName\n" +
+                        "./authFileManager.sh useradd -h hashed-password -dn user-distinguish-name -g groupname -e email-address -s surname -f given-name -o organizationName\n"+
+                        "./authFileManager.sh groupadd -g group-name -d description\n" +
+                        "./authFileManager.sh usermod -password -dn user-distinguish-name -i\n"+
+                        "./authFileManager.sh usermod -password -dn user-distinguish-name -h new-hashed-password\n"+
+                        "./authFileManager.sh usermod -group -a -dn user-disinguish-name -g added-group-name\n" +
+                        "./authFileManager.sh usermod -group -r -dn user-distinguish-name -g removed-group-name\n"+
+                        "Note:\n1. if a value of an option has spaces, the value should be enclosed by the double quotes.\n"+
+                        "  For example: ./authFileManager.sh groupadd -g nceas-dev -d \"Developers at NCEAS\"\n"+
+                        "2. \"-d description\" in groupadd is optional; \"-g groupname -e email-address -s surname -f given-name -o organizationName\" in useradd are optional as well.");
+                       
+                        
+    }
+    
+    /*
+     * Print out the statement to say it is a illegal command
+     */
+    private static void printError(String[] argus) {
+        if(argus != null) {
+            System.out.println("It is an illegal command: ");
+            for(int i=0; i<argus.length; i++) {
+                if(i!= 0) {
+                    System.out.print(argus[i]+" ");
+                }
+            }
+            System.out.println("");
+        }
+       
+    }
 
     
     /**
