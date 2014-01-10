@@ -646,7 +646,7 @@ public class AuthFile implements AuthInterface {
             }
             description = map.get(DASHD);
             authFile.addGroup(groupName, description);
-            System.out.println("Successfully add a group "+groupName+" to the file authentication system");
+            System.out.println("Successfully added a group "+groupName+" to the file authentication system");
         } else {
             printError(argus);
             System.exit(1);
@@ -656,7 +656,7 @@ public class AuthFile implements AuthInterface {
     /*
      * Handle the userAdd action in the main method
      */
-    private static void  handleUserAdd(AuthFile authFile,String[]argus) throws UnsupportedEncodingException{
+    private static void  handleUserAdd(AuthFile authFile,String[]argus) throws UnsupportedEncodingException, AuthenticationException{
         boolean inputPassword = false;
         boolean passingHashedPassword = false;
         boolean hasDN = false;
@@ -721,12 +721,17 @@ public class AuthFile implements AuthInterface {
             }
         } 
         
+        String dn = null;
+        String plainPassword = null;
+        String hashedPassword = null;
         if(!hasDN) {
             System.out.println("The \"-dn user-distinguish-name\" is requried in the useradd command ."); 
             System.exit(1);
+        } else {
+            dn = map.get(DN);
         }
         
-        String plainPassword = null;
+       
         if(inputPassword && passingHashedPassword) {
             System.out.println("Error: you can choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the useradd command.");
             System.exit(1);
@@ -735,8 +740,23 @@ public class AuthFile implements AuthInterface {
             System.exit(1);
         } else if(inputPassword) {
             plainPassword = inputPassword();
+            //System.out.println("============the plain password is "+plainPassword);
+        } else if(passingHashedPassword) {
+            hashedPassword = map.get(H);
         }
-        //System.out.println("============the plain password is "+plainPassword);
+        
+        String group = map.get(G);
+        String[] groups = null;
+        if(group != null && !group.trim().equals("")) {
+            groups = new String[1];
+            groups[0]=group;
+        }
+        String email = map.get(E);
+        String surname = map.get(S);
+        String givenname = map.get(F);
+        String organization = map.get(O);
+        authFile.addUser(dn, groups, plainPassword, hashedPassword, email, surname, givenname, organization);
+        System.out.println("Successfully added a user "+dn+" to the file authentication system ");
     }
     
     
