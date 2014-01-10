@@ -618,52 +618,33 @@ public class AuthFile implements AuthInterface {
      * Handle the groupAdd action in the main method
      */
     private static void handleGroupAdd(AuthFile authFile, String[]argus) throws AuthenticationException {
-        HashMap<String, String> map = new <String, String>HashMap();
+        HashMap<String, String> map = null;
         String G = "-g";
         String D = "-d";
-        Vector<String> possibleOptions = new <String>Vector();
-        possibleOptions.add(G);
-        possibleOptions.add(D);
-        for(int i=2; i<argus.length; i++) {
-            String arg = argus[i];
-            
-            if(map.containsKey(arg)) {
-                System.out.println("Error: the command line for groupadd can't have the duplicated options "+arg+".");
-                System.exit(1);
-            }
-            
-            
-            if(possibleOptions.contains(arg) && i<argus.length-1) {
-                if(possibleOptions.contains(argus[i+1])) {
-                    //scenario that -d follows -g
-                    System.out.println("Error: the \""+arg+"\" must be followed by a value rather than an option \""+argus[i+1]+"\"");
-                    System.exit(1);
-                } else {
-                    map.put(arg, argus[i+1]);
-                }
-            } else if(!possibleOptions.contains(arg)) {
-                //when the argu is not a switch check if the previous argument is a switch
-                if(!possibleOptions.contains(argus[i-1])) {
-                    System.out.println("Error: an illegal argument "+arg+" in the groupadd command ");
-                    System.exit(1);
-                }
-            }
-        } 
+        Vector<String> pairedOptions = new Vector<String>();
+        pairedOptions.add(G);
+        pairedOptions.add(D);
+        int startIndex = 2;
+        try {
+            map = parseArgus(startIndex, argus, pairedOptions, null);
+        } catch (Exception e ) {
+            System.out.println("Error in the groupadd command: "+e.getMessage());
+            System.exit(1);
+        }
         String groupName = null;
         String description = null;
         if(map.keySet().size() == 0) {
-            System.out.println("Error: the "+G+" group-name is required in the groupadd command line.");
+            System.out.println("Error in the groupadd command: the \""+G+" group-name\" is required.");
             System.exit(1);
-        }
-        else if(map.keySet().size() ==1 || map.keySet().size() ==2) {
+        } else if(map.keySet().size() ==1 || map.keySet().size() ==2) {
             groupName = map.get(G);
-            if(groupName == null) {
-                System.out.println("Error: the "+G+" group-name is required in the groupadd command line.");
+            if(groupName == null || groupName.trim().equals("")) {
+                System.out.println("Error in the groupadd command : the \""+G+" group-name\" is required.");
                 System.exit(1);
             }
             description = map.get(D);
             authFile.addGroup(groupName, description);
-            System.out.println("Successfully added a group "+groupName+" to the file authentication system");
+            System.out.println("Successfully added a group \""+groupName+"\" to the file authentication system");
         } else {
             printError(argus);
             System.exit(1);
@@ -674,9 +655,7 @@ public class AuthFile implements AuthInterface {
      * Handle the userAdd action in the main method
      */
     private static void  handleUserAdd(AuthFile authFile,String[]argus) throws UnsupportedEncodingException, AuthenticationException{
-        boolean inputPassword = false;
-        boolean passingHashedPassword = false;
-        boolean hasDN = false;
+      
         String I = "-i";
         String H = "-h";
         String DN = "-dn";
@@ -685,95 +664,64 @@ public class AuthFile implements AuthInterface {
         String S = "-s";
         String F = "-f";
         String O= "-o";
-        Vector<String> possibleOptions = new <String>Vector();
-        possibleOptions.add(I);
-        possibleOptions.add(H);
-        possibleOptions.add(DN);
-        possibleOptions.add(G);
-        possibleOptions.add(E);
-        possibleOptions.add(S);
-        possibleOptions.add(F);
-        possibleOptions.add(O);
+        Vector<String> pairedOptions = new Vector<String>();
+        pairedOptions.add(H);
+        pairedOptions.add(DN);
+        pairedOptions.add(G);
+        pairedOptions.add(E);
+        pairedOptions.add(S);
+        pairedOptions.add(F);
+        pairedOptions.add(O);
+        Vector<String> singleOptions = new Vector<String>();
+        singleOptions.add(I);
         
-        HashMap<String, String> map = new <String, String>HashMap();
-        for(int i=2; i<argus.length; i++) {
-            String arg = argus[i];
-            
-            if(map.containsKey(arg)) {
-                System.out.println("Error: the command line for useradd can't have the duplicated options "+arg+".");
-                System.exit(1);
-            }
-            
-            //this is the scenario that "-i" is at the end of the arguments.
-            if(arg.equals(I) && i==argus.length-1) {
-                map.put(I, I);//we need to input password.
-                inputPassword = true;
-            } 
-            
-            if(possibleOptions.contains(arg) && i<argus.length-1) {
-                //System.out.println("find the option "+arg);
-                if(arg.equals(I)) {
-                    //this is the scenario that "-i" is NOT at the end of the arguments.
-                    if(!possibleOptions.contains(argus[i+1])) {
-                        System.out.println("Error: The option \"-i\" means the user will input a password in the useradd command. So it can't be followed by a value. It only can be followed by another option.");
-                        System.exit(1);
-                    }
-                    map.put(I, I);//we need to input password.
-                    inputPassword = true;
-                } else {
-                    if(arg.equals(H)) {
-                        passingHashedPassword = true;
-                    } else if (arg.equals(DN)) {
-                        hasDN = true;
-                    }
-                    map.put(arg, argus[i+1]);
-                }
-                
-            } else if(!possibleOptions.contains(arg)) {
-                //check if the previous argument is an option
-                if(!possibleOptions.contains(argus[i-1])) {
-                    System.out.println("Error: an illegal argument "+arg+" in the useradd command ");
-                    System.exit(1);
-                }
-            }
-        } 
-        
-        String dn = null;
-        String plainPassword = null;
-        String hashedPassword = null;
-        if(!hasDN) {
+        HashMap<String, String> map = new HashMap<String, String>();
+        int startIndex = 2;
+        try {
+            map = parseArgus(startIndex, argus, pairedOptions, singleOptions);
+        } catch (Exception e) {
+            System.out.println("Error in the useradd command: "+e.getMessage());
+            System.exit(1);
+        }
+       
+        String dn = map.get(DN);
+        if(dn == null || dn.trim().equals("")) {
             System.out.println("The \"-dn user-distinguish-name\" is requried in the useradd command ."); 
             System.exit(1);
-        } else {
-            dn = map.get(DN);
-        }
-        
+        } 
+        String plainPassword = null;
+        String hashedPassword = null;
        
-        if(inputPassword && passingHashedPassword) {
-            System.out.println("Error: you can choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the useradd command.");
+        
+        String input = map.get(I);
+        String passHash = map.get(H);
+        if(input != null && passHash != null) {
+            System.out.println("Error in the useradd command: you only can choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed passwword).");
             System.exit(1);
-        } else if (!inputPassword && !passingHashedPassword) {
-            System.out.println("Error: you must choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the useradd command.");
+        } else if (input == null && passHash == null) {
+            System.out.println("Error in the useradd command: you must choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
             System.exit(1);
-        } else if(inputPassword) {
+        } else if(input != null) {
             plainPassword = inputPassword();
             //System.out.println("============the plain password is "+plainPassword);
-        } else if(passingHashedPassword) {
-            hashedPassword = map.get(H);
+        } else if(passHash != null) {
+            hashedPassword = passHash;
         }
         
         String group = map.get(G);
+        //System.out.println("the groups name is "+group);
         String[] groups = null;
         if(group != null && !group.trim().equals("")) {
             groups = new String[1];
             groups[0]=group;
+            //System.out.println("set the first element of the groups to "+groups[0]);
         }
         String email = map.get(E);
         String surname = map.get(S);
         String givenname = map.get(F);
         String organization = map.get(O);
         authFile.addUser(dn, groups, plainPassword, hashedPassword, email, surname, givenname, organization);
-        System.out.println("Successfully added a user "+dn+" to the file authentication system ");
+        System.out.println("Successfully added a user \""+dn+"\" to the file authentication system ");
     }
     
     /*
@@ -804,80 +752,45 @@ public class AuthFile implements AuthInterface {
         String DN = "-dn";
         String I= "-i";
         String H = "-h";
-        Vector<String> possibleOptions = new <String>Vector();
-        possibleOptions.add(I);
-        possibleOptions.add(H);
-        possibleOptions.add(DN);
-        boolean inputPassword = false;
-        boolean passingHashedPassword = false;
-        boolean hasDN = false;
-        HashMap<String, String> map = new <String, String>HashMap();
-        for(int i=3; i<argus.length; i++) {
-            String arg = argus[i];
-            if(map.containsKey(arg)) {
-                System.out.println("Error: the command line for usermod -password can't have the duplicated options "+arg+".");
-                System.exit(1);
-            }
-            
-            //this is the scenario that "-i" is at the end of the arguments.
-            if(arg.equals(I) && i==argus.length-1) {
-                map.put(I, I);//we need to input password.
-                inputPassword = true;
-            } 
-            
-            if(possibleOptions.contains(arg) && i<argus.length-1) {
-                //System.out.println("find the option "+arg);
-                if(arg.equals(I)) {
-                    //this is the scenario that "-i" is NOT at the end of the arguments.
-                    if(!possibleOptions.contains(argus[i+1])) {
-                        System.out.println("Error: The option \"-i\" means the user will input a password in the usermod -password command. So it can't be followed by a value. It only can be followed by another option.");
-                        System.exit(1);
-                    }
-                    map.put(I, I);//we need to input password.
-                    inputPassword = true;
-                } else {
-                    if(arg.equals(H)) {
-                        passingHashedPassword = true;
-                    } else if (arg.equals(DN)) {
-                        hasDN = true;
-                    }
-                    map.put(arg, argus[i+1]);
-                }
-                
-            } else if(!possibleOptions.contains(arg)) {
-                //check if the previous argument is an option
-                if(!possibleOptions.contains(argus[i-1])) {
-                    System.out.println("Error: an illegal argument "+arg+" in the usermod -password command ");
-                    System.exit(1);
-                }
-            }
-        } 
-        
-        String dn = null;
+        Vector<String> pairedOptions = new Vector<String>();
+        pairedOptions.add(H);
+        pairedOptions.add(DN);
+        Vector<String> singleOptions = new Vector<String>();
+        singleOptions.add(I);
+        HashMap<String, String> map = new HashMap<String, String>();
+        int startIndex = 3;
+        try {
+            map = parseArgus(startIndex, argus, pairedOptions, singleOptions);
+        } catch (Exception e) {
+            System.out.println("Error in the usermod -password command: "+e.getMessage());
+            System.exit(1);
+        }
+      
+        String dn = map.get(DN);
+        if(dn == null || dn.trim().equals("")) {
+            System.out.println("Error in the usermod -password command: The \"-dn user-distinguish-name\" is requried."); 
+            System.exit(1);
+        }
         String plainPassword = null;
         String hashedPassword = null;
-        if(!hasDN) {
-            System.out.println("The \"-dn user-distinguish-name\" is requried in the usermod -password command ."); 
+        
+        String input = map.get(I);
+        String passHash = map.get(H);
+        if(input != null && passHash != null) {
+            System.out.println("Error in the usermod -password command: you only can choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
             System.exit(1);
-        } else {
-            dn = map.get(DN);
-        }
-
-        if(inputPassword && passingHashedPassword) {
-            System.out.println("Error: you can choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the usermod -password command.");
+        } else if (input == null && passHash == null) {
+            System.out.println("Error in the usermod -password command: you must choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
             System.exit(1);
-        } else if (!inputPassword && !passingHashedPassword) {
-            System.out.println("Error: you must choose either \"-i\"(input a password) or \"-d dashed-passpwrd\"(pass through a hashed passwprd) in the usermod -password command.");
-            System.exit(1);
-        } else if(inputPassword) {
+        } else if(input != null) {
             plainPassword = inputPassword();
-            authFile.modifyPassWithPlain(dn, plainPassword);
-            System.out.println("Successfully modified the password for the user "+dn);
             //System.out.println("============the plain password is "+plainPassword);
-        } else if(passingHashedPassword) {
-            hashedPassword = map.get(H);
+            authFile.modifyPassWithPlain(dn, plainPassword);
+            System.out.println("Successfully modified the password for the user \""+dn+"\".");
+        } else if(passHash != null) {
+            hashedPassword = passHash;
             authFile.modifyPassWithHash(dn, hashedPassword);
-            System.out.println("Successfully modified the password for the user "+dn);
+            System.out.println("Successfully modified the password for the user "+dn+"\".");
         }
     }
     
@@ -889,74 +802,109 @@ public class AuthFile implements AuthInterface {
         String A= "-a";
         String R = "-r";
         String G = "-g";
-        Vector<String> possibleOptions = new <String>Vector();
-        possibleOptions.add(DN);
-        possibleOptions.add(A);
-        possibleOptions.add(R);
-        possibleOptions.add(G);
-        HashMap<String, String> map = new <String, String>HashMap();
-        for(int i=3; i<argus.length; i++) {
-            String arg = argus[i];
-            if(map.containsKey(arg)) {
-                System.out.println("Error: the command line for the usermod -group can't have the duplicated options "+arg+".");
-                System.exit(1);
-            }
-            
-            //this is the scenario that "-a" or "-r" is at the end of the arguments.
-            if((arg.equals(A) || arg.equals(R)) && i==argus.length-1) {
-                map.put(arg, arg);//we need to input password.
-            } 
-            
-            if(possibleOptions.contains(arg) && i<argus.length-1) {
-                //System.out.println("find the option "+arg);
-                if(arg.equals(A) || arg.equals(R)) {
-                    //this is the scenario that "-a" or "-r" is NOT at the end of the arguments.
-                    if(!possibleOptions.contains(argus[i+1])) {
-                        System.out.println("Error: the option \"-a\" or \"-d\" shouldn't follow any value.");
-                        System.exit(1);
-                    }
-                    map.put(arg, arg);
-                    
-                } else {
-                    map.put(arg, argus[i+1]);
-                }
-                
-            } else if(!possibleOptions.contains(arg)) {
-                //check if the previous argument is an option
-                if(!possibleOptions.contains(argus[i-1])) {
-                    System.out.println("Error: an illegal argument "+arg+" in the usermod -group command ");
-                    System.exit(1);
-                }
-            }
+        Vector<String> pairedOptions = new Vector<String>();
+        pairedOptions.add(G);
+        pairedOptions.add(DN);
+        Vector<String> singleOptions = new Vector<String>();
+        singleOptions.add(A);
+        singleOptions.add(R);
+        HashMap<String, String> map = new HashMap<String, String>();
+        int startIndex = 3;
+        try {
+            map = parseArgus(startIndex, argus, pairedOptions, singleOptions);
+        } catch (Exception e) {
+            System.out.println("Error in the usermod -group command: "+e.getMessage());
+            System.exit(1);
         }
-        
+               
         String add = map.get(A);
         String remove = map.get(R);
         String group = map.get(G);
         String dn = map.get(DN);
         if(dn == null || dn.trim().equals("")) {
-            System.out.println("Erorr: the \"-dn user-distinguish-name\" is required in the usermod -group command");
+            System.out.println("Erorr in the usermod -group command: the \"-dn user-distinguish-name\" is required.");
             System.exit(1);
         }
         
         if(group == null || group.trim().equals("")) {
-            System.out.println("Erorr: the \"-g group-name\" is required in the usermod -group command");
+            System.out.println("Erorr in the usermod -group command: the \"-g group-name\" is required.");
             System.exit(1);
         }
         
         if(add != null && remove!= null) {
-            System.out.println("Erorr: You can only choose either \"-a\"(add the user to the group or \"-d\"(remove the user from the group in the usermod -group command");
+            System.out.println("Erorr in the usermod -group command: You can only choose either \"-a\"(add the user to the group) or \"-r\"(remove the user from the group).");
             System.exit(1);
         } else if (add == null && remove == null) {
-            System.out.println("Erorr: You must only choose either \"-a\"(add the user to the group or \"-d\"(remove the user from the group in the usermod -group command");
+            System.out.println("Erorr in the usermod -group command: You must choose either \"-a\"(add the user to the group) or \"-r\"(remove the user from the group).");
             System.exit(1);
         } else if (remove != null) {
             authFile.removeUserFromGroup(dn, group);
-            System.out.println("Successfully removed the user "+dn+" from the group "+group);
+            System.out.println("Successfully removed the user "+dn+" from the group \""+group+"\".");
         } else {
             authFile.addUserToGroup(dn, group);
-            System.out.println("Successfully added the user "+dn+" to the group "+group);
+            System.out.println("Successfully added the user "+dn+" to the group \""+group+"\".");
         }
+    }
+    
+    
+    /**
+     * Parse the arguments to get the pairs of option/value. If it is a single option (it doesn't need a value), the pair will be switch/switch. 
+     * @param startIndex the index of arguments where we will start.
+     * @param argus the arguments array will be parsed.
+     * @param pairedOptions the known options which should be a pair
+     * @param singleOptions the know options which just has a single value
+     * @return the empty map if there is no pairs were found
+     * @throws Exception if there is an illegal argument.
+     */
+    private static HashMap<String, String> parseArgus(int startIndex, String[]argus, Vector<String>pairedOptions, Vector<String>singleOptions) throws Exception {
+        HashMap<String, String> map = new <String, String>HashMap();
+        if(argus != null) {
+            for(int i=startIndex; i<argus.length; i++) {
+                String arg = argus[i];
+                if(map.containsKey(arg)) {
+                    throw new Exception("The command line can't have the duplicated options \""+arg+"\".");
+                }
+                
+                if(singleOptions != null && singleOptions.contains(arg)) {
+                    //we find a single option
+                    if(i==argus.length-1) {
+                        //it is the last argument, this is fine.
+                        map.put(arg, arg);
+                    } else if (i<argus.length -1) {
+                        //it is not the last argument. 
+                        if ((pairedOptions != null && pairedOptions.contains(argus[i+1])) || singleOptions.contains(argus[i+1])) {
+                            //it follows an option, this is fine
+                            map.put(arg, arg);
+                        } else {
+                            //it follows a vlaue, this is illegal
+                            throw new Exception("The option \""+arg+"\" shouldn't be followed any value, e.g. "+ argus[i+1]+".");
+                        }
+                    }
+                } else if (pairedOptions != null && pairedOptions.contains(arg)) {
+                    //we found an option which should follow a vlaue
+                    if(i==argus.length-1) {
+                        //it is the last argument (no value follows it)
+                        throw new Exception("The option \""+arg+"\" must be followed by a value");
+                    } else {
+                        //it is not the last argument and we need to check its following value
+                        if (!pairedOptions.contains(argus[i+1]) && (singleOptions == null || !singleOptions.contains(argus[i+1]))) {
+                            //it is NOT followed by an option, this is fine
+                            map.put(arg, argus[i+1]);
+                        } else {
+                            //it is followed by an option, this is illegal
+                            throw new Exception("The option \""+arg+"\" shouldn't be followed the option \""+ argus[i+1]+"\". It should be followed by a value.");
+                        }
+                    }
+                } else {
+                    //we found an argument is not an option
+                    if(pairedOptions == null || !pairedOptions.contains(argus[i-1])) {
+                        //the previous argument is not an option switch
+                        throw new Exception("The \""+arg+"\" is an illegal argument");
+                    }
+                }
+            } 
+        }
+        return map;
     }
     
     /*
@@ -967,7 +915,7 @@ public class AuthFile implements AuthInterface {
         String quit = "q";
         Console console = System.console();
         if (console == null) {
-            System.out.println("Sorry, we can't fetch the console from the system. You can't use the option \"-i\" to input a password. You have to use the option \"-d dashed-passpwrd\" to pass through a hashed passwprd in the useradd command. ");
+            System.out.println("Sorry, we can't fetch the console from the system. You can't use the option \"-i\" to input a password. You have to use the option \"-h hashed-passpwrd\" to pass through a hashed passwprd in the useradd command. ");
             System.exit(1);
         }
   
@@ -1007,12 +955,12 @@ public class AuthFile implements AuthInterface {
      */
     private static void printUsage() {
         System.out.println("Usage:\n"+
-                        "./authFileManager.sh useradd -i -dn user-distinguish-name -g groupname -e email-address -s surname -f given-name -o organizationName\n" +
-                        "./authFileManager.sh useradd -h hashed-password -dn user-distinguish-name -g groupname -e email-address -s surname -f given-name -o organizationName\n"+
+                        "./authFileManager.sh useradd -i -dn user-distinguish-name -g group-name -e email-address -s surname -f given-name -o organizationName\n" +
+                        "./authFileManager.sh useradd -h hashed-password -dn user-distinguish-name -g group-name -e email-address -s surname -f given-name -o organizationName\n"+
                         "./authFileManager.sh groupadd -g group-name -d description\n" +
                         "./authFileManager.sh usermod -password -dn user-distinguish-name -i\n"+
                         "./authFileManager.sh usermod -password -dn user-distinguish-name -h new-hashed-password\n"+
-                        "./authFileManager.sh usermod -group -a -dn user-disinguish-name -g added-group-name\n" +
+                        "./authFileManager.sh usermod -group -a -dn user-distinguish-name -g added-group-name\n" +
                         "./authFileManager.sh usermod -group -r -dn user-distinguish-name -g removed-group-name\n"+
                         "Note:\n1. if a value of an option has spaces, the value should be enclosed by the double quotes.\n"+
                         "  For example: ./authFileManager.sh groupadd -g nceas-dev -d \"Developers at NCEAS\"\n"+
@@ -1349,6 +1297,16 @@ public class AuthFile implements AuthInterface {
                         hashedPass = encrypt(plainPass);
                     } catch (Exception e) {
                         throw new AuthenticationException("AuthFile.User.serialize - can't encript the password since "+e.getMessage());
+                    }
+                }
+            }
+            if(groups != null) {
+                for(int i=0; i<groups.length; i++) {
+                    String group = groups[i];
+                    if(group != null && !group.trim().equals("")) {
+                        if(!groupExists(group)) {
+                            throw new AuthenticationException("AuthFile.User.serialize - can't put the user into a non-existing group "+group);
+                        }
                     }
                 }
             }
