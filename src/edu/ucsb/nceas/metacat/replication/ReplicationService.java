@@ -46,9 +46,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.List;
 import java.util.Timer;
 import java.util.Vector;
 
@@ -62,6 +65,7 @@ import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.log4j.Logger;
 import org.dataone.client.RestClient;
 import org.dataone.client.auth.CertificateManager;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
@@ -86,6 +90,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
+import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -415,6 +420,36 @@ public class ReplicationService extends BaseService {
 				rir.upgrade();
 				out.write("Removed invalid replicas for server " + serverid);
 				
+			} else if (subaction.equals("syncaccesspolicy")) {
+				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+				response.setContentType("text/html");
+				out = response.getWriter();
+				if (params.containsKey("docids")) {
+					String docIds = ((String[]) params.get("docids"))[0];
+					logMetacat.debug("Attempting to sync access policies for docids: " + docIds);
+					ArrayList<String> ids = new ArrayList<String>(
+							Arrays.asList(docIds.split("\\s*,\\s*")));
+					try {
+						List<Identifier> syncedIds = syncAP.sync(ids);
+						out.write("<html><body>Syncing access policies has completed.</body></html>");
+					} catch (Exception e) {
+						logMetacat.error("Error syncing all access polies: "
+								+ e.getMessage());
+						response.setContentType("text/html");
+						out = response.getWriter();
+						out.write("<html><body>Error syncing access policies</body></html>");
+					}
+				} else {
+					logMetacat.debug("Syncing access policies for all docids for this node");
+					try {
+						syncAP.syncAll();
+						out.write("<html><body>Syncing access policies for all docids has completed.</body></html>");
+					} catch (Exception e) {
+						logMetacat.error("Error syncing access policies: "
+								+ e.getMessage());
+						out.write("<html><body>Error syncing access policies: " + e.getMessage() + " </body></html>");
+					}
+				}
 			} else {
 			
 				out.write("<error>Unkonwn subaction</error>");
@@ -440,6 +475,7 @@ public class ReplicationService extends BaseService {
 				out.write("<td><b>ORE Maps</b></td>");
 				out.write("<td><b>Invalid Replicas</b></td>");
 			}
+			out.write("<td><b>Sync Access Policies</b></td>");
 			out.write("</tr>");
 
 			pstmt = dbConn.prepareStatement("SELECT serverid, server, last_checked, replicate, datareplicate, hub FROM xml_replication");
@@ -485,6 +521,15 @@ public class ReplicationService extends BaseService {
 					out.write("<input type='submit' value='Remove Invalid Replicas' " + disabled + " />");
 					out.write("</form></td>");
 				}
+				// for syncing access policies (MN -> CN)
+				out.write("<td><form action='" + request.getContextPath() + "/admin'>");
+				out.write("<input name='serverid' type='hidden' value='" + serverId + "'/>");
+				out.write("<input name='configureType' type='hidden' value='replication'/>");
+				out.write("<input name='action' type='hidden' value='servercontrol'/>");
+				out.write("<input name='subaction' type='hidden' value='syncaccesspolicy'/>");
+				out.write("<input type='submit' value='Sync access policies'/>");
+				out.write("</form></td>");
+				
 				out.write("</tr>");
 
 				tablehasrows = rs.next();

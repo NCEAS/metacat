@@ -33,6 +33,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,6 +61,7 @@ import org.dataone.service.types.v1.SystemMetadata;
 import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -68,7 +70,18 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 public class SyncAccessPolicy {
 
 	private static Logger logMetacat = Logger.getLogger(SyncAccessPolicy.class);
+	
+	protected static int MAXIMUM_DB_RECORD_COUNT;
 
+	static {
+		try {
+			MAXIMUM_DB_RECORD_COUNT = Integer.valueOf(PropertyService
+					.getProperty("database.webResultsetSize"));
+		} catch (Exception e) {
+			logMetacat.warn("Could not set MAXIMUM_DB_RECORD_COUNT", e);
+		}
+	}
+	
 	/**
 	 * Synchronize access policy (from system metadata) of d1 member node with
 	 * the corresponding controlling node.
@@ -106,10 +119,15 @@ public class SyncAccessPolicy {
 
 		CNode cn = D1Client.getCN();
 
-		for (int i = objList.getStart(); i <= objList.getCount(); i++) {
+		logMetacat.debug("start: " + objList.getStart() + "count: "
+				+ objList.getCount());
+		for (int i = objList.getStart(); i < objList.getCount(); i++) {
 
 			objInfo = objList.getObjectInfo(i);
 			pid = objInfo.getIdentifier();
+
+			logMetacat.debug("Getting SM for pid: " + pid.getValue() + " i: "
+					+ i);
 			try {
 				// Get sm, access policy for requested localId
 				mnSysMeta = IdentifierManager.getInstance().getSystemMetadata(
@@ -123,12 +141,14 @@ public class SyncAccessPolicy {
 						+ pid.getValue() + e.getMessage());
 			}
 
+			logMetacat
+					.debug("Getting access policy for pid: " + pid.getValue());
+
 			mnAccessPolicy = mnSysMeta.getAccessPolicy();
-			// System.out.println("pid: " +
+			// logMetacat.debug("pid: " +
 			// mnSysMeta.getIdentifier().toString());
 
 			// Get sm, access policy for requested pid from the CN
-			// BigInteger mnSerialVersion = mnSysMeta.getSerialVersion();
 
 			try {
 				cnSysMeta = cn.getSystemMetadata(pid);
@@ -136,17 +156,25 @@ public class SyncAccessPolicy {
 				logMetacat.error("Error getting system metadata for pid: "
 						+ pid.getValue() + " from cn: " + e.getMessage());
 			}
-			
-			cnAccessPolicy = cnSysMeta.getAccessPolicy();
+			logMetacat.debug("Getting access policy from CN for pid: "
+					+ pid.getValue());
 
-			// Compare access policy of MN and CN, and update if different
+			cnAccessPolicy = cnSysMeta.getAccessPolicy();
+			logMetacat.debug("Diffing access policies (MN,CN) for pid: "
+					+ pid.getValue());
+
+			// Compare access policies of MN and CN, and update if different.
 			if (!isEqual(mnAccessPolicy, cnAccessPolicy)) {
 				try {
 					BigInteger serialVersion = cnSysMeta.getSerialVersion();
-					cn.setAccessPolicy(session, pid,
-							mnSysMeta.getAccessPolicy(),
+					logMetacat.debug("Setting access policy from CN for pid: "
+							+ pid.getValue() + "serial version: "
+							+ serialVersion.toString());
+					cn.setAccessPolicy(session, pid, mnAccessPolicy,
 							serialVersion.longValue());
-					// Add this pid to the list of pids that were successfully synced
+					logMetacat.debug("Successfully set access policy");
+					// Add this pid to the list of pids that were successfully
+					// synced
 					syncedIds.add(pid);
 				} catch (Exception e) {
 					logMetacat.error("Error setting access policy of pid: "
@@ -154,6 +182,7 @@ public class SyncAccessPolicy {
 				}
 
 			}
+			logMetacat.debug("Done with pid: " + pid.getValue());
 		}
 
 		return syncedIds;
@@ -240,8 +269,8 @@ public class SyncAccessPolicy {
 		ObjectFormatIdentifier objectFormatId = null;
 		Boolean replicaStatus = false; // return only pids for which this mn is
 										// authoritative
-		Integer start = null;
-		Integer count = null;
+		Integer start = 0;
+		Integer count = MAXIMUM_DB_RECORD_COUNT;
 
 		ObjectList objsToSync = IdentifierManager.getInstance()
 				.querySystemMetadata(startTime, endTime, objectFormatId,
@@ -259,10 +288,12 @@ public class SyncAccessPolicy {
 	 *            - first access policy in the comparison
 	 * @param ap2
 	 *            - second access policy in the comparison
-	 * @return
+	 * @return	boolean - true if access policies are equivalent
 	 */
 	private boolean isEqual(AccessPolicy ap1, AccessPolicy ap2) {
 
+		// Access Policy -> Access Rule -> (Subject, Permission)
+		// i.e. Subject="slaughter", Permission="read,write,changePermission"
 		// Get the list of access rules for each access policy
 		List<org.dataone.service.types.v1.AccessRule> allowList1 = ap1
 				.getAllowList();
@@ -274,7 +305,7 @@ public class SyncAccessPolicy {
 
 		// Load the permissions from the access rules into a hash of sets, i.e.,
 		// so that we end up with this:
-		// hash key: set of permissions
+		// hash key: set of permissions, i.e.
 		// ----------------------------
 		// user1: read, write
 		// user2: read
@@ -282,6 +313,7 @@ public class SyncAccessPolicy {
 		// With the permissions in this structure, they can be easily compared
 		Set<Permission> perms = null;
 		// Process first access policy
+		// Loop through access rules of this allowList
 		for (org.dataone.service.types.v1.AccessRule accessRule : allowList1) {
 			for (Subject s : accessRule.getSubjectList()) {
 				if (userPerms1.containsKey(s)) {
@@ -292,6 +324,7 @@ public class SyncAccessPolicy {
 				for (Permission p : accessRule.getPermissionList()) {
 					perms.add(p);
 				}
+				userPerms1.put(s, perms);
 			}
 		}
 
@@ -306,30 +339,37 @@ public class SyncAccessPolicy {
 				for (Permission p : accessRule.getPermissionList()) {
 					perms.add(p);
 				}
+				userPerms2.put(s, perms);
 			}
 		}
 
 		// Now perform the comparison. This test assumes that the mn perms are
 		// more
 		// complete than the cn perms.
+		logMetacat.debug("Performing comparison of access policies");
 		for (Map.Entry<Subject, Set<Permission>> entry : userPerms1.entrySet()) {
 			// User name
 			Subject s1 = entry.getKey();
 			// Perms that the user holds
-			Set p1 = entry.getValue();
+			Set<Permission> p1 = entry.getValue();
+			logMetacat
+					.debug("Checking access policy of user: " + s1.getValue());
 
-			// Does this user in both access policies?
+			// Does this user exist in both access policies?
 			if (userPerms2.containsKey(s1)) {
-				if (!p1.equals(userPerms2.get(p1))) {
+				if (!p1.equals(userPerms2.get(s1))) {
+					logMetacat.debug("User access policies not equal");
 					return false;
 				}
 			} else {
+				logMetacat.debug("User access policy not found on CN");
 				return false;
 			}
 		}
 
 		// All comparisons have been passed, so the two access policies are
 		// equivalent
+		logMetacat.debug("Access policies are the same");
 		return true;
 	}
 
@@ -351,7 +391,7 @@ public class SyncAccessPolicy {
 			try {
 				guids = new ArrayList<String>(Arrays.asList(args[0]
 						.split("\\s*,\\s*")));
-				System.out.println("Trying to syncing access policy for pids: "
+				logMetacat.debug("Trying to syncing access policy for pids: "
 						+ args[0]);
 				syncAP.sync(guids);
 			} catch (Exception e) {
