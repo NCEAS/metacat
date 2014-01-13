@@ -88,7 +88,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testAddGroup() throws Exception{
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          authFile.addGroup(GROUPNAME, DESCRIPITION);
          try {
              authFile.addGroup(GROUPNAME, "Developers at NCEAS");
@@ -104,7 +104,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testAddUser() throws Exception{
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          String[]groups = {GROUPNAME};
          authFile.addUser(USERNAME, groups, PLAINPASSWORD, null, EMAILADDRESS, SURNAME, GIVENNAME, ORGANIZATIONNAME);
          //user a hash value of the PASSWORD
@@ -123,7 +123,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testAuthenticate() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          boolean success = authFile.authenticate(USERNAME, PLAINPASSWORD);
          if(!success) {
              assertTrue("The authentication should succeed.", false);
@@ -151,7 +151,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testGetUserInfo() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          String[] userInfo = authFile.getUserInfo(USERNAME, null);
          assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, userInfo[0].equals(GIVENNAME+" "+SURNAME));
          assertTrue("The org name for the user "+USERNAME+" should be "+ORGANIZATIONNAME, userInfo[1].equals(ORGANIZATIONNAME));
@@ -167,7 +167,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testGetUsers() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          String[][] users = authFile.getUsers(null, null);
          assertTrue("The file should have one user "+USERNAME, users[0][0].equals(USERNAME));
          assertTrue("The common name for the user "+USERNAME+" should be "+GIVENNAME+" "+SURNAME, users[0][1].equals(GIVENNAME+" "+SURNAME));
@@ -190,7 +190,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testGetGroups() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          String[][] groups = authFile.getGroups(null, null);
          assertTrue("The file should have one group associated with "+USERNAME, groups[0][0].equals(GROUPNAME));
          assertTrue("The group "+groups[0][0]+" should have the description "+DESCRIPITION, groups[0][1].equals(DESCRIPITION));
@@ -208,7 +208,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testChangePassword() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          authFile.authenticate(USERNAME, PLAINPASSWORD);
          String newPassword = "hello";
          authFile.modifyPassWithPlain(USERNAME,newPassword);
@@ -239,7 +239,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testAddRemoveUserToFromGroup() throws Exception{
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          try {
              authFile.addUserToGroup("user1", GROUPNAME);
              assertTrue("Can't reach here since we tried to add an unexisting user to a group", false);
@@ -318,7 +318,7 @@ public class AuthFileTest extends MCTestCase {
       * @throws Exception
       */
      public void testGetPrincipals() throws Exception {
-         AuthFile authFile = AuthFile.getInstance(PASSWORDFILEPATH);
+         AuthFile authFile = new AuthFile(PASSWORDFILEPATH);
          System.out.println(""+authFile.getPrincipals(null, null));
      }
 }
