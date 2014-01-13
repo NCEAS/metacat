@@ -51,7 +51,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 /**
  * This an authentication class base on a username/password file.
  * It is an alternative authentication mechanism of the ldap authentication.
- * This is a singleton class and the password file looks like:
+ * The password file looks like:
  *<?xml version="1.0" encoding="UTF-8" ?>
  * <subjects>
  *  <users>
@@ -60,6 +60,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *          <email>foo@foo.com</email>
  *          <surName>Smith</surName>
  *          <givenName>John</givenName>
+ *          <organization>NCEAS</organization>
  *          <group>nceas-dev</group>
  *      </user>
  *  </users>
@@ -107,30 +108,30 @@ public class AuthFile implements AuthInterface {
      * @return
      * @throws AuthenticationException
      */
-    public static AuthFile getInstance() throws AuthenticationException {
+    /*public static AuthFile getInstance() throws AuthenticationException {
         if(authFile == null) {
             authFile = new AuthFile();
         }
         return authFile;
-    }
+    }*/
     
     /**
      * Get the instance of the AuthFile from specified password file
      * @return
      * @throws AuthenticationException
      */
-    public static AuthFile getInstance(String passwordFile) throws AuthenticationException {
+    /*public static AuthFile getInstance(String passwordFile) throws AuthenticationException {
         passwordFilePath = passwordFile;
         if(authFile == null) {
             authFile = new AuthFile();
         }
         return authFile;
-    }
+    }*/
     
     /**
      * Constructor
      */
-    private AuthFile() throws AuthenticationException {
+    public AuthFile() throws AuthenticationException {
         try {
             init();
         } catch (Exception e) {
@@ -138,6 +139,21 @@ public class AuthFile implements AuthInterface {
             throw new AuthenticationException(e.getMessage());
         }
         
+    }
+    
+    /**
+     * 
+     * @param passwordFile
+     * @throws AuthenticationException
+     */
+    public  AuthFile (String passwordFile) throws AuthenticationException {
+        passwordFilePath = passwordFile;
+        try {
+            init();
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new AuthenticationException(e.getMessage());
+        }
     }
     
     /*
@@ -600,7 +616,7 @@ public class AuthFile implements AuthInterface {
                 System.exit(1);
             }
             PropertyService.getInstance(argus[0]);
-            AuthFile authFile = AuthFile.getInstance();
+            AuthFile authFile = new AuthFile();
             if(argus[1] != null && argus[1].equals(GROUPADD)) {
                 handleGroupAdd(authFile,argus);
             } else if (argus[1] != null && argus[1].equals(USERADD)) {
