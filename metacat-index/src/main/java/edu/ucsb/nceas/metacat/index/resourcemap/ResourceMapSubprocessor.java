@@ -150,24 +150,26 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
 			String query = QUERY + "\"" + id + "\"";
 			SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
 			QueryResponse qr = solrServer.query(solrParams);
-			SolrDocument orig = qr.getResults().get(0);
-			IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
-			for (String fieldName : orig.getFieldNames()) {
-				// don't transfer the copyTo fields, otherwise there are errors
-				if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
-					continue;
-				}
-				for (Object value : orig.getFieldValues(fieldName)) {
-					String stringValue = value.toString();
-					// special handling for dates in ISO 8601
-					if (value instanceof Date) {
-						stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
-						SolrDateConverter converter = new SolrDateConverter();
-						stringValue = converter.convert(stringValue);
+			if (qr.getResults().size() > 0) {
+				SolrDocument orig = qr.getResults().get(0);
+				IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+				for (String fieldName : orig.getFieldNames()) {
+					// don't transfer the copyTo fields, otherwise there are errors
+					if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+						continue;
 					}
-					SolrElementField field = new SolrElementField(fieldName, stringValue);
-					log.debug("Adding field: " + fieldName);
-					doc.addField(field);
+					for (Object value : orig.getFieldValues(fieldName)) {
+						String stringValue = value.toString();
+						// special handling for dates in ISO 8601
+						if (value instanceof Date) {
+							stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
+							SolrDateConverter converter = new SolrDateConverter();
+							stringValue = converter.convert(stringValue);
+						}
+						SolrElementField field = new SolrElementField(fieldName, stringValue);
+						log.debug("Adding field: " + fieldName);
+						doc.addField(field);
+					}
 				}
 			}
 
