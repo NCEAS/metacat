@@ -26,6 +26,8 @@
     
     <import resource="application-context-resource-map.xml" />
     <import resource="application-context-systemmeta100.xml" />
+    
+    <import resource="application-context-annotation.xml" />
 
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
  <bean id="fgdcDateConverter" class="org.dataone.cn.indexer.convert.FgdcDateConverter"/>
@@ -57,6 +59,7 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
+       <ref bean="rdfXmlSubprocessor" />
       </list>
      </property>
     </bean>

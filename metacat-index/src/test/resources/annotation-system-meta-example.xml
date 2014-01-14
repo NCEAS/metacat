@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1:systemMetadata xmlns:d1="http://ns.dataone.org/service/types/v1">
+	<identifier>http://doi.org/annotation.1.1</identifier>
+	<formatId>http://www.w3.org/TR/rdf-syntax-grammar</formatId>
+	<size>0</size>
+	<checksum algorithm="MD5">TBD</checksum>
+	<rightsHolder>public</rightsHolder>
+	<accessPolicy>
+		<allow>
+			<subject>public</subject>
+			<permission>read</permission>
+		</allow>
+	</accessPolicy>
+	<replicationPolicy replicationAllowed="true" numberReplicas="2" />
+	<archived>false</archived>
+	<dateSysMetadataModified>2013-04-11T17:54:25.462+00:00</dateSysMetadataModified>
+	<authoritativeMemberNode>TBD</authoritativeMemberNode>
+</d1:systemMetadata>

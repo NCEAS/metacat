@@ -1,0 +1,61 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="rdfXmlSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.RdfXmlSubprocessor">
+		<property name="matchDocument"
+			value="/d100:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar']" />
+		<property name="fieldList">
+			<list>
+				<ref bean="annotation.measurement" />
+			</list>
+		</property>	
+	</bean>
+	
+	<bean id="annotation.measurement" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+		<constructor-arg name="name" value="measurement_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> 
+				PREFIX ao: <http://purl.org/ao/>
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+				PREFIX pav: <http://purl.org/pav/>
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+				SELECT ?measurement_sm ?pid
+				FROM <$GRAPH_NAME>
+				WHERE { 
+
+						?measurement_sm rdf:type oboe-core:Measurement .
+						?measurement_sm rdf:type ?restriction .
+						?restriction owl:onProperty oboe-core:ofCharacteristic .
+						?restriction owl:allValuesFrom ?characteristic .
+						?characteristic rdfs:subClassOf+ ?allChar .
+						?allChar rdfs:subClassOf oboe-core:Characteristic .
+						
+						OPTIONAL { 
+							?measurement_sm rdf:type ?restriction2 .
+							?restriction2 owl:onProperty oboe-core:usesStandard .
+							?restriction2 owl:allValuesFrom ?standard .
+						}
+						
+						?annotation ao:context ?measurement_sm .
+						?annotation ao:annotatesResource ?metadata .
+						?metadata dcterms:identifier ?pid . 
+						
+						?annotation pav:createdBy ?person .
+						?person foaf:name ?name .
+						?annotation pav:createdOn ?date .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+
+</beans>
