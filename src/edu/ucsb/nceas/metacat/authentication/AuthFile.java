@@ -75,7 +75,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class AuthFile implements AuthInterface {
-    private static final String ORGANIZATIONNAME = "UNkown";
+    private static final String ORGANIZATIONNAME = "Unknown";
     private static final String ORGANIZATION = "organization";
     private static final String NAME = "name";
     private static final String DN = "dn";
@@ -873,7 +873,7 @@ public class AuthFile implements AuthInterface {
      * @throws Exception if there is an illegal argument.
      */
     private static HashMap<String, String> parseArgus(int startIndex, String[]argus, Vector<String>pairedOptions, Vector<String>singleOptions) throws Exception {
-        HashMap<String, String> map = new <String, String>HashMap();
+        HashMap<String, String> map = new HashMap<String, String>();
         if(argus != null) {
             for(int i=startIndex; i<argus.length; i++) {
                 String arg = argus[i];
