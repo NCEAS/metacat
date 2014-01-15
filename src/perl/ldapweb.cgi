@@ -883,8 +883,9 @@ sub getLdapEntry {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-        $ldap->start_tls( verify => 'require',
-                      cafile => $ldapServerCACertFile);
+        $ldap->start_tls( verify => 'none');
+        #$ldap->start_tls( verify => 'require',
+        #              cafile => $ldapServerCACertFile);
     	my $bindresult = $ldap->bind;
     	if ($bindresult->code) {
         	return $entry;
@@ -993,9 +994,9 @@ sub findExistingAccounts {
     debug("findExistingAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	#$ldap->start_tls( verify => 'none');
-    	$ldap->start_tls( verify => 'require',
-                      cafile => $ldapServerCACertFile);
+    	$ldap->start_tls( verify => 'none');
+    	#$ldap->start_tls( verify => 'require',
+        #              cafile => $ldapServerCACertFile);
     	$ldap->bind( version => 3, anonymous => 1);
 		$mesg = $ldap->search (
 			base   => $base,
