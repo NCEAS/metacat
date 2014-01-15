@@ -388,26 +388,30 @@ public class SolrIndex {
 			// copy the original values already indexed for this document	
 	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
 	    	QueryResponse res = solrServer.query(query);
-	    	SolrDocument orig = res.getResults().get(0);
 	    	SolrDoc doc = new SolrDoc();
-	        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
-	    	for (String fieldName: orig.getFieldNames()) {
-	        	//  don't transfer the copyTo fields, otherwise there are errors
-	        	if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
-	        		continue;
-	        	}
-	        	for (Object value: orig.getFieldValues(fieldName)) {
-	        		String stringValue = value.toString();
-	        		// special handling for dates in ISO 8601
-	        		if (value instanceof Date) {
-	        			stringValue = DateTimeMarshaller.serializeDateToUTC((Date)value);
-	        			SolrDateConverter converter = new SolrDateConverter();
-	        			stringValue = converter.convert(stringValue);
-	        		}
-					SolrElementField field = new SolrElementField(fieldName, stringValue);
-					log.debug("Adding field: " + fieldName);
-					doc.addField(field);
-	        	}
+	    	
+	    	// include existing values if they exist
+	        if (res.getResults().size() > 0) {
+		        SolrDocument orig = res.getResults().get(0);
+		        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+		    	for (String fieldName: orig.getFieldNames()) {
+		        	//  don't transfer the copyTo fields, otherwise there are errors
+		        	if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+		        		continue;
+		        	}
+		        	for (Object value: orig.getFieldValues(fieldName)) {
+		        		String stringValue = value.toString();
+		        		// special handling for dates in ISO 8601
+		        		if (value instanceof Date) {
+		        			stringValue = DateTimeMarshaller.serializeDateToUTC((Date)value);
+		        			SolrDateConverter converter = new SolrDateConverter();
+		        			stringValue = converter.convert(stringValue);
+		        		}
+						SolrElementField field = new SolrElementField(fieldName, stringValue);
+						log.debug("Adding field: " + fieldName);
+						doc.addField(field);
+		        	}
+		        }
 	        }
 	    	
 	        // add the additional fields we are trying to include in the index
