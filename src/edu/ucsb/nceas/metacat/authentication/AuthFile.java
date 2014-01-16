@@ -978,9 +978,10 @@ public class AuthFile implements AuthInterface {
                         "./authFileManager.sh usermod -password -dn user-distinguish-name -h new-hashed-password\n"+
                         "./authFileManager.sh usermod -group -a -dn user-distinguish-name -g added-group-name\n" +
                         "./authFileManager.sh usermod -group -r -dn user-distinguish-name -g removed-group-name\n"+
-                        "Note:\n1. if a value of an option has spaces, the value should be enclosed by the double quotes.\n"+
+                        "Note:\n"+"1. The user-distinguish-name must look like \"uid=john,o=something,dc=something,dc=something\" and the group-name must look like \"cn=dev,o=something,dc=something,dc=something\".\n"+
+                        "2. if a value of an option has spaces, the value should be enclosed by the double quotes.\n"+
                         "  For example: ./authFileManager.sh groupadd -g nceas-dev -d \"Developers at NCEAS\"\n"+
-                        "2. \"-d description\" in groupadd is optional; \"-g groupname -e email-address -s surname -f given-name -o organizationName\" in useradd are optional as well.");
+                        "3. \"-d description\" in groupadd is optional; \"-g groupname -e email-address -s surname -f given-name -o organizationName\" in useradd are optional as well.");
                        
                         
     }
