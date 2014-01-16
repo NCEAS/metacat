@@ -266,7 +266,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="scientificName"           type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="relatedOrganizations"     type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="datePublished"            type="date"      multiValued="false" indexed="true" stored="true" />
-        <field name="pubDate" 				   type="date" 		multiValued="false"	indexed="true" stored="true"/>
+        <field name="pubDate" 				   type="date" 							indexed="true" stored="true"/>
 
 		<field name="investigator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
 		<field name="investigatorText" 	type="text" 	indexed="true" stored="false" multiValued="true"/>
@@ -399,8 +399,8 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
     <copyField source="topic" dest="topicText"/>
     <copyField source="investigator" dest="investigatorText"/>
     <copyField source="keywords" dest="keywordsText"/>
-    <copyField source="pubDate" dest="datePublished"/>
-    <copyField source="dateUploaded" dest="updateDate"/>
+    <copyField source="pubDate" dest="datePublished" />
+    <copyField source="dateUploaded" dest="updateDate" />
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
   
 
