@@ -3,9 +3,9 @@
  *  Copyright: 2010 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
- *   '$Author: jones $'
- *     '$Date: 2010-02-03 17:58:12 -0900 (Wed, 03 Feb 2010) $'
- * '$Revision: 5211 $'
+ *   '$Author$'
+ *     '$Date$'
+ * '$Revision$'
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.PreparedStatement;
@@ -48,6 +49,8 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -68,8 +71,14 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
+import org.dataone.client.CNode;
+import org.dataone.client.D1Client;
+import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 
@@ -89,6 +98,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataquery.DataQuery;
@@ -3331,6 +3341,12 @@ public class MetacatHandler {
         String success = null;
         boolean isEmlPkgMember = false;
         
+		SystemMetadata mnSysMeta = null;
+		Session session = null;
+		Identifier pid = new Identifier();
+		AccessPolicy mnAccessPolicy = null;
+		SystemMetadata cnSysMeta = null;
+        
         String[] docList = params.get("docid");
         String[] principalList = params.get("principal");
         String[] permissionList = params.get("permission");
@@ -3357,7 +3373,22 @@ public class MetacatHandler {
                 
                 // force hazelcast to update system metadata
                 HazelcastService.getInstance().refreshSystemMetadataEntry(docList[0]);
-                
+         
+                // Update the CN with the modified access policy
+                logMetacat.debug("Setting CN access policy for pid: " + docList[0]);
+
+    			try {
+    				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(docList[0]));
+    				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+
+    				logMetacat.debug("Trying to syncing access policy for pids: "
+    						+ docList[0]);
+    				syncAP.sync(guids);
+    			} catch (Exception e) {
+    				logMetacat.error("Error syncing pids: " + docList[0]
+    						+ " Exception " + e.getMessage());
+                    e.printStackTrace(System.out);
+    			}
             } catch(AccessControlException ace) {
                 errorList.addElement("MetacatHandler.handleSetAccessAction - " +
                 		             "access control error when setting " + 
@@ -3410,6 +3441,7 @@ public class MetacatHandler {
         // handle every accessionNumber
         for (int i = 0; i < docList.length; i++) {
             String docid = docList[i];
+
             if (docid.startsWith("urn:")) {
                 try {
                     String actualDocId = LSIDUtil.getDocId(docid, false);
@@ -3492,6 +3524,21 @@ public class MetacatHandler {
             // force hazelcast to update system metadata
             HazelcastService.getInstance().refreshSystemMetadataEntry(docList[0]);
             
+            logMetacat.debug("Setting CN access policy for pid: " + docList[0]);
+
+			try {
+				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(docList[0]));
+				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+
+				logMetacat.debug("Trying to syncing access policy for pids: "
+						+ docList[0]);
+				syncAP.sync(guids);
+			} catch (Exception e) {
+				logMetacat.error("Error syncing pids: " + docList[0]
+						+ " Exception " + e.getMessage());
+                e.printStackTrace(System.out);
+			}
+
             //force replication when this action is called
             boolean isXml = true;
             if (publicId.equalsIgnoreCase("BIN")) {
