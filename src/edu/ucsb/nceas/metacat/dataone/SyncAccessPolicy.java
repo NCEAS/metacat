@@ -7,7 +7,7 @@ package edu.ucsb.nceas.metacat.dataone;
  *             National Center for Ecological Analysis and Synthesis
  *    Authors: Peter Slaughter
  *
- *   '$Author: slaughter $'
+ *   '$Author$'
  *     '$Date:$'
  * '$Revision:$'
  *
@@ -109,9 +109,8 @@ public class SyncAccessPolicy {
 		AccessPolicy cnAccessPolicy = null;
 		String guid = null;
 		AccessPolicy mnAccessPolicy = null;
-		Identifier pid = null;
+		Identifier pid = new Identifier();
 		ObjectInfo objInfo = null;
-		pid = new Identifier();
 		Session session = null;
 		List<Identifier> syncedIds = new ArrayList<Identifier>();
 		SystemMetadata cnSysMeta = null;
@@ -132,7 +131,6 @@ public class SyncAccessPolicy {
 				// Get sm, access policy for requested localId
 				mnSysMeta = IdentifierManager.getInstance().getSystemMetadata(
 						pid.getValue());
-
 			} catch (McdbDocNotFoundException e) {
 				logMetacat.error("Error syncing access policy of pid: "
 						+ pid.getValue() + " pid not found: " + e.getMessage());
@@ -145,20 +143,17 @@ public class SyncAccessPolicy {
 					.debug("Getting access policy for pid: " + pid.getValue());
 
 			mnAccessPolicy = mnSysMeta.getAccessPolicy();
-			// logMetacat.debug("pid: " +
-			// mnSysMeta.getIdentifier().toString());
-
+			
 			// Get sm, access policy for requested pid from the CN
-
 			try {
 				cnSysMeta = cn.getSystemMetadata(pid);
 			} catch (Exception e) {
 				logMetacat.error("Error getting system metadata for pid: "
 						+ pid.getValue() + " from cn: " + e.getMessage());
+				continue;
 			}
 			logMetacat.debug("Getting access policy from CN for pid: "
 					+ pid.getValue());
-
 			cnAccessPolicy = cnSysMeta.getAccessPolicy();
 			logMetacat.debug("Diffing access policies (MN,CN) for pid: "
 					+ pid.getValue());
@@ -176,11 +171,26 @@ public class SyncAccessPolicy {
 					// Add this pid to the list of pids that were successfully
 					// synced
 					syncedIds.add(pid);
+				} catch (NotAuthorized na) {
+					logMetacat
+							.error("Error syncing CN with access policy of pid: "
+									+ pid.getValue()
+									+ " user not authorized: "
+									+ na.getMessage());
+					throw na;
+				} catch (ServiceFailure sf) {
+					logMetacat
+							.error("Error syncing CN with access policy of pid: "
+									+ pid.getValue()
+									+ " Service failure: "
+									+ sf.getMessage());
+					throw sf;
 				} catch (Exception e) {
-					logMetacat.error("Error setting access policy of pid: "
-							+ pid.getValue() + " with cn: " + e.getMessage());
+					logMetacat
+							.error("Error syncing CN with access policy of pid: "
+									+ pid.getValue() + e.getMessage());
+					throw e;
 				}
-
 			}
 			logMetacat.debug("Done with pid: " + pid.getValue());
 		}
@@ -228,7 +238,6 @@ public class SyncAccessPolicy {
 		// syncAll, and
 		// what sync(ObjectList...) expects
 		for (String guid : guidsToSync) {
-
 			try {
 				sm = IdentifierManager.getInstance().getSystemMetadata(guid);
 			} catch (Exception e) {
@@ -236,15 +245,11 @@ public class SyncAccessPolicy {
 						+ e.getMessage());
 			}
 
-			logMetacat.debug("Got sm for guid: " + guid);
 			ObjectInfo oi = new ObjectInfo();
-
 			Identifier id = new Identifier();
 			id.setValue(guid);
 			oi.setIdentifier(id);
-
 			oi.setDateSysMetadataModified(sm.getDateSysMetadataModified());
-
 			oi.setChecksum(sm.getChecksum());
 			oi.setFormatId(sm.getFormatId());
 			oi.setSize(sm.getSize());
