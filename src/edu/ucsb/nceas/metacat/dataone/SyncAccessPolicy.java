@@ -8,8 +8,8 @@ package edu.ucsb.nceas.metacat.dataone;
  *    Authors: Peter Slaughter
  *
  *   '$Author$'
- *     '$Date:$'
- * '$Revision:$'
+ *     '$Date$'
+ * '$Revision$'
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -104,7 +104,7 @@ public class SyncAccessPolicy {
 	public List<Identifier> sync(ObjectList objList) throws ServiceFailure,
 			InvalidToken, NotAuthorized, NotFound, NotImplemented,
 			McdbDocNotFoundException, InvalidRequest, VersionMismatch,
-			NumberFormatException, AccessionNumberException, SQLException {
+			NumberFormatException, AccessionNumberException, SQLException, Exception {
 
 		AccessPolicy cnAccessPolicy = null;
 		String guid = null;
@@ -220,7 +220,7 @@ public class SyncAccessPolicy {
 			throws NumberFormatException, ServiceFailure, InvalidToken,
 			NotAuthorized, NotFound, NotImplemented, McdbDocNotFoundException,
 			InvalidRequest, VersionMismatch, AccessionNumberException,
-			SQLException {
+			SQLException, Exception {
 		List<Identifier> syncedPids = null;
 		ObjectList objList = new ObjectList();
 		SystemMetadata sm = new SystemMetadata();
@@ -264,7 +264,7 @@ public class SyncAccessPolicy {
 			NotAuthorized, NotFound, NotImplemented, McdbDocNotFoundException,
 			InvalidRequest, VersionMismatch, NumberFormatException,
 			AccessionNumberException, SQLException, PropertyNotFoundException,
-			ServiceException {
+			ServiceException, Exception {
 
 		// For the following query parameters - null indicates that the query
 		// will not be
