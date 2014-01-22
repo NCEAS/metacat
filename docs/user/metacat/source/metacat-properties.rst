@@ -350,6 +350,11 @@ Authorization and Authentication Properties
 |                                   | Metacat is first installed and configured. All accounts must exist            |                                               |
 |                                   | in LDAP in order to continue with the configuration.                          |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _auth-user-management-url:     |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| auth.userManagementUrl            | A web page provides the user management such as creating a new user and       | https://identity.nceas.ucsb.edu               |
+|                                   | changing password.                                                            |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-file-path:               |                                                                               |                                               |
 |                                   |                                                                               |                                               |
 | auth.file.path                    | The absolute path of the password file which stores the username/password     | /var/metacat/certs/password                   |
