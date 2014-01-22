@@ -13,13 +13,13 @@
 	<group>
         <index>2</index>
         <name>File-based Authentication Configuration</name>
-        <description>Class edu.ucsb.nceas.metacat.authentication.AuthFile uses the configurations.</description>
+        <description>Authentication class edu.ucsb.nceas.metacat.authentication.AuthFile uses the configuration.</description>
     </group>
 	
 	<group>
         <index>3</index>
         <name>LDAP Authentication Configuration</name>
-        <description>Class edu.ucsb.nceas.metacat.AuthLdap uses the configurations of an external LDAP server.</description>
+        <description>Authentication class edu.ucsb.nceas.metacat.AuthLdap uses the configurations of an external LDAP server.</description>
     </group>
     
     
@@ -64,7 +64,7 @@
         <index>1</index>
         <required>true</required>
         <description>Absolute path of the password file.</description>
-        <helpFile>docs/metacat-properties.html#auth.file.path</helpFile>
+        <helpFile>docs/metacat-properties.html#auth-file-path</helpFile>
     </config>
 	
 	<config>
