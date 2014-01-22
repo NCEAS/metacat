@@ -53,6 +53,15 @@
 		<group>1</group>
 		<index>2</index>
 		<required>true</required>
+		<fieldType>select</fieldType>
+        <option>
+              <name>edu.ucsb.nceas.metacat.authentication.AuthFile</name>
+              <value>edu.ucsb.nceas.metacat.authentication.AuthFile</value>
+        </option>
+        <option>
+           <name>edu.ucsb.nceas.metacat.AuthLdap</name>
+           <value>edu.ucsb.nceas.metacat.AuthLdap</value>
+         </option>
 		<description>Authentication Class.</description>
 		<helpFile>docs/metacat-properties.html#auth-class</helpFile>
 	</config>
