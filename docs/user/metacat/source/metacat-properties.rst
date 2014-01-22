@@ -350,6 +350,14 @@ Authorization and Authentication Properties
 |                                   | Metacat is first installed and configured. All accounts must exist            |                                               |
 |                                   | in LDAP in order to continue with the configuration.                          |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _auth-file-path:               |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| auth.file.path                    | The absolute path of the password file which stores the username/password     | /var/metacat/certs/password                   |
+|                                   | and users' information. This file is used for the file-based authentication   |                                               |
+|                                   | mechanism.                                                                    |                                               |
+|                                   |                                                                               |                                               |
+|                                   | Default Value: /var/metacat/certs/password                                    |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _auth-url:                     |                                                                               |                                               |
 |                                   |                                                                               |                                               |
 | auth.url                          | The URL of the server that Metacat should use for authentication.             | ldap://ldap.ecoinformatics.org:389/           |
