@@ -329,14 +329,14 @@ Authorization and Authentication Properties
 +===================================+===============================================================================+===============================================+
 | .. _auth-class:                   |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| auth.class                        | The class used for user authentication. Currently, only the AuthLdap          | edu.ucsb.nceas.metacat.AuthLdap               |
-|                                   | class is included in the Metacat distribution.                                |                                               |
+| auth.class                        | The class used for user authentication. Currently, both the AuthFile and      | edu.ucsb.nceas.metacat.AuthLdap               |
+|                                   | AuthLdap classes are included in the Metacat distribution.                    |                                               |
 |                                   | Note: If you implement another authentication strategy by implementing a Java |                                               |
 |                                   | class that extends the AuthInterface interface and rebuilding Metacat,        |                                               |
 |                                   | change this property to the fully qualified class name of your custom         |                                               |
 |                                   | authentication mechanism.                                                     |                                               |
 |                                   |                                                                               |                                               |
-|                                   | Default Value: edu.ucsb.nceas.metacat.AuthLdap                                |                                               |
+|                                   | Default Value: edu.ucsb.nceas.metacat.authentication.AuthFile                 |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | auth.timeoutMinutes*              | The number of minutes that a user will stay logged in to Metacat              | 180                                           |
 |                                   | without any activity.                                                         |                                               |
