@@ -95,14 +95,26 @@
 		     				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	   	
 							<select class="textinput" name="<%= metaDataProperty.getKey() %>">
 		<%
+		                    String storedValue = (String)request.getAttribute(metaDataProperty.getKey());
 							Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
 							Vector<String> fieldOptionNames = metaDataProperty.getFieldOptionNames();
 							for (int i = 0; i < fieldOptionNames.size(); i++) {
-		%>
-								<option value="<%= fieldOptionValues.elementAt(i) %>"> <%= fieldOptionNames.elementAt(i) %>
+							     boolean foundStoredValue = false;
+							     if(storedValue != null && !storedValue.equals("") && storedValue.equals(fieldOptionNames.elementAt(i))) {
+							         foundStoredValue = true;
+							     }
+                             if(foundStoredValue) {
+        %>
+                                <option value="<%= fieldOptionValues.elementAt(i) %>" selected="selected"><%= fieldOptionNames.elementAt(i) %></option>
+        <%
+                              } else {
+        %>
+								<option value="<%= fieldOptionValues.elementAt(i) %>"><%= fieldOptionNames.elementAt(i) %></option>
 		<%
+		                      }
 							}
 		%>
+		
 							</select>
 							<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
 							
