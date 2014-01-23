@@ -50,7 +50,7 @@ function trim(stringToTrim) {
           
         
 				<p><span class="greenbold">Step 1: Create an Account</span> <br>
-		   			Create an account by registering with the <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]">KNB</a>.
+		   			Create an account by registering with the <a href="[%userManagementUrl%]">KNB</a>.
 
 					Many scientists will already have accounts in the KNB, especially those 
 					from institutions like NCEAS and LTER. If you already have an account 
@@ -133,11 +133,7 @@ function trim(stringToTrim) {
   </form>
   </menu>
   
-  Dont have an account yet? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]">Create a new account</a>
-  <br />
-  Forgot your password? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]&amp;stage=resetpass">Reset your password</a>
-  <br />
-  Forgot your username? <a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]&amp;stage=lookupname">Look up your username</a>
+  Need an account? Forgot password? <a href="[%userManagementUrl%]">Click here</a>.
 
 [% IF cfg == 'nceas' %]
   [% INCLUDE "nceasFooter.tmpl" %]
