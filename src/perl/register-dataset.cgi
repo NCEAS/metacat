@@ -88,6 +88,7 @@ my $cgiPrefix =
   "/" . $properties->getProperty('application.context') . "/cgi-bin";
 my $styleSkinsPath  = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
+my $userManagementUrl = $properties->getProperty('auth.userManagementUrl');
 
 my $now = time;
 
@@ -213,6 +214,7 @@ $$templateVars{'email'}           = $email;
 $$templateVars{'templates'}       = $templates;
 $$templateVars{'required'}        = $required;
 $$templateVars{'config'}          = $config;
+$$templateVars{'userManagementUrl'} = $userManagementUrl;
 
 debug("Initialized -- stage set: $FORM::stage");
 
