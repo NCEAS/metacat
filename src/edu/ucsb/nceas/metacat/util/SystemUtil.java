@@ -618,4 +618,13 @@ public class SystemUtil {
 		
 		return indexPaths;
 	}
+	
+	/**
+	 * Get the url pointing to the user management page.
+	 * @return the url.
+	 * @throws PropertyNotFoundException
+	 */
+	public static String getUserManagementUrl() throws PropertyNotFoundException {
+	    return PropertyService.getProperty("auth.userManagementUrl");
+	}
  }
