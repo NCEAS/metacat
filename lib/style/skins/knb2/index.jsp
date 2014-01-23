@@ -195,20 +195,7 @@
                           </tr>
                           <tr valign="middle">
                             <td height="20">&nbsp;</td>
-                            <td height="20" align="left"><a href="http://ldap.ecoinformatics.org/cgi-bin/ldapweb.cgi?cfg=knb" target="_blank">create
-                              a new account</a></td>
-                            <td height="20">&nbsp;</td>
-                          </tr>
-                          <tr valign="middle">
-                            <td height="20">&nbsp;</td>
-                            <td height="20" align="left"><a href="http://ldap.ecoinformatics.org/cgi-bin/ldapweb.cgi?stage=resetpass&cfg=knb" target="_blank">forgot
-                              your password?</a></td>
-                            <td height="20">&nbsp;</td>
-                          </tr>
-                          <tr valign="middle">
-                            <td height="20">&nbsp;</td>
-                            <td height="20" align="left"><a href="http://ldap.ecoinformatics.org/cgi-bin/ldapweb.cgi?stage=changepass&cfg=knb" target="_blank">change
-                                your password</a></td>
+                            <td height="20" align="left"><a href="<%=USER_MANAGEMENT_URL%>" target="_blank">Need an account? Forgot password?</a></td>
                             <td height="20">&nbsp;</td>
                           </tr>
                           <tr valign="middle">

@@ -123,11 +123,9 @@ for citation and attribution information as well as usage rights).
     </menu>
   </li>
   <p>&nbsp;</p>
-  <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=ltss">Create a new account</a>
-    <ul>
-        <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=ltss&amp;stage=changepass">Change your password</a>
-        <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=ltss&amp;stage=resetpass">Reset your password</a>
-    </ul>
+  
+  
+  <li><a href="<%=USER_MANAGEMENT_URL%>">Need an account? Forgot password?</a>
     <br />
     <menu>
       The account management tools are used to create and manage registry 

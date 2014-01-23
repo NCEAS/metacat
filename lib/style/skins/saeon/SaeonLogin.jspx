@@ -269,8 +269,8 @@
 			<jsp:element name="a">
 				<jsp:attribute name="target">_new</jsp:attribute>
 				<jsp:attribute name="href">
-					<!--<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon"</jsp:expression>-->
-					<jsp:expression>KNB_SITE_URL + "/cgi-bin/ldapweb.cgi?cfg=saeon"</jsp:expression>
+					<!--<jsp:expression>USER_MANAGEMENT_URL</jsp:expression>-->
+					<jsp:expression>USER_MANAGEMENT_URL</jsp:expression>
 				</jsp:attribute>
 				<jsp:element name="img">
 					<jsp:attribute name="src">
@@ -340,7 +340,7 @@
 			<jsp:element name="a">
 				<jsp:attribute name="target">_parent</jsp:attribute>
 				<jsp:attribute name="href">
-					<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon&amp;stage=resetpass"</jsp:expression>
+					<jsp:expression>USER_MANAGEMENT_URL</jsp:expression>
 				</jsp:attribute>
 				<jsp:element name="img">
 					<jsp:attribute name="src">
@@ -358,7 +358,7 @@
 			<jsp:element name="a">
 				<jsp:attribute name="target">_parent</jsp:attribute>
 				<jsp:attribute name="href">
-					<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon&amp;stage=changepass"</jsp:expression>
+					<jsp:expression>USER_MANAGEMENT_URL</jsp:expression>
 				</jsp:attribute>
 				<jsp:element name="img">
 					<jsp:attribute name="src">

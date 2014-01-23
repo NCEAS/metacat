@@ -69,12 +69,12 @@
 						<tr>	
 							<td colspan="2" class="regtext" align="center" valign="top">				
 								<!-- reset pass --> 
-								<a href="{$cgi-prefix}/ldapweb.cgi?cfg=sanparks&amp;stage=resetpass" target="_parent">
+								<a href="<%=USER_MANAGEMENT_URL%>" target="_parent">
 									reset your password
 								</a>
 								|
 								<!-- change pass --> 
-								<a href="{$cgi-prefix}/ldapweb.cgi?cfg=sanparks&amp;stage=changepass" target="_parent">
+								<a href="<%=USER_MANAGEMENT_URL%>" target="_parent">
 									change your password
 								</a>
 							</td>
@@ -100,7 +100,7 @@
 	</xsl:when>
   	<xsl:otherwise>
 		<h3>Login
-		<a href="{$contextURL}/cgi-bin/ldapweb.cgi?cfg=sanparks" target="_new">
+		<a href="<%=USER_MANAGEMENT_URL%>" target="_new">
 			<span class="regtext"> (request an account...)</span>
 		</a>
 		</h3>

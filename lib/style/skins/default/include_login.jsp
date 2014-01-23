@@ -132,7 +132,7 @@
                     <img src="<%=STYLE_SKINS_URL%>/default/images/transparent1x1.gif" width="10">
                   </td>
                   <td align="left" class="text_plain">
-                    <a href="<%=CGI_URL%>/ldapweb.cgi?cfg=default" target="_top">
+                    <a href="<%=USER_MANAGEMENT_URL%>" target="_top">
                     create a new account</a>
                   </td>
                 </tr>
@@ -159,7 +159,7 @@
                     <img src="<%=STYLE_SKINS_URL%>/default/images/transparent1x1.gif" width="10" >
                   </td>
                   <td align="left" class="text_plain">
-                    <a href="<%=CGI_URL%>/ldapweb.cgi?stage=resetpass&cfg=default" target="_top">forgot your password?</a>
+                    <a href="<%=USER_MANAGEMENT_URL%>" target="_top">forgot your password?</a>
                   </td>
                 </tr>
                 <tr valign="middle"> 
@@ -176,7 +176,7 @@
                     <img src="<%=STYLE_SKINS_URL%>/default/images/transparent1x1.gif" width="10">
                   </td>
                   <td align="left" class="text_plain">
-                    <a href="<%=CGI_URL%>/ldapweb.cgi?stage=changepass&cfg=default" target="_top">change your password</a> 
+                    <a href="<%=USER_MANAGEMENT_URL%>" target="_top">change your password</a> 
                   </td>
                 </tr>
                 <tr>

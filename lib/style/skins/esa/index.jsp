@@ -266,7 +266,7 @@ individual registry entries for citation information as well as usage rights.
            <strong>Steps for registering an ESA data set</strong>
 	    <br>
            <span class="greenbold">Step 1: Create an Account</span> <br>
-           <p> <a href="<%=CGI_URL%>/ldapweb.cgi?cfg=esa">Create an account</a> by registering with the <a href="http://knb.ecoinformatics.org">KNB</a>. Many scientists will already have accounts in the KNB, especially those 
+           <p> <a href="<%=USER_MANAGEMENT_URL%>">Create an account</a> by registering with the <a href="http://knb.ecoinformatics.org">KNB</a>. Many scientists will already have accounts in the KNB, especially those 
 from institutions like NCEAS and LTER. If you already have an account please use that existing account rather than creating a new one. </p>
            <span class="greenbold">Step 2: Login</span><br>
 	   <p><a href="<%=CGI_URL%>/register-dataset.cgi?cfg=esa&stage=loginform">Login to the ESA Registry</a> website with the account you created. Fill out the ESA Data Registry Form.</p>
@@ -275,12 +275,11 @@ from institutions like NCEAS and LTER. If you already have an account please use
            <span class="greenbold">Step 4: Look for Feedback</span> <br>
 <p>After you submit, watch for e-mail sent by the ESA moderator regarding whether your data set  has been accepted.</p>      </ul>
   
-      <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=esa">Create a new account</a>
+      
     <ul>
-        <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=esa&amp;stage=changepass">Change your password</a>
-        <li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=esa&amp;stage=resetpass">Reset your password</a>
+        Need an account? Forgot password? <a href="<%=USER_MANAGEMENT_URL%>">Click here</a>.
     </ul>
-        <ul>
+    <ul>
       The account management tools are used to create and manage registry 
       accounts.   Accounts are free, and are used to identify contributors
       so that they can maintain their entries in the future.  

@@ -97,7 +97,7 @@ else {
 <h5 class="hiddenStructure">Personal tools</h5>
 <ul id="portal-personaltools">
 	<li><%=loginHTML %></li>
-	<li><a href="<%=CGI_URL%>/ldapweb.cgi?cfg=saeon" target="_top"> Join </a></li>
+	<li><a href="<%=USER_MANAGEMENT_URL%>" target="_top"> Join </a></li>
 </ul>
 
 </body>

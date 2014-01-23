@@ -82,7 +82,7 @@
             <input type="text" name="username" maxlength="15" size="15" value="">
           </td>
           <td>
-            <a target="_top" href="http://knb.ecoinformatics.org/cgi-bin/ldapweb.cgi?cfg=lter">
+            <a target="_top" href="<%=USER_MANAGEMENT_URL%>">
               Create a new account
             </a>
           </td>
@@ -104,7 +104,7 @@
             </select>
           </td>
           <td>
-            <a target="_top" href="http://knb.ecoinformatics.org/cgi-bin/ldapweb.cgi?stage=resetpass&cfg=lter">
+            <a target="_top" href="<%=USER_MANAGEMENT_URL%>">
               Forgot your password?
             </a>
           </td>
@@ -119,7 +119,7 @@
             <input type="password" name="password" maxlength="15" size="15" value="">
           </td>
           <td>
-            <a target="_top" href="http://knb.ecoinformatics.org/cgi-bin/ldapweb.cgi?stage=changepass&cfg=lter">
+            <a target="_top" href="<%=USER_MANAGEMENT_URL%>">
               Change your password
             </a>
           </td>
