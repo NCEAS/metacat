@@ -81,6 +81,7 @@
 	String STYLE_SKINS_URL = SystemUtil.getStyleSkinsURL();
 	String STYLE_COMMON_URL = SystemUtil.getStyleCommonURL();
 	String DEFAULT_STYLE_URL = SystemUtil.getDefaultStyleURL();
+	String USER_MANAGEMENT_URL = SystemUtil.getUserManagementUrl();
 
 %>
 
