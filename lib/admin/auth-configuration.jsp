@@ -1,5 +1,5 @@
 <%@ page language="java"%>
-<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.*" %>
+<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.*, edu.ucsb.nceas.metacat.properties.PropertyService" %>
 <%
 	/**
  *  '$RCSfile$'
@@ -143,10 +143,35 @@
 						} else {
 		%>
 						<div class="form-row">
-							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>					
-							<input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
-			    			        value="<%= request.getAttribute(metaDataProperty.getKey()) %>"	             		    	    	           		    	             			
-			           		    	type="<%= fieldType %>	"/>	
+							<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	
+		<%				
+							if(metaDataProperty.getKey().equals("auth.userManagementUrl")) {
+							     //System.out.println("getURL   ==== "+request.getRequestURL().toString());
+							     //System.out.println("getURI   ==== "+request.getRequestURI());
+							     //System.out.println("getServletpath   ==== "+request.getServletPath());
+							     
+							     //System.out.println("getScheme   ==== "+request.getScheme());
+							     //System.out.println("getServer name   ==== "+request.getServerName());
+							     //System.out.println("getServer port   ==== "+request.getServerPort());
+							     //System.out.println("getServer context ==== "+request.getContextPath());
+                                 String userManagementUrl = (String)request.getAttribute(metaDataProperty.getKey());
+                                 if(userManagementUrl == null || userManagementUrl.equals("")) {
+                                    userManagementUrl = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+request.getContextPath()+PropertyService.getProperty("auth.defaultUserManagementPage");
+                                 } 
+        %>
+                                 <input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>"                                                                                         
+                                    value="<%= userManagementUrl%>"
+                                    type="<%= fieldType %>"/> 
+        <%
+                             } else {
+        %>
+                                 <input class="textinput" id="<%= metaDataProperty.getKey() %>" name="<%= metaDataProperty.getKey() %>" 
+                                    value="<%= request.getAttribute(metaDataProperty.getKey()) %>"                                                                                      
+                                    type="<%= fieldType %>  "/> 
+        <%
+                             }
+        %>				
+							
 							<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','<%= metaDataProperty.getHelpFile() %>')"></i>
 									</div>    		    
 		<%
