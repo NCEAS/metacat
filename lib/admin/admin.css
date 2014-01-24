@@ -250,6 +250,24 @@ input[type="text"] {
 	display: inline-block;
 }
 
+.icon-plus-sign {
+    color: #166194;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-left: 10px;
+    margin-top: 0.5em;
+    display: inline-block;
+}
+
+.icon-minus-sign {
+    color: #166194;
+    font-size: 1.2em;
+    cursor: pointer;
+    margin-left: 10px;
+    margin-top: 0.5em;
+    display: inline-block;
+}
+
 .checkbox-help{			/*For question mark icons next to checkboxes (need different vertical positioning) */
 	margin-top: 0.7em;	
 }
@@ -362,6 +380,15 @@ input[type="text"] {
 	display: none;
 	width: 100%;
 	margin-left: 2em;
+}
+
+.h3-label {
+    text-align: left;
+    font: 400 1.5em/1.5em "Oswald", Arial, sans-serif;
+    -webkit-margin-before: 0.2em;
+    -webkit-margin-after: 0.2em;
+    display: inline-block;
+    margin-top: 20px;
 }
 
 frame[name="bottom"] table
