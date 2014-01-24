@@ -255,7 +255,8 @@ public class AuthAdmin extends MetacatAdmin {
 				} catch (ConnectException ce) {
 					if (ce.getMessage() != null
 							&& ce.getMessage().contains("NameNotFoundException")) {
-						errorVector.add("User : " + adminUser + " is not in LDAP.");
+						errorVector.add("User : " + adminUser + " is not in the specified identity service."+
+							" If you chose to use the AuthFile as the authentication class, please add the user to the password file first.");
 					} else {
 						errorVector.add("Connection error while verifying Metacat " + 
 								"Administrators : " + ce.getMessage());

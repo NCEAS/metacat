@@ -358,7 +358,10 @@ public class AuthFile implements AuthInterface {
     @Override
     public HashMap<String, Vector<String>> getAttributes(String foruser)
                     throws ConnectException {
-        // TODO Auto-generated method stub
+        //we only check if the user exists or not.
+        if(!userExists(foruser)) {
+            throw new ConnectException("NameNotFoundException - the user "+foruser+" doesn't exist in the password file.");
+        }
         return null;
     }
     
