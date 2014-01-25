@@ -103,6 +103,7 @@ public class AuthFile implements AuthInterface {
     private String authURI = null;
     private static String passwordFilePath = null;
     private static AuthFileHashInterface hashClass = null;
+    private boolean readPathFromProperty = true;
     /**
      * Get the instance of the AuthFile
      * @return
@@ -148,6 +149,7 @@ public class AuthFile implements AuthInterface {
      */
     public  AuthFile (String passwordFile) throws AuthenticationException {
         passwordFilePath = passwordFile;
+        readPathFromProperty = false;
         try {
             init();
         } catch (Exception e) {
@@ -160,9 +162,10 @@ public class AuthFile implements AuthInterface {
      * Initialize the user/password configuration
      */
     private void init() throws PropertyNotFoundException, IOException, ConfigurationException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-        if(passwordFilePath == null) {
+        if(readPathFromProperty || passwordFilePath == null) {
             passwordFilePath  = PropertyService.getProperty("auth.file.path");
         }
+        //System.out.println("the password file path is ======================= "+passwordFilePath);
         File passwordFile = new File(passwordFilePath);
         
         authURI = SystemUtil.getContextURL();
@@ -175,9 +178,26 @@ public class AuthFile implements AuthInterface {
         if(!passwordFile.exists()) {
             File parent = passwordFile.getParentFile();
             if(!parent.exists()) {
-                parent.mkdirs();
+                boolean success = false;
+                try {
+                    success = parent.mkdirs();
+                } catch (Exception e) {
+                    throw new IOException("AuthFile.init - couldn't create the directory "+parent.getAbsolutePath()+ " since "+e.getMessage());
+                }
+                if(!success) {
+                    throw new IOException("AuthFile.init - couldn't create the directory "+parent.getAbsolutePath()+ ", probably since the metacat doesn't have the write permission.");
+                }
             }
-            passwordFile.createNewFile();
+            boolean success = false;
+            try {
+                success = passwordFile.createNewFile();
+            }  catch (Exception e) {
+                throw new IOException("AuthFile.init - couldn't create the file "+passwordFile.getAbsolutePath()+ " since "+e.getMessage());
+            }
+            if(!success) {
+                throw new IOException("AuthFile.init - couldn't create the file "+parent.getAbsolutePath()+ ", probably since the metacat doesn't have the write permission.");
+            }
+            
             OutputStreamWriter writer = null;
             FileOutputStream output = null;
             try {
