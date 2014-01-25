@@ -54,7 +54,9 @@ public class AuthAdmin extends MetacatAdmin {
 
 	private static AuthAdmin authAdmin = null;
 	private static Logger logMetacat = Logger.getLogger(AuthAdmin.class);
-
+	private static final String AUTHCLASSKEY = "auth.class";
+	public static final String FILECLASS = "edu.ucsb.nceas.metacat.authentication.AuthFile";
+    public static final String LDAPCLASS = "edu.ucsb.nceas.metacat.AuthLdap";
 	/**
 	 * private constructor since this is a singleton
 	 */
@@ -161,16 +163,29 @@ public class AuthAdmin extends MetacatAdmin {
 							globalPropertyKey);
 				}
 				
-				// process the fields for the global options (group 1)
-				SortedMap<Integer, MetaDataProperty> authClientPropertyMap = authMetaData
+				//String authClassName = request.getParameter(AUTHCLASSKEY);
+				//System.out.println("the auth class name from the request is "+authClassName);
+				// process the fields for the file-based options (group 2)
+				SortedMap<Integer, MetaDataProperty> filePropertyMap = authMetaData
 						.getPropertiesInGroup(2);
-				Set<Integer> authClientPropertyIndexes = authClientPropertyMap.keySet();
-				for (Integer authClientPropertyIndex : authClientPropertyIndexes) {
-					String authClientPropertyKey = authClientPropertyMap.get(
-							authClientPropertyIndex).getKey();
+				Set<Integer> filePropertyIndexes = filePropertyMap.keySet();
+				for (Integer filePropertyIndex : filePropertyIndexes) {
+					String filePropertyKey = filePropertyMap.get(
+							filePropertyIndex).getKey();
 					PropertyService.checkAndSetProperty(request,
-							authClientPropertyKey);
+							filePropertyKey);
 				}
+				
+				// process the fields for the ldap-based options (group 3)
+                SortedMap<Integer, MetaDataProperty> ldapPropertyMap = authMetaData
+                        .getPropertiesInGroup(3);
+                Set<Integer> ldapPropertyIndexes = ldapPropertyMap.keySet();
+                for (Integer ldapPropertyIndex : ldapPropertyIndexes) {
+                    String ldapPropertyKey = ldapPropertyMap.get(
+                            ldapPropertyIndex).getKey();
+                    PropertyService.checkAndSetProperty(request,
+                            ldapPropertyKey);
+                }
 
 				// we need to write the options from memory to the properties
 				// file
