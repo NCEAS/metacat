@@ -287,6 +287,8 @@ public class AuthAdmin extends MetacatAdmin {
         } catch (ClassNotFoundException e) {
             errorVector.add("AuthAdmin.validateOptions - ClassNotFoundException : "
                   + e.getMessage());
+        } catch (Exception e) {
+            errorVector.add("AuthAdmin.validateOptions - An exception : "+e.getMessage());
         }
 
 		return errorVector;
