@@ -1,5 +1,5 @@
 <%@ page language="java"%>
-<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.*, edu.ucsb.nceas.metacat.properties.PropertyService" %>
+<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.*, edu.ucsb.nceas.metacat.properties.PropertyService, edu.ucsb.nceas.metacat.admin.AuthAdmin" %>
 <%
 	/**
  *  '$RCSfile$'
@@ -32,6 +32,7 @@
 
 <title>Authentication Configuration</title>
 <%@ include file="./head-section.jsp"%>
+<script language="javascript" type="text/javascript" src="<%= request.getContextPath() %>/style/common/jquery/jquery.js"></script>
 
 <SCRIPT LANGUAGE="JavaScript" TYPE="TEXT/JAVASCRIPT">
 <!--
@@ -56,6 +57,7 @@
 		<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
 		                                        onsubmit="return validateAndSubmitForm(this);">
 		<% 
+		    
 			// metadata holds all group and properties metadata
 		    PropertiesMetaData metadata = (PropertiesMetaData)request.getAttribute("metadata");
 			if (metadata != null) {
@@ -69,6 +71,7 @@
 					// for this group, display the header (group name)
 					MetaDataGroup metaDataGroup = (MetaDataGroup)groupMap.get(groupId);
 		%>
+		    <div id="<%= metaDataGroup.getName().replace(' ','_') %>">
 				<h3><%= metaDataGroup.getName()  %></h3>
 				<p><%= metaDataGroup.getDescription()  %></p>
 		<%
@@ -82,18 +85,14 @@
 		    			String fieldType = metaDataProperty.getFieldType(); 
 		    			if (metaDataProperty.getIsRequired()) {
 		%>
-						<SCRIPT LANGUAGE="JavaScript" TYPE="TEXT/JAVASCRIPT">
-						<!--
-							addExclusion("<%= metaDataProperty.getKey() %>");
-						//-->
-						</SCRIPT> 		
+						
 		<% 		
 		    			}
 		    			if (fieldType.equals("select")) {
 		%> 
 						<div class="form-row">
 		     				<div class="textinput-label"><label for="<%= metaDataProperty.getKey() %>"><%= metaDataProperty.getLabel() %></label></div>	   	
-							<select class="textinput" name="<%= metaDataProperty.getKey() %>">
+							<select class="textinput" id="<%= metaDataProperty.getKey().replace('.', '_') %>" name="<%= metaDataProperty.getKey() %>">
 		<%
 		                    String storedValue = (String)request.getAttribute(metaDataProperty.getKey());
 							Vector<String> fieldOptionValues = metaDataProperty.getFieldOptionValues();
@@ -113,6 +112,7 @@
 		<%
 		                      }
 							}
+							
 		%>
 		
 							</select>
@@ -182,9 +182,37 @@
 							}
 						}
 					}
+		%>
+				  </div>
+		<%
 				}
 			}
 		%>
+		
+		<%
+		      String FILEGROUPNAME = "File-based_Authentication_Configuration";
+		      String LDAPGROUPNAME = "LDAP_Authentication_Configuration";
+		      String AUTHCLASSID = "auth_class";
+		%>
+		<script language="javascript" type="text/javascript">
+		      //this is for the first loading
+		      taggleLdapFileConfig();
+		
+		      //this is for the user to change to different authentication class.
+		      $('#<%=AUTHCLASSID%>').change(function(){
+		          taggleLdapFileConfig();
+		      });
+		      
+		      function taggleLdapFileConfig() {
+		          if($("#<%=AUTHCLASSID%> option:selected" ).text() == '<%=AuthAdmin.LDAPCLASS%>') {
+                      $('#<%=FILEGROUPNAME%>').css('display', 'none');
+                      $('#<%=LDAPGROUPNAME%>').css('display', 'block');
+                  } else if($("#<%=AUTHCLASSID%> option:selected" ).text() == '<%=AuthAdmin.FILECLASS%>') {
+                      $('#<%=LDAPGROUPNAME%>').css('display', 'none');
+                      $('#<%=FILEGROUPNAME%>').css('display', 'block');
+                  }
+		      }
+		</script>
 		
 		  <div class="buttons-wrapper">
 		  	<input type="hidden" name="configureType" value="auth"/>
