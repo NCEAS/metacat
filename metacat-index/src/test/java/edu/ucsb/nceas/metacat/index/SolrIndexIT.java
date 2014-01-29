@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -17,7 +16,6 @@ import java.util.Map;
 
 import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
@@ -69,7 +67,7 @@ public class SolrIndexIT  {
     /**
      * Test building index for an insert.
      */
-//    @Test
+    @Test
     public void testInsert() throws Exception {
     	
     	
@@ -97,7 +95,7 @@ public class SolrIndexIT  {
     /**
      * Test building index for an insert.
      */
-//    @Test
+    @Test
     public void testUpdate() throws Exception {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAUPDATEFILEPATH);
@@ -115,7 +113,7 @@ public class SolrIndexIT  {
     /**
      * Test building index for an insert.
      */
-//    @Test
+    @Test
     public void testArchive() throws Exception {
        SolrIndex solrIndex = generateSolrIndex();
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
