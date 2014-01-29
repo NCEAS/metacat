@@ -196,7 +196,7 @@
 			<jsp:attribute name="name">sessionid</jsp:attribute>
 			<jsp:attribute name="type">hidden</jsp:attribute>
 			<jsp:attribute name="value">
-				<jsp:getProperty name="clientViewBean" property="sessionid" />
+				<jsp:expression>clientViewBean.getSessionid()</jsp:expression>
 			</jsp:attribute>
 		</jsp:element>
 		<input type="text" id="anyfield" name="anyfield" value="" size="14" />
