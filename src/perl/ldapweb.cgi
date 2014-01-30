@@ -269,9 +269,12 @@ my @validDisplayOrgList; #this array contains the org list which will be shown i
 my %orgNamesHash = %$orgNames;
 foreach my $element (@displayOrgList) {
     if(exists $orgNamesHash{$element}) {
-         debug("push the organization " . $element . " into the dispaly array");
+         my $label = $ldapConfig->{$element}{'label'};
+         my %displayHash;
+         $displayHash{$element} = $label;
+         debug("push a hash containing the key " . $element . "with the value label" . $label . " into the display array");
          #if the name is found in the organization part of metacat.properties, put it into the valid array
-         push(@validDisplayOrgList, $element);
+         push(@validDisplayOrgList, \%displayHash);
     } 
     
 }
