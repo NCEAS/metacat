@@ -35,13 +35,15 @@
           </td>
           <td align="right">
             <select name="o">
-              [% FOREACH org = orgList %]
-		[% IF allParams.o == org %]
-                  <option value="[% org %]" selected>[% org %]</option>
-                [% ELSE %]
-                  <option value="[% org %]">[% org %]</option>
-                [% END %]
-              [% END %]
+              [% FOREACH orgDisplayHash = orgList %]
+                  [% FOREACH pair IN orgDisplayHash.pairs %]
+                    [% IF allParams.o == pair.key %]
+                        <option value="[% pair.key %]" selected>[% pair.value %]</option>
+                    [% ELSE %]
+                        <option value="[% pair.key %]">[% pair.value %]</option>
+                    [% END %]
+                  [% END %]
+               [% END %]
             </select>
           </td>
         </tr>
