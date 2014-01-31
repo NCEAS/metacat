@@ -31,11 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
-
-
-
-
-
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.XMLConfiguration;
 import org.apache.commons.configuration.tree.xpath.XPathExpressionEngine;
@@ -98,12 +93,12 @@ public class AuthFile implements AuthInterface {
     
     
     private static Log log = LogFactory.getLog(AuthFile.class);
-    private static AuthFile authFile = null;
     private static XMLConfiguration userpassword = null;
     private String authURI = null;
     private static String passwordFilePath = null;
     private static AuthFileHashInterface hashClass = null;
     private boolean readPathFromProperty = true;
+    
     /**
      * Get the instance of the AuthFile
      * @return
@@ -397,7 +392,7 @@ public class AuthFile implements AuthInterface {
                     throws ConnectException {
             StringBuffer out = new StringBuffer();
 
-            out.append("<?xml version=\"1.0\" encoding=\"iso-8859-1\"?>\n");
+            out.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
             out.append("<principals>\n");
             out.append("  <authSystem URI=\"" +authURI
                     + "\" organization=\"" + ORGANIZATIONNAME + "\">\n");
@@ -702,7 +697,7 @@ public class AuthFile implements AuthInterface {
         String E = "-e";
         String S = "-s";
         String F = "-f";
-        String O= "-o";
+        String O = "-o";
         Vector<String> pairedOptions = new Vector<String>();
         pairedOptions.add(H);
         pairedOptions.add(DN);
@@ -735,10 +730,10 @@ public class AuthFile implements AuthInterface {
         String input = map.get(I);
         String passHash = map.get(H);
         if(input != null && passHash != null) {
-            System.out.println("Error in the useradd command: you only can choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed passwword).");
+            System.out.println("Error in the useradd command: you only can choose either \"-i\" (input a password) or \"-h hashed-password\" (pass through a hashed passwword).");
             System.exit(1);
         } else if (input == null && passHash == null) {
-            System.out.println("Error in the useradd command: you must choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
+            System.out.println("Error in the useradd command: you must choose either \"-i\" (input a password) or \"-h hashed-password\" (pass through a hashed password).");
             System.exit(1);
         } else if(input != null) {
             plainPassword = inputPassword();
@@ -789,7 +784,7 @@ public class AuthFile implements AuthInterface {
      */
     private static void handleModifyPass(AuthFile authFile, String[] argus) throws UnsupportedEncodingException, AuthenticationException {
         String DN = "-dn";
-        String I= "-i";
+        String I = "-i";
         String H = "-h";
         Vector<String> pairedOptions = new Vector<String>();
         pairedOptions.add(H);
@@ -816,10 +811,10 @@ public class AuthFile implements AuthInterface {
         String input = map.get(I);
         String passHash = map.get(H);
         if(input != null && passHash != null) {
-            System.out.println("Error in the usermod -password command: you only can choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
+            System.out.println("Error in the usermod -password command: you only can choose either \"-i\" (input a password) or \"-h hashed-password\" (pass through a hashed password).");
             System.exit(1);
         } else if (input == null && passHash == null) {
-            System.out.println("Error in the usermod -password command: you must choose either \"-i\"(input a password) or \"-h hashed-password\"(pass through a hashed password).");
+            System.out.println("Error in the usermod -password command: you must choose either \"-i\" (input a password) or \"-h hashed-password\" (pass through a hashed password).");
             System.exit(1);
         } else if(input != null) {
             plainPassword = inputPassword();
@@ -838,7 +833,7 @@ public class AuthFile implements AuthInterface {
      */
     private static void handleModifyGroup(AuthFile authFile, String[] argus) throws AuthenticationException {
         String DN = "-dn";
-        String A= "-a";
+        String A = "-a";
         String R = "-r";
         String G = "-g";
         Vector<String> pairedOptions = new Vector<String>();
@@ -861,20 +856,20 @@ public class AuthFile implements AuthInterface {
         String group = map.get(G);
         String dn = map.get(DN);
         if(dn == null || dn.trim().equals("")) {
-            System.out.println("Erorr in the usermod -group command: the \"-dn user-distinguish-name\" is required.");
+            System.out.println("Error in the usermod -group command: the \"-dn user-distinguish-name\" is required.");
             System.exit(1);
         }
         
         if(group == null || group.trim().equals("")) {
-            System.out.println("Erorr in the usermod -group command: the \"-g group-name\" is required.");
+            System.out.println("Error in the usermod -group command: the \"-g group-name\" is required.");
             System.exit(1);
         }
         
         if(add != null && remove!= null) {
-            System.out.println("Erorr in the usermod -group command: You can only choose either \"-a\"(add the user to the group) or \"-r\"(remove the user from the group).");
+            System.out.println("Error in the usermod -group command: You can only choose either \"-a\" (add the user to the group) or \"-r\" (remove the user from the group).");
             System.exit(1);
         } else if (add == null && remove == null) {
-            System.out.println("Erorr in the usermod -group command: You must choose either \"-a\"(add the user to the group) or \"-r\"(remove the user from the group).");
+            System.out.println("Error in the usermod -group command: You must choose either \"-a\" (add the user to the group) or \"-r\" (remove the user from the group).");
             System.exit(1);
         } else if (remove != null) {
             authFile.removeUserFromGroup(dn, group);
@@ -901,7 +896,7 @@ public class AuthFile implements AuthInterface {
             for(int i=startIndex; i<argus.length; i++) {
                 String arg = argus[i];
                 if(map.containsKey(arg)) {
-                    throw new Exception("The command line can't have the duplicated options \""+arg+"\".");
+                    throw new Exception("The command line can't have duplicate options \""+arg+"\".");
                 }
                 
                 if(singleOptions != null && singleOptions.contains(arg)) {
@@ -954,30 +949,30 @@ public class AuthFile implements AuthInterface {
         String quit = "q";
         Console console = System.console();
         if (console == null) {
-            System.out.println("Sorry, we can't fetch the console from the system. You can't use the option \"-i\" to input a password. You have to use the option \"-h hashed-passpwrd\" to pass through a hashed passwprd in the useradd command. ");
+            System.out.println("Sorry, we can't fetch the console from the system. You can't use the option \"-i\" to input a password. You have to use the option \"-h hashed-password\" to pass through a hashed passwprd in the useradd command. ");
             System.exit(1);
         }
   
         while(true) {
-                System.out.print("Enter your new password(input 'q' to quite): ");
+                System.out.print("Enter your new password (input 'q' to quit): ");
                 String password1 = new String(console.readPassword());
                 if(password1== null || password1.trim().equals("")) {
-                    System.out.println("Eorror: the password can't be blank or null. Please try again.");
+                    System.out.println("Error: the password can't be blank or null. Please try again.");
                     continue;
                 } else if (password1.equals(quit)) {
                     System.exit(0);
                 }
-                System.out.print("Confirm your new password(input 'q' to quite): ");
+                System.out.print("Confirm your new password (input 'q' to quit): ");
                 String password2 = new String(console.readPassword());
                 if(password2 == null || password2.trim().equals("")) {
-                    System.out.println("Eorror: the password can't be blank or null. Please try again.");
+                    System.out.println("Error: the password can't be blank or null. Please try again.");
                     continue;
                 }  else if (password2.equals(quit)) {
                     System.exit(0);
                 }
                 
                 if(!password1.equals(password2)) {
-                    System.out.println("Eorror: The second passwords does't match the first one. Please try again.");
+                    System.out.println("Error: The second password does't match the first one. Please try again.");
                 } else {
                     password = password1;
                     break;
