@@ -1,0 +1,426 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context  
+    					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+
+	<bean id="eml.abstract" class="org.dataone.cn.indexer.parser.MergeSolrField">
+	  <constructor-arg name="name" value="abstract" />
+	  <constructor-arg name="xpath"
+	    value="//dataset/abstract/descendant::text()" />
+	  <constructor-arg name="delimiter" value=" " />
+	  <property name="multivalue" value="false" />
+	  <property name="dedupe" value="false" />
+	</bean>
+
+	<bean id="eml.keywords" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="keywords" />
+		<constructor-arg name="xpath"
+			value="//dataset/keywordSet/keyword/text()" />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.southBoundCoord" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="southBoundCoord" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/geographicCoverage/boundingCoordinates/southBoundingCoordinate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="solrLatitudeConverter" />
+	</bean>
+
+	<bean id="eml.northBoundCoord" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="northBoundCoord" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/geographicCoverage/boundingCoordinates/northBoundingCoordinate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="solrLatitudeConverter" />
+	</bean>
+
+	<bean id="eml.westBoundCoord" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="westBoundCoord" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/geographicCoverage/boundingCoordinates/westBoundingCoordinate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="solrLongitudeConverter" />
+	</bean>
+
+	<bean id="eml.eastBoundCoord" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="eastBoundCoord" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/geographicCoverage/boundingCoordinates/eastBoundingCoordinate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="solrLongitudeConverter" />
+	</bean>
+
+	<bean id="eml.site" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="site" />
+		<constructor-arg name="xpath" value='//dataset/coverage/geographicCoverage/geographicDescription/text()' />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.beginDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="beginDate" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+
+	<bean id="eml.endDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="endDate" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+	
+	<bean id="eml.singleBeginDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="beginDate" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+	
+	<bean id="eml.singleEndDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="endDate" />
+		<constructor-arg name="xpath"
+			value="//dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+	
+	<bean id="eml.pubDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="pubDate" />
+		<constructor-arg name="xpath" value="//dataset/pubDate/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+
+	<bean id="eml.title" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="title" />
+		<constructor-arg name="xpath" value="//dataset/title/text()" />
+		<property name="multivalue" value="false" />
+	</bean>
+	
+	<bean id="eml.project" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="project" />
+		<constructor-arg name="xpath" value="//dataset/project/title/text()" />
+		<property name="multivalue" value="false" />
+	</bean>	
+
+	<bean id="eml.authorSurName" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="authorSurName" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator[1]/individualName[1]/surName/text()" />
+	</bean>
+	
+	<bean id="eml.authorGivenName" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="authorGivenName" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator[1]/individualName[1]/givenName/text()" />
+	</bean>
+
+	<bean id="eml.authorSurNameSort" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="authorSurNameSort" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator[1]/individualName[1]/surName/text()" />
+	</bean>
+	
+	<bean id="eml.authorGivenNameSort" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="authorGivenNameSort" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator[1]/individualName[1]/givenName/text()" />
+	</bean>
+
+	<bean id="eml.author" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+			p:multivalue="false"
+			p:root-ref="eml.authorNameRoot">
+			<constructor-arg name="name" value="author" />
+	</bean>
+	
+	<bean id="eml.authorNameRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="author"
+		p:xPath="//dataset/creator/individualName"
+		p:template="[givenName] [surName]">
+		<property name="leafs">
+			<list>
+				<ref bean="eml.givenNameLeaf"/>
+				<ref bean="eml.surNameLeaf"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="eml.givenNameLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="givenName"
+		p:xPath="givenName/text()" />
+		
+	<bean id="eml.surNameLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="surName"
+		p:xPath="surName/text()"/>
+			
+	<bean id="eml.author_lname" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="authorLastName" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator/individualName/surName/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.investigator" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="investigator" />
+		<constructor-arg name="xpath"
+			value="//dataset/creator/individualName/surName/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.origin" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.originRoot">
+		<constructor-arg name="name" value="origin" />
+	</bean>
+	
+	<bean id="eml.originRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="origin"
+		p:xPath="//dataset/creator" 
+		p:template="[individualName]||[organizationName]">
+		<property name="leafs"><list><ref bean="eml.organizationNameLeaf"/></list></property>
+		<property name="subRoots"><list><ref bean="eml.individualNameRoot" /></list></property>
+	</bean>
+		
+	<bean id="eml.organizationNameLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="organizationName"
+		p:xPath="organizationName/text()" />
+		
+	<bean id="eml.individualNameRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="individualName"
+		p:xPath="individualName"
+		p:template="[givenName] [surName]">
+		<property name="leafs">
+			<list>
+				<ref bean="eml.givenNameLeaf"/>
+				<ref bean="eml.surNameLeaf"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="eml.contactOrganization" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="contactOrganization" />
+		<constructor-arg name="xpath"
+		  value="//dataset/creator/organizationName/text()" />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true"/>
+	</bean>
+	
+	<bean id="eml.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
+		<constructor-arg name="name" value="fileID" />
+	</bean>
+	
+	<bean id="eml.text" class="org.dataone.cn.indexer.parser.FullTextSolrField">
+		<constructor-arg name="name" value="text" />
+		<constructor-arg name="xpath"
+			value="//dataset/*[not(self::dataTable)]//text()" />
+		<property name="multivalue" value="false" />
+		<property name="combineNodes" value="true"/>
+	</bean>
+	
+	<bean id="eml.genus" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="genus" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Genus"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.species" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="species" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Species"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.kingdom" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="kingdom" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Kingdom"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.order" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="order" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Order"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.phylum" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="phylum" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Phylum"]/text() | //taxonomicClassification/taxonRankValue[../taxonRankName="Division"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+		
+	<bean id="eml.family" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="family" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Family"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+
+	<bean id="eml.class" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="class" />
+		<constructor-arg name="xpath" 
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Class"]/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	
+	<bean id="eml.scientificName" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+			p:multivalue="true"
+			p:root-ref="eml.scientificNameRoot">
+			<constructor-arg name="name" value="scientificName" />
+	</bean>
+	
+	<bean id="eml.scientificNameRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="scientificName"
+		p:xPath='//taxonomicClassification[../taxonRankName="Genus"]'
+		p:template="[genus] [species]">
+		<property name="leafs">
+			<list>
+				<ref bean="eml.genusLeaf"/>
+				<ref bean="eml.speciesLeaf"/>
+			</list>
+		</property>
+	</bean>	
+	
+	<bean id="eml.genusLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="genus"
+		p:xPath='../taxonRankValue/text()' />
+		
+	<bean id="eml.speciesLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="species"
+		p:xPath='taxonRankValue/text()' />	
+	
+
+	<bean id="eml.attributeName" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeName" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeName/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="false" />
+	</bean>
+	
+	<bean id="eml.attributeLabel" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeLabel" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeLabel/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="false" />
+	</bean>
+	
+	<bean id="eml.attributeDescription" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeDescription" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeDefinition/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="false" />
+	</bean>
+	
+	<bean id="eml.attributeUnit" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeUnit" />
+		<constructor-arg name="xpath"
+			value='//dataTable//standardUnit/text() | //dataTable//customUnit/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="false" />
+	</bean>
+
+	<bean id="eml.attributeText" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+			p:multivalue="true"
+			p:root-ref="eml.attributeTextRoot">
+			<constructor-arg name="name" value="attribute" />
+	</bean>
+	
+	<bean id="eml.attributeTextRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="attribute"
+		p:xPath='//dataTable/attributeList/attribute'
+		p:template="[attributeName] [attributeLabel] [attributeDescription] [attributeUnit]">
+		<property name="leafs">
+			<list>
+				<ref bean="eml.attributeNameLeaf" />
+				<ref bean="eml.attributeLabelLeaf" />
+				<ref bean="eml.attributeDescriptionLeaf" />
+				<ref bean="eml.attributeUnitLeaf" />
+			</list>
+		</property>
+	</bean>	
+	
+	<bean id="eml.attributeNameLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="attributeName"
+		p:xPath='attributeName/text()' />
+		
+	<bean id="eml.attributeLabelLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="attributeLabel"
+		p:xPath='attributeLabel/text()' />
+	
+	<bean id="eml.attributeDescriptionLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="attributeDescription"
+		p:xPath='attributeDefinition/text()' />
+		
+	<bean id="eml.attributeUnitLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="attributeUnit"
+		p:xPath='.//standardUnit/text() | .//customUnit/text()' />	
+	
+	<bean id="eml.attributeName.noDupe" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeName_noDupe" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeName/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="eml.attributeLabel.noDupe" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeLabel_noDupe" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeLabel/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="eml.attributeDescription.noDupe" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeDescription_noDupe" />
+		<constructor-arg name="xpath"
+			value='//dataTable/attributeList/attribute/attributeDefinition/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="eml.attributeUnit.noDupe" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="attributeUnit_noDupe" />
+		<constructor-arg name="xpath"
+			value='//dataTable//standardUnit/text() | //dataTable//customUnit/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="eml.fullText" class="org.dataone.cn.indexer.parser.AggregateSolrField" >
+		<property name="name" value="text" />
+		<property name="solrFields">
+	   		<list>
+	       		<ref bean="eml.text" />
+	       		<ref bean="eml.attributeName.noDupe" />
+	       		<ref bean="eml.attributeLabel.noDupe" />
+	       		<ref bean="eml.attributeDescription.noDupe" />
+	       		<ref bean="eml.attributeUnit.noDupe" />
+	      	</list>
+	  	</property>
+	</bean>
+</beans>
