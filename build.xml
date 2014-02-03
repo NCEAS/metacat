@@ -1192,6 +1192,7 @@
 		description="Uses the ant to run a class">
 		
 		<java classname="${classtorun}" fork="true">
+			<arg line="${args}" />
 			<jvmarg value="-Dfile.encoding=UTF-8"/>
 			<classpath>
 				<path refid="test.classpath" />

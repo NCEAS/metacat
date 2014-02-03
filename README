@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.3.1 Release
+Version: 2.4.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,17 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+Release Notes for 2.4.0:
+------------------------
+These release adds a new default file-based authentication mechanism
+that allows administrators to more easily deploy Metacat without a
+LDAP server.
+Other enhancements include:
+* Access policy synchronization with the DataONE Coordinating Node
+* Indexing support for EML singleDateTime coverage values
+* Indexing support document read/download events
+* Improved package download structure and file naming conventions
 
 Release Notes for 2.3.1:
 ------------------------
