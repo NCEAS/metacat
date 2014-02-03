@@ -39,20 +39,16 @@ String email = SkinPropertyService.getProperty(CFG, "email.recipient");
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-<title>Metacat Data Catalog </title>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <link rel="stylesheet" type="text/css" href="<%=STYLE_SKINS_URL%>/<%=CFG%>/<%=CFG%>.css">
-    <script language="javascript" type="text/javascript" src="<%=STYLE_SKINS_URL%>/<%=CFG%>/<%=CFG%>.js"></script>
-    <script language="javascript" type="text/javascript" src="branding.js"></script>
+    <title>Metacat Default User Management</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <%@ include file="../../admin/head-section.jsp"%>
 </head>
 <body>
-  <script language="javascript">
-      insertTemplateOpening("<%=CONTEXT_URL%>");
-  </script>
-  <p>Please contact the administrator( <%=email%> ) to get a new account or reset password.
+  
+  <%@ include file="../../admin/header-section.jsp"%>
+  <div class="document">
+    <p>Please contact the administrator( <%=email%> ) to get a new account or reset password.
+  </div>
  
-  <script language="javascript">
-      insertTemplateClosing("<%=CONTEXT_URL%>");
-  </script>
 </body>
 </html>
