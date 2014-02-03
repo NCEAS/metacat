@@ -417,10 +417,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		  }
 
-          // Log the delete
-          EventLog.getInstance().log(request.getRemoteAddr(), 
-                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
-                  pid.getValue(), Event.DELETE.xmlValue());
+          // NOTE: cannot log the delete without localId
+//          EventLog.getInstance().log(request.getRemoteAddr(), 
+//                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
+//                  pid.getValue(), Event.DELETE.xmlValue());
 
       }
 
@@ -562,10 +562,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		  }
 
-          // Log the archive
-          EventLog.getInstance().log(request.getRemoteAddr(), 
-                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
-                  pid.getValue(), Event.DELETE.xmlValue());
+          // NOTE: cannot log the archive without localId
+//          EventLog.getInstance().log(request.getRemoteAddr(), 
+//                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
+//                  pid.getValue(), Event.DELETE.xmlValue());
 
       }
 
@@ -1170,9 +1170,18 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       
       logMetacat.debug("Returning from registerSystemMetadata");
-      EventLog.getInstance().log(request.getRemoteAddr(), 
-          request.getHeader("User-Agent"), session.getSubject().getValue(), 
-          pid.getValue(), "registerSystemMetadata");
+      
+      try {
+    	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+    	  EventLog.getInstance().log(request.getRemoteAddr(), 
+    	          request.getHeader("User-Agent"), session.getSubject().getValue(), 
+    	          localId, "registerSystemMetadata");
+      } catch (McdbDocNotFoundException e) {
+    	  // do nothing, no localId to log with
+    	  logMetacat.warn("Could not log 'registerSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+      }
+      
+      
       return pid;
   }
   
