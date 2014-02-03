@@ -144,7 +144,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
 	public static SolrDoc getSolrDoc(String id) throws SolrServerException,
 			IOException, ParserConfigurationException, SAXException,
 			XPathExpressionException, NotImplemented, NotFound, UnsupportedType {
-		SolrDoc doc = new SolrDoc();
+		SolrDoc doc = null;
 
 		if (solrServer != null) {
 			String query = QUERY + "\"" + id + "\"";
@@ -152,6 +152,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
 			QueryResponse qr = solrServer.query(solrParams);
 			if (qr.getResults().size() > 0) {
 				SolrDocument orig = qr.getResults().get(0);
+				doc = new SolrDoc();
 				IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
 				for (String fieldName : orig.getFieldNames()) {
 					// don't transfer the copyTo fields, otherwise there are errors
