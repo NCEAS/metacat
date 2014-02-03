@@ -216,7 +216,7 @@ public class SolrIndex {
                                     docs = subprocessor.processDocument(id, docs, docObject);
                                 }
                             } catch (Exception e) {
-                                log.error(e.getStackTrace().toString());
+                                log.error(e.getMessage(), e);
                                 throw new SolrServerException(e.getMessage());
                             }
                         }
