@@ -662,13 +662,13 @@ public class AuthLdap implements AuthInterface {
 
 			String filter = null;
 
-			if (user.indexOf("o=") > 0) {
+			/*if (user.indexOf("o=") > 0) {
 				String tempStr = user.substring(user.indexOf("o="));
 				filter = "(&(" + user.substring(0, user.indexOf(",")) + ")("
 						+ tempStr.substring(0, tempStr.indexOf(",")) + "))";
 			} else {
 				filter = "(&(" + user.substring(0, user.indexOf(",")) + "))";
-			}
+			}*/
 			filter = "(&(" + user.substring(0, user.indexOf(",")) + "))";
 
 			NamingEnumeration namingEnum = ctx.search(user, filter, ctls);
