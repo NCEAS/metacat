@@ -61,6 +61,7 @@ import org.dataone.service.types.v1.SystemMetadata;
 import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -116,10 +117,15 @@ public class SyncAccessPolicy {
 		SystemMetadata cnSysMeta = null;
 		SystemMetadata mnSysMeta = null;
 
-		CNode cn = D1Client.getCN();
+		CNode cn = null;
+		
+		try {
+			cn = D1Client.getCN();
+		} catch (ServiceFailure sf) {
+			logMetacat.error("Unable to get Coordinating node name for this MN");
+			throw new AccessControlException ("Unable to get Coordinating node name for this MN");
+		}
 
-		logMetacat.debug("start: " + objList.getStart() + "count: "
-				+ objList.getCount());
 		for (int i = objList.getStart(); i < objList.getCount(); i++) {
 
 			objInfo = objList.getObjectInfo(i);
@@ -162,8 +168,8 @@ public class SyncAccessPolicy {
 			if (!isEqual(mnAccessPolicy, cnAccessPolicy)) {
 				try {
 					BigInteger serialVersion = cnSysMeta.getSerialVersion();
-					logMetacat.debug("Setting access policy from CN for pid: "
-							+ pid.getValue() + "serial version: "
+					logMetacat.debug("Requesting CN to set access policy for pid: "
+							+ pid.getValue() + ", serial version: "
 							+ serialVersion.toString());
 					cn.setAccessPolicy(session, pid, mnAccessPolicy,
 							serialVersion.longValue());
@@ -192,7 +198,7 @@ public class SyncAccessPolicy {
 					throw e;
 				}
 			}
-			logMetacat.debug("Done with pid: " + pid.getValue());
+			logMetacat.debug("Done syncing access policy for pid: " + pid.getValue());
 		}
 
 		return syncedIds;
@@ -348,9 +354,13 @@ public class SyncAccessPolicy {
 			}
 		}
 
-		// Now perform the comparison. This test assumes that the mn perms are
-		// more
-		// complete than the cn perms.
+		// Check if the number of access rules is the same for mn and cn. If not
+		// then consider them not equal, without performing diff of each access rule.
+		if (userPerms1.entrySet().size() != userPerms2.entrySet().size())
+			return false;
+		
+		// Now perform the comparison of each access rule of access policy 1 to ap 2.
+		// This test assumes that the mn perms are more complete than the cn perms.
 		logMetacat.debug("Performing comparison of access policies");
 		for (Map.Entry<Subject, Set<Permission>> entry : userPerms1.entrySet()) {
 			// User name
