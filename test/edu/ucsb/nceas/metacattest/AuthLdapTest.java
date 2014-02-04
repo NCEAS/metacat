@@ -58,6 +58,7 @@ public class AuthLdapTest extends MCTestCase
         TestSuite suite = new TestSuite();
         suite.addTest(new AuthLdapTest("initialize"));
         suite.addTest(new AuthLdapTest("getPrincipals"));
+        suite.addTest(new AuthLdapTest("testAliasedAccount"));
         return suite;
     }
 
@@ -104,5 +105,13 @@ public class AuthLdapTest extends MCTestCase
     /**
      * To Do: add more methods test
      */
+    
+    public void testAliasedAccount() throws Exception {
+        String alias = "uid=test2,o=unaffiliated,dc=ecoinformatics,dc=org";
+        AuthLdap ldap = new AuthLdap();
+        assertTrue("We should authenticate the alias dn "+alias,ldap.authenticate(alias, "test"));
+        String[] info =ldap.getUserInfo(alias, null);
+        assertTrue("The email address should be tao@nceas.ucsb.edu and should be "+info[2], info[2].equals("tao@nceas.ucsb.edu"));
+    }
 
 }
