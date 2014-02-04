@@ -55,7 +55,9 @@ font-weight: bold;
 .iframesearchboxclass { /* not used */ }
 .iframeleftcolclass  { /* not used */ }
 .iframerightcolclass { /* not used */ }
-.iframefooterclass   { /* not used */ }
+.iframefooterclass   { 
+	width: 100%;
+}
 
 /**
  *  create a left margin for the main content
@@ -415,5 +417,13 @@ div#newHeader {
 ul {
 	list-style-type: none;
 }
+
+footer{
+	margin-top:45px;
+	margin-left: 45px;
+}
+footer p{
+	margin-bottom: 0px;
+	font-size: 12px;
 }
 
