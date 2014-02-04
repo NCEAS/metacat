@@ -122,6 +122,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 	DistributionSection currentDistributionSection = null;
 
 	Vector<DistributionSection> allDistributionSections = new Vector<DistributionSection>();
+    private Vector<String> guidsToSync;
 
 	// This variable keeps a counter of each distribution element. This index
 	// will be used to name the inline data file that gets written to disk, and to
@@ -191,9 +192,11 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 	 */
 	public Eml210SAXHandler(DBConnection conn, String action, String docid,
 			String revision, String user, String[] groups, String pub, int serverCode,
-			Date createDate, Date updateDate, boolean writeAccessRules) throws SAXException {
+			Date createDate, Date updateDate, boolean writeAccessRules, Vector<String> guidsToSync) throws SAXException {
 		super(conn, action, docid, revision, user, groups, pub, serverCode, createDate,
 				updateDate, writeAccessRules);
+		
+		this.guidsToSync = guidsToSync;
 		// Get the unchangeable subtrees (user doesn't have write permission)
 		try {
 
@@ -1597,6 +1600,10 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 
 				pstmt.setString(7, subSectionId);
 				logMetacat.debug("SubSectionId in accesstable: " + subSectionId);
+				
+				// Save guid of data object for syncing of access policy with CN after parsing
+				// is successful (see DocumentImpl.write)
+				guidsToSync.add(referencedGuid);
 			}
 
 			Vector<AccessRule> accessRules = accessSection.getAccessRules();
@@ -1637,7 +1644,6 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 		// for D1, refresh the entries
 		HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
 		HazelcastService.getInstance().refreshSystemMetadataEntry(referencedGuid);
-		
 
 	}// writeGivenAccessRuleIntoDB
 

@@ -67,6 +67,7 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
+import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -2693,7 +2694,7 @@ public class DocumentImpl
     	
     	// Get the xml as a string so we can write to file later
     	StringReader xmlReader = new StringReader(xmlString);
-    	
+
         logMetacat.debug("DocumentImpl.write - conn usage count before writing: "
                 + conn.getUsageCount());
         AccessionNumber ac = new AccessionNumber(accnum, action);
@@ -2755,7 +2756,8 @@ public class DocumentImpl
                 	// detect encoding
                     XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
 			        String encoding = xsr.getEncoding();
-			        
+			        Vector<String>guidsToSync = new Vector<String>();
+
                     /*
                      * XMLReader parser = initializeParser(conn, action, docid,
                      * updaterev, validate, user, groups, pub, serverCode, dtd);
@@ -2763,7 +2765,7 @@ public class DocumentImpl
                     logMetacat.debug("DocumentImpl.write - initializing parser");
                     parser = initializeParser(conn, action, docid, xmlReader, updaterev,
                             user, groups, pub, serverCode, dtd, ruleBase,
-                            needValidation, false, null, null, encoding, writeAccessRules);
+                            needValidation, false, null, null, encoding, writeAccessRules, guidsToSync);
                     	// false means it is not a revision doc
                                    //null, null are createdate and updatedate
                                    //null will use current time as create date time
@@ -2782,6 +2784,20 @@ public class DocumentImpl
 
                     // write to xml_node complete. start the indexing thread.
                     addDocidToIndexingQueue(docid, rev);
+                    
+			        // The EML parser has already written to systemmetadata and then writes to xml_access when the db transaction
+                    // is committed. If the pids that have been updated are for data objects with their own access rules, we
+			        // must inform the CN to sync it's access rules with the MN, so the EML 2.1 parser collected such pids from the parse
+			        // operation.
+            		if (guidsToSync.size() > 0) {
+            			try {
+            				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+            				syncAP.sync(guidsToSync);
+            			} catch (Exception e) {
+            				logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
+            				e.printStackTrace(System.out);
+            			}
+            		}
                } catch (Exception e) {
                    e.printStackTrace();
             	   logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
@@ -2851,9 +2867,10 @@ public class DocumentImpl
             // detect encoding
         	XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
 	        String encoding = xsr.getEncoding();
-	        
+	        Vector<String>guidsToSync = new Vector<String>();
+
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
-                    pub, serverCode, dtd, ruleBase, needValidation, false, null, null, encoding, writeAccessRules);
+                    pub, serverCode, dtd, ruleBase, needValidation, false, null, null, encoding, writeAccessRules, guidsToSync);
                     // null and null are createtime and updatetime
                     // null will create current time
                     //false means it is not a revision doc
@@ -2872,6 +2889,15 @@ public class DocumentImpl
         	writeToFileSystem(xmlString, accnum, encoding);
 
             addDocidToIndexingQueue(docid, rev);
+    		if (guidsToSync.size() > 0) {
+    			try {
+    				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+    				syncAP.sync(guidsToSync);
+    			} catch (Exception e) {
+    				logMetacat.error("Error syncing pids with CN: " + " Exception " + e.getMessage());
+    				e.printStackTrace(System.out);
+    			}
+    		}
         } catch (Exception e) {
         	logMetacat.error("DocumentImpl.write - Problem with parsing: " + e.getMessage());
             e.printStackTrace();
@@ -3051,10 +3077,11 @@ public class DocumentImpl
 	        
 	        // no need to write the EML-contained access rules for replication
 	        boolean writeAccessRules = false;
-	       
+	        Vector<String>guidsToSync = new Vector<String>();
+
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
                     pub, serverCode, dtd, ruleBase, needValidation, 
-                    isRevision, createDate, updateDate, encoding, writeAccessRules);
+                    isRevision, createDate, updateDate, encoding, writeAccessRules, guidsToSync);
          
             conn.setAutoCommit(false);
             parser.parse(new InputSource(xmlReader));
@@ -3562,7 +3589,7 @@ public class DocumentImpl
             String action, String docid, Reader xml, String rev, String user,
             String[] groups, String pub, int serverCode, Reader dtd,
             String ruleBase, boolean needValidation, boolean isRevision,
-            Date createDate, Date updateDate, String encoding, boolean writeAccessRules) throws Exception
+            Date createDate, Date updateDate, String encoding, boolean writeAccessRules, Vector<String> guidsToSync) throws Exception
     {
         XMLReader parser = null;
         try {
@@ -3604,7 +3631,7 @@ public class DocumentImpl
             } else if (ruleBase != null && ruleBase.equals(EML210)) {
                 logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.1.0 parser");
                 chandler = new Eml210SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules);
+                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
                 chandler.setIsRevisionDoc(isRevision);
                 chandler.setEncoding(encoding);
                 parser.setContentHandler((ContentHandler) chandler);
