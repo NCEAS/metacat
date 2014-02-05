@@ -5,6 +5,7 @@
 /* Gather most recent docids from xml_revisions that
  *  1. do not have systemMetadata.archived=true 
  *  2. do not exist in xml_documents
+ *  TODO: hone the criteria for selecting documents to restore
  * */
 CREATE TABLE restore_documents (
 	docid VARCHAR(250),
@@ -30,9 +31,10 @@ FROM
 WHERE x.docid = id.docid
 AND x.rev = id.rev
 AND id.guid = sm.guid
--- TODO: hone the criteria for selecting documents to restore
 AND sm.archived = true
-AND sm.obsoletedBy is not null;
+AND sm.obsoleted_by is not null
+AND NOT EXISTS (SELECT * from xml_documents xd WHERE x.docid = xd.docid)
+ORDER BY id.guid;
 
 /* Move xml_revisions back into xml_documents for the affected docids 
  */
