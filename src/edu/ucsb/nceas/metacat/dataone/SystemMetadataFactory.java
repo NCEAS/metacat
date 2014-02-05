@@ -291,7 +291,8 @@ public class SystemMetadataFactory {
 			}
 			if (obsoletesSysMeta != null) {
 				obsoletesSysMeta.setObsoletedBy(identifier);
-				obsoletesSysMeta.setArchived(true);
+				// DO NOT set archived to true -- it will have unintended consequences if the CN sees this.
+				//obsoletesSysMeta.setArchived(true);
 				obsoletesSysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(obsoletes, obsoletesSysMeta);
 			}
