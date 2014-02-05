@@ -1001,7 +1001,7 @@ public class AuthFile implements AuthInterface {
                         "2. The user-distinguish-name must look like \"uid=john,o=something,dc=something,dc=something\" and the group-name must look like \"cn=dev,o=something,dc=something,dc=something\".\n"+
                         "3. if a value of an option has spaces, the value should be enclosed by the double quotes.\n"+
                         "  For example: ./authFileManager.sh groupadd -g cn=dev,o=something,dc=something,dc=something -d \"Developers at NCEAS\"\n"+
-                        "4. \"-d description\" in groupadd is optional; \"-g groupname -e email-address -s surname -f given-name -o organizationName\" in useradd are optional as well.");
+                        "4. \"-d description\" in the \"groupadd\" command is optional; \"-g groupname -e email-address -s surname -f given-name -o organizationName\" in the \"useradd\" command are optional as well.");
                        
                         
     }
