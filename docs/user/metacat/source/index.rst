@@ -64,13 +64,13 @@ Contents
    submitting
    query-index
    themes
+   authinterface
    geoserver
    replication
    harvester
    oaipmh
    event-logging
    sitemaps
-   authinterface
    metacat-properties
    development
 
