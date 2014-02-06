@@ -3,13 +3,42 @@
  */
 
 /* 
- * Gather most recent docids from xml_revisions that
- * TODO: hone the criteria for selecting documents to restore
- *  1. have systemMetadata.archived=true
- * 	2. have non-null obsoleted_by (they were updated by a newer version)
- *  3. do not exist in xml_documents (they were incorrectly archived)
- *  4. have access_log event='delete' by the CN?
- * */
+ * Gather most recent docids that:
+ * - have access_log event='delete' by the CN
+ * - are obsoleted by a newer version
+ * Then we know the current version should be restored
+ */
+
+/* Find the most recent version by traversing system metadata 
+ * see: http://www.postgresql.org/docs/8.4/static/queries-with.html
+ */
+DROP TABLE IF EXISTS current_documents;
+WITH RECURSIVE q AS
+(
+	SELECT  id.guid, sm.obsoleted_by
+	FROM access_log al, identifier id, systemmetadata sm
+	WHERE al.event = 'delete'
+	AND al.date_logged >= '20140101'
+	AND al.principal LIKE '%urn:node:CN%'
+	AND al.docid = id.docid || '.' || id.rev 
+	AND id.guid = sm.guid
+	AND sm.obsoleted_by IS NOT null
+UNION ALL
+	SELECT  newer.guid, newer.obsoleted_by
+	FROM    systemMetadata newer
+	JOIN    q
+	ON      q.obsoleted_by = newer.guid
+)
+SELECT guid, obsoleted_by
+INTO current_documents
+FROM q
+WHERE obsoleted_by is null
+ORDER BY guid;
+
+/**
+ * Gather the details of the documents to restore
+ */
+DROP TABLE IF EXISTS restore_documents;
 CREATE TABLE restore_documents (
 	docid VARCHAR(250),
 	rev INT8,
@@ -27,29 +56,18 @@ SELECT
 	x.rev,
 	x.rootnodeid,
 	id.guid
-FROM 
+FROM current_documents cd,
 	xml_revisions x,
-	identifier id,
-	systemMetadata sm
+	identifier id
 WHERE x.docid = id.docid
 AND x.rev = id.rev
-AND id.guid = sm.guid
-AND sm.archived = true
-AND sm.obsoleted_by is not null
-AND NOT EXISTS (SELECT * FROM xml_documents xd WHERE x.docid = xd.docid)
-AND x.docid || '.' || x.rev IN 
-(SELECT docid
-FROM access_log al
-WHERE al.event = 'delete'
-AND al.date_logged >= '20140101'
-AND al.principal LIKE '%CNORC%')
-ORDER BY id.guid;
+AND id.guid = cd.guid;
 
-SELECT docid
-FROM access_log al
-WHERE al.event = 'delete'
-AND al.date_logged >= '20140101'
-AND al.principal LIKE '%CNORC%';
+-- look at them
+SELECT * 
+FROM restore_documents;
+
+--STOP HERE WHEN TESTING
 
 /* Move xml_revisions back into xml_documents for the affected docids 
  */
@@ -84,7 +102,7 @@ WHERE x.rootnodeid = rd.rootnodeid;
  */
 UPDATE systemMetadata sm
 SET sm.archived = false
-FROM xml_documents x
+FROM xml_revisions x
 	identifier id
 WHERE x.docid = id.docid
 AND id.guid = sm.guid
@@ -92,7 +110,8 @@ AND sm.obsoleted_by IS NOT null;
 
 /* Clean up
  */
-DROP TABLE restore_documents;
+DROP TABLE IF EXISTS current_documents;
+DROP TABLE IF EXISTS restore_documents;
 
 /*
  * update the database version
