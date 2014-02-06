@@ -3,60 +3,63 @@ Metacat Authentication Mechanism
 Metacat supports either an internal password file authentication or the use of LDAP 
 as an external authentication mechanism.  It does this by supplying two classes 
 (``AuthFile`` or ``AuthLDAP``) that implement authentication via a password file or 
-an external LDAP server. You may choose the authentication mechanism during the configuration.
+an external LDAP server. You may choose the authentication mechanism during initial configuration.
 
-However, administrators have the choice of replacing the default classes with a different system for authentication because 
+If neither of these choices is suitable for your deployment, a custom authentication mechanism can be built.
 Metacat is written such that this Authentication provider is replaceable with 
 another class that implements the same interface (``AuthInterface``). As 
 an Administrator, you have the choice to provide an alternative implementation 
 of ``AuthInterface`` and then configuring ``metacat.properties`` to use that 
 class for authentication instead of LDAP or the internal password file.
 
-Password File Based Authentication
+File-Based Authentication
 ----------------------------------
-This is the default authentication mechanism in Metacat release.  The password file
-path can be specified during the configuration.  The Tomcat user should have the
-write/read permission to access the file.  The password file looks like:
+This is the default authentication mechanism in Metacat. The password file
+path can be specified during initial configuration. The Tomcat user should have 
+write/read permission to access the file. The password file follows this form:
 
 ::
 
-<?xml version="1.0" encoding="UTF-8"?>
-<subjects>
-<users>
-<user dn="uid=john,o=NCEAS,dc=ecoinformatics,dc=org">
-<password>csilPspPJdMx8zt7L9XKXeUxZjkPgKZd.o7TTPC0oJOFmT2kQ/E92</password>
-<email>foo@foo.com</email>
-<surName>Smith</surName>
-<givenName>John</givenName>
-<organization>NCEAS</organization>
-<memberof>cn=nceas-dev,o=NCEAS,dc=ecoinformatics,dc=org</memberof>
-</user>
-<user dn="uid=brand,o=NCEAS,dc=ecoinformatics,dc=org">
-<password>$2a$10$j8eGWJBEpj5MubdaqOeJje7oYw6JNc2aq2U7buoRw16kthwOEcWkC</password>
-</user>
-</users>
-<groups>
-<group name="cn=nceas-dev,o=NCEAS,dc=ecoinformatics,dc=org">
-<description>Developers at NCEAS</description>
-</group>
-</groups>
-</subjects> 
+  <?xml version="1.0" encoding="UTF-8"?>
+  <subjects>
+  	<users>
+		<user dn="uid=john,o=NCEAS,dc=ecoinformatics,dc=org">
+			<password>csilPspPJdMx8zt7L9XKXeUxZjkPgKZd.o7TTPC0oJOFmT2kQ/E92</password>
+			<email>foo@foo.com</email>
+			<surName>Smith</surName>
+			<givenName>John</givenName>
+			<organization>NCEAS</organization>
+			<memberof>cn=nceas-dev,o=NCEAS,dc=ecoinformatics,dc=org</memberof>
+		</user>
+		<user dn="uid=brand,o=NCEAS,dc=ecoinformatics,dc=org">
+			<password>$2a$10$j8eGWJBEpj5MubdaqOeJje7oYw6JNc2aq2U7buoRw16kthwOEcWkC</password>
+		</user>
+	</users>
+	<groups>
+		<group name="cn=nceas-dev,o=NCEAS,dc=ecoinformatics,dc=org">
+			<description>Developers at NCEAS</description>
+		</group>
+	</groups>
+  </subjects> 
 
 The format of the DN must look like uid=john,o=NCEAS,dc=ecoinformatics,dc=org.
 
 The format of the group name must look like cn=nceas-dev,o=NCEAS,dc=ecoinformatics,dc=org.
 
-The password stored in the file was hased by Bcrypt algorithm.  If you have the "-i" in the 
+The password stored in the file is hashed using Bcrypt algorithm.  If you have the "-i" in the 
 "useradd" or "usermod" commands when you run the command line utility (see the following section), 
 you will be prompted to input the password and the utility will hash the password and store it in
-the file. You may also get the hash of a password from any online tool, such as https://www.dailycred.com/blog/12/bcrypt-calculator (we
-don't have any guaranty on the security of those tools), then use the "-h" to pass the hashed password to the file by the utility.
+the file. You may also get the hash of a password from any online tool, 
+such as https://www.dailycred.com/blog/12/bcrypt-calculator (we don't have any guaranty on the security of those tools), 
+then use the "-h" to pass the hashed password to the file by the utility.
 
 
 Utility for Password File Based Authentication
 ----------------------------------------------
-You can edit the password file manually.  We also developed a command line utility 
-to help the administrator to manage users and groups. The file locates at $METACAT/WEB-INF/scripts/bash/authFileManager.sh.
+You can edit the password file manually or use Metacat's command line utility 
+for managing users and groups. The utility is located in the deployed Metacat webapp::
+
+  $METACAT/WEB-INF/scripts/bash/authFileManager.sh.
 
 You must be in the directory - $METACAT/WEB-INF/scripts/bash/ to run the file::
 
@@ -72,33 +75,38 @@ You run the command as the owner of the file::
 
 Usage of the utility:
 
-./authFileManager.sh useradd -i -dn user-distinguish-name -g group-name -e email-address -s surname -f given-name -o organizationName 
+./authFileManager.sh useradd -i -dn <user-distinguish-name> [-g <group-name> -e <email-address> -s <surname> -f <given-name> -o <organizationName>] 
 
-./authFileManager.sh useradd -h hashed-password -dn user-distinguish-name -g group-name -e email-address -s surname -f given-name -o organizationName 
+./authFileManager.sh useradd -h <hashed-password> -dn <user-distinguish-name> [-g <group-name> -e <email-address> -s <surname> -f <given-name> -o <organizationName>]
 
-./authFileManager.sh groupadd -g group-name -d description 
+./authFileManager.sh groupadd -g <group-name> [-d <description>] 
 
-./authFileManager.sh usermod -password -dn user-distinguish-name -i 
+./authFileManager.sh usermod -password -dn <user-distinguish-name> -i 
 
-./authFileManager.sh usermod -password -dn user-distinguish-name -h new-hashed-password 
+./authFileManager.sh usermod -password -dn <user-distinguish-name> -h <new-hashed-password> 
 
-./authFileManager.sh usermod -group -a -dn user-distinguish-name -g added-group-name 
+./authFileManager.sh usermod -group -a -dn <user-distinguish-name> -g <added-group-name> 
 
-./authFileManager.sh usermod -group -r -dn user-distinguish-name -g removed-group-name 
+./authFileManager.sh usermod -group -r -dn <user-distinguish-name> -g <removed-group-name> 
 
 
-Note:
-
-1. Metacat currently uses Bcrypt algorithm to hash the password. The hashed password following the "-h" should be generated by a Bcrypt algorithm.
-  The hash string usually has $ signs which messes the command line arguments. You should use two SINGLE quotes to wrap the entire hashed string.
-2. The user-distinguish-name must look like "uid=john,o=something,dc=something,dc=something" and the group-name must look like "cn=dev,o=something,dc=something,dc=something".
-3. if a value of an option has spaces, the value should be enclosed by the double quotes.
+.. Note:: 
+  
+  Metacat currently uses Bcrypt algorithm to hash the password. The hashed password following the "-h" should be generated by a Bcrypt algorithm. 
+  The hash string usually contains $ signs which can interfere with the command line arguments. You should use two SINGLE quotes to wrap the entire hashed string.
+  
+  The <user-distinguish-name> must look like "uid=john,o=something,dc=something,dc=something" and the group-name must look like "cn=dev,o=something,dc=something,dc=something".
+  
+  If an option value has spaces, the value should be enclosed in double quotes.
   For example: ./authFileManager.sh groupadd -g cn=dev,o=something,dc=something,dc=something -d "Developers at NCEAS"
-4. "-d description" in the "groupadd" command is optional; "-g groupname -e email-address -s surname -f given-name -o organizationName" in the "useradd" command are optional as well.
+  
+  The "-d <description>" option in the "groupadd" command is optional; 
+  "-g <groupname> -e <email-address> -s <surname> -f <given-name> -o <organizationName>" in the "useradd" command are optional as well.
 
-LDAP Based Authentication
+LDAP-Based Authentication
 ----------------------------------
-Before the Metacat 2.4.0 release, the LDAP was the default authentication mechanism. It 
-used the NCEAS LDAP server by default.  However, the server will be only accessible by the
-trusted partners. If you are not on the list, you may use either the password file authentication
-(for a small group of users) or set up a LDAP server by yourself (for a big group of users).
+Before the Metacat 2.4.0 release, LDAP was the default authentication mechanism and was configured to use 
+the NCEAS LDAP server. We are now restricting access to the server to only trusted partners who can 
+guarantee secure communication with their clients and the LDAP server. 
+If you are not on the list, you can contact us for more information or you may use the password file authentication
+(for a small group of users) or set up your own LDAP server (for a big group of users).
