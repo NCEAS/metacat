@@ -2,10 +2,13 @@
  * Restore archived documents
  */
 
-/* Gather most recent docids from xml_revisions that
- *  1. do not have systemMetadata.archived=true 
- *  2. do not exist in xml_documents
- *  TODO: hone the criteria for selecting documents to restore
+/* 
+ * Gather most recent docids from xml_revisions that
+ * TODO: hone the criteria for selecting documents to restore
+ *  1. have systemMetadata.archived=true
+ * 	2. have non-null obsoleted_by (they were updated by a newer version)
+ *  3. do not exist in xml_documents (they were incorrectly archived)
+ *  4. have access_log event='delete' by the CN?
  * */
 CREATE TABLE restore_documents (
 	docid VARCHAR(250),
@@ -33,8 +36,20 @@ AND x.rev = id.rev
 AND id.guid = sm.guid
 AND sm.archived = true
 AND sm.obsoleted_by is not null
-AND NOT EXISTS (SELECT * from xml_documents xd WHERE x.docid = xd.docid)
+AND NOT EXISTS (SELECT * FROM xml_documents xd WHERE x.docid = xd.docid)
+AND x.docid || '.' || x.rev IN 
+(SELECT docid
+FROM access_log al
+WHERE al.event = 'delete'
+AND al.date_logged >= '20140101'
+AND al.principal LIKE '%CNORC%')
 ORDER BY id.guid;
+
+SELECT docid
+FROM access_log al
+WHERE al.event = 'delete'
+AND al.date_logged >= '20140101'
+AND al.principal LIKE '%CNORC%';
 
 /* Move xml_revisions back into xml_documents for the affected docids 
  */
@@ -62,13 +77,18 @@ SELECT
 FROM xml_nodes_revisions x, restore_documents rd
 WHERE x.rootnodeid = rd.rootnodeid;
 
-/* Ensure previous revisions of docids do not have systemMetadata.archived=true
+/* Ensure ALL previous revisions of docids that
+ * have been obsoleted_by something else 
+ * do not also have archived=true flag set
  * (Avoids encountering this issue again)
  */
 UPDATE systemMetadata sm
 SET sm.archived = false
-FROM restore_documents rd
-WHERE sm.guid = rd.guid;
+FROM xml_documents x
+	identifier id
+WHERE x.docid = id.docid
+AND id.guid = sm.guid
+AND sm.obsoleted_by IS NOT null;
 
 /* Clean up
  */
