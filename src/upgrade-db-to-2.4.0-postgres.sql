@@ -24,10 +24,10 @@ WITH RECURSIVE q AS
 	AND id.guid = sm.guid
 	AND sm.obsoleted_by IS NOT null
 UNION ALL
-	SELECT  newer.guid, newer.obsoleted_by
-	FROM    systemMetadata newer
-	JOIN    q
-	ON      q.obsoleted_by = newer.guid
+	SELECT newer.guid, newer.obsoleted_by
+	FROM systemMetadata newer
+	JOIN q
+	ON q.obsoleted_by = newer.guid
 )
 SELECT guid, obsoleted_by
 INTO current_documents
