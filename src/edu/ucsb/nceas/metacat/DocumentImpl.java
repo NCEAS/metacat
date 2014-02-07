@@ -3604,7 +3604,7 @@ public class DocumentImpl
             if (ruleBase != null && ruleBase.equals(EML200)) {
                 logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.0.0 parser");
                 chandler = new Eml200SAXHandler(dbconn, action, docid, rev,
-                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules);
+                        user, groups, pub, serverCode, createDate, updateDate, writeAccessRules, guidsToSync);
                 chandler.setIsRevisionDoc(isRevision);
                 chandler.setEncoding(encoding);
                 parser.setContentHandler((ContentHandler) chandler);
