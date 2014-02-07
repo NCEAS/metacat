@@ -106,18 +106,38 @@ DELETE FROM xml_nodes_revisions x
 USING restore_documents rd
 WHERE x.rootnodeid = rd.rootnodeid;
 
-/* Ensure ALL previous revisions of docids that
- * have been obsoleted_by something else 
+/* Ensure ALL previous revisions of docids 
+ * that have been obsoleted_by something else
+ * but still have current revisions 
  * do not also have archived=true flag set
  * (Avoids encountering this issue again)
  */
+
+/* Check the numbers
+ */
+SELECT count(id.guid)
+FROM xml_revisions x,
+	identifier id,
+	systemMetadata sm
+WHERE x.docid = id.docid
+AND x.rev = id.rev
+AND id.guid = sm.guid
+AND sm.obsoleted_by IS NOT null
+AND sm.archived = 'true'
+AND EXISTS (SELECT * from xml_documents xd WHERE xd.docid = x.docid);
+
+/*Do the update
+ */
 UPDATE systemMetadata sm
 SET sm.archived = false
-FROM xml_revisions x
+FROM xml_revisions x,
 	identifier id
 WHERE x.docid = id.docid
+AND x.rev = id.rev
 AND id.guid = sm.guid
-AND sm.obsoleted_by IS NOT null;
+AND sm.obsoleted_by IS NOT null
+AND sm.archived = 'true'
+AND EXISTS (SELECT * from xml_documents xd WHERE xd.docid = x.docid);
 
 /* Clean up
  */
