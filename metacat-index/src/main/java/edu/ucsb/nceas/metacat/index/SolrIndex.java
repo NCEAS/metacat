@@ -422,6 +422,11 @@ public class SolrIndex {
 	    		}
 	    	}
 	        
+	        // make sure there is an id in the solrdoc so it is added to the index
+	        if (!doc.hasField(ID)) {
+	        	doc.updateOrAddField(ID, pid.getValue());
+	        }
+	        
 	        // insert the whole thing
 	        insertToIndex(doc);
     	} catch (Exception e) {
