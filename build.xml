@@ -72,14 +72,14 @@
 	                <arg value = "@{dest}" />
 	            </args>
 	        </git>
-	        <git command = "pull" dir = "@{dest}" >
+	        <git command = "checkout" dir = "@{dest}">
 	        	<args>
-	                <arg value = "@{repository}" />
 	                <arg value = "@{refname}" />
 	            </args>
 	        </git>
-	        <git command = "checkout" dir = "@{dest}">
+	    	<git command = "pull" dir = "@{dest}" >
 	        	<args>
+	                <arg value = "@{repository}" />
 	                <arg value = "@{refname}" />
 	            </args>
 	        </git>
