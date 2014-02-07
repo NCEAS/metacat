@@ -69,19 +69,6 @@ FROM restore_documents;
 
 --STOP HERE WHEN TESTING
 
-/* Move xml_revisions back into xml_documents for the affected docids 
- */
-INSERT INTO xml_documents
-	(docid, rootnodeid, docname, doctype,
-	user_owner, user_updated, date_created, date_updated,
-	server_location, rev, public_access, catalog_id) 
-SELECT 
-	docid, rootnodeid, docname, doctype,
-	user_owner, user_updated , date_created, date_updated,
-	server_location, rev, public_access, catalog_id
-FROM xml_revisions x, restore_documents rd
-WHERE x.rootnodeid = rd.rootnodeid;
-
 /* Move xml_nodes_revisions back into xml_nodes for the affected docids 
  */
 INSERT INTO xml_nodes
@@ -90,9 +77,33 @@ INSERT INTO xml_nodes
 	date_updated, nodedatanumerical, nodedatadate)
 SELECT 
 	nodeid, nodeindex, nodetype, nodename, nodeprefix,  
-	nodedata, parentnodeid, rootnodeid, docid, date_created,
+	nodedata, parentnodeid, x.rootnodeid, x.docid, date_created,
 	date_updated, nodedatanumerical, nodedatadate
 FROM xml_nodes_revisions x, restore_documents rd
+WHERE x.rootnodeid = rd.rootnodeid;
+
+/* Move xml_revisions back into xml_documents for the affected docids 
+ */
+INSERT INTO xml_documents
+	(docid, rootnodeid, docname, doctype,
+	user_owner, user_updated, date_created, date_updated,
+	server_location, rev, public_access, catalog_id) 
+SELECT 
+	x.docid, x.rootnodeid, docname, doctype,
+	user_owner, user_updated , date_created, date_updated,
+	server_location, x.rev, public_access, catalog_id
+FROM xml_revisions x, restore_documents rd
+WHERE x.rootnodeid = rd.rootnodeid;
+
+/* Remove the records from revisions 
+ * Order matters here because of foreign key constraints
+ */
+DELETE FROM xml_revisions x
+USING restore_documents rd
+WHERE x.rootnodeid = rd.rootnodeid;
+
+DELETE FROM xml_nodes_revisions x
+USING restore_documents rd
 WHERE x.rootnodeid = rd.rootnodeid;
 
 /* Ensure ALL previous revisions of docids that
