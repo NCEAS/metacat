@@ -86,7 +86,7 @@ ___________
 The query service should provide results quickly, as it will be used to construct the user dashboard and possibly other UI elements.
 
 Statistics Service Solr Index
-------------------------
+-----------------------------
 Currently Metacat writes access information to the table ‘access_log’ that has the fields:
 	
 =========== ===========================
@@ -106,9 +106,9 @@ In order to provide fast queries, aggregation and faceting of selected fields, a
 the ‘systemmetadata’ table into a new Solr index that will be configured in Metacat as a second Solr core. The new Solr index will 
 be based on access events and will contain the fields shown in the following table:
 
-==============  =========
+==============  ===========
 name             ddata type
------------     ---------------------------
+--------------  -----------
 id 		    	str
 datetime		date
 event			str
@@ -118,7 +118,7 @@ rightsHolder	str
 principal		str
 size			int
 formatId   		str
-==============  =========
+==============  ===========
 
 The new Solr index will contain the following fields:
 
