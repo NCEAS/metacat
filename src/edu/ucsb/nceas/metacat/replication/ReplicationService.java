@@ -424,14 +424,13 @@ public class ReplicationService extends BaseService {
 				SyncAccessPolicy syncAP = new SyncAccessPolicy();
 				response.setContentType("text/html");
 				out = response.getWriter();
-				if (params.containsKey("docids")) {
-					String docIds = ((String[]) params.get("docids"))[0];
-					logMetacat.debug("Attempting to sync access policies for docids: " + docIds);
-					ArrayList<String> ids = new ArrayList<String>(
-							Arrays.asList(docIds.split("\\s*,\\s*")));
+				if (params.containsKey("pid")) {
+					String[] pids = params.get("pid");
+					logMetacat.debug("Attempting to sync access policies for pids: " + pids);
+					ArrayList<String> pidsToSync = new ArrayList<String>(Arrays.asList(pids));
 					try {
-						List<Identifier> syncedIds = syncAP.sync(ids);
-						out.write("<html><body>Syncing access policies has completed.</body></html>");
+						List<Identifier> syncedPids = syncAP.sync(pidsToSync);
+						out.write("<html><body>Syncing access policies has completed for " + syncedPids.size() + " pids.</body></html>");
 					} catch (Exception e) {
 						logMetacat.error("Error syncing all access polies: "
 								+ e.getMessage());
