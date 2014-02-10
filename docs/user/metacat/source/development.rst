@@ -17,4 +17,5 @@ Contents:
 
    identifiers
    doi
+   statistics-service
 
