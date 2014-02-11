@@ -93,6 +93,7 @@ import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -1787,21 +1788,28 @@ public class MetacatHandler {
               String accNumber = docid[0];
               logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - " + 
                 doAction + " " + accNumber + "...");
+              Identifier identifier = new Identifier();
+              identifier.setValue(accNumber);
+              if(!D1NodeService.isValidIdentifier(identifier)) {
+                  String error = "The docid "+accNumber +" is not valid since it is null or contians the white space(s).";
+                  logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +error);
+                  throw new Exception(error);
+              }
               
-              if (accNumber == null || accNumber.equals("")) {
+              /*if (accNumber == null || accNumber.equals("")) {
                   logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +
                 		          "writing with null acnumber");
                   newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
                           doAction, null, user, groups);
                   EventLog.getInstance().log(ipAddress, userAgent, user, "", action[0]);
               
-              } else {
-                  newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
+              } else {*/
+              newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
                           doAction, accNumber, user, groups);
             
-                  EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
+              EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
               
-              }
+              //}
               
               // alert listeners of this event
               MetacatDocumentEvent mde = new MetacatDocumentEvent();
@@ -3006,16 +3014,46 @@ public class MetacatHandler {
        * System.err.println("Fatal Error: couldn't get response output
        * stream.");
        */
+      if(params.containsKey("qformat")) 
+      {
+          qformat = params.get("qformat")[0];
+      }
       
       if (params.containsKey("docid")) 
       {
           docid = params.get("docid")[0];
       }
       
-      if(params.containsKey("qformat")) 
-      {
-          qformat = params.get("qformat")[0];
+      Identifier identifier = new Identifier();
+      identifier.setValue(docid);
+      if(!D1NodeService.isValidIdentifier(identifier)) {
+          output += this.PROLOG;
+          output += this.ERROR;
+          output += "The docid "+docid +" is not valid since it is null or contians the white space(s).";
+          output += this.ERRORCLOSE;
+          logMetacat.warn("MetacatHandler.handleInsertMultipartAction - " +
+                          "The docid "+docid +" is not valid since it is null or contians the white space(s).");
+          if (qformat == null || qformat.equals("xml")) {
+              response.setContentType("text/xml");
+              out.println(output);
+          } else {
+              try {
+                  DBTransform trans = new DBTransform();
+                  response.setContentType("text/html");
+                  trans.transformXMLDocument(output,
+                          "message", "-//W3C//HTML//EN", qformat,
+                          out, null, null);
+              } catch (Exception e) {
+
+                  logMetacat.error("MetacatHandler.handleInsertMultipartAction - General error: "
+                          + e.getMessage());
+                  e.printStackTrace(System.out);
+              }
+          }
+          return;
       }
+      
+      
       
       // Make sure we have a docid and datafile
       if (docid != null && fileList.containsKey("datafile")) 
@@ -3164,147 +3202,159 @@ public class MetacatHandler {
         if (params.containsKey("docid")) {
             docid = params.get("docid")[0];
         }
+        
+        Identifier identifier = new Identifier();
+        identifier.setValue(docid);
+        if(!D1NodeService.isValidIdentifier(identifier)) {
+            output += this.PROLOG;
+            output += this.ERROR;
+            output += "The docid "+docid +" is not valid since it is null or contians the white space(s).";
+            output += this.ERRORCLOSE;
+            logMetacat.warn("MetacatHandler.handleUploadAction - " +
+                            "The docid "+docid +" is not valid since it is null or contians the white space(s).");
+        } else {
+         // Make sure we have a docid and datafile
+            if (docid != null && fileList.containsKey("datafile")) {
+                logMetacat.info("MetacatHandler.handleUploadAction - " +
+                                "Uploading data docid: " + docid);
+                // Get a reference to the file part of the form
+                //FilePart filePart = (FilePart) fileList.get("datafile");
+                String fileName = fileList.get("filename");
+                logMetacat.info("MetacatHandler.handleUploadAction - " +
+                                "Uploading filename: " + fileName);
+                // Check if the right file existed in the uploaded data
+                if (fileName != null) {
+
+                    try {
+                        //logMetacat.info("Upload datafile " + docid
+                        // +"...", 10);
+                        //If document get lock data file grant
+                        if (DocumentImpl.getDataFileLockGrant(docid)) {
+                            // Save the data file to disk using "docid" as the name
+                            String datafilepath = PropertyService.getProperty("application.datafilepath");
+                            File dataDirectory = new File(datafilepath);
+                            dataDirectory.mkdirs();
+                            File newFile = null;
+                            //                    File tempFile = null;
+                            String tempFileName = fileList.get("name");
+                            String newFileName = dataDirectory + File.separator + docid;
+                            long size = 0;
+                            boolean fileExists = false;
+
+                            try {
+                                newFile = new File(newFileName);
+                                fileExists = newFile.exists();
+                                logMetacat.info("MetacatHandler.handleUploadAction - " +
+                                                "new file status is: " + fileExists);
+                                if ( fileExists == false ) {
+                                    // copy file to desired output location
+                                    try {
+                                        MetacatUtil.copyFile(tempFileName, newFileName);
+                                    } catch (IOException ioe) {
+                                        logMetacat.error("IO Exception copying file: " +
+                                                ioe.getMessage());
+                                        ioe.printStackTrace(System.out);
+                                    }
+                                    size = newFile.length();
+                                    if (size == 0) {
+                                        throw new IOException("Uploaded file is 0 bytes!");
+                                    }
+                                } // Latent bug here if the file already exists, then the
+                                  // conditional fails but the document is still registered.
+                                  // maybe this never happens because we already requested a lock?
+                                logMetacat.info("MetacatHandler.handleUploadAction - " +
+                                                "Uploading the following to Metacat:" +
+                                                fileName + ", " + docid + ", " +
+                                                username + ", " + groupnames);
+                                //register the file in the database (which generates
+                                // an exception
+                                //if the docid is not acceptable or other untoward
+                                // things happen
+                                DocumentImpl.registerDocument(fileName, "BIN", docid,
+                                        username, groupnames);
+                                
+                                // generate system metadata about the doc
+                                SystemMetadata sm = SystemMetadataFactory.createSystemMetadata(docid, false, false);
+                                
+                                // manage it in the store
+                                HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
+                                
+                                // submit for indexing
+                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null);
+                                
+                            } catch (Exception ee) {
+                                // If the file did not exist before this method was 
+                                // called and an exception is generated while 
+                                // creating or registering it, then we want to delete
+                                // the file from disk because the operation failed.
+                                // However, if the file already existed before the 
+                                // method was called, then the exception probably
+                                // occurs when registering the document, and so we
+                                // want to leave the old file in place.
+                                if ( fileExists == false ) {
+                                    newFile.delete();
+                                }
+                                
+                                logMetacat.info("MetacatHandler.handleUploadAction - " +
+                                                "in Exception: fileExists is " + fileExists);
+                                logMetacat.error("MetacatHandler.handleUploadAction - " +
+                                                 "Upload Error: " + ee.getMessage());
+                                throw ee;
+                            }
+
+                            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
+                                    username, docid, "upload");
+                            // Force replication this data file
+                            // To data file, "insert" and update is same
+                            // The fourth parameter is null. Because it is
+                            // notification server
+                            // and this method is in MetaCatServerlet. It is
+                            // original command,
+                            // not get force replication info from another metacat
+                            ForceReplicationHandler frh = new ForceReplicationHandler(
+                                    docid, "insert", false, null);
+                            logMetacat.debug("MetacatHandler.handleUploadAction - " +
+                                             "ForceReplicationHandler created: " + 
+                                             frh.toString());
+
+                            // set content type and other response header fields
+                            // first
+                            output += "<?xml version=\"1.0\"?>";
+                            output += "<success>";
+                            output += "<docid>" + docid + "</docid>";
+                            output += "<size>" + size + "</size>";
+                            output += "</success>";
+                        }
+
+                    } catch (Exception e) {
+
+                        output += "<?xml version=\"1.0\"?>";
+                        output += "<error>";
+                        output += e.getMessage();
+                        output += "</error>";
+                    }
+                } else {
+                    // the field did not contain a file
+                    output += "<?xml version=\"1.0\"?>";
+                    output += "<error>";
+                    output += "The uploaded data did not contain a valid file.";
+                    output += "</error>";
+                }
+            } else {
+                // Error bcse docid missing or file missing
+                output += "<?xml version=\"1.0\"?>";
+                output += "<error>";
+                output += "The uploaded data did not contain a valid docid "
+                    + "or valid file.";
+                output += "</error>";
+            }
+        }
+
 
         if(params.containsKey("qformat")) {
             qformat = params.get("qformat")[0];
         }
-
-        // Make sure we have a docid and datafile
-        if (docid != null && fileList.containsKey("datafile")) {
-            logMetacat.info("MetacatHandler.handleUploadAction - " +
-            		        "Uploading data docid: " + docid);
-            // Get a reference to the file part of the form
-            //FilePart filePart = (FilePart) fileList.get("datafile");
-            String fileName = fileList.get("filename");
-            logMetacat.info("MetacatHandler.handleUploadAction - " +
-            		        "Uploading filename: " + fileName);
-            // Check if the right file existed in the uploaded data
-            if (fileName != null) {
-
-                try {
-                    //logMetacat.info("Upload datafile " + docid
-                    // +"...", 10);
-                    //If document get lock data file grant
-                    if (DocumentImpl.getDataFileLockGrant(docid)) {
-                        // Save the data file to disk using "docid" as the name
-                        String datafilepath = PropertyService.getProperty("application.datafilepath");
-                        File dataDirectory = new File(datafilepath);
-                        dataDirectory.mkdirs();
-                        File newFile = null;
-                        //                    File tempFile = null;
-                        String tempFileName = fileList.get("name");
-                        String newFileName = dataDirectory + File.separator + docid;
-                        long size = 0;
-                        boolean fileExists = false;
-
-                        try {
-                            newFile = new File(newFileName);
-                            fileExists = newFile.exists();
-                            logMetacat.info("MetacatHandler.handleUploadAction - " +
-                            		        "new file status is: " + fileExists);
-                            if ( fileExists == false ) {
-                                // copy file to desired output location
-                                try {
-                                    MetacatUtil.copyFile(tempFileName, newFileName);
-                                } catch (IOException ioe) {
-                                    logMetacat.error("IO Exception copying file: " +
-                                            ioe.getMessage());
-                                    ioe.printStackTrace(System.out);
-                                }
-                                size = newFile.length();
-                                if (size == 0) {
-                                    throw new IOException("Uploaded file is 0 bytes!");
-                                }
-                            } // Latent bug here if the file already exists, then the
-                              // conditional fails but the document is still registered.
-                              // maybe this never happens because we already requested a lock?
-                            logMetacat.info("MetacatHandler.handleUploadAction - " +
-                            		        "Uploading the following to Metacat:" +
-                                            fileName + ", " + docid + ", " +
-                                            username + ", " + groupnames);
-                            //register the file in the database (which generates
-                            // an exception
-                            //if the docid is not acceptable or other untoward
-                            // things happen
-                            DocumentImpl.registerDocument(fileName, "BIN", docid,
-                                    username, groupnames);
-                            
-                            // generate system metadata about the doc
-                            SystemMetadata sm = SystemMetadataFactory.createSystemMetadata(docid, false, false);
-							
-					        // manage it in the store
-                            HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
-                            
-                            // submit for indexing
-                            MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null);
-					        
-                        } catch (Exception ee) {
-                            // If the file did not exist before this method was 
-                            // called and an exception is generated while 
-                            // creating or registering it, then we want to delete
-                            // the file from disk because the operation failed.
-                            // However, if the file already existed before the 
-                            // method was called, then the exception probably
-                            // occurs when registering the document, and so we
-                            // want to leave the old file in place.
-                            if ( fileExists == false ) {
-                                newFile.delete();
-                            }
-                            
-                            logMetacat.info("MetacatHandler.handleUploadAction - " +
-                            		        "in Exception: fileExists is " + fileExists);
-                            logMetacat.error("MetacatHandler.handleUploadAction - " +
-                            		         "Upload Error: " + ee.getMessage());
-                            throw ee;
-                        }
-
-                        EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"),
-                                username, docid, "upload");
-                        // Force replication this data file
-                        // To data file, "insert" and update is same
-                        // The fourth parameter is null. Because it is
-                        // notification server
-                        // and this method is in MetaCatServerlet. It is
-                        // original command,
-                        // not get force replication info from another metacat
-                        ForceReplicationHandler frh = new ForceReplicationHandler(
-                                docid, "insert", false, null);
-                        logMetacat.debug("MetacatHandler.handleUploadAction - " +
-                        		         "ForceReplicationHandler created: " + 
-                        		         frh.toString());
-
-                        // set content type and other response header fields
-                        // first
-                        output += "<?xml version=\"1.0\"?>";
-                        output += "<success>";
-                        output += "<docid>" + docid + "</docid>";
-                        output += "<size>" + size + "</size>";
-                        output += "</success>";
-                    }
-
-                } catch (Exception e) {
-
-                    output += "<?xml version=\"1.0\"?>";
-                    output += "<error>";
-                    output += e.getMessage();
-                    output += "</error>";
-                }
-            } else {
-                // the field did not contain a file
-                output += "<?xml version=\"1.0\"?>";
-                output += "<error>";
-                output += "The uploaded data did not contain a valid file.";
-                output += "</error>";
-            }
-        } else {
-            // Error bcse docid missing or file missing
-            output += "<?xml version=\"1.0\"?>";
-            output += "<error>";
-            output += "The uploaded data did not contain a valid docid "
-                + "or valid file.";
-            output += "</error>";
-        }
-
+        
         if (qformat == null || qformat.equals("xml")) {
             response.setContentType("text/xml");
             out.println(output);
