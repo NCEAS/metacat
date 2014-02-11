@@ -111,7 +111,8 @@ public class SyncAccessPolicy {
 
 		try {
 			cn = D1Client.getCN();
-			logMetacat.debug("Will sync access policies to CN id: " + cn.getNodeId() + " with info: " + cn.toString());
+			logMetacat.debug("Will sync access policies to CN id: "
+					+ cn.getNodeId() + " with info: " + cn.toString());
 		} catch (ServiceFailure sf) {
 			logMetacat
 					.error("Unable to get Coordinating node name for this MN");
@@ -188,6 +189,8 @@ public class SyncAccessPolicy {
 									+ pid.getValue()
 									+ " Service failure: "
 									+ sf.getMessage());
+					sf.printStackTrace();
+					logMetacat.debug("Cause: " + sf.getCause());
 					// throw sf;
 					continue;
 				} catch (Exception e) {
@@ -343,28 +346,33 @@ public class SyncAccessPolicy {
 								objectFormatId, replicaStatus, start, count);
 
 				logMetacat.debug("syncTask total # of guids: "
-						+ objsToSync.getTotal() + ", count for this page: " + objsToSync.getCount());
+						+ objsToSync.getTotal() + ", count for this page: "
+						+ objsToSync.getCount());
 			} catch (Exception e) {
 				logMetacat.error("Error syncing ids");
 			}
-			
+
 			total = objsToSync.getTotal();
 
-			// The first loop might have fewer results than the requested count value from the properties file,
-			// so in this case use count returned from IdentiferManger for the loop count/increment (loop will only execute once).
-			if (objsToSync.getCount() < count) count = objsToSync.getCount();
-			
-			for (int i = 0; (i + count -1) < total; i += count) {
+			// The first loop might have fewer results than the requested count
+			// value from the properties file,
+			// so in this case use count returned from IdentiferManger for the
+			// loop count/increment (loop will only execute once).
+			if (objsToSync.getCount() < count)
+				count = objsToSync.getCount();
+
+			for (int i = 0; (i + count - 1) < total; i += count) {
 				try {
 					logMetacat.debug("syncTask # requested: " + count
 							+ ", start: " + start + ", total: " + total
 							+ ", count: " + objsToSync.getCount());
 					tmpIds = sync(objsToSync);
 					syncedIds.addAll(tmpIds);
-					
+
 					// Set start for the next db retrieval, loop interation
 					start += objsToSync.getCount();
-					if (start >= total) break;
+					if (start >= total)
+						break;
 					objsToSync = IdentifierManager
 							.getInstance()
 							.querySystemMetadata(startTime, endTime,
