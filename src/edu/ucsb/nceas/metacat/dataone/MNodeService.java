@@ -81,6 +81,7 @@ import org.dataone.service.mn.tier2.v1.MNAuthorization;
 import org.dataone.service.mn.tier3.v1.MNStorage;
 import org.dataone.service.mn.tier4.v1.MNReplication;
 import org.dataone.service.mn.v1.MNQuery;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
@@ -1313,6 +1314,30 @@ public class MNodeService extends D1NodeService
             
         }
     }
+    
+    private SystemMetadata makePublicIfNot(SystemMetadata sysmeta, Identifier pid) throws ServiceFailure, InvalidToken, NotFound, NotImplemented, InvalidRequest {
+    	// check if it is publicly readable
+		boolean isPublic = false;
+		Subject publicSubject = new Subject();
+		publicSubject.setValue(Constants.SUBJECT_PUBLIC);
+		Session publicSession = new Session();
+		publicSession.setSubject(publicSubject);
+		AccessRule publicRule = new AccessRule();
+		publicRule.addPermission(Permission.READ);
+		publicRule.addSubject(publicSubject);
+		
+		// see if we need to add the rule
+		try {
+			isPublic = this.isAuthorized(publicSession, pid, Permission.READ);
+		} catch (NotAuthorized na) {
+			// well, certainly not authorized for public read!
+		}
+		if (!isPublic) {
+			sysmeta.getAccessPolicy().addAllow(publicRule);
+		}
+		
+		return sysmeta;
+    }
 
 	@Override
 	public Identifier generateIdentifier(Session session, String scheme, String fragment)
@@ -1647,6 +1672,9 @@ public class MNodeService extends D1NodeService
 		sysmeta.setObsoletes(originalIdentifier);
 		sysmeta.setObsoletedBy(null);
 		
+		// ensure it is publicly readable
+		sysmeta = makePublicIfNot(sysmeta, originalIdentifier);
+		
 		// get the bytes
 		InputStream inputStream = this.get(session, originalIdentifier);
 		
@@ -1685,9 +1713,7 @@ public class MNodeService extends D1NodeService
 				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
 				Map<Identifier, List<Identifier>> sciMetaMap = resourceMapStructure.get(potentialOreIdentifier);
 				List<Identifier> dataIdentifiers = sciMetaMap.get(originalIdentifier);
-				
-				// TODO: ensure all data package objects allow public read
-	
+					
 				// reconstruct the ORE with the new identifiers
 				sciMetaMap.remove(originalIdentifier);
 				sciMetaMap.put(newIdentifier, dataIdentifiers);
@@ -1713,6 +1739,25 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setSize(BigInteger.valueOf(resourceMapString.getBytes("UTF-8").length));
 				oreSysMeta.setChecksum(ChecksumUtil.checksum(resourceMapString.getBytes("UTF-8"), oreSysMeta.getChecksum().getAlgorithm()));
 				
+				// ensure ORE is publicly readable
+				oreSysMeta = makePublicIfNot(sysmeta, potentialOreIdentifier);
+				
+				// ensure all data objects allow public read
+				List<String> pidsToSync = new ArrayList<String>();
+				for (Identifier dataId: dataIdentifiers) {
+					SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+					dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+					this.updateSystemMetadata(dataSysMeta);
+					pidsToSync.add(dataId.getValue());
+				}
+				SyncAccessPolicy sap = new SyncAccessPolicy();
+				try {
+					sap.sync(pidsToSync);
+				} catch (Exception e) {
+					// ignore
+					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
+				}
+				
 				// save the updated ORE
 				this.update(
 						session, 
@@ -1730,7 +1775,7 @@ public class MNodeService extends D1NodeService
 	
 					@SuppressWarnings("unused")
 					SystemMetadata extraSysMeta = SystemMetadataFactory.createSystemMetadata(newLocalId, true, false);
-					// should be done generating the ORE here
+					// should be done generating the ORE here, and the same permissions were used from the metadata object
 					
 				} catch (Exception e) {
 					// oops, guess there was a problem - no package for you
