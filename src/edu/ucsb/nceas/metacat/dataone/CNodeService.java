@@ -545,7 +545,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 				sysMeta.setArchived(true);
 				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-				
+			    // notify the replicas
+				notifyReplicaNodes(sysMeta);
+				  
 			  } else {
 				  throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
 					  ". Couldn't obtain the system metadata record.");
@@ -569,51 +571,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       }
 
-      // get the node list
-      try {
-          cn = D1Client.getCN();
-          nodeList = cn.listNodes().getNodeList();
-          
-      } catch (Exception e) { // handle BaseException and other I/O issues
-          
-          // swallow errors since the call is not critical
-          logMetacat.error("Can't inform MNs of the archive of " + pid.getValue() + 
-              " due to communication issues with the CN: " + e.getMessage());
-          
-      }
-
-	  // notify the replicas
-	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-	  if (systemMetadata.getReplicaList() != null) {
-		  for (Replica replica: systemMetadata.getReplicaList()) {
-			  NodeReference replicaNode = replica.getReplicaMemberNode();
-			  try {
-                  if (nodeList != null) {
-                      // find the node type
-                      for (Node node : nodeList) {
-                          if ( node.getIdentifier().getValue().equals(replicaNode.getValue()) ) {
-                              nodeType = node.getType();
-                              break;
-              
-                          }
-                      }
-                  }
-                  
-                  // only send call MN.archive() to avoid an infinite loop with the CN
-                  if (nodeType != null && nodeType == NodeType.MN) {
-				      Identifier mnRetId = D1Client.getMN(replicaNode).archive(null, pid);
-				      
-                  }
-                  
-			  } catch (Exception e) {
-				  // all we can really do is log errors and carry on with life
-				  logMetacat.error("Error archiving pid: " +  pid.getValue() + 
-					  " from replica MN: " + replicaNode.getValue(), e);
-			}
-			  
-		  }
-	  }
-	  
 	  return pid;
       
   }
