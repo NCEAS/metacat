@@ -36,6 +36,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.log4j.Logger;
 import org.dataone.client.CNode;
@@ -61,6 +63,7 @@ import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
+import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -69,7 +72,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 public class SyncAccessPolicy {
 
 	private static Logger logMetacat = Logger.getLogger(SyncAccessPolicy.class);
-	
+
 	/**
 	 * Synchronize access policy (from system metadata) of d1 member node with
 	 * the corresponding controlling node.
@@ -92,7 +95,8 @@ public class SyncAccessPolicy {
 	private List<Identifier> sync(ObjectList objList) throws ServiceFailure,
 			InvalidToken, NotAuthorized, NotFound, NotImplemented,
 			McdbDocNotFoundException, InvalidRequest, VersionMismatch,
-			NumberFormatException, AccessionNumberException, SQLException, Exception {
+			NumberFormatException, AccessionNumberException, SQLException,
+			Exception {
 
 		AccessPolicy cnAccessPolicy = null;
 		AccessPolicy mnAccessPolicy = null;
@@ -104,12 +108,15 @@ public class SyncAccessPolicy {
 		SystemMetadata mnSysMeta = null;
 
 		CNode cn = null;
-		
+
 		try {
 			cn = D1Client.getCN();
+			logMetacat.debug("Will sync access policies to CN id: " + cn.getNodeId() + " with info: " + cn.toString());
 		} catch (ServiceFailure sf) {
-			logMetacat.error("Unable to get Coordinating node name for this MN");
-			throw new AccessControlException ("Unable to get Coordinating node name for this MN");
+			logMetacat
+					.error("Unable to get Coordinating node name for this MN");
+			throw new AccessControlException(
+					"Unable to get Coordinating node name for this MN");
 		}
 
 		for (int i = objList.getStart(); i < objList.getCount(); i++) {
@@ -117,7 +124,8 @@ public class SyncAccessPolicy {
 			objInfo = objList.getObjectInfo(i);
 			pid = objInfo.getIdentifier();
 
-			logMetacat.debug("Getting SM for pid: " + pid.getValue() + " i: " + i);
+			logMetacat.debug("Getting SM for pid: " + pid.getValue() + " i: "
+					+ i);
 			try {
 				// Get sm, access policy for requested localId
 				mnSysMeta = IdentifierManager.getInstance().getSystemMetadata(
@@ -132,10 +140,11 @@ public class SyncAccessPolicy {
 				continue;
 			}
 
-			logMetacat.debug("Getting access policy for pid: " + pid.getValue());
+			logMetacat
+					.debug("Getting access policy for pid: " + pid.getValue());
 
 			mnAccessPolicy = mnSysMeta.getAccessPolicy();
-			
+
 			// Get sm, access policy for requested pid from the CN
 			try {
 				cnSysMeta = cn.getSystemMetadata(pid);
@@ -154,9 +163,11 @@ public class SyncAccessPolicy {
 			if (!isEqual(mnAccessPolicy, cnAccessPolicy)) {
 				try {
 					BigInteger serialVersion = cnSysMeta.getSerialVersion();
-					logMetacat.debug("Requesting CN to set access policy for pid: "
-							+ pid.getValue() + ", serial version: "
-							+ serialVersion.toString());
+					logMetacat
+							.debug("Requesting CN to set access policy for pid: "
+									+ pid.getValue()
+									+ ", serial version: "
+									+ serialVersion.toString());
 					cn.setAccessPolicy(session, pid, mnAccessPolicy,
 							serialVersion.longValue());
 					logMetacat.debug("Successfully set access policy");
@@ -169,7 +180,7 @@ public class SyncAccessPolicy {
 									+ pid.getValue()
 									+ " user not authorized: "
 									+ na.getMessage());
-					//throw na;
+					// throw na;
 					continue;
 				} catch (ServiceFailure sf) {
 					logMetacat
@@ -177,19 +188,20 @@ public class SyncAccessPolicy {
 									+ pid.getValue()
 									+ " Service failure: "
 									+ sf.getMessage());
-					//throw sf;
+					// throw sf;
 					continue;
 				} catch (Exception e) {
 					logMetacat
 							.error("Error syncing CN with access policy of pid: "
 									+ pid.getValue() + e.getMessage());
-					//throw e;
+					// throw e;
 					continue;
 				}
 			} else {
 				logMetacat.warn("Skipping pid: " + pid.getValue());
 			}
-			logMetacat.debug("Done syncing access policy for pid: " + pid.getValue());
+			logMetacat.debug("Done syncing access policy for pid: "
+					+ pid.getValue());
 		}
 
 		return syncedIds;
@@ -223,7 +235,7 @@ public class SyncAccessPolicy {
 		SystemMetadata sm = new SystemMetadata();
 
 		int start = 0;
-		int count = 0; //guidsToSync.size();
+		int count = 0; // guidsToSync.size();
 
 		objList.setStart(start);
 
@@ -251,7 +263,7 @@ public class SyncAccessPolicy {
 			oi.setSize(sm.getSize());
 			objList.addObjectInfo(oi);
 		}
-		
+
 		int total = count;
 		objList.setCount(count);
 		objList.setTotal(total);
@@ -260,30 +272,112 @@ public class SyncAccessPolicy {
 		return syncedPids;
 	}
 
-	public List<Identifier> syncAll() throws ServiceFailure, InvalidToken,
-			NotAuthorized, NotFound, NotImplemented, McdbDocNotFoundException,
-			InvalidRequest, VersionMismatch, NumberFormatException,
-			AccessionNumberException, SQLException, PropertyNotFoundException,
-			ServiceException, Exception {
+	/**
+	 * For all guids for which current MN is authoritative, check that access
+	 * policy is synced with CN.
+	 * 
+	 * @return void
+	 */
+	public void syncAll() throws ServiceFailure, InvalidToken, NotAuthorized,
+			NotFound, NotImplemented, McdbDocNotFoundException, InvalidRequest,
+			VersionMismatch, NumberFormatException, AccessionNumberException,
+			SQLException, PropertyNotFoundException, ServiceException,
+			Exception {
 
-		// For the following query parameters - null indicates that the query
-		// will not be
-		// constrained by the parameter.
-		Date startTime = null;
-		Date endTime = null;
-		ObjectFormatIdentifier objectFormatId = null;
-		Boolean replicaStatus = false; // return only pids for which this mn is
-										// authoritative
-		Integer start = 0;
-		Integer count = Integer.valueOf(PropertyService.getProperty("database.webResultsetSize"));
+		SyncTask st = new SyncTask();
+		// Create a single thread to run the sync of all guids in
+		ExecutorService executor = Executors.newSingleThreadExecutor();
+		logMetacat.debug("syncAll starting thread");
+		executor.execute(st);
+		// Only one task will run on this thread
+		executor.shutdown();
 
-		ObjectList objsToSync = IdentifierManager.getInstance()
-				.querySystemMetadata(startTime, endTime, objectFormatId,
-						replicaStatus, start, count);
+		// return syncedIds;
+	}
 
-		List<Identifier> syncedIds = sync(objsToSync);
+	/**
+	 * Perform syncAll in a single thread.
+	 * 
+	 * @return void
+	 */
+	private class SyncTask implements Runnable {
 
-		return syncedIds;
+		@Override
+		public void run() {
+			// For the following query parameters - null indicates that the
+			// query
+			// will not be
+			// constrained by the parameter.
+			Date startTime = null;
+			Date endTime = null;
+			ObjectFormatIdentifier objectFormatId = null;
+			Boolean replicaStatus = false; // return only pids for which this mn
+											// is
+
+			ObjectList objsToSync = null;
+			Integer count = 0;
+			Integer start = 0;
+			Integer total = 0;
+			List<Identifier> tmpIds = null;
+			List<Identifier> syncedIds = new ArrayList<Identifier>();
+
+			try {
+				count = Integer.valueOf(PropertyService
+						.getProperty("database.webResultsetSize"));
+			} catch (NumberFormatException e1) {
+				logMetacat
+						.error("Error in  propery file for format of database.webResultsetSize, will use 1000");
+				e1.printStackTrace();
+				count = 1000;
+			} catch (PropertyNotFoundException e1) {
+				logMetacat
+						.error("Error reading propery file for database.webResultsetSize, will use 1000");
+				e1.printStackTrace();
+				count = 1000;
+			}
+
+			// Get the total count of guids before we start syncing
+			try {
+				objsToSync = IdentifierManager.getInstance()
+						.querySystemMetadata(startTime, endTime,
+								objectFormatId, replicaStatus, start, count);
+
+				logMetacat.debug("syncTask total # of guids: "
+						+ objsToSync.getTotal() + ", count for this page: " + objsToSync.getCount());
+			} catch (Exception e) {
+				logMetacat.error("Error syncing ids");
+			}
+			
+			total = objsToSync.getTotal();
+
+			// The first loop might have fewer results than the requested count value from the properties file,
+			// so in this case use count returned from IdentiferManger for the loop count/increment (loop will only execute once).
+			if (objsToSync.getCount() < count) count = objsToSync.getCount();
+			
+			for (int i = 0; (i + count -1) < total; i += count) {
+				try {
+					logMetacat.debug("syncTask # requested: " + count
+							+ ", start: " + start + ", total: " + total
+							+ ", count: " + objsToSync.getCount());
+					tmpIds = sync(objsToSync);
+					syncedIds.addAll(tmpIds);
+					
+					// Set start for the next db retrieval, loop interation
+					start += objsToSync.getCount();
+					if (start >= total) break;
+					objsToSync = IdentifierManager
+							.getInstance()
+							.querySystemMetadata(startTime, endTime,
+									objectFormatId, replicaStatus, start, count);
+				} catch (Exception e) {
+					logMetacat.error("Error syncing ids");
+					break;
+				}
+			}
+			logMetacat
+					.debug("syncTask thread completed. Number of guids synced: "
+							+ syncedIds.size());
+		}
 	}
 
 	/**
@@ -293,7 +387,7 @@ public class SyncAccessPolicy {
 	 *            - first access policy in the comparison
 	 * @param ap2
 	 *            - second access policy in the comparison
-	 * @return	boolean - true if access policies are equivalent
+	 * @return boolean - true if access policies are equivalent
 	 */
 	private boolean isEqual(AccessPolicy ap1, AccessPolicy ap2) {
 
@@ -349,19 +443,23 @@ public class SyncAccessPolicy {
 		}
 
 		// Check if the number of access rules is the same for mn and cn. If not
-		// then consider them not equal, without performing diff of each access rule.
+		// then consider them not equal, without performing diff of each access
+		// rule.
 		if (userPerms1.entrySet().size() != userPerms2.entrySet().size())
 			return false;
-		
-		// Now perform the comparison of each access rule of access policy 1 to ap 2.
-		// This test assumes that the mn perms are more complete than the cn perms.
+
+		// Now perform the comparison of each access rule of access policy 1 to
+		// ap 2.
+		// This test assumes that the mn perms are more complete than the cn
+		// perms.
 		logMetacat.debug("Performing comparison of access policies");
 		for (Map.Entry<Subject, Set<Permission>> entry : userPerms1.entrySet()) {
 			// User name
 			Subject s1 = entry.getKey();
 			// Perms that the user holds
 			Set<Permission> p1 = entry.getValue();
-			logMetacat.debug("Checking access policy of user: " + s1.getValue());
+			logMetacat
+					.debug("Checking access policy of user: " + s1.getValue());
 
 			// Does this user exist in both access policies?
 			if (userPerms2.containsKey(s1)) {
@@ -382,9 +480,9 @@ public class SyncAccessPolicy {
 	}
 
 	/**
-	 * Run pid synch script on the given pids
-	 * Each argument is an individual pid 
-	 * because pids cannot contain whitespace. 
+	 * Run pid synch script on the given pids Each argument is an individual pid
+	 * because pids cannot contain whitespace.
+	 * 
 	 * @param args
 	 * @throws Exception
 	 */
@@ -392,22 +490,27 @@ public class SyncAccessPolicy {
 
 		// set up the properties based on the test/deployed configuration of the
 		// workspace
-		SortedProperties testProperties = new SortedProperties("test/test.properties");
+		SortedProperties testProperties = new SortedProperties(
+				"test/test.properties");
 		testProperties.load();
-		String metacatContextDir = testProperties.getProperty("metacat.contextDir");
+		String metacatContextDir = testProperties
+				.getProperty("metacat.contextDir");
 		PropertyService.getInstance(metacatContextDir + "/WEB-INF");
-		
+
 		ArrayList<String> guids = null;
 		SyncAccessPolicy syncAP = new SyncAccessPolicy();
 
 		if (args.length > 0) {
 			try {
 				guids = new ArrayList<String>(Arrays.asList(args));
-				logMetacat.warn("Trying to syncing access policy for " + args.length + " pids");
+				logMetacat.warn("Trying to syncing access policy for "
+						+ args.length + " pids");
 				List<Identifier> synchedPids = syncAP.sync(guids);
-				logMetacat.warn("Sunk access policies for " + synchedPids.size() + " pids");
+				logMetacat.warn("Sunk access policies for "
+						+ synchedPids.size() + " pids");
 			} catch (Exception e) {
-				logMetacat.error("Error syncing pids, message: " + e.getMessage(), e);
+				logMetacat.error(
+						"Error syncing pids, message: " + e.getMessage(), e);
 				System.exit(1);
 			}
 		}

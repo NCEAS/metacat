@@ -439,10 +439,10 @@ public class ReplicationService extends BaseService {
 						out.write("<html><body>Error syncing access policies</body></html>");
 					}
 				} else {
-					logMetacat.debug("Syncing access policies for all docids for this node");
+					logMetacat.debug("Request to sync all access policies has been submitted.");
 					try {
 						syncAP.syncAll();
-						out.write("<html><body>Syncing access policies for all docids has completed.</body></html>");
+						out.write("<html><body>Request to sync all access policies has been submitted.</body></html>");
 					} catch (Exception e) {
 						logMetacat.error("Error syncing access policies: "
 								+ e.getMessage());
