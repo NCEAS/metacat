@@ -795,19 +795,20 @@ public class MetaCatServlet extends HttpServlet {
 
 			// handle login action
 			if (action.equals("login")) {
-				PrintWriter out = response.getWriter();
+				//PrintWriter out = response.getWriter();
+				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
 				handler.handleLoginAction(out, params, request, response);
 				out.close();
 
 				// handle logout action
 			} else if (action.equals("logout")) {
-				PrintWriter out = response.getWriter();
+				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
 				handler.handleLogoutAction(out, params, request, response);
 				out.close();
 
-				// handle shrink DBConnection request
+				// handle session validate request
 			} else if (action.equals("validatesession")) {
-				PrintWriter out = response.getWriter();
+				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
 				String idToValidate = null;
 				String idsToValidate[] = params.get("sessionid");
 				if (idsToValidate != null) {
@@ -942,7 +943,7 @@ public class MetaCatServlet extends HttpServlet {
 				DocumentUtil.isAuthorized(out, params, request, response);
 				out.close();
 			} else if (action.equals("getprincipals")) {
-				PrintWriter out = response.getWriter();
+				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
 				handler.handleGetPrincipalsAction(out, userName, password);
 				out.close();
 			} else if (action.equals("getdoctypes")) {

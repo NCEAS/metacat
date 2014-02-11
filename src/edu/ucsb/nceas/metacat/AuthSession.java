@@ -224,7 +224,7 @@ public class AuthSession {
 			String username, String[] groups, String userInfo[]) {
 		StringBuffer out = new StringBuffer();
 
-		out.append("<?xml version=\"1.0\"?>\n");
+		out.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
 		out.append("<" + tag + ">");
 		out.append("\n  <message>" + message + "</message>\n");
 		if (sessionId != null) {

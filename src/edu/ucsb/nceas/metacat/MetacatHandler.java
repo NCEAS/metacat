@@ -40,7 +40,6 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
-import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.sql.PreparedStatement;
@@ -71,10 +70,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
-import org.dataone.client.CNode;
-import org.dataone.client.D1Client;
-import org.dataone.service.exceptions.NotAuthorized;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
@@ -336,18 +331,19 @@ public class MetacatHandler {
     /**
      * Handle the login request. Create a new session object. Do user
      * authentication through the session.
+     * @throws IOException 
      */
-    public void handleLoginAction(PrintWriter out, Hashtable<String, String[]> params,
-            HttpServletRequest request, HttpServletResponse response) {
+    public void handleLoginAction(Writer out, Hashtable<String, String[]> params,
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
         Logger logMetacat = Logger.getLogger(MetacatHandler.class);
         AuthSession sess = null;
         
         if(params.get("username") == null){
             response.setContentType("text/xml");
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println("Username not specified");
-            out.println("</error>");
+            out.write("<?xml version=\"1.0\"?>");
+            out.write("<error>");
+            out.write("Username not specified");
+            out.write("</error>");
             return;
         }
         
@@ -355,10 +351,10 @@ public class MetacatHandler {
         
         if(params.get("password") == null){
             response.setContentType("text/xml");
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println("Password not specified");
-            out.println("</error>");
+            out.write("<?xml version=\"1.0\"?>");
+            out.write("<error>");
+            out.write("Password not specified");
+            out.write("</error>");
             return;
         }
         
@@ -377,7 +373,7 @@ public class MetacatHandler {
             String errorMsg = "MetacatServlet.handleLoginAction - Problem in MetacatServlet.handleLoginAction() authenicating session: "
                 + e.getMessage();
             logMetacat.error(errorMsg);
-            out.println(errorMsg);
+            out.write(errorMsg);
             e.printStackTrace(System.out);
             return;
         }
@@ -405,7 +401,7 @@ public class MetacatHandler {
                 String errorMsg = "MetacatServlet.handleLoginAction - service problem registering session: "
                         + se.getMessage();
                 logMetacat.error("MetacatHandler.handleLoginAction - " + errorMsg);
-                out.println(errorMsg);
+                out.write(errorMsg);
                 se.printStackTrace(System.out);
                 return;
             }           
@@ -414,7 +410,7 @@ public class MetacatHandler {
         // format and transform the output
         if (qformat.equals("xml")) {
             response.setContentType("text/xml");
-            out.println(sess.getMessage());
+            out.write(sess.getMessage());
         } else {
             try {
                 DBTransform trans = new DBTransform();
@@ -432,9 +428,10 @@ public class MetacatHandler {
     
     /**
      * Handle the logout request. Close the connection.
+     * @throws IOException 
      */
-    public void handleLogoutAction(PrintWriter out, Hashtable<String, String[]> params,
-            HttpServletRequest request, HttpServletResponse response) {
+    public void handleLogoutAction(Writer out, Hashtable<String, String[]> params,
+            HttpServletRequest request, HttpServletResponse response) throws IOException {
         Logger logMetacat = Logger.getLogger(MetacatHandler.class);
         String qformat = "xml";
         if(params.get("qformat") != null){
@@ -464,7 +461,7 @@ public class MetacatHandler {
         //format and transform the output
         if (qformat.equals("xml")) {
             response.setContentType("text/xml");
-            out.println(output.toString());
+            out.write(output.toString());
         } else {
             try {
                 DBTransform trans = new DBTransform();
@@ -2252,19 +2249,20 @@ public class MetacatHandler {
     /**
      * Handle the "getprincipals" action. Read all principals from
      * authentication scheme in XML format
+     * @throws IOException 
      */
-    protected void handleGetPrincipalsAction(PrintWriter out, String user,
-            String password) {
+    protected void handleGetPrincipalsAction(Writer out, String user,
+            String password) throws IOException {
         try {
             AuthSession auth = new AuthSession();
             String principals = auth.getPrincipals(user, password);
-            out.println(principals);
+            out.write(principals);
             
         } catch (Exception e) {
-            out.println("<?xml version=\"1.0\"?>");
-            out.println("<error>");
-            out.println(e.getMessage());
-            out.println("</error>");
+            out.write("<?xml version=\"1.0\"?>");
+            out.write("<error>");
+            out.write(e.getMessage());
+            out.write("</error>");
         }
     }
     

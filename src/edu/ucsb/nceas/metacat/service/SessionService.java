@@ -26,7 +26,8 @@
 
 package edu.ucsb.nceas.metacat.service;
 
-import java.io.PrintWriter;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Calendar;
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -224,12 +225,13 @@ public class SessionService extends BaseService {
 	 *            the output stream to write to.
 	 * @param sessionId
 	 *            the id of the session to look for.
+	 * @throws IOException 
 	 */
-	public void validateSession(PrintWriter out, HttpServletResponse response, 
-			String sessionId) {		
+	public void validateSession(Writer out, HttpServletResponse response, 
+			String sessionId) throws IOException {		
 		boolean needSessionInfo = false;
 		response.setContentType("text/xml");
-		out.println("<?xml version=\"1.0\"?>");
+		out.write("<?xml version=\"1.0\"?>");
 		out.write("<validateSession><status>");
 		if (validateSession(sessionId)) {
 			out.write("valid");
@@ -326,7 +328,7 @@ public class SessionService extends BaseService {
 	/*
 	 * Add user's groups information into the response
 	 */
-	private void appendGroupsInformation(SessionData sessionData, PrintWriter out ) {
+	private void appendGroupsInformation(SessionData sessionData, Writer out ) throws IOException {
 	  if(sessionData != null && out != null){
 	    String[] groups = sessionData.getGroupNames();
 	    if(groups != null) {
