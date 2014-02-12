@@ -52,7 +52,6 @@ import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.CNode;
@@ -114,6 +113,7 @@ import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
+import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREParserException;
 import org.dspace.foresite.ORESerialiserException;
@@ -1653,10 +1653,12 @@ public class MNodeService extends D1NodeService
 		// get the original SM
 		SystemMetadata originalSystemMetadata = this.getSystemMetadata(session, originalIdentifier);
 
-		// make copy of it
-		SystemMetadata sysmeta = new SystemMetadata();
+		// make copy of it using the marshaller to ensure DEEP copy
+		SystemMetadata sysmeta = null;
 		try {
-			BeanUtils.copyProperties(sysmeta, originalSystemMetadata);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			TypeMarshaller.marshalTypeToOutputStream(originalSystemMetadata, baos);
+			sysmeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, new ByteArrayInputStream(baos.toByteArray()));
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
@@ -1725,7 +1727,9 @@ public class MNodeService extends D1NodeService
 				SystemMetadata originalOreSysMeta = this.getSystemMetadata(session, potentialOreIdentifier);
 				SystemMetadata oreSysMeta = new SystemMetadata();
 				try {
-					BeanUtils.copyProperties(oreSysMeta, originalOreSysMeta);
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					TypeMarshaller.marshalTypeToOutputStream(originalOreSysMeta, baos);
+					oreSysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, new ByteArrayInputStream(baos.toByteArray()));
 				} catch (Exception e) {
 					// report as service failure
 					ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
@@ -1740,7 +1744,7 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setChecksum(ChecksumUtil.checksum(resourceMapString.getBytes("UTF-8"), oreSysMeta.getChecksum().getAlgorithm()));
 				
 				// ensure ORE is publicly readable
-				oreSysMeta = makePublicIfNot(sysmeta, potentialOreIdentifier);
+				oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
 				
 				// ensure all data objects allow public read
 				List<String> pidsToSync = new ArrayList<String>();
