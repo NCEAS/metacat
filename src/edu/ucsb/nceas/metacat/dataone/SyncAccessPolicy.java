@@ -188,9 +188,9 @@ public class SyncAccessPolicy {
 							.error("Error syncing CN with access policy of pid: "
 									+ pid.getValue()
 									+ " Service failure: "
-									+ sf.getMessage());
+									+ "'" + sf.getDescription() + "'");
 					sf.printStackTrace();
-					logMetacat.debug("Cause: " + sf.getCause());
+					logMetacat.debug("Cause: " + "'" + sf.getCause() + "'");
 					// throw sf;
 					continue;
 				} catch (Exception e) {
@@ -386,6 +386,8 @@ public class SyncAccessPolicy {
 					.debug("syncTask thread completed. Number of guids synced: "
 							+ syncedIds.size());
 		}
+        //PropertyService.setProperty("dataone.systemmetadata.generated", Boolean.TRUE.toString());
+
 	}
 
 	/**
