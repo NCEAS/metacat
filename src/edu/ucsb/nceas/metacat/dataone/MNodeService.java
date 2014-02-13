@@ -1258,6 +1258,17 @@ public class MNodeService extends D1NodeService
                 logMetacat.info("Updated local copy of system metadata for pid " +
                     pid.getValue() + " after change notification from the CN.");
                 
+                // TODO: consider inspecting the change for archive
+                // see: https://projects.ecoinformatics.org/ecoinfo/issues/6417
+//                if (newSysMeta.getArchived() != null && newSysMeta.getArchived().booleanValue()) {
+//                	try {
+//						this.archive(session, newSysMeta.getIdentifier());
+//					} catch (NotFound e) {
+//						// do we care? nothing to do about it now
+//						logMetacat.error(e.getMessage(), e);
+//					}
+//                }
+                
             } catch (RuntimeException e) {
                 String msg = "SystemMetadata for pid " + pid.getValue() +
                   " couldn't be updated: " +
