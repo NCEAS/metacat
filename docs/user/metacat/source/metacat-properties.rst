@@ -324,6 +324,8 @@ file are marked. All others are managed with the properties configuration utilit
 
 Authorization and Authentication Properties
 
+.. _Authentication details: ./authinterface.html
+
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | Property                          | Description                                                                   | Example                                       |
 +===================================+===============================================================================+===============================================+
@@ -360,6 +362,8 @@ Authorization and Authentication Properties
 | auth.file.path                    | The absolute path of the password file which stores the username/password     | /var/metacat/certs/password                   |
 |                                   | and users' information. This file is used for the file-based authentication   |                                               |
 |                                   | mechanism.                                                                    |                                               |
+|                                   |                                                                               |                                               |
+|                                   | Please see the `Authentication details`_ page for more information.           |                                               |
 |                                   |                                                                               |                                               |
 |                                   | Default Value: /var/metacat/certs/password                                    |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
