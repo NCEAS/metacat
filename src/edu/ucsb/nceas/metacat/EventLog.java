@@ -140,24 +140,29 @@ public class EventLog
         try {
         	
         	Event d1Event = Event.convert(event);
-        	String fieldName = d1Event.xmlValue() + "_count_i";
-        	int eventCount = 0;
-        	
-        	String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
-        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, d1Event, null, null, false, 0, 0);
-        	eventCount = eventLog.getTotal();
-
-	        List<Object> values = new ArrayList<Object>();
-			values.add(eventCount);
-	        Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
-	        fields.put(fieldName, values);
-	        
-	        return fields;
+        	if (d1Event != null) {
+        		
+	        	String fieldName = d1Event.xmlValue() + "_count_i";
+	        	int eventCount = 0;
+	        	
+	        	String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
+	        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, d1Event, null, null, false, 0, 0);
+	        	eventCount = eventLog.getTotal();
+	
+		        List<Object> values = new ArrayList<Object>();
+				values.add(eventCount);
+		        Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
+		        fields.put(fieldName, values);
+		        
+		        return fields;
+        	}
 	        
         } catch (Exception e) {
-        	logMetacat.error("Could not update event index information", e);
-        	return null;
+        	logMetacat.error("Could not update event index information on pid: " + pid.getValue() + " for event: " + event, e);
         }
+        // default if we can't find the event information
+    	return null;
+
     }
     
     /**
