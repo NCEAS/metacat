@@ -19,8 +19,6 @@
     <ref bean="eml.site" />
     <ref bean="eml.beginDate" />
     <ref bean="eml.endDate" />
-    <ref bean="eml.singleBeginDate" />
-    <ref bean="eml.singleEndDate" />
     <ref bean="eml.pubDate" />
     <ref bean="eml.author" />
     <ref bean="eml.authorGivenName"/>

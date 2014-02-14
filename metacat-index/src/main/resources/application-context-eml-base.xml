@@ -65,7 +65,7 @@
 	<bean id="eml.beginDate" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="beginDate" />
 		<constructor-arg name="xpath"
-			value="//dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text()" />
+			value="//dataset/coverage/temporalCoverage/rangeOfDates/beginDate/calendarDate/text() | //dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
 		<property name="multivalue" value="false" />
 		<property name="converter" ref="dateConverter" />
 	</bean>
@@ -73,23 +73,7 @@
 	<bean id="eml.endDate" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="endDate" />
 		<constructor-arg name="xpath"
-			value="//dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text()" />
-		<property name="multivalue" value="false" />
-		<property name="converter" ref="dateConverter" />
-	</bean>
-	
-	<bean id="eml.singleBeginDate" class="org.dataone.cn.indexer.parser.SolrField">
-		<constructor-arg name="name" value="beginDate" />
-		<constructor-arg name="xpath"
-			value="//dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
-		<property name="multivalue" value="false" />
-		<property name="converter" ref="dateConverter" />
-	</bean>
-	
-	<bean id="eml.singleEndDate" class="org.dataone.cn.indexer.parser.SolrField">
-		<constructor-arg name="name" value="endDate" />
-		<constructor-arg name="xpath"
-			value="//dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
+			value="//dataset/coverage/temporalCoverage/rangeOfDates/endDate/calendarDate/text() | //dataset/coverage/temporalCoverage/singleDateTime/calendarDate/text()" />
 		<property name="multivalue" value="false" />
 		<property name="converter" ref="dateConverter" />
 	</bean>
