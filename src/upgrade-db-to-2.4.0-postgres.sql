@@ -4,8 +4,8 @@
 
 /* 
  * Gather most recent docids that:
- * - have access_log event='delete' by the CN
- * - are obsoleted by a newer version
+ * have access_log event='delete' by the CN
+ * are obsoleted by a newer version
  * Then we know the current version should be restored
  */
 
@@ -63,13 +63,13 @@ WHERE x.docid = id.docid
 AND x.rev = id.rev
 AND id.guid = cd.guid;
 
--- look at them
+/* look at them */
 /*
 SELECT * 
 FROM restore_documents;
 */
 
---STOP HERE WHEN TESTING
+/* STOP HERE WHEN TESTING */
 
 /* Move xml_nodes_revisions back into xml_nodes for the affected docids 
  */
@@ -131,7 +131,7 @@ AND sm.archived = 'true';
 /*Do the update on xml_revisions
  */
 UPDATE systemMetadata sm
-SET sm.archived = false
+SET archived = false
 FROM xml_revisions x,
 	identifier id
 WHERE x.docid = id.docid
@@ -158,7 +158,7 @@ AND sm.archived = 'true';
 /*Do the update on xml_documents
  */
 UPDATE systemMetadata sm
-SET sm.archived = false
+SET archived = false
 FROM xml_documents x,
 	identifier id
 WHERE x.docid = id.docid
