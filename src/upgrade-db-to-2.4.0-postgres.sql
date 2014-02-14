@@ -64,8 +64,10 @@ AND x.rev = id.rev
 AND id.guid = cd.guid;
 
 -- look at them
+/*
 SELECT * 
 FROM restore_documents;
+*/
 
 --STOP HERE WHEN TESTING
 
@@ -112,8 +114,9 @@ WHERE x.rootnodeid = rd.rootnodeid;
  * (Avoids encountering this issue again)
  */
 
-/* Check the numbers
+/* Check the numbers in xml_revisions
  */
+/*
 SELECT count(id.guid)
 FROM xml_revisions x,
 	identifier id,
@@ -123,6 +126,7 @@ AND x.rev = id.rev
 AND id.guid = sm.guid
 AND sm.obsoleted_by IS NOT null
 AND sm.archived = 'true';
+*/
 
 /*Do the update on xml_revisions
  */
@@ -139,6 +143,7 @@ AND sm.archived = 'true';
 /** 
  * Check numbers in xml_documents
  */
+/*
 SELECT count(id.guid)
 FROM xml_documents x,
 	identifier id,
@@ -148,6 +153,7 @@ AND x.rev = id.rev
 AND id.guid = sm.guid
 AND sm.obsoleted_by IS NOT null
 AND sm.archived = 'true';
+*/
 
 /*Do the update on xml_documents
  */
