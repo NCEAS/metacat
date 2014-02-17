@@ -536,7 +536,7 @@
 		</javac>
 	</target>
 
-	<target name="jar" depends="compile,geteml"
+	<target name="jar" depends="compile,geteml,getdataone,getdc,getdryad"
 		description="Compiles and jars metacat java code to metacat.jar in build dir ">
 
 		<delete file="${build.dir}/${name}.jar" />
@@ -641,6 +641,37 @@
 		<gzip zipfile="./harvest-list-editor-${release}.tar.gz"
 			src="./harvest-list-editor-${release}.tar" />
 		<delete file="./harvest-list-editor-${release}.tar" />
+	</target>
+
+	<target name="getdataone"
+		description="Gets the dataone schemas and copies them to your metacat sandbox">
+		<mkdir dir="lib/schema/dataone" />
+		<get dest="lib/schema/dataone/dataoneTypes.xsd" skipexisting="true" verbose="on">
+		  <url url="http://ns.dataone.org/service/types/v1"/> 
+		</get>
+		<get dest="lib/schema/dataone/dataoneTypes_v1.1.xsd" skipexisting="true">
+		  <url url="http://ns.dataone.org/service/types/v1.1"/>
+		</get>
+	</target>
+	
+	<target name="getdryad" depends="getdc"
+		description="Gets the dryad schemas and copies them to your metacat sandbox">
+		<mkdir dir="lib/schema/dryad" />
+		<get dest="lib/schema/dryad/dryad.xsd" skipexisting="true" verbose="on">
+		  <url url="http://purl.org/dryad/schema/terms/v3.1"/> 
+		</get>
+		<get dest="lib/schema/dryad/dryad-bibo.xsd" skipexisting="true">
+		  <url url="http://purl.org/dryad/schema/dryad-bibo/v3.1"/>
+		</get>
+	</target>
+	
+	<target name="getdc" 
+		description="Gets the dublin core schemas and copies them to your metacat sandbox">
+		<get dest="lib/schema/dc" skipexisting="true" verbose="on">
+		  <url url="http://dublincore.org/schemas/xmls/qdc/2008/02/11/dcterms.xsd"/> 
+		  <url url="http://dublincore.org/schemas/xmls/qdc/2008/02/11/dc.xsd"/>
+		  <url url="http://dublincore.org/schemas/xmls/qdc/2008/02/11/dcmitype.xsd"/>
+		</get>
 	</target>
 
 	<target name="geteml" depends="getemlpre2,getemlpre2beta4,geteml2+,getConversionXSL"
@@ -1445,7 +1476,7 @@
 	</target>
 
 	<target name="dist"
-		depends="geteml,get-ecogrid,jar,protocol,documentation,getConversionXSL,getutilities"
+		depends="geteml,get-ecogrid,jar,protocol,documentation,getConversionXSL,getutilities,getdataone,getdc,getdryad"
 		description="prepares a full release distribution">
 		<mkdir dir="${dist.dir}" />
 		<delete dir="${ver.dir}" />

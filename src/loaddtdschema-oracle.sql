@@ -91,5 +91,22 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@eml2_1_1namespace@', '/schema/eml-2.1.1/eml.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '/schema/RegistryService/RegistryEntryType.xsd', '/schema/RegistryService/RegistryEntryType.xsd'); 
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.opengis.net/sensorML/1.0.1', '/schema/sensorML.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://ns.dataone.org/service/types/v1.1', '/schema/dataone/dataoneTypes_v1.1.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dryad/schema/terms/v3.1', '/schema/dryad/dryad.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dryad/schema/dryad-bibo/v3.1', '/schema/dryad/dryad-bibo.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/terms/', '/schema/dc/dcterms.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/elements/1.1/', '/schema/dc/dc.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/dcmitype/', '/schema/dc/dcmitype.xsd');
+
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.4.0',1,CURRENT_DATE);
