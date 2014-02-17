@@ -7,6 +7,15 @@ DELETE FROM xml_catalog
 DELETE FROM xml_catalog 
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%eml%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dataone/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dc/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dryad/%';                
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('DTD', '-//ecoinformatics.org//eml-access-@eml-version@//EN',
          '/dtd/eml-access-@eml-version@.dtd');
