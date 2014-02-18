@@ -66,6 +66,7 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 
@@ -171,7 +172,7 @@ public class SyncAccessPolicy {
 									+ serialVersion.toString());
 					cn.setAccessPolicy(session, pid, mnAccessPolicy,
 							serialVersion.longValue());
-					logMetacat.debug("Successfully set access policy");
+					logMetacat.debug("Successfully set access policy for pid: " + pid.getValue());
 					// Add this pid to the list of pids that were successfully
 					// synced
 					syncedIds.add(pid);
@@ -203,7 +204,7 @@ public class SyncAccessPolicy {
 			} else {
 				logMetacat.warn("Skipping pid: " + pid.getValue());
 			}
-			logMetacat.debug("Done syncing access policy for pid: "
+			logMetacat.debug("Done checking access policy for pid: "
 					+ pid.getValue());
 		}
 
@@ -307,6 +308,7 @@ public class SyncAccessPolicy {
 
 		@Override
 		public void run() {
+			
 			// For the following query parameters - null indicates that the
 			// query
 			// will not be
@@ -316,14 +318,16 @@ public class SyncAccessPolicy {
 			ObjectFormatIdentifier objectFormatId = null;
 			Boolean replicaStatus = false; // return only pids for which this mn
 											// is
-
 			ObjectList objsToSync = null;
 			Integer count = 0;
 			Integer start = 0;
 			Integer total = 0;
 			List<Identifier> tmpIds = null;
+			// If even one sync error encounted, don't set property that will disable
+			// "syncAll" button in admin/replication web page.
+			boolean syncError = false;
 			List<Identifier> syncedIds = new ArrayList<Identifier>();
-
+						
 			try {
 				count = Integer.valueOf(PropertyService
 						.getProperty("database.webResultsetSize"));
@@ -379,15 +383,24 @@ public class SyncAccessPolicy {
 									objectFormatId, replicaStatus, start, count);
 				} catch (Exception e) {
 					logMetacat.error("Error syncing ids");
+					syncError = true;
 					break;
 				}
 			}
 			logMetacat
 					.debug("syncTask thread completed. Number of guids synced: "
 							+ syncedIds.size());
+			if (!syncError) {
+				try {
+					PropertyService.setProperty(
+							"dataone.syncaccesspolicies.synced",
+							Boolean.TRUE.toString());
+				} catch (GeneralPropertyException e) {
+					logMetacat
+							.error("Unable to update property dataone.syncaccesspolicies.synced=true");
+				}
+			}
 		}
-        //PropertyService.setProperty("dataone.systemmetadata.generated", Boolean.TRUE.toString());
-
 	}
 
 	/**
@@ -399,7 +412,7 @@ public class SyncAccessPolicy {
 	 *            - second access policy in the comparison
 	 * @return boolean - true if access policies are equivalent
 	 */
-	private boolean isEqual(AccessPolicy ap1, AccessPolicy ap2) {
+	public boolean isEqual(AccessPolicy ap1, AccessPolicy ap2) {
 
 		// Access Policy -> Access Rule -> (Subject, Permission)
 		// i.e. Subject="slaughter", Permission="read,write,changePermission"
