@@ -7,6 +7,18 @@ DELETE FROM xml_catalog
 DELETE FROM xml_catalog 
       WHERE entry_type LIKE 'Schema'
         AND system_id LIKE '%eml%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dataone/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dc/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dwc/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dryad/%';                
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('DTD', '-//ecoinformatics.org//eml-access-@eml-version@//EN',
          '/dtd/eml-access-@eml-version@.dtd');
@@ -107,6 +119,8 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://purl.org/dc/elements/1.1/', '/schema/dc/dc.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://purl.org/dc/dcmitype/', '/schema/dc/dcmitype.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://rs.tdwg.org/dwc/terms/', '/schema/dwc/tdwg_dwcterms.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.4.0',1,CURRENT_DATE);

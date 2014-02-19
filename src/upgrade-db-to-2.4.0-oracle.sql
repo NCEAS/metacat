@@ -62,6 +62,37 @@ AND id.guid = sm.guid
 AND sm.obsoleted_by IS NOT null
 AND sm.archived = 'true';
 
+/* Register schemas
+*/
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dataone/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dc/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dwc/%';
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/dryad/%';                
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://ns.dataone.org/service/types/v1.1', '/schema/dataone/dataoneTypes_v1.1.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dryad/schema/terms/v3.1', '/schema/dryad/dryad.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dryad/schema/dryad-bibo/v3.1', '/schema/dryad/dryad-bibo.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/terms/', '/schema/dc/dcterms.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/elements/1.1/', '/schema/dc/dc.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://purl.org/dc/dcmitype/', '/schema/dc/dcmitype.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://rs.tdwg.org/dwc/terms/', '/schema/dwc/tdwg_dwcterms.xsd');
+
 /*
  * update the database version
  */
