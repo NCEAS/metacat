@@ -1398,7 +1398,6 @@
 			<fileset dir="${ecogrid-dir}"/>
 			<fileset dir="lib/style/common/emlb6toeml2"/>
 			<fileset dir="lib/dtd"/>
-			<fileset dir="lib/schema"/>
 			<fileset dir="${utilitiesdir}"/>
 			<fileset dir="${libdir.mvn}"/>
 		</delete>
