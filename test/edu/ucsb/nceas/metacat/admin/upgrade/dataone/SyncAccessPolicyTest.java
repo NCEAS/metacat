@@ -26,25 +26,15 @@
 package edu.ucsb.nceas.metacat.admin.upgrade.dataone;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.util.Hashtable;
 
-import org.apache.http.client.HttpClient;
-import org.apache.http.impl.client.DefaultHttpClient;
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
-import org.dataone.service.exceptions.IdentifierNotUnique;
-import org.dataone.service.exceptions.InsufficientResources;
-import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
-import org.dataone.service.exceptions.InvalidToken;
-import org.dataone.service.exceptions.NotAuthorized;
-import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
@@ -52,27 +42,16 @@ import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SystemMetadata;
-import org.dataone.service.util.Constants;
 import org.junit.Before;
 
-import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
-import edu.ucsb.nceas.metacat.dataone.CNodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.util.RequestUtil;
-import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
-import junit.framework.Test;
-import junit.framework.TestSuite;
 
 /**
  * A JUnit test for testing syncing access policies between MN -> CN after local
@@ -120,6 +99,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new SyncAccessPolicyTest("initialize"));
+		suite.addTest(new SyncAccessPolicyTest("testIsEqual"));
 		suite.addTest(new SyncAccessPolicyTest("testSyncAccessPolicy"));
 
 		return suite;
@@ -314,5 +294,41 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 		}
 
 		debug("Done running testSyncAccessPolicy");
+	}
+	
+	public void testIsEqual() {
+		AccessPolicy ap1 = new AccessPolicy();
+		AccessRule ar1 = new AccessRule();
+		ar1.addPermission(Permission.READ);
+		Subject subject1 = new Subject();
+		subject1.setValue(username);
+		ar1.addSubject(subject1);
+		ap1.addAllow(ar1);
+		
+		AccessPolicy ap2 = new AccessPolicy();
+		AccessRule ar2 = new AccessRule();
+		ar2.addPermission(Permission.READ);
+		Subject subject2 = new Subject();
+		subject2.setValue(username);
+		ar2.addSubject(subject2);
+		ap2.addAllow(ar2);
+		
+		boolean isEqual = false;
+		SyncAccessPolicy syncAP = new SyncAccessPolicy();
+		
+		// try something that should be true
+		isEqual = syncAP.isEqual(ap1, ap2);
+		assertTrue(isEqual);
+		
+		// try something that makes them not equal
+		Subject subject3 = new Subject();
+		subject3.setValue(anotheruser);
+		ar2.addSubject(subject3);
+		
+		isEqual = syncAP.isEqual(ap1, ap2);
+		assertFalse(isEqual);
+		
+		isEqual = syncAP.isEqual(ap1, null);
+		assertFalse(isEqual);
 	}
 }

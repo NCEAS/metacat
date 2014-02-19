@@ -50,6 +50,7 @@ import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.VersionMismatch;
 import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectInfo;
@@ -63,7 +64,6 @@ import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
-import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
@@ -414,12 +414,17 @@ public class SyncAccessPolicy {
 	 */
 	public boolean isEqual(AccessPolicy ap1, AccessPolicy ap2) {
 
+		// can't check when either is null
+		if (ap1 == null || ap2 == null) {
+			return false;
+		}
+		
 		// Access Policy -> Access Rule -> (Subject, Permission)
 		// i.e. Subject="slaughter", Permission="read,write,changePermission"
 		// Get the list of access rules for each access policy
-		List<org.dataone.service.types.v1.AccessRule> allowList1 = ap1
+		List<AccessRule> allowList1 = ap1
 				.getAllowList();
-		List<org.dataone.service.types.v1.AccessRule> allowList2 = ap2
+		List<AccessRule> allowList2 = ap2
 				.getAllowList();
 
 		HashMap<Subject, Set<Permission>> userPerms1 = new HashMap<Subject, Set<Permission>>();
@@ -436,7 +441,7 @@ public class SyncAccessPolicy {
 		Set<Permission> perms = null;
 		// Process first access policy
 		// Loop through access rules of this allowList
-		for (org.dataone.service.types.v1.AccessRule accessRule : allowList1) {
+		for (AccessRule accessRule : allowList1) {
 			for (Subject s : accessRule.getSubjectList()) {
 				if (userPerms1.containsKey(s)) {
 					perms = userPerms1.get(s);
@@ -451,7 +456,7 @@ public class SyncAccessPolicy {
 		}
 
 		// Process second access policy
-		for (org.dataone.service.types.v1.AccessRule accessRule : allowList2) {
+		for (AccessRule accessRule : allowList2) {
 			for (Subject s : accessRule.getSubjectList()) {
 				if (userPerms2.containsKey(s)) {
 					perms = userPerms2.get(s);
