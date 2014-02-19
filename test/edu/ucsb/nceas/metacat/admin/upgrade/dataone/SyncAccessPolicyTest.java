@@ -70,6 +70,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -78,26 +79,6 @@ import junit.framework.TestSuite;
  * update by metacat services
  */
 public class SyncAccessPolicyTest extends D1NodeServiceTest {
-
-//	private static String username;
-//	private static String password;
-//	private static String anotheruser;
-//	private static String anotherPassword;
-//
-//	static {
-//		try {
-//
-//			username = PropertyService.getProperty("test.mcUser");
-//			password = PropertyService.getProperty("test.mcPassword");
-//			anotheruser = PropertyService.getProperty("test.mcAnotherUser");
-//			anotherpassword = PropertyService
-//					.getProperty("test.mcAnotherPassword");
-//
-//		} catch (PropertyNotFoundException pnfe) {
-//			System.err.println("Could not get property in static block: "
-//					+ pnfe.getMessage());
-//		}
-//	}
 
 	private Metacat m;
 
@@ -153,6 +134,18 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	}
 
 	/**
+	 * constructs a "fake" session with a test subject
+	 * @return
+	 */
+	@Override
+	public Session getTestSession() throws Exception {
+		Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(anotheruser);
+        session.setSubject(subject);
+        return session;
+	}
+	/**
 	 * Test object creation
 	 */
 	public Identifier createTestPid() {
@@ -166,15 +159,6 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 					"test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid,
 					session.getSubject(), object);
-
-			AccessPolicy accessPolicy = sysmeta.getAccessPolicy();
-			AccessRule allow = new AccessRule();
-			allow.addPermission(Permission.CHANGE_PERMISSION);
-			Subject publicSubject = new Subject();
-			publicSubject.setValue(Constants.SUBJECT_PUBLIC);
-			allow.addSubject(publicSubject);
-			accessPolicy.addAllow(allow);
-			sysmeta.setAccessPolicy(accessPolicy);
 
 			pid = MNodeService.getInstance(request).create(session, guid,
 					object, sysmeta);
@@ -194,8 +178,16 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 		SystemMetadata mnSysMeta = null;
 		String resultXML = null;
 
-		debug("Logging in with user: " + username);
 		String response = null;
+		debug("Logging in with user: " + anotheruser + ", password: "
+				+ anotherpassword);
+		try {
+			response = m.login(anotheruser, anotherpassword);
+			debug("Login response: " + response);
+		} catch (Exception e) {
+			debug("Unable to login: " + response);
+			fail();
+		}
 
 		try {
 			debug("\nStarting sync access policy test");
@@ -273,41 +265,22 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 				debug("Unable to retrieve localId for pid: " + pid.getValue());
 				fail();
 			}
-			
-			debug("Logging in with user: " + anotheruser + ", password: " + anotherpassword);
-			try {
-				response = m.login(anotheruser, anotherpassword);
-				debug("Login response: " + response);
-			} catch (Exception e) {
-				debug("Unable to login: " + response);
-				fail();
-			}
-			
+
 			debug("Updating permissions of localId: " + localId + ", guid: "
-					+ pid.getValue());
+					+ pid.getValue() + ", username: " + username + " read, allow, allowFirst");
 
-			// Now update the access policy on the local metacat using the
-			// metacat api
-			fieldValuePairs = new Hashtable<String, String[]>();
-			fieldValuePairs.put("action", new String[] { "setaccess" });
-			fieldValuePairs.put("docid", new String[] { localId });
-			fieldValuePairs.put("principal", new String[] { username });
-			fieldValuePairs.put("permission", new String[] { "read" });
-			fieldValuePairs.put("permType", new String[] { "allow" });
-			fieldValuePairs.put("permOrder", new String[] { "allowFirst" });
-			debug("Updating access perms for docid: " + localId);
 			try {
-				resultXML = RequestUtil.get(metacatUrl, fieldValuePairs);
+				response = m.setAccess(localId, username, 
+						AccessControlInterface.READSTRING, 
+	    				AccessControlInterface.ALLOW, 
+	    				AccessControlInterface.ALLOWFIRST);
 			} catch (Exception e) {
-				debug("Error setting permissions on docid: " + localId);
+				debug("Response from setaccess: " + response);
+				debug("Error setting access for localId: " + e.getMessage());
 				fail();
 			}
-
-			if (!resultXML.contains("success")) {
-				debug("Unable to change access policy on MN, response: " + resultXML);
-				fail();
-			}
-
+			
+			debug("Response from setaccess: " + response);
 			debug("Retrieving updated docid from CN to check if perms were updated...");
 
 			// Get the test document from the CN
@@ -328,7 +301,10 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Diffing access policies (MN,CN) for pid: " + pid.getValue());
 			SyncAccessPolicy syncAP = new SyncAccessPolicy();
 			debug("Comparing access policies...");
-			assert (syncAP.isEqual(mnAccessPolicy, cnAccessPolicy));
+			
+			Boolean apEqual = new Boolean (syncAP.isEqual(mnAccessPolicy, cnAccessPolicy));
+			debug("Access policies are equal is " + apEqual.toString());
+			assert (apEqual == true);
 
 			m.logout();
 
