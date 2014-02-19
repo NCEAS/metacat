@@ -1,0 +1,18 @@
+<DryadDataPackage xmlns="http://purl.org/dryad/schema/terms/v3.1" xmlns:dwc="http://rs.tdwg.org/dwc/terms/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:bibo="http://purl.org/dryad/schema/dryad-bibo/v3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://purl.org/dryad/schema/terms/v3.1 http://datadryad.org/profile/v3.1/dryad.xsd">
+  <dcterms:type>package</dcterms:type>
+  <dcterms:creator>Zmasek, Christian M.</dcterms:creator>
+  <dcterms:creator>Zhang, Qing</dcterms:creator>
+  <dcterms:creator>Ye, Yuzhen</dcterms:creator>
+  <dcterms:creator>Godzik, Adam</dcterms:creator>
+  <dcterms:dateSubmitted>2007-12-06T20:55:28Z</dcterms:dateSubmitted>
+  <dcterms:available>2007-12-06T20:55:28Z</dcterms:available>
+  <dcterms:title>Data from: Surprising complexity of the ancestral apoptosis network</dcterms:title>
+  <dcterms:identifier>http://dx.doi.org/10.5061/dryad.12</dcterms:identifier>
+  <dcterms:references>http://dx.doi.org/10.1186/gb-2007-8-10-r226</dcterms:references>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/1</dcterms:hasPart>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/2</dcterms:hasPart>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/3</dcterms:hasPart>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/4</dcterms:hasPart>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/5</dcterms:hasPart>
+  <dcterms:hasPart>http://dx.doi.org/10.5061/dryad.12/6</dcterms:hasPart>
+</DryadDataPackage>
