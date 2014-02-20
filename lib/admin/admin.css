@@ -44,34 +44,47 @@ body{
      -webkit-background-size: cover;
 	 -moz-background-size: cover;
 	 -o-background-size: cover;
-	 font: 400 1em/1.2em Source Sans Pro, Arial, sans-serif;
+	 font-weight: 400;
+	 font-size: 1em;
+	 line-height: 1.2em;
+	 font-family: "Helvetica", "Source Sans Pro", sans-serif;
+	 overflow-x: hidden;
 }
 
-h1{
-	font: 400 3em/3em "Oswald", Arial, sans-serif;
-	-webkit-margin-before: 0.2em;
-	-webkit-margin-after: 0.2em;
-	display: block;
-	clear: both;
-}
 
-h2 {
-	font: 400 2.5em/2.5em "Oswald", Arial, sans-serif;
-	-webkit-margin-before: 0.2em;
-	-webkit-margin-after: 0.2em;
-	display: block;
-	clear: both;
-}
 
-h3 {
-	font: 400 1.5em/1.5em "Oswald", Arial, sans-serif;
-	-webkit-margin-before: 0.2em;
-	-webkit-margin-after: 0.2em;
-	display: block;
-	clear: both;
-	margin-top: 20px;
-}
-
+	h3 {
+		font-size: 1.2em;
+		line-height: 2em;
+		display: block;
+		clear: both;
+		margin: 0px;
+	}
+	
+	h2{
+		font-size: 2em;
+		line-height: 2.1em;
+		font-weight: 400;
+		display: block;
+		clear: both;
+		margin: 0px;
+	}
+	
+	h1{
+		font-size: 2.5em;
+		line-height: 2.8em;
+		display: inline-block;
+		clear: both;
+		margin: 0px;
+	}
+	
+	h1 > a, 
+	h2 > a,
+	h3 > a,
+	h4 > a{
+		color: #333333;
+	}
+	
 input {
 	padding-left: 4px;
 	width: 400px;
@@ -90,11 +103,14 @@ select{
 	height: 2em;
 }
 
-input[type="submit"] {
-	width: 100px;
+input[type="submit"],
+input[type="button"] {
+	min-width: 100px;
 	margin-right: 5px;
 	margin-top: 20px;
 	cursor: pointer;
+	background-color: #555;
+	color: #FFF;
 }
 
 input[type="radio"] {
@@ -158,7 +174,7 @@ table{
 .footer li > a,
 .header li > a{
 	color: #FFFFFF;
-	font: 400 2em/2em Oswald, Arial;
+	font: 400 1.5em/1.5em Oswald, Arial;
 	text-transform: uppercase;
 }
 
@@ -166,13 +182,6 @@ table{
 .header li > a:hover{
 	opacity: 0.6;
 	text-decoration: none;
-}
-
-.document{
-	position: relative;
-	margin-top: 20px;
-	padding-bottom: 10px;
-	min-height: 800px;
 }
 
 .header{
@@ -213,13 +222,6 @@ input[type="text"] {
 	top: -5px;
 }
 
-.button, input[type="submit"], input[type="button"] {
-	width: 100px;
-	margin: 20px 5px 10px 0px;
-	font: 400 1.2em/1.5em Oswald, Arial;
-	cursor: pointer;
-	height: 1.7em;
-}
 
 
 .checkradio-label-inline {
@@ -343,37 +345,24 @@ input[type="text"] {
 	background: none;
 }
 
-.configure-link {
+.configure-link a{
 	background: rgba(255, 255, 255, 0.7);
 	border-radius: 10px;
 	-moz-border-radius: 10px;
 	-webkit-border-radius: 10px;
 	color: #333333;
+	width: 207px;
+	display: block;
+	text-align: center;
+	padding-top: 5px;
+	padding-bottom: 5px;
 }
 
-.configure-link.inactive{
-	background: none;
-}
-
-.configure-link.inactive:hover{
-	background: none;
-	cursor: default;
-	color: #333333;
-}
 
 .configure-link > i,
 .configure-link > a{
 	color: inherit;
 	vertical-align: middle;
-}
-
-.configure-link:hover,
-.configure-link:hover > a,
-.configure-link:hover > i{
-	background: rgba(255, 255, 255, 1);
-	color: #166194;
-	text-decoration: none;
-	cursor: pointer;
 }
 
 .hiding-section {

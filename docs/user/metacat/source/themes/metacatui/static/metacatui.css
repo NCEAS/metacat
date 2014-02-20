@@ -123,18 +123,17 @@ Bold 700
 
 
 
-
 /* DOCUMENT / MAIN CONTENT AREA
 ------------------------------------------------------*/
 .document{
-	background: rgba(255, 255, 255, 0.8);
+	background: rgba(244, 244, 244, 0.9);
 	margin: 20px auto;
-	padding: 20px 30px;
-	width: 1170px;
+	padding: 5px 2%;
+	width: 85%;
 	padding-bottom: 360px;
-	border-radius: 20px;
-	-webkit-border-radius: 20px;
-	-moz-border-radius: 20px;
+			border-radius: 10px;
+	   -moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
 }
 
 /* Permalink icons */
@@ -150,7 +149,28 @@ Bold 700
 	color: #166194;
 }
 
+h1 a{
+	color: #333;
+	font-weight: 400;
+	display: inline-block;
+}
+h2 a{
+	color: #333;
+	font-weight: 400;
+	display: inline-block;
+}
 
+h3 a{
+	color: #333;
+	font-weight: 400;
+	display: inline-block;
+}
+
+h4 a{
+	color: #333;
+	font-weight: 500;
+	display: inline-block;
+}
 /* SIDEBAR
 ---------------------------------------------------- */
 .sidebar{
@@ -165,7 +185,7 @@ Bold 700
 }
 
 .sidebar .sidebar-title{
-	font: 300 24px/24px Oswald;
+	font-size: 1.2em;
 	margin-top: 0;
 }
 
@@ -209,14 +229,9 @@ Bold 700
     }
     
     body {
-      color: #333333;
-      font: 400 15px/20px "Source Sans Pro", "Helvetica Nueue", "Helvetica", "sans serif";
-      background: #FFFFFF;
+      background: #166194;
       background: url(bg.jpg) no-repeat center center fixed;
-      -webkit-background-size: cover;
-	  -moz-background-size: cover;
-	  -o-background-size: cover;
-	  background-size: cover;
+      background-size: cover;
     }
     
 /* TABLES 
@@ -251,24 +266,6 @@ Bold 700
 /* TAG STYLING
 -------------------------------------------------------- */
     
-	h3 {
-		font: 400 24.5px/40px "Source Sans Pro", Arial, sans-serif;
-	}
-	
-	h2{
-		font: 400 27.5px/40px "Oswald", Arial, sans-serif;
-	}
-	
-	h1{
-		font: 400 32px/40px "Oswald" sans-serif;
-	}
-	
-	h1 > a, 
-	h2 > a,
-	h3 > a,
-	h4 > a{
-		color: #333333;
-	}
 	
     
     article, aside, figure, footer, header, hgroup, menu, nav, section { 
@@ -312,14 +309,7 @@ Bold 700
     li{
     	margin-left: 10px;
     }
-    
-    select{
-    	font: 300 16px/16px "Oswald" Arial sans-serif;
-    }
-    
-   dt{
-   		font: 300 18px/40px Oswald;
-   }
+
 
 
 
@@ -384,17 +374,25 @@ Bold 700
  
  
  .topic{
- 	background: rgba(255,255,255,0.5);
+ 	background: #FFF;
  	padding: 20px;
- 	border-radius: 20px;
- 	-webkit-border-radius: 20px;
- 	-moz-border-radius: 20px;
+ 	border-radius: 5px;
+ 	-webkit-border-radius: 5px;
+ 	-moz-border-radius: 5px;
  	margin-bottom: 20px;
  }
  
  .topic-title{
- 	font: 300 24px/24px Oswald;
+ 	font-size: 1.7em;
 	margin-top: 0;
+ }
+ 
+ .topic ul{
+ 	list-style: none;
+ }
+ 
+ .topic > ul > li > a{
+ 	font-weight: 500;
  }
  
  #license pre{
@@ -435,4 +433,17 @@ Bold 700
  	font-weight: 400;
  }
  
+  
+.toctree-wrapper ul{
+	list-style: none;
+}
+.toctree-l1 {
+	margin-bottom: 20px;
+}
+.toctree-l1 > a{
+	font-weight: 500;
+}
+.first ul{
+	list-style: none;
+}
  
