@@ -104,8 +104,6 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '/schema/RegistryService/RegistryEntryType.xsd', '/schema/RegistryService/RegistryEntryType.xsd'); 
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
-  VALUES ('Schema', 'http://www.opengis.net/sensorML/1.0.1', '/schema/sensorML.xsd');
-INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ns.dataone.org/service/types/v1.1', '/schema/dataone/dataoneTypes_v1.1.xsd');
