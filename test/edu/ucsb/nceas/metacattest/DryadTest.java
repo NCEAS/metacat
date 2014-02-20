@@ -26,8 +26,10 @@
 package edu.ucsb.nceas.metacattest;
 
 import java.io.InputStream;
-import java.io.StringReader;
 import java.math.BigInteger;
+
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
@@ -35,10 +37,6 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
 
-import junit.framework.Test;
-import junit.framework.TestSuite;
-import edu.ucsb.nceas.metacat.client.MetacatFactory;
-import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
@@ -60,33 +58,12 @@ public class DryadTest
     }
 
     /**
-     * Establish a testing framework by initializing appropriate objects
-     */
-    public void setUp() {
-        try {
-            System.err.println("Test Metacat: " + metacatUrl);
-            m = MetacatFactory.createMetacatConnection(metacatUrl);
-        }
-        catch (MetacatInaccessibleException mie) {
-            System.err.println("Metacat is: " + metacatUrl);
-            fail("Metacat connection failed." + mie.getMessage());
-        }
-    }
-
-    /**
-     * Release any objects after tests are complete
-     */
-    public void tearDown() {
-    }
-
-    /**
      * Create a suite of tests to be run together
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
         suite.addTest(new DryadTest("initialize"));
         // Test basic functions
-        //suite.addTest(new DryadTest("insertDoc"));
         suite.addTest(new DryadTest("d1InsertDoc"));
 
         return suite;
@@ -101,34 +78,11 @@ public class DryadTest
     }
     
     /**
-     * Test insert of Dryad document via Metacat
-     * Note: formatId will be generic
-     */
-    public void insertDoc() {
-		try {
-			m.login(username, password);
-	    	String docid = this.generateDocumentId();
-	    	docid += ".1";
-			String documentContents = this.getTestDocFromFile(DRYAD_TEST_DOC);
-			m.insert(docid, new StringReader(documentContents), null);
-			InputStream results = m.read(docid);
-			String resultString = IOUtils.toString(results);
-			assertEquals(documentContents, resultString);
-			m.logout();
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail(e.getMessage());
-		}
-    	
-    }
-    
-    /**
      * Insert test doc using D1 API
      */
     public void d1InsertDoc() {
 		try {
 	    	String docid = this.generateDocumentId();
-	    	docid += ".1";
 			String documentContents = this.getTestDocFromFile(DRYAD_TEST_DOC);
 			Session session = getTestSession();
 			Identifier pid = new Identifier();
@@ -142,13 +96,11 @@ public class DryadTest
 			InputStream results = MNodeService.getInstance(request).get(session, pid);
 			String resultString = IOUtils.toString(results);
 			assertEquals(documentContents, resultString);
-			m.logout();
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail(e.getMessage());
 		}
     	
     }
-
     
 }
