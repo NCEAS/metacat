@@ -25,25 +25,28 @@
 
 package edu.ucsb.nceas.metacattest;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.math.BigInteger;
 
 import org.apache.commons.io.IOUtils;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.SystemMetadata;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 /**
- * A JUnit test for testing Metacat when Non Ascii Characters are inserted
+ * A JUnit test for testing Dryad documents
  */
 public class DryadTest
-    extends MCTestCase {
+    extends D1NodeServiceTest {
     
     private static final String DRYAD_TEST_DOC = "test/dryad-metadata-profile-sample.xml";
 
@@ -83,7 +86,9 @@ public class DryadTest
         TestSuite suite = new TestSuite();
         suite.addTest(new DryadTest("initialize"));
         // Test basic functions
-        suite.addTest(new DryadTest("insertDoc"));
+        //suite.addTest(new DryadTest("insertDoc"));
+        suite.addTest(new DryadTest("d1InsertDoc"));
+
         return suite;
     }
 
@@ -96,11 +101,8 @@ public class DryadTest
     }
     
     /**
-     * Test insert of Dryad document
-     * @throws InsufficientKarmaException
-     * @throws MetacatException
-     * @throws IOException
-     * @throws MetacatInaccessibleException
+     * Test insert of Dryad document via Metacat
+     * Note: formatId will be generic
      */
     public void insertDoc() {
 		try {
@@ -110,6 +112,34 @@ public class DryadTest
 			String documentContents = this.getTestDocFromFile(DRYAD_TEST_DOC);
 			m.insert(docid, new StringReader(documentContents), null);
 			InputStream results = m.read(docid);
+			String resultString = IOUtils.toString(results);
+			assertEquals(documentContents, resultString);
+			m.logout();
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail(e.getMessage());
+		}
+    	
+    }
+    
+    /**
+     * Insert test doc using D1 API
+     */
+    public void d1InsertDoc() {
+		try {
+	    	String docid = this.generateDocumentId();
+	    	docid += ".1";
+			String documentContents = this.getTestDocFromFile(DRYAD_TEST_DOC);
+			Session session = getTestSession();
+			Identifier pid = new Identifier();
+			pid.setValue(docid);
+			SystemMetadata sysmeta = this.createSystemMetadata(pid, session.getSubject(), IOUtils.toInputStream(documentContents, "UTF-8"));
+			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+			formatId.setValue("http://datadryad.org/profile/v3.1");
+			sysmeta.setFormatId(formatId);
+			sysmeta.setSize(BigInteger.valueOf(IOUtils.toByteArray(documentContents).length));
+			MNodeService.getInstance(request).create(session, pid, IOUtils.toInputStream(documentContents, "UTF-8"), sysmeta);
+			InputStream results = MNodeService.getInstance(request).get(session, pid);
 			String resultString = IOUtils.toString(results);
 			assertEquals(documentContents, resultString);
 			m.logout();
