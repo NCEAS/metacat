@@ -3392,6 +3392,7 @@ public class MetacatHandler {
 		SystemMetadata mnSysMeta = null;
 		Session session = null;
 		Identifier pid = new Identifier();
+        String guid = null;
 		AccessPolicy mnAccessPolicy = null;
 		SystemMetadata cnSysMeta = null;
         
@@ -3410,6 +3411,19 @@ public class MetacatHandler {
                 		             "?action=setaccess&docid=<doc_id>&accessBlock=<access_section>");
                 outputResponse(successList, errorList, out);
                 return;
+            } else {
+                // look-up pid assuming docid
+                guid = docList[0];
+                try {
+   	             String docid = DocumentUtil.getDocIdFromAccessionNumber(docList[0]);
+   	             int rev = DocumentUtil.getRevisionFromAccessionNumber(docList[0]);
+   	             guid = IdentifierManager.getInstance().getGUID(docid, rev);
+                } catch (McdbDocNotFoundException e) {
+               	 // log the warning
+               	 logMetacat.warn("No pid found for [assumed] docid: " + docList[0]);
+                } catch (Exception e) {
+                	logMetacat.warn("Error looking up pid for [assumed] dociid: " + docList[0]);
+                }
             }
             try {
                 AccessControlForSingleFile accessControl = 
@@ -3420,20 +3434,20 @@ public class MetacatHandler {
                 		               docList[0]);
                 
                 // force hazelcast to update system metadata
-                HazelcastService.getInstance().refreshSystemMetadataEntry(docList[0]);
+                HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
          
                 // Update the CN with the modified access policy
-                logMetacat.debug("Setting CN access policy for pid: " + docList[0]);
+                logMetacat.debug("Setting CN access policy for pid: " + guid);
 
     			try {
-    				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(docList[0]));
+    				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
     				SyncAccessPolicy syncAP = new SyncAccessPolicy();
 
-    				logMetacat.debug("Trying to syncing access policy for pids: "
-    						+ docList[0]);
+    				logMetacat.debug("Trying to syncing access policy for pid: "
+    						+ guid);
     				syncAP.sync(guids);
     			} catch (Exception e) {
-    				logMetacat.error("Error syncing pids: " + docList[0]
+    				logMetacat.error("Error syncing pid: " + guid
     						+ " Exception " + e.getMessage());
                     e.printStackTrace(System.out);
     			}
@@ -3570,19 +3584,19 @@ public class MetacatHandler {
                 }
             }
             // force hazelcast to update system metadata
-            HazelcastService.getInstance().refreshSystemMetadataEntry(docList[0]);
+            HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
             
-            logMetacat.debug("Setting CN access policy for pid: " + docList[0]);
+            logMetacat.debug("Setting CN access policy for pid: " + guid);
 
 			try {
-				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(docList[0]));
+				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
 				SyncAccessPolicy syncAP = new SyncAccessPolicy();
 
 				logMetacat.debug("Trying to syncing access policy for pids: "
-						+ docList[0]);
+						+ guid);
 				syncAP.sync(guids);
 			} catch (Exception e) {
-				logMetacat.error("Error syncing pids: " + docList[0]
+				logMetacat.error("Error syncing pids: " + guid
 						+ " Exception " + e.getMessage());
                 e.printStackTrace(System.out);
 			}
