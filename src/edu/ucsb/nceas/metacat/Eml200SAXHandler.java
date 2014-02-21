@@ -2002,7 +2002,19 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                                         inlineFileName, subreeid);
              // Save guid of data object for syncing of access policy with CN after parsing
              // is successful (see DocumentImpl.write)
-             guidsToSync.add(inlineFileName);
+             
+             // look-up pid assuming docid
+             String dataGuid = inlineFileName;
+             try {
+	             String dataDocid = DocumentUtil.getDocIdFromAccessionNumber(inlineFileName);
+	             int dataRev = DocumentUtil.getRevisionFromAccessionNumber(inlineFileName);
+	             dataGuid = IdentifierManager.getInstance().getGUID(dataDocid, dataRev);
+             } catch (McdbDocNotFoundException e) {
+            	 // log the warning
+            	 logMetacat.warn("No pid found for [assumed] data docid: " + inlineFileName);
+            	 // what do you do?
+             }
+			guidsToSync.add(dataGuid);
            }
            else if (onlineURLDistributionIdList.containsKey(subreeid))
            {
