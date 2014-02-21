@@ -9,10 +9,16 @@
  * Then we know the current version should be restored
  */
 
+DROP TABLE IF EXISTS current_documents;
+CREATE TABLE current_documents (
+	guid text, 
+	obsoleted_by text
+);
+
 /* Find the most recent version by traversing system metadata 
  * see: http://www.postgresql.org/docs/8.4/static/queries-with.html
  */
-DROP TABLE IF EXISTS current_documents;
+INSERT INTO current_documents (guid, obsoleted_by)
 WITH RECURSIVE q AS
 (
 	SELECT  id.guid, sm.obsoleted_by
@@ -30,7 +36,6 @@ UNION ALL
 	ON q.obsoleted_by = newer.guid
 )
 SELECT guid, obsoleted_by
-INTO current_documents
 FROM q
 WHERE obsoleted_by is null
 ORDER BY guid;
