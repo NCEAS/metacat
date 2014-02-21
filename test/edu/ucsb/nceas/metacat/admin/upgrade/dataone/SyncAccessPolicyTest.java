@@ -93,10 +93,9 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new SyncAccessPolicyTest("initialize"));
-		suite.addTest(new SyncAccessPolicyTest("testIsEqual"));
+//		suite.addTest(new SyncAccessPolicyTest("testIsEqual"));
 		suite.addTest(new SyncAccessPolicyTest("testSyncAccessPolicy"));
-		suite.addTest(new SyncAccessPolicyTest(
-				"testSyncEML201OnlineDataAccessPolicy"));
+//		suite.addTest(new SyncAccessPolicyTest("testSyncEML201OnlineDataAccessPolicy"));
 
 		return suite;
 	}
@@ -162,14 +161,6 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 
 		String response = null;
 		debug("\nStarting sync access policy test");
-		debug("Logging in with user: " + anotheruser + ", password: "
-				+ anotherpassword);
-		try {
-			response = m.login(anotheruser, anotherpassword);
-		} catch (Exception e) {
-			debug("Unable to login: " + response);
-			fail();
-		}
 
 		String localId = null;
 		try {
@@ -227,7 +218,23 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 				fail("Error, cannot read system metadata for pid: " + pid
 						+ " after " + attempts + " attempts");
 			}
+			
+			/* Read SM from MN */
+			try {
+				mnSysMeta = MNodeService.getInstance(request)
+						.getSystemMetadata(pid);
+				debug("Got SM from MN");
+			} catch (Exception e) {
+				fail("Error getting system metadata for new pid: "
+						+ pid.getValue() + ". Message: " + e.getMessage());
+			}
+			
+			SyncAccessPolicy syncAP = new SyncAccessPolicy();
 
+			// access policies should match after initial harvest
+			assertTrue(syncAP.isEqual(cnSysMeta.getAccessPolicy(), mnSysMeta.getAccessPolicy()));
+
+			// find the local id for this pid
 			try {
 				localId = IdentifierManager.getInstance().getLocalId(
 						pid.getValue());
@@ -239,7 +246,6 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 					+ pid.getValue() + ", username: " + username
 					+ " read, allow, allowFirst");
 
-			m.logout();
 			response = m.login(anotheruser, anotherpassword);
 			debug("Logging in as user: " + anotheruser);
 			debug("Adding access for user: " + username);
@@ -259,7 +265,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Response from setaccess: " + response);
 			debug("Retrieving updated docid from CN to check if perms were updated...");
 
-			/* Reread SM from MN */
+			/* Reread SM from MN after updating access */
 			try {
 				mnSysMeta = MNodeService.getInstance(request)
 						.getSystemMetadata(pid);
@@ -341,7 +347,6 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Getting access policy for pid: " + pid.getValue());
 			cnAccessPolicy = cnSysMeta.getAccessPolicy();
 			debug("Diffing access policies (MN,CN) for pid: " + pid.getValue());
-			SyncAccessPolicy syncAP = new SyncAccessPolicy();
 			debug("Comparing access policies...");
 
 			Boolean apEqual = new Boolean(syncAP.isEqual(mnAccessPolicy,
