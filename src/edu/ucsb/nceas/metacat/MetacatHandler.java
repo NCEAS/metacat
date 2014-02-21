@@ -3575,34 +3575,43 @@ public class MetacatHandler {
                     accessControl.insertPermissions(principal, 
                       Integer.valueOf(AccessControlList.intValue(permission)).longValue(), 
                       permType, permOrder, null, null);
+                    
+                    // refresh using guid
+                    guid = accessionNumber;
+                    try {
+          	             String tempDocid = DocumentUtil.getDocIdFromAccessionNumber(accessionNumber);
+          	             int rev = DocumentUtil.getRevisionFromAccessionNumber(accessionNumber);
+          	             guid = IdentifierManager.getInstance().getGUID(tempDocid, rev);
+                      	 logMetacat.debug("Found pid: " + guid);
+                    } catch (Exception e) {
+                       	logMetacat.warn("Error looking up pid for [assumed] docid: " + accessionNumber);
+                    }
+                    
+            		// force hazelcast to refresh system metadata
+                    HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
+                    
+                    logMetacat.debug("Synching CN access policy for pid: " + guid);
+
+        			try {
+        				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
+        				SyncAccessPolicy syncAP = new SyncAccessPolicy();
+        				logMetacat.debug("Trying to syncing access policy for pid: " + guid);
+        				syncAP.sync(guids);
+        			} catch (Exception e) {
+        				logMetacat.error("Error syncing pids: " + guid
+        						+ " Exception " + e.getMessage(), e);
+        			}
                 } catch (Exception ee) {
                     logMetacat.error("MetacatHandler.handleSetAccessAction - " +
                     		         "Error inserting permission: " + 
-                    		         ee.getMessage());
-                    ee.printStackTrace(System.out);
+                    		         ee.getMessage(), ee);
                     error = "Failed to set access control for document "
                             + accessionNumber + " because " + ee.getMessage();
                     errorList.addElement(error);
                     continue;
                 }
             }
-            // force hazelcast to update system metadata
-            HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
             
-            logMetacat.debug("Setting CN access policy for pid: " + guid);
-
-			try {
-				ArrayList<String> guids = new ArrayList<String>(Arrays.asList(guid));
-				SyncAccessPolicy syncAP = new SyncAccessPolicy();
-
-				logMetacat.debug("Trying to syncing access policy for pids: "
-						+ guid);
-				syncAP.sync(guids);
-			} catch (Exception e) {
-				logMetacat.error("Error syncing pids: " + guid
-						+ " Exception " + e.getMessage());
-                e.printStackTrace(System.out);
-			}
 
             //force replication when this action is called
             boolean isXml = true;
