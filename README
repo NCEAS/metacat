@@ -60,6 +60,7 @@ These release adds a new default file-based authentication mechanism
 that allows administrators to more easily deploy Metacat without a
 LDAP server.
 Other enhancements include:
+* Correct use of DataONE 'archive' flag
 * Access policy synchronization with the DataONE Coordinating Node
 * Indexing support for EML singleDateTime coverage values
 * Indexing support document read/download events
