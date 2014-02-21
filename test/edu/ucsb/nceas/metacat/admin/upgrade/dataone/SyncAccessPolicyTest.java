@@ -49,7 +49,6 @@ import org.junit.Before;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
-import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
@@ -61,8 +60,6 @@ import edu.ucsb.nceas.utilities.access.AccessControlInterface;
  * update by metacat services
  */
 public class SyncAccessPolicyTest extends D1NodeServiceTest {
-
-	private CNode cn = null;
 
 	/**
 	 * Constructor to build the test
@@ -81,17 +78,6 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	public void setUp() throws Exception {
 		metacatConnectionNeeded = true;
 		super.setUp();
-
-		/*
-		 * Determine the CN for the current host. This test must be run on a
-		 * registered MN.
-		 */
-		try {
-			cn = D1Client.getCN();
-		} catch (ServiceFailure sf) {
-			debug("Unable to get Coordinating node name for this MN");
-			fail();
-		}
 
 	}
 
@@ -172,10 +158,12 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 		AccessPolicy mnAccessPolicy = null;
 		SystemMetadata cnSysMeta = null;
 		SystemMetadata mnSysMeta = null;
+		CNode cn = null;
 
 		String response = null;
 		debug("\nStarting sync access policy test");
-		debug("Logging in with user: " + anotheruser + ", password: " + anotherpassword);
+		debug("Logging in with user: " + anotheruser + ", password: "
+				+ anotherpassword);
 		try {
 			response = m.login(anotheruser, anotherpassword);
 		} catch (Exception e) {
@@ -183,6 +171,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			fail();
 		}
 
+		String localId = null;
 		try {
 			Identifier pid = null;
 			pid = createTestPid();
@@ -191,6 +180,17 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Inserted new document: " + pid.getValue());
 			boolean found = false;
 			int attempts = 0;
+
+			/*
+			 * Determine the CN for the current host. This test must be run on a
+			 * registered MN.
+			 */
+			try {
+				cn = D1Client.getCN();
+			} catch (ServiceFailure sf) {
+				debug("Unable to get Coordinating node name for this MN");
+				fail();
+			}
 
 			// We have to wait until the CN has harvested the new document,
 			// otherwise we
@@ -206,9 +206,11 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 				Thread.sleep(1000 * 60);
 				// Get the test document from the CN
 				// Get sm, access policy for requested pid from the CN
+				// Get sm, access policy for requested pid from the CN
 				try {
-					cnSysMeta = CNodeService.getInstance(request)
-							.getSystemMetadata(pid);
+					cnSysMeta = cn.getSystemMetadata(pid);
+					debug("Got SM from CN");
+
 				} catch (Exception e) {
 					debug("Error getting system metadata for pid: "
 							+ pid.getValue() + " from cn: " + e.getMessage());
@@ -226,13 +228,11 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 						+ " after " + attempts + " attempts");
 			}
 
-			String localId = null;
 			try {
 				localId = IdentifierManager.getInstance().getLocalId(
 						pid.getValue());
 			} catch (Exception e) {
-				debug("Unable to retrieve localId for pid: " + pid.getValue());
-				fail();
+				fail("Unable to retrieve localId for pid: " + pid.getValue());
 			}
 
 			debug("Updating permissions of localId: " + localId + ", guid: "
@@ -241,6 +241,8 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 
 			m.logout();
 			response = m.login(anotheruser, anotherpassword);
+			debug("Logging in as user: " + anotheruser);
+			debug("Adding access for user: " + username);
 
 			/* Update the docid access policy with Metacat api */
 			try {
@@ -257,26 +259,14 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Response from setaccess: " + response);
 			debug("Retrieving updated docid from CN to check if perms were updated...");
 
-			/* Reread SM from MN, CN */
+			/* Reread SM from MN */
 			try {
 				mnSysMeta = MNodeService.getInstance(request)
 						.getSystemMetadata(pid);
 				debug("Got SM from MN");
 			} catch (Exception e) {
-				debug("Error getting system metadata for new pid: "
+				fail("Error getting system metadata for new pid: "
 						+ pid.getValue() + ". Message: " + e.getMessage());
-				fail();
-			}
-
-			// Get the test document from the CN 
-			try {
-				cnSysMeta = CNodeService.getInstance(request)
-						.getSystemMetadata(pid);
-				debug("Got SM from CN");
-			} catch (Exception e) {
-				debug("Error getting system metadata for pid: "
-						+ pid.getValue() + " from cn: " + e.getMessage());
-				fail();
 			}
 
 			/* Check if the access policy was updated on the MN */
@@ -285,20 +275,68 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			List<Subject> subjectList = null;
 			List<AccessRule> accessRules = mnAccessPolicy.getAllowList();
 			debug("Checking that access policy was added to MN");
-//
-//			for (AccessRule ar : accessRules) {
-//				subjectList = ar.getSubjectList();
-//				for (Subject sj : subjectList) {
-//					debug("Checking subject: " + sj.getValue());
-//					if (sj.getValue().contains(anotheruser)) {
-//						debug("user " + anotheruser + " found");
-//						found = true;
-//					}
-//					debug("Foo");
-//				}
-//			}
-//
-//			assertTrue(found);
+
+			try {
+				debug("Checking " + accessRules.size() + " access rules");
+				for (AccessRule ar : accessRules) {
+					subjectList = ar.getSubjectList();
+					debug("Checking " + ar.sizeSubjectList()
+							+ " subjects for this access rule");
+					for (Subject sj : subjectList) {
+						debug("Checking subject: " + sj.getValue());
+						if (sj.getValue().equals(username)) {
+							debug("user " + username + " found");
+							found = true;
+						}
+						debug("MN done with subject: " + sj.getValue());
+					}
+				}
+			} catch (Exception e) {
+				debug("Error checking access policy: " + e.getMessage());
+				fail();
+			}
+
+			if (!found)
+				debug("user " + username + " not found in access policy");
+
+			// assertTrue(found);
+
+			/* Reread SM from CN */
+			try {
+				cnSysMeta = cn.getSystemMetadata(pid);
+				debug("Got SM from CN");
+			} catch (Exception e) {
+				fail("Error getting system metadata for pid: " + pid.getValue()
+						+ " from cn: " + e.getMessage());
+			}
+
+			debug("Done getting CN SM");
+
+			/* Check if the access policy was updated on the MN */
+			cnAccessPolicy = cnSysMeta.getAccessPolicy();
+			found = false;
+			subjectList = null;
+			accessRules = cnAccessPolicy.getAllowList();
+			debug("Checking that access policy was added to CN");
+			debug("Checking " + accessRules.size() + " access rules");
+
+			for (AccessRule ar : accessRules) {
+				subjectList = ar.getSubjectList();
+				debug("Checking " + ar.sizeSubjectList()
+						+ " subjects for this access rule");
+				for (Subject sj : subjectList) {
+					debug("Checking subject: " + sj.getValue());
+					if (sj.getValue().indexOf(username) >= 0) {
+						debug("user " + username + " found");
+						found = true;
+					}
+				}
+			}
+			if (!found)
+				debug("user " + username + " not found in access policy");
+			debug("Done checking access rules for CN");
+
+			assertTrue(found);
 			debug("Checking privs retrieved from CN");
 			debug("Getting access policy for pid: " + pid.getValue());
 			cnAccessPolicy = cnSysMeta.getAccessPolicy();
@@ -310,14 +348,18 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 					cnAccessPolicy));
 			debug("Are access policies equal?: " + apEqual.toString());
 			assert (apEqual == true);
-
-			deleteDocumentId(localId, SUCCESS, true);
-			m.logout();
-
 		} catch (Exception e) {
 			e.printStackTrace();
 			debug("Error running syncAP test: " + e.getMessage());
 			fail();
+		} finally {
+			if (localId != null)
+				deleteDocumentId(localId, SUCCESS, true);
+			try {
+				m.logout();
+			} catch (Exception e) {
+				debug("Error logging out");
+			}
 		}
 
 		debug("Done running testSyncAccessPolicy");
@@ -331,10 +373,11 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	 */
 	public void testSyncEML201OnlineDataAccessPolicy() {
 		String newdocid = null;
-		String onlineDocid;
+		String onlineDocid = null;
 		String onlinetestdatafile2 = "test/onlineDataFile2";
 		SystemMetadata mnSysMeta = null;
 		SystemMetadata cnSysMeta = null;
+		CNode cn = null;
 
 		try {
 			debug("\nRunning: testSyncEML201OnlineDataAccessPolicy");
@@ -377,6 +420,12 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 
 			Identifier pid = new Identifier();
 			pid.setValue(guid);
+			try {
+				cn = D1Client.getCN();
+			} catch (ServiceFailure sf) {
+				debug("Unable to get Coordinating node name for this MN");
+				fail();
+			}
 
 			/*
 			 * Wait for the cn to harvest metadata for the data object. We are
@@ -469,20 +518,26 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			debug("Are access policies equal?: " + apEqual.toString());
 			assert (apEqual == true);
 
-			/* Delete the document */
-			deleteDocumentId(newdocid + ".2", SUCCESS, true);
-			deleteDocumentId(onlineDocid + ".1", SUCCESS, true);
-
-			// logout
-			debug("logging out");
-			m.logout();
 		} catch (MetacatAuthException mae) {
 			fail("Authorization failed:\n" + mae.getMessage());
 		} catch (MetacatInaccessibleException mie) {
 			fail("Metacat Inaccessible:\n" + mie.getMessage());
 		} catch (Exception e) {
 			fail("General exception:\n" + e.getMessage());
+		} finally {
+			/* Delete the document */
+			deleteDocumentId(newdocid + ".2", SUCCESS, true);
+			deleteDocumentId(onlineDocid + ".1", SUCCESS, true);
+
+			// logout
+			debug("logging out");
+			try {
+				m.logout();
+			} catch (Exception e) {
+				debug("Error logging out");
+			}
 		}
+
 		debug("Done running testSyncEML201OnlineDataAccessPolicy");
 	}
 
