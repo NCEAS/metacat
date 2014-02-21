@@ -93,9 +93,9 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new SyncAccessPolicyTest("initialize"));
-//		suite.addTest(new SyncAccessPolicyTest("testIsEqual"));
+		suite.addTest(new SyncAccessPolicyTest("testIsEqual"));
 		suite.addTest(new SyncAccessPolicyTest("testSyncAccessPolicy"));
-//		suite.addTest(new SyncAccessPolicyTest("testSyncEML201OnlineDataAccessPolicy"));
+		suite.addTest(new SyncAccessPolicyTest("testSyncEML201OnlineDataAccessPolicy"));
 
 		return suite;
 	}
