@@ -3418,6 +3418,7 @@ public class MetacatHandler {
    	             String docid = DocumentUtil.getDocIdFromAccessionNumber(docList[0]);
    	             int rev = DocumentUtil.getRevisionFromAccessionNumber(docList[0]);
    	             guid = IdentifierManager.getInstance().getGUID(docid, rev);
+               	 logMetacat.debug("Setting access on found pid: " + guid);
                 } catch (McdbDocNotFoundException e) {
                	 // log the warning
                	 logMetacat.warn("No pid found for [assumed] docid: " + docList[0]);
@@ -3426,6 +3427,8 @@ public class MetacatHandler {
                 }
             }
             try {
+            	
+              	logMetacat.debug("Setting access for docid: " + docList[0]);
                 AccessControlForSingleFile accessControl = 
                     new AccessControlForSingleFile(docList[0]);
                 accessControl.insertPermissions(accessBlock[0]);
