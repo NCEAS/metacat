@@ -2002,7 +2002,6 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                                         inlineFileName, subreeid);
              // Save guid of data object for syncing of access policy with CN after parsing
              // is successful (see DocumentImpl.write)
-             
              // look-up pid assuming docid
              String dataGuid = inlineFileName;
              try {
@@ -2012,9 +2011,8 @@ public class Eml200SAXHandler extends DBSAXHandler implements
              } catch (McdbDocNotFoundException e) {
             	 // log the warning
             	 logMetacat.warn("No pid found for [assumed] data docid: " + inlineFileName);
-            	 // what do you do?
              }
-			guidsToSync.add(dataGuid);
+ 			 guidsToSync.add(dataGuid);
            }
            else if (onlineURLDistributionIdList.containsKey(subreeid))
            {
@@ -2037,7 +2035,17 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                                    "xml_access table for " + dataFileName);
                // Save guid of data object for syncing of access policy with CN after parsing
                // is successful (see DocumentImpl.write)
-               guidsToSync.add(dataFileName);
+               // look-up pid assuming docid
+               String dataGuid = dataFileName;
+               try {
+  	             String dataDocid = DocumentUtil.getDocIdFromAccessionNumber(dataFileName);
+  	             int dataRev = DocumentUtil.getRevisionFromAccessionNumber(dataFileName);
+  	             dataGuid = IdentifierManager.getInstance().getGUID(dataDocid, dataRev);
+               } catch (McdbDocNotFoundException e) {
+              	 // log the warning
+              	 logMetacat.warn("No pid found for [assumed] data docid: " + dataFileName);
+               }
+               guidsToSync.add(dataGuid);
                // put the id into a hashtalbe. So when we run wirtetop level
                // access, those id will be ignored because they already has
                // additional access rules
