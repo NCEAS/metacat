@@ -1281,7 +1281,7 @@ public class MNodeService extends D1NodeService
             
             // submit for indexing
             try {
-				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null);
+				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
 			} catch (Exception e) {
                 logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
 			}

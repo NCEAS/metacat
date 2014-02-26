@@ -428,7 +428,7 @@ public abstract class D1NodeService {
     	// lock and unlock of the pid happens in the subclass
     	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
     	// submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
         
     } catch (Exception e) {
     	logMetacat.error("Problem creating system metadata: " + pid.getValue(), e);
@@ -1260,7 +1260,7 @@ public abstract class D1NodeService {
         // note: the calling subclass handles the map hazelcast lock/unlock
       	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
       	// submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
       } catch (Exception e) {
           throw new ServiceFailure("1190", e.getMessage());
           
@@ -1281,7 +1281,7 @@ public abstract class D1NodeService {
             HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
             HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
             // submit for indexing
-            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
 

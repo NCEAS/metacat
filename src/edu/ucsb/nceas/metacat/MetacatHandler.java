@@ -1846,7 +1846,7 @@ public class MetacatHandler {
                     HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
                     
                     // submit for indexing
-                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
                     
                   } catch ( McdbDocNotFoundException dnfe ) {
                     logMetacat.debug(
@@ -2680,7 +2680,7 @@ public class MetacatHandler {
 						try {
 							// submit for indexing
 						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields);
+	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
 						} catch (Exception e) {
 							failedList.add(id);
 						    logMetacat.info("Error submitting to index for pid " + id);
@@ -2779,7 +2779,7 @@ public class MetacatHandler {
                         	
                             // submit for indexing
     					    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                            MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields);
+                            MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
 
     					    results.append("<pid>" + id + "</pid>\n");
                             logMetacat.debug("queued SystemMetadata for index on pid: " + id);
@@ -3280,7 +3280,7 @@ public class MetacatHandler {
                                 HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
                                 
                                 // submit for indexing
-                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null);
+                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null, true);
                                 
                             } catch (Exception ee) {
                                 // If the file did not exist before this method was 

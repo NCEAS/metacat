@@ -3473,7 +3473,7 @@ public class DocumentImpl
 				sysMeta.setArchived(true);
             	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
-                MetacatSolrIndex.getInstance().submit(guid, sysMeta, null);
+                MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
             }
             
             // clear cache after inserting or updating a document

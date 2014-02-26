@@ -403,7 +403,7 @@ public class ReplicationHandler extends TimerTask
     	  logReplication.debug("Saving SystemMetadata to shared map: " + sysMeta.getIdentifier().getValue());
       	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
       	  // submit for indexing
-          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
       }
    	  
       docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
@@ -582,7 +582,7 @@ public class ReplicationHandler extends TimerTask
     	  // save the system metadata
     	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
     	  // submit for indexing
-          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
 
       }
    	  
@@ -881,7 +881,7 @@ public class ReplicationHandler extends TimerTask
 										.getBytes("UTF-8")));
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
 			}
 
 			logReplication.info("ReplicationHandler.handleSystemMetadata - Successfully replicated system metadata for guid: "
