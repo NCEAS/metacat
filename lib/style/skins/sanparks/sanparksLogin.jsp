@@ -157,7 +157,7 @@
 		<span class="regtext"> (request an account...)</span>
 		</a>
 		</h3>
-		<form name="loginForm" id="loginForm" onsubmit="submitLoginFormIntoDivAndReload('<%= SERVLET_URL %>', this, 'loginSection')">
+		<form name="loginForm" id="loginForm" method="post" onsubmit="submitLoginFormIntoDivAndReload('<%= SERVLET_URL %>', this, 'loginSection'); return false;">
 		  <input name="qformat" type="hidden" value="sanparks" />
 		  <input name="action" type="hidden" value="login"/>
 		  <table>
@@ -190,7 +190,7 @@
 	} else {
 %>
 		<h3>Welcome,<%= clientViewBean.getUsername() %></h3>
-		<form name="logoutForm" id="logoutForm" onsubmit="submitLogoutFormIntoDiv('<%= SERVLET_URL %>', this, 'loginSection')">
+		<form name="logoutForm" id="logoutForm" method="post" onsubmit="submitLogoutFormIntoDiv('<%= SERVLET_URL %>', this, 'loginSection'); return false;">
 		  <input name="qformat" value="sanparks" type="hidden" />
 		  <input name="action" type="hidden" value="logout"/>
 		  <table>
