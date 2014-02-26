@@ -108,6 +108,19 @@ public class SolrIndexIT  {
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(result.contains("version2"));
+       
+       // have to re-index the older version
+       Identifier obsoletedPid = systemMetadata.getObsoletes();
+       SystemMetadata obsoletedSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
+       assertTrue(obsoletedSystemMetadata.getIdentifier().getValue().equals(obsoletedPid.getValue()));
+       obsoletedSystemMetadata.setObsoletedBy(pid);
+       InputStream obsoletedEmlInputStream = new FileInputStream(new File(EMLFILEPATH));  
+       solrIndex.update(obsoletedPid, obsoletedSystemMetadata, obsoletedEmlInputStream);
+       
+       // old version should be marked as obsoleted and not returned
+       result = doQuery(solrIndex.getSolrServer(), "&fq=-obsoletedBy:*");
+       assertTrue(!result.contains("version1"));
+       assertTrue(result.contains("version2"));
     }
     
     /**
