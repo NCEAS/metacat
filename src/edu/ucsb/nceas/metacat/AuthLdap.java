@@ -358,6 +358,9 @@ public class AuthLdap implements AuthInterface {
 	 */
 	private String getAliasedDn(String alias, Hashtable<String, String> env, boolean useTLS) throws NamingException, IOException  {
 	    String aliasedDn = null;
+	    if(env != null) {
+	        env.put(Context.REFERRAL, "ignore");
+	    }
         LdapContext sctx = new InitialLdapContext(env, null);
         StartTlsResponse tls = null;
         if(useTLS) {
@@ -629,10 +632,10 @@ public class AuthLdap implements AuthInterface {
 	public String[] getUserInfo(String user, String password) throws ConnectException {
 		String[] userinfo = new String[3];
 
+		logMetacat.info("AuthLdap.getUserInfo - get the user info for user  "+user);
 		// Identify service provider to use
 		Hashtable env = new Hashtable(11);
-		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-		env.put(Context.REFERRAL, referral);
+		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");	
 		env.put(Context.PROVIDER_URL, ldapUrl);
 		String realName = null;
 		try {
@@ -640,7 +643,7 @@ public class AuthLdap implements AuthInterface {
 		} catch(Exception e) {
 		    logMetacat.warn("AuthLdap.getUserInfo - can't get the alias name for the user "+user+" since "+e.getMessage());
 		}
-		
+		logMetacat.info("AuthLdap.getUserInfo - the aliased dn for "+user+" is "+realName);
 		if(realName != null) {
 		    //the the user is an alias name. we need to use the the real name
 		    user = realName;
@@ -649,6 +652,7 @@ public class AuthLdap implements AuthInterface {
 		try {
 
 			// Create the initial directory context
+		    env.put(Context.REFERRAL, referral);
 			DirContext ctx = new InitialDirContext(env);
 			// Specify the attributes to match.
 			// Users are objects that have the attribute
