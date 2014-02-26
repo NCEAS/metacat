@@ -109,7 +109,7 @@ public class AuthLdapTest extends MCTestCase
     public void testAliasedAccount() throws Exception {
         String alias = "uid=test2,o=unaffiliated,dc=ecoinformatics,dc=org";
         AuthLdap ldap = new AuthLdap();
-        assertTrue("We should authenticate the alias dn "+alias,ldap.authenticate(alias, "test"));
+        assertTrue("We should authenticate the alias dn "+alias,ldap.authenticate(alias, "kepler"));
         String[] info =ldap.getUserInfo(alias, null);
         assertTrue("The email address should be tao@nceas.ucsb.edu and should be "+info[2], info[2].equals("tao@nceas.ucsb.edu"));
     }
