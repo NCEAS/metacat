@@ -643,7 +643,7 @@ public class AuthLdap implements AuthInterface {
 		} catch(Exception e) {
 		    logMetacat.warn("AuthLdap.getUserInfo - can't get the alias name for the user "+user+" since "+e.getMessage());
 		}
-		logMetacat.info("AuthLdap.getUserInfo - get the real name   "+realName);
+		logMetacat.info("AuthLdap.getUserInfo - the aliased dn for "+user+" is "+realName);
 		if(realName != null) {
 		    //the the user is an alias name. we need to use the the real name
 		    user = realName;
