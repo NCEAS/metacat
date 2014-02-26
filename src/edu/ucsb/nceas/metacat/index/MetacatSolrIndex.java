@@ -168,12 +168,20 @@ public class MetacatSolrIndex {
         return inputStream;
      
     }
-    
-    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields) {
+
+    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
     	IndexTask task = new IndexTask();
     	task.setSystemMetadata(systemMetadata);
     	task.setFields(fields);
-		HazelcastService.getInstance().getIndexQueue().put(pid, task );
+		HazelcastService.getInstance().getIndexQueue().put(pid, task);
+		
+		// submit older revisions recursively otherwise they stay in the index!
+		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
+			Identifier obsoletedPid = systemMetadata.getObsoletes();
+			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
+			this.submit(obsoletedPid, obsoletedSysMeta , null, followRevisions);
+		}
+		
     }
     
 

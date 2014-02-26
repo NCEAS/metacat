@@ -128,7 +128,7 @@ public class EventLog
 	        pid.setValue(guid);
 	        
 	        // submit for indexing
-	        MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event));
+	        MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event), false);
 	        
         } catch (Exception e) {
         	logMetacat.error("Could not update event index information", e);

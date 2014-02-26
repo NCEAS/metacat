@@ -636,7 +636,7 @@ public class ReplicationService extends BaseService {
 				// save the system metadata
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
 			}
       
 			// dates
@@ -933,7 +933,7 @@ public class ReplicationService extends BaseService {
 	      	  // save the system metadata
 	      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 	      	  // submit for indexing
-              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
 	        }
 	        
 	        // process the access control
@@ -1205,7 +1205,7 @@ public class ReplicationService extends BaseService {
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
 			}
       
 			logReplication.info("ReplicationService.handleForceReplicateSystemMetadataRequest - processed guid: " + guid);
