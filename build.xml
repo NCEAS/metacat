@@ -415,10 +415,10 @@
 		<!-- the git repo -->
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
-		<property name="metacatui.git.repository.refname"
-							value="METACATUI_1_4_BRANCH" />
 		<!--<property name="metacatui.git.repository.refname"
-									value="master" /> -->
+							value="METACATUI_1_4_BRANCH" /> -->
+		<property name="metacatui.git.repository.refname"
+									value="master" />
 		<property name="metacatui.build.dir"
 					value="metacatui_build" />
 		<property name="metacatui.resources.dir"
