@@ -109,8 +109,12 @@ public class AuthSession {
 				if (groups == null) {
                     groups = new String[0];
                 }
-
-				String[] userInfo = authService.getUserInfo(username, password);
+				String[] userInfo = null;
+				try {
+				     userInfo = authService.getUserInfo(username, password);
+				} catch (ConnectException e) {
+				    logMetacat.warn("AuthSession.authenticate - can't get the user info for user "+ username+" since "+e.getMessage());;
+				}
 
 				this.session = createSession(request, username, password, groups,
 						userInfo);
@@ -159,7 +163,7 @@ public class AuthSession {
 		session.setAttribute("username", username);
 		session.setAttribute("password", password);
 
-		if (userInfo != null & userInfo.length == 3) {
+		if (userInfo != null && userInfo.length == 3) {
 			session.setAttribute("name", userInfo[0]);
 			session.setAttribute("organization", userInfo[1]);
 			session.setAttribute("email", userInfo[2]);
