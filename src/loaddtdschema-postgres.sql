@@ -123,4 +123,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.4.0',1,CURRENT_DATE);
+  VALUES ('2.4.1',1,CURRENT_DATE);

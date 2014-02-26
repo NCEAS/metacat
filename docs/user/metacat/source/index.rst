@@ -2,7 +2,7 @@
 Metacat Administrator's Guide
 =============================
 
-.. sidebar:: Version: 2.4.0
+.. sidebar:: Version: 2.4.1
 
     .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
@@ -13,7 +13,7 @@ Metacat Administrator's Guide
 
     License: GPL
     
-    Release Date: September, 2013
+    Release Date: February, 2014
 
 Metacat is a repository for data and metadata (documentation about data) that helps 
 scientists find, understand and effectively use data sets they manage or that 
@@ -26,11 +26,11 @@ in other ways.
 - Download Metacat
 
     - Binary Distribution (A war file installation)
-        - GZIP File: metacat-bin-2.4.0.tar.gz_
-        - ZIP File: metacat-bin-2.4.0.zip_
+        - GZIP File: metacat-bin-2.4.1.tar.gz_
+        - ZIP File: metacat-bin-2.4.1.zip_
     - Source Distribution (Full source, requiring build)
-        - GZIP File: metacat-src-2.4.0.tar.gz_
-        - ZIP File: metacat-src-2.4.0.zip_
+        - GZIP File: metacat-src-2.4.1.tar.gz_
+        - ZIP File: metacat-src-2.4.1.zip_
     - `Older versions`_
     
 - For Developers: Metacat `API documentation`_
@@ -39,13 +39,13 @@ in other ways.
 
 .. _API documentation: ./api/index.html
 
-.. _metacat-bin-2.4.0.tar.gz: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.4.0.tar.gz
+.. _metacat-bin-2.4.1.tar.gz: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.4.1.tar.gz
 
-.. _metacat-bin-2.4.0.zip: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.4.0.zip
+.. _metacat-bin-2.4.1.zip: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.4.1.zip
 
-.. _metacat-src-2.4.0.tar.gz: http://knb.ecoinformatics.org/software/dist/metacat-src-2.4.0.tar.gz
+.. _metacat-src-2.4.1.tar.gz: http://knb.ecoinformatics.org/software/dist/metacat-src-2.4.1.tar.gz
 
-.. _metacat-src-2.4.0.zip: http://knb.ecoinformatics.org/software/dist/metacat-src-2.4.0.zip
+.. _metacat-src-2.4.1.zip: http://knb.ecoinformatics.org/software/dist/metacat-src-2.4.1.zip
 
 .. _Older versions: http://knb.ecoinformatics.org/software/dist/
 

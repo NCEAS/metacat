@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.4.0 Release
+Version: 2.4.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,12 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+Release Notes for 2.4.1:
+------------------------
+This is a patch release that fixes two issues:
+* LDAP authentication using aliased referrals
+* Re-indexing previous document revisions on update
 
 Release Notes for 2.4.0:
 ------------------------
@@ -480,7 +486,7 @@ Bug Fixes:
   (Bugs 1307, 1310, 1322, 1344, 1551)
 * Changed the code to support insertion of following characters: ', `,
   charcters in the Numeric Character Reference format (&#xyz;) and
-  characters like µ. Characters like µ will be converted to and stored in
+  characters like ??. Characters like ?? will be converted to and stored in
   Numeric Character Reference format(&#xyz;). They will also be returned
   in Numeric Character Reference and it is upto the client to convert them
   and display them accordingly in the application. Partial fix provided by
