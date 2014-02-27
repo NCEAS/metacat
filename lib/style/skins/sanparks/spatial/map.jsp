@@ -37,7 +37,7 @@
 <html>
   <head>
     <link rel="stylesheet" type="text/css" href="<%=STYLE_COMMON_URL%>/spatial/map.css" />
-    <script src="http://www.openlayers.org/api/OpenLayers.js"></script>
+	<script src="<%=STYLE_COMMON_URL%>/spatial/OpenLayers-2.13.1/OpenLayers.js"></script>
     <script src="<%=STYLE_COMMON_URL%>/spatial/map.js"></script>
     <script type="text/javascript">
         function init() {	
