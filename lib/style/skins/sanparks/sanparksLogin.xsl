@@ -54,7 +54,7 @@
   			<xsl:otherwise>
   			
 				<h3>Welcome, <xsl:value-of select="login/name"/>  </h3>
-				<form name="logoutForm" onsubmit="submitLogoutFormIntoDiv('{$servletURL}', this, 'loginSection')">
+				<form name="logoutForm" id="logoutForm" method="post" onsubmit="submitLogoutFormIntoDiv('{$servletURL}', this, 'loginSection'); return false;">
 					<input name="qformat" value="sanparks" type="hidden" />
 					<input name="action" type="hidden" value="logout"/>
 					<table>
@@ -105,7 +105,7 @@
 			<span class="regtext"> (request an account...)</span>
 		</a>
 		</h3>
-		<form name="loginForm" id="loginForm" onsubmit="submitLoginFormIntoDivAndReload('{$servletURL}', this, 'loginSection')">
+		<form name="loginForm" id="loginForm" method="post" onsubmit="submitLoginFormIntoDivAndReload('{$servletURL}', this, 'loginSection'); return false;">
 			<input name="qformat" type="hidden" value="sanparks" />
 			<input name="action" type="hidden" value="login"/>
 			<table>
