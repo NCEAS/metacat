@@ -72,6 +72,7 @@ public class DBTransform {
   private String httpServer = null;
   private String contextURL = null;
   private String servletURL = null;
+  private String userManagementURL = null;
   
   /**
    * construct a DBTransform instance.
@@ -91,6 +92,7 @@ public class DBTransform {
     httpServer = SystemUtil.getServerURL();
     contextURL = SystemUtil.getContextURL();
     servletURL = SystemUtil.getServletURL();
+    userManagementURL = PropertyService.getProperty("auth.userManagementUrl");
   }
 
   /**
@@ -196,11 +198,12 @@ public class DBTransform {
         logMetacat.debug("DBTransform.doTransform - httpServer: " + httpServer);
         logMetacat.debug("DBTransform.doTransform - contextURL: " + contextURL);
         logMetacat.debug("DBTransform.doTransform - serletURL: " + servletURL);
+        logMetacat.debug("DBTransform.doTransform - userManagementURL: " + userManagementURL);
         transformer.setParameter("cgi-prefix", cgiPrefix);
         transformer.setParameter("httpServer", httpServer);
         transformer.setParameter("contextURL", contextURL);
         transformer.setParameter("servletURL", servletURL);
-        
+        transformer.setParameter("userManagementURL", userManagementURL);
         // Set up parameter for transformation
         if ( param != null) {
           en = param.keys();
