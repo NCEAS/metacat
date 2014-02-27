@@ -48,12 +48,14 @@ import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DBTransform;
+import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryService;
@@ -179,7 +181,8 @@ public class MetacatSolrIndex {
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
-			this.submit(obsoletedPid, obsoletedSysMeta , null, followRevisions);
+		    Map<String, List<Object>> obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
+			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
 		}
 		
     }
