@@ -35,6 +35,7 @@
  <xsl:param name="contextURL"/>
  <xsl:param name="servletURL"/>
  <xsl:param name="cgi-prefix"/>
+ <xsl:param name="userManagementURL"/>
  <xsl:param name="qformat">sanparks</xsl:param>
  <xsl:param name="redirect">true</xsl:param>
  <xsl:template match="/">
@@ -69,12 +70,12 @@
 						<tr>	
 							<td colspan="2" class="regtext" align="center" valign="top">				
 								<!-- reset pass --> 
-								<a href="<%=USER_MANAGEMENT_URL%>" target="_parent">
+								<a href="{$userManagementURL}" target="_parent">
 									reset your password
 								</a>
 								|
 								<!-- change pass --> 
-								<a href="<%=USER_MANAGEMENT_URL%>" target="_parent">
+								<a href="{$userManagementURL}" target="_parent">
 									change your password
 								</a>
 							</td>
@@ -100,7 +101,7 @@
 	</xsl:when>
   	<xsl:otherwise>
 		<h3>Login
-		<a href="<%=USER_MANAGEMENT_URL%>" target="_new">
+		<a href="{$userManagementURL}" target="_new">
 			<span class="regtext"> (request an account...)</span>
 		</a>
 		</h3>
