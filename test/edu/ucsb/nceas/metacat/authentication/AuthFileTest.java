@@ -26,7 +26,7 @@ import edu.ucsb.nceas.MCTestCase;
 
 
 public class AuthFileTest extends MCTestCase {
-    private static final String PASSWORDFILEPATH = "build/password";
+    private static final String PASSWORDFILEPATH = "build/password";//please don't change the password file location to a production one since it will be deleted.
     private static final String GROUPNAME = "nceas-dev";
     private static final String DESCRIPITION = "Developers at NCEAS";
     private static final String GROUPNAME2 = "dataone-dev";
