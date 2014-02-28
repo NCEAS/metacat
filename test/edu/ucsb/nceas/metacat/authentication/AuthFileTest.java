@@ -18,6 +18,8 @@
  */
 package edu.ucsb.nceas.metacat.authentication;
 
+import java.io.File;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import edu.ucsb.nceas.MCTestCase;
@@ -48,6 +50,12 @@ public class AuthFileTest extends MCTestCase {
      public AuthFileTest(String name)
      {
          super(name);
+
+         // clear the test password file for subsequent runs
+         File pwFile = new File(PASSWORDFILEPATH);
+         if (pwFile.exists()) {
+        	 pwFile.delete();
+         }
      }
    
      /**
@@ -56,6 +64,7 @@ public class AuthFileTest extends MCTestCase {
      public void setUp() throws Exception 
      {
          super.setUp();
+         
      }
 
      /**
