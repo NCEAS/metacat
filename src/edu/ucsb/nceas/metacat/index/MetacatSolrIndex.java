@@ -124,6 +124,8 @@ public class MetacatSolrIndex {
             throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized subjects(even the public user) in this query session.");
         }
         InputStream inputStream = null;
+        // allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
+        query = query.replaceAll("\\+", "%2B");
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
         String wt = solrParams.get(SolrQueryService.WT);
         // handle normal and skin-based queries
