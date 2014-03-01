@@ -56,9 +56,12 @@ for your OS.
 
 Release Notes for 2.4.1:
 ------------------------
-This is a patch release that fixes two issues:
-* LDAP authentication using aliased referrals
-* Re-indexing previous document revisions on update
+This is a patch release that addresses the following:
+* Allows LDAP authentication using aliased referrals
+* Re-indexes previous document revisions in SOLR when
+new revisions are added on update
+* Allows authentication in SANParks skin
+* Enables OpenLayer.js mapping plug-in over https
 
 Release Notes for 2.4.0:
 ------------------------
