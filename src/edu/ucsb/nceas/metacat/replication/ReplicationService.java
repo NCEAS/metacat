@@ -50,8 +50,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
 import java.util.Timer;
 import java.util.Vector;
 
@@ -2009,6 +2011,53 @@ public class ReplicationService extends BaseService {
 		}//finally
 
 		return serverCode;
+	}
+	
+	/**
+	 * Returns a Map of serverCode=serverName 
+	 * @return Map of server codes to names (URIs)
+	 */
+	public static Map<Integer, String> getServerCodes() throws ServiceException {
+		DBConnection dbConn = null;
+		int serialNumber = -1;
+		PreparedStatement pstmt = null;
+		
+		Map<Integer, String> codes = new HashMap<Integer, String>();
+
+		try {
+
+			dbConn = DBConnectionPool.getDBConnection("MetacatReplication.getServerCodes");
+			serialNumber = dbConn.getCheckOutSerialNumber();
+			pstmt = dbConn.prepareStatement("SELECT serverid, server FROM xml_replication ");
+			pstmt.execute();
+			ResultSet rs = pstmt.getResultSet();
+			while (rs.next()) {
+				int serverCode = rs.getInt(1);
+				String server = rs.getString(2);
+				codes.put(serverCode, server);
+			}
+			pstmt.close();
+			
+		} catch (SQLException sqle) {
+			throw new ServiceException("ReplicationService.getServerCodes - " 
+					+ "SQL error when getting server map: " + sqle.getMessage());
+
+		} finally {
+			try {
+				pstmt.close();
+			}//try
+			catch (Exception ee) {
+				logMetacat.error("ReplicationService.getServerCodes - " + ReplicationService.METACAT_REPL_ERROR_MSG);                         
+				logReplication.error("ReplicationService.getServerCodes - Error in MetacatReplicatio.getServerCodes: "
+						+ ee.getMessage());
+
+			}//catch
+			finally {
+				DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+			}//finally
+		}//finally
+
+		return codes;
 	}
 
 	/**

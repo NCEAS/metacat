@@ -4,7 +4,10 @@ import java.io.InputStream;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
@@ -26,6 +29,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.SortedProperties;
 
@@ -152,15 +156,31 @@ public class DatapackageSummarizer {
 		// summarize the packages
 		DatapackageSummarizer ds = new DatapackageSummarizer();
 		List<Identifier> identifiers = new ArrayList<Identifier>();
-		Vector<String> idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_0NAMESPACE, false, 1);
-		Vector<String> idList1 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_1NAMESPACE, false, 1);
-		Vector<String> idList2 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_0NAMESPACE, false, 1);
-		Vector<String> idList3 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_1NAMESPACE, false, 1);
+		Map<Integer, String> serverCodes = ReplicationService.getServerCodes();
+
+		// select the metadata ids we want to summarize
+		boolean includeReplicas = true;
+		Iterator<Integer> codeIter = Arrays.asList(new Integer[] {1}).iterator();
+		if (includeReplicas ) {
+			codeIter = serverCodes.keySet().iterator();
+		}
 		
-		idList.addAll(idList1);
-		idList.addAll(idList2);
-		idList.addAll(idList3);
+		Vector<String> idList = new Vector<String>();
+		while (codeIter.hasNext()) {
+			int serverLocation = codeIter.next();
+			Vector<String> idList0 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_0NAMESPACE, false, serverLocation);
+			Vector<String> idList1 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_1NAMESPACE, false, serverLocation);
+			Vector<String> idList2 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_0NAMESPACE, false, serverLocation);
+			Vector<String> idList3 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_1NAMESPACE, false, serverLocation);
+			
+			idList.addAll(idList0);
+			idList.addAll(idList1);
+			idList.addAll(idList2);
+			idList.addAll(idList3);
 		
+		}
+		
+		// go through all the identifiers now
 		for (String localId : idList) {
 			try {
 				String guid = IdentifierManager.getInstance().getGUID(
