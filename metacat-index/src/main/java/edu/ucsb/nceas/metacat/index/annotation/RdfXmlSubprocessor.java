@@ -151,6 +151,7 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 						solrDoc = documentsToIndex.get(id);
 						if (solrDoc == null) {
 							solrDoc = new SolrDoc();
+							solrDoc.addField(new SolrElementField(SolrElementField.FIELD_ID, id));
 							documentsToIndex.put(id, solrDoc);
 						}
 					}
@@ -208,6 +209,9 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     		}
     		// add the pending
     		for (SolrElementField field: pendingDoc.getFieldList()) {
+    			if (field.getName().equals(SolrElementField.FIELD_ID) && mergedDoc.hasField(SolrElementField.FIELD_ID)) {
+    				continue;
+    			}
 				mergedDoc.addField(field);
 				
 			}
@@ -221,30 +225,33 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 	 * Get the SolrDoc for the specified id
 	 */
 	public static SolrDoc getSolrDoc(String id) throws SolrServerException, MalformedURLException, UnsupportedType, NotFound, ParserConfigurationException, IOException, SAXException {
-		SolrDoc doc = new SolrDoc();
+		SolrDoc doc = null;
 
 		if (solrServer != null) {
 			String query = QUERY + "\"" + id + "\"";
 			SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
 			QueryResponse qr = solrServer.query(solrParams);
-			SolrDocument orig = qr.getResults().get(0);
-			IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
-			for (String fieldName : orig.getFieldNames()) {
-				// don't transfer the copyTo fields, otherwise there are errors
-				if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
-					continue;
-				}
-				for (Object value : orig.getFieldValues(fieldName)) {
-					String stringValue = value.toString();
-					// special handling for dates in ISO 8601
-					if (value instanceof Date) {
-						stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
-						SolrDateConverter converter = new SolrDateConverter();
-						stringValue = converter.convert(stringValue);
+			if (!qr.getResults().isEmpty()) {
+				doc = new SolrDoc();
+				SolrDocument orig = qr.getResults().get(0);
+				IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+				for (String fieldName : orig.getFieldNames()) {
+					// don't transfer the copyTo fields, otherwise there are errors
+					if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+						continue;
 					}
-					SolrElementField field = new SolrElementField(fieldName, stringValue);
-					log.debug("Adding field: " + fieldName);
-					doc.addField(field);
+					for (Object value : orig.getFieldValues(fieldName)) {
+						String stringValue = value.toString();
+						// special handling for dates in ISO 8601
+						if (value instanceof Date) {
+							stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
+							SolrDateConverter converter = new SolrDateConverter();
+							stringValue = converter.convert(stringValue);
+						}
+						SolrElementField field = new SolrElementField(fieldName, stringValue);
+						log.debug("Adding field: " + fieldName);
+						doc.addField(field);
+					}
 				}
 			}
 

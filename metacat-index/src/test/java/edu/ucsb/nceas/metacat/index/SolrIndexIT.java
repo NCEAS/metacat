@@ -42,8 +42,9 @@ public class SolrIndexIT  {
     
 	private String annotation_id = "http://doi.org/annotation.1.1";
 	private static final String ANNOTATION_SYSTEM_META_FILE_PATH = "src/test/resources/annotation-system-meta-example.xml";
-	private static final String ANNOTATION_FILE_PATH = "src/test/resources/annotation-example.rdf";;
-    
+	private static final String AO_FILE_PATH = "src/test/resources/ao-example.rdf";;
+	private static final String OA_FILE_PATH = "src/test/resources/oa-example.rdf";;
+
 	private SolrIndex solrIndex = null;
     
     @Before
@@ -190,10 +191,10 @@ public class SolrIndexIT  {
     }
     
     /**
-     * Test building index for annotation.
+     * Test building index for annotation using OpenAnnotation.
      */
     @Test
-    public void testAnnotation() throws Exception {
+    public void testOpenAnnotation() throws Exception {
     	
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
@@ -213,12 +214,12 @@ public class SolrIndexIT  {
        
        // augment with the dynamic field
        SystemMetadata annotationSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, ANNOTATION_SYSTEM_META_FILE_PATH);
-       InputStream annotationInputStream = new FileInputStream(new File(ANNOTATION_FILE_PATH)); 
+       InputStream annotationInputStream = new FileInputStream(new File(OA_FILE_PATH)); 
        Identifier annotationPid = new Identifier();
        annotationPid.setValue(annotation_id);
        solrIndex.update(annotationPid, annotationSystemMetadata, annotationInputStream);
        String annotationResult = doQuery(solrIndex.getSolrServer());
-       assertTrue(annotationResult.contains("measurement_sm"));
+       assertTrue(annotationResult.contains("characteristic_sm"));
        
     }
     
