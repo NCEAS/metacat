@@ -101,6 +101,8 @@ public class MCTestCase
 	private static String lterpassword;
 	protected static String referraluser;
 	protected static String referralpassword;
+	protected static String piscouser;
+	protected static String piscopassword;
 	
 	protected static String metacatContextDir;
 	
@@ -124,6 +126,8 @@ public class MCTestCase
 			lterpassword = PropertyService.getProperty("test.lterPassword");
 			referraluser = PropertyService.getProperty("test.referralUser");
             referralpassword = PropertyService.getProperty("test.referralPassword");
+            piscouser = PropertyService.getProperty("test.piscoUser");
+            piscopassword = PropertyService.getProperty("test.piscoPassword");
 			String authenClass = PropertyService.getProperty("auth.class");
 			if(authenClass != null && authenClass.equals(AUTHFILECLASSNAME)) {
 			   
@@ -157,6 +161,12 @@ public class MCTestCase
                     authFile.addUser(referraluser, groups, referralpassword, null, null, null, null, null);
                 } catch (Exception e) {
                     System.out.println("Couldn't add the user "+referraluser+" to the password file since "+e.getMessage());
+                }
+			    
+			    try {
+                    authFile.addUser(piscouser, groups, piscopassword, null, null, null, null, null);
+                } catch (Exception e) {
+                    System.out.println("Couldn't add the user "+piscouser+" to the password file since "+e.getMessage());
                 }
 			}
 		} catch (IOException ioe) {
