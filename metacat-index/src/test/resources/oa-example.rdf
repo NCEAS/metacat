@@ -187,7 +187,7 @@
 
     <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1">
         <rdf:type rdf:resource="&prov;Entity"/>
-        <terms:identifier rdf:datatype="&xsd;string">doi:10.12345/eml.1.1</terms:identifier>
+        <terms:identifier rdf:datatype="&xsd;string">urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39098</terms:identifier>
         <prov:wasAttributedTo rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
     </owl:NamedIndividual>
     
@@ -197,7 +197,7 @@
 
     <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1">
         <rdf:type rdf:resource="&prov;Entity"/>
-        <terms:identifier rdf:datatype="&xsd;string">doi:10.12345/eml.2.1</terms:identifier>
+        <terms:identifier rdf:datatype="&xsd;string">urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39099</terms:identifier>
         <prov:wasRevisionOf rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
     </owl:NamedIndividual>
     
