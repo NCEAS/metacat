@@ -137,9 +137,6 @@ public class MetaCatServletTest extends MCTestCase {
 		
 		suite.addTest(new MetaCatServletTest("testReindexFail"));
 		
-		suite.addTest(new MetaCatServletTest("testPiscoReferralLogin"));
-		
-		suite.addTest(new MetaCatServletTest("testPiscoReferralLoginFail"));
 		
 		return suite;
 	}
@@ -249,28 +246,7 @@ public class MetaCatServletTest extends MCTestCase {
 		// assertTrue( withProtocol.getProtocol().equals("http"));
 	}
 	
-	/**
-     * Test the login to Other succesfully
-     */
-    public void testPiscoReferralLogin() {
-        debug("\nRunning: testPiscoReferralLogin test");
-        String user = piscouser;
-        String passwd = piscopassword;
-        debug("logging in pisco user: " + user + ":" + passwd);
-        assertTrue(logIn(user, passwd));
-        // assertTrue( withProtocol.getProtocol().equals("http"));
-    }
 
-    /**
-     * Test the login to Other failed
-     */
-    public void testPiscoReferralLoginFail() {
-        debug("\nRunning: testPiscoReferralLoginFail test");
-        String user = piscouser;
-        String passwd = "wrong";
-        assertTrue(!logIn(user, passwd));
-        // assertTrue( withProtocol.getProtocol().equals("http"));
-    }
 
 	/**
 	 * Test insert a xml document successfully
