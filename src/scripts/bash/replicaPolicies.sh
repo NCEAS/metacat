@@ -1,3 +1,11 @@
+# sets the replication policy for all objects in the MN where the calling member node is the  authoritative member node.
+# This code can easily be changed to replace $identifiers with a custom list of ids
+# the $xml_path should point to a XML file with the replication policy to apply to all based on xmlns:d1="http://ns.dataone.org/service/types/v1" 
+# 
+# Dependencies:
+#	xmlstarlet - developed with version 1.0.1
+#	curl - developed with version 7.19.7
+
 authoritativeMN="urn:node:mnDemo8"
 MN_base_URL="https://mn-demo-8.test.dataone.org/knb/d1/mn/v1"
 CN_base_URL="https://cn-dev.test.dataone.org/cn/v1"
