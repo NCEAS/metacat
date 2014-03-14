@@ -833,7 +833,7 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.REFERRAL, "throw");
 		env.put(Context.PROVIDER_URL, ldapUrl);
 		env.put("com.sun.jndi.ldap.connect.timeout", ldapConnectTimeLimit);
-		String realName = null;
+		/*String realName = null;
 		try {
             realName = getAliasedDnNonTLS(foruser,env);
         } catch(Exception e) {
@@ -843,7 +843,7 @@ public class AuthLdap implements AuthInterface {
         if(realName != null) {
             //the the user is an alias name. we need to use the the real name
             foruser = realName;
-        }
+        }*/
 		// Iterate through the referrals, handling NamingExceptions in the
 		// outer catch statement, ReferralExceptions in the inner catch
 		// statement
