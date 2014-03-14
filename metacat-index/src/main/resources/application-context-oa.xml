@@ -14,7 +14,7 @@
 	</bean>
 	
 	<bean id="annotation.measurement" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
-		<constructor-arg name="name" value="characteristic_sm" />
+		<constructor-arg name="name" value="standard_sm" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -24,33 +24,24 @@
 				PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> 
 				PREFIX oa: <http://www.w3.org/ns/oa#>
 				PREFIX dcterms: <http://purl.org/dc/terms/>
-				PREFIX pav: <http://purl.org/pav/>
 				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
 
-				SELECT ?characteristic_sm ?pid
+				SELECT ?standard_sm ?pid
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
 						?measurement rdf:type oboe-core:Measurement .
 						?measurement rdf:type ?restriction .
-						?restriction owl:onProperty oboe-core:ofCharacteristic .
-						?restriction owl:allValuesFrom ?characteristic .
-						?characteristic rdfs:subClassOf+ ?characteristic_sm .
-						?characteristic_sm rdfs:subClassOf oboe-core:Characteristic .
+						?restriction owl:onProperty oboe-core:usesStandard .
+						?restriction owl:allValuesFrom ?standard .
+						?standard rdfs:subClassOf+ ?standard_sm .
+						?standard_sm rdfs:subClassOf oboe-core:Standard .
 						
-						OPTIONAL { 
-							?measurement rdf:type ?restriction2 .
-							?restriction2 owl:onProperty oboe-core:usesStandard .
-							?restriction2 owl:allValuesFrom ?standard .
-						}
-						
-						?annotation oa:hasBody ?measurement .
+						?annotation oa:hasBody ?measurement .												
 						?annotation oa:hasTarget ?target .
 						?target oa:hasSource ?metadata .
 						?metadata dcterms:identifier ?pid . 
 						
-						?annotation oa:annotatedBy ?person .
-						?person foaf:name ?name .
 				 	} 
 				 ]]>
 			</value>

@@ -218,9 +218,9 @@ public class SolrIndexIT  {
        Identifier annotationPid = new Identifier();
        annotationPid.setValue(annotation_id);
        solrIndex.update(annotationPid, annotationSystemMetadata, annotationInputStream);
-       String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=characteristic_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Mass\"");
+       String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=standard_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram\"");
        assertTrue(annotationResult.contains(pid.getValue()));
-       assertTrue(annotationResult.contains("http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Mass"));
+       assertTrue(annotationResult.contains("http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram"));
     }
     
     /**
