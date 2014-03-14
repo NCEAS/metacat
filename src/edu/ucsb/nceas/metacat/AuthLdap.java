@@ -430,12 +430,16 @@ public class AuthLdap implements AuthInterface {
 		double stopTime;
 		
 		logMetacat.info("AuthLdap.authenticateNonTLS - Trying to authenticate without TLS");
-		env.put(Context.SECURITY_AUTHENTICATION, "simple");
-		env.put(Context.SECURITY_PRINCIPAL, userDN);
-		env.put(Context.SECURITY_CREDENTIALS, password);
+		//env.put(Context.SECURITY_AUTHENTICATION, "simple");
+		//env.put(Context.SECURITY_PRINCIPAL, userDN);
+		//env.put(Context.SECURITY_CREDENTIALS, password);
 
 		startTime = System.currentTimeMillis();
 		ctx = new InitialLdapContext(env, null);
+		ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
+        ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
+        ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
+        ctx.reconnect(null);
 		stopTime = System.currentTimeMillis();
 		logMetacat.info("AuthLdap.authenticateNonTLS - Connection time thru " + ldapsUrl + " was: "
 				+ (stopTime - startTime) / 1000 + " seconds.");
