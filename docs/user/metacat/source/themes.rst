@@ -47,9 +47,9 @@ your new footer images and their corresponding web addresses. For example,
 4. **Create your theme map:** By default, Metacat will use the default theme templates unless you specifically tell Metacat to override these with the template files in your custom theme.
 In the ``js/themes/<yourtheme>/config.js`` file, change the theme name on line 1, ``default``, to your chosen new theme name.
 In the ``themeMap``, add a new line for every template you have edited and added to your new theme. An example for the footer.html and navbar.html files is below.
-
+	  
   ::
-	
+
 	var theme = theme || "default";
 	var themeMap = 
 	{
@@ -62,13 +62,14 @@ In the ``themeMap``, add a new line for every template you have edited and added
 
 5. Repeat step 3-4 as necessary for any other template files you edit.
 
+7. Open ``index.html``. Edit the following line to reflect your theme name (``data-theme``) and your Metacat
+   context (``data-metacat-context``). (The Metacat context is the name of the directory in which Metacat is installed in the Tomcat web-application directory (most likely "metacat"). Whomever installed Metacat will know what this directory is called. If your MetacatUI is already successfully retrieving datasets during searches, this is already set and can be left as is.)
 6. **Specify your theme and metacat context** Open ``index.html``. Edit the following line to specify your theme name (attribute ``data-theme``) and your Metacat
-   context (attribute ``data-metacat-context``):
+   context (attribute ``data-metacat-context``) (The Metacat context is the name of the directory in which Metacat is installed in the Tomcat web-application directory (most likely "metacat"). Whomever installed Metacat will know what this directory is called. If your MetacatUI is already successfully retrieving datasets during searches, this is already set and can be left as is.)
 
 	::
 	 
 	  <script data-theme="default" data-metacat-context="metacat" id="loader" type="text/javascript" src="loader.js"></script>
-
 
 
 Creating a Custom Theme
@@ -86,7 +87,7 @@ Notice that each theme directory looks something like this:
 	  routers/
 	  templates/
 	  config.js
-
+		
 2. **Style your theme** Add a CSS file to your theme by creating a CSS file in the ``js/themes/<yourtheme>/css/`` directory
    named ``metacatui.css``
 
