@@ -45,8 +45,12 @@ NameVirtualHost *:443
         #   Note: Inside SSLCACertificatePath you need hash symlinks
         #         to point to the certificate files. Use the provided
         #         Makefile to update the hash symlinks after changes.
+        # Use the correct DataONE chain for validating client certificates
+        # see: https://repository.dataone.org/software/tools/trunk/ca
         SSLCACertificatePath /etc/ssl/certs/
-        #SSLCACertificateFile /etc/apache2/ssl.crt/ca-bundle.crt
+        #SSLCACertificateFile /etc/ssl/certs/DataONECAChain.crt
+        SSLVerifyClient optional
+        SSLVerifyDepth  10
         
         #   Client Authentication (Type):
         #   Client certificate verification type and depth.  Types are
