@@ -8,12 +8,13 @@
 			value="/d100:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar']" />
 		<property name="fieldList">
 			<list>
-				<ref bean="annotation.measurement" />
+				<ref bean="annotation.standard" />
+				<ref bean="annotation.characteristic" />
 			</list>
 		</property>	
 	</bean>
 	
-	<bean id="annotation.measurement" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="annotation.standard" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
 		<constructor-arg name="name" value="standard_sm" />
 		<constructor-arg name="query">
 			<value>
@@ -36,6 +37,42 @@
 						?restriction owl:allValuesFrom ?standard .
 						?standard rdfs:subClassOf+ ?standard_sm .
 						?standard_sm rdfs:subClassOf oboe-core:Standard .
+						
+						?annotation oa:hasBody ?measurement .												
+						?annotation oa:hasTarget ?target .
+						?target oa:hasSource ?metadata .
+						?metadata dcterms:identifier ?pid . 
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+	
+	<bean id="annotation.characteristic" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+		<constructor-arg name="name" value="characteristic_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> 
+				PREFIX oa: <http://www.w3.org/ns/oa#>
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+				SELECT ?characteristic_sm ?pid
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+						?measurement rdf:type oboe-core:Measurement .
+						?measurement rdf:type ?restriction .
+						?restriction owl:onProperty oboe-core:ofCharacteristic .
+						?restriction owl:allValuesFrom ?characteristic .
+						?characteristic rdfs:subClassOf+ ?characteristic_sm .
+						?characteristic_sm rdfs:subClassOf oboe-core:Characteristic .
 						
 						?annotation oa:hasBody ?measurement .												
 						?annotation oa:hasTarget ?target .
