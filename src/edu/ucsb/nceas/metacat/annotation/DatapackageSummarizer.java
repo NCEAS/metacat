@@ -63,6 +63,9 @@ public class DatapackageSummarizer {
     public static String prov = "http://www.w3.org/ns/prov#";
     public static String prov_source = "http://www.w3.org/ns/prov.owl";
     public static String cito =  "http://purl.org/spar/cito/";
+    
+    // package visibility for testing only
+    boolean randomize = false;
 
     /**
      * Generate annotation for given metadata identifier
@@ -194,6 +197,13 @@ public class DatapackageSummarizer {
 		String unit = attribute.getUnit().toLowerCase();
 		boolean found = false;
 		ExtendedIterator iter = standardClass.listSubClasses(false);
+		if (randomize) {
+			List subclasses = iter.toList();
+			int size = subclasses.size();
+			Long index = new Long(Math.round(Math.floor((Math.random() * (size-1)))));
+			OntClass subclass = (OntClass) subclasses.get( index.intValue() );
+			return subclass;
+		}
 		while (iter.hasNext()) {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
@@ -217,6 +227,13 @@ public class DatapackageSummarizer {
 		boolean found = false;
 		// find something that matches
 		ExtendedIterator iter = characteristicClass.listSubClasses();
+		if (randomize) {
+			List subclasses = iter.toList();
+			int size = subclasses.size();
+			Long index = new Long(Math.round(Math.floor((Math.random() * (size-1)))));
+			OntClass subclass = (OntClass) subclasses.get( index.intValue() );
+			return subclass;
+		}
 		while (iter.hasNext()) {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
