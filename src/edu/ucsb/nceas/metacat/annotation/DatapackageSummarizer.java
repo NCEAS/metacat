@@ -100,9 +100,12 @@ public class DatapackageSummarizer {
 		ObjectProperty hasBodyProperty = m.getObjectProperty(oa + "hasBody");
 		ObjectProperty hasTargetProperty = m.getObjectProperty(oa + "hasTarget");
 		ObjectProperty hasSourceProperty = m.getObjectProperty(oa + "hasSource");
+		ObjectProperty hasSelectorProperty = m.getObjectProperty(oa + "hasSelector");
 		ObjectProperty annotatedByProperty = m.getObjectProperty(oa + "annotatedBy");
 		Property identifierProperty = m.getProperty(dcterms + "identifier");
+		Property conformsToProperty = m.getProperty(dcterms + "conformsTo");
 		Property nameProperty = m.getProperty(foaf + "name");
+		Property rdfValue = m.getProperty(rdf + "value");
 		
 		ObjectProperty ofCharacteristic = m.getObjectProperty(oboe_core + "ofCharacteristic");
 		ObjectProperty usesStandard = m.getObjectProperty(oboe_core + "usesStandard");
@@ -114,10 +117,11 @@ public class DatapackageSummarizer {
 		
 		Resource annotationClass =  m.getOntClass(oa + "Annotation");
 		Resource specificResourceClass =  m.getOntClass(oa + "SpecificResource");
+		Resource fragmentSelectorClass =  m.getOntClass(oa + "FragmentSelector");
 		Resource entityClass =  m.getResource(prov + "Entity");
 		Resource personClass =  m.getResource(prov + "Person");
 		
-		int cnt = 0;
+		int cnt = 1;
 
 		// these apply to every attribute annotation
 		Individual meta1 = m.createIndividual(ont.getURI() + "#meta" + cnt, entityClass);
@@ -131,6 +135,7 @@ public class DatapackageSummarizer {
 			String entityName = entity.getName();
 			logMetacat.debug("Entity name: " + entityName);
 			Attribute[] attributes = entity.getAttributeList().getAttributes();
+			int attributeCount = 1;
 			for (Attribute attribute: attributes) {
 				
 				String attributeName = attribute.getName();
@@ -161,11 +166,16 @@ public class DatapackageSummarizer {
 					Individual m1 = m.createIndividual(ont.getURI() + "#measurement" + cnt, measurementClass);
 					Individual a1 = m.createIndividual(ont.getURI() + "#annotation" + cnt, annotationClass);
 					Individual t1 = m.createIndividual(ont.getURI() + "#target" + cnt, specificResourceClass);
+					String xpointer = "xpointer(/eml/dataSet/" + cnt + "/attributeList/" + attributeCount + ")";
+					Individual s1 = m.createIndividual(ont.getURI() + "#" + xpointer, fragmentSelectorClass);
+					s1.addLiteral(rdfValue, xpointer);
+					s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
 					
 					// statements about the annotation
 					a1.addProperty(hasBodyProperty, m1);
 					a1.addProperty(hasTargetProperty, t1);
 					t1.addProperty(hasSourceProperty, meta1);
+					t1.addProperty(hasSelectorProperty, s1);
 					a1.addProperty(annotatedByProperty, p1);
 					
 					// describe the measurement in terms of restrictions
@@ -195,6 +205,8 @@ public class DatapackageSummarizer {
 	private Resource lookupStandard(OntClass standardClass, Attribute attribute) {
 		// what's our unit?
 		String unit = attribute.getUnit().toLowerCase();
+		List<String> tokens = Arrays.asList(unit.split(" "));
+
 		boolean found = false;
 		ExtendedIterator iter = standardClass.listSubClasses(false);
 		if (randomize) {
@@ -208,7 +220,7 @@ public class DatapackageSummarizer {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
 			logMetacat.debug("subclass: " + subclassName);
-			if (subclassName.equals(unit)) {
+			if (tokens.contains(subclassName)) {
 				found = true;
 			}
 			if (subclass.hasLabel(unit, null)) {
@@ -224,6 +236,8 @@ public class DatapackageSummarizer {
 	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
 		// what's our label?
 		String label = attribute.getLabel().toLowerCase();
+		List<String> tokens = Arrays.asList(label.split(" "));
+		
 		boolean found = false;
 		// find something that matches
 		ExtendedIterator iter = characteristicClass.listSubClasses();
@@ -238,7 +252,7 @@ public class DatapackageSummarizer {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
 			logMetacat.debug("subclass: " + subclassName);
-			if (subclassName.equals(label)) {
+			if (tokens.contains(subclassName)) {
 				found = true;
 			}
 			if (subclass.hasLabel(label, null)) {
