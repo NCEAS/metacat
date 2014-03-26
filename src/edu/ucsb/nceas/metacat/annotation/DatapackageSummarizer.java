@@ -279,8 +279,14 @@ public class DatapackageSummarizer {
 		
 	}
 	
+	/**
+	 * Look up possible concept from BioPortal annotation service.
+	 * @see "http://data.bioontology.org/documentation"
+	 * @param superClass
+	 * @param text
+	 * @return
+	 */
 	private Resource lookupRemoteAnnotationClass(OntClass superClass, String text) {
-		
 		
 		try {
 			
