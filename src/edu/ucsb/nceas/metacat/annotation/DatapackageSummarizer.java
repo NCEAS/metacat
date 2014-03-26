@@ -72,7 +72,7 @@ public class DatapackageSummarizer {
     
     // for looking up concepts in BioPortal
     static final String REST_URL = "http://data.bioontology.org";
-    static final String API_KEY = "24e4775e-54e0-11e0-9d7b-005056aa3316";
+    static final String API_KEY = "LOGIN_TO_BIOPORTAL";
     
     // package visibility for testing only
     boolean randomize = false;
