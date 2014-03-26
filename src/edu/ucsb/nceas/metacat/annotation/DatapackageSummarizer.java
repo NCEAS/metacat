@@ -131,15 +131,14 @@ public class DatapackageSummarizer {
 		Resource entityClass =  m.getResource(prov + "Entity");
 		Resource personClass =  m.getResource(prov + "Person");
 		
-		int cnt = 1;
-
 		// these apply to every attribute annotation
-		Individual meta1 = m.createIndividual(ont.getURI() + "#meta" + cnt, entityClass);
-		Individual p1 = m.createIndividual(ont.getURI() + "#person" + cnt, personClass);
+		Individual meta1 = m.createIndividual(ont.getURI() + "#meta", entityClass);
+		Individual p1 = m.createIndividual(ont.getURI() + "#person", personClass);
 		p1.addProperty(nameProperty, "Ben Leinfelder");
 		meta1.addProperty(identifierProperty, metadataPid.getValue());
 
 		// loop through the tables and attributes
+		int entityCount = 1;
 		Entity[] entities = dataPackage.getEntityList();
 		for (Entity entity: entities) {
 			String entityName = entity.getName();
@@ -147,6 +146,9 @@ public class DatapackageSummarizer {
 			Attribute[] attributes = entity.getAttributeList().getAttributes();
 			int attributeCount = 1;
 			for (Attribute attribute: attributes) {
+				
+				// for naming the individuals uniquely
+				String cnt = entityCount + "_" + attributeCount;
 				
 				String attributeName = attribute.getName();
 				String attributeLabel = attribute.getLabel();
@@ -176,7 +178,7 @@ public class DatapackageSummarizer {
 					Individual m1 = m.createIndividual(ont.getURI() + "#measurement" + cnt, measurementClass);
 					Individual a1 = m.createIndividual(ont.getURI() + "#annotation" + cnt, annotationClass);
 					Individual t1 = m.createIndividual(ont.getURI() + "#target" + cnt, specificResourceClass);
-					String xpointer = "xpointer(/eml/dataSet/" + cnt + "/attributeList/" + attributeCount + ")";
+					String xpointer = "xpointer(/eml/dataSet/" + entityCount + "/attributeList/" + attributeCount + ")";
 					Individual s1 = m.createIndividual(ont.getURI() + "#" + xpointer, fragmentSelectorClass);
 					s1.addLiteral(rdfValue, xpointer);
 					s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
@@ -197,10 +199,11 @@ public class DatapackageSummarizer {
 						AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, ofCharacteristic, characteristic);
 						m1.addOntClass(avfr);
 					}
-					cnt++;
 				}
+				attributeCount++;
 				
-			}		
+			}
+			entityCount++;
 		}
 		
 		StringWriter sw = new StringWriter();
@@ -292,8 +295,8 @@ public class DatapackageSummarizer {
 			
 			String urlParameters = "apikey=" + API_KEY;
 			urlParameters += "&format=xml";
-//			urlParameters += "&ontologies=OBOE-SBC";
-			urlParameters += "&ontologies=SWEET";
+			urlParameters += "&ontologies=OBOE-SBC";
+//			urlParameters += "&ontologies=SWEET";
 			urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
 			
 			String url = REST_URL + "/annotator?" + urlParameters ;
@@ -305,8 +308,10 @@ public class DatapackageSummarizer {
 				String classURI = classNodeList.item(0).getFirstChild().getNodeValue();
 				logMetacat.info("annotator suggested: " + classURI);
 				Resource subclass = superClass.getModel().getResource(classURI);
-				// TODO: check that it is a subclass of superClass?
-				return subclass;
+				// check that it is a subclass of superClass
+				if (superClass.hasSubClass(subclass)) {
+					return subclass;
+				}
 			}
 		} catch (Exception e) {
 			logMetacat.error("Could not lookup BioPortal annotation for text= " + text, e);
