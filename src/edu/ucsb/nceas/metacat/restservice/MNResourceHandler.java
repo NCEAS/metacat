@@ -359,6 +359,10 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                	if (query.startsWith("/")) {
 		                		query = query.substring(1);
 		                    }
+		                	// remove the query delimiter if it exists
+		                	if (query.startsWith("?")) {
+		                		query = query.substring(1);
+		                    }
 		                }
 		                logMetacat.debug("query: " + query);
 
