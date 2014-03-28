@@ -19,7 +19,6 @@
 package edu.ucsb.nceas.metacat.annotation;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.InputStream;
 
 import junit.framework.Test;

@@ -1,10 +1,7 @@
 package edu.ucsb.nceas.metacat.annotation;
 
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringWriter;
-import java.net.URL;
-import java.net.URLEncoder;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,8 +21,6 @@ import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import com.hp.hpl.jena.ontology.AllValuesFromRestriction;
 import com.hp.hpl.jena.ontology.Individual;
@@ -49,7 +44,6 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.SortedProperties;
-import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class DatapackageSummarizer {
 
@@ -69,10 +63,6 @@ public class DatapackageSummarizer {
     public static String prov = "http://www.w3.org/ns/prov#";
     public static String prov_source = "http://www.w3.org/ns/prov.owl";
     public static String cito =  "http://purl.org/spar/cito/";
-    
-    // for looking up concepts in BioPortal
-    static final String REST_URL = "http://data.bioontology.org";
-    static final String API_KEY = "LOGIN_TO_BIOPORTAL";
     
     // package visibility for testing only
     boolean randomize = false;
@@ -133,10 +123,22 @@ public class DatapackageSummarizer {
 		
 		// these apply to every attribute annotation
 		Individual meta1 = m.createIndividual(ont.getURI() + "#meta", entityClass);
-		Individual p1 = m.createIndividual(ont.getURI() + "#person", personClass);
-		p1.addProperty(nameProperty, "Ben Leinfelder");
 		meta1.addProperty(identifierProperty, metadataPid.getValue());
 
+		// who should we attribute the annotation to?
+		Individual p1 = m.createIndividual(ont.getURI() + "#person", personClass);
+		
+		// add an orcid annotation if we can find one from their system
+		List<String> creators = dataPackage.getCreators();
+		//creators = Arrays.asList("Matthew Jones");
+		if (creators != null && creators.size() > 0) {
+			p1.addProperty(nameProperty, creators.get(0));
+			String orcidId = OrcidService.lookupOrcid(null, null, creators.toArray(new String[0]));
+			if (orcidId != null) {
+				p1.addProperty(identifierProperty, orcidId);
+			}
+		}
+		
 		// loop through the tables and attributes
 		int entityCount = 1;
 		Entity[] entities = dataPackage.getEntityList();
@@ -244,7 +246,7 @@ public class DatapackageSummarizer {
 			}
 		}
 		// try to look it up if we got this far
-		return this.lookupRemoteAnnotationClass(standardClass, unit);
+		return BioPortalService.lookupAnnotationClass(standardClass, unit);
 	}
 	
 	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
@@ -278,46 +280,8 @@ public class DatapackageSummarizer {
 		}
 		
 		// try to look it up if we got this far
-		return this.lookupRemoteAnnotationClass(characteristicClass, attribute.getDefinition());
+		return BioPortalService.lookupAnnotationClass(characteristicClass, attribute.getDefinition());
 		
-	}
-	
-	/**
-	 * Look up possible concept from BioPortal annotation service.
-	 * @see "http://data.bioontology.org/documentation"
-	 * @param superClass
-	 * @param text
-	 * @return
-	 */
-	private Resource lookupRemoteAnnotationClass(OntClass superClass, String text) {
-		
-		try {
-			
-			String urlParameters = "apikey=" + API_KEY;
-			urlParameters += "&format=xml";
-			urlParameters += "&ontologies=OBOE-SBC";
-//			urlParameters += "&ontologies=SWEET";
-			urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
-			
-			String url = REST_URL + "/annotator?" + urlParameters ;
-			URL restURL = new URL(url);
-			InputStream is = ReplicationService.getURLStream(restURL);
-			Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new InputStreamReader(is, "UTF-8"));
-			NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
-			if (classNodeList != null && classNodeList.getLength() > 0) {
-				String classURI = classNodeList.item(0).getFirstChild().getNodeValue();
-				logMetacat.info("annotator suggested: " + classURI);
-				Resource subclass = superClass.getModel().getResource(classURI);
-				// check that it is a subclass of superClass
-				if (superClass.hasSubClass(subclass)) {
-					return subclass;
-				}
-			}
-		} catch (Exception e) {
-			logMetacat.error("Could not lookup BioPortal annotation for text= " + text, e);
-		}
-		
-		return null;
 	}
 	
 	private DataPackage getDataPackage(Identifier pid) throws Exception {
