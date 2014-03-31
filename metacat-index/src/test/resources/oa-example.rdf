@@ -92,7 +92,7 @@
     <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder">
         <rdf:type rdf:resource="&prov;Person"/>
         <foaf:name rdf:datatype="&xsd;string">Benjamin River Leinfelder</foaf:name>
-        <terms:identifier rdf:datatype="&xsd;anyURI">http://orcid.org/0000-0003-1758-9950</terms:identifier>
+        <terms:identifier rdf:datatype="&xsd;anyURI">http://sandbox-1.orcid.org/doesNotExist</terms:identifier>
     </owl:NamedIndividual>
     
 
@@ -102,6 +102,7 @@
     <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones">
         <rdf:type rdf:resource="&prov;Person"/>
         <foaf:name rdf:datatype="&xsd;string">Matthew Bently Jones</foaf:name>
+        <terms:identifier rdf:datatype="&xsd;anyURI">http://sandbox-1.orcid.org/0000-0003-2141-4459</terms:identifier>
     </owl:NamedIndividual>
     
 
@@ -195,7 +196,7 @@
     <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1">
         <rdf:type rdf:resource="&prov;Entity"/>
         <terms:identifier rdf:datatype="&xsd;string">urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39098</terms:identifier>
-        <prov:wasAttributedTo rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
+        <prov:wasAttributedTo rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones"/>
     </owl:NamedIndividual>
     
 

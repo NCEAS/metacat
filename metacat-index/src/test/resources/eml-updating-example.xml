@@ -1,12 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<eml:eml packageId="urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39099" system="knb" xmlns:eml="eml://ecoinformatics.org/eml-2.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 eml.xsd">  <dataset> <title>Test version2</title>
- <creator id="1365702846270"> <individualName><surName>test</surName>
-</individualName>
-</creator>
- <keywordSet><keyword>test</keyword>
-</keywordSet>
-<contact id="1365702851795"><individualName><surName>test</surName>
-</individualName>
-</contact>
-</dataset>
- </eml:eml>
+<eml:eml packageId="urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39099"
+	system="knb" xmlns:eml="eml://ecoinformatics.org/eml-2.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 eml.xsd">
+	<dataset>
+		<title>Test version2</title>
+		<creator id="1365702846270">
+			<individualName>
+				<givenName>Matthew</givenName>
+				<surName>Jones</surName>
+			</individualName>
+		</creator>
+		<keywordSet>
+			<keyword>test</keyword>
+			<keyword>test version2</keyword>
+		</keywordSet>
+		<contact id="1365702851795">
+			<individualName>
+				<surName>test</surName>
+			</individualName>
+		</contact>
+	</dataset>
+</eml:eml>

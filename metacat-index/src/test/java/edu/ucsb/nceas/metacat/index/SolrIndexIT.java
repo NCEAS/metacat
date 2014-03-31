@@ -221,6 +221,11 @@ public class SolrIndexIT  {
        String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=standard_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram\"");
        assertTrue(annotationResult.contains(pid.getValue()));
        assertTrue(annotationResult.contains("http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram"));
+
+       // check that it contains the creator annotation as well
+       assertTrue(annotationResult.contains("creator_sm"));
+       assertTrue(annotationResult.contains("http://sandbox-1.orcid.org/0000-0003-2141-4459"));
+
     }
     
     /**
