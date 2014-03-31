@@ -30,14 +30,15 @@ public class BioPortalService {
 	 * @param text
 	 * @return
 	 */
-	public static Resource lookupAnnotationClass(OntClass superClass, String text) {
+	public static Resource lookupAnnotationClass(OntClass superClass, String text, String ontologies) {
 		
 		try {
 			
 			String urlParameters = "apikey=" + API_KEY;
 			urlParameters += "&format=xml";
-			urlParameters += "&ontologies=OBOE-SBC";
-//			urlParameters += "&ontologies=SWEET";
+			if (ontologies != null) {
+				urlParameters += "&ontologies=" + ontologies;
+			}
 			urlParameters += "&text=" + URLEncoder.encode(text, "UTF-8");
 			
 			String url = REST_URL + "/annotator?" + urlParameters ;

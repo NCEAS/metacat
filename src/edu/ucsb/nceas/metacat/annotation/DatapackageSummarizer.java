@@ -54,6 +54,7 @@ public class DatapackageSummarizer {
 	public static String owl = "http://www.w3.org/2002/07/owl#";
 	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl#";
 	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#";
+	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#";
 	public static String oa = "http://www.w3.org/ns/oa#";
 	public static String oa_source = "http://www.w3.org/ns/oa.rdf";
 	public static String dcterms = "http://purl.org/dc/terms/";
@@ -63,6 +64,8 @@ public class DatapackageSummarizer {
     public static String prov = "http://www.w3.org/ns/prov#";
     public static String prov_source = "http://www.w3.org/ns/prov.owl";
     public static String cito =  "http://purl.org/spar/cito/";
+    
+	public static String OBOE_SBC = "OBOE-SBC";
     
     // package visibility for testing only
     boolean randomize = false;
@@ -246,7 +249,7 @@ public class DatapackageSummarizer {
 			}
 		}
 		// try to look it up if we got this far
-		return BioPortalService.lookupAnnotationClass(standardClass, unit);
+		return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE_SBC);
 	}
 	
 	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
@@ -280,7 +283,7 @@ public class DatapackageSummarizer {
 		}
 		
 		// try to look it up if we got this far
-		return BioPortalService.lookupAnnotationClass(characteristicClass, attribute.getDefinition());
+		return BioPortalService.lookupAnnotationClass(characteristicClass, attribute.getDefinition(), OBOE_SBC);
 		
 	}
 	
