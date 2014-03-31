@@ -1,0 +1,168 @@
+<?xml version="1.0"?><eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.0.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ds="eml://ecoinformatics.org/dataset-2.0.0" packageId="tao.1.1" scope="system" system="knb" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.0.0 eml.xsd"> <dataset scope="document"> <title>Datos Meteorologicos</title>
+ <creator id="Matt.Jones" scope="document"> <individualName> <salutation>Mr.</salutation>
+ <givenName>Matthew</givenName>
+ <surName>Jones</surName>
+ </individualName>
+ </creator>
+ <contact scope="document"> <references>Matt.Jones</references>
+ </contact>
+ <access authSystem="knb" order="allowFirst" scope="document"> <allow> <principal>public</principal>
+ <permission>read</permission>
+ </allow>
+ </access>
+ <dataTable scope="document"> <entityName>Datos Meteorologicos</entityName>
+ <entityDescription>Datos Estacion meteorologica La Hechicera para 2001</entityDescription>
+ <physical scope="document"> <objectName>sample.dat</objectName>
+ <size unit="bytes">188860</size>
+ <characterEncoding>ASCII</characterEncoding>
+ <dataFormat> <textFormat> <numHeaderLines>1</numHeaderLines>
+ <recordDelimiter>\n</recordDelimiter>
+ <attributeOrientation>column</attributeOrientation>
+ <simpleDelimited> <fieldDelimiter>,</fieldDelimiter>
+ </simpleDelimited>
+ </textFormat>
+ </dataFormat>
+ <distribution scope="document"> <online> <url function="download">ecogrid://knb/tao.2.1</url>
+ </online>
+ </distribution>
+</physical>
+ <attributeList> <attribute id="att.1" scope="document"> <attributeName>DATE</attributeName>
+ <attributeLabel>DATE</attributeLabel>
+ <attributeDefinition>Date of collection</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">string</storageType>
+ <measurementScale> <datetime> <formatString>MM/DD/YY</formatString>
+ <dateTimePrecision>1</dateTimePrecision>
+ <dateTimeDomain> <bounds> <minimum exclusive="false">01/01/01</minimum>
+ <maximum exclusive="false">01/05/01</maximum>
+ </bounds>
+ </dateTimeDomain>
+ </datetime>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.2" scope="document"> <attributeName>TIME</attributeName>
+ <attributeLabel>TIME</attributeLabel>
+ <attributeDefinition>Time of collection</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">string</storageType>
+ <measurementScale> <datetime> <formatString>HH:MM</formatString>
+ <dateTimePrecision>1</dateTimePrecision>
+ <dateTimeDomain> <bounds> <minimum exclusive="false">00:00</minimum>
+ <maximum exclusive="false">23:59</maximum>
+ </bounds>
+ </dateTimeDomain>
+ </datetime>
+ </measurementScale>
+ </attribute>
+<attribute id="att.3" scope="document"> <attributeName>T_AIR</attributeName>
+ <attributeLabel>T_AIR</attributeLabel>
+ <attributeDefinition>Air temperature</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>celsius</standardUnit>
+ </unit>
+ <precision>.1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.4" scope="document"> <attributeName>RH</attributeName>
+ <attributeLabel>RH</attributeLabel>
+ <attributeDefinition>Relative Humidity</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">int</storageType>
+ <measurementScale> <ratio> <unit> <standardUnit>dimensionless</standardUnit>
+ </unit>
+ <precision>1</precision>
+ <numericDomain> <numberType>integer</numberType>
+ </numericDomain>
+ </ratio>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.5" scope="document"> <attributeName>DEW</attributeName>
+ <attributeLabel>DEW</attributeLabel>
+ <attributeDefinition>Dew point</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>celsius</standardUnit>
+ </unit>
+ <precision>.1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+<attribute id="att.6" scope="document"> <attributeName>BARO</attributeName>
+ <attributeLabel>BARO</attributeLabel>
+ <attributeDefinition>Barometric preasure</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>millibar</standardUnit>
+ </unit>
+ <precision>.1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.7" scope="document"> <attributeName>WD</attributeName>
+ <attributeLabel>WD</attributeLabel>
+ <attributeDefinition>Wind direction</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">int</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>degree</standardUnit>
+ </unit>
+ <precision>1</precision>
+ <numericDomain> <numberType>integer</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.8" scope="document"> <attributeName>WS</attributeName>
+ <attributeLabel>WS</attributeLabel>
+ <attributeDefinition>Wind speed</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>knots</standardUnit>
+ </unit>
+ <precision>.1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.9" scope="document"> <attributeName>RAIN</attributeName>
+ <attributeLabel>RAIN</attributeLabel>
+ <attributeDefinition>Amount of Rain</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>centimeter</standardUnit>
+ </unit>
+ <precision>.1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+<attribute id="att.10" scope="document"> <attributeName>SOL</attributeName>
+ <attributeLabel>SOL</attributeLabel>
+ <attributeDefinition>Solar radiation</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>watt</standardUnit>
+ </unit>
+ <precision>1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ <attribute id="att.11" scope="document"> <attributeName>SOL_SUM</attributeName>
+ <attributeLabel>SOL_SUM</attributeLabel>
+ <attributeDefinition>Solar radiation accumulation</attributeDefinition>
+ <storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+ <measurementScale> <interval> <unit> <standardUnit>watt</standardUnit>
+ </unit>
+ <precision>1</precision>
+ <numericDomain> <numberType>real</numberType>
+ </numericDomain>
+ </interval>
+ </measurementScale>
+ </attribute>
+ </attributeList>
+ <caseSensitive>no</caseSensitive>
+ <numberOfRecords>100</numberOfRecords>
+ </dataTable>
+ </dataset>
+ </eml:eml>
