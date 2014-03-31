@@ -107,6 +107,7 @@ public class DatapackageSummarizer {
 		ObjectProperty annotatedByProperty = m.getObjectProperty(oa + "annotatedBy");
 		Property identifierProperty = m.getProperty(dcterms + "identifier");
 		Property conformsToProperty = m.getProperty(dcterms + "conformsTo");
+		Property wasAttributedTo = m.getProperty(prov + "wasAttributedTo");
 		Property nameProperty = m.getProperty(foaf + "name");
 		Property rdfValue = m.getProperty(rdf + "value");
 		
@@ -123,23 +124,33 @@ public class DatapackageSummarizer {
 		Resource fragmentSelectorClass =  m.getOntClass(oa + "FragmentSelector");
 		Resource entityClass =  m.getResource(prov + "Entity");
 		Resource personClass =  m.getResource(prov + "Person");
-		
+				
 		// these apply to every attribute annotation
 		Individual meta1 = m.createIndividual(ont.getURI() + "#meta", entityClass);
 		meta1.addProperty(identifierProperty, metadataPid.getValue());
 
-		// who should we attribute the annotation to?
-		Individual p1 = m.createIndividual(ont.getURI() + "#person", personClass);
+		// decide who should be credited with the package
+		Individual p1 = null;
 		
-		// add an orcid annotation if we can find one from their system
+		// look up creators from the EML metadata
 		List<String> creators = dataPackage.getCreators();
 		//creators = Arrays.asList("Matthew Jones");
-		if (creators != null && creators.size() > 0) {
-			p1.addProperty(nameProperty, creators.get(0));
-			String orcidId = OrcidService.lookupOrcid(null, null, creators.toArray(new String[0]));
-			if (orcidId != null) {
-				p1.addProperty(identifierProperty, orcidId);
+		if (creators != null && creators.size() > 0) {	
+			// use an orcid if we can find one from their system
+			String orcidUri = OrcidService.lookupOrcid(null, null, creators.toArray(new String[0]));
+			if (orcidUri != null) {
+				p1 = m.createIndividual(orcidUri, personClass);
+				p1.addProperty(identifierProperty, orcidUri);
+			} else {
+				p1 = m.createIndividual(ont.getURI() + "#person", personClass);
 			}
+			// include the name we have in the metadata
+			p1.addProperty(nameProperty, creators.get(0));
+		}
+		
+		// attribute the package to this creator if we have one
+		if (p1 != null) {
+			meta1.addProperty(wasAttributedTo, p1);
 		}
 		
 		// loop through the tables and attributes
@@ -193,7 +204,7 @@ public class DatapackageSummarizer {
 					a1.addProperty(hasTargetProperty, t1);
 					t1.addProperty(hasSourceProperty, meta1);
 					t1.addProperty(hasSelectorProperty, s1);
-					a1.addProperty(annotatedByProperty, p1);
+					//a1.addProperty(annotatedByProperty, p1);
 					
 					// describe the measurement in terms of restrictions
 					if (standard != null) {
