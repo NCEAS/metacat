@@ -56,7 +56,7 @@ public class BioPortalService {
 				}
 			}
 		} catch (Exception e) {
-			logMetacat.error("Could not lookup BioPortal annotation for text= " + text, e);
+			logMetacat.error("Could not lookup BioPortal annotation for text=" + text, e);
 		}
 		
 		return null;
