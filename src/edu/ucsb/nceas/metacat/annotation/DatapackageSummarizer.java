@@ -55,6 +55,7 @@ public class DatapackageSummarizer {
 	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl#";
 	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#";
 	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#";
+	public static String oboe_sbc = "http://ecoinformatics.org/oboe-ext/sbclter.1.0/oboe-sbclter.owl#";
 	public static String oa = "http://www.w3.org/ns/oa#";
 	public static String oa_source = "http://www.w3.org/ns/oa.rdf";
 	public static String dcterms = "http://purl.org/dc/terms/";
@@ -84,6 +85,9 @@ public class DatapackageSummarizer {
 		// TODO: import the ontologies we use
 		ont.addImport(m.createResource(oboe));
 		m.addSubModel(ModelFactory.createOntologyModel().read(oboe));
+		
+		ont.addImport(m.createResource(oboe_sbc));
+		m.addSubModel(ModelFactory.createOntologyModel().read(oboe_sbc));
 		
 		ont.addImport(m.createResource(oa));
 		m.addSubModel(ModelFactory.createOntologyModel().read(oa_source));
@@ -156,70 +160,74 @@ public class DatapackageSummarizer {
 		// loop through the tables and attributes
 		int entityCount = 1;
 		Entity[] entities = dataPackage.getEntityList();
-		for (Entity entity: entities) {
-			String entityName = entity.getName();
-			logMetacat.debug("Entity name: " + entityName);
-			Attribute[] attributes = entity.getAttributeList().getAttributes();
-			int attributeCount = 1;
-			for (Attribute attribute: attributes) {
-				
-				// for naming the individuals uniquely
-				String cnt = entityCount + "_" + attributeCount;
-				
-				String attributeName = attribute.getName();
-				String attributeLabel = attribute.getLabel();
-				String attributeDefinition = attribute.getDefinition();
-				String attributeType = attribute.getAttributeType();
-				String attributeScale = attribute.getMeasurementScale();
-				String attributeUnitType = attribute.getUnitType();
-				String attributeUnit = attribute.getUnit();
-				String attributeDomain = attribute.getDomain().getClass().getSimpleName();
-
-				logMetacat.debug("Attribute name: " + attributeName);
-				logMetacat.debug("Attribute label: " + attributeLabel);
-				logMetacat.debug("Attribute definition: " + attributeDefinition);
-				logMetacat.debug("Attribute type: " + attributeType);
-				logMetacat.debug("Attribute scale: " + attributeScale);
-				logMetacat.debug("Attribute unit type: " + attributeUnitType);
-				logMetacat.debug("Attribute unit: " + attributeUnit);
-				logMetacat.debug("Attribute domain: " + attributeDomain);
-			
-				// look up the characteristic or standard subclasses
-				Resource standard = this.lookupStandard(standardClass, attribute);
-				Resource characteristic = this.lookupCharacteristic(characteristicClass, attribute);
-				
-				if (standard != null || characteristic != null) {
+		if (entities != null) {
+			for (Entity entity: entities) {
+				String entityName = entity.getName();
+				logMetacat.debug("Entity name: " + entityName);
+				Attribute[] attributes = entity.getAttributeList().getAttributes();
+				int attributeCount = 1;
+				if (attributes != null) {
+					for (Attribute attribute: attributes) {
+						
+						// for naming the individuals uniquely
+						String cnt = entityCount + "_" + attributeCount;
+						
+						String attributeName = attribute.getName();
+						String attributeLabel = attribute.getLabel();
+						String attributeDefinition = attribute.getDefinition();
+						String attributeType = attribute.getAttributeType();
+						String attributeScale = attribute.getMeasurementScale();
+						String attributeUnitType = attribute.getUnitType();
+						String attributeUnit = attribute.getUnit();
+						String attributeDomain = attribute.getDomain().getClass().getSimpleName();
+		
+						logMetacat.debug("Attribute name: " + attributeName);
+						logMetacat.debug("Attribute label: " + attributeLabel);
+						logMetacat.debug("Attribute definition: " + attributeDefinition);
+						logMetacat.debug("Attribute type: " + attributeType);
+						logMetacat.debug("Attribute scale: " + attributeScale);
+						logMetacat.debug("Attribute unit type: " + attributeUnitType);
+						logMetacat.debug("Attribute unit: " + attributeUnit);
+						logMetacat.debug("Attribute domain: " + attributeDomain);
 					
-					// instances
-					Individual m1 = m.createIndividual(ont.getURI() + "#measurement" + cnt, measurementClass);
-					Individual a1 = m.createIndividual(ont.getURI() + "#annotation" + cnt, annotationClass);
-					Individual t1 = m.createIndividual(ont.getURI() + "#target" + cnt, specificResourceClass);
-					String xpointer = "xpointer(/eml/dataSet/" + entityCount + "/attributeList/" + attributeCount + ")";
-					Individual s1 = m.createIndividual(ont.getURI() + "#" + xpointer, fragmentSelectorClass);
-					s1.addLiteral(rdfValue, xpointer);
-					s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
-					
-					// statements about the annotation
-					a1.addProperty(hasBodyProperty, m1);
-					a1.addProperty(hasTargetProperty, t1);
-					t1.addProperty(hasSourceProperty, meta1);
-					t1.addProperty(hasSelectorProperty, s1);
-					//a1.addProperty(annotatedByProperty, p1);
-					
-					// describe the measurement in terms of restrictions
-					if (standard != null) {
-						AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, usesStandard, standard);
-						m1.addOntClass(avfr);
-					}
-					if (characteristic != null) {
-						AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, ofCharacteristic, characteristic);
-						m1.addOntClass(avfr);
+						// look up the characteristic or standard subclasses
+						Resource standard = this.lookupStandard(standardClass, attribute);
+						Resource characteristic = this.lookupCharacteristic(characteristicClass, attribute);
+						
+						if (standard != null || characteristic != null) {
+							
+							// instances
+							Individual m1 = m.createIndividual(ont.getURI() + "#measurement" + cnt, measurementClass);
+							Individual a1 = m.createIndividual(ont.getURI() + "#annotation" + cnt, annotationClass);
+							Individual t1 = m.createIndividual(ont.getURI() + "#target" + cnt, specificResourceClass);
+							String xpointer = "xpointer(/eml/dataSet/" + entityCount + "/attributeList/" + attributeCount + ")";
+							Individual s1 = m.createIndividual(ont.getURI() + "#" + xpointer, fragmentSelectorClass);
+							s1.addLiteral(rdfValue, xpointer);
+							s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
+							
+							// statements about the annotation
+							a1.addProperty(hasBodyProperty, m1);
+							a1.addProperty(hasTargetProperty, t1);
+							t1.addProperty(hasSourceProperty, meta1);
+							t1.addProperty(hasSelectorProperty, s1);
+							//a1.addProperty(annotatedByProperty, p1);
+							
+							// describe the measurement in terms of restrictions
+							if (standard != null) {
+								AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, usesStandard, standard);
+								m1.addOntClass(avfr);
+							}
+							if (characteristic != null) {
+								AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, ofCharacteristic, characteristic);
+								m1.addOntClass(avfr);
+							}
+						}
+						attributeCount++;
+						
 					}
 				}
-				attributeCount++;
-				
+				entityCount++;
 			}
-			entityCount++;
 		}
 		
 		StringWriter sw = new StringWriter();
