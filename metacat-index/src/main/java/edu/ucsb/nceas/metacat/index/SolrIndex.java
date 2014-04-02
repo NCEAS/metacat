@@ -547,7 +547,7 @@ public class SolrIndex {
                                 ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, 
                                 IOException, SAXException, ParserConfigurationException, OREParserException, JiBXException, EncoderException {
         checkParams(pid, systemMetadata, data);
-        boolean isArchive = systemMetadata.getArchived();
+        boolean isArchive = systemMetadata.getArchived() != null && systemMetadata.getArchived();
         if(isArchive ) {
             //delete the index for the archived objects
             remove(pid.getValue(), systemMetadata);
