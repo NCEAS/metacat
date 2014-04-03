@@ -128,7 +128,7 @@ To install and run the Registry:
 
       sudo apt-get install ant libappconfig-perl libxml-libxml-perl \
       libxml-libxslt-perl libtemplate-perl libcgi-session-perl \
-      libdigest-sha1-perl libnet-ldap-perl libterm-readkey-perl \
+      libnet-ldap-perl libterm-readkey-perl \
       libxml-dom-perl libsoap-lite-perl -y
 
   * Install two more package using cpan 
@@ -139,6 +139,7 @@ To install and run the Registry:
       sudo cpan -i Scalar::Util
       sudo cpan -i Captcha:reCAPTCHA
       sudo cpan -i DateTime
+      sudo cpan -i Digest::SHA1
       
 
 3. Double-check that Metacat's temporary folder, application.tempDir, is 
