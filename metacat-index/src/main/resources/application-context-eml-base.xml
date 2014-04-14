@@ -107,7 +107,7 @@
 		p:multivalue="true"
 		p:root-ref="eml.geohashRoot">
 		<constructor-arg name="name" value="geohash_3" />
-		<property name="converter" ref="geohashConverter_2"/>
+		<property name="converter" ref="geohashConverter_3"/>
 	</bean>
 	
 		<bean id="eml.geohash4" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
