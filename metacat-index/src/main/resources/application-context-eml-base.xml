@@ -60,16 +60,32 @@
 	<bean id="eml.geohashRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
 		p:name="geohashRoot"
 		p:xPath="//dataset/coverage/geographicCoverage/boundingCoordinates"
-		p:template="[northBoundingCoordinate] [westBoundingCoordinate] [southBoundingCoordinate] [eastBoundingCoordinate]">
+		p:template="[northBoundingCoordinate] [southBoundingCoordinate] [eastBoundingCoordinate] [westBoundingCoordinate]">
 		<property name="leafs">
 			<list>
 				<ref bean="eml.northBoundingCoordinateLeaf"/>
-				<ref bean="eml.westBoundingCoordinateLeaf"/>
 				<ref bean="eml.southBoundingCoordinateLeaf"/>
 				<ref bean="eml.eastBoundingCoordinateLeaf"/>
+				<ref bean="eml.westBoundingCoordinateLeaf"/>
 			</list>
 		</property>
 	</bean>
+	
+	<bean id="eml.northBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="northBoundingCoordinate"
+		p:xPath="northBoundingCoordinate/text()" />
+		
+	<bean id="eml.westBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="westBoundingCoordinate"
+		p:xPath="westBoundingCoordinate/text()" />
+	
+	<bean id="eml.southBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="southBoundingCoordinate"
+		p:xPath="southBoundingCoordinate/text()" />		
+		
+	<bean id="eml.eastBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="eastBoundingCoordinate"
+		p:xPath="eastBoundingCoordinate/text()" />
 	
 		
 	<!-- use the root to calculate different geohash lengths -->

@@ -48,6 +48,15 @@
     <ref bean="eml.attributeText" />
     <ref bean="eml.fileID" />
     <ref bean="eml.fullText" />
+    <ref bean="eml.geohash1" />
+    <ref bean="eml.geohash2" />
+    <ref bean="eml.geohash3" />
+    <ref bean="eml.geohash4" />
+    <ref bean="eml.geohash5" />
+    <ref bean="eml.geohash6" />
+    <ref bean="eml.geohash7" />
+    <ref bean="eml.geohash8" />
+    <ref bean="eml.geohash9" />
    </list>
   </property>
  </bean>
