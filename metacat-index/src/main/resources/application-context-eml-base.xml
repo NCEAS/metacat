@@ -295,9 +295,9 @@
 		<property name="dedupe" value="true"/>
 	</bean>
 	
-	<bean id="eml.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
+	<!-- <bean id="eml.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
 		<constructor-arg name="name" value="fileID" />
-	</bean>
+	</bean> -->
 	
 	<bean id="eml.text" class="org.dataone.cn.indexer.parser.FullTextSolrField">
 		<constructor-arg name="name" value="text" />
