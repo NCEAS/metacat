@@ -233,7 +233,7 @@
 		<property name="util-module" value="utilities" />
 		<!--<property name="utilities-tag" value="trunk" />-->
 		<property name="utilities-tag" value="tags/UTILITIES_1_3_0" />
-		<property name="seek-tag" value="tags/ECOGRID_1_2_2" />
+		<property name="seek-tag" value="branches/ECOGRID_1_2_3" />
 		<property name="eml-module" value="eml" />
 		<property name="eml-version" value="2.0.0beta6" />
 		<property name="eml-beta4-version" value="2.0.0beta4" />
