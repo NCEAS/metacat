@@ -624,8 +624,9 @@ public class ReplicationService extends BaseService {
 			String homeServer = (String) docinfoHash.get("home_server");
 			
 			// process system metadata
+			SystemMetadata sysMeta = null;
 			if (systemMetadataXML != null) {
-				SystemMetadata sysMeta = 
+				sysMeta = 
 					TypeMarshaller.unmarshalTypeFromStream(
 							SystemMetadata.class,
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
@@ -637,8 +638,7 @@ public class ReplicationService extends BaseService {
 		      	}
 				// save the system metadata
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+				
 			}
       
 			// dates
@@ -684,7 +684,16 @@ public class ReplicationService extends BaseService {
 						dbaction, docid, null, null, homeServer, server, createdDate,
 						updatedDate);
 			} finally {
-
+				if(sysMeta != null) {
+					// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
+					// will not interrupt the process.
+					try {
+						MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+					} catch (Exception ee) {
+						logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
+					}
+	                
+				}
 				//process extra access rules before dealing with the write exception (doc exist already)
 				try {
 		        	// check if we had a guid -> docid mapping
