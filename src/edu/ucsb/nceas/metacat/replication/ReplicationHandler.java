@@ -43,7 +43,6 @@ import java.util.Hashtable;
 import java.util.TimerTask;
 import java.util.Vector;
 
-
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -388,10 +387,10 @@ public class ReplicationHandler extends TimerTask
       // strip out the system metadata portion
       String systemMetadataXML = ReplicationUtil.getSystemMetadataContent(docInfoStr);
    	  docInfoStr = ReplicationUtil.getContentWithoutSystemMetadata(docInfoStr);
-      
+   	  SystemMetadata sysMeta = null;
    	  // process system metadata if we have it
       if (systemMetadataXML != null) {
-    	  SystemMetadata sysMeta = 
+    	  sysMeta = 
     		  TypeMarshaller.unmarshalTypeFromStream(
     				  SystemMetadata.class, 
     				  new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
@@ -402,8 +401,7 @@ public class ReplicationHandler extends TimerTask
       	  // save the system metadata
     	  logReplication.debug("Saving SystemMetadata to shared map: " + sysMeta.getIdentifier().getValue());
       	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-      	  // submit for indexing
-          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+      	  
       }
    	  
       docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
@@ -457,6 +455,17 @@ public class ReplicationHandler extends TimerTask
                               remoteserver, tableName, true,// true is for time replication 
                               createdDate,
                               updatedDate);
+      
+      if(sysMeta != null) {
+			// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
+			// will not interrupt the process.
+			try {
+				MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+			} catch (Exception ee) {
+				logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
+			}
+          
+		}
       
       //set the user information
       String user = (String) docinfoHash.get("user_owner");
