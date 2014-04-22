@@ -77,8 +77,8 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 	 */
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
-		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotations"));
-//		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
+//		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotations"));
+		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateRandomAnnotation"));
 		return suite;
 	}

@@ -117,8 +117,12 @@ public class DatapackageSummarizer {
 		
 		ObjectProperty ofCharacteristic = m.getObjectProperty(oboe_core + "ofCharacteristic");
 		ObjectProperty usesStandard = m.getObjectProperty(oboe_core + "usesStandard");
+		ObjectProperty ofEntity = m.getObjectProperty(oboe_core + "ofEntity");
+		ObjectProperty hasMeasurement = m.getObjectProperty(oboe_core + "hasMeasurement");
 
 		// classes
+		OntClass entityClass =  m.getOntClass(oboe_core + "Entity");
+		OntClass observationClass =  m.getOntClass(oboe_core + "Observation");
 		OntClass measurementClass =  m.getOntClass(oboe_core + "Measurement");
 		OntClass characteristicClass = m.getOntClass(oboe_core + "Characteristic");
 		OntClass standardClass =  m.getOntClass(oboe_core + "Standard");
@@ -126,11 +130,11 @@ public class DatapackageSummarizer {
 		Resource annotationClass =  m.getOntClass(oa + "Annotation");
 		Resource specificResourceClass =  m.getOntClass(oa + "SpecificResource");
 		Resource fragmentSelectorClass =  m.getOntClass(oa + "FragmentSelector");
-		Resource entityClass =  m.getResource(prov + "Entity");
+		Resource provEntityClass =  m.getResource(prov + "Entity");
 		Resource personClass =  m.getResource(prov + "Person");
 				
 		// these apply to every attribute annotation
-		Individual meta1 = m.createIndividual(ont.getURI() + "#meta", entityClass);
+		Individual meta1 = m.createIndividual(ont.getURI() + "#meta", provEntityClass);
 		meta1.addProperty(identifierProperty, metadataPid.getValue());
 
 		// decide who should be credited with the package
@@ -163,6 +167,14 @@ public class DatapackageSummarizer {
 		if (entities != null) {
 			for (Entity entity: entities) {
 				String entityName = entity.getName();
+				
+				Individual o1 = m.createIndividual(ont.getURI() + "#observation" + entityCount, observationClass);
+				Resource entityConcept = lookupEntity(entityClass, entity);
+				if (entityConcept != null) {
+					AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, ofEntity, entityConcept);
+					o1.addOntClass(avfr);
+				}
+				
 				logMetacat.debug("Entity name: " + entityName);
 				Attribute[] attributes = entity.getAttributeList().getAttributes();
 				int attributeCount = 1;
@@ -221,6 +233,10 @@ public class DatapackageSummarizer {
 								AllValuesFromRestriction avfr = m.createAllValuesFromRestriction(null, ofCharacteristic, characteristic);
 								m1.addOntClass(avfr);
 							}
+							
+							// attach to the observation
+							// TODO: evaluate whether the measurement can apply to the given observed entity
+							o1.addProperty(hasMeasurement, m1);
 						}
 						attributeCount++;
 						
@@ -303,6 +319,16 @@ public class DatapackageSummarizer {
 		
 		// try to look it up if we got this far
 		return BioPortalService.lookupAnnotationClass(characteristicClass, attribute.getDefinition(), OBOE_SBC);
+		
+	}
+	
+	private Resource lookupEntity(OntClass entityClass, Entity entity) {
+		// what's our description like?
+		String name = entity.getName();
+		String definition = entity.getDefinition();
+		
+		// try to look it up if we got this far
+		return BioPortalService.lookupAnnotationClass(entityClass, definition, OBOE_SBC);
 		
 	}
 	
@@ -434,7 +460,7 @@ public class DatapackageSummarizer {
 	
 	public static void testGenerate() throws Exception {
 		Identifier metadataPid = new Identifier();
-		metadataPid.setValue("doi:10.5072/FK2445ZN4");
+		metadataPid.setValue("tao.1.4");
 		DatapackageSummarizer ds = new DatapackageSummarizer();
 		String rdfString = ds.generateAnnotation(metadataPid);
 		logMetacat.info("RDF annotation: \n" + rdfString);
