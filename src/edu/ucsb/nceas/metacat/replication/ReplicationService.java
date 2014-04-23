@@ -86,6 +86,7 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.metacat.accesscontrol.PermOrderException;
 import edu.ucsb.nceas.metacat.admin.upgrade.RemoveInvalidReplicas;
+import edu.ucsb.nceas.metacat.admin.upgrade.UpdateDOI;
 import edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateORE;
 import edu.ucsb.nceas.metacat.admin.upgrade.dataone.GenerateSystemMetadata;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
@@ -413,6 +414,15 @@ public class ReplicationService extends BaseService {
 				gore.upgrade();
 				out.write("Generated ORE maps for server " + serverid);
 				
+			} else if (subaction.equals("updatedoi")) {
+				UpdateDOI udoi = new UpdateDOI();
+				int serverLocation = -1;
+				String serverid = ((String[]) params.get("serverid"))[0];
+				serverLocation = Integer.parseInt(serverid);
+				udoi.setServerLocation(serverLocation );
+				udoi.upgrade();
+				out.write("Generated ORE maps for server " + serverid);
+				
 			} else if (subaction.equals("removeinvalidreplicas")) {
 				RemoveInvalidReplicas rir = new RemoveInvalidReplicas();
 				int serverLocation = -1;
@@ -474,6 +484,7 @@ public class ReplicationService extends BaseService {
 			if (showGenerateSystemMetadata) {
 				out.write("<td><b>System Metadata</b></td>");
 				out.write("<td><b>ORE Maps</b></td>");
+				out.write("<td><b>DOI Registrations</b></td>");
 				out.write("<td><b>Invalid Replicas</b></td>");
 			}
 			out.write("<td><b>Sync Access Policies</b></td>");
@@ -507,6 +518,15 @@ public class ReplicationService extends BaseService {
 					out.write("<input name='action' type='hidden' value='servercontrol'/>");
 					out.write("<input name='subaction' type='hidden' value='generateore'/>");
 					out.write("<input type='submit' value='Generate ORE'/>");
+					out.write("</form></td>");
+					
+					// for DOI updating
+					out.write("<td><form action='" + request.getContextPath() + "/admin'>");
+					out.write("<input name='serverid' type='hidden' value='" + serverId + "'/>");
+					out.write("<input name='configureType' type='hidden' value='replication'/>");
+					out.write("<input name='action' type='hidden' value='servercontrol'/>");
+					out.write("<input name='subaction' type='hidden' value='updatedoi'/>");
+					out.write("<input type='submit' value='Update DOIs'/>");
 					out.write("</form></td>");
 					
 					// for invalid replicas

@@ -674,7 +674,7 @@ public class MetacatClient implements Metacat {
     	 
     	HttpPost post = new HttpPost(metacatUrl);
     	MultipartEntity entity = new MultipartEntity(HttpMultipartMode.BROWSER_COMPATIBLE);
-    	 
+    	
     	// For File parameters
     	InputStreamBody content = null;
     	if (size < 0) {
