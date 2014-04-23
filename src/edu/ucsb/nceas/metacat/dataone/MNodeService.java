@@ -1848,9 +1848,9 @@ public class MNodeService extends D1NodeService
 		String pid = guid.getValue();
 		List<Identifier> retList = null;
 		try {
-			String query = "fl=id,resourceMap&wt=xml&q=-obsoletedBy:*+resourceMap:*+id:\"" + pid + "\"";;
+			String query = "fl=id,resourceMap&wt=xml&q=-obsoletedBy:[* TO *]+resourceMap:[* TO *]+id:\"" + pid + "\"";
 			if (includeObsolete) {
-				query = "fl=id,resourceMap&wt=xml&q=resourceMap:*+id:\"" + pid + "\"";
+				query = "fl=id,resourceMap&wt=xml&q=resourceMap:[* TO *]+id:\"" + pid + "\"";
 			}
 			
 			InputStream results = this.query("solr", query);
