@@ -67,6 +67,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.fileupload.FileItem;
+import org.apache.commons.fileupload.disk.DiskFileItemFactory;
+import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
@@ -79,11 +82,6 @@ import org.ecoinformatics.eml.EMLParser;
 
 import au.com.bytecode.opencsv.CSVWriter;
 
-import com.oreilly.servlet.multipart.FilePart;
-import com.oreilly.servlet.multipart.MultipartParser;
-import com.oreilly.servlet.multipart.ParamPart;
-import com.oreilly.servlet.multipart.Part;
-
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
@@ -94,7 +92,6 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -2867,6 +2864,7 @@ public class MetacatHandler {
         Hashtable<String,String[]> params = new Hashtable<String,String[]>();
         Hashtable<String,String> fileList = new Hashtable<String,String>();
         int sizeLimit = 1000;
+        String tmpDir = "/tmp";
         try {
             sizeLimit = 
                 (new Integer(PropertyService.getProperty("replication.datafilesizelimit"))).intValue();
@@ -2876,43 +2874,59 @@ public class MetacatHandler {
             		         pnfe.getMessage());
             pnfe.printStackTrace(System.out);
         }
+        try {
+            tmpDir = PropertyService.getProperty("application.tempDir");
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.error("MetacatHandler.handleMultipartForm - " +
+            		         "Could not determine temp dir, using default. " + 
+            		         pnfe.getMessage());
+            pnfe.printStackTrace(System.out);
+        }
         logMetacat.debug("MetacatHandler.handleMultipartForm - " +
         		         "The size limit of uploaded data files is: " + 
         		         sizeLimit);
         
         try {
-            MultipartParser mp = new MultipartParser(request,
-                    sizeLimit * 1024 * 1024);
-            Part part;
-            
-            while ((part = mp.readNextPart()) != null) {
-                String name = part.getName();
-                
-                if (part.isParam()) {
+        	boolean isMultipart = ServletFileUpload.isMultipartContent(request);
+        	// Create a factory for disk-based file items
+        	DiskFileItemFactory factory = new DiskFileItemFactory();
+
+        	// Configure a repository (to ensure a secure temp location is used)
+        	File repository = new File(tmpDir);
+        	factory.setRepository(repository);
+
+        	// Create a new file upload handler
+        	ServletFileUpload upload = new ServletFileUpload(factory);
+
+        	// Parse the request
+        	List<FileItem> items = upload.parseRequest(request);
+        	
+        	Iterator<FileItem> iter = items.iterator();
+        	while (iter.hasNext()) {
+        		FileItem item = iter.next();
+        		String name = item.getFieldName();
+        		
+        	    if (item.isFormField()) {
+        	    	
                     // it's a parameter part
-                    ParamPart paramPart = (ParamPart) part;
                     String[] values = new String[1];
-                    values[0] = paramPart.getStringValue();
+                    values[0] = item.getString();
                     params.put(name, values);
                     if (name.equals("action")) {
                         action = values[0];
                     }
-                } else if (part.isFile()) {
+                } else {
                     // it's a file part
-                    FilePart filePart = (FilePart) part;
-                    String fileName = filePart.getFileName();
-                    
-                    // the filePart will be clobbered on the next loop, save to disk
-                    tempFile = MetacatUtil.writeTempUploadFile(filePart, fileName);
+                    String fileName = item.getName();                    
+
+                    // write to disk
+                    tempFile = MetacatUtil.writeTempUploadFile(item, fileName);
                     fileList.put(name, tempFile.getAbsolutePath());
                     fileList.put("filename", fileName);
                     fileList.put("name", tempFile.getAbsolutePath());
-                } else {
-                    logMetacat.info("MetacatHandler.handleMultipartForm - " +
-                    		        "Upload name '" + name + "' was empty.");
                 }
             }
-        } catch (IOException ioe) {
+        } catch (Exception ioe) {
             try {
                 out = response.getWriter();
             } catch (IOException ioe2) {

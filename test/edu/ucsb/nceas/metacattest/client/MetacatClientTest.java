@@ -155,6 +155,7 @@ public class MetacatClientTest extends MCTestCase
       suite.addTest(new MetacatClientTest("getNewestDocRevision"));  // (also tries to insert)
       suite.addTest(new MetacatClientTest("upload"));
       suite.addTest(new MetacatClientTest("upload_stream"));
+      suite.addTest(new MetacatClientTest("upload_stream_chunked"));
       suite.addTest(new MetacatClientTest("invalidRead"));
       suite.addTest(new MetacatClientTest("read"));
       suite.addTest(new MetacatClientTest("query"));
@@ -534,6 +535,45 @@ public class MetacatClientTest extends MCTestCase
            assertTrue(response.indexOf("<success>") != -1);
            assertTrue(response.indexOf(identifier) != -1);
            debug("upload_stream(): response=" + response);
+
+        } catch (MetacatAuthException mae) {
+            fail("Authorization failed:\n" + mae.getMessage());
+        } catch (MetacatInaccessibleException mie) {
+          mie.printStackTrace();
+            fail("Metacat Inaccessible:\n" + mie.getMessage());
+        } catch (InsufficientKarmaException ike) {
+            assertTrue(1 == 1);
+            fail("Insufficient karma:\n" + ike.getMessage());
+        } catch (MetacatException me) {
+            fail("Metacat Error:\n" + me.getMessage());
+        } catch (Exception e) {
+            fail("General exception:\n" + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test the upload() function by passing an InputStream
+     */
+    public void upload_stream_chunked()
+    {
+        debug("\nStarting upload_stream_chunked test...");
+        try {
+            newdocid = generateDocumentId();
+            String identifier = newdocid + ".1";
+            m.login(username, password);
+            File testFile = new File(onlinetestdatafile);
+            String response = m.upload(identifier, "onlineDataFile1",
+                                       new FileInputStream(testFile), -1);
+
+            assertTrue(response.indexOf("<success>") != -1);
+            assertTrue(response.indexOf(identifier) != -1);
+            identifier = newdocid + ".2";
+            response = m.upload(identifier, "onlineDataFile1",
+                    new FileInputStream(testFile), -1);
+
+           assertTrue(response.indexOf("<success>") != -1);
+           assertTrue(response.indexOf(identifier) != -1);
+           debug("upload_stream_chunked(): response=" + response);
 
         } catch (MetacatAuthException mae) {
             fail("Authorization failed:\n" + mae.getMessage());
