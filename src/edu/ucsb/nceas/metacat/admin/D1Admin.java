@@ -104,6 +104,7 @@ public class D1Admin extends MetacatAdmin {
 			try {
 				
 				// get the current configuration values
+				String cnURL = PropertyService.getProperty("D1Client.CN_URL");
 				String nodeName = PropertyService.getProperty("dataone.nodeName");
 				String nodeDescription = PropertyService.getProperty("dataone.nodeDescription");
 				String memberNodeId = PropertyService.getProperty("dataone.nodeId");
@@ -135,7 +136,7 @@ public class D1Admin extends MetacatAdmin {
 				if (nodeReplicate != null) {
 					replicate = Boolean.parseBoolean(nodeReplicate);
 				}
-				
+				request.setAttribute("D1Client.CN_URL", cnURL);
 				request.setAttribute("dataone.nodeName", nodeName);
 				request.setAttribute("dataone.nodeDescription", nodeDescription);
 				request.setAttribute("dataone.nodeId", memberNodeId);
@@ -246,6 +247,7 @@ public class D1Admin extends MetacatAdmin {
 				// and preserve their entries.
 				validationErrors.addAll(validateOptions(request));
 				
+				String cnURL = (String)request.getParameter("D1Client.CN_URL");
 				String nodeName = (String)request.getParameter("dataone.nodeName");
 				String nodeDescription = (String)request.getParameter("dataone.nodeDescription");
 				String memberNodeId = (String)request.getParameter("dataone.nodeId");
@@ -290,6 +292,7 @@ public class D1Admin extends MetacatAdmin {
 					validationErrors.add("nodeName cannot be null");
 				} else {
 					
+					PropertyService.setProperty("D1Client.CN_URL", cnURL);
 					PropertyService.setPropertyNoPersist("dataone.nodeName", nodeName);
 					PropertyService.setPropertyNoPersist("dataone.nodeDescription", nodeDescription);					
 					PropertyService.setPropertyNoPersist("dataone.nodeSynchronize", Boolean.toString(synchronize));
