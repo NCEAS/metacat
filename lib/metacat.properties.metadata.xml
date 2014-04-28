@@ -385,10 +385,19 @@
 	
 	<!-- DataONE configuration -->
 	<config>
+		<key>D1Client.CN_URL</key>
+		<label>Coordinating Node URL</label>
+		<group>6</group>
+		<index>1</index>
+		<fieldType>hidden</fieldType>
+		<description> </description>
+		<helpFile> </helpFile>
+	</config>
+	<config>
 		<key>dataone.nodeName</key>
 		<label>Node Name</label>
 		<group>6</group>
-		<index>1</index>
+		<index>2</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -397,7 +406,7 @@
 		<key>dataone.nodeDescription</key>
 		<label>Node Description</label>
 		<group>6</group>
-		<index>2</index>
+		<index>3</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -406,7 +415,7 @@
 		<key>dataone.nodeId</key>
 		<label>Node Identifier</label>
 		<group>6</group>
-		<index>3</index>
+		<index>4</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -415,7 +424,7 @@
 		<key>dataone.subject</key>
 		<label>Node Subject</label>
 		<group>6</group>
-		<index>4</index>
+		<index>5</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -424,7 +433,7 @@
 	    <key>dataone.nodeSynchronize</key>
 	    <label>Synchronize?</label>
 	    <group>6</group>
-	    <index>5</index>                
+	    <index>6</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -433,7 +442,7 @@
 	    <key>dataone.nodeReplicate</key>
 	    <label>Replicate?</label>
 	    <group>6</group>
-	    <index>6</index>                
+	    <index>7</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -442,7 +451,7 @@
 	    <key>D1Client.certificate.file</key>
 	    <label>Certificate file</label>
 	    <group>6</group>
-	    <index>7</index>                
+	    <index>8</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -451,7 +460,7 @@
 	    <key>dataone.ore.generated</key>
 	    <label>Have the ORE maps been generated?</label>
 	    <group>6</group>
-	    <index>8</index>                
+	    <index>9</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -460,7 +469,7 @@
 	    <key>dataone.systemmetadata.generated</key>
 	    <label>Has System Metadata been generated?</label>
 	    <group>6</group>
-	    <index>9</index>                
+	    <index>10</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -469,7 +478,7 @@
 	    <key>dataone.mn.services.enabled</key>
 	    <label>Have D1 MN services been enabled</label>
 	    <group>6</group>
-	    <index>10</index>                
+	    <index>11</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -478,7 +487,7 @@
 	    <key>dataone.mn.registration.submitted</key>
 	    <label>Has the MN registration been submitted</label>
 	    <group>6</group>
-	    <index>11</index>                
+	    <index>12</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -487,7 +496,7 @@
 	    <key>D1Client.resourcesDir</key>
 	    <label>Configurable DataONE Resources Directory</label>
 	    <group>6</group>
-	    <index>12</index>                
+	    <index>13</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
@@ -496,7 +505,7 @@
 		<key>dataone.contactSubject</key>
 		<label>Contact Subject</label>
 		<group>6</group>
-		<index>13</index>
+		<index>14</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
 		<helpFile> </helpFile>
