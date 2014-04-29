@@ -6,11 +6,13 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.types.v1.Identifier;
@@ -28,9 +30,17 @@ import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.Ontology;
+import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.Query;
+import com.hp.hpl.jena.query.QueryExecution;
+import com.hp.hpl.jena.query.QueryExecutionFactory;
+import com.hp.hpl.jena.query.QueryFactory;
+import com.hp.hpl.jena.query.QuerySolution;
+import com.hp.hpl.jena.query.ResultSet;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.tdb.TDBFactory;
 import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 import edu.ucsb.nceas.metacat.DBUtil;
@@ -40,6 +50,7 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -70,6 +81,100 @@ public class DatapackageSummarizer {
     
     // package visibility for testing only
     boolean randomize = false;
+    
+    public void indexEphemeralAnnotation(Identifier metadataPid) throws Exception {
+
+    	// generate an annotation for the metadata given
+		String rdfContent = this.generateAnnotation(metadataPid);
+		
+		// load to triple store
+		Dataset dataset = TDBFactory.createDataset("./tbd");
+		
+    	// read the annotation into the triplestore
+		InputStream source = IOUtils.toInputStream(rdfContent, "UTF-8");
+    	String name = "http://annotation";
+    	boolean loaded = dataset.containsNamedModel(name);
+    	if (loaded) {
+    		dataset.removeNamedModel(name);
+    		loaded = false;
+    	}
+		if (!loaded) {
+			OntModel ontModel = ModelFactory.createOntologyModel();
+			ontModel.read(source, name);
+			dataset.addNamedModel(name, ontModel);
+		}
+		
+		// query for fields to add to index
+        Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
+		
+        // TODO: look up the query to use (support multiple like in the indexing project)
+        String q = null;
+        
+        q = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
+        	+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+        	+ "PREFIX owl: <http://www.w3.org/2002/07/owl#> " 
+			+ "PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> "
+			+ "PREFIX oa: <http://www.w3.org/ns/oa#> "
+			+ "PREFIX dcterms: <http://purl.org/dc/terms/> "
+			+ "SELECT ?standard_sm ?id "
+			+ "FROM <$GRAPH_NAME> "
+			+ "WHERE { "
+			+ "		?measurement rdf:type oboe-core:Measurement . "
+			+ "		?measurement rdf:type ?restriction . "
+			+ "		?restriction owl:onProperty oboe-core:usesStandard . "
+			+ "		?restriction owl:allValuesFrom ?standard . "
+			+ "		?standard rdfs:subClassOf+ ?standard_sm . "
+			+ "		?standard_sm rdfs:subClassOf oboe-core:Standard . "				
+			+ "		?annotation oa:hasBody ?measurement . "												
+			+ "		?annotation oa:hasTarget ?target . "
+			+ "		?target oa:hasSource ?metadata . "
+			+ "		?metadata dcterms:identifier ?id . " 
+			+ "}";
+
+        q = q.replaceAll("\\$GRAPH_NAME", name);
+		Query query = QueryFactory.create(q);
+		QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
+		ResultSet results = qexec.execSelect();
+		
+		while (results.hasNext()) {
+			QuerySolution solution = results.next();
+			System.out.println(solution.toString());
+			
+			// find the index document we are trying to augment with the annotation
+			if (solution.contains("id")) {
+				String id = solution.getLiteral("id").getString();
+				if (!id.equals(metadataPid.getValue())) {
+					// skip any solution that does not annotate the given pid
+					continue;
+				}
+				
+			}
+			// loop through the solution variables, add an index value for each
+			Iterator<String> varNameIter = solution.varNames();
+			while (varNameIter.hasNext()) {
+				String key = varNameIter.next();
+				if (key.equals("id")) {
+					// don't include the id
+					continue;
+				}
+				String value = solution.get(key).toString();
+				List<Object> values = fields.get(key);
+				if (values  == null) {
+					values = new ArrayList<Object>();
+				}
+				values.add(value);
+				fields.put(key, values);
+			}
+		}
+
+		// clean up the triple store
+		TDBFactory.release(dataset);
+        
+		// add to index
+		MetacatSolrIndex.getInstance().submit(metadataPid, null, fields, true);
+		
+		
+	}
 
     /**
      * Generate annotation for given metadata identifier

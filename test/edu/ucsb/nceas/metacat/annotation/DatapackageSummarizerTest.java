@@ -78,9 +78,36 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotations"));
-		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
+//		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
+		suite.addTest(new DatapackageSummarizerTest("testStandaloneAnnotation"));
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateRandomAnnotation"));
 		return suite;
+	}
+	
+	public void testStandaloneAnnotation() throws Exception {
+		// insert the test document to sem-index
+		Identifier metadataPid = new Identifier();
+		metadataPid.setValue("testAnnotation.eml." + System.currentTimeMillis());
+		Session session = getTestSession();
+		try {
+			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DOC).getBytes("UTF-8"));
+			SystemMetadata sysmeta = createSystemMetadata(metadataPid, session.getSubject(), object);
+			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+			formatId.setValue("eml://ecoinformatics.org/eml-2.0.0");
+			sysmeta.setFormatId(formatId);
+			Identifier pid = MNodeService.getInstance(request).create(session, metadataPid, object, sysmeta);
+			assertEquals(metadataPid.getValue(), pid.getValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Could not add metadata test file: " + e.getMessage());
+		}
+		
+		// index it
+		DatapackageSummarizer ds = new DatapackageSummarizer();
+		ds.indexEphemeralAnnotation(metadataPid);
+		
+		// check it
+		
 	}
 	
 	/**
