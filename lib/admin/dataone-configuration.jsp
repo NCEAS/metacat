@@ -371,7 +371,7 @@
 			<%if (isUpdate) { %>
 				<input class=button type="submit" value="Update"/>
 			<%} else if (isSubmitted) { %>
-				<input class=button type="submit" value="Update" disabled="disabled"/>
+				<input class=button type="submit" value="Update"/>
 			<%} else { %>
 				<input class=button type="submit" value="Register"/>
 			<%} %>
