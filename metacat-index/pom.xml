@@ -34,16 +34,6 @@
 			<artifactId>metacat-common</artifactId>
 			<version>2.4.2-SNAPSHOT</version>
 			<type>jar</type>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpclient</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpmime</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -65,12 +55,7 @@
 				<exclusion>
 					<groupId>com.hp.hpl.jena</groupId>
 					<artifactId>jena</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpclient</artifactId>
-				</exclusion>
-				
+				</exclusion>				
 				<exclusion>
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>

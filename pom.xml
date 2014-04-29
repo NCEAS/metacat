@@ -10,9 +10,8 @@
     <url>http://maven.apache.org</url>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <d1_libclient_version>1.2.4</d1_libclient_version>
-        <d1_common_java_version>1.1.3</d1_common_java_version>
-        <d1_portal_version>1.2.0</d1_portal_version>
+        <d1_libclient_version>1.4.0-SNAPSHOT</d1_libclient_version>
+        <d1_portal_version>1.3.0-SNAPSHOT</d1_portal_version>
         <metacat_common_version>2.4.2-SNAPSHOT</metacat_common_version>            
     </properties>
     <repositories>
@@ -207,12 +206,16 @@
 					<groupId>xerces</groupId>
 					<artifactId>xercesImpl</artifactId>
 		        </exclusion>
+		        <exclusion>
+					<groupId>com.hp.hpl.jena</groupId>
+					<artifactId>jena</artifactId>
+				</exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>edu.ucsb.nceas</groupId>
 			<artifactId>ezid</artifactId>
-			<version>1.0.0</version>
+			<version>1.0.1-SNAPSHOT</version>
 		</dependency>
 		<!-- geotools -->
 		<dependency>
@@ -327,5 +330,11 @@
             <artifactId>jbcrypt</artifactId>
             <version>0.3m</version>
         </dependency>
+        <!-- jena tdb -->
+        <dependency>
+			<groupId>org.apache.jena</groupId>
+			<artifactId>jena-tdb</artifactId>
+			<version>1.0.0</version>
+		</dependency>
     </dependencies>
 </project>
