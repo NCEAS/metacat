@@ -418,7 +418,10 @@ public class SolrIndex {
 	        for (String fieldName: fields.keySet()) {
 	    		List<Object> values = fields.get(fieldName);
 	    		for (Object value: values) {
-	    	    	doc.updateOrAddField(fieldName, value.toString());
+	    			if (!doc.hasFieldWithValue(fieldName, value.toString())) {
+		    			doc.addField(new SolrElementField(fieldName, value.toString()));
+	    			}
+	    	    	//doc.updateOrAddField(fieldName, value.toString());
 	    		}
 	    	}
 	        
