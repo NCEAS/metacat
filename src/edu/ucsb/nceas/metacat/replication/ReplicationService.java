@@ -420,8 +420,35 @@ public class ReplicationService extends BaseService {
 				String serverid = ((String[]) params.get("serverid"))[0];
 				serverLocation = Integer.parseInt(serverid);
 				udoi.setServerLocation(serverLocation );
-				udoi.upgrade();
-				out.write("Generated ORE maps for server " + serverid);
+								
+				//Get the list of IDs, if any were given
+				String ids = ((String[]) params.get("ids"))[0];
+				
+				//Get the formatId, if one was given
+				String formatIds = ((String[]) params.get("formatIds"))[0];
+				
+				//Allow DOI's to be updated by both ID and formatId
+				if((ids.length() > 0) || (formatIds.length() > 0)){
+					//If at least one ID was given, update their DOI registrations
+					if(ids.length() > 0){
+						String delimeter = " "; 
+						String[] idArray = ids.split(delimeter);	
+						List<String> idList = Arrays.asList(idArray);
+						udoi.upgradeById(idList);
+					}
+					
+					//If at least one formatId was given, update the DOI registrations
+					if(formatIds.length() > 0){
+						String delimeter = " "; 
+						String[] formatIdArray = formatIds.split(delimeter);	
+						List<String> formatIdList = Arrays.asList(formatIdArray);
+						udoi.upgradeByFormatId(formatIdList);
+					}
+				}
+				else{
+					udoi.upgrade();
+				}
+				out.write("Updated DOI's for server " + serverid);
 				
 			} else if (subaction.equals("removeinvalidreplicas")) {
 				RemoveInvalidReplicas rir = new RemoveInvalidReplicas();
@@ -526,6 +553,10 @@ public class ReplicationService extends BaseService {
 					out.write("<input name='configureType' type='hidden' value='replication'/>");
 					out.write("<input name='action' type='hidden' value='servercontrol'/>");
 					out.write("<input name='subaction' type='hidden' value='updatedoi'/>");
+					out.write("<label>Update by ID:</label>");
+					out.write("<textarea name='ids'></textarea>");
+					out.write("<label>Update by formatId:</label>");
+					out.write("<textarea name='formatIds'></textarea>");
 					out.write("<input type='submit' value='Update DOIs'/>");
 					out.write("</form></td>");
 					

@@ -26,6 +26,7 @@ package edu.ucsb.nceas.metacat.admin.upgrade;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +45,7 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
 /**
  * Updates existing DOI registrations for EML versions
- * @author leinfelder
+ * @author leinfelder, walker
  *
  */
 public class UpdateDOI implements UpgradeUtilityInterface {
@@ -61,16 +62,19 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 		this.serverLocation = serverLocation;
 	}
 	
+	/** 
+	 * Update the registration of a list of DOIs
+	 * @param identifiers - DOIs to update
+	 */
 	private void updateDOIRegistration(List<String> identifiers) {
 		for (String pid: identifiers) {
 			try {
-
-				String docid = DocumentUtil.getDocIdFromAccessionNumber(pid);
-				int rev = DocumentUtil.getRevisionFromAccessionNumber(pid);
-				String guid = IdentifierManager.getInstance().getGUID(docid, rev);
+				//Create an identifier and retrieve the SystemMetadata for this guid
 				Identifier identifier = new Identifier();
-				identifier.setValue(guid);
-				SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+				identifier.setValue(pid);
+				SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+				
+				//Update the registration
 				DOIService.getInstance().registerDOI(sysMeta);
 			} catch (Exception e) {
 				// what to do? nothing
@@ -81,6 +85,9 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 		}
 	}
 	
+	/**
+	 * Update the DOI registration of all ids in this server with EML formatIds
+	 */
     public boolean upgrade() throws AdminException {
         boolean success = true;
         
@@ -112,6 +119,58 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 		}
         
         
+        return success;
+    }
+    
+	/**
+	 * Update the registration of all DOIs with the specified guids in this server
+	 * @param ids - a List of DOIs to update
+	 */
+    public boolean upgradeById(List<String> ids) throws AdminException {
+        boolean success = true;
+        
+        try{
+        	updateDOIRegistration(ids);
+	    } catch (Exception e) {
+			String msg = "Problem updating DOIs: " + e.getMessage();
+			log.error(msg, e);
+			success = false;
+			throw new AdminException(msg);
+		}
+        return success;
+    }
+    
+    /**
+     * Update the registration of all DOIs in this server with the specified formatId
+     * @param formatIds - a List of formatIDs used to filter DOI selection 
+     */
+    public boolean upgradeByFormatId(List<String> formatIds) throws AdminException {
+        boolean success = true;  
+        List<String> idList = new ArrayList<String>();
+        
+        try{
+        	for (String formatId: formatIds) {        		
+	        	//Get all the docids with this formatId
+        		List<String> docids = DBUtil.getAllDocidsByType(formatId, true, serverLocation);
+	        	
+        		//get the guids for each docid and add to our list
+	        	for(String id: docids){
+	        		String docid = DocumentUtil.getDocIdFromAccessionNumber(id);
+					int rev = DocumentUtil.getRevisionFromAccessionNumber(id);
+					String guid = IdentifierManager.getInstance().getGUID(docid, rev);	
+					idList.add(guid);
+	        	}
+	        	
+	        	//Update the registration for all these guids
+	            Collections.sort(idList);
+	            updateDOIRegistration(idList);
+        	}
+	    } catch (Exception e) {
+			String msg = "Problem updating DOIs: " + e.getMessage();
+			log.error(msg, e);
+			success = false;
+			throw new AdminException(msg);
+		}
         return success;
     }
     
