@@ -391,9 +391,10 @@ public class SolrIndex {
 	    	SolrDoc doc = new SolrDoc();
 	    	
 	    	// include existing values if they exist
+	        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+
 	        if (res.getResults().size() > 0) {
 		        SolrDocument orig = res.getResults().get(0);
-		        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
 		    	for (String fieldName: orig.getFieldNames()) {
 		        	//  don't transfer the copyTo fields, otherwise there are errors
 		        	if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
@@ -419,9 +420,12 @@ public class SolrIndex {
 	    		List<Object> values = fields.get(fieldName);
 	    		for (Object value: values) {
 	    			if (!doc.hasFieldWithValue(fieldName, value.toString())) {
-		    			doc.addField(new SolrElementField(fieldName, value.toString()));
+	    				if (indexSchema.getField(fieldName).multiValued()) {
+	    					doc.addField(new SolrElementField(fieldName, value.toString()));
+	    				} else {
+	    	    	    	doc.updateOrAddField(fieldName, value.toString());
+	    				}
 	    			}
-	    	    	//doc.updateOrAddField(fieldName, value.toString());
 	    		}
 	    	}
 	        
