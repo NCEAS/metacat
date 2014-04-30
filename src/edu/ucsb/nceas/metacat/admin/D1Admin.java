@@ -34,6 +34,7 @@ import org.apache.log4j.Logger;
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
 import org.dataone.client.auth.CertificateManager;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.types.v1.Node;
 import org.dataone.service.types.v1.NodeList;
@@ -293,6 +294,7 @@ public class D1Admin extends MetacatAdmin {
 				} else {
 					
 					PropertyService.setProperty("D1Client.CN_URL", cnURL);
+					Settings.getConfiguration().setProperty("D1Client.CN_URL", cnURL);
 					PropertyService.setPropertyNoPersist("dataone.nodeName", nodeName);
 					PropertyService.setPropertyNoPersist("dataone.nodeDescription", nodeDescription);					
 					PropertyService.setPropertyNoPersist("dataone.nodeSynchronize", Boolean.toString(synchronize));
@@ -432,7 +434,7 @@ public class D1Admin extends MetacatAdmin {
         logMetacat.debug("Setting client certificate location.");
         String mnCertificatePath = PropertyService.getProperty("D1Client.certificate.file");
         CertificateManager.getInstance().setCertificateLocation(mnCertificatePath);
-        CNode cn = D1Client.getCN();
+        CNode cn = D1Client.getCN(PropertyService.getProperty("D1Client.CN_URL"));
         
         // check if this is new or an update
         boolean update = isNodeRegistered(node.getIdentifier().getValue());
