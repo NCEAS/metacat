@@ -79,7 +79,8 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 		TestSuite suite = new TestSuite();
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotations"));
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
-		suite.addTest(new DatapackageSummarizerTest("testStandaloneAnnotation"));
+//		suite.addTest(new DatapackageSummarizerTest("testStandaloneAnnotation"));
+		suite.addTest(new DatapackageSummarizerTest("testIndexAnnotations"));
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateRandomAnnotation"));
 		return suite;
 	}
@@ -169,7 +170,15 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 		// check that it was parsed?
 	}
 	
+	public void testIndexAnnotations() throws Exception {
+		testGenerateAnnotations(true);
+	}
+	
 	public void testGenerateAnnotations() throws Exception {
+		testGenerateAnnotations(false);
+	}
+	
+	private void testGenerateAnnotations(boolean indexOnly) throws Exception {
 		
 		// summarize the packages
 		DatapackageSummarizer ds = new DatapackageSummarizer();
@@ -206,6 +215,12 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 				Identifier pid = new Identifier();
 				pid.setValue(guid);
 				identifiers.add(pid);
+				
+				// just index the annotation, don't save it
+				if (indexOnly) {
+					ds.indexEphemeralAnnotation(pid);
+					continue;
+				}
 				
 				String annotation = ds.generateAnnotation(pid);
 				Identifier annotationPid = new Identifier();
