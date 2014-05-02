@@ -9,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.w3c.dom.Node;
 
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class OrcidService {
@@ -49,8 +48,7 @@ public class OrcidService {
 			
 			String url = REST_URL + "?q=" + urlParameters + "&rows=1";
 			URL restURL = new URL(url);
-			//InputStream is = restURL.openStream();
-			InputStream is = ReplicationService.getURLStream(restURL);
+			InputStream is = restURL.openStream();
 			String results = IOUtils.toString(is);
 			logMetacat.debug("RESULTS: " + results);
 			Node doc = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new StringReader(results));

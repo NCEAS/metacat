@@ -12,7 +12,6 @@ import org.w3c.dom.NodeList;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.rdf.model.Resource;
 
-import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class BioPortalService {
@@ -43,7 +42,7 @@ public class BioPortalService {
 			
 			String url = REST_URL + "/annotator?" + urlParameters ;
 			URL restURL = new URL(url);
-			InputStream is = ReplicationService.getURLStream(restURL);
+			InputStream is = restURL.openStream();
 			Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new InputStreamReader(is, "UTF-8"));
 			NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
 			if (classNodeList != null && classNodeList.getLength() > 0) {

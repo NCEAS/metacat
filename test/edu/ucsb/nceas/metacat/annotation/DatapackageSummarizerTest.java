@@ -81,7 +81,6 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 //		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
 //		suite.addTest(new DatapackageSummarizerTest("testStandaloneAnnotation"));
 		suite.addTest(new DatapackageSummarizerTest("testIndexAnnotations"));
-//		suite.addTest(new DatapackageSummarizerTest("testGenerateRandomAnnotation"));
 		return suite;
 	}
 	
@@ -116,20 +115,6 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 	 * @throws Exception
 	 */
 	public void testGenerateAnnotation() throws Exception {
-		this.testGenerateAnnotation_base(false);
-	}
-	
-	/**
-	 * Generate a bunch of random annotations
-	 * @throws Exception
-	 */
-	public void testGenerateRandomAnnotation() throws Exception {
-		for (int i = 0; i < 5; i++) {
-			this.testGenerateAnnotation_base(true);
-		}
-	}
-
-	private void testGenerateAnnotation_base(boolean randomize) throws Exception {
 		Identifier metadataPid = new Identifier();
 		metadataPid.setValue("testAnnotation.eml." + System.currentTimeMillis());
 		Session session = getTestSession();
@@ -148,7 +133,6 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 
 		// generate the annotation for the metadata
 		DatapackageSummarizer ds = new DatapackageSummarizer();
-		ds.randomize = randomize;
 		String rdfContent = ds.generateAnnotation(metadataPid);
 		
 		// save the annotation

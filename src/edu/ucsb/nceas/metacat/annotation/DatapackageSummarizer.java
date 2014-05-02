@@ -41,7 +41,6 @@ import com.hp.hpl.jena.rdf.model.ModelFactory;
 import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.tdb.TDBFactory;
-import com.hp.hpl.jena.util.iterator.ExtendedIterator;
 
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.DocumentImpl;
@@ -79,9 +78,6 @@ public class DatapackageSummarizer {
     
 	public static String OBOE_SBC = "OBOE-SBC";
     
-    // package visibility for testing only
-    boolean randomize = false;
-    
     public void indexEphemeralAnnotation(Identifier metadataPid) throws Exception {
 
     	// generate an annotation for the metadata given
@@ -92,7 +88,7 @@ public class DatapackageSummarizer {
 		
     	// read the annotation into the triplestore
 		InputStream source = IOUtils.toInputStream(rdfContent, "UTF-8");
-    	String name = "http://annotation";
+    	String name = "http://annotation/" + metadataPid.getValue();
     	boolean loaded = dataset.containsNamedModel(name);
     	if (loaded) {
     		dataset.removeNamedModel(name);
@@ -108,15 +104,14 @@ public class DatapackageSummarizer {
         Map<String, List<Object>> fields = new HashMap<String, List<Object>>();
 		
         // TODO: look up the query to use (support multiple like in the indexing project)
-        String q = null;
-        
-        q = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
+        List<String> queries = new ArrayList<String>();        
+        queries.add("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
         	+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
         	+ "PREFIX owl: <http://www.w3.org/2002/07/owl#> " 
 			+ "PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> "
 			+ "PREFIX oa: <http://www.w3.org/ns/oa#> "
 			+ "PREFIX dcterms: <http://purl.org/dc/terms/> "
-			+ "SELECT ?standard_sm ?id "
+			+ "SELECT ?standard_sm ?pid "
 			+ "FROM <$GRAPH_NAME> "
 			+ "WHERE { "
 			+ "		?measurement rdf:type oboe-core:Measurement . "
@@ -128,44 +123,67 @@ public class DatapackageSummarizer {
 			+ "		?annotation oa:hasBody ?measurement . "												
 			+ "		?annotation oa:hasTarget ?target . "
 			+ "		?target oa:hasSource ?metadata . "
-			+ "		?metadata dcterms:identifier ?id . " 
-			+ "}";
-
-        q = q.replaceAll("\\$GRAPH_NAME", name);
-		Query query = QueryFactory.create(q);
-		QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
-		ResultSet results = qexec.execSelect();
-		
-		while (results.hasNext()) {
-			QuerySolution solution = results.next();
-			System.out.println(solution.toString());
+			+ "		?metadata dcterms:identifier ?pid . " 
+			+ "}");
+        
+        queries.add("PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> "
+    		+ "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
+    		+ "PREFIX owl: <http://www.w3.org/2002/07/owl#> "
+    		+ "PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> "
+    		+ "PREFIX oa: <http://www.w3.org/ns/oa#> "
+    		+ "PREFIX dcterms: <http://purl.org/dc/terms/> "
+    		+ "SELECT ?characteristic_sm ?pid "
+    		+ "FROM <$GRAPH_NAME>"
+    		+ "WHERE { "
+    		+ "		?measurement rdf:type oboe-core:Measurement . "
+    		+ "		?measurement rdf:type ?restriction . "
+			+ "		?restriction owl:onProperty oboe-core:ofCharacteristic . "
+			+ "		?restriction owl:allValuesFrom ?characteristic . "
+			+ "		?characteristic rdfs:subClassOf+ ?characteristic_sm . "
+			+ "		?characteristic_sm rdfs:subClassOf oboe-core:Characteristic . "
+			+ "		?annotation oa:hasBody ?measurement .	"											
+			+ "		?annotation oa:hasTarget ?target . "
+			+ "		?target oa:hasSource ?metadata . "
+			+ "		?metadata dcterms:identifier ?pid . " 
+			+ "}");
+        
+        for (String q: queries) {
+	        q = q.replaceAll("\\$GRAPH_NAME", name);
+			Query query = QueryFactory.create(q);
+			QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
+			ResultSet results = qexec.execSelect();
 			
-			// find the index document we are trying to augment with the annotation
-			if (solution.contains("id")) {
-				String id = solution.getLiteral("id").getString();
-				if (!id.equals(metadataPid.getValue())) {
-					// skip any solution that does not annotate the given pid
-					continue;
-				}
+			while (results.hasNext()) {
+				QuerySolution solution = results.next();
+				System.out.println(solution.toString());
 				
-			}
-			// loop through the solution variables, add an index value for each
-			Iterator<String> varNameIter = solution.varNames();
-			while (varNameIter.hasNext()) {
-				String key = varNameIter.next();
-				if (key.equals("id")) {
-					// don't include the id
-					continue;
+				// find the index document we are trying to augment with the annotation
+				if (solution.contains("pid")) {
+					String id = solution.getLiteral("pid").getString();
+					if (!id.equals(metadataPid.getValue())) {
+						// skip any solution that does not annotate the given pid
+						continue;
+					}
+					
 				}
-				String value = solution.get(key).toString();
-				List<Object> values = fields.get(key);
-				if (values  == null) {
-					values = new ArrayList<Object>();
+				// loop through the solution variables, add an index value for each
+				Iterator<String> varNameIter = solution.varNames();
+				while (varNameIter.hasNext()) {
+					String key = varNameIter.next();
+					if (key.equals("pid")) {
+						// don't include the id
+						continue;
+					}
+					String value = solution.get(key).toString();
+					List<Object> values = fields.get(key);
+					if (values  == null) {
+						values = new ArrayList<Object>();
+					}
+					values.add(value);
+					fields.put(key, values);
 				}
-				values.add(value);
-				fields.put(key, values);
 			}
-		}
+        }
 
 		// clean up the triple store
 		TDBFactory.release(dataset);
@@ -363,17 +381,11 @@ public class DatapackageSummarizer {
 	private Resource lookupStandard(OntClass standardClass, Attribute attribute) {
 		// what's our unit?
 		String unit = attribute.getUnit().toLowerCase();
-		List<String> tokens = Arrays.asList(unit.split(" "));
-
+		
+		/*
 		boolean found = false;
+		List<String> tokens = Arrays.asList(unit.split(" "));
 		ExtendedIterator iter = standardClass.listSubClasses(false);
-		if (randomize) {
-			List subclasses = iter.toList();
-			int size = subclasses.size();
-			Long index = new Long(Math.round(Math.floor((Math.random() * (size-1)))));
-			OntClass subclass = (OntClass) subclasses.get( index.intValue() );
-			return subclass;
-		}
 		while (iter.hasNext()) {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
@@ -388,25 +400,23 @@ public class DatapackageSummarizer {
 				return subclass;
 			}
 		}
+		*/
+		
 		// try to look it up if we got this far
 		return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE_SBC);
 	}
 	
 	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
-		// what's our label?
+		// what are we looking for?
 		String label = attribute.getLabel().toLowerCase();
-		List<String> tokens = Arrays.asList(label.split(" "));
+		String definition = attribute.getDefinition();
+		String text = label + " " + definition;
 		
+		/*
+		// find something that matches		
 		boolean found = false;
-		// find something that matches
+		List<String> tokens = Arrays.asList(label.split(" "));
 		ExtendedIterator iter = characteristicClass.listSubClasses();
-		if (randomize) {
-			List subclasses = iter.toList();
-			int size = subclasses.size();
-			Long index = new Long(Math.round(Math.floor((Math.random() * (size-1)))));
-			OntClass subclass = (OntClass) subclasses.get( index.intValue() );
-			return subclass;
-		}
 		while (iter.hasNext()) {
 			OntClass subclass = (OntClass) iter.next();
 			String subclassName = subclass.getLocalName().toLowerCase();
@@ -421,9 +431,10 @@ public class DatapackageSummarizer {
 				return subclass;
 			}
 		}
+		*/
 		
-		// try to look it up if we got this far
-		return BioPortalService.lookupAnnotationClass(characteristicClass, attribute.getDefinition(), OBOE_SBC);
+		// try to look it up from the service
+		return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE_SBC);
 		
 	}
 	
