@@ -735,6 +735,24 @@ public class MetaCatServlet extends HttpServlet {
 						skins[0] = skin;
 						params.put("qformat", skins);
 					}
+					
+					// attempt to redirect to metacatui (#view/{pid}) if not getting the raw XML
+					// see: https://projects.ecoinformatics.org/ecoinfo/issues/6546
+					if (!skin.equals("xml")) {
+						String uiContext = PropertyService.getProperty("ui.context");
+						String docidNoRev = DocumentUtil.getDocIdFromAccessionNumber(docidToRead);
+						int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
+						String pid = null;
+						try {
+							pid = IdentifierManager.getInstance().getGUID(docidNoRev, rev);
+							response.sendRedirect(SystemUtil.getServerURL() + "/" + uiContext + "/#view/" + pid );
+							return;
+						} catch (McdbDocNotFoundException nfe) {
+							logMetacat.warn("Could not locate PID for docid: " + docidToRead, nfe);
+						}
+					}
+					
+					// otherwise carry on as usual
 					handler.handleReadAction(params, request, response, "public", null, null);
 					return;
 				}
