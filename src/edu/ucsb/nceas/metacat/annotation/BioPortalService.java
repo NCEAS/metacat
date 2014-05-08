@@ -9,6 +9,7 @@ import org.apache.log4j.Logger;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
+import com.hp.hpl.jena.ontology.ConversionException;
 import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.rdf.model.Resource;
 
@@ -31,6 +32,11 @@ public class BioPortalService {
 	 */
 	public static Resource lookupAnnotationClass(OntClass superClass, String text, String ontologies) {
 		
+		// no point calling the service
+		if (text == null || text.length() == 0) {
+			return null;
+		}
+		
 		try {
 			
 			String urlParameters = "apikey=" + API_KEY;
@@ -46,13 +52,24 @@ public class BioPortalService {
 			Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new InputStreamReader(is, "UTF-8"));
 			NodeList classNodeList = XMLUtilities.getNodeListWithXPath(doc, "//annotation/annotatedClass/id");
 			if (classNodeList != null && classNodeList.getLength() > 0) {
-				String classURI = classNodeList.item(0).getFirstChild().getNodeValue();
-				logMetacat.info("annotator suggested: " + classURI);
-				Resource subclass = superClass.getModel().getResource(classURI);
-				// check that it is a subclass of superClass
-				if (superClass.hasSubClass(subclass)) {
-					return subclass;
+				for (int i = 0; i < classNodeList.getLength(); i++) {
+					String classURI = classNodeList.item(i).getFirstChild().getNodeValue();
+					logMetacat.info("annotator suggested: " + classURI);
+					Resource subclass = superClass.getModel().getResource(classURI);
+					// check that it is a subclass of superClass
+					boolean isSubclass = false;
+					try {
+						isSubclass = superClass.hasSubClass(subclass);
+					} catch (ConversionException ce) {
+						logMetacat.warn("Skipping unknown subclass: " + classURI, ce);
+						// try the next one
+						continue;
+					}
+					if (isSubclass) {
+						return subclass;
+					}
 				}
+				
 			}
 		} catch (Exception e) {
 			logMetacat.error("Could not lookup BioPortal annotation for text=" + text, e);
