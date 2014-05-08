@@ -86,7 +86,8 @@ public class DatapackageSummarizer {
 		
 		// load to triple store
 		//Dataset dataset = TDBFactory.createDataset("./tbd");
-		Dataset dataset = DatasetFactory.createMem();
+		Dataset dataset = TDBFactory.createDataset();
+		//Dataset dataset = DatasetFactory.createMem();
 		
     	// read the annotation into the triplestore
 		InputStream source = IOUtils.toInputStream(rdfContent, "UTF-8");
