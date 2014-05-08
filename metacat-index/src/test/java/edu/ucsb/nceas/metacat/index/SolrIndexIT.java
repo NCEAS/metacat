@@ -4,9 +4,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -74,11 +71,10 @@ public class SolrIndexIT  {
     	
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
-       InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
        //List<String> chain = null;
        Identifier pid = new Identifier();
        pid.setValue(id);
-       solrIndex.update(pid, systemMetadata, emlInputStream);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        //assertTrue(ids.size() == 1);
@@ -100,12 +96,11 @@ public class SolrIndexIT  {
     public void testUpdate() throws Exception {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAUPDATEFILEPATH);
-       InputStream emlInputStream = new FileInputStream(new File(EMLUPDATEFILEPATH));  
        /*obsoletes.add(id);
        obsoletes.add("tao");*/
        Identifier pid = new Identifier();
        pid.setValue(newId);
-       solrIndex.update(pid, systemMetadata, emlInputStream);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(result.contains("version2"));
@@ -115,8 +110,7 @@ public class SolrIndexIT  {
        SystemMetadata obsoletedSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        assertTrue(obsoletedSystemMetadata.getIdentifier().getValue().equals(obsoletedPid.getValue()));
        obsoletedSystemMetadata.setObsoletedBy(pid);
-       InputStream obsoletedEmlInputStream = new FileInputStream(new File(EMLFILEPATH));  
-       solrIndex.update(obsoletedPid, obsoletedSystemMetadata, obsoletedEmlInputStream);
+       solrIndex.update(obsoletedPid, obsoletedSystemMetadata, EMLFILEPATH);
        
        // old version should be marked as obsoleted and not returned
        result = doQuery(solrIndex.getSolrServer(), "&fq=-obsoletedBy:*");
@@ -133,13 +127,12 @@ public class SolrIndexIT  {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        //System metadata's archive is true.
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAARCHIVEFILEPATH);
-       InputStream emlInputStream = new FileInputStream(new File(EMLUPDATEFILEPATH));    
        /*ArrayList<String> obsoletes = new ArrayList<String>();
        obsoletes.add(id);
        obsoletes.add("tao");*/
        Identifier pid = new Identifier();
        pid.setValue(newId);
-       solrIndex.update(pid, systemMetadata, emlInputStream);
+       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(!result.contains("version2"));
@@ -153,10 +146,9 @@ public class SolrIndexIT  {
     public void testDynamicFields() throws Exception {
     	
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
-       InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
        Identifier pid = new Identifier();
        pid.setValue(id);
-       solrIndex.update(pid, systemMetadata, emlInputStream);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        boolean foundId = false;
@@ -197,10 +189,9 @@ public class SolrIndexIT  {
     public void testOpenAnnotation() throws Exception {
     	
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
-       InputStream emlInputStream = new FileInputStream(new File(EMLFILEPATH)); 
        Identifier pid = new Identifier();
        pid.setValue(id);
-       solrIndex.update(pid, systemMetadata, emlInputStream);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        boolean foundId = false;
@@ -214,10 +205,9 @@ public class SolrIndexIT  {
        
        // augment with the dynamic field
        SystemMetadata annotationSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, ANNOTATION_SYSTEM_META_FILE_PATH);
-       InputStream annotationInputStream = new FileInputStream(new File(OA_FILE_PATH)); 
        Identifier annotationPid = new Identifier();
        annotationPid.setValue(annotation_id);
-       solrIndex.update(annotationPid, annotationSystemMetadata, annotationInputStream);
+       solrIndex.update(annotationPid, annotationSystemMetadata, OA_FILE_PATH);
        String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=standard_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram\"");
        assertTrue(annotationResult.contains(pid.getValue()));
        assertTrue(annotationResult.contains("http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram"));

@@ -23,7 +23,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -176,7 +175,7 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private Map<String, SolrDoc> process(String id, SystemMetadata systemMetadata, InputStream dataStream)
+    private Map<String, SolrDoc> process(String id, SystemMetadata systemMetadata, String objectPath)
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, JiBXException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType{
 
@@ -209,6 +208,7 @@ public class SolrIndex {
                                 // metadata document.
                                 // note that resource map processing touches all objects
                                 // referenced by the resource map.
+                            	InputStream dataStream = new FileInputStream(objectPath);
                                 Document docObject = generateXmlDocument(dataStream);
                                 if (docObject == null) {
                                     throw new Exception("Could not load OBJECT for ID " + id );
@@ -333,14 +333,14 @@ public class SolrIndex {
      * @param data
      * @throws SolrServerException
      */
-    private void checkParams(Identifier pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException {
+    private void checkParams(Identifier pid, SystemMetadata systemMetadata, String objectPath) throws SolrServerException {
         if(pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
             throw new SolrServerException("The identifier of the indexed document should not be null or blank.");
         }
         if(systemMetadata == null) {
             throw new SolrServerException("The system metadata of the indexed document "+pid.getValue()+ " should not be null.");
         }
-        if(data == null) {
+        if(objectPath == null) {
             throw new SolrServerException("The indexed document itself for pid "+pid.getValue()+" should not be null.");
         }
     }
@@ -349,7 +349,7 @@ public class SolrIndex {
      * Insert the indexes for a document.
      * @param pid  the id of this document
      * @param systemMetadata  the system metadata associated with the data object
-     * @param data  the data object itself
+     * @param data  the path to the object file itself
      * @throws SolrServerException 
      * @throws JiBXException 
      * @throws EncoderException 
@@ -357,11 +357,11 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private synchronized void insert(Identifier pid, SystemMetadata systemMetadata, InputStream data) 
+    private synchronized void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath) 
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, SolrServerException, JiBXException, EncoderException, NotImplemented, NotFound, UnsupportedType {
-        checkParams(pid, systemMetadata, data);
-        Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, data);
+        checkParams(pid, systemMetadata, objectPath);
+        Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, objectPath);
         
         //transform the Map to the SolrInputDocument which can be used by the solr server
         if(docs != null) {
@@ -514,11 +514,9 @@ public class SolrIndex {
      */
     public void update(Identifier pid, SystemMetadata systemMetadata) {
         String objectPath = null;
-        InputStream data = null;
         try {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-            data = new FileInputStream(objectPath);
-            update(pid, systemMetadata, data);
+            update(pid, systemMetadata, objectPath);
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
             String error = "SolrIndex.update - could not update the solr index since " + e.getMessage();
@@ -550,10 +548,10 @@ public class SolrIndex {
      * @throws JiBXException
      * @throws EncoderException
      */
-    void update(Identifier pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException, 
+    void update(Identifier pid, SystemMetadata systemMetadata, String objectPath) throws SolrServerException, 
                                 ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, 
                                 IOException, SAXException, ParserConfigurationException, OREParserException, JiBXException, EncoderException {
-        checkParams(pid, systemMetadata, data);
+        checkParams(pid, systemMetadata, objectPath);
         boolean isArchive = systemMetadata.getArchived() != null && systemMetadata.getArchived();
         if(isArchive ) {
             //delete the index for the archived objects
@@ -561,7 +559,7 @@ public class SolrIndex {
             log.info("SolrIndex.update============================= archive the idex for the identifier "+pid);
         } else {
             //generate index for either add or update.
-            insert(pid, systemMetadata, data);
+            insert(pid, systemMetadata, objectPath);
             log.info("SolrIndex.update============================= insert index for the identifier "+pid);
         }
     }
