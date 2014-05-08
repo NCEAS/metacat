@@ -31,6 +31,7 @@ import com.hp.hpl.jena.ontology.OntClass;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.Ontology;
 import com.hp.hpl.jena.query.Dataset;
+import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
@@ -84,7 +85,8 @@ public class DatapackageSummarizer {
 		String rdfContent = this.generateAnnotation(metadataPid);
 		
 		// load to triple store
-		Dataset dataset = TDBFactory.createDataset("./tbd");
+		//Dataset dataset = TDBFactory.createDataset("./tbd");
+		Dataset dataset = DatasetFactory.createMem();
 		
     	// read the annotation into the triplestore
 		InputStream source = IOUtils.toInputStream(rdfContent, "UTF-8");
@@ -94,8 +96,9 @@ public class DatapackageSummarizer {
     		dataset.removeNamedModel(name);
     		loaded = false;
     	}
+		OntModel ontModel = null;
 		if (!loaded) {
-			OntModel ontModel = ModelFactory.createOntologyModel();
+			ontModel = ModelFactory.createOntologyModel();
 			ontModel.read(source, name);
 			dataset.addNamedModel(name, ontModel);
 		}
@@ -185,6 +188,12 @@ public class DatapackageSummarizer {
 			}
         }
 
+        // remove the graph to save storage
+//        ontModel.removeAll();
+//        ontModel.commit();
+//        ontModel.close();
+		dataset.removeNamedModel(name);
+        
 		// clean up the triple store
 		TDBFactory.release(dataset);
         
