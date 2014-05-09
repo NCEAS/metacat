@@ -28,10 +28,10 @@ import com.hp.hpl.jena.ontology.AllValuesFromRestriction;
 import com.hp.hpl.jena.ontology.Individual;
 import com.hp.hpl.jena.ontology.ObjectProperty;
 import com.hp.hpl.jena.ontology.OntClass;
+import com.hp.hpl.jena.ontology.OntDocumentManager;
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.Ontology;
 import com.hp.hpl.jena.query.Dataset;
-import com.hp.hpl.jena.query.DatasetFactory;
 import com.hp.hpl.jena.query.Query;
 import com.hp.hpl.jena.query.QueryExecution;
 import com.hp.hpl.jena.query.QueryExecutionFactory;
@@ -78,6 +78,22 @@ public class DatapackageSummarizer {
     public static String cito =  "http://purl.org/spar/cito/";
     
 	public static String OBOE_SBC = "OBOE-SBC";
+	
+	private static boolean cacheInitialized;
+	
+	private static void initializeCache() {
+		if (!cacheInitialized) {
+			// cache the ontologies we use
+			OntDocumentManager.getInstance().addModel(oboe, ModelFactory.createOntologyModel().read(oboe));
+			OntDocumentManager.getInstance().addModel(oboe_sbc, ModelFactory.createOntologyModel().read(oboe_sbc));
+			OntDocumentManager.getInstance().addModel(oa, ModelFactory.createOntologyModel().read(oa_source));
+			OntDocumentManager.getInstance().addModel(dcterms, ModelFactory.createOntologyModel().read(dcterms_source));
+			OntDocumentManager.getInstance().addModel(foaf, ModelFactory.createOntologyModel().read(foaf_source));
+			OntDocumentManager.getInstance().addModel(prov, ModelFactory.createOntologyModel().read(prov));
+			OntDocumentManager.getInstance().addModel(cito, ModelFactory.createOntologyModel().read(cito));
+			cacheInitialized = true;
+		}
+	}
     
     public void indexEphemeralAnnotation(Identifier metadataPid) throws Exception {
 
@@ -216,20 +232,22 @@ public class DatapackageSummarizer {
 		Ontology ont = m.createOntology("http://annotation/" + metadataPid.getValue());
 		
 		// TODO: import the ontologies we use
+		initializeCache();
+		
 		ont.addImport(m.createResource(oboe));
-		m.addSubModel(ModelFactory.createOntologyModel().read(oboe));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(oboe));
 		
 		ont.addImport(m.createResource(oboe_sbc));
-		m.addSubModel(ModelFactory.createOntologyModel().read(oboe_sbc));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(oboe_sbc));
 		
 		ont.addImport(m.createResource(oa));
-		m.addSubModel(ModelFactory.createOntologyModel().read(oa_source));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(oa));
 
 		ont.addImport(m.createResource(dcterms));
-		m.addSubModel(ModelFactory.createOntologyModel().read(dcterms_source));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(dcterms));
 
 		ont.addImport(m.createResource(foaf));
-		m.addSubModel(ModelFactory.createOntologyModel().read(foaf_source));
+		m.addSubModel(OntDocumentManager.getInstance().getModel(foaf));
 		
 		ont.addImport(m.createResource(prov));
 		//m.addSubModel(ModelFactory.createOntologyModel().read(prov_source));
