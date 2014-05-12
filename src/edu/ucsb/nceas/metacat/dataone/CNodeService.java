@@ -1460,7 +1460,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               logMetacat.debug("Locked identifier " + pid.getValue());
               sysmeta.setSerialVersion(BigInteger.ONE);
               sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-              sysmeta.setArchived(false); // this is a create op, not update
+              //sysmeta.setArchived(false); // this is a create op, not update
               
               // the CN should have set the origin and authoritative member node fields
               try {
