@@ -100,7 +100,7 @@ public class SolrIndexIT  {
        obsoletes.add("tao");*/
        Identifier pid = new Identifier();
        pid.setValue(newId);
-       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
+       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(result.contains("version2"));
@@ -191,6 +191,7 @@ public class SolrIndexIT  {
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        Identifier pid = new Identifier();
        pid.setValue(id);
+       DistributedMapsFactory.getSystemMetadataMap().put(pid, systemMetadata);
        solrIndex.update(pid, systemMetadata, EMLFILEPATH);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
@@ -207,6 +208,7 @@ public class SolrIndexIT  {
        SystemMetadata annotationSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, ANNOTATION_SYSTEM_META_FILE_PATH);
        Identifier annotationPid = new Identifier();
        annotationPid.setValue(annotation_id);
+       DistributedMapsFactory.getSystemMetadataMap().put(annotationPid, annotationSystemMetadata);
        solrIndex.update(annotationPid, annotationSystemMetadata, OA_FILE_PATH);
        String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=standard_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram\"");
        assertTrue(annotationResult.contains(pid.getValue()));
