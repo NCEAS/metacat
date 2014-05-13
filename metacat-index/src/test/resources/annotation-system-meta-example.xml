@@ -4,7 +4,7 @@
 	<formatId>http://www.w3.org/TR/rdf-syntax-grammar</formatId>
 	<size>0</size>
 	<checksum algorithm="MD5">TBD</checksum>
-	<rightsHolder>public</rightsHolder>
+	<rightsHolder>cn=test,dc=dataone,dc=org</rightsHolder>
 	<accessPolicy>
 		<allow>
 			<subject>public</subject>

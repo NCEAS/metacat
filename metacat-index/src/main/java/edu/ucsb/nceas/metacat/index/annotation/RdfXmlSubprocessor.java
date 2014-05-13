@@ -21,8 +21,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -55,6 +57,10 @@ import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.util.AccessUtil;
+import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
@@ -72,6 +78,7 @@ import com.hp.hpl.jena.tdb.TDBFactory;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
+import edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
 
 
 /**
@@ -147,6 +154,21 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 					// find the index document we are trying to augment with the annotation
 					if (solution.contains("pid")) {
 						String id = solution.getLiteral("pid").getString();
+						
+						// check if anyone with permissions on the annotation document has write permission on the document we are annotating
+						boolean statementAuthorized = false;
+						try {
+							HashMap<Subject, Set<Permission>> annotationPermissionMap = AccessUtil.getPermissionMap(DistributedMapsFactory.getSystemMetadata(name).getAccessPolicy());
+							annotationPermissionMap.put(DistributedMapsFactory.getSystemMetadata(name).getRightsHolder(), new HashSet<Permission>(Arrays.asList(Permission.CHANGE_PERMISSION)));
+							statementAuthorized = AuthUtils.isAuthorized(annotationPermissionMap.keySet(), Permission.WRITE, DistributedMapsFactory.getSystemMetadata(id));
+						} catch (Exception e) {
+							log.warn("Could not check for assertion permission on original pid: " + id, e);
+						}
+						if (!statementAuthorized) {	
+							continue;
+						}
+						
+						// otherwise carry on with the indexing
 						solrDoc = documentsToIndex.get(id);
 						if (solrDoc == null) {
 							solrDoc = new SolrDoc();
