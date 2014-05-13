@@ -429,7 +429,7 @@ public class PropertiesAdmin extends MetacatAdmin {
                 //System.out.println("============================== the web.xml file is "+indexConfigFile);
                 String configContents = FileUtil.readFileToString(hzConfigFile, "UTF-8");
                 //System.out.println("============================== the content of web.xml file is "+configContents);
-                configContents = configContents.replace("<name>DataONE</name>", "<name>" + metacatContext + "</name>");
+                configContents = configContents.replace("<name>metacat</name>", "<name>" + metacatContext + "</name>");
                 FileUtil.writeFile(hzConfigFile, new StringReader(configContents), "UTF-8");
             }
             
