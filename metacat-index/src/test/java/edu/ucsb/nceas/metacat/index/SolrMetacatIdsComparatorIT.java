@@ -13,6 +13,7 @@ import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
@@ -45,6 +46,7 @@ public class SolrMetacatIdsComparatorIT {
      * Figure out ids which have been indexed.
      */
     @Test
+    @Ignore
     public void figureIdsNotIndexed() throws Exception {
         metacatIdsFile = new File( metacatIDFileName);
         notInSolrFile = new File(NOTINSOLR);
@@ -73,6 +75,7 @@ public class SolrMetacatIdsComparatorIT {
      * Figure out ids which have been indexed.
      */
     @Test
+    @Ignore
     public void getNumberOfIdsInSolr() throws Exception {
         numberOfIdsFile = new File(NUMBEROFIDS);
         if(numberOfIdsFile.exists()) {
