@@ -136,6 +136,10 @@ Bold 700
 	-webkit-border-radius: 10px;
 }
 
+h1{
+	display: inline-block; /* So that headers display at full width */
+}
+
 /* Permalink icons */
 .document .headerlink{
 	display: none;
@@ -244,8 +248,7 @@ h4 a{
     
     table{
     	background: rgba(255,255,255, 0.8);
-    	margin: 40px auto;
-    	
+    	margin-top:20px;    	
     }
     
     thead, th{

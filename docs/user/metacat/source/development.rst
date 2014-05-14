@@ -18,4 +18,5 @@ Contents:
    identifiers
    doi
    statistics-service
+   ore-model-expansion
 
