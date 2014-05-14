@@ -36,42 +36,44 @@ public class OrcidService {
 	 */
 	public static String lookupOrcid(String surName, String[] givenNames, String[] otherNames) {
 		
+		String url = null;
+
 		try {
 			
 			String urlParameters = "";
 			if (surName != null) {
-				surName = surName.replaceAll(" ", "%20");
+//				surName = surName.replaceAll(" ", "%20");
 				urlParameters += "+family-name:\"" + surName + "\"";
 			}
 			if (otherNames != null) {
 				for (String otherName: otherNames) {
-					otherName = otherName.replaceAll(" ", "%20");
+//					otherName = otherName.replaceAll(" ", "%20");
 					urlParameters += "+other-names:\"" + otherName + "\""; 
 				}
 			}
 			if (givenNames != null) {
 				for (String givenName: givenNames) {
-					givenName = givenName.replaceAll(" ", "%20");
+//					givenName = givenName.replaceAll(" ", "%20");
 					urlParameters += "+given-names:\"" + givenName + "\""; 
 				}
 			}
 			
-			//urlParameters = URLEncoder.encode(urlParameters, "UTF-8");
+			urlParameters = URLEncoder.encode(urlParameters, "UTF-8");
 			
-			String url = REST_URL + "?q=" + urlParameters + "&rows=1";
+			url = REST_URL + "?q=" + urlParameters + "&rows=1";
 			URL restURL = new URL(url);
 			InputStream is = restURL.openStream();
 			String results = IOUtils.toString(is);
 			logMetacat.debug("RESULTS: " + results);
 			Node doc = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new StringReader(results));
-			Node orcidUriNodeList = XMLUtilities.getNodeWithXPath(doc, "//*[local-name()=\"uri\"]");
+			Node orcidUriNodeList = XMLUtilities.getNodeWithXPath(doc, "//*[local-name()=\"orcid-identifier\"]/*[local-name()=\"uri\"]");
 			if (orcidUriNodeList != null) {
 				String orcidUri = orcidUriNodeList.getFirstChild().getNodeValue();
 				logMetacat.info("Found ORCID URI: " + orcidUri);
 				return orcidUri;
 			}
 		} catch (Exception e) {
-			logMetacat.error("Could not lookup ORCID for surName=" + surName, e);
+			logMetacat.error("Could not lookup ORCID using: " + url, e);
 		}
 		
 		return null;

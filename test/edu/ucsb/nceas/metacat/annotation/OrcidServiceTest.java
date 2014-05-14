@@ -63,9 +63,9 @@ public class OrcidServiceTest extends MCTestCase {
 	}
 	
 	public void testLookup() {
-		String[] otherNames = new String[] {"Matthew Jones"};
+		String[] otherNames = new String[] {"Matthew Bentley Jones"};
 		String orcid = OrcidService.lookupOrcid(null, null, otherNames);
-		assertEquals("http://sandbox-1.orcid.org/0000-0003-2141-4459", orcid);
+		assertEquals("http://orcid.org/0000-0003-0077-4738", orcid);
 	}
 	
 	public void findMatches() {
