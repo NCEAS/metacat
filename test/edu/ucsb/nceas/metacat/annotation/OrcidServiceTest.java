@@ -18,6 +18,12 @@
  */
 package edu.ucsb.nceas.metacat.annotation;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
 import edu.ucsb.nceas.MCTestCase;
@@ -51,6 +57,8 @@ public class OrcidServiceTest extends MCTestCase {
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new OrcidServiceTest("testLookup"));
+		suite.addTest(new OrcidServiceTest("findMatches"));
+
 		return suite;
 	}
 	
@@ -58,6 +66,25 @@ public class OrcidServiceTest extends MCTestCase {
 		String[] otherNames = new String[] {"Matthew Jones"};
 		String orcid = OrcidService.lookupOrcid(null, null, otherNames);
 		assertEquals("http://sandbox-1.orcid.org/0000-0003-2141-4459", orcid);
+	}
+	
+	public void findMatches() {
+		
+		int count = 0;
+		Map<String, String> matches = new HashMap<String, String>();
+
+		List<String> creators = OrcidService.lookupCreators(true);
+		for (String creator: creators) {
+			String orcid = OrcidService.lookupOrcid(null, null, Arrays.asList(creator).toArray(new String[0]));
+			if (orcid != null) {
+				matches.put(orcid, creator);
+				count++;
+			}
+ 		}
+		assertTrue(count > 0);
+		for (Entry<String, String> entry : matches.entrySet()) {
+			System.out.println("Found ORCID: " + entry.getKey() + " for creator: " + entry.getValue());
+		}
 	}
 
 }
