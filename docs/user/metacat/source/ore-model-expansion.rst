@@ -13,16 +13,14 @@ Author
   Lauren Walker
 
 Date
-  - 20140513 Initial draft of RDF model expansion for derived data packages
+  - 20140513 Initial draft of ORE model expansion for derived data packages
 
 Goal
   Accurately describe the relationships of resources that are derived from other resources.
 
 Summary 
-  This proposed expansion of the Metacat RDF schema uses the `PROV ontology <http://www.w3.org/TR/prov-overview/>`_ to describe
+  This proposed expansion of the Metacat ORE model uses the `PROV ontology <http://www.w3.org/TR/prov-overview/>`_ to describe
   the relationships between generated or derived resources and the resources used to generate them.
-  Other provenance, such as agent, can be added to the Metacat RDFs to store information about how a resource
-  was produced.
   
 Overview
 ---------------------------------------
