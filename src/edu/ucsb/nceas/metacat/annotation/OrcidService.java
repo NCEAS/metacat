@@ -9,6 +9,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.HttpMethod;
+import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -62,8 +65,14 @@ public class OrcidService {
 			
 			url = REST_URL + "?q=" + urlParameters + "&rows=1";
 			URL restURL = new URL(url);
-			InputStream is = restURL.openStream();
-			String results = IOUtils.toString(is);
+			HttpClient client = new HttpClient();
+			HttpMethod method = new GetMethod(url);
+			method.addRequestHeader("Accept", "application/orcid+xml");
+			client.executeMethod(method);
+			InputStream is = method.getResponseBodyAsStream();
+			//InputStream is = restURL.openStream();
+			
+			String results = IOUtils.toString(is, "UTF-8");
 			logMetacat.debug("RESULTS: " + results);
 			Node doc = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new StringReader(results));
 			Node orcidUriNodeList = XMLUtilities.getNodeWithXPath(doc, "//*[local-name()=\"orcid-identifier\"]/*[local-name()=\"uri\"]");
