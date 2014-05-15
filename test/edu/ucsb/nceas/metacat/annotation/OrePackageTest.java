@@ -34,6 +34,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
+import org.dspace.foresite.OREFactory;
 import org.dspace.foresite.Predicate;
 import org.dspace.foresite.ResourceMap;
 import org.dspace.foresite.Triple;
@@ -72,7 +73,7 @@ public class OrePackageTest extends D1NodeServiceTest {
 	 */
 	public static Test suite() {
 		TestSuite suite = new TestSuite();
-		suite.addTest(new DatapackageSummarizerTest("testGenerateAnnotation"));
+		suite.addTest(new OrePackageTest("testGenerateAnnotation"));
 		return suite;
 	}
 	
@@ -87,18 +88,18 @@ public class OrePackageTest extends D1NodeServiceTest {
 		Identifier metadataPid = new Identifier();
 		metadataPid.setValue("testOre.eml." + System.currentTimeMillis());
 		Session session = getTestSession();
-		try {
-			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DOC).getBytes("UTF-8"));
-			SystemMetadata sysmeta = createSystemMetadata(metadataPid, session.getSubject(), object);
-			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-			formatId.setValue("eml://ecoinformatics.org/eml-2.0.0");
-			sysmeta.setFormatId(formatId);
-			Identifier pid = MNodeService.getInstance(request).create(session, metadataPid, object, sysmeta);
-			assertEquals(metadataPid.getValue(), pid.getValue());
-		} catch (Exception e) {
-			e.printStackTrace();
-			fail("Could not add metadata test file: " + e.getMessage());
-		}
+//		try {
+//			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DOC).getBytes("UTF-8"));
+//			SystemMetadata sysmeta = createSystemMetadata(metadataPid, session.getSubject(), object);
+//			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+//			formatId.setValue("eml://ecoinformatics.org/eml-2.0.0");
+//			sysmeta.setFormatId(formatId);
+//			Identifier pid = MNodeService.getInstance(request).create(session, metadataPid, object, sysmeta);
+//			assertEquals(metadataPid.getValue(), pid.getValue());
+//		} catch (Exception e) {
+//			e.printStackTrace();
+//			fail("Could not add metadata test file: " + e.getMessage());
+//		}
 
 		// generate the ORE for the EML metadata + data
 		Map<Identifier, List<Identifier>> resources = new HashMap<Identifier, List<Identifier>>();
@@ -112,10 +113,13 @@ public class OrePackageTest extends D1NodeServiceTest {
 		ResourceMap resourceMap = ResourceMapFactory.getInstance().createResourceMap(resourceMapPid , resources);
 		
 		// augment the ORE package with triples describing the derivation
-		Triple triple = new TripleJena();
-		triple.initialise(new URI(dataIdentifier.getValue()));
 		Predicate predicate = new Predicate(new URI("http://www.w3.org/ns/prov#wasDerivedFrom"));
-		triple.relate(predicate , new URI("https://cn.dataone.or/cn/v1/resolve/data.1.1"));
+		Triple triple = 
+				OREFactory.createTriple(
+						new URI("https://cn.dataone.org/cn/v1/resolve/" + dataIdentifier.getValue()), 
+						predicate, 
+						new URI("https://cn.dataone.org/cn/v1/resolve/data.1.1"));
+		System.out.println("Triple: " + " " + triple.getPredicate().getURI() + " " + triple.getObjectURI());
 		resourceMap.addTriple(triple);
 
 		// get the RDF content
