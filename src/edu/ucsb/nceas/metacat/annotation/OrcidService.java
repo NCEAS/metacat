@@ -37,27 +37,32 @@ public class OrcidService {
 	 * @param otherNames
 	 * @return
 	 */
-	public static String lookupOrcid(String surName, String[] givenNames, String[] otherNames) {
+	public static String lookupOrcid(String text, String surName, String[] givenNames, String[] otherNames) {
 		
 		String url = null;
 
 		try {
 			
 			String urlParameters = "";
-			if (surName != null) {
-//				surName = surName.replaceAll(" ", "%20");
-				urlParameters += "+family-name:\"" + surName + "\"";
-			}
-			if (otherNames != null) {
-				for (String otherName: otherNames) {
-//					otherName = otherName.replaceAll(" ", "%20");
-					urlParameters += "+other-names:\"" + otherName + "\""; 
+			
+			if (text != null) {
+				urlParameters += "\"" + text + "\""; 
+			} else {
+				if (surName != null) {
+//					surName = surName.replaceAll(" ", "%20");
+					urlParameters += "+family-name:\"" + surName + "\"";
 				}
-			}
-			if (givenNames != null) {
-				for (String givenName: givenNames) {
-//					givenName = givenName.replaceAll(" ", "%20");
-					urlParameters += "+given-names:\"" + givenName + "\""; 
+				if (otherNames != null) {
+					for (String otherName: otherNames) {
+//						otherName = otherName.replaceAll(" ", "%20");
+						urlParameters += "+other-names:\"" + otherName + "\""; 
+					}
+				}
+				if (givenNames != null) {
+					for (String givenName: givenNames) {
+//						givenName = givenName.replaceAll(" ", "%20");
+						urlParameters += "+given-names:\"" + givenName + "\""; 
+					}
 				}
 			}
 			

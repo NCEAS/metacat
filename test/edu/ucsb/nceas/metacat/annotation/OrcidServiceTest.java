@@ -64,7 +64,7 @@ public class OrcidServiceTest extends MCTestCase {
 	
 	public void testLookup() {
 		String[] otherNames = new String[] {"Matthew Bentley Jones"};
-		String orcid = OrcidService.lookupOrcid(null, null, otherNames);
+		String orcid = OrcidService.lookupOrcid(null, null, null, otherNames);
 		assertEquals("http://orcid.org/0000-0003-0077-4738", orcid);
 	}
 	
@@ -75,7 +75,7 @@ public class OrcidServiceTest extends MCTestCase {
 
 		List<String> creators = OrcidService.lookupCreators(true);
 		for (String creator: creators) {
-			String orcid = OrcidService.lookupOrcid(null, null, Arrays.asList(creator).toArray(new String[0]));
+			String orcid = OrcidService.lookupOrcid(null, null, null, Arrays.asList(creator).toArray(new String[0]));
 			if (orcid != null) {
 				matches.put(orcid, creator);
 				count++;

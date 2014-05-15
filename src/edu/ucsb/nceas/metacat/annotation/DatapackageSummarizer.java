@@ -296,7 +296,7 @@ public class DatapackageSummarizer {
 		//creators = Arrays.asList("Matthew Jones");
 		if (creators != null && creators.size() > 0) {	
 			// use an orcid if we can find one from their system
-			String orcidUri = OrcidService.lookupOrcid(null, null, creators.toArray(new String[0]));
+			String orcidUri = OrcidService.lookupOrcid(null, null, null, creators.toArray(new String[0]));
 			if (orcidUri != null) {
 				p1 = m.createIndividual(orcidUri, personClass);
 				p1.addProperty(identifierProperty, orcidUri);
