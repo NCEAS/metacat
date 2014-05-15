@@ -5,14 +5,44 @@
 
 	<bean id="rdfXmlSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.RdfXmlSubprocessor">
 		<property name="matchDocument"
-			value="/d100:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar']" />
+			value="/d100:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar'] | /d100:systemMetadata/formatId[text()='http://www.openarchives.org/ore/terms']" />
 		<property name="fieldList">
 			<list>
 				<ref bean="annotation.standard" />
 				<ref bean="annotation.characteristic" />
 				<ref bean="annotation.creator" />
+				<ref bean="prov.wasDerivedFrom" />
+				
 			</list>
 		</property>	
+	</bean>
+	
+	<bean id="prov.wasDerivedFrom" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+		<constructor-arg name="name" value="wasDerivedFrom_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT ?pid ?wasDerivedFrom_sm
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+					?primary_data		ore:isDocumentedBy	?primary_metadata .
+					?derived_data		prov:wasDerivedFrom	?primary_data .
+					?derived_data		ore:isDocumentedBy	?derived_metadata .
+					?derived_metadata	dcterms:identifier 	?pid . 
+					?primary_metadata	dcterms:identifier 	?wasDerivedFrom_sm .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
 	</bean>
 	
 	<bean id="annotation.standard" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
