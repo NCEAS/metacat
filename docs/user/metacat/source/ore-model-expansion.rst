@@ -210,12 +210,13 @@ hadDerivation, for easier querying.	The SparQL query used to determine the deriv
 
 ::
 
-	SELECT ?derived_metadata
+	SELECT ?primary_metadata_pid ?derived_metadata_pid
 	WHERE {
-		?primary_data ore:isDocumentedBy  ?primary_metadata;
-		              prov:wasDerivedFrom ?derived_data.
-					  
-		?derived_data ore:isDocumentedBy ?derived_metadata.
+		?primary_data		ore:isDocumentedBy	?primary_metadata .
+		?primary_metadata	dcterms:identifier 	?primary_metadata_pid .
+		?derived_data		prov:wasDerivedFrom	?primary_data .
+		?derived_data		ore:isDocumentedBy	?derived_metadata .
+		?derived_metadata	dcterms:identifier 	?derived_metadata_pid .
 	}
 	
 ::
