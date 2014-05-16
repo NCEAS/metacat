@@ -47,6 +47,7 @@ public class OrePackageTest extends D1NodeServiceTest {
 
 	
     private static final String ANNOTATION_TEST_DOC = "test/eml-sample-annotation.xml";
+    private static final String ANNOTATION_TEST_DATA = "test/onlineDataFile2";
 
 	/**
 	 * constructor for the test
@@ -88,25 +89,39 @@ public class OrePackageTest extends D1NodeServiceTest {
 		Identifier metadataPid = new Identifier();
 		metadataPid.setValue("testOre.eml." + System.currentTimeMillis());
 		Session session = getTestSession();
-//		try {
-//			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DOC).getBytes("UTF-8"));
-//			SystemMetadata sysmeta = createSystemMetadata(metadataPid, session.getSubject(), object);
-//			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-//			formatId.setValue("eml://ecoinformatics.org/eml-2.0.0");
-//			sysmeta.setFormatId(formatId);
-//			Identifier pid = MNodeService.getInstance(request).create(session, metadataPid, object, sysmeta);
-//			assertEquals(metadataPid.getValue(), pid.getValue());
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			fail("Could not add metadata test file: " + e.getMessage());
-//		}
+		try {
+			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DOC).getBytes("UTF-8"));
+			SystemMetadata sysmeta = createSystemMetadata(metadataPid, session.getSubject(), object);
+			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+			formatId.setValue("eml://ecoinformatics.org/eml-2.0.0");
+			sysmeta.setFormatId(formatId);
+			Identifier pid = MNodeService.getInstance(request).create(session, metadataPid, object, sysmeta);
+			assertEquals(metadataPid.getValue(), pid.getValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Could not add metadata test file: " + e.getMessage());
+		}
+		
+		// add a data file
+		Identifier dataIdentifier = new Identifier();
+		dataIdentifier.setValue("derivedData." + System.currentTimeMillis());
+		try {
+			InputStream object = new ByteArrayInputStream(this.getTestDocFromFile(ANNOTATION_TEST_DATA).getBytes("UTF-8"));
+			SystemMetadata sysmeta = createSystemMetadata(dataIdentifier, session.getSubject(), object);
+			ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+			formatId.setValue("text/csv");
+			sysmeta.setFormatId(formatId);
+			Identifier pid = MNodeService.getInstance(request).create(session, dataIdentifier, object, sysmeta);
+			assertEquals(dataIdentifier.getValue(), pid.getValue());
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail("Could not add data test file: " + e.getMessage());
+		}
 
 		// generate the ORE for the EML metadata + data
 		Map<Identifier, List<Identifier>> resources = new HashMap<Identifier, List<Identifier>>();
 		Identifier resourceMapPid = new Identifier();
 		resourceMapPid.setValue("resourceMap_" + metadataPid.getValue());
-		Identifier dataIdentifier = new Identifier();
-		dataIdentifier.setValue("derivedData.1.1");
 		List<Identifier> dataPids = Arrays.asList(dataIdentifier);
 		resources.put(metadataPid, dataPids);
 		
