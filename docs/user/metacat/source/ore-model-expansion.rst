@@ -102,7 +102,9 @@ Smith has the option of creating a new data package with the image and an EML fi
  
 Sample RDF
 ----------
-A sample RDF notation for our above Couture and Smith example (Figure 4) can be :download:`downloaded <_static/resourceMap_couture.1.1.rdf>` or see below:
+A sample RDF notation for our above Couture and Smith example (Figure 4) can be :download:`downloaded <_static/resourceMap_couture.1.1.rdf>` or viewed below. Note that the 
+primary data resource will need to be described in the RDFs for its derivations so that an RDF for a derived dataset will have all the information it needs to relate the primary
+resource to the derived resource. This way, a SparQL query can be run within a derived dataset RDF to make the assertion that derived_metadata wasDerivedFrom primary_metadata.
 
 ::
 
@@ -119,10 +121,16 @@ A sample RDF notation for our above Couture and Smith example (Figure 4) can be 
 	  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1">
 	    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
 	    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_data.1.1</dcterms:identifier>
-	    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1"/>
+	    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
 	    <prov:wasGeneratedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1"/>
 	    <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1"/>
 	    <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.2.1"/>
+	  </rdf:Description>
+	      
+	  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1">
+	    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_smith .1.1#aggregation</ore:isAggregatedBy>
+	    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">smith_data.1.1</dcterms:identifier>
+	    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_metadata.1.1"/>
 	  </rdf:Description>
 	    
 	  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation">
@@ -185,6 +193,7 @@ A sample RDF notation for our above Couture and Smith example (Figure 4) can be 
 	  </rdf:Description>
 	    
 	</rdf:RDF>
+
 
 ::
 

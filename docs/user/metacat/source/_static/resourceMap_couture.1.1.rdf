@@ -11,10 +11,16 @@
   <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1">
     <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
     <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_data.1.1</dcterms:identifier>
-    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1"/>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
     <prov:wasGeneratedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1"/>
     <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1"/>
     <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.2.1"/>
+  </rdf:Description>
+      
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_smith .1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">smith_data.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_metadata.1.1"/>
   </rdf:Description>
     
   <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation">
