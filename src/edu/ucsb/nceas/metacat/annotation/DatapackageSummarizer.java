@@ -21,6 +21,7 @@ import org.dataone.service.types.v1.Subject;
 import org.ecoinformatics.datamanager.parser.Attribute;
 import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
+import org.ecoinformatics.datamanager.parser.Party;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
@@ -292,11 +293,11 @@ public class DatapackageSummarizer {
 		Individual p1 = null;
 		
 		// look up creators from the EML metadata
-		List<String> creators = dataPackage.getCreators();
+		List<Party> creators = dataPackage.getCreators();
 		//creators = Arrays.asList("Matthew Jones");
 		if (creators != null && creators.size() > 0) {	
 			// use an orcid if we can find one from their system
-			String orcidUri = OrcidService.lookupOrcid(null, null, null, creators.toArray(new String[0]));
+			String orcidUri = OrcidService.lookupOrcid(creators.get(0).getOrganization(), creators.get(0).getSurName(), creators.get(0).getGivenNames(), null);
 			if (orcidUri != null) {
 				p1 = m.createIndividual(orcidUri, personClass);
 				p1.addProperty(identifierProperty, orcidUri);
@@ -304,7 +305,11 @@ public class DatapackageSummarizer {
 				p1 = m.createIndividual(ont.getURI() + "#person", personClass);
 			}
 			// include the name we have in the metadata
-			p1.addProperty(nameProperty, creators.get(0));
+			if (creators.get(0).getSurName() != null) {
+				p1.addProperty(nameProperty, creators.get(0).getSurName());
+			} else if (creators.get(0).getOrganization() != null) {
+				p1.addProperty(nameProperty, creators.get(0).getOrganization());
+			}
 		}
 		
 		// attribute the package to this creator if we have one

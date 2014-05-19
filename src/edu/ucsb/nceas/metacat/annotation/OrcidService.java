@@ -37,7 +37,7 @@ public class OrcidService {
 	 * @param otherNames
 	 * @return
 	 */
-	public static String lookupOrcid(String text, String surName, String[] givenNames, String[] otherNames) {
+	public static String lookupOrcid(String text, String surName, List<String> givenNames, List<String> otherNames) {
 		
 		String url = null;
 
