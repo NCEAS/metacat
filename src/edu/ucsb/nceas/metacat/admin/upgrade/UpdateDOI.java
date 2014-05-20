@@ -72,12 +72,12 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 		
 		// look up the prefix - NOTE we have used different shoulders over time, so might consider updating anything with "doi:..."
 		String prefix = "doi:";
-		try {
-			prefix = PropertyService.getProperty("guid.ezid.doishoulder." + serverLocation);
-		} catch (PropertyNotFoundException pnfe) {
-			log.error("Could not look up the doi shoulder for this server", pnfe);
-			return;
-		}
+//		try {
+//			prefix = PropertyService.getProperty("guid.ezid.doishoulder." + serverLocation);
+//		} catch (PropertyNotFoundException pnfe) {
+//			log.error("Could not look up the doi shoulder for this server", pnfe);
+//			return;
+//		}
 
 		for (String pid: identifiers) {
 			try {
