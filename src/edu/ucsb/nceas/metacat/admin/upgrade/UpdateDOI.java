@@ -39,7 +39,9 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.DOIService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
 
@@ -67,8 +69,23 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 	 * @param identifiers - DOIs to update
 	 */
 	private void updateDOIRegistration(List<String> identifiers) {
+		
+		// look up the prefix - NOTE we have used different shoulders over time, so might consider updating anything with "doi:..."
+		String prefix = "doi:";
+		try {
+			prefix = PropertyService.getProperty("guid.ezid.doishoulder." + serverLocation);
+		} catch (PropertyNotFoundException pnfe) {
+			log.error("Could not look up the doi shoulder for this server", pnfe);
+			return;
+		}
+
 		for (String pid: identifiers) {
 			try {
+				// skip if not a DOI
+				if (!pid.startsWith(prefix)) {
+					continue;
+				}
+				
 				//Create an identifier and retrieve the SystemMetadata for this guid
 				Identifier identifier = new Identifier();
 				identifier.setValue(pid);
