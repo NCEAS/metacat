@@ -336,7 +336,7 @@ public class ReplicationService extends BaseService {
 		String dataReplicate = null;
 		String hub = null;
 		Writer out = null;
-		boolean showGenerateSystemMetadata = false;
+		boolean showGenerateSystemMetadata = true;
 		try {
 			response.setContentType("text/xml");
 			out = response.getWriter();
@@ -494,11 +494,11 @@ public class ReplicationService extends BaseService {
 				return;
 			}
 			
-			// show SM generate button?
-			String dataoneConfigured = PropertyService.getProperty("configutil.dataoneConfigured");
-			if (dataoneConfigured != null) {
-				showGenerateSystemMetadata = Boolean.parseBoolean(dataoneConfigured);
-			}
+			// hide SM/ORE buttons?
+//			String dataoneConfigured = PropertyService.getProperty("configutil.dataoneConfigured");
+//			if (dataoneConfigured != null) {
+//				showGenerateSystemMetadata = Boolean.parseBoolean(dataoneConfigured);
+//			}
 			
 			// always list them after processing
 			response.setContentType("text/html");
