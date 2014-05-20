@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -927,7 +928,8 @@ public class MetaCatServlet extends HttpServlet {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");
 					out.println("<error>");
-					out.println("Permission denied for user " + userName + " " + action);
+					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for user " + userName + " " + action);
+					out.println(cleanMessage);
 					out.println("</error>");
 				}
 				out.close();
@@ -940,7 +942,8 @@ public class MetaCatServlet extends HttpServlet {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");
 					out.println("<error>");
-					out.println("Permission denied for " + action);
+					String cleanMessage = StringEscapeUtils.escapeXml("Permission denied for " + action);
+					out.println(cleanMessage);
 					out.println("</error>");
 				}
 				out.close();
@@ -1121,7 +1124,8 @@ public class MetaCatServlet extends HttpServlet {
 					PrintWriter out = response.getWriter();
 					out.println("<?xml version=\"1.0\"?>");
 					out.println("<error>");
-					out.println("Error: action: " + action + " not registered.  Please report this error.");
+					String cleanMessage = StringEscapeUtils.escapeXml("Error: action: " + action + " not registered.  Please report this error.");
+					out.println(cleanMessage);
 					out.println("</error>");
 					out.close();
 				}

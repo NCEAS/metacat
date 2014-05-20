@@ -72,6 +72,7 @@ import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Event;
@@ -2098,7 +2099,7 @@ public class MetacatHandler {
                 
             } catch (NullPointerException npe) {
                 
-                out.println("<error>Error getting document ID: " + docid
+                out.println("<error>Error getting document ID: " + StringEscapeUtils.escapeXml(docid)
                         + "</error>");
                 //if ( conn != null ) { util.returnConnection(conn); }
                 return;
@@ -2355,7 +2356,7 @@ public class MetacatHandler {
         
         out.println("<?xml version=\"1.0\"?>");
         out.println("<isRegistered>");
-        out.println("<docid>" + id + "</docid>");
+        out.println("<docid>" + StringEscapeUtils.escapeXml(id) + "</docid>");
         out.println("<exists>" + exists + "</exists>");
         out.println("</isRegistered>");
     }
@@ -2375,7 +2376,7 @@ public class MetacatHandler {
             Vector<String> docids = DBUtil.getAllDocids(scope);
             out.println("<?xml version=\"1.0\"?>");
             out.println("<idList>");
-            out.println("  <scope>" + scope + "</scope>");
+            out.println("  <scope>" + StringEscapeUtils.escapeXml(scope) + "</scope>");
             for(int i=0; i<docids.size(); i++) {
                 String docid = docids.elementAt(i);
                 out.println("  <docid>" + docid + "</docid>");
@@ -2408,7 +2409,7 @@ public class MetacatHandler {
             String lastDocid = dbutil.getMaxDocid(scope);
             out.println("<?xml version=\"1.0\"?>");
             out.println("<lastDocid>");
-            out.println("  <scope>" + scope + "</scope>");
+            out.println("  <scope>" + StringEscapeUtils.escapeXml(scope) + "</scope>");
             out.println("  <docid>" + lastDocid + "</docid>");
             out.println("</lastDocid>");
             
@@ -2837,7 +2838,7 @@ public class MetacatHandler {
         try {
             DocumentImpl doc = new DocumentImpl(docid, false);
             doc.buildIndex();
-            out.print("<docid>" + docid);
+            out.print("<docid>" + StringEscapeUtils.escapeXml(docid));
             out.println("</docid>");
         } catch (McdbException me) {
             out.print("<error>");
@@ -2984,7 +2985,8 @@ public class MetacatHandler {
             } else {                
                 out.println("<?xml version=\"1.0\"?>");
                 out.println("<error>");
-                out.println("Permission denied for " + action);
+                
+                out.println("Permission denied for upload action");
                 out.println("</error>");
             }
         } else if(action.equals("insertmultipart")) {
@@ -2995,7 +2997,7 @@ public class MetacatHandler {
           } else {
               out.println("<?xml version=\"1.0\"?>");
               out.println("<error>");
-              out.println("Permission denied for " + action);
+              out.println("Permission denied for insertmultipart action");
               out.println("</error>");
           }
         } else {
@@ -3059,7 +3061,8 @@ public class MetacatHandler {
                           "The docid "+docid +" is not valid since it is null or contians the white space(s).");
           if (qformat == null || qformat.equals("xml")) {
               response.setContentType("text/xml");
-              out.println(output);
+              String cleanMessage = StringEscapeUtils.escapeXml(output);
+              out.println(cleanMessage);
           } else {
               try {
                   DBTransform trans = new DBTransform();
