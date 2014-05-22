@@ -25,6 +25,8 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
@@ -74,6 +76,20 @@ public class DOIService {
 
 	private Logger logMetacat = Logger.getLogger(DOIService.class);
 
+	private boolean doiEnabled = false;
+	
+	private String shoulder = null;
+	
+	private String ezidUsername = null;
+	
+	private String ezidPassword = null;
+	
+	private EZIDService ezid = null;
+	
+	private Date lastLogin = null;
+	
+	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
+
 	private static DOIService instance = null;
 	
 	public static DOIService getInstance() {
@@ -88,6 +104,37 @@ public class DOIService {
 	 */
 	private DOIService() {
 		
+		// for DOIs
+		String ezidServiceBaseUrl = null;
+		
+		try {
+            doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
+			shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
+			ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+			ezidUsername = PropertyService.getProperty("guid.ezid.username");
+			ezidPassword = PropertyService.getProperty("guid.ezid.password");
+		} catch (PropertyNotFoundException e) {
+			logMetacat.warn("DOI support is not configured at this node.", e);
+			return;
+		}
+		
+		ezid = new EZIDService(ezidServiceBaseUrl);
+		//ezid = new EZIDClient(ezidServiceBaseUrl);
+
+		
+		
+	}
+	
+	/**
+	 * Make sure we have a current login before making any calls
+	 * @throws EZIDException
+	 */
+	private void refreshLogin() throws EZIDException {
+		Date now = Calendar.getInstance().getTime();
+		if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
+			ezid.login(ezidUsername, ezidPassword);
+			lastLogin = now;	
+		}
 	}
 	
 	/**
@@ -99,22 +146,7 @@ public class DOIService {
 	 * @throws NotImplemented 
 	 */
 	public boolean registerDOI(SystemMetadata sysMeta) throws EZIDException, NotImplemented, ServiceFailure {
-		
-		// for DOIs
-		String ezidUsername = null;
-		String ezidPassword = null;
-		String shoulder = null;
-		boolean doiEnabled = false;
-		try {
-            doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
-			shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
-			ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			ezidPassword = PropertyService.getProperty("guid.ezid.password");
-		} catch (PropertyNotFoundException e) {
-			logMetacat.warn("DOI support is not configured at this node.", e);
-			return false;
-		}
-		
+				
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
 			
@@ -126,15 +158,8 @@ public class DOIService {
 				// enter metadata about this identifier
 				HashMap<String, String> metadata = null;
 				
-				// login to EZID service
-				String ezidServiceBaseUrl = null;
-				try {
-					ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
-				} catch (PropertyNotFoundException e) {
-					logMetacat.warn("Using default EZID baseUrl");
-				}
-				EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
-				ezid.login(ezidUsername, ezidPassword);
+				// make sure we have a current login
+				this.refreshLogin();
 				
 				// check for existing metadata
 				boolean create = false;
@@ -234,7 +259,6 @@ public class DOIService {
 					ezid.setMetadata(identifier, metadata);
 				}
 				
-				ezid.logout();
 			}
 			
 		}
@@ -250,21 +274,6 @@ public class DOIService {
 	 */
 	public Identifier generateDOI() throws EZIDException, InvalidRequest {
 
-		Identifier identifier = new Identifier();
-
-		// look up configuration values
-		String shoulder = null;
-		String ezidUsername = null;
-		String ezidPassword = null;
-		boolean doiEnabled = false;
-		try {
-            doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
-			shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
-			ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			ezidPassword = PropertyService.getProperty("guid.ezid.password");
-		} catch (PropertyNotFoundException e1) {
-			throw new InvalidRequest("2193", "DOI shoulder is not configured at this node.");
-		}
 		
 		// only continue if we have the feature turned on
 		if (!doiEnabled) {
@@ -280,18 +289,13 @@ public class DOIService {
 		metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.RESERVED.toString());
 		metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.NO.toString());
 
+		// make sure we have a current login
+		this.refreshLogin();
+
 		// call the EZID service
-		String ezidServiceBaseUrl = null;
-		try {
-			ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
-		} catch (PropertyNotFoundException e) {
-			logMetacat.warn("Using default EZID baseUrl");
-		}
-		EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
-		ezid.login(ezidUsername, ezidPassword);
 		String doi = ezid.mintIdentifier(shoulder, metadata);
+		Identifier identifier = new Identifier();
 		identifier.setValue(doi);
-		ezid.logout();
 		
 		return identifier;
 	}
