@@ -397,7 +397,7 @@ public class MNodeService extends D1NodeService
             // attempt to register the identifier - it checks if it is a doi
             try {
     			DOIService.getInstance().registerDOI(sysmeta);
-    		} catch (EZIDException e) {
+    		} catch (Exception e) {
                 throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
     		}
 
@@ -450,7 +450,7 @@ public class MNodeService extends D1NodeService
         // attempt to register the identifier - it checks if it is a doi
         try {
 			DOIService.getInstance().registerDOI(sysmeta);
-		} catch (EZIDException e) {
+		} catch (Exception e) {
 			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
 			sf.initCause(e);
             throw sf;

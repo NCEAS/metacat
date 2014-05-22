@@ -53,8 +53,8 @@ import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
+import edu.ucsb.nceas.ezid.EZIDClient;
 import edu.ucsb.nceas.ezid.EZIDException;
-import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
@@ -84,7 +84,7 @@ public class DOIService {
 	
 	private String ezidPassword = null;
 	
-	private EZIDService ezid = null;
+	private EZIDClient ezid = null;
 	
 	private Date lastLogin = null;
 	
@@ -118,8 +118,7 @@ public class DOIService {
 			return;
 		}
 		
-		ezid = new EZIDService(ezidServiceBaseUrl);
-		//ezid = new EZIDClient(ezidServiceBaseUrl);
+		ezid = new EZIDClient(ezidServiceBaseUrl);
 
 		
 		
@@ -144,8 +143,9 @@ public class DOIService {
 	 * @throws EZIDException 
 	 * @throws ServiceFailure 
 	 * @throws NotImplemented 
+	 * @throws InterruptedException 
 	 */
-	public boolean registerDOI(SystemMetadata sysMeta) throws EZIDException, NotImplemented, ServiceFailure {
+	public boolean registerDOI(SystemMetadata sysMeta) throws EZIDException, NotImplemented, ServiceFailure, InterruptedException {
 				
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
@@ -156,24 +156,7 @@ public class DOIService {
 			if (identifier.startsWith(shoulder)) {
 				
 				// enter metadata about this identifier
-				HashMap<String, String> metadata = null;
-				
-				// make sure we have a current login
-				this.refreshLogin();
-				
-				// check for existing metadata
-				boolean create = false;
-				try {
-					metadata = ezid.getMetadata(identifier);
-				} catch (EZIDException e) {
-					// expected much of the time
-					logMetacat.warn("No metadata found for given identifier: " + e.getMessage());
-				}
-				if (metadata == null) {
-					create = true;
-				}
-				// confuses the API if we send the original metadata that it gave us, so start from scratch
-				metadata = new HashMap<String, String>();
+				HashMap<String, String> metadata = new HashMap<String, String>();
 				
 				// title 
 				String title = ErcMissingValueCode.UNKNOWN.toString();
@@ -252,12 +235,11 @@ public class DOIService {
 				metadata.put(InternalProfile.STATUS.toString(), status);
 				metadata.put(InternalProfile.EXPORT.toString(), export);
 	
+				// make sure we have a current login
+				this.refreshLogin();
+				
 				// set using the API
-				if (create) {
-					ezid.createIdentifier(identifier, metadata);
-				} else {
-					ezid.setMetadata(identifier, metadata);
-				}
+				ezid.createOrUpdate(identifier, metadata);
 				
 			}
 			

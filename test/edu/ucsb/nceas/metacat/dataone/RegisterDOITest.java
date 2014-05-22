@@ -180,7 +180,16 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
 			
 			// check that EZID knows about it
-			HashMap<String, String> metadata = ezid.getMetadata(guid.getValue());
+			HashMap<String, String> metadata = null;
+			int count = 0;
+			do {
+				try {
+					metadata = ezid.getMetadata(guid.getValue());
+				} catch (Exception e) {
+					Thread.sleep(1000);
+				}
+				count++;
+			} while (metadata == null && count < 10);
 			assertNotNull(metadata);
 
 			// add the actual object for the newly-minted DOI
@@ -201,7 +210,24 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			assertEquals(guid.getValue(), pid.getValue());
 
 			// check for the metadata for title element
-			metadata = ezid.getMetadata(pid.getValue());
+			count = 0;
+			metadata = null;
+			do {
+				try {
+					metadata = ezid.getMetadata(pid.getValue());
+					// check if the update thread finished yet, otherwise try again
+					if (metadata != null && isMetadata) {
+						String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+						if (!registeredTarget.endsWith("/#view/" + pid.getValue())) {
+							// try fetching it again
+							metadata = null;
+						}
+					}
+				} catch (Exception e) {
+					Thread.sleep(1000);
+				}
+				count++;
+			} while (metadata == null && count < 10);
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
 			
@@ -243,7 +269,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			// check for the metadata explicitly, using ezid service
 			EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 			ezid.login(ezidUsername, ezidPassword);
-			HashMap<String, String> metadata = ezid.getMetadata(pid.getValue());
+			int count = 0;
+			HashMap<String, String> metadata = null;
+			do {
+				try {
+					metadata = ezid.getMetadata(pid.getValue());
+				} catch (Exception e) {
+					Thread.sleep(1000);
+				}
+				count++;
+			} while (metadata == null && count < 10);
+			
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
 			
@@ -288,7 +324,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            // check for the metadata explicitly, using ezid service
 	            EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 	            ezid.login(ezidUsername, ezidPassword);
-	            HashMap<String, String> metadata = ezid.getMetadata(publishedIdentifier.getValue());
+	            int count = 0;
+				HashMap<String, String> metadata = null;
+				do {
+					try {
+						metadata = ezid.getMetadata(publishedIdentifier.getValue());
+					} catch (Exception e) {
+						Thread.sleep(1000);
+					}
+					count++;
+				} while (metadata == null && count < 10);
+	            
 	            assertNotNull(metadata);
 	            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
 	            content.close();
