@@ -337,15 +337,15 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 
         <field name="fileID" 			type="string" 	indexed="true" stored="true"/>
    		<field name="text"				type="text"		indexed="true" stored="true" multiValued="false" />
-   		<field name="geohash_1" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_2" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_3" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_4" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_5" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_6" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_7" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_8" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
-   		<field name="geohash_9" 			type="text" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_1" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_2" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_3" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_4" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_5" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_6" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_7" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_8" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+   		<field name="geohash_9" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
    		
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
