@@ -19,4 +19,6 @@ Contents:
    doi
    statistics-service
    ore-model-expansion
+   semantic-annotation
+   
 
