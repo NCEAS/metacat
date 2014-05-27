@@ -67,29 +67,42 @@ Important concepts used in the model:
    * `oa:hasSelector <http://www.openannotation.org/spec/core/specific.html#FragmentSelector>`_ : Specifies the part of a resource to which an annotation applies. An XPath FragmentSelector will commonly be used for annotating XML-based metadata resources
    * `oa:annotatedBy <http://www.openannotation.org/spec/core/core.html#Provenance>`_ : [subProperty of prov:wasAttributedTo] The object of the relationship is a resource that identifies the agent responsible for creating the Annotation. 
 
-   * `oboe:Measurement <http://www.w3.org/ns/prov#wasInformedBy>`_ : The primary body of semantic annotations on attributes.
-   * `oboe:ofCharacteristic <http://www.w3.org/ns/prov#used>`_ : Specifies which Characteristic (subclass) is measured
-   * `oboe:usesStandard <http://www.w3.org/ns/prov#wasInformedBy>`_ : Specifies in which Standard (Unit subclass) the measurement is recorded.
+   * `oboe:Measurement <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#Measurement>`_ : The primary body of semantic annotations on attributes.
+   * `oboe:ofCharacteristic <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#ofCharacteristic>`_ : Specifies which Characteristic (subclass) is measured
+   * `oboe:usesStandard <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#usesStandard>`_ : Specifies in which Standard (Unit subclass) the measurement is recorded.
    
 
 ::
 
+
+Model details
+--------------
+Using the ``weight`` column in our example data package, we can illustrate the annotation model's use of concepts from OBOE, OA, and PROV.
+The primary entry point for the annotation is ``#ann.4.1`` and was asserted by Ben Leinfelder (foaf:name) , identified with his ORCID URI (oa:annotatedBy).
+The body of the annotation (oa:hasBody) is comprised of an oboe:Measurement instance, ``#weight``, that measures ``Mass`` (oboe:ofCharacteristic) in ``Gram`` (oboe:usesStandard).
+The target of the annotation (oa:hasTarget) points to the EML metadata resource (oa:hasSource) that documents the data table and selects a particular part of the metadata that describes 
+the specific ``weight`` data attribute (oa:hasSelector). Because the EML metadata is serialized as XML, we can use an XPath oa:FragmentSelector to identify the data column being annotated.
+Note that our XPath expression identifies ``weight`` as the second column in the first data table in the data package: #xpointer(/eml/dataSet/dataTable[1]/attributeList/attribute[2].
+
+In order to bind the column annotation of the metadata to the physical data object (the three-column CSV file), we need to traverse the packaging model where an additional annotation expresses the relationship 
+between the data and metadata objects. The annotation, ``#ann.1.1``, asserts that the Metadata file (#eml.1.1) describes (cito:documents) the data file (#data.1.1). More specifically, the annotation target specifies 
+where in the EML the #data.1.1 object is described by using an oa:FragmentSelector with an XPath pointer to the first data file documented in the EML: #xpointer(/eml/dataSet/dataTable[1].
+
+Note that the annotation model uses a slightly different model than the original ORE resource map model recommended by DataONE. While it is more complicated to include pointers to data documentation within the metadata,
+we have found that the current ORE maps are not sufficiently descriptive on their own and any consumers must also consult the metadata to figure out which object is the csv, which is the pdf, which is the script, etc...
+By incorporating the metadata pointer within the annotation model, we hope to be able to hanlde data packages that use manu different metadata serializations without having to write custom handlers for each formatId.
+
 Indexing
 --------
-The Metacat Index component has been enhanced to parse semantic models provided as RDF. The general purpose RdfXmlSubprocessor can be used with SparqlFields to extract key concepts from any given model that is added to the document store.
-The processor assumes that the identifier of the RDF document is the name of the graph being inserted into the triple store.
+The Metacat Index component has been enhanced to parse semantic models provided as RDF. 
+The general purpose RdfXmlSubprocessor can be used with SparqlFields to extract key concepts from any given model that is added to the Metacat MN document store.
+
+The processor assumes that the identifier of the RDF document is the name of the graph being inserted into the triple store and provides that graph name to the query engine for substitution in any query syntax ($GRAPH_NAME).
 The SPARQL requirements are that the solution[s] return the identifier (pid) of the object being annotated, and the index field being populated with the given value[s].
 If multiple fields are to be extracted from the model for indexing, a distinct SPARQL query should be used for each field.
+
 The query can (and is largely expected to) be constrained to the named graph that contains only that set of annotation triples. While the infrastructure can (and likely will) share the same triple store, 
 we should not assume other models have been loaded when processing any given graph. This means that any solutions will rely on only the named graph being processed during indexing.
-
-New Index Fields. Currently these are dynamic, multi-valued string fields which allow us to index the new semantic content without changing the SOLR schema. 
-They are multi-valued because they will store the entire class subsumption hierarchy (up) for any matching concepts
-and because they will store annotations from the same metadata resources for different attributes.
-	* ``characteristic_sm``
-	* ``standard_sm``
-
-
 
 The SPARQL query used to determine the Characteristics measured in a dataset is shown below. Note that the query includes superclasses in the returned solutions so that 
 the index returns a match for both general and specific criteria.
@@ -122,11 +135,22 @@ the index returns a match for both general and specific criteria.
 	 	}
 	
 ::
+
+Index Fields 
+_________________
+
+Currently, these dynamic, multi-valued string fields allow us to index the new semantic content without changing the SOLR schema. 
+They are multi-valued because they will store the entire class subsumption hierarchy (up) for any matching concepts
+and because they will store annotations from the same metadata resources for different attributes.
+	* ``characteristic_sm`` - indexes the oboe:Characteristic[s] for oboe:Measurement[s] in the datapackage
+	* ``standard_sm`` - indexes the oboe:Standard[s] for oboe:Measurement[s] in the datapackage
+
+
 	
 Example
 _______
 
-Continuing with example model, these concepts would be indexed for the data attributes.
+Continuing with example model, these concepts would be indexed for the data attributes described in the datapackage metadata.
 
 +---------------------------+-------------------+---------------------+-------------------------------------------------------------------------------------+
 | Object                    |  Field Name       | Field Type          |                                                Value                                |
@@ -153,7 +177,7 @@ Continuing with example model, these concepts would be indexed for the data attr
 +---------------------------+-------------------+---------------------+-------------------------------------------------------------------------------------+
 
 Queries
-_______-
+_______
 These indexed fields will be used primarily by MetacatUI to enhance discovery - both in terms of recall (concept hierarchies are exploited) and precision (concepts like Mass, do not result in false-positives for "Massachusetts"). 
 As more aspects of the annotation model (e.g., observation Entity) are included in the index, the queries can incorporate them for greater query precision. Unfortunately, the flat nature of the SOLR index will prevent us from 
 constructing queries that take full advantage of the underlying semantic annotation. We can filter results so that only those that measured Length Characteristics and Tree Entities, 
