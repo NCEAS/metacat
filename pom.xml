@@ -36,6 +36,16 @@
     </repositories>
     <dependencies>
     	<dependency>
+			<groupId>org.xhtmlrenderer</groupId>
+			<artifactId>core-renderer</artifactId>
+			<version>R8</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.jtidy</groupId>
+			<artifactId>jtidy</artifactId>
+			<version>r938</version>
+		</dependency>
+    	<dependency>
     		<groupId>gov.loc</groupId>
 			<artifactId>bagit</artifactId>
 			<version>4.4</version>

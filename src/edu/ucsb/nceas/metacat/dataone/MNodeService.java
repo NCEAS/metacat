@@ -26,6 +26,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -143,6 +144,7 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
+import edu.ucsb.nceas.utilities.export.HtmlToPdf;
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.writer.impl.ZipWriter;
@@ -1899,6 +1901,9 @@ public class MNodeService extends D1NodeService
 			//Create a map of dataone ids and file names
 			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
 			
+			// track the pid-to-file mapping
+			StringBuffer pidMapping = new StringBuffer();
+			
 			// find the package contents
 			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
 			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
@@ -1914,6 +1919,85 @@ public class MNodeService extends D1NodeService
 						try{
 							//Get the system metadata for this metadata object
 							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
+							
+							// include user-friendly metadata
+							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
+								InputStream metadataStream = this.get(session, metadataID);
+							
+								try {
+									// transform
+						            String format = "default";
+
+									DBTransform transformer = new DBTransform();
+						            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
+						            String sourceType = metadataSysMeta.getFormatId().getValue();
+						            String targetType = "-//W3C//HTML//EN";
+						            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+						            Writer writer = new OutputStreamWriter(baos , "UTF-8");
+						            // TODO: include more params?
+						            Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+						            String localId = null;
+									try {
+										localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+									} catch (McdbDocNotFoundException e) {
+										throw new NotFound("1020", e.getMessage());
+									}
+									params.put("qformat", new String[] {format});	            
+						            params.put("docid", new String[] {localId});
+						            params.put("pid", new String[] {pid.getValue()});
+						            params.put("displaymodule", new String[] {"printall"});
+						            
+						            transformer.transformXMLDocument(
+						                    documentContent , 
+						                    sourceType, 
+						                    targetType , 
+						                    format, 
+						                    writer, 
+						                    params, 
+						                    null //sessionid
+						                    );
+						            
+						            // finally, get the HTML back
+						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
+						            
+						            // write to temp file with correct css path
+						            File tmpDir = File.createTempFile("package_", "_dir");
+						            tmpDir.delete();
+						            tmpDir.mkdir();
+						            File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
+						            File cssDir = new File(tmpDir, format);
+						            cssDir.mkdir();
+						            File cssFile = new File(tmpDir, format + "/" + format + ".css");
+						            String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
+						            File pdfFile = new File(tmpDir, pdfFileName);
+						            //File pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
+						            
+						            // put the CSS file in place for the html to find it
+						            String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
+						            IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
+						            
+						            // write the HTML file
+						            IOUtils.copy(resultInputStream, new FileOutputStream(htmlFile));
+						            
+						            // convert to PDF
+						            HtmlToPdf.export(htmlFile.getAbsolutePath(), pdfFile.getAbsolutePath());
+						            
+						            //add to the package
+						            bag.addFileToPayload(pdfFile);
+									pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
+						            
+						            // mark for clean up after we are done
+									htmlFile.delete();
+									cssFile.delete();
+									cssDir.delete();
+						            tempFiles.add(tmpDir);
+									tempFiles.add(pdfFile); // delete this first later on
+						            
+								} catch (Exception e) {
+									logMetacat.warn("Could not transform metadata", e);
+								}
+							}
+
 							
 							//If this is in eml format, extract the filename and GUID from each entity in its package
 							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://")) {
@@ -1976,9 +2060,7 @@ public class MNodeService extends D1NodeService
 			tempDir = new File(tempDir.getPath() + "_dir");
 			tempDir.mkdir();			
 			tempFiles.add(tempDir);
-			
-			// track the pid-to-file mapping
-			StringBuffer pidMapping = new StringBuffer();
+			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
 			
 			// loop through the package contents
 			for (Identifier entryPid: packagePids) {
@@ -2013,7 +2095,6 @@ public class MNodeService extends D1NodeService
 			}
 			
 			//add the the pid to data file map
-			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
 			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
 			bag.addFileAsTag(pidMappingFile);
 			tempFiles.add(pidMappingFile);
@@ -2037,9 +2118,8 @@ public class MNodeService extends D1NodeService
 			tempFiles.add(bagFile);
 			
 			// clean up other temp files
-			for(int i=tempFiles.size()-1; i>=0; i--){
-				File tf = new File(tempFiles.get(i).getPath());
-				tf.delete();
+			for (int i=tempFiles.size()-1; i>=0; i--){
+				tempFiles.get(i).delete();
 			}
 			
 		} catch (IOException e) {
