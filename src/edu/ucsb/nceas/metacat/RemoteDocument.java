@@ -26,9 +26,10 @@
 
 package edu.ucsb.nceas.metacat;
 
+import edu.ucsb.nceas.metacat.client.MetacatClient;
+import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
-import edu.ucsb.nceas.utilities.HttpMessage;
 import javax.servlet.ServletOutputStream;
 
 import org.apache.log4j.Logger;
@@ -48,6 +49,9 @@ import java.util.zip.*;
  */
 public class RemoteDocument
 {
+	
+	private MetacatClient metacat = null;
+	
   private String docIdWithoutRevision = null; //Docid for this document
   private String revision = null; // Reviseion number for this document
   private String dataSetId = null; // Data set document Id which contains
@@ -79,6 +83,11 @@ public class RemoteDocument
     // Get data set id for the given docid
     dataSetId = DBUtil.findDataSetDocIdForGivenDocument(docIdWithoutRevision);
     documentHomeServerURL = getMetacatURLForGivenDocId(dataSetId);
+    
+    
+    // make sure we initialize the client for making remote calls
+	this.metacat = (MetacatClient) MetacatFactory.createMetacatConnection(documentHomeServerURL);
+	  
     // Get revisionAndDocType
     getRevisionAndDocTypeString();
     revision = myRevision;
@@ -241,6 +250,7 @@ public class RemoteDocument
    */
   private void getRevisionAndDocTypeString()
   {
+	  
     // Set property for login action
     Properties prop = new Properties();
     // Set action = getrevisionanddoctype
@@ -455,7 +465,6 @@ public class RemoteDocument
     String response = getMetacatString(prop);
     logMetacat.debug("Logout Message: "+response);
     // Set cookie to null
-    HttpMessage.setCookie(null);
      
   }//logout
   
@@ -506,14 +515,9 @@ public class RemoteDocument
    * @param prop the properties to be sent to Metacat
    */
   private InputStream getMetacatInputStream(Properties prop) throws Exception
-  {
+  {	  
     // Variable to store the returned input stream
-    InputStream returnStream = null;
-    // Create a URL for remtate
-    URL url = new URL(documentHomeServerURL);
-    HttpMessage msg = new HttpMessage(url);
-    // Now contact metacat and send the request
-    returnStream = msg.sendPostMessage(prop);
+    InputStream returnStream = metacat.sendParameters(prop);
     return returnStream;
  
   }//getMetacatInputStream

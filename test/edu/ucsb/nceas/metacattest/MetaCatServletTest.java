@@ -28,8 +28,10 @@ package edu.ucsb.nceas.metacattest;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.client.MetacatClient;
+import edu.ucsb.nceas.metacat.client.MetacatFactory;
+import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.utilities.HttpMessage;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 import junit.framework.Test;
@@ -45,6 +47,7 @@ import java.util.*;
  */
 public class MetaCatServletTest extends MCTestCase {
 	private static String metacatURL;
+	private MetacatClient metacat = null;
 	private String serialNumber;
 
 	/* Initialize properties */
@@ -82,6 +85,12 @@ public class MetaCatServletTest extends MCTestCase {
 	 * Establish a testing framework by initializing appropriate objects
 	 */
 	public void setUp() {
+		try {
+			metacat = (MetacatClient) MetacatFactory.createMetacatConnection(metacatURL);
+		} catch (MetacatInaccessibleException e) {
+			fail("Could not initialize MetacatClient: " + e.getMessage());
+			e.printStackTrace();
+		}
 
 	}
 
@@ -496,7 +505,6 @@ public class MetaCatServletTest extends MCTestCase {
 
 		String response = getMetacatString(prop);
 		debug("Logout Message: " + response);
-		HttpMessage.setCookie(null);
 
 		if (response.indexOf("<logout>") != -1) {
 			disConnected = true;
@@ -629,9 +637,7 @@ public class MetaCatServletTest extends MCTestCase {
 		// Now contact metacat and send the request
 		try {
 
-			URL url = new URL(metacatURL);
-			HttpMessage msg = new HttpMessage(url);
-			returnStream = msg.sendPostMessage(prop);
+			returnStream = metacat.sendParameters(prop);
 			return returnStream;
 		} catch (Exception e) {
 			e.printStackTrace(System.err);
