@@ -145,7 +145,6 @@ and because they will store annotations from the same metadata resources for dif
 	* ``characteristic_sm`` - indexes the oboe:Characteristic[s] for oboe:Measurement[s] in the datapackage
 	* ``standard_sm`` - indexes the oboe:Standard[s] for oboe:Measurement[s] in the datapackage
 
-
 	
 Example
 _______
@@ -182,6 +181,44 @@ These indexed fields will be used primarily by MetacatUI to enhance discovery - 
 As more aspects of the annotation model (e.g., observation Entity) are included in the index, the queries can incorporate them for greater query precision. Unfortunately, the flat nature of the SOLR index will prevent us from 
 constructing queries that take full advantage of the underlying semantic annotation. We can filter results so that only those that measured Length Characteristics and Tree Entities, 
 but not that we measured the Length of the Tree (it may be that we actually measured the Length of the bird in the tree).
+
+
+
+Extending the model
+___________________
+
+The proposed system for asserting and indexing annotations can easily be extended. For practical reasons, we do want to codify a preferred mechanism for expressing 
+observation measurements and binding them to their data table attributes. But because the model is essentially just a collection of triples, and the mechanism that indexes those
+triples is configured with custom SPARQL queries, we can accommodate additional statements about data objects and packages in the future.
+
+One such semantic extension involves a provenance graph for derived data products. For detailed information on that endeavor, see the ore-model-expansion section.
+
+Another area for extension uses ORCIDs to give attribution to the appropriate author/creator. This is expressed in the model using prov:wasAttributedTo and 
+could be readily indexed into a dynamic SOLR field like ``creator_sm``. But until these ORCIDs are more widely adopted, it may be difficult to provide effective querying based on this field.
+It would also require authors to actively assert that their ORCIDs are associated certain data packages and objects; perhaps using tools that we currently do not have implemented. 
+
+
+Annotation serializations
+______________________________
+
+Our initial serialization technique for semantic annotations is to have a distinct file for the model. We have been using RDF/XML, but other syntaxes will likely be supported out of the box 
+because we are using the Jena library for model parsing.
+
+Other methods for serializing the model we have considered and may support in the future include:
+	* ``ORE`` - included as additional triples in our current ORE resource map packaging serializations
+	* ``RDFa`` - annotations embedded directly within the science metadata
+	* ``triplestore`` - triples written directly to a triple store endpoint using an API
+	
+
+Annotation permissions
+______________________________
+
+Because annotations ussually assert facts (or opinions) about _other_ objects, we will allow these assertions to be indexed only if the rights holder for the RDF model has the same rightsholder
+priveledges on the target object.
+This will prevent both malicious and accidental assertions about objects by other parties who should not be influencing how the object is documented or interpreted. 
+Unfortunately, this also prevents interested, non-rights holder parties from asserting valuable statements about research data in the system. 
+Ideally, we will accommodate third-party annotations and expose them for use in discovery and integration so long as they are effectively labeled (e.g., "alternative annotaiton", "automated annotation", etc...).
+
 
 
 Sample annotation using OWL
