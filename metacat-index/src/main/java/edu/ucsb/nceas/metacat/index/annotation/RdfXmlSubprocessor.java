@@ -107,7 +107,9 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
         for (SolrDoc processedDoc : processedDocs) {
             processedDocsMap.put(processedDoc.getIdentifier(), processedDoc);
         }
-        return processedDocsMap;
+        // make sure to merge any docs that are currently being processed
+        Map<String, SolrDoc> mergedDocuments = mergeDocs(docs, processedDocsMap);
+        return mergedDocuments;
     }
 
     private InputStream toInputStream(Document doc) throws TransformerConfigurationException, TransformerException, TransformerFactoryConfigurationError {
@@ -213,7 +215,9 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
         return list;
     }
     
-    private Map<String, SolrDoc> mergeDocs(Map<String, SolrDoc> pending, Map<String, SolrDoc> existing) {
+    private Map<String, SolrDoc> mergeDocs(Map<String, SolrDoc> pending, Map<String, SolrDoc> existing) throws Exception {
+    	IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+
     	Map<String, SolrDoc> merged = new HashMap<String, SolrDoc>();
     	Iterator<String> pendingIter = pending.keySet().iterator();
     	while (pendingIter.hasNext()) {
@@ -233,8 +237,14 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     			if (field.getName().equals(SolrElementField.FIELD_ID) && mergedDoc.hasField(SolrElementField.FIELD_ID)) {
     				continue;
     			}
-				mergedDoc.addField(field);
-				
+    			// don't transfer the copyTo fields, otherwise there are errors
+				if (indexSchema.isCopyFieldTarget(indexSchema.getField(field.getName()))) {
+					continue;
+				}
+				// only add if we don't already have it
+				if (!mergedDoc.hasFieldWithValue(field.getName(), field.getValue())) {
+					mergedDoc.addField(field);
+				}	
 			}
     		
     		// include in results
