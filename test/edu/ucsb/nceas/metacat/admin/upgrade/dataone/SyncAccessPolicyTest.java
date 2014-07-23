@@ -34,8 +34,8 @@ import java.util.Vector;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.dataone.client.CNode;
-import org.dataone.client.D1Client;
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
@@ -43,7 +43,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Before;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
@@ -199,7 +199,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 				// Get sm, access policy for requested pid from the CN
 				// Get sm, access policy for requested pid from the CN
 				try {
-					cnSysMeta = cn.getSystemMetadata(pid);
+					cnSysMeta = cn.getSystemMetadata(null, pid);
 					debug("Got SM from CN");
 
 				} catch (Exception e) {
@@ -222,7 +222,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			/* Read SM from MN */
 			try {
 				mnSysMeta = MNodeService.getInstance(request)
-						.getSystemMetadata(pid);
+						.getSystemMetadata(null, pid);
 				debug("Got SM from MN");
 			} catch (Exception e) {
 				fail("Error getting system metadata for new pid: "
@@ -268,7 +268,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			/* Reread SM from MN after updating access */
 			try {
 				mnSysMeta = MNodeService.getInstance(request)
-						.getSystemMetadata(pid);
+						.getSystemMetadata(null, pid);
 				debug("Got SM from MN");
 			} catch (Exception e) {
 				fail("Error getting system metadata for new pid: "
@@ -309,7 +309,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 
 			/* Reread SM from CN */
 			try {
-				cnSysMeta = cn.getSystemMetadata(pid);
+				cnSysMeta = cn.getSystemMetadata(null, pid);
 				debug("Got SM from CN");
 			} catch (Exception e) {
 				fail("Error getting system metadata for pid: " + pid.getValue()
@@ -448,7 +448,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 				Thread.sleep(1000 * 60);
 				// Get sm for data object pid from the CN
 				try {
-					cnSysMeta = cn.getSystemMetadata(pid);
+					cnSysMeta = cn.getSystemMetadata(null, pid);
 				} catch (Exception e) {
 					debug("Error getting system metadata for pid: "
 							+ pid.getValue() + " from cn: " + e.getMessage());
@@ -501,7 +501,7 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 			}
 			/* Get CN access policy for data object */
 			try {
-				cnSysMeta = cn.getSystemMetadata(pid);
+				cnSysMeta = cn.getSystemMetadata(null, pid);
 			} catch (Exception e) {
 				debug("Error getting system metadata for pid: "
 						+ pid.getValue() + " from cn: " + e.getMessage());

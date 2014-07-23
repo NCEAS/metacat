@@ -25,12 +25,10 @@ package edu.ucsb.nceas.metacat.restservice;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.Enumeration;
-import java.util.Map;
-import java.util.StringTokenizer;
 
 import javax.servlet.ServletRequest;
-import javax.servlet.http.*;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequestWrapper;
 
 /**
  * @author berkley

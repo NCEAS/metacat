@@ -37,14 +37,15 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
+import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.dataone.client.CNode;
-import org.dataone.client.D1Client;
-import org.dataone.client.ObjectFormatCache;
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -58,19 +59,19 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.Node;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.Constants;
@@ -470,7 +471,7 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    */
   public Log getLogRecords(Session session, Date fromDate, Date toDate, 
-      Event event, String pidFilter, Integer start, Integer count) throws InvalidToken, ServiceFailure,
+      String event, String pidFilter, Integer start, Integer count) throws InvalidToken, ServiceFailure,
       NotAuthorized, InvalidRequest, NotImplemented {
 
 	  // only admin access to this method
@@ -750,7 +751,7 @@ public abstract class D1NodeService {
                         CNode cn = null;
                         try {
                             cn = D1Client.getCN();
-                        } catch (ServiceFailure e) {
+                        } catch (BaseException e) {
                             logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't connect to the CN since "+
                                             e.getDescription()+ ". The false value will be returned for the AuthoritativeMNodeAdmin.");
                             return allowed;
@@ -1291,6 +1292,48 @@ public abstract class D1NodeService {
         }
 
     }
+    
+	public boolean updateSystemMetadata(Session session, Identifier pid,
+			SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
+			ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
+		
+		// The lock to be used for this identifier
+      Lock lock = null;
+
+      // TODO: control who can call this?
+      if (session == null) {
+          //TODO: many of the thrown exceptions do not use the correct error codes
+          //check these against the docs and correct them
+          throw new NotAuthorized("4861", "No Session - could not authorize for registration." +
+                  "  If you are not logged in, please do so and retry the request.");
+      }
+      
+      // verify that guid == SystemMetadata.getIdentifier()
+      logMetacat.debug("Comparing guid|sysmeta_guid: " + pid.getValue() + 
+          "|" + sysmeta.getIdentifier().getValue());
+      
+      if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
+          throw new InvalidRequest("4863", 
+              "The identifier in method call (" + pid.getValue() + 
+              ") does not match identifier in system metadata (" +
+              sysmeta.getIdentifier().getValue() + ").");
+      }
+
+      // do the actual update
+      this.updateSystemMetadata(sysmeta);
+      
+      try {
+    	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+    	  EventLog.getInstance().log(request.getRemoteAddr(), 
+    	          request.getHeader("User-Agent"), session.getSubject().getValue(), 
+    	          localId, "updateSystemMetadata");
+      } catch (McdbDocNotFoundException e) {
+    	  // do nothing, no localId to log with
+    	  logMetacat.warn("Could not log 'updateSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+      }
+      
+      return true;
+	}
   
   /**
    * Given a Permission, returns a list of all permissions that it encompasses
@@ -1481,10 +1524,6 @@ public abstract class D1NodeService {
       }
 
       return pid;
-  }
-  
-  public Identifier archive(Identifier pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-	  return archive(null, pid);
   }
 
 

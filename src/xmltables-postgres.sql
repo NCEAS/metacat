@@ -299,6 +299,7 @@ CREATE INDEX identifier_docid_rev_log ON identifier((docid||'.'||rev));
  */
 CREATE TABLE systemMetadata (
 	guid   text,          -- the globally unique string identifier of the object that the system metadata describes
+	series_id text, -- the series identifier
 	serial_version VARCHAR(256), --the serial version of the object
 	date_uploaded TIMESTAMP, -- the date/time the document was first submitted
 	rights_holder VARCHAR(250), --the user who has rights to the document, usually the first persons to upload it

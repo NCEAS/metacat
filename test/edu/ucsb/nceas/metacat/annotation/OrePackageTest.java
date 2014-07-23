@@ -33,7 +33,7 @@ import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.OREFactory;
 import org.dspace.foresite.Predicate;
 import org.dspace.foresite.ResourceMap;

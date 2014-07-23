@@ -106,7 +106,7 @@ public class OrcidService {
 			}
 			
 			MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-			InputStream results = MNodeService.getInstance(request ).query("solr", query);
+			InputStream results = MNodeService.getInstance(request ).query(null, "solr", query);
 			Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
 			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
 			NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//lst[@name=\"origin\"]/int/@name");

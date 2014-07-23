@@ -19,9 +19,8 @@
  */
 package edu.ucsb.nceas.metacat.dataone;
 
-import org.dataone.client.CNode;
+import org.dataone.client.v2.impl.MultipartCNode;
 import org.dataone.service.exceptions.IdentifierNotUnique;
-import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -30,13 +29,13 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 
 /**
  * MockCNode mimics a DataONE Coordinating Node, and should be used only for testing
  * when there is a dependency on CN services
  */
-public class MockCNode extends CNode {
+public class MockCNode extends MultipartCNode {
 
     /**
      * See superclass for documentation
@@ -65,18 +64,4 @@ public class MockCNode extends CNode {
         return true;
     }
     
-    /**
-     * we only want to test against ourselves
-     */
-    @Override
-    public String lookupNodeBaseUrl(String nodeId) throws ServiceFailure, NotImplemented {
-
-    	try {
-			return MNodeService.getInstance(null).getCapabilities().getBaseURL();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return null;
-    }
 }

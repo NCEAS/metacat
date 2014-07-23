@@ -34,13 +34,13 @@ import java.util.concurrent.locks.Lock;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
-import org.dataone.client.CNode;
-import org.dataone.client.D1Client;
-import org.dataone.client.MNode;
-import org.dataone.service.cn.v1.CNAuthorization;
-import org.dataone.service.cn.v1.CNCore;
-import org.dataone.service.cn.v1.CNRead;
-import org.dataone.service.cn.v1.CNReplication;
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.v2.MNode;
+import org.dataone.service.cn.v2.CNAuthorization;
+import org.dataone.service.cn.v2.CNCore;
+import org.dataone.service.cn.v2.CNRead;
+import org.dataone.service.cn.v2.CNReplication;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -59,14 +59,14 @@ import org.dataone.service.types.v1.ChecksumAlgorithmList;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.Node;
-import org.dataone.service.types.v1.NodeList;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.ObjectFormatList;
+import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.ObjectLocationList;
 import org.dataone.service.types.v1.Permission;
@@ -75,8 +75,8 @@ import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
-import org.dataone.service.types.v1.util.ServiceMethodRestrictionUtil;
+import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v2.util.ServiceMethodRestrictionUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 
@@ -84,6 +84,7 @@ import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 
 /**
  * Represents Metacat's implementation of the DataONE Coordinating Node 
@@ -1729,7 +1730,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    */
   @Override
   public ObjectList listObjects(Session session, Date startTime, 
-      Date endTime, ObjectFormatIdentifier formatid, Boolean replicaStatus,
+      Date endTime, ObjectFormatIdentifier formatid, Identifier identifier, Boolean replicaStatus,
       Integer start, Integer count)
       throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
       ServiceFailure {
@@ -1834,203 +1835,132 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   }
 
 	@Override
-	public boolean isAuthorized(Identifier pid, Permission permission)
-			throws ServiceFailure, InvalidToken, NotFound, NotAuthorized,
-			NotImplemented, InvalidRequest {
-		
-		return isAuthorized(null, pid, permission);
+	public QueryEngineDescription getQueryEngineDescription(Session session,
+			String queryEngine) throws InvalidToken, ServiceFailure, NotAuthorized,
+			NotImplemented, NotFound {
+		throw new NotImplemented("0000", "CN query services are not implemented in Metacat.");
+
 	}
 	
 	@Override
-	public boolean setAccessPolicy(Identifier pid, AccessPolicy accessPolicy, long serialVersion)
-			throws InvalidToken, NotFound, NotImplemented, NotAuthorized,
-			ServiceFailure, InvalidRequest, VersionMismatch {
-		
-		return setAccessPolicy(null, pid, accessPolicy, serialVersion);
+	public QueryEngineList listQueryEngines(Session session) throws InvalidToken,
+			ServiceFailure, NotAuthorized, NotImplemented {
+		throw new NotImplemented("0000", "CN query services are not implemented in Metacat.");
+
 	}
 	
 	@Override
-	public Identifier setRightsHolder(Identifier pid, Subject userId, long serialVersion)
-			throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
-			NotImplemented, InvalidRequest, VersionMismatch {
-		
-		return setRightsHolder(null, pid, userId, serialVersion);
+	public InputStream query(Session session, String queryEngine, String query)
+			throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
+			NotImplemented, NotFound {
+		throw new NotImplemented("0000", "CN query services are not implemented in Metacat.");
+
 	}
 	
 	@Override
-	public Identifier create(Identifier pid, InputStream object, SystemMetadata sysmeta)
-			throws InvalidToken, ServiceFailure, NotAuthorized,
-			IdentifierNotUnique, UnsupportedType, InsufficientResources,
-			InvalidSystemMetadata, NotImplemented, InvalidRequest {
-
-		return create(null, pid, object, sysmeta);
+	public Node getCapabilities() throws NotImplemented, ServiceFailure {
+		throw new NotImplemented("0000", "The CN capabilities are not stored in Metacat.");
 	}
 	
+	/**
+     * A method to notify the Coordinating Node that the authoritative copy of 
+     * system metadata on the Authoritative Member Node has changed.
+     * 
+     * @param session   Session information that contains the identity of the 
+     *                  calling user as retrieved from the X.509 certificate 
+     *                  which must be traceable to the CILogon service.
+     * @param serialVersion   The serialVersion of the system metadata
+     * @param dateSysMetaLastModified  The time stamp for when the system metadata was changed
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws InvalidToken
+     */
 	@Override
-	public Identifier delete(Identifier pid) throws InvalidToken, ServiceFailure,
-			NotAuthorized, NotFound, NotImplemented {
+    public boolean systemMetadataChanged(Session session, Identifier pid,
+        long serialVersion, Date dateSysMetaLastModified) 
+        throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
+        InvalidToken {
+        
+        // cannot be called by public
+        if (session == null) {
+        	throw new InvalidToken("2183", "No session was provided.");
+        }
 
-		return delete(null, pid);
-	}
+        SystemMetadata currentLocalSysMeta = null;
+        SystemMetadata newSysMeta = null;
+        boolean allowed = false;
+        
+        // are we allowed to call this?
+        allowed = super.isAuthoritativeMNodeAdmin(session, pid);
+        
+        if (!allowed ) {
+            String msg = "The subject identified by " + session.getSubject().getValue() +
+              " is not authorized to call this service.";
+            throw new NotAuthorized("1331", msg);
+            
+        }
+        
+        // compare what we have locally to what is sent in the change notification
+        try {
+            currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+             
+        } catch (RuntimeException e) {
+            String msg = "SystemMetadata for pid " + pid.getValue() +
+              " couldn't be updated because it couldn't be found locally: " +
+              e.getMessage();
+            logMetacat.error(msg);
+            ServiceFailure sf = new ServiceFailure("1333", msg);
+            sf.initCause(e);
+            throw sf; 
+        }
+        
+        if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
+            try {
+            	
+                MNode mn = D1Client.getMN(currentLocalSysMeta.getAuthoritativeMemberNode());
+				newSysMeta = mn .getSystemMetadata(null, pid);
+            } catch (NotFound e) {
+                // huh? you just said you had it
+            	String msg = "On updating the local copy of system metadata " + 
+                "for pid " + pid.getValue() +", the AuthMN reports it is not found." +
+                " The error message was: " + e.getMessage();
+                logMetacat.error(msg);
+                ServiceFailure sf = new ServiceFailure("1333", msg);
+                sf.initCause(e);
+                throw sf;
+            }
+            
+            // update the local copy of system metadata for the pid
+            try {
+                HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
+                logMetacat.info("Updated local copy of system metadata for pid " +
+                    pid.getValue() + " after change notification from the CN.");
+                
+                // TODO: consider inspecting the change for archive
+                // see: https://projects.ecoinformatics.org/ecoinfo/issues/6417
+
+            } catch (RuntimeException e) {
+                String msg = "SystemMetadata for pid " + pid.getValue() +
+                  " couldn't be updated: " +
+                  e.getMessage();
+                logMetacat.error(msg);
+                ServiceFailure sf = new ServiceFailure("1333", msg);
+                sf.initCause(e);
+                throw sf;
+            }
+            
+            // submit for indexing
+            try {
+				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
+			} catch (Exception e) {
+                logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
+			}
+        }
+        
+        return true;
+        
+    }
 	
-	@Override
-	public Identifier generateIdentifier(String scheme, String fragment)
-			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
-			InvalidRequest {
-
-		return generateIdentifier(null, scheme, fragment);
-	}
-	
-	@Override
-	public Log getLogRecords(Date fromDate, Date toDate, Event event, String pidFilter,
-			Integer start, Integer count) throws InvalidToken, InvalidRequest,
-			ServiceFailure, NotAuthorized, NotImplemented, InsufficientResources {
-
-		return getLogRecords(null, fromDate, toDate, event, pidFilter, start, count);
-	}
-	
-	@Override
-	public boolean hasReservation(Subject subject, Identifier pid)
-			throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
-			NotImplemented, InvalidRequest, IdentifierNotUnique {
-
-		return hasReservation(null, subject, pid);
-	}
-	
-	@Override
-	public Identifier registerSystemMetadata(Identifier pid, SystemMetadata sysmeta)
-			throws NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest,
-			InvalidSystemMetadata, InvalidToken {
-
-		return registerSystemMetadata(null, pid, sysmeta);
-	}
-	
-	@Override
-	public Identifier reserveIdentifier(Identifier pid) throws InvalidToken,
-			ServiceFailure, NotAuthorized, IdentifierNotUnique, NotImplemented,
-			InvalidRequest {
-
-		return reserveIdentifier(null, pid);
-	}
-	
-	@Override
-	public boolean setObsoletedBy(Identifier pid, Identifier obsoletedByPid, long serialVersion)
-			throws NotImplemented, NotFound, NotAuthorized, ServiceFailure,
-			InvalidRequest, InvalidToken, VersionMismatch {
-
-		return setObsoletedBy(null, pid, obsoletedByPid, serialVersion);
-	}
-	
-	@Override
-	public DescribeResponse describe(Identifier pid) throws InvalidToken,
-			NotAuthorized, NotImplemented, ServiceFailure, NotFound {
-
-		return describe(null, pid);
-	}
-	
-	@Override
-	public InputStream get(Identifier pid) throws InvalidToken, ServiceFailure,
-			NotAuthorized, NotFound, NotImplemented {
-
-		return get(null, pid);
-	}
-	
-	@Override
-	public Checksum getChecksum(Identifier pid) throws InvalidToken,
-			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
-		return getChecksum(null, pid);
-	}
-	
-	@Override
-	public SystemMetadata getSystemMetadata(Identifier pid) throws InvalidToken,
-			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
-		return getSystemMetadata(null, pid);
-	}
-	
-	@Override
-	public ObjectList listObjects(Date startTime, Date endTime,
-			ObjectFormatIdentifier formatid, Boolean replicaStatus, Integer start, Integer count)
-			throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
-			ServiceFailure {
-
-		return listObjects(null, startTime, endTime, formatid, replicaStatus, start, count);
-	}
-	
-	@Override
-	public ObjectLocationList resolve(Identifier pid) throws InvalidToken,
-			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
-		return resolve(null, pid);
-	}
-	
-	@Override
-	public ObjectList search(String queryType, String query) throws InvalidToken,
-			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
-
-		return search(null, queryType, query);
-	}
-	
-	@Override
-	public boolean deleteReplicationMetadata(Identifier pid, NodeReference nodeId,
-			long serialVersion) throws InvalidToken, InvalidRequest, ServiceFailure,
-			NotAuthorized, NotFound, NotImplemented, VersionMismatch {
-
-		return deleteReplicationMetadata(null, pid, nodeId, serialVersion);
-	}
-	
-	@Override
-	public boolean isNodeAuthorized(Subject targetNodeSubject, Identifier pid)
-			throws NotImplemented, NotAuthorized, InvalidToken, ServiceFailure,
-			NotFound, InvalidRequest {
-
-		return isNodeAuthorized(null, targetNodeSubject, pid);
-	}
-	
-	@Override
-	public boolean setReplicationPolicy(Identifier pid, ReplicationPolicy policy,
-			long serialVersion) throws NotImplemented, NotFound, NotAuthorized,
-			ServiceFailure, InvalidRequest, InvalidToken, VersionMismatch {
-
-		return setReplicationPolicy(null, pid, policy, serialVersion);
-	}
-	
-	@Override
-	public boolean setReplicationStatus(Identifier pid, NodeReference targetNode,
-			ReplicationStatus status, BaseException failure) throws ServiceFailure,
-			NotImplemented, InvalidToken, NotAuthorized, InvalidRequest, NotFound {
-
-		return setReplicationStatus(null, pid, targetNode, status, failure);
-	}
-	
-	@Override
-	public boolean updateReplicationMetadata(Identifier pid, Replica replica,
-			long serialVersion) throws NotImplemented, NotAuthorized, ServiceFailure,
-			NotFound, InvalidRequest, InvalidToken, VersionMismatch {
-
-		return updateReplicationMetadata(null, pid, replica, serialVersion);
-	}
-
-  @Override
-  public QueryEngineDescription getQueryEngineDescription(String arg0)
-          throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
-          NotFound {
-      throw new NotImplemented("4410", "getQueryEngineDescription not implemented");
-      
-  }
-
-  @Override
-  public QueryEngineList listQueryEngines() throws InvalidToken, ServiceFailure,
-          NotAuthorized, NotImplemented {
-      throw new NotImplemented("4420", "listQueryEngines not implemented");
-      
-  }
-
-  @Override
-  public InputStream query(String arg0, String arg1) throws InvalidToken,
-          ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-      throw new NotImplemented("4324", "query not implemented");
-      
-  }
 }

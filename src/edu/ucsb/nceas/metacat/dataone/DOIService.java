@@ -31,7 +31,8 @@ import java.util.HashMap;
 
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
-import org.dataone.client.D1Client;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
@@ -39,14 +40,14 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Node;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.Constants;
 import org.ecoinformatics.datamanager.parser.DataPackage;
@@ -200,7 +201,7 @@ public class DOIService {
 				ObjectFormat objectFormat = null;
 				try {
 					objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-				} catch (NotFound e1) {
+				} catch (BaseException e1) {
 					logMetacat.warn("Could not check format type for: " + sysMeta.getFormatId());
 				}
 				if (objectFormat != null && objectFormat.getFormatType().equals("METADATA")) {
@@ -339,7 +340,7 @@ public class DOIService {
 		// default to given DN
 		String fullName = subject.getValue();
 		
-		SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(subject);
+		SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
 		if (subjectInfo != null && subjectInfo.getPersonList() != null) {
 			for (Person p: subjectInfo.getPersonList()) {
 				if (p.getSubject().equals(subject)) {

@@ -36,7 +36,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-import org.dataone.client.ObjectFormatCache;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.AccessPolicy;
@@ -52,7 +52,7 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.accesscontrol.XMLAccessAccess;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -1054,15 +1054,15 @@ public class IdentifierManager {
         String authoritativeMemberNode, long modifiedDate, String submitter, 
         String guid, String objectFormat, BigInteger size, boolean archived,
         boolean replicationAllowed, int numberReplicas, String obsoletes,
-        String obsoletedBy, BigInteger serialVersion, DBConnection dbConn) throws SQLException  {
+        String obsoletedBy, BigInteger serialVersion, String seriesId, DBConnection dbConn) throws SQLException  {
   
         // Execute the insert statement
         String query = "update " + TYPE_SYSTEM_METADATA + 
             " set (date_uploaded, rights_holder, checksum, checksum_algorithm, " +
             "origin_member_node, authoritive_member_node, date_modified, " +
             "submitter, object_format, size, archived, replication_allowed, number_replicas, " +
-            "obsoletes, obsoleted_by, serial_version) " +
-            "= (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) where guid = ?";
+            "obsoletes, obsoleted_by, serial_version, series_id) " +
+            "= (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) where guid = ?";
         PreparedStatement stmt = dbConn.prepareStatement(query);
         
         //data values
@@ -1082,9 +1082,11 @@ public class IdentifierManager {
         stmt.setString(14, obsoletes);
         stmt.setString(15, obsoletedBy);
         stmt.setString(16, serialVersion.toString());
+        stmt.setString(17, seriesId);
+
 
         //where clause
-        stmt.setString(17, guid);
+        stmt.setString(18, guid);
         logMetacat.debug("stmt: " + stmt.toString());
         //execute
         int rows = stmt.executeUpdate();
@@ -1207,6 +1209,7 @@ public class IdentifierManager {
 		    sm.getObsoletes() == null ? null:sm.getObsoletes().getValue(),
 		    sm.getObsoletedBy() == null ? null: sm.getObsoletedBy().getValue(),
 		    sm.getSerialVersion(),
+		    sm.getSeriesId() == null ? null: sm.getSeriesId().getValue(),
 		    dbConn
         );
         

@@ -159,10 +159,10 @@
     <load-on-startup>100</load-on-startup>
   </servlet>
     
-	<!-- CN REST Servlet -->
+	<!-- CN REST Servlet v1 -->
     <servlet>
-      <servlet-name>CNRestServlet</servlet-name>
-      <servlet-class>edu.ucsb.nceas.metacat.restservice.CNRestServlet</servlet-class>
+      <servlet-name>CNRestServletV1</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v1.CNRestServlet</servlet-class>
       <init-param>
         <param-name>debug</param-name>
         <param-value>1</param-value>
@@ -174,10 +174,40 @@
       <load-on-startup>15</load-on-startup>
     </servlet>
     
-    <!-- MN REST Servlet -->
+    <!-- CN REST Servlet v2 -->
     <servlet>
-      <servlet-name>MNRestServlet</servlet-name>
-      <servlet-class>edu.ucsb.nceas.metacat.restservice.MNRestServlet</servlet-class>
+      <servlet-name>CNRestServletV2</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v2.CNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>15</load-on-startup>
+    </servlet>
+    
+    <!-- MN REST Servlet V1 -->
+    <servlet>
+      <servlet-name>MNRestServletV1</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v1.MNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>20</load-on-startup>
+    </servlet>
+    
+    <!-- MN REST Servlet V2 -->
+    <servlet>
+      <servlet-name>MNRestServletV2</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.v2.MNRestServlet</servlet-class>
       <init-param>
         <param-name>debug</param-name>
         <param-value>1</param-value>
@@ -256,24 +286,28 @@
   </servlet-mapping>
 
 
-	<!-- CN REST services -->
+	<!-- CN REST services v1-->
 	<servlet-mapping>
-		<servlet-name>CNRestServlet</servlet-name>
-		<url-pattern>/d1/cn/*</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>CNRestServlet</servlet-name>
+		<servlet-name>CNRestServletV1</servlet-name>
 		<url-pattern>/d1/cn/v1/*</url-pattern>
 	</servlet-mapping>	
 	
-	<!-- MN REST services -->
+	<!-- MN REST services v1 -->
 	<servlet-mapping>
-		<servlet-name>MNRestServlet</servlet-name>
-		<url-pattern>/d1/mn/*</url-pattern>
-	</servlet-mapping>
-	<servlet-mapping>
-		<servlet-name>MNRestServlet</servlet-name>
+		<servlet-name>MNRestServletV1</servlet-name>
 		<url-pattern>/d1/mn/v1/*</url-pattern>
+	</servlet-mapping>
+	
+	<!-- CN REST services v2-->
+	<servlet-mapping>
+		<servlet-name>CNRestServletV2</servlet-name>
+		<url-pattern>/d1/cn/v2/*</url-pattern>
+	</servlet-mapping>	
+	
+	<!-- MN REST services v2-->
+	<servlet-mapping>
+		<servlet-name>MNRestServletV2</servlet-name>
+		<url-pattern>/d1/mn/v2/*</url-pattern>
 	</servlet-mapping>
 	
  <!-- uncomment this if you want the admin servlet -->

@@ -36,7 +36,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
-import org.dataone.client.D1Client;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -47,14 +47,14 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.Node;
-import org.dataone.service.types.v1.NodeList;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.ObjectFormatList;
+import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Replica;
@@ -62,7 +62,7 @@ import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 
 /**
@@ -165,7 +165,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		    int count = 1;
 	    
 		    Log log = CNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, 
-		    	event, null, start, count);
+		    	event.xmlValue(), null, start, count);
 		    assertNotNull(log);
 		    assertTrue(log.getCount() == count);
 		    assertTrue(log.getStart() == start);

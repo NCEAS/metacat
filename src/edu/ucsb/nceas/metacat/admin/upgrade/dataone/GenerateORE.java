@@ -39,16 +39,16 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.D1Client;
-import org.dataone.client.MNode;
-import org.dataone.client.ObjectFormatCache;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.v2.MNode;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectInfo;
 import org.dataone.service.types.v1.ObjectList;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dspace.foresite.ResourceMap;
 
@@ -169,7 +169,7 @@ public class GenerateORE implements UpgradeUtilityInterface {
 	        formatId = ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId();
 	        
 	        // get the objects that match
-			ObjectList objectList = mn.listObjects(null, null, null, formatId , null, 0, Integer.MAX_VALUE);
+			ObjectList objectList = mn.listObjects(null, null, null, formatId, null, null, 0, Integer.MAX_VALUE);
 			pids = new ArrayList<Identifier>();
 			for (ObjectInfo o: objectList.getObjectInfoList()) {
 				pids.add(o.getIdentifier());
@@ -214,7 +214,7 @@ public class GenerateORE implements UpgradeUtilityInterface {
 				log.debug("processing ORE pid: " + orePid.getValue());
 
 				// get original SystemMetadata
-				SystemMetadata originalOreSysMeta = mn.getSystemMetadata(orePid);
+				SystemMetadata originalOreSysMeta = mn.getSystemMetadata(null, orePid);
 				
 				// only update the CURRENT revision of the ORE
 				if (originalOreSysMeta.getObsoletedBy() != null || (originalOreSysMeta.getArchived() != null && originalOreSysMeta.getArchived())) {
@@ -223,7 +223,7 @@ public class GenerateORE implements UpgradeUtilityInterface {
 				}
 				
 				// get the original ORE map
-				InputStream originalOreStream = mn.get(orePid);
+				InputStream originalOreStream = mn.get(null, orePid);
 				Map<Identifier, Map<Identifier, List<Identifier>>> originalOre = ResourceMapFactory.getInstance().parseResourceMap(originalOreStream);
 
 				// generate the updated ORE map, in this case we aren't changing any values, just altering the serialization using a newer foresite library

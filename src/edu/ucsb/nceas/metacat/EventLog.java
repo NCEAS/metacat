@@ -35,10 +35,10 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.LogEntry;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.LogEntry;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -139,14 +139,13 @@ public class EventLog
     	// update the search index for the event
         try {
         	
-        	Event d1Event = Event.convert(event);
-        	if (d1Event != null) {
+        	if (event != null) {
         		
-	        	String fieldName = d1Event.xmlValue() + "_count_i";
+	        	String fieldName = event + "_count_i";
 	        	int eventCount = 0;
 	        	
 	        	String docid = IdentifierManager.getInstance().getLocalId(pid.getValue());
-	        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, d1Event, null, null, false, 0, 0);
+	        	Log eventLog = this.getD1Report(null, null, new String[] {docid}, event, null, null, false, 0, 0);
 	        	eventCount = eventLog.getTotal();
 	
 		        List<Object> values = new ArrayList<Object>();
@@ -371,7 +370,7 @@ public class EventLog
     
     
     public Log getD1Report(String[] ipAddress, String[] principal, String[] docid,
-            Event event, Timestamp startDate, Timestamp endDate, boolean anonymous, Integer start, Integer count)
+            String event, Timestamp startDate, Timestamp endDate, boolean anonymous, Integer start, Integer count)
     {
         
         Log log = new Log();
@@ -459,34 +458,15 @@ public class EventLog
             }
         	queryWhereClause.append("event in (");
     		queryWhereClause.append("?");
-    		String eventString = event.xmlValue();
-    		if (event.equals(Event.CREATE)) {
+    		String eventString = event;
+    		if (eventString.equals(Event.CREATE.xmlValue())) {
     			eventString = "insert";
     		}
     		paramValues.add(eventString);
         	queryWhereClause.append(") ");
             clauseAdded = true;
         }
-        else {
-	        if (clauseAdded) {
-	            queryWhereClause.append(" and ");
-	        }
-	    	queryWhereClause.append("event in (");
-	    	for (int i = 0; i < Event.values().length; i++) {
-	    		if (i > 0) {
-	        		queryWhereClause.append(", ");
-	    		}
-	    		queryWhereClause.append("?");
-	    		Event e = Event.values()[i];
-	    		String eventString = e.xmlValue();
-	    		if (e.equals(Event.CREATE)) {
-	    			eventString = "insert";
-	    		}
-	    		paramValues.add(eventString);
-	    	}
-	    	queryWhereClause.append(") ");
-	        clauseAdded = true;
-        }
+        
         if (startDate != null) {
             if (clauseAdded) {
                 queryWhereClause.append(" and ");
@@ -568,12 +548,7 @@ public class EventLog
 					logEntry.setSubject(subject);
 					
 					String logEventString = rs.getString(6);
-					Event logEvent = Event.convert(logEventString );
-					if (logEvent == null) {
-						logMetacat.info("Skipping uknown DataONE Event type: " + logEventString);
-						continue;
-					}
-					logEntry.setEvent(logEvent);
+					logEntry.setEvent(logEventString);
 					logEntry.setDateLogged(rs.getTimestamp(7));
 					
 					logEntry.setNodeIdentifier(memberNode);

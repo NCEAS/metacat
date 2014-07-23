@@ -20,13 +20,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.restservice;
+package edu.ucsb.nceas.metacat.restservice.v1;
 
 import java.io.IOException;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
+import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
+import edu.ucsb.nceas.metacat.restservice.D1RestServlet;
 
 
 /**

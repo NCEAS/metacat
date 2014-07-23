@@ -20,20 +20,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.restservice;
+package edu.ucsb.nceas.metacat.restservice.v1;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
-import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -45,8 +41,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.dataone.client.ObjectFormatCache;
-import org.dataone.client.formats.ObjectFormatInfo;
+import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.service.exceptions.BaseException;
@@ -66,14 +61,11 @@ import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.MonitorList;
 import org.dataone.service.types.v1.Node;
 import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
-import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
@@ -85,8 +77,9 @@ import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -302,9 +295,6 @@ public class MNResourceHandler extends D1ResourceHandler {
                             // TODO: send to output	
                             status = true;
                             
-                        } else {
-	                    	// health monitoring calls
-	                        status = monitor(extra);
                         }
                         
                     }
@@ -540,7 +530,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     		if (pid != null) {
     			Identifier identifier = new Identifier();
     			identifier.setValue(pid);
-				InputStream stream = mnode.getView(session, identifier, format);
+				InputStream stream = mnode.view(session, format, identifier);
 
     			// set the content-type if we have it from the implementation
     			if (stream instanceof ContentTypeInputStream) {
@@ -731,8 +721,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      * @throws IOException 
+     * @throws InvalidToken 
      */
-    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, JiBXException, IOException, InstantiationException, IllegalAccessException {
+    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, JiBXException, IOException, InstantiationException, IllegalAccessException, InvalidToken {
     	SynchronizationFailed syncFailed = null;
 		try {
 			syncFailed = collectSynchronizationFailed();
@@ -744,141 +735,8 @@ public class MNResourceHandler extends D1ResourceHandler {
 		
 		MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
     }
-    
 
-    /**
-     * Handles the monitoring resources
-     * @return
-     * @throws NotFound
-     * @throws ParseException
-     * @throws NotImplemented
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws InvalidRequest
-     * @throws InsufficientResources
-     * @throws UnsupportedType
-     * @throws IOException
-     * @throws JiBXException
-     */
-    private boolean monitor(String pathInfo) 
-      throws NotFound, ParseException, NotImplemented, ServiceFailure, 
-      NotAuthorized, InvalidRequest, InsufficientResources, UnsupportedType, 
-      IOException, JiBXException {
-    	logMetacat.debug("processing monitor request");
-        
-        logMetacat.debug("verb is GET");
-        logMetacat.debug("pathInfo is " + pathInfo);
-        
-        if (pathInfo.toLowerCase().equals("status")) {
-            logMetacat.debug("processing status request");
-            // TODO: implement in MNCore
-            //MNodeService.getInstance().getStatus();
-            return false;
-            
-        } else if (pathInfo.toLowerCase().equals("object")) {
-            logMetacat.debug("processing object request");
-            Identifier pid = null;
-            ObjectFormat format = null;
-            if (params.containsKey("format")) {
-                String f = params.get("format")[0];
-                format = ObjectFormatCache.getInstance().getFormat(f);
-            }
-            if (params.containsKey("pid")) {
-                String id = params.get("pid")[0];
-                pid = new Identifier();
-                pid.setValue(id);
-            }
-            
-            // TODO: implement in MNCore
-            //ObjectStatistics objectStats = MNodeService.getInstance().getObjectStatistics(format, pid);
-            return false;
-            
-        } else if (pathInfo.toLowerCase().equals("event")) {
-            logMetacat.debug("processing event request");
-            ObjectFormatIdentifier fmtid = null;
-            String fromDateStr = null;
-            Date fromDate = null;
-            String toDateStr = null;
-            Date toDate = null;
-            String requestor = null;
-            Subject subject = null;
-            String eventName = null;
-            Event event = null;
-
-            if (params.containsKey("formatId")) {
-                String f = params.get("formatId")[0];
-                fmtid = ObjectFormatCache.getInstance().getFormat(f).getFormatId();
-            }
-            
-            if (params.containsKey("fromDate")) {
-                fromDateStr = params.get("fromDate")[0];
-                fromDate = getDateAsUTC(fromDateStr);
-            }
-            
-            if (params.containsKey("toDate")) {
-              toDateStr = params.get("toDate")[0];
-              toDate = getDateAsUTC(toDateStr);
-            }
-            
-            if (params.containsKey("requestor")) {
-            	requestor = params.get("requestor")[0];
-            	subject = new Subject();
-            	subject.setValue(requestor);
-            }
-            
-            if (params.containsKey("event")) {
-            	eventName = params.get("event")[0];
-                event = Event.convert(eventName);
-            }
-            
-            MonitorList monitorList = MNodeService.getInstance(request).getOperationStatistics(session, fromDate, toDate, subject, event, fmtid);
-            
-            OutputStream out = response.getOutputStream();
-            response.setStatus(200);
-            response.setContentType("text/xml");
-            
-            TypeMarshaller.marshalTypeToOutputStream(monitorList, out);
-            
-            return true;
-            
-        }
-        
-        return false;
-    }
-    
-    /*
-     * Parse an ISO8601 date string, returning a Date in UTC time if the string
-     * ends in 'Z'.
-     * 
-     * @param fromDateStr -  the date string to be parsed
-     * @return date -  the date object represented by the string
-     */
-    private Date getDateAsUTC(String fromDateStr)
-      throws ParseException {
-
-    	Date date = null;
-    	
-    	try {
-    		// try the expected date format
-        // a date format for date string arguments
-        DateFormat dateFormat = 
-        	new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-
-	      date = dateFormat.parse(fromDateStr);
-      
-    	} catch (ParseException e) {
-    		// try the date with the UTC indicator
-        DateFormat utcDateFormat = 
-        	new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ss'Z'");
-        utcDateFormat.setTimeZone(TimeZone.getTimeZone("GMT-0"));
-        date = utcDateFormat.parse(fromDateStr);
-        
-      }
-    	
-    	return date;
-    }
-
-		/**
+	/**
      * Calculate the checksum 
      * @throws NotImplemented
      * @throws JiBXException
@@ -953,8 +811,9 @@ public class MNResourceHandler extends D1ResourceHandler {
         	}
         }
         
-        //parse the systemMetadata
-        final SystemMetadata sysmeta = collectSystemMetadata();
+        // parse the systemMetadata
+        Map<String, File> files = collectMultipartFiles();        
+        final SystemMetadata sysmeta = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, files.get("sysmeta"));
         
         String sn = multipartparams.get("sourceNode").get(0);
         logMetacat.debug("sourceNode: " + sn);
@@ -990,10 +849,11 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotAuthorized 
      * @throws InvalidToken 
      * @throws InvalidRequest 
+     * @throws InsufficientResources 
      */
     private void getReplica(String id) 
         throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented, 
-        ServiceFailure, NotFound {
+        ServiceFailure, NotFound, InsufficientResources {
         
         Identifier pid = new Identifier();
         pid.setValue(id);
@@ -1168,8 +1028,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken 
      * @throws IOException 
      * @throws JiBXException 
+     * @throws InsufficientResources 
      */
-    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, JiBXException {
+    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, JiBXException, InsufficientResources {
         OutputStream out = null;
         
         if (pid != null) { //get a specific document                
@@ -1291,12 +1152,13 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure 
      * @throws InvalidToken 
      * @throws IOException 
+     * @throws InvalidRequest 
      */
-    protected void getPackage(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException {
+    protected void getPackage(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
 
         Identifier id = new Identifier();
         id.setValue(pid);
-        InputStream is = MNodeService.getInstance(request).getPackage(session, id);
+        InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
         
         // use the provided filename
         String filename = null;

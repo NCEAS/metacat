@@ -36,7 +36,7 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.DocumentImpl;
@@ -215,7 +215,7 @@ public class DatapackageSummarizerTest extends D1NodeServiceTest {
 				// look for the latest version of the annotation, if there is one
 				do {
 					try {
-						sysmeta = MNodeService.getInstance(request).getSystemMetadata(annotationPid);
+						sysmeta = MNodeService.getInstance(request).getSystemMetadata(null, annotationPid);
 						if (sysmeta.getObsoletedBy() != null) {
 							annotationPid.setValue(sysmeta.getObsoletedBy().getValue());
 						}

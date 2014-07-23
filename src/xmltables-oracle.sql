@@ -406,6 +406,7 @@ END;
  */
 CREATE TABLE systemMetadata (
    guid   VARCHAR2(2000),    -- the globally unique string identifier
+   series_id   VARCHAR2(2000),    -- the series identifier
    serial_version VARCHAR2(256), --the serial version of the object   
    date_uploaded DATE, -- the date/time the document was first submitted
    rights_holder VARCHAR2(250), --the user who has rights to the document, usually the first persons to upload it

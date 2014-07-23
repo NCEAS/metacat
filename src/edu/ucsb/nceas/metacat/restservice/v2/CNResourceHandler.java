@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.restservice;
+package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -39,8 +39,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.dataone.client.ObjectFormatCache;
-import org.dataone.client.formats.ObjectFormatInfo;
+import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -59,11 +58,11 @@ import org.dataone.service.types.v1.ChecksumAlgorithmList;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
+import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.ObjectFormatList;
+import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.ObjectLocationList;
 import org.dataone.service.types.v1.Permission;
@@ -71,16 +70,18 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.EncodingUtilities;
+import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
 import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -459,7 +460,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         Date fromDate = null;
         Date toDate = null;
-        Event event = null;
+        String event = null;
         Integer start = null;
         Integer count = null;
         String pidFilter = null;
@@ -479,8 +480,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             logMetacat.warn("Could not parse toDate: " + e.getMessage());
         }
         try {
-            String eventS = params.get("event")[0];
-            event = Event.convert(eventS);
+            event = params.get("event")[0];
         } catch (Exception e) {
             logMetacat.warn("Could not parse event: " + e.getMessage());
         }
@@ -1144,7 +1144,10 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         long serialVersion = 0L;
         String serialVersionStr = null;
-        AccessPolicy accessPolicy = collectAccessPolicy();
+        
+        // parse the accessPolicy
+        Map<String, File> files = collectMultipartFiles();        
+        AccessPolicy accessPolicy = TypeMarshaller.unmarshalTypeFromFile(AccessPolicy.class, files.get("accessPolicy"));;
 
         // get the serialVersion
         try {
@@ -1191,6 +1194,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         Date startTime = null;
         Date endTime = null;
         ObjectFormatIdentifier formatId = null;
+        Identifier identifier = null;
         boolean replicaStatus = true;
         int start = 0;
         int count = 1000;
@@ -1224,6 +1228,9 @@ public class CNResourceHandler extends D1ResourceHandler {
             } else if (name.equals("formatId") && value != null) {
             	formatId = new ObjectFormatIdentifier();
             	formatId.setValue(value);
+            } else if (name.equals("identifier") && value != null) {
+            	identifier = new Identifier();
+            	identifier.setValue(value);
             } else if (name.equals("replicaStatus") && value != null) {
                 replicaStatus = Boolean.parseBoolean(value);
             } else if (name.equals("start") && value != null) {
@@ -1240,7 +1247,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
         // get the list
         ObjectList ol = CNodeService.getInstance(request).listObjects(session,
-                startTime, endTime, formatId, replicaStatus, start, count);
+                startTime, endTime, formatId, identifier, replicaStatus, start, count);
 
         // send it
         OutputStream out = response.getOutputStream();
@@ -1330,14 +1337,15 @@ public class CNResourceHandler extends D1ResourceHandler {
             IllegalAccessException, JiBXException, VersionMismatch {
 
         boolean result = false;
-        ReplicationPolicy policy = null;
         long serialVersion = 0L;
         String serialVersionStr = null;
 
         Identifier identifier = new Identifier();
         identifier.setValue(pid);
 
-        policy = collectReplicationPolicy();
+        // parse the policy
+        Map<String, File> files = collectMultipartFiles();        
+        ReplicationPolicy policy = TypeMarshaller.unmarshalTypeFromFile(ReplicationPolicy.class, files.get("policy"));
 
         // get the serialVersion
         try {
@@ -1575,23 +1583,14 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing ReplicaStatus from the mime multipart entity");
 
         try {
-            failure = collectReplicationStatus();
+        	// parse the policy
+            Map<String, File> files = collectMultipartFiles();        
+            failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")), 
+                    "Replication failed for an unknown reason.");
             
-        } catch (IOException e2) {
+        } catch (Exception e2) {
             throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
                 e2.getMessage());
-            
-        } catch (InstantiationException e2) {
-            throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
-                e2.getMessage());
-            
-        } catch (IllegalAccessException e2) {
-            throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
-                    e2.getMessage());
-            
-        } catch (JiBXException e2) {
-            throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
-                    e2.getMessage());
             
         }
         
@@ -1665,19 +1664,24 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest
      * @throws NotFound
      * @throws VersionMismatch 
+     * @throws JiBXException 
+     * @throws IOException 
+     * @throws IllegalAccessException 
+     * @throws InstantiationException 
      */
     public boolean updateReplicationMetadata(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
-            NotFound, VersionMismatch {
+            NotFound, VersionMismatch, InstantiationException, IllegalAccessException, IOException, JiBXException {
 
         boolean result = false;
         long serialVersion = 0L;
         String serialVersionStr = null;
-        Replica replica = null;
         Identifier identifier = new Identifier();
         identifier.setValue(pid);
 
-        replica = collectReplicaMetadata();
+        // parse the replica
+        Map<String, File> files = collectMultipartFiles();        
+        Replica replica = TypeMarshaller.unmarshalTypeFromFile(Replica.class, files.get("replicaMetadata"));
 
         // get the serialVersion
         try {

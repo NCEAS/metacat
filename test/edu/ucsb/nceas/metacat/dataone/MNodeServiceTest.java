@@ -51,7 +51,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
-import org.dataone.client.ObjectFormatCache;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.util.TypeMarshaller;
@@ -72,9 +72,8 @@ import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.MonitorList;
-import org.dataone.service.types.v1.Node;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
@@ -83,7 +82,7 @@ import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.jibx.runtime.JiBXException;
 import org.junit.After;
@@ -693,7 +692,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         // now check that we have at least one
         ObjectList objectList = 
           MNodeService.getInstance(request).listObjects(session, startTime, endTime, 
-              objectFormatId, replicaStatus, start, count);
+              objectFormatId, null, replicaStatus, start, count);
         assertNotNull(objectList);
         assertTrue(objectList.getCount() == count);
         assertTrue(objectList.getStart() == 0);
@@ -729,31 +728,6 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         
     }
     
-  }
-
-  public void testGetOperationStatistics() {
-      printTestHeader("testGetOperationStatistics");
-    try {
-      Session session = getCNSession();
-      SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Date startTime = sdf.parse("2010-01-01");
-        Date endTime = new Date();
-      MonitorList monitorList = 
-        MNodeService.getInstance(request).getOperationStatistics(
-            session, 
-            startTime, 
-            endTime, 
-            session.getSubject(), 
-            Event.CREATE, 
-            null //formatId
-            );
-      
-      assertNotNull(monitorList);
-      // TODO: should probably test other parts of the information
-    } catch (Exception e) {
-      e.printStackTrace();
-      fail("Probably not yet implemented: " + e.getMessage());
-    }
   }
 
   public void testPing() {
@@ -850,7 +824,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 	    int count = 1;
     
       log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, 
-        event, null, start, count);
+        event.xmlValue(), null, start, count);
       
       assertNotNull(log);      
       assertTrue(log.getCount() == count);
@@ -1157,7 +1131,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
 			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, pid);
+			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, null, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
 			BagFactory bagFactory = new BagFactory();
@@ -1234,7 +1208,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
 			
 			// get the package we uploaded
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, pid);
+			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, null, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
 			BagFactory bagFactory = new BagFactory();

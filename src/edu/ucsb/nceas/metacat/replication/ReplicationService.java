@@ -65,10 +65,11 @@ import org.apache.http.HttpResponse;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.log4j.Logger;
-import org.dataone.client.RestClient;
+import org.dataone.client.rest.DefaultHttpMultipartRestClient;
+import org.dataone.client.rest.RestClient;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
 import org.jibx.runtime.JiBXException;
@@ -1468,6 +1469,15 @@ public class ReplicationService extends BaseService {
 							+ me.getMessage());
 			// e.printStackTrace(System.out);
 			errorMsg = me.getMessage();
+		} catch (Exception e) {
+			logReplication
+			.error("ReplicationService.handleGetDocumentRequest - General exception encountered."
+					+ "handlGetDocumentRequest for file: "
+					+ documentPath
+					+ " : "
+					+ e.getMessage());
+			// e.printStackTrace(System.out);
+			errorMsg = e.getMessage();
 		} finally {
             IOUtils.closeQuietly(fos);
             IOUtils.closeQuietly(is);
@@ -2259,7 +2269,7 @@ public class ReplicationService extends BaseService {
 	 * @return a string representing the content of the url
 	 * @throws java.io.IOException
 	 */
-	public static String getURLContent(URL u) throws java.io.IOException {
+	public static String getURLContent(URL u) throws Exception {
 		char istreamChar;
 		int istreamInt;
 		// get the response content
@@ -2283,14 +2293,13 @@ public class ReplicationService extends BaseService {
 	 * @return a InputStream representing the content of the url
 	 * @throws java.io.IOException
 	 */
-	public static InputStream getURLStream(URL u) throws java.io.IOException {
+	public static InputStream getURLStream(URL u) throws Exception {
 	    logReplication.info("Getting url stream from " + u.toString());
 		logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
 		// use httpclient to set up SSL
-		RestClient client = getSSLClient();
-		HttpResponse response = client.doGetRequest(u.toString());
+		DefaultHttpMultipartRestClient client = getSSLClient();
 		// get the response content
-		InputStream input = response.getEntity().getContent();
+		InputStream input = client.doGetRequest(u.toString(), CLIENTTIMEOUT);
 		logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
 		
 		return input;		
@@ -2301,8 +2310,8 @@ public class ReplicationService extends BaseService {
 	 * Sends client certificate to the server when doing the request.
 	 * @return
 	 */
-	private static RestClient getSSLClient() {
-		RestClient client = new RestClient();
+	private static DefaultHttpMultipartRestClient getSSLClient() {
+		DefaultHttpMultipartRestClient client = new DefaultHttpMultipartRestClient();
 		
 		// set up this server's client identity
 		String subject = null;
@@ -2321,7 +2330,7 @@ public class ReplicationService extends BaseService {
 		}
 		
 		// set the configured timeout
-		client.setTimeouts(CLIENTTIMEOUT);
+		//client.setTimeouts(CLIENTTIMEOUT);
 
 		SSLSocketFactory socketFactory = null;
 		try {

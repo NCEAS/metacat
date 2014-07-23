@@ -55,12 +55,12 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.dataone.client.CNode;
-import org.dataone.client.D1Client;
-import org.dataone.client.MNode;
-import org.dataone.client.ObjectFormatCache;
+import org.dataone.client.v2.CNode;
+import org.dataone.client.v2.itk.D1Client;
+import org.dataone.client.v2.MNode;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.formats.ObjectFormatInfo;
+import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
@@ -75,27 +75,30 @@ import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.SynchronizationFailed;
 import org.dataone.service.exceptions.UnsupportedType;
-import org.dataone.service.mn.tier1.v1.MNCore;
-import org.dataone.service.mn.tier1.v1.MNRead;
-import org.dataone.service.mn.tier2.v1.MNAuthorization;
-import org.dataone.service.mn.tier3.v1.MNStorage;
-import org.dataone.service.mn.tier4.v1.MNReplication;
-import org.dataone.service.mn.v1.MNQuery;
+import org.dataone.service.mn.tier1.v2.MNCore;
+import org.dataone.service.mn.tier1.v2.MNRead;
+import org.dataone.service.mn.tier2.v2.MNAuthorization;
+import org.dataone.service.mn.tier3.v2.MNStorage;
+import org.dataone.service.mn.tier4.v2.MNReplication;
+import org.dataone.service.mn.v2.MNPackage;
+import org.dataone.service.mn.v2.MNQuery;
+import org.dataone.service.mn.v2.MNView;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.Log;
-import org.dataone.service.types.v1.LogEntry;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.LogEntry;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.MonitorInfo;
 import org.dataone.service.types.v1.MonitorList;
-import org.dataone.service.types.v1.Node;
-import org.dataone.service.types.v1.NodeList;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeState;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v1.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
@@ -107,7 +110,7 @@ import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.Synchronization;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
@@ -141,6 +144,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
+import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
@@ -177,7 +181,7 @@ import gov.loc.repository.bagit.writer.impl.ZipWriter;
  * 
  */
 public class MNodeService extends D1NodeService 
-    implements MNAuthorization, MNCore, MNRead, MNReplication, MNStorage, MNQuery {
+    implements MNAuthorization, MNCore, MNRead, MNReplication, MNStorage, MNQuery, MNView, MNPackage {
 
     //private static final String PATHQUERY = "pathquery";
 	public static final String UUID_SCHEME = "UUID";
@@ -788,7 +792,7 @@ public class MNodeService extends D1NodeService
      * @throws NotImplemented
      */
     @Override
-    public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Boolean replicaStatus, Integer start,
+    public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, Boolean replicaStatus, Integer start,
             Integer count) throws NotAuthorized, InvalidRequest, NotImplemented, ServiceFailure, InvalidToken {
 
         ObjectList objectList = null;
@@ -962,63 +966,7 @@ public class MNodeService extends D1NodeService
         }
     }
 
-    /**
-     * Returns the number of operations that have been serviced by the node 
-     * over time periods of one and 24 hours.
-     * 
-     * @param session - the Session object containing the credentials for the Subject
-     * @param period - An ISO8601 compatible DateTime range specifying the time 
-     *                 range for which to return operation statistics.
-     * @param requestor - Limit to operations performed by given requestor identity.
-     * @param event -  Enumerated value indicating the type of event being examined
-     * @param format - Limit to events involving objects of the specified format
-     * 
-     * @return the desired log records
-     * 
-     * @throws InvalidToken
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws InvalidRequest
-     * @throws NotImplemented
-     */
-    public MonitorList getOperationStatistics(Session session, Date startTime, 
-        Date endTime, Subject requestor, Event event, ObjectFormatIdentifier formatId)
-        throws NotImplemented, ServiceFailure, NotAuthorized, InsufficientResources, UnsupportedType {
-
-        MonitorList monitorList = new MonitorList();
-
-        try {
-
-            // get log records first
-            Log logs = getLogRecords(session, startTime, endTime, event, null, 0, null);
-
-            // TODO: aggregate by day or hour -- needs clarification
-            int count = 1;
-            for (LogEntry logEntry : logs.getLogEntryList()) {
-                Identifier pid = logEntry.getIdentifier();
-                Date logDate = logEntry.getDateLogged();
-                // if we are filtering by format
-                if (formatId != null) {
-                    SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-                    if (!sysmeta.getFormatId().getValue().equals(formatId.getValue())) {
-                        // does not match
-                        continue;
-                    }
-                }
-                MonitorInfo item = new MonitorInfo();
-                item.setCount(count);
-                item.setDate(new java.sql.Date(logDate.getTime()));
-                monitorList.addMonitorInfo(item);
-
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServiceFailure("2081", "Could not retrieve statistics: " + e.getMessage());
-        }
-
-        return monitorList;
-
-    }
+    
 
     /**
      * A callback method used by a CN to indicate to a MN that it cannot 
@@ -1398,130 +1346,10 @@ public class MNodeService extends D1NodeService
 		return identifier;
 	}
 
-	@Override
-	public boolean isAuthorized(Identifier pid, Permission permission)
-			throws ServiceFailure, InvalidRequest, InvalidToken, NotFound,
-			NotAuthorized, NotImplemented {
-
-		return isAuthorized(null, pid, permission);
-	}
+	
 
 	@Override
-	public boolean systemMetadataChanged(Identifier pid, long serialVersion, Date dateSysMetaLastModified)
-			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
-			InvalidRequest {
-
-		return systemMetadataChanged(null, pid, serialVersion, dateSysMetaLastModified);
-	}
-
-	@Override
-	public Log getLogRecords(Date fromDate, Date toDate, Event event, String pidFilter,
-			Integer start, Integer count) throws InvalidRequest, InvalidToken,
-			NotAuthorized, NotImplemented, ServiceFailure {
-
-		return getLogRecords(null, fromDate, toDate, event, pidFilter, start, count);
-	}
-
-	@Override
-	public DescribeResponse describe(Identifier pid) throws InvalidToken,
-			NotAuthorized, NotImplemented, ServiceFailure, NotFound {
-
-		return describe(null, pid);
-	}
-
-	@Override
-	public InputStream get(Identifier pid) throws InvalidToken, NotAuthorized,
-			NotImplemented, ServiceFailure, NotFound, InsufficientResources {
-
-		return get(null, pid);
-	}
-
-	@Override
-	public Checksum getChecksum(Identifier pid, String algorithm)
-			throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
-			ServiceFailure, NotFound {
-
-		return getChecksum(null, pid, algorithm);
-	}
-
-	@Override
-	public SystemMetadata getSystemMetadata(Identifier pid)
-			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-			NotFound {
-
-		return getSystemMetadata(null, pid);
-	}
-
-	@Override
-	public ObjectList listObjects(Date startTime, Date endTime,
-			ObjectFormatIdentifier objectFormatId, Boolean replicaStatus, Integer start,
-			Integer count) throws InvalidRequest, InvalidToken, NotAuthorized,
-			NotImplemented, ServiceFailure {
-
-		return listObjects(null, startTime, endTime, objectFormatId, replicaStatus, start, count);
-	}
-
-	@Override
-	public boolean synchronizationFailed(SynchronizationFailed syncFailed)
-			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure {
-
-		return synchronizationFailed(null, syncFailed);
-	}
-
-	@Override
-	public InputStream getReplica(Identifier pid) throws InvalidToken,
-			NotAuthorized, NotImplemented, ServiceFailure, NotFound,
-			InsufficientResources {
-
-		return getReplica(null, pid);
-	}
-
-	@Override
-	public boolean replicate(SystemMetadata sysmeta, NodeReference sourceNode)
-			throws NotImplemented, ServiceFailure, NotAuthorized,
-			InvalidRequest, InvalidToken, InsufficientResources,
-			UnsupportedType {
-
-		return replicate(null, sysmeta, sourceNode);
-	}
-
-	@Override
-	public Identifier create(Identifier pid, InputStream object,
-			SystemMetadata sysmeta) throws IdentifierNotUnique,
-			InsufficientResources, InvalidRequest, InvalidSystemMetadata,
-			InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-			UnsupportedType {
-
-		return create(null, pid, object, sysmeta);
-	}
-
-	@Override
-	public Identifier delete(Identifier pid) throws InvalidToken,
-			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
-		return delete(null, pid);
-	}
-
-	@Override
-	public Identifier generateIdentifier(String scheme, String fragment)
-			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
-			InvalidRequest {
-
-		return generateIdentifier(null, scheme, fragment);
-	}
-
-	@Override
-	public Identifier update(Identifier pid, InputStream object,
-			Identifier newPid, SystemMetadata sysmeta) throws IdentifierNotUnique,
-			InsufficientResources, InvalidRequest, InvalidSystemMetadata,
-			InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
-			UnsupportedType, NotFound {
-
-		return update(null, pid, object, newPid, sysmeta);
-	}
-
-	@Override
-	public QueryEngineDescription getQueryEngineDescription(String engine)
+	public QueryEngineDescription getQueryEngineDescription(Session session, String engine)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
 			NotFound {
 	    if(engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
@@ -1569,7 +1397,7 @@ public class MNodeService extends D1NodeService
 	}
 
 	@Override
-	public QueryEngineList listQueryEngines() throws InvalidToken,
+	public QueryEngineList listQueryEngines(Session session) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotImplemented {
 		QueryEngineList qel = new QueryEngineList();
 		//qel.addQueryEngine(EnabledQueryEngines.PATHQUERYENGINE);
@@ -1582,7 +1410,7 @@ public class MNodeService extends D1NodeService
 	}
 
 	@Override
-	public InputStream query(String engine, String query) throws InvalidToken,
+	public InputStream query(Session session, String engine, String query) throws InvalidToken,
 			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
 			NotFound {
 	    String user = Constants.SUBJECT_PUBLIC;
@@ -1855,7 +1683,7 @@ public class MNodeService extends D1NodeService
 				query = "fl=id,resourceMap&wt=xml&q=resourceMap:[* TO *]+id:\"" + pid + "\"";
 			}
 			
-			InputStream results = this.query("solr", query);
+			InputStream results = this.query(null, "solr", query);
 			org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
 			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
 			org.w3c.dom.NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
@@ -1875,17 +1703,11 @@ public class MNodeService extends D1NodeService
 		return retList;
 	}
 	
-	/**
-	 * Packages the given package in a Bagit collection for download
-	 * @param pid
-	 * @throws NotImplemented 
-	 * @throws NotFound 
-	 * @throws NotAuthorized 
-	 * @throws ServiceFailure 
-	 * @throws InvalidToken 
-	 */
-	public InputStream getPackage(Session session, Identifier pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-		
+
+	@Override
+	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
+			Identifier pid) throws InvalidToken, ServiceFailure,
+			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 		InputStream bagInputStream = null;
 		BagFactory bagFactory = new BagFactory();
 		Bag bag = bagFactory.createBag();
@@ -2145,24 +1967,28 @@ public class MNodeService extends D1NodeService
 		}
 		
 		return bagInputStream;
-
 	}
-	
-	/**
-	 * Get a rendered view of the object identified by pid.
-	 * Uses the registered format given by the format parameter.
-	 * Typically, this is structured HTML that can be styled with CSS.
-	 * @param session
-	 * @param pid
-	 * @param format
-	 * @return
-	 * @throws InvalidToken
-	 * @throws ServiceFailure
-	 * @throws NotAuthorized
-	 * @throws NotFound
-	 * @throws NotImplemented
-	 */
-	public InputStream getView(Session session, Identifier pid, String format) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+
+	@Override
+	public OptionList listViews(Session arg0) throws InvalidToken,
+			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+		OptionList views = new OptionList();
+		Vector<String> skinNames = null;
+		try {
+			skinNames = SkinUtil.getSkinNames();
+		} catch (PropertyNotFoundException e) {
+			throw new ServiceFailure("2841", e.getMessage());
+		}
+		for (String skinName: skinNames) {
+			views.addOption(skinName);
+		}
+		return views;
+	}
+
+	@Override
+	public InputStream view(Session session, String format, Identifier pid)
+			throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
+			NotImplemented, NotFound {
 		InputStream resultInputStream = null;
 		
 		SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
@@ -2231,7 +2057,6 @@ public class MNodeService extends D1NodeService
 		}
 		
 		return resultInputStream;
-		
 	}	
     
 }

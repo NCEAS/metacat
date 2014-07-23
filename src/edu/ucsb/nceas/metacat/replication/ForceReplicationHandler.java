@@ -336,9 +336,9 @@ public class ForceReplicationHandler implements Runnable
 				logReplication.error("ForceReplicationHandler.run - URL error in ForceReplicationHandler.run for server "
 						+ server + " : " + mue.getMessage());
 //				mue.printStackTrace();
-			} catch (IOException io) {
+			} catch (Exception io) {
 		    	logMetacat.error("ForceReplicationHandler.run - " + ReplicationService.METACAT_REPL_ERROR_MSG);
-				logReplication.error("ForceReplicationHandler.run - I/O error in ForceReplicationHandler.run for server "
+				logReplication.error("ForceReplicationHandler.run - Error in ForceReplicationHandler.run for server "
 						+ server + " : " + io.getMessage());
 			}
 		}//for
