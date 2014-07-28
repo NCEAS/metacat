@@ -42,6 +42,8 @@ use Digest::SHA1;
 use File::stat;
 use File::Basename;
 use File::Temp;
+use File::Copy;
+use Fcntl qw(:flock);
 use strict;
 
 #debug("running register-dataset.cgi");
@@ -499,22 +501,103 @@ if ( !$error ) {
 
 			# document is being inserted
 			my $docStatus = "INCOMPLETE";
-			while ( $docStatus eq "INCOMPLETE" ) {
-				$docid = newAccessionNumber( $config->{'scope'}, $metacat );
-
-				$xmldocWithDocID =~ s/docid/$docid/;
-				debugDoc($xmldocWithDocID);
-				$docStatus = insertMetadata( $xmldocWithDocID, $docid );
+            
+            #Lock a local file while we are creating a new docid
+            my $lockFilePath = "docids.lock";
+            open my $lock, '>', $lockFilePath;
+            flock($lock, LOCK_EX);
+            
+            my $logFilePath = "log.txt";
+            open my $log, '>>', $logFilePath;
+            print $log "\n----next doc---\n";
+            
+            my $tries = 0;
+            my $configScope = $config->{'scope'};
+            
+			while ($docStatus eq "INCOMPLETE") {
+                                
+                my $docidsFilePath = "docids.txt";
+                my $docidsFilePathNew = "docids.txt.new";
+                
+                #Open/create a local file while we are creating a new docid
+                open my $docidsFile,  '+<',  $docidsFilePath;
+                open my $docidsNewFile, '>', $docidsFilePathNew;
+                                
+                #Read each docid scope,num in the file
+                while( <$docidsFile> ) {
+                    my @line = split /,/;
+                    my $scope = $line[0];
+                    
+                     if($scope eq $configScope){
+                                                 
+                        my $newDocId = $line[1] + 1;
+                        $docid = "$configScope.$newDocId.1";
+                                                 
+                        print $docidsNewFile "$configScope,$newDocId \n";
+                         
+                    }
+                    else{
+                        print $docidsNewFile $_;
+                    }
+                }
+                
+                #Close the file and replace the old docids file with this new one
+                close $docidsNewFile;
+                close $docidsFile;
+                move($docidsFilePathNew, $docidsFilePath);
+                
+                if((!$docid) || ($tries > 5)){
+                    print $log "We DID NOT create a docid from the local file\n";
+                    
+                    #Create the docid
+                    #$docid = newAccessionNumber( $config->{'scope'}, $metacat );
+                    $docid = newAccessionNumber( "walker", $metacat );
+                    
+                    print $log "newAccessionNum: $docid\n";
+                    
+                    $xmldocWithDocID =~ s/docid/$docid/;
+                    debugDoc($xmldocWithDocID);
+                    $docStatus = insertMetadata( $xmldocWithDocID, $docid );
+                    print $log "docStatus: $docStatus\n------------\n";
+                  
+                    #Append the new docid
+                    #my @line = split(/\./, $docid);
+                    #my $scope = $line[0];
+                    #my $num = $line[1];
+                    
+                    #open my $docidsFile,  '>>',  $docidsFilePath;
+                    
+                    #print $docidsFile "$scope,$num\n";
+                
+                    #close $docidsFile;
+                }
+                else{
+                    print $log "We created a docid: $docid\n";
+                    $xmldocWithDocID =~ s/docid/$docid/;
+                    
+                    debugDoc($xmldocWithDocID);
+                    
+                    $docStatus = insertMetadata( $xmldocWithDocID, $docid );
+                    print $log "docStatus: $docStatus\n------------\n";
+                    
+                    $tries++;
+                }
+                
+                debug("B2");
 			}
-			debug("B2");
-			if ( $docStatus ne "SUCCESS" ) {
-				debug("NO SUCCESS");
-				debug("Message is: $docStatus");
-				push( @errorMessages, $docStatus );
-			}
-			else {
-				deleteRemovedData();
-			}
+            
+            close $log;
+            close $lock;
+            
+            if ( $docStatus ne "SUCCESS" ) {
+                debug("NO SUCCESS");
+                debug("Message is: $docStatus");
+                
+                push( @errorMessages, $docStatus );
+            }
+            else{
+                deleteRemovedData();
+            }
 
 			debug("B3");
 		}
@@ -697,7 +780,7 @@ sub insertMetadata {
 	if ( !$response ) {
 		debug("Response gotten (D2)");
 		my $errormsg = $metacat->getMessage();
-		i debug( "Error is (D3): " . $errormsg );
+		debug( "Error is (D3): " . $errormsg );
 		if ( $errormsg =~ /is already in use/ ) {
 			$docStatus = "INCOMPLETE";
 		}
@@ -4842,10 +4925,16 @@ sub toConfirmData {
 	}
 
 	if ( !$error ) {
-
-		# If no errors, then print out data in confirm Data template
+        # If no errors, then print out data in confirm Data template
 		$$templateVars{'section'} = "Confirm Data";
-		$template->process( $templates->{'confirmData'}, $templateVars );
+        
+        #Just return the data file upload details, if specified
+        if(param("justGetUploadDetails")){
+            $template->process( $templates->{'dataUploadDetails'}, $templateVars );   
+        }
+        else{
+            $template->process( $templates->{'confirmData'}, $templateVars );
+        }
 
 	}
 	else {
