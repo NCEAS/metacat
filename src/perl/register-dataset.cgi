@@ -44,7 +44,6 @@ use File::Basename;
 use File::Temp;
 use File::Copy;
 use Fcntl qw(:flock);
-use Data::UUID;
 use strict;
 
 #debug("running register-dataset.cgi");
@@ -447,7 +446,18 @@ if ( !$error ) {
 	}
 }
 
+open my $log, ">>", "log.txt";
+
 my $docid;
+my $scope = $FORM::scope;
+
+print $log "scope: $scope\n";
+print $log "FORM:scope: $FORM::scope\n";
+
+if(($scope eq "") || (!$scope)){
+    $scope = $config->{'scope'};
+    print $log "using config scope\n";
+}
 
 # Create a metacat object
 my $metacat = Metacat->new($metacatUrl);
@@ -507,7 +517,9 @@ if ( !$error ) {
 			while ($docStatus eq "INCOMPLETE") {
                                 
                 #Create the docid
-                $docid = newDocid($config->{'scope'}, $metacat);
+                $docid = newDocid($scope, $metacat);
+                
+                print $log "created docid: $docid\n scope is: $scope\n";
                                     
                 $xmldocWithDocID =~ s/docid/$docid/;
                 debugDoc($xmldocWithDocID);
@@ -762,7 +774,6 @@ sub newDocid {
     
     my $scope   = shift;
     my $metacat = shift;
-    my $getFromMetacat  = shift;
     my $scopeFound = 0;
     
     #Lock a local file while we are creating a new docid
@@ -1289,7 +1300,7 @@ sub fileMetadata {
         
         while(!$uploadStatus){
             
-            $docid = newDocid($config->{'scope'}, $metacat);
+            $docid = newDocid($scope, $metacat);
             
             $uploadStatus = uploadData( $outFile, $docid, $cleanName );
                         
@@ -1492,8 +1503,8 @@ sub uploadData {
 		
         my $uploadMsg = $metacat->getMessage();
 		
-        #push( @errorMessages,
-        #		"Failed to upload file. Error was: $uploadMsg\n" );
+        push( @errorMessages,
+        		"Failed to upload file. Error was: $uploadMsg\n" );
 		
         debug("Upload -- Error is: $uploadMsg");
 	}
