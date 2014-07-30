@@ -778,8 +778,8 @@ sub newDocid {
     
     #Lock a local file while we are creating a new docid
     my $lockFilePath = "docids.lock";
-    open my $lock, '>', $lockFilePath;
-    flock($lock, LOCK_EX);
+    open(LOCK, ">$lockFilePath");
+    flock(LOCK, LOCK_EX);
     
     my $lastdocid = newAccessionNumber($scope, $metacat);
     #Extract the docid number from the docid
@@ -828,7 +828,7 @@ sub newDocid {
     close $docidsNewFile;
     close $docidsFile;
     move($docidsFilePathNew, $docidsFilePath);
-    close $lock;
+    close LOCK;
     
     return $docid;
 }
