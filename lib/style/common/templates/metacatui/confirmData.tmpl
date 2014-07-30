@@ -1,4 +1,6 @@
-
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"   
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+  
 	<!-- CONTENT SECTION
     ======================================================================= -->
 	<article id="RegistryEntryReview">
@@ -17,7 +19,6 @@
 <tr><td align="left">
 <a name="BasicInformation"></a>
 <h4>Basic Information</h4>
-</p>
 <p><span class="text-info">First Name:</span>        [%providerGivenName%]
 </p>
 <p><span class="text-info">Last Name:</span>         [%providerSurName%]
@@ -40,7 +41,7 @@
     [% END %]
 [% END %]
 
-<hr class="rule">
+<hr class="rule" />
 <a name="DataSetOriginator"></a>
 <h4>Principal Data Set Owner</h4>
 
@@ -81,7 +82,7 @@
 <p><span class="text-info">Country:</span>               [%origCountry%]
 </p>
 
-<hr class="rule">
+<hr class="rule" />
 <a name="AdditionalOriginators"></a>
 <h4>Associated Parties</h4> 
 
@@ -89,6 +90,10 @@
     [% IF aoCount > 0 %]
         [% numAO = aoCount %]
     [% END %]
+
+</td>
+</tr>
+</table>
 
 <table cellspacing="0" border="0" width="760">
     <tr> 
@@ -122,14 +127,14 @@
      [% END %]    
 </table>
 
-<hr class="rule">
+<hr class="rule" />
 <a name="DataSetAbstract"></a>
 <h4>Data Set Abstract</h4>
 <p>
 [%abstract%]
 </p>
  [% IF modules.keyword == 'true' %]
-<hr class="rule">
+<hr class="rule" />
 <a name="KeywordInformation"></a>
 <h4>Keyword Information</h4> 
 
@@ -172,19 +177,19 @@
 [% END %]
   
 [% IF modules.temporal == 'true' %]
-<hr class="rule">
+<hr class="rule" />
 <a name="TemporalCoverageOfData"></a>
 <h4>Temporal Coverage of Data</h4> 
 
-<p><span class="text-info">Start Date:</span> [%beginningYear%]&nbsp;[%beginningMonth%]&nbsp;[%beginningDay%]
+<p><span class="text-info">Start Date:</span> [%beginningYear%]\u00A0[%beginningMonth%]\u00A0[%beginningDay%]
 </p>
 
-<p><span class="text-info">Stop Date:</span>    [%endingYear%]&nbsp;[%endingMonth%]&nbsp;[%endingDay%]
+<p><span class="text-info">Stop Date:</span>    [%endingYear%]\u00A0[%endingMonth%]\u00A0[%endingDay%]
 </p>
 [% END %]
 
 [% IF modules.spatial == 'true' %]
-<hr class="rule">
+<hr class="rule" />
 <a name="SpatialCoverageOfData"></a>
 <h4>Spatial Coverage of Data</h4> 
 
@@ -208,22 +213,22 @@
     </tr>
     <tr> 
       <td width="18%" valign="TOP"> 
-        <p><span class="text-info">&nbsp;Latitude</span></p>
+        <p><span class="text-info">\u00A0Latitude</span></p>
       </td>
       <td width="20%" valign="TOP"> 
-        <p><span class="text-info">&nbsp;North/South</span></p>
+        <p><span class="text-info">\u00A0North/South</span></p>
       </td>
       <td width="20%" valign="TOP"> 
-        <p><span class="text-info">&nbsp;Longitude</span></p>
+        <p><span class="text-info">\u00A0Longitude</span></p>
       </td>
       <td width="42%" valign="TOP"> 
-        <p><span class="text-info">&nbsp;West/East</span></p>
+        <p><span class="text-info">\u00A0West/East</span></p>
       </td>
     </tr>
     <tr> 
       <td width="18%" valign="TOP"> 
         <p><font size="-1">
-	[%latDeg1%]&nbsp;[%latMin1%]'&nbsp;[%latSec1%]&quot; 
+	[%latDeg1%]\u00A0[%latMin1%]'\u00A0[%latSec1%]&quot; 
         </font></p>
       </td>
       <td width="20%" valign="TOP"> 
@@ -233,7 +238,7 @@
       </td>
       <td width="20%" valign="TOP"> 
         <p><font size="-1"> 
-	  [%longDeg1%]&nbsp;[%longMin1%]'&nbsp;[%longSec1%]&quot; 
+	  [%longDeg1%]\u00A0[%longMin1%]'\u00A0[%longSec1%]&quot; 
         </font></p>
       </td>
       <td width="42%" valign="TOP"> 
@@ -253,7 +258,7 @@
         <p><span class="text-info">Latitude</span></p>
       </td>
       <td width="20%" valign="TOP"> 
-        <p><sapn class="text-info">&nbsp;North/South</span></p>
+        <p><sapn class="text-info">\u00A0North/South</span></p>
       </td>
       <td width="20%" valign="TOP"> 
         <p><span class="text-info">Longitude</span></p>
@@ -265,7 +270,7 @@
     <tr>
       <td width="18%" valign="TOP"> 
         <p><font size="-1">
-	[%latDeg2%]&nbsp;[%latMin2%]'&nbsp;[%latSec2%]&quot;
+	[%latDeg2%]\u00A0[%latMin2%]'\u00A0[%latSec2%]&quot;
         </font></p>
       </td>
       <td width="20%" valign="TOP"> 
@@ -275,7 +280,7 @@
       </td>
       <td width="20%" valign="TOP"> 
         <p><font size="-1"> 
-	  [%longDeg2%]&nbsp;[%longMin2%]'&nbsp;[%longSec2%]&quot; 
+	  [%longDeg2%]\u00A0[%longMin2%]'\u00A0[%longSec2%]&quot; 
         </font></p>
       </td>
       <td width="42%" valign="TOP">
@@ -293,7 +298,7 @@
     [% IF taxaCount > 0 %]
         [% numTaxa = taxaCount %]
     [% END %]
-    <hr class="rule">
+    <hr class="rule" />
     <a name="Taxonomic Coverage"></a>
     <h4>Taxonomic Coverage of Data</h4>
     [% cnt = 1 %]
@@ -307,7 +312,7 @@
 [% END %]
 
 [% IF modules.method == 'true' %]
-    <hr class="rule">
+    <hr class="rule" />
     <a name="Methods"></a>
     <h4>Data Collection Methods</h4>
     <p><span class="text-info">Method Title:</span> [%methodTitle%]</p>
@@ -319,7 +324,7 @@
 [% END %]
 
 [% IF modules.upload == 'true' && upCount %]
-   <hr class="rule">
+   <hr class="rule" />
 	 <a name="Upload Data"></a>
 	  <h4>Upload Data</h4>
     
@@ -346,7 +351,7 @@
 				</p>
     [% END %]
 [% END %]
-<hr class="rule">
+<hr class="rule" />
 <a name="DataSetContactAddress"></a>
 <h4>Data Set Contact</h4> 
 
@@ -388,19 +393,19 @@
 </p>
 
 
-<hr class="rule">
+<hr class="rule" />
 <a name="DistributionIinformation"></a>
 <h4>Distribution Information</h4> 
 
-<a name=Site-specificCode></a>
+<a name="Site-specificCode"></a>
 <p><span class="text-info">Data Set Identifier:</span> [%identifier%]
 </p>
 
-<p><span class="text-info">Data Medium:</span>       [%dataMedium%]&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-info">Other Data Medium</span>: [%dataMediumOther%]
+<p><span class="text-info">Data Medium:</span>       [%dataMedium%]\u00A0\u00A0\u00A0\u00A0<span class="text-info">Other Data Medium</span>: [%dataMediumOther%]
 </p>
 
 
-<p><span class="text-info">Usage Constraints:</span>   [%useConstraints%]&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-info">Other Usage Constraints:</span>  [%useConstraintsOther%]
+<p><span class="text-info">Usage Constraints:</span>   [%useConstraints%]\u00A0\u00A0\u00A0\u00A0<span class="text-info">Other Usage Constraints:</span>  [%useConstraintsOther%]
 </p>
 
 
@@ -408,121 +413,121 @@
 </p>
 <p><span class="text-info">Additional Information:</span>  [%addComments%]
 </p>
-<hr class="rule">
+<hr class="rule" />
 
 <form id="confirmForm" action="[% cgiPrefix %]/register-dataset.cgi" method="post">
-  <input type="hidden" name="cfg" value="[% cfg %]">
-  <input type="hidden" name="docid" value="[% docid %]">
-  <input type="hidden" name="stage" value="confirmed">
-  <input type="hidden" name="providerGivenName" value="[%providerGivenName%]">
-  <input type="hidden" name="providerSurName" value="[%providerSurName%]">
-  <input type="hidden" name="site" value="[%site%]">
+  <input type="hidden" name="cfg" value="[% cfg %]" />
+  <input type="hidden" name="docid" value="[% docid %]" />
+  <input type="hidden" name="stage" value="confirmed" />
+  <input type="hidden" name="providerGivenName" value="[%providerGivenName%]" />
+  <input type="hidden" name="providerSurName" value="[%providerSurName%]"/>
+  <input type="hidden" name="site" value="[%site%]"/>
   [% IF cfg == 'nceas' %]
       [% FOREACH group = wg %]
-          <input type="hidden" name="wg" value="[%group%]">
+          <input type="hidden" name="wg" value="[%group%]" />
       [% END %]
   [% END %]
-  <input type="hidden" name="identifier" value="[%identifier%]">
-  <input type="hidden" name="title" value="[%title%]">
-  <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]">
-  <input type="hidden" name="origNamelast0" value="[%origNamelast0%]">
-  <input type="hidden" name="origNameOrg" value="[%origNameOrg%]">
-  <input type="hidden" name="origRole0" value="[%origRole0%]">
-  <input type="hidden" name="origDelivery" value="[%origDelivery%]">
-  <input type="hidden" name="origCity" value="[%origCity%]"> 
-  <input type="hidden" name="origState" value="[%origState%]">
-  <input type="hidden" name="origStateOther" value="[%origStateOther%]">
-  <input type="hidden" name="origZIP" value="[%origZIP%]">
-  <input type="hidden" name="origCountry" value="[%origCountry%]">
-  <input type="hidden" name="origPhone" value="[%origPhone%]">
-  <input type="hidden" name="origFAX" value="[%origFAX%]">
-  <input type="hidden" name="origEmail" value="[%origEmail%]">
-  <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]">
-  <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]">
-  <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]">
-  <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]">
-  <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]">
-  <input type="hidden" name="origCityContact" value="[%origCityContact%]"> 
-  <input type="hidden" name="origStateContact" value="[%origStateContact%]">
-  <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]">
-  <input type="hidden" name="origZIPContact" value="[%origZIPContact%]">
-  <input type="hidden" name="origCountryContact" value="[%origCountryContact%]">
-  <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]">
-  <input type="hidden" name="origFAXContact" value="[%origFAXContact%]">
-  <input type="hidden" name="origEmailContact" value="[%origEmailContact%]">
-  <input type="hidden" name="aoCount" value="[%aoCount%]">
+  <input type="hidden" name="identifier" value="[%identifier%]" /> 
+  <input type="hidden" name="title" value="[%title%]" />
+  <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]" />
+  <input type="hidden" name="origNamelast0" value="[%origNamelast0%]" />
+  <input type="hidden" name="origNameOrg" value="[%origNameOrg%]" />
+  <input type="hidden" name="origRole0" value="[%origRole0%]" />
+  <input type="hidden" name="origDelivery" value="[%origDelivery%]" />
+  <input type="hidden" name="origCity" value="[%origCity%]" /> 
+  <input type="hidden" name="origState" value="[%origState%]" />
+  <input type="hidden" name="origStateOther" value="[%origStateOther%]" />
+  <input type="hidden" name="origZIP" value="[%origZIP%]" />
+  <input type="hidden" name="origCountry" value="[%origCountry%]" />
+  <input type="hidden" name="origPhone" value="[%origPhone%]" />
+  <input type="hidden" name="origFAX" value="[%origFAX%]"/>
+  <input type="hidden" name="origEmail" value="[%origEmail%]" />
+  <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]" />
+  <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]" />
+  <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]" />
+  <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]" />
+  <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]" />
+  <input type="hidden" name="origCityContact" value="[%origCityContact%]" /> 
+  <input type="hidden" name="origStateContact" value="[%origStateContact%]" />
+  <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]" />
+  <input type="hidden" name="origZIPContact" value="[%origZIPContact%]"/>
+  <input type="hidden" name="origCountryContact" value="[%origCountryContact%]" />
+  <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]" />
+  <input type="hidden" name="origFAXContact" value="[%origFAXContact%]" />
+  <input type="hidden" name="origEmailContact" value="[%origEmailContact%]" />
+  <input type="hidden" name="aoCount" value="[%aoCount%]" />
   [% cnt = 1 %]
   [% WHILE cnt <= numAO %]
       [% SET origNamefirst = "origNamefirst${cnt}" %]
       [% SET origNamelast = "origNamelast${cnt}" %]
       [% SET origRole = "origRole${cnt}" %]
-      <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst %]">
-      <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast %]">
-      <input type="hidden" name="[% origRole %]" value="[% $origRole %]">
+      <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst %]" />
+      <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast %]" />
+      <input type="hidden" name="[% origRole %]" value="[% $origRole %]" />
       [% cnt = cnt + 1 %]
   [% END %]
-  <input type="hidden" name="abstract" value="[%abstract%]">
-  <input type="hidden" name="keyCount" value="[%keyCount%]">
+  <input type="hidden" name="abstract" value="[%abstract%]" />
+  <input type="hidden" name="keyCount" value="[%keyCount%]" />
   [% cnt = 1 %]
   [% WHILE cnt <= numKey %]
       [% SET kyd = "keyword${cnt}" %]
       [% SET keyType = "kwType${cnt}" %]
       [% SET keyTh = "kwTh${cnt}" %]
-      <input type="hidden" name="[% kyd %]" value="[% $kyd %]">
-      <input type="hidden" name="[% keyType %]" value="[% $keyType %]">
-      <input type="hidden" name="[% keyTh %]" value="[% $keyTh %]">
+      <input type="hidden" name="[% kyd %]" value="[% $kyd %]" />
+      <input type="hidden" name="[% keyType %]" value="[% $keyType %]" />
+      <input type="hidden" name="[% keyTh %]" value="[% $keyTh %]" />
       [% cnt = cnt + 1 %]
   [% END %]
-  <input type="hidden" name="addComments" value="[%addComments%]">
-  <input type="hidden" name="useConstraints" value="[%useConstraints%]">
-  <input type="hidden" name="useConstraintsOther" value="[%useConstraintsOther%]">
-  <input type="hidden" name="url" value="[%url%]">
-  <input type="hidden" name="dataMedium" value="[%dataMedium%]">
-  <input type="hidden" name="dataMediumOther" value="[%dataMediumOther%]">
-  <input type="hidden" name="beginningYear" value="[%beginningYear%]">
-  <input type="hidden" name="beginningMonth" value="[%beginningMonth%]">
-  <input type="hidden" name="beginningDay" value="[%beginningDay%]">
-  <input type="hidden" name="endingYear" value="[%endingYear%]">
-  <input type="hidden" name="endingMonth" value="[%endingMonth%]">
-  <input type="hidden" name="endingDay" value="[%endingDay%]">
-  <input type="hidden" name="geogdesc" value="[%geogdesc%]">
-  <input type="hidden" name="useSiteCoord" value="[%useSiteCoord%]">
-  <input type="hidden" name="latDeg1" value="[% latDeg1 %]">
-  <input type="hidden" name="latMin1" value="[%latMin1%]">
-  <input type="hidden" name="latSec1" value="[%latSec1%]">
-  <input type="hidden" name="hemisphLat1" value="[%hemisphLat1%]">	
-  <input type="hidden" name="longDeg1" value="[% longDeg1 %]">
-  <input type="hidden" name="longMin1" value="[%longMin1%]">
-  <input type="hidden" name="longSec1" value="[%longSec1%]">
-  <input type="hidden" name="hemisphLong1" value="[%hemisphLong1%]">
-  <input type="hidden" name="latDeg2" value="[%latDeg2%]">
-  <input type="hidden" name="latMin2" value="[%latMin2%]">
-  <input type="hidden" name="latSec2" value="[%latSec2%]">
-  <input type="hidden" name="hemisphLat2" value="[%hemisphLat2%]">	
-  <input type="hidden" name="longDeg2" value="[%longDeg2%]">
-  <input type="hidden" name="longMin2" value="[%longMin2%]">
-  <input type="hidden" name="longSec2" value="[%longSec2%]">
-  <input type="hidden" name="hemisphLong2" value="[%hemisphLong2%]">
-  <input type="hidden" name="taxaCount" value="[%taxaCount%]">
-  <input type="hidden" name="userLoggedIn" value="[%userLoggedIn%]">
+  <input type="hidden" name="addComments" value="[%addComments%]" />
+  <input type="hidden" name="useConstraints" value="[%useConstraints%]" />
+  <input type="hidden" name="useConstraintsOther" value="[%useConstraintsOther%]" />
+  <input type="hidden" name="url" value="[%url%]" />
+  <input type="hidden" name="dataMedium" value="[%dataMedium%]" />
+  <input type="hidden" name="dataMediumOther" value="[%dataMediumOther%]" />
+  <input type="hidden" name="beginningYear" value="[%beginningYear%]" />
+  <input type="hidden" name="beginningMonth" value="[%beginningMonth%]" />
+  <input type="hidden" name="beginningDay" value="[%beginningDay%]" />
+  <input type="hidden" name="endingYear" value="[%endingYear%]" />
+  <input type="hidden" name="endingMonth" value="[%endingMonth%]" />
+  <input type="hidden" name="endingDay" value="[%endingDay%]" />
+  <input type="hidden" name="geogdesc" value="[%geogdesc%]" />
+  <input type="hidden" name="useSiteCoord" value="[%useSiteCoord%]" />
+  <input type="hidden" name="latDeg1" value="[% latDeg1 %]" />
+  <input type="hidden" name="latMin1" value="[%latMin1%]" />
+  <input type="hidden" name="latSec1" value="[%latSec1%]" />
+  <input type="hidden" name="hemisphLat1" value="[%hemisphLat1%]" />	
+  <input type="hidden" name="longDeg1" value="[% longDeg1 %]" />
+  <input type="hidden" name="longMin1" value="[%longMin1%]" />
+  <input type="hidden" name="longSec1" value="[%longSec1%]" />
+  <input type="hidden" name="hemisphLong1" value="[%hemisphLong1%]" />
+  <input type="hidden" name="latDeg2" value="[%latDeg2%]" />
+  <input type="hidden" name="latMin2" value="[%latMin2%]" />
+  <input type="hidden" name="latSec2" value="[%latSec2%]" />
+  <input type="hidden" name="hemisphLat2" value="[%hemisphLat2%]" />	
+  <input type="hidden" name="longDeg2" value="[%longDeg2%]" />
+  <input type="hidden" name="longMin2" value="[%longMin2%]" />
+  <input type="hidden" name="longSec2" value="[%longSec2%]" />
+  <input type="hidden" name="hemisphLong2" value="[%hemisphLong2%]" />
+  <input type="hidden" name="taxaCount" value="[%taxaCount%]" />
+  <input type="hidden" name="userLoggedIn" value="[%userLoggedIn%]" />
   [% cnt = 1 %]
   [% WHILE cnt <= numTaxa %]
       [% SET trn = "taxonRankName${cnt}" %]
       [% SET trv = "taxonRankValue${cnt}" %]
-      <input type="hidden" name="[% trn %]" value="[% $trn %]">
-      <input type="hidden" name="[% trv %]" value="[% $trv %]">
+      <input type="hidden" name="[% trn %]" value="[% $trn %]" />
+      <input type="hidden" name="[% trv %]" value="[% $trv %]" />
       [% cnt = cnt + 1 %]
   [% END %]
-  <input type="hidden" name="taxaAuth" value="[%taxaAuth%]">
+  <input type="hidden" name="taxaAuth" value="[%taxaAuth%]" />
 
-  <input type="hidden" name="methodTitle" value="[%methodTitle%]">
+  <input type="hidden" name="methodTitle" value="[%methodTitle%]" />
   [% FOREACH para = methodPara %]
-      <input type="hidden" name="methodPara" value="[%para%]">
+      <input type="hidden" name="methodPara" value="[%para%]" />
   [% END %]
-  <input type="hidden" name="studyExtentDescription" value="[%studyExtentDescription%]">
-  <input type="hidden" name="samplingDescription" value="[%samplingDescription%]">
-  <input type="hidden" name="upCount" value="[%upCount%]">
-  <input type="hidden" name="delCount" value="[% delCount %]">
+  <input type="hidden" name="studyExtentDescription" value="[%studyExtentDescription%]" />
+  <input type="hidden" name="samplingDescription" value="[%samplingDescription%]" />
+  <input type="hidden" name="upCount" value="[%upCount%]" />
+  <input type="hidden" name="delCount" value="[% delCount %]" />
   [% dCount = 0 %]
   [% IF delCount > 0 %]
      [% dCount = delCount %]
@@ -530,8 +535,8 @@
   [% cnt = 0 %]
   [% WHILE cnt < dCount %]
  		  [% SET delfile = "deletefile_${cnt}" %]
-      <input type="hidden" name="[% delfile %]" value="[% $delfile %]">
-			<input type="hidden" name="deletefile" value="[% $delfile %]">
+      		<input type="hidden" name="[% delfile %]" value="[% $delfile %]" />
+			<input type="hidden" name="deletefile" value="[% $delfile %]" />
 			[% cnt = cnt + 1 %]
 	[% END %]		
 
@@ -548,10 +553,10 @@
       [% SET filePerm = "uploadperm_${cnt}" %]
 
       [% IF fileSum %]
-        <input type="hidden" name="[% fileSum %]" value="[% $fileSum %]">
-        <input type="hidden" name="[% fileName %]" value="[% $fileName %]">
-        <input type="hidden" name="[% fileType %]" value="[% $fileType %]">
-        <input type="hidden" name="[% filePerm %]" value="[% $filePerm %]">
+        <input type="hidden" name="[% fileSum %]" value="[% $fileSum %]" />
+        <input type="hidden" name="[% fileName %]" value="[% $fileName %]" />
+        <input type="hidden" name="[% fileType %]" value="[% $fileType %]" />
+        <input type="hidden" name="[% filePerm %]" value="[% $filePerm %]" />
       [% END %]
       [% cnt = cnt + 1 %]
   [% END %]
@@ -559,13 +564,11 @@
   	<!-- form submission -->
 	<a name="buttons"></a>
 	<p><span class="text-info">Is the information above correct?</span></p> 
-	<input id="dataCorrect" type="button" class="btn" value="     Yes, submit    " name="dataCorrect">
-	<input id="dataWrongButton" type="button" class="btn" value="No, go back to editing">
-	<input id="dataWrong" name="dataWrong" type="hidden" class="btn" value="TBD" >
+	<input id="dataCorrect" type="button" class="btn" value="     Yes, submit    " name="dataCorrect" />
+	<input id="dataWrongButton" type="button" class="btn" value="No, go back to editing" />
+	<input id="dataWrong" name="dataWrong" type="hidden" class="btn" value="TBD" />
 
 </form>
-
-</td><tr></table>
 
 [% IF userLoggedIn != 'true' %]
 
@@ -582,14 +585,14 @@
 					</p>
   
 					<form method="post" action="[% cgiPrefix %]/register-dataset.cgi" onsubmit="return submitform(this);" >
-						<input type="hidden" name="stage" value="login"> 
-						<input type="hidden" name="username" value=""> 
-						<input type="hidden" name="cfg" value="[%cfg%]"> 
+						<input type="hidden" name="stage" value="login" /> 
+						<input type="hidden" name="username" value="" /> 
+						<input type="hidden" name="cfg" value="[%cfg%]" /> 
 					
 						<div>
 							<div class="row-fluid">
 								<div class="span2 text-left">Username</div>
-								<div class="span4 text-left"><input name="uid" type="text" value=""></div>
+								<div class="span4 text-left"><input name="uid" type="text" value="" /></div>
 							</div>
 							<div class="row-fluid">
 								<div class="span2 text-left">Organization</div>
@@ -612,11 +615,11 @@
 							<div class="row-fluid">
 								<div class="span2 text-left">Password</div>
 								<div class="span4 text-left"><input name="password" type="password" maxlength="50"
-									value=""></div>
+									value="" /></div>
 							</div>
 							<div class="row-fluid">
 								<div class="offset2 span4 text-left">
-									<input type="submit" class="btn" name="loginAction" value="Login">
+									<input type="submit" class="btn" name="loginAction" value="Login" />
 								</div>
 							</div>
 						</div>

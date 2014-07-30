@@ -1,0 +1,5 @@
+904a0e14a7f5fe9f0f7b6d9fa5756f6858dcf8b7,/var/metacat/temporary/tempCjZvOtestdata.csv,application/octet-stream,
+904a0e14a7f5fe9f0f7b6d9fa5756f6858dcf8b7,/var/metacat/temporary/tempujppLtestdata.csv,application/octet-stream,
+904a0e14a7f5fe9f0f7b6d9fa5756f6858dcf8b7,/var/metacat/temporary/tempoU_ibtestdata.csv,application/octet-stream,
+904a0e14a7f5fe9f0f7b6d9fa5756f6858dcf8b7,/var/metacat/temporary/temp3qI70testdata.csv,application/octet-stream,
+904a0e14a7f5fe9f0f7b6d9fa5756f6858dcf8b7,/var/metacat/temporary/tempMcpHltestdata.csv,application/octet-stream,
