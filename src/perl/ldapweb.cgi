@@ -1637,10 +1637,12 @@ sub getNextUidNumber {
                             #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
                         } else {
                             debug("Remove the attribute successfully and write a new increased value back");
-                            if($uidNumber <= $existingHighUid ) {
-                            	debug("The stored uidNumber $uidNumber is less than the used uidNumber $existingHighUid, so we will use the new number which is $existingHighUid+1");
-                            	$uidNumber = $existingHighUid +1;
-                            } 
+                            if($existingHighUid) {
+                            	if($uidNumber <= $existingHighUid ) {
+                            		debug("The stored uidNumber $uidNumber is less than or equals the used uidNumber $existingHighUid, so we will use the new number which is $existingHighUid+1");
+                            		$uidNumber = $existingHighUid +1;
+                            	} 
+                            }                  
                             my $newValue = $uidNumber +1;
                             $delMesg = $ldap->modify($dn_store_next_uid, add => {$attribute_name_store_next_uid => $newValue});
                             $realUidNumber = $uidNumber;
@@ -1665,27 +1667,21 @@ sub getExistingHighestUidNum {
    
     my $high;
     my $ldap;
-    debug("ldap server: $ldapurl");
+    
     
     #if main ldap server is down, a html file containing warning message will be returned
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
-    debug("after creating a ldap server");
     if ($ldap) {
-    	debug("before staring the tls");
         $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
-        debug("after staring the tls");
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
-        debug("after binding ....");
         my $uids = $ldap->search(
                         base => "dc=ecoinformatics,dc=org",
                         scope => "sub",
                         filter => "uidNumber=*", 
                         attrs   => [ 'uidNumber' ],
                         );
-       debug("after searching.... $uids");
        return unless $uids->count;
-       debug("before sorting the returned uidNumber");
   	    my @uids;
         if ($uids->count > 0) {
                 foreach my $uid ($uids->all_entries) {
