@@ -1638,6 +1638,7 @@ sub getNextUidNumber {
                         } else {
                             debug("Remove the attribute successfully and write a new increased value back");
                             if($existingHighUid) {
+                            	debug("exiting high uid exists =======================================");
                             	if($uidNumber <= $existingHighUid ) {
                             		debug("The stored uidNumber $uidNumber is less than or equals the used uidNumber $existingHighUid, so we will use the new number which is $existingHighUid+1");
                             		$uidNumber = $existingHighUid +1;
@@ -1667,6 +1668,7 @@ sub getExistingHighestUidNum {
    
     my $high;
     my $ldap;
+    my $storedUidNumber;
     
     
     #if main ldap server is down, a html file containing warning message will be returned
@@ -1675,6 +1677,12 @@ sub getExistingHighestUidNum {
         $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
+        my $mesg = $ldap->search(base  => $dn_store_next_uid, filter => '(objectClass=*)');
+         if ($mesg->count() > 0) {
+                debug("Find the cn - $dn_store_next_uid");
+                my  $entry = $mesg->pop_entry;
+                $storedUidNumber = $entry->get_value($attribute_name_store_next_uid);
+        }
         my $uids = $ldap->search(
                         base => "dc=ecoinformatics,dc=org",
                         scope => "sub",
@@ -1685,12 +1693,20 @@ sub getExistingHighestUidNum {
   	    my @uids;
         if ($uids->count > 0) {
                 foreach my $uid ($uids->all_entries) {
-                        push @uids, $uid->get_value('uidNumber');
+                		if($storedUidNumber) {
+                			if( $uid->get_value('uidNumber') >= $storedUidNumber) {
+                				push @uids, $uid->get_value('uidNumber');
+                			}
+                		} else {
+                        	push @uids, $uid->get_value('uidNumber');
+                        }
                 }
         }       
         
-        @uids = sort { $b <=> $a } @uids;
-        $high = $uids[0];   
+        if(@uids) {
+        	@uids = sort { $b <=> $a } @uids;
+        	$high = $uids[0];   
+        }    
         debug("the highest exiting uidnumber is $high");
         $ldap->unbind;   # take down session
     }
