@@ -446,17 +446,11 @@ if ( !$error ) {
 	}
 }
 
-open my $log, ">>", "log.txt";
-
 my $docid;
 my $scope = $FORM::scope;
 
-print $log "scope: $scope\n";
-print $log "FORM:scope: $FORM::scope\n";
-
 if(($scope eq "") || (!$scope)){
     $scope = $config->{'scope'};
-    print $log "using config scope\n";
 }
 
 # Create a metacat object
@@ -518,9 +512,7 @@ if ( !$error ) {
                                 
                 #Create the docid
                 $docid = newDocid($scope, $metacat);
-                
-                print $log "created docid: $docid\n scope is: $scope\n";
-                                    
+                                                    
                 $xmldocWithDocID =~ s/docid/$docid/;
                 debugDoc($xmldocWithDocID);
                 $docStatus = insertMetadata( $xmldocWithDocID, $docid );
