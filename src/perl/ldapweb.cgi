@@ -317,7 +317,7 @@ my %stages = (
               'emailverification' => \&handleEmailVerification,
               'lookupname'        => \&handleLookupName,
               'searchnamesbyemail'=> \&handleSearchNameByEmail,
-              #'getnextuid'        => \&getNextUidNumber,
+              #'getnextuid'        => \&getExistingHighestUidNum,
              );
 
 # call the appropriate routine based on the stage
@@ -1613,6 +1613,7 @@ sub getNextUidNumber {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
+    	my $existingHighUid=getExistingHighestUidNum($ldapUsername, $ldapPassword);
         $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
@@ -1636,6 +1637,13 @@ sub getNextUidNumber {
                             #can't remove the attribute with the specified value - that means somebody modify the value in another route, so try it again
                         } else {
                             debug("Remove the attribute successfully and write a new increased value back");
+                            if($existingHighUid) {
+                            	debug("exiting high uid exists =======================================");
+                            	if($uidNumber <= $existingHighUid ) {
+                            		debug("The stored uidNumber $uidNumber is less than or equals the used uidNumber $existingHighUid, so we will use the new number which is $existingHighUid+1");
+                            		$uidNumber = $existingHighUid +1;
+                            	} 
+                            }                  
                             my $newValue = $uidNumber +1;
                             $delMesg = $ldap->modify($dn_store_next_uid, add => {$attribute_name_store_next_uid => $newValue});
                             $realUidNumber = $uidNumber;
@@ -1651,6 +1659,59 @@ sub getNextUidNumber {
         $ldap->unbind;   # take down session
     }
     return $realUidNumber;
+}
+
+#Method to get the existing high uidNumber in the account tree.
+sub getExistingHighestUidNum {
+    my $ldapUsername = shift;
+    my $ldapPassword = shift;
+   
+    my $high;
+    my $ldap;
+    my $storedUidNumber;
+    
+    
+    #if main ldap server is down, a html file containing warning message will be returned
+    $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    if ($ldap) {
+        $ldap->start_tls( verify => 'require',
+                      cafile => $ldapServerCACertFile);
+        my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
+        my $mesg = $ldap->search(base  => $dn_store_next_uid, filter => '(objectClass=*)');
+         if ($mesg->count() > 0) {
+                debug("Find the cn - $dn_store_next_uid");
+                my  $entry = $mesg->pop_entry;
+                $storedUidNumber = $entry->get_value($attribute_name_store_next_uid);
+        }
+        my $uids = $ldap->search(
+                        base => "dc=ecoinformatics,dc=org",
+                        scope => "sub",
+                        filter => "uidNumber=*", 
+                        attrs   => [ 'uidNumber' ],
+                        );
+       return unless $uids->count;
+  	    my @uids;
+        if ($uids->count > 0) {
+                foreach my $uid ($uids->all_entries) {
+                		if($storedUidNumber) {
+                			if( $uid->get_value('uidNumber') >= $storedUidNumber) {
+                				push @uids, $uid->get_value('uidNumber');
+                			}
+                		} else {
+                        	push @uids, $uid->get_value('uidNumber');
+                        }
+                }
+        }       
+        
+        if(@uids) {
+        	@uids = sort { $b <=> $a } @uids;
+        	$high = $uids[0];   
+        }    
+        debug("the highest exiting uidnumber is $high");
+        $ldap->unbind;   # take down session
+    }
+    return $high;
+
 }
 
 
