@@ -509,6 +509,7 @@
 		description="Compiles java code to build dir, and copies metacat props files there">
 
 		<javac srcdir="${build.src}" destdir="${build.dest}"
+			target="1.6"
 			debug="${debug}"
 			excludes="**/*.sql **/client/*.java **/harvesterClient/*.java">
 			<classpath>
