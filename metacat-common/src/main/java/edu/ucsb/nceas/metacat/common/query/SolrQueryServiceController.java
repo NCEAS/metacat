@@ -21,7 +21,6 @@ package edu.ucsb.nceas.metacat.common.query;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

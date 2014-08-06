@@ -21,7 +21,6 @@ package edu.ucsb.nceas.metacat.common.query;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -35,15 +34,11 @@ import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.XML;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.core.SolrCore;
-import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
 import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Subject;
 import org.xml.sax.SAXException;
-
-import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseTransformer;
 
 
 /**
