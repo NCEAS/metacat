@@ -1,6 +1,6 @@
 package edu.ucsb.nceas.metacat.index.resourcemap;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +15,6 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
-import org.dataone.configuration.Settings;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;

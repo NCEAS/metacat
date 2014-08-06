@@ -11,7 +11,6 @@ import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
-import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

@@ -1,16 +1,17 @@
 package edu.ucsb.nceas.metacat.index.event;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import java.util.Calendar;
 
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.junit.Before;
 import org.junit.Test;
 
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
-import edu.ucsb.nceas.metacat.index.ApplicationController;
 import edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
 
 public class IndexEventEntryListenerIT {

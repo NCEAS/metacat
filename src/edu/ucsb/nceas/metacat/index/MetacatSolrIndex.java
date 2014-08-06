@@ -22,7 +22,6 @@
  */
 package edu.ucsb.nceas.metacat.index;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,7 +50,7 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DBTransform;

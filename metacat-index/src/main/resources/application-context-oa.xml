@@ -5,7 +5,7 @@
 
 	<bean id="rdfXmlSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.RdfXmlSubprocessor">
 		<property name="matchDocument"
-			value="/d100:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar'] | /d100:systemMetadata/formatId[text()='http://www.openarchives.org/ore/terms']" />
+			value="/d200:systemMetadata/formatId[text()='http://www.w3.org/TR/rdf-syntax-grammar'] | /d200:systemMetadata/formatId[text()='http://www.openarchives.org/ore/terms']" />
 		<property name="fieldList">
 			<list>
 				<ref bean="annotation.standard" />

@@ -3,7 +3,7 @@ package edu.ucsb.nceas.metacat.index;
 import static org.junit.Assert.assertTrue;
 
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.Test;
 
 import com.hazelcast.core.IMap;

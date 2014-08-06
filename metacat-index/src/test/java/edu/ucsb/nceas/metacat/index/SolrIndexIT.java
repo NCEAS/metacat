@@ -22,7 +22,7 @@ import org.apache.solr.response.SolrQueryResponse;
 import org.apache.solr.response.XMLResponseWriter;
 import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.SystemMetadata;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 import org.junit.Before;
 import org.junit.Test;

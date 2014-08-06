@@ -7,126 +7,126 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="id" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/identifier/text()" />
+						value="/d200:systemMetadata/identifier/text()" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="formatId" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/formatId/text()" />
+						value="/d200:systemMetadata/formatId/text()" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="formatType" />
-					<constructor-arg name="xpath" value="/d100:systemMetadata/formatId/text()" />
+					<constructor-arg name="xpath" value="/d200:systemMetadata/formatId/text()" />
 					<property name="converter" ref="formatIdToFormatTypeConverter" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="size" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/size/text()" />
+						value="/d200:systemMetadata/size/text()" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="checksum" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/checksum/text()" />
+						value="/d200:systemMetadata/checksum/text()" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="submitter" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/submitter/text()" />
+						value="/d200:systemMetadata/submitter/text()" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="checksumAlgorithm" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/checksum/@algorithm" />
+						value="/d200:systemMetadata/checksum/@algorithm" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="rightsHolder" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/rightsHolder/text()" />
+						value="/d200:systemMetadata/rightsHolder/text()" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="replicationAllowed" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replicationPolicy/@replicationAllowed" />
+						value="/d200:systemMetadata/replicationPolicy/@replicationAllowed" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="numberReplicas" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replicationPolicy/@numberReplicas" />
+						value="/d200:systemMetadata/replicationPolicy/@numberReplicas" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="preferredReplicationMN" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replicationPolicy/preferredMemberNode/text()" />
+						value="/d200:systemMetadata/replicationPolicy/preferredMemberNode/text()" />
 					<property name="multivalue" value="true" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="blockedReplicationMN" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replicationPolicy/blockedMemberNode/text()" />
+						value="/d200:systemMetadata/replicationPolicy/blockedMemberNode/text()" />
 					<property name="multivalue" value="true" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="obsoletes" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/obsoletes/text()" />
+						value="/d200:systemMetadata/obsoletes/text()" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="obsoletedBy" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/obsoletedBy/text()" />
+						value="/d200:systemMetadata/obsoletedBy/text()" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="dateUploaded" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/dateUploaded/text()" />
+						value="/d200:systemMetadata/dateUploaded/text()" />
 					<property name="converter" ref="dateConverter" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="dateModified" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/dateSysMetadataModified/text()" />
+						value="/d200:systemMetadata/dateSysMetadataModified/text()" />
 					<property name="converter" ref="dateConverter" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="datasource" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/originMemberNode/text()" />
+						value="/d200:systemMetadata/originMemberNode/text()" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="authoritativeMN" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/authoritativeMemberNode/text()" />
+						value="/d200:systemMetadata/authoritativeMemberNode/text()" />
 				</bean>
 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="replicaMN" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replica/replicaMemberNode/text()" />
+						value="/d200:systemMetadata/replica/replicaMemberNode/text()" />
 					<property name="multivalue" value="true" />
 				</bean>
 				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="replicaVerifiedDate" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/replica/replicaVerified/text()" />
+						value="/d200:systemMetadata/replica/replicaVerified/text()" />
 					<property name="multivalue" value="true" />
 					<property name="converter" ref="dateConverter" />
 				</bean>
@@ -134,7 +134,7 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="readPermission" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/accessPolicy/allow[permission= 'read']/subject/text()" />
+						value="/d200:systemMetadata/accessPolicy/allow[permission= 'read']/subject/text()" />
 					<property name="multivalue" value="true" />
 					<property name="dedupe" value="true" />
 				</bean>
@@ -142,7 +142,7 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="writePermission" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/accessPolicy/allow[permission= 'write']/subject/text()" />
+						value="/d200:systemMetadata/accessPolicy/allow[permission= 'write']/subject/text()" />
 					<property name="multivalue" value="true" />
 					<property name="dedupe" value="true" />
 				</bean>
@@ -150,7 +150,7 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="changePermission" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/accessPolicy/allow[permission= 'changePermission']/subject/text()" />
+						value="/d200:systemMetadata/accessPolicy/allow[permission= 'changePermission']/subject/text()" />
 					<property name="multivalue" value="true" />
 					<property name="dedupe" value="true" />
 				</bean>
@@ -158,7 +158,7 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="isPublic" />
 					<constructor-arg name="xpath"
-						value="/d100:systemMetadata/accessPolicy/allow[permission= 'read']/subject[text()='public']/text()" />
+						value="/d200:systemMetadata/accessPolicy/allow[permission= 'read']/subject[text()='public']/text()" />
 					<property name="converter" ref="booleanPublicConverter" />
 				</bean>
 

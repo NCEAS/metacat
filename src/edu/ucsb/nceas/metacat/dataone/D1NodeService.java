@@ -831,13 +831,21 @@ public abstract class D1NodeService {
       
       // check the CN list
       if (!allowed) {
-	      // are we allowed to do this? only CNs are allowed
-	      CNode cn = D1Client.getCN();
-	      List<Node> nodes = cn.listNodes().getNodeList();
-	      
+	      List<Node> nodes = null;
+
+    	  try {
+		      // are we allowed to do this? only CNs are allowed
+		      CNode cn = D1Client.getCN();
+		      nodes = cn.listNodes().getNodeList();
+    	  }
+	      catch (Throwable e) {
+	    	  logMetacat.warn(e.getMessage());
+	    	  return false;  
+	      }
+		      
 	      if ( nodes == null ) {
-	          throw new ServiceFailure("4852", "Couldn't get node list.");
-	  
+	    	  return false;
+	          //throw new ServiceFailure("4852", "Couldn't get node list.");
 	      }
 	      
 	      // find the node in the node list

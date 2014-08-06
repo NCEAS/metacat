@@ -9,7 +9,7 @@
  <bean id="eml210Subprocessor"
   class="org.dataone.cn.indexer.parser.ScienceMetadataDocumentSubprocessor">
   <property name="matchDocument"
-   value="/d100:systemMetadata/formatId[text() = 'eml://ecoinformatics.org/eml-2.1.0']"></property>
+   value="/d200:systemMetadata/formatId[text() = 'eml://ecoinformatics.org/eml-2.1.0']"></property>
   <property name="fieldList">
    <list>
     <ref bean="eml.abstract" />

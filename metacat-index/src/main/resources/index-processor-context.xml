@@ -27,7 +27,9 @@
     <import resource="application-context-resource-map.xml" />
     <import resource="application-context-systemmeta100.xml" />
     
+    <!--  
     <import resource="application-context-oa.xml" />
+    -->
     
     <!-- <import resource="application-context-ao.xml" /> -->
     
@@ -98,7 +100,9 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
+       <!--  
        <ref bean="rdfXmlSubprocessor" />
+       -->
       </list>
      </property>
     </bean>
@@ -109,10 +113,11 @@
  <bean id="xmlNamespaceConfig" class="org.dataone.cn.indexer.XMLNamespaceConfig">
   <constructor-arg name="namespaceList">
    <list>
+    
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"
-      value="http://ns.dataone.org/service/types/v1" />
-     <constructor-arg name="prefix" value="d100" />
+      value="http://ns.dataone.org/service/types/v2.0" />
+     <constructor-arg name="prefix" value="d200" />
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"

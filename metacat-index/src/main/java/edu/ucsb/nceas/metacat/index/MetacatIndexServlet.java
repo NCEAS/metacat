@@ -21,8 +21,6 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.List;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -30,12 +28,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.configuration.Settings;
-
-import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 
 
 /**
