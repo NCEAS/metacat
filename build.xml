@@ -33,6 +33,7 @@
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	<property environment="env" />
 	<property file="build.properties" /><!-- USER SPECIFIC PROPS -->
+	<property name="java.target.version" value="1.6" /> <!-- the target version for java compile-->
 
 
     <!-- Configure the maven2 ant tasks -->
@@ -509,7 +510,8 @@
 		description="Compiles java code to build dir, and copies metacat props files there">
 
 		<javac srcdir="${build.src}" destdir="${build.dest}"
-			target="1.6"
+			target="${java.target.version}"
+			source="${java.target.version}"
 			debug="${debug}"
 			excludes="**/*.sql **/client/*.java **/harvesterClient/*.java">
 			<classpath>
@@ -537,6 +539,8 @@
 	<target name="client" depends="prepare"
 		description="Compiles metacat-client java code to build dir">
 		<javac srcdir="${build.src}" destdir="${build.dest}"
+			target="${java.target.version}"
+			source="${java.target.version}"
 			includes="edu/ucsb/nceas/metacat/client/*">
 			<classpath>
 				<path refid="compile.classpath" />
@@ -561,6 +565,8 @@
 	<target name="harvester" depends="client"
 		description="Compiles harvester java code to build dir">
 		<javac srcdir="${build.src}" destdir="${build.dest}"
+			target="${java.target.version}"
+			source="${java.target.version}"
 			includes="edu/ucsb/nceas/metacat/harvesterClient/*">
 			<classpath>
 				<path refid="compile.classpath" />
@@ -1639,6 +1645,8 @@
 		<javac srcdir="src/edu/ucsb/nceas/metacat/lsid"
 			destdir="${lsid.build.dir}/WEB-INF/classes" debug="${compile.debug}"
 			deprecation="${compile.deprecation}"
+			target="${java.target.version}"
+			source="${java.target.version}"
 			optimize="${compile.optimize}">
 			<classpath>
 				<path refid="compile.classpath" />
