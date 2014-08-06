@@ -315,7 +315,9 @@ public class MNodeService
 	public SystemMetadata getSystemMetadata(Identifier pid)
 			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			NotFound {
-		return impl.getSystemMetadata(null, pid);
+		
+		return this.getSystemMetadata(null, pid);
+		
 	}
 
 	@Override
@@ -323,7 +325,17 @@ public class MNodeService
 	public SystemMetadata getSystemMetadata(Session session, Identifier pid)
 			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			NotFound {
-		return impl.getSystemMetadata(session, pid);
+		org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(session, pid);
+		SystemMetadata retSysMeta = null;
+		try {
+			retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+		} catch (Exception e) {
+			// report as service failure
+			ServiceFailure sf = new ServiceFailure("4801", e.getMessage());
+			sf.initCause(e);
+			throw sf;
+		}
+		return retSysMeta;
 	}
 
 	@Override
