@@ -323,7 +323,8 @@
   </servlet-mapping>
   -->
   
-	<!-- begin MyProxy portal delegation section -->
+	<!-- begin MyProxy portal delegation section. Uncomment to enable MyProxy -->
+	<!--
 	<servlet>
         <servlet-name>startRequest</servlet-name>
         <servlet-class>edu.ucsb.nceas.metacat.portal.StartRequest</servlet-class>
@@ -362,12 +363,11 @@
         <listener-class>edu.uiuc.ncsa.myproxy.oa4mp.client.loader.ClientBootstrapper</listener-class>
     </listener>
 
-	<!-- TODO: make relative path if possible -->
 	<context-param>
         <param-name>oa4mp:client.config.file</param-name>
         <param-value>/WEB-INF/oa4mp_client.xml</param-value>
     </context-param>
-    
+    -->
     <!-- end MyProxy section -->
     
    <!-- currently the W3C havent settled on a media type for WSDL;
