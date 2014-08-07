@@ -143,11 +143,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     // MNCore tests
     suite.addTest(new MNodeServiceTest("testPing"));
     suite.addTest(new MNodeServiceTest("testGetLogRecords"));
-    suite.addTest(new MNodeServiceTest("testGetOperationStatistics"));
     suite.addTest(new MNodeServiceTest("testGetCapabilities"));
-    // include these when they are part of the MN interface definitions
-    // suite.addTest(new MNodeServiceTest("testGetObjectStatistics"));
-    // suite.addTest(new MNodeServiceTest("testGetStatus"));
+    
     // MNAuthorization tests
     suite.addTest(new MNodeServiceTest("testIsAuthorized"));
     suite.addTest(new MNodeServiceTest("testIsEquivIdentityAuthorized"));
