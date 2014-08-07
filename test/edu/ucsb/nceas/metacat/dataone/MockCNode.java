@@ -27,8 +27,12 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
+import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 
 /**
@@ -43,6 +47,41 @@ public class MockCNode extends MultipartCNode {
     public MockCNode() {
     	super(null);
     }
+    
+    @Override
+	public NodeList listNodes() throws NotImplemented, ServiceFailure {
+		NodeList list = new NodeList();
+		list.addNode(getCapabilities());
+		return list;
+	}
+    
+    @Override
+	public Node getCapabilities() throws NotImplemented, ServiceFailure {
+		Node node = new Node();
+		node.setIdentifier(getNodeId());
+		Subject subject = new Subject();
+		subject.setValue("cn=" + getNodeId() + ",dc=dataone,dc=org");
+		node.addSubject(subject );
+		node.setType(getNodeType());
+		return node;
+	}
+    
+    @Override
+	public NodeReference getNodeId() {
+		NodeReference nodeRef = new NodeReference();
+		nodeRef.setValue("urn:node:MockCNode");
+		return nodeRef ;
+	}
+    
+    @Override
+	public NodeType getNodeType() {
+		return NodeType.CN;
+	}
+    
+    @Override
+	public String getNodeBaseServiceUrl() {
+		return "https//:foo.dataone.org";
+	}
     
     /**
      * No records exist in the Mock CNode - indicates such

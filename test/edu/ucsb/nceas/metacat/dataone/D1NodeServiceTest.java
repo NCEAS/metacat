@@ -33,6 +33,9 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.dataone.client.D1Node;
+import org.dataone.client.NodeLocator;
+import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -41,6 +44,7 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Permission;
@@ -50,6 +54,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
+import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.client.Metacat;
@@ -74,14 +79,25 @@ public class D1NodeServiceTest extends MCTestCase {
     /**
 	 * Establish a testing framework by initializing appropriate objects
 	 */
-	public void setUp() throws Exception {
-		super.setUp();
-	}
+    public void setUp() throws Exception {
+    	super.setUp();
+		NodeLocator nodeLocator = new NodeLocator() {
+			@Override
+			public D1Node getCNode() throws ClientSideException {
+				return new MockCNode();
+			}
+		};
+		D1Client.setNodeLocator(nodeLocator );
+    	
+    }
 
 	/**
 	 * Release any objects after tests are complete
 	 */
-	public void tearDown() {}
+	public void tearDown() {
+		// set back to force it to use defaults
+		D1Client.setNodeLocator(null);
+	}
 	
 	/**
 	 * constructs a "fake" session with a test subject
@@ -193,7 +209,22 @@ public class D1NodeServiceTest extends MCTestCase {
 			} catch (Exception e) {
 				// probably missing the doc
 			}
-			if (is == null) {
+			
+			if (is != null) {
+				// check for v2 OFL
+				try {
+					ObjectFormatList ofl = TypeMarshaller.unmarshalTypeFromStream(ObjectFormatList.class, is);
+				} catch (ClassCastException cce) {
+					// need to update it
+					InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
+					Reader xmlDocument = new InputStreamReader(formats);
+					int rev = m.getNewestDocRevision(ObjectFormatService.OBJECT_FORMAT_DOCID);
+					rev++;
+					m.update(ObjectFormatService.OBJECT_FORMAT_DOCID + "." + rev, xmlDocument, null);
+				}
+				
+			}
+			else {
 				// get the default from d1_common
 				InputStream formats = ObjectFormatServiceImpl.getInstance().getObjectFormatFile();
 				Reader xmlDocument = new InputStreamReader(formats);
