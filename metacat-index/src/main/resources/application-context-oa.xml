@@ -18,26 +18,24 @@
 	</bean>
 	
 	<bean id="prov.wasDerivedFrom" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
-		<constructor-arg name="name" value="wasDerivedFrom_sm" />
+		<constructor-arg name="name" value="wasDerivedFrom" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
 				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
 				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX j.0: <http://www.w3.org/ns/prov#> 
 				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
 				PREFIX dcterms: <http://purl.org/dc/terms/>
 
-				SELECT ?pid ?wasDerivedFrom_sm
+				SELECT ?pid ?wasDerivedFrom
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
-					?primary_data		ore:isDocumentedBy	?primary_metadata .
-					?derived_data		prov:wasDerivedFrom	?primary_data .
-					?derived_data		ore:isDocumentedBy	?derived_metadata .
-					?derived_metadata	dcterms:identifier 	?pid . 
-					?primary_metadata	dcterms:identifier 	?wasDerivedFrom_sm .
+					?derived_data		j.0:wasDerivedFrom	?primary_data .
+					?derived_data		dcterms:identifier 	?pid . 
+					?primary_data		dcterms:identifier 	?wasDerivedFrom .
 						
 				 	} 
 				 ]]>

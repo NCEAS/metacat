@@ -96,7 +96,7 @@ lexicographic ordering isn't equal to the numeric ordering) -->
           <analyzer class="org.apache.lucene.analysis.snowball.SnowballAnalyzer"/>
         </fieldType>
         -->
-
+ 
         <!-- A text field that only splits on whitespace for more exact matching -->
         <fieldtype name="text_ws" class="solr.TextField" positionIncrementGap="100">
             <analyzer>
@@ -234,6 +234,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="resourceMap"		type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="documents"			type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="isDocumentedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="wasDerivedFrom"	type="string"   indexed="true" stored="true" multiValued="true"/>
 
         <!--Permissions-->
         <field name="readPermission"    type="string"   indexed="true" stored="true" multiValued="true"/>
