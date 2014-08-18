@@ -20,6 +20,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -129,6 +131,14 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     	// read the annotation
 		InputStream source = toInputStream(rdfXmlDocument);
     	String name = indexDocument.getIdentifier();
+    	
+    	//Check if the identifier is a valid URI and if not, make it one by prepending "http://"
+    	URI nameURI = new URI(name);
+    	String scheme = nameURI.getScheme();
+    	if((scheme == null) || (scheme.isEmpty())){
+    		name = "http://" + name;
+    	}
+    	
     	boolean loaded = dataset.containsNamedModel(name);
 		if (!loaded) {
 			OntModel ontModel = ModelFactory.createOntologyModel();
