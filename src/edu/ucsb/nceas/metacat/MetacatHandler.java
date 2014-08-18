@@ -1848,6 +1848,15 @@ public class MetacatHandler {
                     // submit for indexing
                     MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
                     
+                    // [re]index the resource map now that everything is saved
+                    // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
+                    Identifier potentialOreIdentifier = new Identifier();
+        			potentialOreIdentifier.setValue(SystemMetadataFactory.RESOURCE_MAP_PREFIX + sysMeta.getIdentifier().getValue());
+        			SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
+        			if (oreSystemMetadata != null) {
+                        MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, null, true);
+        			}
+                    
                   } catch ( McdbDocNotFoundException dnfe ) {
                     logMetacat.debug(
                       "There was a problem finding the localId " +
