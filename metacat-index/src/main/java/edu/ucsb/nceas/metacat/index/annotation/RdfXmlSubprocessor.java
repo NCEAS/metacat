@@ -130,13 +130,14 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 		
     	// read the annotation
 		InputStream source = toInputStream(rdfXmlDocument);
-    	String name = indexDocument.getIdentifier();
-    	
+    	String indexDocId = indexDocument.getIdentifier();
+    	String name = indexDocId;
+    			
     	//Check if the identifier is a valid URI and if not, make it one by prepending "http://"
-    	URI nameURI = new URI(name);
+    	URI nameURI = new URI(indexDocId);
     	String scheme = nameURI.getScheme();
     	if((scheme == null) || (scheme.isEmpty())){
-    		name = "http://" + name;
+    		name = "http://" + indexDocId;
     	}
     	
     	boolean loaded = dataset.containsNamedModel(name);
@@ -170,8 +171,8 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 						// check if anyone with permissions on the annotation document has write permission on the document we are annotating
 						boolean statementAuthorized = false;
 						try {
-							HashMap<Subject, Set<Permission>> annotationPermissionMap = AccessUtil.getPermissionMap(DistributedMapsFactory.getSystemMetadata(name).getAccessPolicy());
-							annotationPermissionMap.put(DistributedMapsFactory.getSystemMetadata(name).getRightsHolder(), new HashSet<Permission>(Arrays.asList(Permission.CHANGE_PERMISSION)));
+							HashMap<Subject, Set<Permission>> annotationPermissionMap = AccessUtil.getPermissionMap(DistributedMapsFactory.getSystemMetadata(indexDocId).getAccessPolicy());
+							annotationPermissionMap.put(DistributedMapsFactory.getSystemMetadata(indexDocId).getRightsHolder(), new HashSet<Permission>(Arrays.asList(Permission.CHANGE_PERMISSION)));
 							statementAuthorized = AuthUtils.isAuthorized(annotationPermissionMap.keySet(), Permission.WRITE, DistributedMapsFactory.getSystemMetadata(id));
 						} catch (Exception e) {
 							log.warn("Could not check for assertion permission on original pid: " + id, e);

@@ -27,9 +27,9 @@
     <import resource="application-context-resource-map.xml" />
     <import resource="application-context-systemmeta100.xml" />
     
-    <!--  
+     
     <import resource="application-context-oa.xml" />
-    -->
+    
     
     <!-- <import resource="application-context-ao.xml" /> -->
     
@@ -100,9 +100,7 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
-       <!--  
        <ref bean="rdfXmlSubprocessor" />
-       -->
       </list>
      </property>
     </bean>
