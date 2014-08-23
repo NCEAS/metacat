@@ -52,6 +52,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -508,7 +509,14 @@ public class MetaCatServlet extends HttpServlet {
 	 * Index the paths specified in the metacat.properties
 	 */
     private void checkIndexPaths() {
-        Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    	logMetacat.debug("MetaCatServlet.checkIndexPaths - starting....");
+    	if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
+    		logMetacat.info("MetaCatServlet.checkIndexPaths - the pathquery is disabled and it does nothing for checking path_index");
+            return;
+        }
+    	logMetacat.debug("MetaCatServlet.checkIndexPaths - after checking is the pathquery enabled or not...");
+        
 
         Vector<String> pathsForIndexing = null;
         try {  
