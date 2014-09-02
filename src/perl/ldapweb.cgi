@@ -1683,8 +1683,9 @@ sub getExistingHighestUidNum {
                 my  $entry = $mesg->pop_entry;
                 $storedUidNumber = $entry->get_value($attribute_name_store_next_uid);
         }
+		my $authBase = $properties->getProperty("auth.base");
         my $uids = $ldap->search(
-                        base => "dc=ecoinformatics,dc=org",
+                        base => $authBase,
                         scope => "sub",
                         filter => "uidNumber=*", 
                         attrs   => [ 'uidNumber' ],
