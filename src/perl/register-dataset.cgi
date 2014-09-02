@@ -2312,9 +2312,10 @@ sub allowElement {
 sub getUsername() {
 	my $username = '';
 
+	my $authBase = $properties->getProperty("auth.base");
 	if ( $FORM::username ne '' ) {
 		$username =
-		  "uid=$FORM::username,o=$FORM::organization,dc=ecoinformatics,dc=org";
+		  "uid=$FORM::username,o=$FORM::organization,$authBase";
 	}
 	else {
 		my $session = CGI::Session->load();
@@ -3631,7 +3632,8 @@ sub getCredentials {
 	my $userDN   = $FORM::username;
 	my $userOrg  = $FORM::organization;
 	my $userPass = $FORM::password;
-	my $dname    = "uid=$userDN,o=$userOrg,dc=ecoinformatics,dc=org";
+	my $authBase = $properties->getProperty("auth.base");
+	my $dname    = "uid=$userDN,o=$userOrg,$authBase";
 
 	my $session = CGI::Session->load();
 	if ( !( $session->is_empty || $session->is_expired ) ) {
