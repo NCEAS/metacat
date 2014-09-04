@@ -32,6 +32,10 @@ BEGIN
 		DELETE FROM xml_index WHERE docid = v_docid;
 		GET DIAGNOSTICS deleted_count = ROW_COUNT;
 		RAISE NOTICE 'Deleted % rows from xml_index', deleted_count;
+
+                DELETE FROM xml_accesssubtree WHERE docid = v_docid;
+                GET DIAGNOSTICS deleted_count = ROW_COUNT;
+                RAISE NOTICE 'Deleted % rows from xml_accesssubtree', deleted_count;
 	
 		DELETE FROM xml_documents WHERE docid = v_docid AND rev = v_rev;
 		GET DIAGNOSTICS deleted_count = ROW_COUNT;
