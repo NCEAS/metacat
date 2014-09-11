@@ -34,6 +34,8 @@ import gov.loc.repository.bagit.Manifest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -252,8 +254,10 @@ public class InsertORETest extends D1NodeServiceTest {
 				sysmeta = createSystemMetadata(composeActivityId, session.getSubject(), dataObject4);
 				MNodeService.getInstance(request).create(session, composeActivityId, dataObject4, sysmeta);
 				// metadata file
-				InputStream metadataObject = new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
-				sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+				String testfile = "test/eml-sample.xml";
+				InputStream metadataObject = new FileInputStream(testfile);
+				sysmeta = createSystemMetadata(metadataId, session.getSubject(), null);
+		        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
 				MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
 							
 				// save the ORE object
