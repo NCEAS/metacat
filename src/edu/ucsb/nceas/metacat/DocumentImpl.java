@@ -3315,6 +3315,7 @@ public class DocumentImpl
         int serialNumber = -1;
         PreparedStatement pstmt = null;
         boolean isXML   = true;
+        boolean inRevisionTable = false;
         try {
             //check out DBConnection
             conn = DBConnectionPool.getDBConnection("DocumentImpl.delete");
@@ -3326,25 +3327,79 @@ public class DocumentImpl
             int rev = DocumentUtil.getRevisionFromAccessionNumber(accnum);;
 
             // Check if the document exists.
-            pstmt = conn.prepareStatement("SELECT * FROM xml_documents WHERE docid = ?");
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            ResultSet rs = pstmt.getResultSet();
-            if(!rs.next()){
-                rs.close();
-                pstmt.close();
-                conn.increaseUsageCount(1);
-                throw new McdbDocNotFoundException("Docid " + accnum  + 
-                  " does not exist. Please check that you have also " +
-                  "specified the revision number of the document.");
-            }
-            rs.close();
-            pstmt.close();
-            conn.increaseUsageCount(1);
+            if(!removeAll) {
+            	//this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
+            	 logMetacat.info("DocumentImp.delete - archive the document "+accnum);
+            	 pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_documents WHERE docid = ?");
+            	 pstmt.setString(1, docid);
+                 logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
+                 pstmt.execute();
+                 ResultSet rs = pstmt.getResultSet();
+                 if(!rs.next()){
+                	 rs.close();
+                     pstmt.close();
+                     conn.increaseUsageCount(1);                 	
+                     throw new McdbDocNotFoundException("Docid " + accnum  + 
+                           " does not exist. Please check that you have also " +
+                           "specified the revision number of the document.");
+                 } else {
+                	//Get the rev from the xml_table. If the value is greater than the one user specified, we will use this one.
+                	 //In ReplicationHandler.handleDeleteSingleDocument method, the code use "1" as the revision number not matther what is the actual value
+                	 int revFromTable = rs.getInt(1);
+                	 if(revFromTable > rev) {
+                		 logMetacat.info("DocumentImpl.delete - in the archive the user specified rev - "+rev +"is less than the version in xml_document table - "+revFromTable+
+                				 ". We will use the one from table.");
+                		 rev = revFromTable;             		 
+                	 }
+                	 rs.close();
+                     pstmt.close();
+                     conn.increaseUsageCount(1);
+                	 
+                 }
+            } else {          	
+            	logMetacat.info("DocumentImp.delete - complete delete the document "+accnum);
+           	 	pstmt = conn.prepareStatement("SELECT * FROM xml_documents WHERE docid = ? and rev = ?");
+           	 	pstmt.setString(1, docid);
+           	 	pstmt.setInt(2, rev);
+                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
+                pstmt.execute();
+                ResultSet rs = pstmt.getResultSet();
+                if(!rs.next()){
+                	//look at the xml_revisions table
+            		logMetacat.debug("DocumentImpl.delete - look at the docid "+ accnum+" in the xml_revision table");
+            		 pstmt = conn.prepareStatement("SELECT * FROM xml_revisions WHERE docid = ? AND rev = ?");
+                     pstmt.setString(1, docid);
+                     pstmt.setInt(2, rev);
+                     logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
+                     pstmt.execute();
+                     rs = pstmt.getResultSet();
+                     if(!rs.next()) {
+                    	 rs.close();
+                         pstmt.close();
+                         conn.increaseUsageCount(1);
+                         throw new McdbDocNotFoundException("Docid " + accnum  + 
+                               " does not exist. Please check and try to delete it again.");
+                     } else {
+                    	 rs.close();
+                         pstmt.close();
+                         conn.increaseUsageCount(1);
+                    	 inRevisionTable=true;
+                     }
+                } else {
+                	 rs.close();
+                     pstmt.close();
+                     conn.increaseUsageCount(1);               	
+                }
+            }     
 
             // get the type of deleting docid, this will be used in forcereplication
-            String type = getDocTypeFromDB(conn, docid);
+            String type = null;
+            if(!inRevisionTable) {
+            	type = getDocTypeFromDB(conn, "xml_documents", docid);
+            } else {
+            	type = getDocTypeFromDB(conn, "xml_revisions", docid);
+            }
+            logMetacat.info("DocumentImpl.delete - the deleting doc type is " + type+ "...");
             if (type != null && type.trim().equals("BIN")) {
             	isXML = false;
             }
@@ -3362,119 +3417,140 @@ public class DocumentImpl
             }
 
             conn.setAutoCommit(false);
-            
-            // Copy the record to the xml_revisions table if not a full delete
-            if (!removeAll) {
-            	DocumentImpl.archiveDocAndNodesRevision(conn, docid, user, null);
-                logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
-
-            }
-            double afterArchiveDocAndNode = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - The time for archiveDocAndNodesRevision is "+(afterArchiveDocAndNode - start));
-            
             // make sure we don't have a pending index task
             removeDocidFromIndexingQueue(docid, String.valueOf(rev));
-            
-            // Now delete it from the xml_index table
-            pstmt = conn.prepareStatement("DELETE FROM xml_index WHERE docid = ?");
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            conn.increaseUsageCount(1);
-            
-            double afterDeleteIndex = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - The deleting xml_index time is "+(afterDeleteIndex - afterArchiveDocAndNode ));
-            
-            // Now delete it from xml_access table
-            /*************** DO NOT DELETE ACCESS - need to archive this ******************/
-            double afterDeleteXmlAccess2 = System.currentTimeMillis()/1000;
-            /******* END DELETE ACCESS *************/            
-            
-            // Delete enteries from xml_queryresult
-            try {
-                XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
-                xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
-            } catch (AccessException ae) {
-            	throw new SQLException("Problem deleting xml query result for docid " + 
-            			docid + " : " + ae.getMessage());
+            if(!inRevisionTable) {
+            	   // Copy the record to the xml_revisions table if not a full delete
+                if (!removeAll) {
+                	DocumentImpl.archiveDocAndNodesRevision(conn, docid, user, null);
+                    logMetacat.info("DocumentImpl.delete - calling archiveDocAndNodesRevision");
+
+                }
+                double afterArchiveDocAndNode = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - The time for archiveDocAndNodesRevision is "+(afterArchiveDocAndNode - start));
+                       
+                // Now delete it from the xml_index table
+                pstmt = conn.prepareStatement("DELETE FROM xml_index WHERE docid = ?");
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - executing SQL: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
+                
+                double afterDeleteIndex = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - The deleting xml_index time is "+(afterDeleteIndex - afterArchiveDocAndNode ));
+                
+                // Now delete it from xml_access table
+                /*************** DO NOT DELETE ACCESS - need to archive this ******************/
+                double afterDeleteXmlAccess2 = System.currentTimeMillis()/1000;
+                /******* END DELETE ACCESS *************/            
+                
+                // Delete enteries from xml_queryresult
+                try {
+                    XMLQueryresultAccess xmlQueryresultAccess = new XMLQueryresultAccess();
+                    xmlQueryresultAccess.deleteXMLQueryresulForDoc(docid);
+                } catch (AccessException ae) {
+                	throw new SQLException("Problem deleting xml query result for docid " + 
+                			docid + " : " + ae.getMessage());
+                }
+                double afterDeleteQueryResult = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - The deleting xml_queryresult time is "+(afterDeleteQueryResult - afterDeleteXmlAccess2));
+                // Delete it from relation table
+                pstmt = conn.prepareStatement("DELETE FROM xml_relation WHERE docid = ?");
+                //increase usage count
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
+                double afterXMLRelation = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - The deleting time  relation is "+ (afterXMLRelation - afterDeleteQueryResult) );
+
+                // Delete it from xml_path_index table
+                logMetacat.info("DocumentImpl.delete - deleting from xml_path_index");
+                pstmt = conn.prepareStatement("DELETE FROM xml_path_index WHERE docid = ?");
+                //increase usage count
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
+
+                logMetacat.info("DocumentImpl.delete - deleting from xml_accesssubtree");
+                // Delete it from xml_accesssubtree table
+                pstmt = conn.prepareStatement("DELETE FROM xml_accesssubtree WHERE docid = ?");
+                //increase usage count
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
+
+                // Delete it from xml_documents table
+                logMetacat.info("DocumentImpl.delete - deleting from xml_documents");
+                pstmt = conn.prepareStatement("DELETE FROM xml_documents WHERE docid = ?");
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                //Usaga count increase 1
+                conn.increaseUsageCount(1);
+                double afterDeleteDoc = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - the time to delete  xml_path_index,  xml_accesssubtree, xml_documents time is "+ 
+                		(afterDeleteDoc - afterXMLRelation ));
+                // Delete the old nodes in xml_nodes table...
+                pstmt = conn.prepareStatement("DELETE FROM xml_nodes WHERE docid = ?");
+
+                // Increase dbconnection usage count
+                conn.increaseUsageCount(1);
+                // Bind the values to the query and execute it
+                pstmt.setString(1, docid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+
+                double afterDeleteXMLNodes = System.currentTimeMillis()/1000;
+                logMetacat.info("DocumentImpl.delete - Deleting xml_nodes time is "+(afterDeleteXMLNodes-afterDeleteDoc));
+            } else {
+            	long rootnodeid = getRevisionRootNodeId(conn, docid, rev);
+            	logMetacat.info("DocumentImpl.delete - deleting from xml_revisions");
+                pstmt = conn.prepareStatement("DELETE FROM xml_revisions WHERE docid = ? AND rev = ?");
+                pstmt.setString(1, docid);
+                pstmt.setInt(2, rev);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
+                
+                logMetacat.info("DocumentImpl.delete - deleting from xml_nodes_revisions");
+                pstmt = conn.prepareStatement("DELETE FROM xml_nodes_revisions WHERE rootnodeid = ?");
+                pstmt.setLong(1, rootnodeid);
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                conn.increaseUsageCount(1);
             }
-            double afterDeleteQueryResult = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - The deleting xml_queryresult time is "+(afterDeleteQueryResult - afterDeleteXmlAccess2));
-            // Delete it from relation table
-            pstmt = conn.prepareStatement("DELETE FROM xml_relation WHERE docid = ?");
-            //increase usage count
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            conn.increaseUsageCount(1);
-            double afterXMLRelation = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - The deleting time  relation is "+ (afterXMLRelation - afterDeleteQueryResult) );
-
-            // Delete it from xml_path_index table
-            logMetacat.info("DocumentImpl.delete - deleting from xml_path_index");
-            pstmt = conn.prepareStatement("DELETE FROM xml_path_index WHERE docid = ?");
-            //increase usage count
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            conn.increaseUsageCount(1);
-
-            logMetacat.info("DocumentImpl.delete - deleting from xml_accesssubtree");
-            // Delete it from xml_accesssubtree table
-            pstmt = conn.prepareStatement("DELETE FROM xml_accesssubtree WHERE docid = ?");
-            //increase usage count
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            conn.increaseUsageCount(1);
-
-            // Delete it from xml_documents table
-            logMetacat.info("DocumentImpl.delete - deleting from xml_documents");
-            pstmt = conn.prepareStatement("DELETE FROM xml_documents WHERE docid = ?");
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-            //Usaga count increase 1
-            conn.increaseUsageCount(1);
-            double afterDeleteDoc = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - the time to delete  xml_path_index,  xml_accesssubtree, xml_documents time is "+ 
-            		(afterDeleteDoc - afterXMLRelation ));
-            // Delete the old nodes in xml_nodes table...
-            pstmt = conn.prepareStatement("DELETE FROM xml_nodes WHERE docid = ?");
-
-            // Increase dbconnection usage count
-            conn.increaseUsageCount(1);
-            // Bind the values to the query and execute it
-            pstmt.setString(1, docid);
-            logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
-            pstmt.execute();
-            pstmt.close();
-
-            double afterDeleteXMLNodes = System.currentTimeMillis()/1000;
-            logMetacat.info("DocumentImpl.delete - Deleting xml_nodes time is "+(afterDeleteXMLNodes-afterDeleteDoc));
             
-            // remove the file if called for
-            if (removeAll) {
-            	deleteFromFileSystem(accnum, isXML);
-            }
-            
-            // set as archived in the systemMetadata 
+                
+            // set as archived in the systemMetadata  if it is not a complete removal
             String pid = IdentifierManager.getInstance().getGUID(docid, rev);
             Identifier guid = new Identifier();
-        	guid.setValue(pid);
-            SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
-            if (sysMeta != null) {
-				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-				sysMeta.setArchived(true);
-            	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-				HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
-                MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+        	guid.setValue(pid);          
+            
+            //removal the access rules for removeAll.
+            if(removeAll) {
+            	
+                logMetacat.info("DocumentImpl.delete - deleting from xml_access");
+                pstmt = conn.prepareStatement("DELETE FROM xml_access WHERE guid = ?");
+                pstmt.setString(1, guid.getValue());
+                logMetacat.debug("DocumentImpl.delete - running sql: " + pstmt.toString());
+                pstmt.execute();
+                pstmt.close();
+                //Usaga count increase 1
+                conn.increaseUsageCount(1);             
+            	
             }
+            
             
             // clear cache after inserting or updating a document
             if (PropertyService.getProperty("database.queryCacheOn").equals("true")) {
@@ -3482,9 +3558,38 @@ public class DocumentImpl
             	DBQuery.clearQueryResultCache();
             }
             
+            //update systemmetadata table and solr index
+            SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+            if (sysMeta != null) {
+    				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+    				sysMeta.setArchived(true);
+                	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                	if(!removeAll) {
+                		HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
+                	} else { 
+                		try {
+                			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
+                			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                		} catch (RuntimeException ee) {
+                			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
+                			throw new Exception("DocumentImpl.delete -"+ee.getMessage());
+                		}	
+                	}              	
+                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+            }
+            
             // only commit if all of this was successful
             conn.commit();
             conn.setAutoCommit(true);
+            
+            // remove the file if called for
+            if (removeAll) {
+            	logMetacat.debug("the identifier set contains "+guid.getValue()+" is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
+            	HazelcastService.getInstance().getIdentifiers().remove(guid);
+            	logMetacat.debug("the identifier set contains "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
+            	deleteFromFileSystem(accnum, isXML);
+            }
                         
             // add force delete replcation document here.
             String deleteAction = ReplicationService.FORCEREPLICATEDELETE;
@@ -3520,11 +3625,11 @@ public class DocumentImpl
 
     }
 
-    private static String getDocTypeFromDB(DBConnection conn, String docidWithoutRev)
+    private static String getDocTypeFromDB(DBConnection conn, String tableName, String docidWithoutRev)
                                  throws SQLException
     {
       String type = null;
-      String sql = "SELECT DOCTYPE FROM xml_documents WHERE docid LIKE ?";
+      String sql = "SELECT DOCTYPE FROM "+tableName+" WHERE docid LIKE ?";
       PreparedStatement stmt = null;
       stmt = conn.prepareStatement(sql);
       stmt.setString(1, docidWithoutRev);
@@ -4526,5 +4631,26 @@ public class DocumentImpl
         double end = System.currentTimeMillis()/1000;
         logMetacat.info("DocumentImpl.deleteXMLNodes - The time to delete xml_nodes in UPDATE is "+(end -start));
      
+    }
+    
+    /*
+     * Get the root node id from xml_revisions table by a specified docid and rev
+     */
+    private static long getRevisionRootNodeId(DBConnection conn, String docid, int rev) throws SQLException {
+    	long rootnodeid = -1;
+        String sql = "SELECT rootnodeid FROM xml_revisions WHERE docid = ? and rev = ?";
+        PreparedStatement stmt = null;
+        stmt = conn.prepareStatement(sql);
+        stmt.setString(1, docid);
+        stmt.setInt(2,  rev);
+        ResultSet result = stmt.executeQuery();
+        boolean hasResult = result.next();
+        if (hasResult)
+        {
+          rootnodeid = result.getLong(1);
+        }
+        logMetacat.debug("DocumentImpl.getRevisionRootNodeId - The root node id of docid " + docid+"."+rev +
+                                 " is " + rootnodeid);
+        return rootnodeid;
     }
 }
