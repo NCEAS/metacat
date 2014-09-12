@@ -1750,9 +1750,9 @@ public class IdentifierManager {
         
     }
     
-    public void deleteSystemMetadata(String guid)
+    public boolean deleteSystemMetadata(String guid)
     {        
-        
+        boolean success = false;
         int serialNumber = -1;
         DBConnection dbConn = null;
         String query = null;
@@ -1760,18 +1760,11 @@ public class IdentifierManager {
         int rows = 0;
         try {
 
-            // Get a database connection from the pool
+        	 // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.deleteSystemMetadata");
             serialNumber = dbConn.getCheckOutSerialNumber();
-
-            // remove main system metadata entry
-            query = "delete from " + TYPE_SYSTEM_METADATA + " where guid = ? ";
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, guid);
-            logMetacat.debug("delete system metadata: " + stmt.toString());
-            rows = stmt.executeUpdate();
-            stmt.close();
-            
+            dbConn.setAutoCommit(false);
+        	
             // remove the smReplicationPolicy
             query = "delete from smReplicationPolicy " + 
             "where guid = ?";
@@ -1790,6 +1783,17 @@ public class IdentifierManager {
             rows = stmt.executeUpdate();
             stmt.close();
             
+            // remove main system metadata entry
+            query = "delete from " + TYPE_SYSTEM_METADATA + " where guid = ? ";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, guid);
+            logMetacat.debug("delete system metadata: " + stmt.toString());
+            rows = stmt.executeUpdate();
+            stmt.close();
+            
+            dbConn.commit();
+            dbConn.setAutoCommit(true);
+            success = true;
             // TODO: remove the access?
             // Metacat keeps "deleted" documents so we should not remove access rules.
             
@@ -1805,6 +1809,7 @@ public class IdentifierManager {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+        return success;
     }
     
     public void updateAuthoritativeMemberNodeId(String existingMemberNodeId, String newMemberNodeId)
