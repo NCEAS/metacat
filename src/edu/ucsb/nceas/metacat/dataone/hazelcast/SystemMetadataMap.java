@@ -29,7 +29,14 @@ public class SystemMetadataMap
 
 	@Override
 	public void delete(Identifier arg0) {
-		// we do not delete system metadata
+		if(arg0!= null) {
+			logMetacat.debug("delete the identifier"+arg0.getValue());
+			boolean success = IdentifierManager.getInstance().deleteSystemMetadata(arg0.getValue());
+			if(!success) {
+				throw new RuntimeException("SystemMetadataMap.delete - the system metadata of guid - "+arg0.getValue()+" can't be removed successfully.");
+			}
+		}
+		
 	}
 
 	@Override
