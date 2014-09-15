@@ -506,11 +506,16 @@ public class SolrIndex {
      *    index for the doc.
      */
     public void update(Identifier pid, SystemMetadata systemMetadata) {
-        String objectPath = null;
+        if(systemMetadata==null || pid==null) {
+        	log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
+        }
+    	String objectPath = null;
         InputStream data = null;
         try {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-            data = new FileInputStream(objectPath);
+            if(!systemMetadata.getArchived()) {
+            	data = new FileInputStream(objectPath);
+            }            
             update(pid, systemMetadata, data);
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
@@ -545,14 +550,17 @@ public class SolrIndex {
      */
     void update(Identifier pid, SystemMetadata systemMetadata, InputStream data) throws SolrServerException, 
                                 ServiceFailure, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, 
-                                IOException, SAXException, ParserConfigurationException, OREParserException, JiBXException, EncoderException {
-        checkParams(pid, systemMetadata, data);
+                                IOException, SAXException, ParserConfigurationException, OREParserException, JiBXException, EncoderException { 
+    	if(systemMetadata==null || pid==null) {
+        	log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
+        }
         boolean isArchive = systemMetadata.getArchived();
         if(isArchive ) {
             //delete the index for the archived objects
             remove(pid.getValue(), systemMetadata);
             log.info("SolrIndex.update============================= archive the idex for the identifier "+pid);
         } else {
+        	checkParams(pid, systemMetadata, data);
             //generate index for either add or update.
             insert(pid, systemMetadata, data);
             log.info("SolrIndex.update============================= insert index for the identifier "+pid);
