@@ -137,7 +137,7 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     	URI nameURI = new URI(indexDocId);
     	String scheme = nameURI.getScheme();
     	if((scheme == null) || (scheme.isEmpty())){
-    		name = "http://" + indexDocId;
+    		name = "http://" + indexDocId.toLowerCase();
     	}
     	
     	boolean loaded = dataset.containsNamedModel(name);
