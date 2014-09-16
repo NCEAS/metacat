@@ -131,6 +131,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		IndexTask task = entryEvent.getValue();
 		SystemMetadata systemMetadata = task.getSystemMetadata();
 		Map<String, List<Object>> fields = task.getFields();
+		byte[] resourceMapData = task.getResourceMapData();
 		
 		/*if(systemMetadata == null) {
 		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
@@ -143,7 +144,12 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		}
 		
 		if (systemMetadata != null) {
-			solrIndex.update(pid, systemMetadata);
+			if(resourceMapData == null) {
+				solrIndex.update(pid, systemMetadata);
+			} else {
+				solrIndex.updateResourceMap(pid, systemMetadata, resourceMapData);
+			}
+			
 		}
 		if (fields != null) {
 			solrIndex.insertFields(pid, fields);
