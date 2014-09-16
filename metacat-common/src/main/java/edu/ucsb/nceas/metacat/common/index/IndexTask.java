@@ -12,6 +12,16 @@ public class IndexTask implements Serializable {
 	
 	private Map<String, List<Object>> fields;
 	
+	private byte[] resourceMapData;
+	
+	public byte[] getResourceMapData() {
+		return resourceMapData;
+	}
+
+	public void setResourceMapData(byte[] resourceMapData) {
+		this.resourceMapData = resourceMapData;
+	}
+
 	public SystemMetadata getSystemMetadata() {
 		return systemMetadata;
 	}
