@@ -77,9 +77,6 @@ import org.jibx.runtime.JiBXException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
-import src.main.java.edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
-import src.main.java.edu.ucsb.nceas.metacat.index.Exception;
-import src.main.java.edu.ucsb.nceas.metacat.index.String;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
