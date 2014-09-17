@@ -64,6 +64,7 @@ import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
+import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
@@ -85,6 +86,7 @@ import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.UtilException;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
@@ -1557,11 +1559,30 @@ public class DocumentImpl
 			throw new McdbException("Could not delete file.  Accession Number number is null" );
 		}
     	
-		// remove the document from disk
-		String documentDir = null;
-		String documentPath = null;
-
-		try {
+		// remove the document from disk	
+    	String documentPath = null;
+	
+		// get the correct location on disk
+		documentPath = getFilePath(accNumber, isXml);
+		// delete it if it exists			
+		if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
+			    try {
+			    	FileUtil.deleteFile(documentPath);
+			    } catch (IOException ioe) {
+			        throw new McdbException("Could not delete file: " + documentPath + " : " + ioe.getMessage());
+			    }
+		}			
+		
+	}
+    
+    private static String getFilePath(String accNumber, boolean isXml) throws McdbException{
+    	if (accNumber == null) {
+			throw new McdbException("Could not get the file path since the Accession Number number is null" );
+		}
+    	String documentPath = null;
+    	try {
+    		String documentDir = null;
+    		
 			// get the correct location on disk
 			if (isXml) {
 				documentDir = PropertyService.getProperty("application.documentfilepath");
@@ -1569,20 +1590,13 @@ public class DocumentImpl
 				documentDir = PropertyService.getProperty("application.datafilepath");
 			}
 			documentPath = documentDir + FileUtil.getFS() + accNumber;
-
-			// delete it if it exists			
-			if (accNumber != null && FileUtil.getFileStatus(documentPath) != FileUtil.DOES_NOT_EXIST) {
-			    try {
-			    	FileUtil.deleteFile(documentPath);
-			    } catch (IOException ioe) {
-			        throw new McdbException("Could not delete file: " + documentPath + " : " + ioe.getMessage());
-			    }
-			}			
+			return documentPath;
+			
 		} catch (PropertyNotFoundException pnfe) {
 			throw new McdbException(pnfe.getClass().getName() + ": Could not delete file because: " 
 					+ documentPath + " : " + pnfe.getMessage());
 		}
-	}
+    }
     
     /**
 	 * Strip out an inline data section from a 2.0.X version document. This assumes 
@@ -3566,17 +3580,24 @@ public class DocumentImpl
                 	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 	if(!removeAll) {
                 		HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
+                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
                 	} else { 
                 		try {
                 			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
                 			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
                 			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                			if(ResourceMapNamespaces.isResourceMap(sysMeta.getFormatId())) {
+                				byte[] resourceMapData = FileUtils.readFileToByteArray(new File(getFilePath(accnum, isXML)));
+                				MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false, resourceMapData);
+                			} else {
+                				MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                			}
                 		} catch (RuntimeException ee) {
                 			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
                 			throw new Exception("DocumentImpl.delete -"+ee.getMessage());
                 		}	
                 	}              	
-                    MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                    
             }
             
             // only commit if all of this was successful

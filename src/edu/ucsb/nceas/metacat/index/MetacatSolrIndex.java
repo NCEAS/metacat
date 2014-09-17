@@ -173,9 +173,17 @@ public class MetacatSolrIndex {
     }
 
     public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
+    	submit(pid, systemMetadata, fields, followRevisions, null);
+		
+    }
+    
+    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions, byte[] resourceMapData) {
     	IndexTask task = new IndexTask();
     	task.setSystemMetadata(systemMetadata);
     	task.setFields(fields);
+    	if(resourceMapData != null) {
+    		task.setResourceMapData(resourceMapData);
+    	}
 		HazelcastService.getInstance().getIndexQueue().put(pid, task);
 		
 		// submit older revisions recursively otherwise they stay in the index!
@@ -183,9 +191,8 @@ public class MetacatSolrIndex {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
 		    Map<String, List<Object>> obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
-			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
+			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions, resourceMapData);
 		}
-		
     }
     
 
