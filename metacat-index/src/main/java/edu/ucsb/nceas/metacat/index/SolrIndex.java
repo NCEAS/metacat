@@ -77,6 +77,9 @@ import org.jibx.runtime.JiBXException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import src.main.java.edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
+import src.main.java.edu.ucsb.nceas.metacat.index.Exception;
+import src.main.java.edu.ucsb.nceas.metacat.index.String;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
@@ -525,6 +528,29 @@ public class SolrIndex {
         }
     }
     
+    /**
+     * This method is used to delete solr index for a resourceMap. The file of resource map
+     * probably was deleted. But the byte array is the content.
+     * @param pid
+     * @param systemMetadata
+     * @param resourceMapData
+     */
+    public void updateResourceMap(Identifier pid, SystemMetadata systemMetadata, byte[] resourceMapData) {
+    	if(systemMetadata != null && pid !=null && pid.getValue()!= null) {
+    		try {
+    			boolean archived = systemMetadata.getArchived() != null && systemMetadata.getArchived();
+        		if(archived && isDataPackage(pid.getValue(), systemMetadata)) {
+        			removeDataPackage(pid.getValue(), resourceMapData);
+        		}
+    		}catch (Exception e) {
+                String error = "SolrIndex.updateResourceMap - could not update the solr index since " + e.getMessage();
+                writeEventLog(systemMetadata, pid, error);
+                log.error(error, e);
+            }
+    		
+    	}
+    }
+    
     
     /**
      * Update the solr index. This method handles the three scenarios:
@@ -616,10 +642,26 @@ public class SolrIndex {
     }
     
     /*
+     * Remove a data package for given pid. The content of package will be obtained from a file.
+     */
+    private void removeDataPackage(String pid) throws ServiceFailure, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, OREParserException {
+    	Document resourceMapDoc = generateXmlDocument(DistributedMapsFactory.getDataObject(pid));
+    	removeDataPackage(pid, resourceMapDoc);
+    }
+    
+    /*
+     * Remove a data package for given pid. The content of package will be the byte array.
+     */
+    private void removeDataPackage(String pid, byte[] resourceMap) throws ServiceFailure, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, OREParserException{
+    	Document resourceMapDoc = generateXmlDocument(new ByteArrayInputStream(resourceMap));
+    	removeDataPackage(pid, resourceMapDoc);
+    }
+    
+    /*
      * Remove a resource map pid
      */
-    private void removeDataPackage(String pid) throws ServiceFailure, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, OREParserException  {
-        Document resourceMapDoc = generateXmlDocument(DistributedMapsFactory.getDataObject(pid));
+    private void removeDataPackage(String pid, Document resourceMapDoc) throws ServiceFailure, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, SolrServerException, IOException, ParserConfigurationException, OREParserException  {
+        //Document resourceMapDoc = generateXmlDocument(DistributedMapsFactory.getDataObject(pid));
         //ResourceMap resourceMap = new ResourceMap(resourceMapDoc);
         ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourceMapDoc);
         List<String> documentIds = resourceMap.getAllDocumentIDs();

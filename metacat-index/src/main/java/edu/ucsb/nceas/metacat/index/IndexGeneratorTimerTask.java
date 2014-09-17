@@ -18,14 +18,11 @@
  */
 package edu.ucsb.nceas.metacat.index;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -34,7 +31,6 @@ import java.util.TimerTask;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrServerException;
@@ -46,7 +42,6 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.SystemMetadata;
@@ -56,9 +51,9 @@ import org.xml.sax.SAXException;
 import com.hazelcast.core.IMap;
 import com.hazelcast.core.ISet;
 
-import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
+import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
 import edu.ucsb.nceas.metacat.index.event.IndexEventLogException;
 
@@ -82,7 +77,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public static final int MAXWAITNUMBER = 180;
     private static final String HTTP = "http://";
     private static final String MNAPPENDIX = "/d1/mn";
-    private static final String RESOURCEMAPPROPERYNAME = "index.resourcemap.namespace";
+    //private static final String RESOURCEMAPPROPERYNAME = "index.resourcemap.namespace";
     public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
     public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
     
@@ -103,7 +98,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
      */
     public IndexGeneratorTimerTask(SolrIndex solrIndex) {
         this.solrIndex = solrIndex;
-        resourceMapNamespaces = Settings.getConfiguration().getList(RESOURCEMAPPROPERYNAME);
+        resourceMapNamespaces = ResourceMapNamespaces.getNamespaces();
         //this.systemMetadataListener = systemMetadataListener;
         //this.mNode = new MNode(buildMNBaseURL());
       
@@ -569,17 +564,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
     /*
      * If the specified ObjectFormatIdentifier is a resrouce map namespace.
      */
-    public static boolean isResourceMap(ObjectFormatIdentifier formatId) {
-        boolean isResourceMap = false;
-        if(formatId != null && resourceMapNamespaces != null) {
-            for(String namespace : resourceMapNamespaces) {
-                if(namespace != null && formatId.getValue() != null && !formatId.getValue().trim().equals("") && formatId.getValue().equals(namespace)) {
-                    isResourceMap = true;
-                    break;
-                }
-            }
-        }
-        return isResourceMap;
+   public static boolean isResourceMap(ObjectFormatIdentifier formatId) {
+       return ResourceMapNamespaces.isResourceMap(formatId);
     }
     
    
