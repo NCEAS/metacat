@@ -379,7 +379,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  }
 	  
 	  // Don't defer to superclass implementation without a locally registered identifier
-	  
+	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
       // Check for the existing identifier
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
@@ -438,7 +438,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
 
 	  // notify the replicas
-	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	  if (systemMetadata.getReplicaList() != null) {
 		  for (Replica replica: systemMetadata.getReplicaList()) {
 			  NodeReference replicaNode = replica.getReplicaMemberNode();
