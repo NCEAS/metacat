@@ -197,10 +197,22 @@
          	</label>
          	<div class="controls controls-well">
 		         <xsl:for-each select="creator">
-		               <xsl:call-template name="party">
-		                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-		                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-		               </xsl:call-template>
+		         
+		         	<xsl:variable name="absolutePath" >
+			         	<xsl:for-each select="ancestor-or-self::*">
+			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:value-of select="local-name()" />
+			         	</xsl:for-each>
+			         </xsl:variable>	
+					<xsl:variable name="index" select="position()" />
+		         	<div>
+		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
+						
+						<xsl:call-template name="party">
+						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+						</xsl:call-template>
+		         	</div>      
 		         </xsl:for-each>
          	</div>
          </div>
@@ -212,10 +224,21 @@
          	<label class="control-label">Data Set Contacts</label>
          	<div class="controls controls-well">
 	         	<xsl:for-each select="contact">
-	               <xsl:call-template name="party">
-	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-	               </xsl:call-template>
+	         		<xsl:variable name="absolutePath" >
+			         	<xsl:for-each select="ancestor-or-self::*">
+			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:value-of select="local-name()" />
+			         	</xsl:for-each>
+			         </xsl:variable>	
+					<xsl:variable name="index" select="position()" />
+		         	<div>
+		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
+		         		
+						<xsl:call-template name="party">
+						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+						</xsl:call-template>
+	               </div>
 		             
 	         	</xsl:for-each>
 	         </div>	
@@ -228,10 +251,21 @@
          	<label class="control-label">Associated Parties</label>
          	<div class="controls controls-well">
 				<xsl:for-each select="associatedParty">
-					<xsl:call-template name="party">
-						<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-						<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-					</xsl:call-template>
+					<xsl:variable name="absolutePath" >
+			         	<xsl:for-each select="ancestor-or-self::*">
+			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:value-of select="local-name()" />
+			         	</xsl:for-each>
+			         </xsl:variable>	
+					<xsl:variable name="index" select="position()" />
+		         	<div>
+		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
+		         		
+						<xsl:call-template name="party">
+							<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+							<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+						</xsl:call-template>
+					</div>	
 		         </xsl:for-each>
 	         </div>	
          </div>
@@ -244,10 +278,21 @@
          	<label class="control-label">Metadata Providers</label>
          	<div class="controls controls-well">
 				<xsl:for-each select="metadataProvider">
-	               <xsl:call-template name="party">
-	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-	               </xsl:call-template>
+					<xsl:variable name="absolutePath" >
+			         	<xsl:for-each select="ancestor-or-self::*">
+			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:value-of select="local-name()" />
+			         	</xsl:for-each>
+			         </xsl:variable>	
+					<xsl:variable name="index" select="position()" />
+		         	<div>
+		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
+		         		
+						<xsl:call-template name="party">
+						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+						</xsl:call-template>
+					</div>	
 				</xsl:for-each>
 		   </div>
 		</div>      
@@ -259,10 +304,21 @@
          	<label class="control-label">Data Set Publishers</label>
          	<div class="controls controls-well">
 		         <xsl:for-each select="publisher">
-	               <xsl:call-template name="party">
-	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-	               </xsl:call-template>
+		         	<xsl:variable name="absolutePath" >
+			         	<xsl:for-each select="ancestor-or-self::*">
+			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:value-of select="local-name()" />
+			         	</xsl:for-each>
+			         </xsl:variable>	
+					<xsl:variable name="index" select="position()" />
+		         	<div>
+		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
+		         		
+						<xsl:call-template name="party">
+						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+						</xsl:call-template>
+					</div>		
 		         </xsl:for-each>
 	         </div>
          </div>

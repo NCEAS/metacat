@@ -118,7 +118,21 @@
 		<xsl:if test="position() = 1">
 			<xsl:attribute name="class">tab-pane active</xsl:attribute>
 		</xsl:if>
-
+		
+		<!-- for annotating this section -->
+		<xsl:variable name="absolutePath" >
+         	<xsl:for-each select="ancestor-or-self::*">
+         		<xsl:text>/</xsl:text>			         	
+         		<xsl:value-of select="local-name()" /> 
+         		<xsl:if test="local-name() = 'dataTable'">
+         			<xsl:text>[</xsl:text>
+         				<xsl:value-of select="$entityindex" /> 
+         			<xsl:text>]</xsl:text>			         	
+         		</xsl:if>        		
+         	</xsl:for-each>
+         </xsl:variable>
+		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$attributeindex"/>])</xsl:attribute>
+		
 
   	<!--  Name -->
   	<div class="control-group">
