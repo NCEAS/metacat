@@ -31,6 +31,7 @@ import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.schema.IndexSchema;
@@ -38,6 +39,7 @@ import org.apache.solr.schema.SchemaField;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.xml.sax.SAXException;
 
@@ -158,6 +160,28 @@ public class SolrQueryServiceController {
             return httpQueryService.getSchema();
         }
        
+    }
+    
+    /**
+     * If the solr client was configured as an embedded solr server.
+     * @return true if it is; false otherwise.
+     */
+    public boolean isEmbeddedSolrServer() {
+    	return isEmbeddedSolrServer;
+    }
+    
+    
+    /**
+     * If the solr server has at least one solr doc for the given id.
+     * @param id
+     * @return true if the server has at lease one solr doc; false otherwise.
+     */
+    public boolean hasSolrDoc(Identifier id) throws ParserConfigurationException, SolrServerException, IOException, SAXException{
+    	 if(isEmbeddedSolrServer) {
+             return embeddedQueryService.hasSolrDoc(id);
+         } else{
+             return httpQueryService.hasSolrDoc(id);
+         }
     }
 
     

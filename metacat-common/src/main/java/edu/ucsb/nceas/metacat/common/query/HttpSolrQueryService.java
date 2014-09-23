@@ -39,9 +39,10 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
-
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.schema.FieldType;
@@ -51,6 +52,7 @@ import org.apache.solr.schema.TextField;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -315,6 +317,21 @@ public class HttpSolrQueryService extends SolrQueryService {
         DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
         Document doc = dBuilder.parse(input);
         return doc;
+    }
+    
+    /**
+     * If there is a solr doc for the given id.
+     * @param id - the specified id.
+     * @return true if there is a solr doc for this id.
+     */
+    public boolean hasSolrDoc(Identifier id) throws ParserConfigurationException, SolrServerException, IOException, SAXException {
+    	boolean hasIt = false;
+    	if(id != null && id.getValue() != null && !id.getValue().trim().equals("") ) {
+    		SolrParams query = EmbeddedSolrQueryService.buildIdQuery(id.getValue());
+            QueryResponse response = httpSolrServer.query(query);
+            hasIt = EmbeddedSolrQueryService.hasResult(response);
+    	}
+    	return hasIt;
     }
     
  
