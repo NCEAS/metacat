@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
+import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -58,17 +59,16 @@ import org.dataone.service.exceptions.SynchronizationFailed;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
-import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
-import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.ExceptionHandler;
@@ -76,6 +76,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
+import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -136,6 +137,8 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PUBLISH = "publish";
     protected static final String RESOURCE_PACKAGE = "package";
     protected static final String RESOURCE_VIEWS = "views";
+    protected static final String RESOURCE_TOKEN = "token";
+
 
 
     
@@ -214,6 +217,15 @@ public class MNResourceHandler extends D1ResourceHandler {
                     // node response
                     node();
                     status = true;
+                } else if (resource.startsWith(RESOURCE_TOKEN)) {
+                    logMetacat.debug("Using resource 'token'");
+                    // get
+                    if (httpVerb == GET) {
+                    	// after the command
+                        getToken();
+                        status = true;
+                    }
+                    
                 } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
                     if (httpVerb == GET) {
                     	// after the command
@@ -736,6 +748,29 @@ public class MNResourceHandler extends D1ResourceHandler {
 		response.setStatus(200);
 		response.setContentType("text/xml");
 		return result;
+    }
+    
+    private void getToken() throws Exception {
+		
+		if (this.session != null) {
+			String userId = this.session.getSubject().getValue();
+
+			String token = null;
+			token = TokenGenerator.getJWT(userId);
+			
+			response.setStatus(200);
+			response.setContentType("text/plain");
+	        OutputStream out = response.getOutputStream();
+	        out.write(token.getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		} else {
+			response.setStatus(401);
+			response.setContentType("text/plain");
+			OutputStream out = response.getOutputStream();
+	        out.write("No session information found".getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		}
+		
     }
     
     /**

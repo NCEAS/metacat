@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
+import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -82,6 +83,8 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.metacat.MetaCatServlet;
+
 
 /**
  * MN REST service implementation handler
@@ -136,6 +139,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PUBLISH = "publish";
     protected static final String RESOURCE_PACKAGE = "package";
     protected static final String RESOURCE_VIEWS = "views";
+    protected static final String RESOURCE_TOKEN = "token";
 
 
     
@@ -214,6 +218,15 @@ public class MNResourceHandler extends D1ResourceHandler {
                     // node response
                     node();
                     status = true;
+                } else if (resource.startsWith(RESOURCE_TOKEN)) {
+                    logMetacat.debug("Using resource 'token'");
+                    // get
+                    if (httpVerb == GET) {
+                    	// after the command
+                        getToken();
+                        status = true;
+                    }
+                    
                 } else if (resource.startsWith(RESOURCE_IS_AUTHORIZED)) {
                     if (httpVerb == GET) {
                     	// after the command
@@ -452,6 +465,28 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
     }
     
+    private void getToken() throws Exception {
+		
+		if (this.session != null) {
+			String userId = this.session.getSubject().getValue();
+
+			String token = null;
+			token = TokenGenerator.getJWT(userId);
+			
+			response.setStatus(200);
+			response.setContentType("text/plain");
+	        OutputStream out = response.getOutputStream();
+	        out.write(token.getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		} else {
+			response.setStatus(401);
+			response.setContentType("text/plain");
+			OutputStream out = response.getOutputStream();
+	        out.write("No session information found".getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		}
+		
+    }
 
     private void doQuery(String engine, String query) {
     	
