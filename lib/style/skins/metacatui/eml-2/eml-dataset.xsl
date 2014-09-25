@@ -208,10 +208,10 @@
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
 						
-						<xsl:call-template name="party">
-						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-						</xsl:call-template>
+		               <xsl:call-template name="party">
+		                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+		                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+		               </xsl:call-template>
 		         	</div>      
 		         </xsl:for-each>
          	</div>
@@ -234,10 +234,10 @@
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
 		         		
-						<xsl:call-template name="party">
-						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-						</xsl:call-template>
+	               <xsl:call-template name="party">
+	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+	               </xsl:call-template>
 	               </div>
 		             
 	         	</xsl:for-each>
@@ -261,10 +261,10 @@
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
 		         		
-						<xsl:call-template name="party">
-							<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-							<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-						</xsl:call-template>
+					<xsl:call-template name="party">
+						<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+						<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+					</xsl:call-template>
 					</div>	
 		         </xsl:for-each>
 	         </div>	
@@ -288,10 +288,10 @@
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
 		         		
-						<xsl:call-template name="party">
-						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-						</xsl:call-template>
+	               <xsl:call-template name="party">
+	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+	               </xsl:call-template>
 					</div>	
 				</xsl:for-each>
 		   </div>
@@ -314,10 +314,10 @@
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
 		         		
-						<xsl:call-template name="party">
-						  <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
-						  <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
-						</xsl:call-template>
+	               <xsl:call-template name="party">
+	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
+	               </xsl:call-template>
 					</div>		
 		         </xsl:for-each>
 	         </div>
@@ -628,7 +628,7 @@
 							<label class="control-label">
 								<xsl:text>Data Table</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">dataTable</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -644,7 +644,7 @@
 							<label class="control-label">
 								<xsl:text>Spatial Raster</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">spatialRaster</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -660,7 +660,7 @@
 							<label class="control-label">
 								<xsl:text>Spatial Vector</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">spatialVector</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -676,7 +676,7 @@
 							<label class="control-label">
 								<xsl:text>Stored Procedure</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">storedProcedure</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -692,7 +692,7 @@
 							<label class="control-label">
 								<xsl:text>View</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">view</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -708,7 +708,7 @@
 							<label class="control-label">
 								<xsl:text>Other Entity</xsl:text>
 							</label>
-							<div class="controls controls-well">
+							<div class="controls controls-well entitydetails">
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">otherEntity</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
