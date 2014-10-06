@@ -566,6 +566,24 @@ sub handleRegister {
     
     # Remove any expired temporary accounts for this subtree before continuing
     clearTemporaryAccounts();
+    
+    # Check if the uid was taken in the production space
+    my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
+    my $uidExists;
+    my $uid=$query->param('uid');
+    my $uidFilter = "uid=" . $uid;
+    my $newSearchBase = $ldapConfig->{$query->param('o')}{'org'} . "," .  $searchBase;
+    debug("the new search base is $newSearchBase");
+    $uidExists = uidExists($ldapurl, $newSearchBase, $uidFilter, \@attrs);
+    debug("the result of uidExists $uidExists");
+    if($uidExists) {
+         print "Content-type: text/html\n\n";
+            my $errorMessage = $uidExists;
+            fullTemplate( ['registerFailed', 'register'], { stage => "register",
+                                                            allParams => $allParams,
+                                                            errorMessage => $errorMessage });
+            exit();
+    }
 
     # Search LDAP for matching entries that already exist
     # Some forms use a single text search box, whereas others search per
@@ -588,7 +606,7 @@ sub handleRegister {
                 ")";
     }
 
-    my @attrs = [ 'uid', 'o', 'ou', 'cn', 'mail', 'telephoneNumber', 'title' ];
+    
     my $found = findExistingAccounts($ldapurl, $searchBase, $filter, \@attrs);
 
     # If entries match, send back a request to confirm new-user creation
@@ -977,6 +995,48 @@ sub sendPasswordNotification {
                         "couldn't find a valid email address.";
     }
     return $errorMessage;
+}
+
+#
+# search the LDAP production space to see if a uid already exists
+#
+sub uidExists {
+    my $ldapurl = shift;
+    debug("the ldap ulr is $ldapurl");
+    my $base = shift;
+    debug("the base is $base");
+    my $filter = shift;
+    debug("the filter is $filter");
+    my $attref = shift;
+  
+    my $ldap;
+    my $mesg;
+
+    my $foundAccounts = 0;
+
+    #if main ldap server is down, a html file containing warning message will be returned
+    debug("uidExists: connecting to $ldapurl, $timeout");
+    $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
+    if ($ldap) {
+        $ldap->start_tls( verify => 'none');
+        #$ldap->start_tls( verify => 'require',
+        #              cafile => $ldapServerCACertFile);
+        $ldap->bind( version => 3, anonymous => 1);
+        $mesg = $ldap->search (
+            base   => $base,
+            filter => $filter,
+            attrs => @$attref,
+        );
+        debug("the message count is " . $mesg->count());
+        if ($mesg->count() > 0) {
+            $foundAccounts = "The username has been taken already by another user. Please choose a different one.";
+           
+        }
+        $ldap->unbind;   # take down session
+    } else {
+        $foundAccounts = "The ldap server is not running";
+    }
+    return $foundAccounts;
 }
 
 #
