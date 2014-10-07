@@ -584,6 +584,7 @@ sub handleRegister {
                                                             errorMessage => $errorMessage });
             exit();
     }
+
     # Search LDAP for matching entries that already exist
     # Some forms use a single text search box, whereas others search per
     # attribute.
@@ -605,6 +606,7 @@ sub handleRegister {
                 ")";
     }
 
+    
     my $found = findExistingAccounts($ldapurl, $searchBase, $filter, \@attrs);
 
     # If entries match, send back a request to confirm new-user creation
@@ -674,7 +676,7 @@ sub handleChangePassword {
     }
 
     # We have all of the info we need, so try to change the password
-    if ($query->param('userPassword') =~ $query->param('userPassword2')) {
+    if ($query->param('userPassword') eq $query->param('userPassword2')) {
 
         my $o = $query->param('o');
         $searchBase = $ldapConfig->{$o}{'base'};
