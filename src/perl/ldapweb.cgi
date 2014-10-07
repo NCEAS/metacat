@@ -676,7 +676,7 @@ sub handleChangePassword {
     }
 
     # We have all of the info we need, so try to change the password
-    if ($query->param('userPassword') =~ $query->param('userPassword2')) {
+    if ($query->param('userPassword') eq $query->param('userPassword2')) {
 
         my $o = $query->param('o');
         $searchBase = $ldapConfig->{$o}{'base'};
