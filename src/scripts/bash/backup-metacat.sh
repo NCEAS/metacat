@@ -29,6 +29,8 @@ DAYSTOKEEP=7
 # Device to be used for the DVD writer -- this may vary on your system
 DVD=/dev/dvd
 
+# Location the metacat.properties file
+METACATPROPERTIESPATH=/var/lib/tomcat6/webapps/knb/WEB-INF/metacat.properties
 #
 # Below here lie demons
 #
@@ -49,10 +51,13 @@ ARCHDIR="$ARCHROOT/$ARCHNAME"
 mkdir $ARCHDIR
 
 # Shut down the tomcat server so nobody else changes anything while we backup
-/etc/init.d/tomcat stop
+/etc/init.d/tomcat6 stop
 
 # Shut down ldap too
-/etc/init.d/slapd stop
+#/etc/init.d/slapd stop
+
+# Copy the metacat.properties file to /var/metacat
+cp $METACATPROPERTIESPATH $DATADIR
 
 # Backup postgres
 su - postgres -c "pg_dump $DBNAME > $ARCHDIR/metacat-postgres-backup.sql"
@@ -64,10 +69,10 @@ tar czf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
 slapcat -l $ARCHDIR/$DBNAME-ldap.ldif
 
 # Restart LDAP
-/etc/init.d/slapd start
+#/etc/init.d/slapd start
 
 # Restart tomcat
-/etc/init.d/tomcat start
+/etc/init.d/tomcat6 start
 
 # Tar up the archive and copy it to archive media
 cd $ARCHROOT
