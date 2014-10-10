@@ -16,6 +16,7 @@
 package edu.ucsb.nceas.metacat.index.resourcemap;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -63,6 +64,7 @@ import edu.ucsb.nceas.metacat.index.SolrIndex;
 public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implements IDocumentSubprocessor {
 
     private static final String QUERY ="q=id:";
+    private static final String QUERY2="q="+SolrElementField.FIELD_RESOURCEMAP+":";
     private static Log log = LogFactory.getLog(SolrIndex.class);
     private static SolrServer solrServer =  null;
     static {
@@ -144,38 +146,81 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
 	public static SolrDoc getSolrDoc(String id) throws SolrServerException,
 			IOException, ParserConfigurationException, SAXException,
 			XPathExpressionException, NotImplemented, NotFound, UnsupportedType {
+	    int targetIndex = 0;
 		SolrDoc doc = null;
-
-		if (solrServer != null) {
-			String query = QUERY + "\"" + id + "\"";
-			SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
-			QueryResponse qr = solrServer.query(solrParams);
-			if (qr.getResults().size() > 0) {
-				SolrDocument orig = qr.getResults().get(0);
-				doc = new SolrDoc();
-				IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
-				for (String fieldName : orig.getFieldNames()) {
-					// don't transfer the copyTo fields, otherwise there are errors
-					if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
-						continue;
-					}
-					for (Object value : orig.getFieldValues(fieldName)) {
-						String stringValue = value.toString();
-						// special handling for dates in ISO 8601
-						if (value instanceof Date) {
-							stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
-							SolrDateConverter converter = new SolrDateConverter();
-							stringValue = converter.convert(stringValue);
-						}
-						SolrElementField field = new SolrElementField(fieldName, stringValue);
-						log.debug("Adding field: " + fieldName);
-						doc.addField(field);
-					}
-				}
-			}
-
-		}
+		String query = QUERY + "\"" + id + "\"";
+	    List<SolrDoc> list = getDocumentsByQuery(query);
+	    if(list != null && !list.isEmpty()) {
+	        doc = list.get(targetIndex);
+	    }
 		return doc;
+	}
+	
+	/**
+	 * Get a list of solr documents which's resourcemap field matches the given value.
+	 * @param resourceMapId - the target resource map id
+	 * @return the list of solr document 
+	 * @throws MalformedURLException
+	 * @throws UnsupportedType
+	 * @throws NotFound
+	 * @throws SolrServerException
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	public static List<SolrDoc> getDocumentsByResourceMap(String resourceMapId) throws MalformedURLException, 
+	            UnsupportedType, NotFound, SolrServerException, ParserConfigurationException, IOException, SAXException {
+	    String query = QUERY2 + "\"" + resourceMapId + "\"";
+	    return getDocumentsByQuery(query);
+	}
+	
+	/**
+	 * Get a list of slor docs which match the query.
+	 * @param query - a string of a query
+	 * @return
+	 * @throws SolrServerException
+	 * @throws MalformedURLException
+	 * @throws UnsupportedType
+	 * @throws NotFound
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	public static List<SolrDoc> getDocumentsByQuery(String query) throws SolrServerException, MalformedURLException, UnsupportedType, 
+	                                                                NotFound, ParserConfigurationException, IOException, SAXException {
+	    List<SolrDoc> docs = new ArrayList<SolrDoc>();
+	    if (solrServer != null && query != null && !query.trim().equals("")) {
+            SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
+            QueryResponse qr = solrServer.query(solrParams);
+            if (qr != null && qr.getResults() != null) {
+                for(int i=0; i<qr.getResults().size(); i++) {
+                    SolrDocument orig = qr.getResults().get(i);
+                    SolrDoc doc = new SolrDoc();
+                    IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+                    for (String fieldName : orig.getFieldNames()) {
+                        // don't transfer the copyTo fields, otherwise there are errors
+                        if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+                            continue;
+                        }
+                        for (Object value : orig.getFieldValues(fieldName)) {
+                            String stringValue = value.toString();
+                            // special handling for dates in ISO 8601
+                            if (value instanceof Date) {
+                                stringValue = DateTimeMarshaller.serializeDateToUTC((Date) value);
+                                SolrDateConverter converter = new SolrDateConverter();
+                                stringValue = converter.convert(stringValue);
+                            }
+                            SolrElementField field = new SolrElementField(fieldName, stringValue);
+                            log.debug("Adding field: " + fieldName);
+                            doc.addField(field);
+                        }
+                    }
+                    docs.add(doc);
+                }
+                
+            }
+	    }
+	    return docs;
 	}
 
 

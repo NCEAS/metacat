@@ -110,7 +110,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     }
 
     public void entryRemoved(EntryEvent<Identifier, IndexTask> entryEvent) {
-    	// do nothing
+        // do nothing
     }
     public void entryEvicted(EntryEvent<Identifier, IndexTask> entryEvent) {
     	// do nothing
@@ -131,7 +131,6 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		IndexTask task = entryEvent.getValue();
 		SystemMetadata systemMetadata = task.getSystemMetadata();
 		Map<String, List<Object>> fields = task.getFields();
-		byte[] resourceMapData = task.getResourceMapData();
 		
 		/*if(systemMetadata == null) {
 		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
@@ -144,11 +143,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		}
 		
 		if (systemMetadata != null) {
-			if(resourceMapData == null) {
-				solrIndex.update(pid, systemMetadata);
-			} else {
-				solrIndex.updateResourceMap(pid, systemMetadata, resourceMapData);
-			}
+		    solrIndex.update(pid, systemMetadata);
 			
 		}
 		if (fields != null) {
