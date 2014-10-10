@@ -397,10 +397,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 			  SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 			  if ( sysMeta != null ) {
-				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+				/*sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
 				sysMeta.setArchived(true);
 				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);*/
+			    //move the systemmetadata object from the map and delete the records in the systemmetadata database table
+	            //since this is cn, we don't need worry about the mn solr index.
+	            HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
+	            HazelcastService.getInstance().getIdentifiers().remove(pid);
 				
 			  } else {
 				  throw new ServiceFailure("4962", "Couldn't delete the object " + pid.getValue() +
