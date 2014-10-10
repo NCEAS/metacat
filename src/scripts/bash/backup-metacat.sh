@@ -29,8 +29,11 @@ DAYSTOKEEP=7
 # Device to be used for the DVD writer -- this may vary on your system
 DVD=/dev/dvd
 
-# Location the metacat.properties file
+# Location of the metacat.properties file
 METACATPROPERTIESPATH=/var/lib/tomcat6/webapps/knb/WEB-INF/metacat.properties
+
+# Location of the apache configuration file
+APACHECONF=/etc/apache2/sites-enabled
 #
 # Below here lie demons
 #
@@ -65,8 +68,11 @@ su - postgres -c "pg_dump $DBNAME > $ARCHDIR/metacat-postgres-backup.sql"
 # Backup the data files
 tar czf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
 
+# Backup the apache configuration files
+tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF 
+
 # Backup LDAP to an LDIF file
-slapcat -l $ARCHDIR/$DBNAME-ldap.ldif
+#slapcat -l $ARCHDIR/$DBNAME-ldap.ldif
 
 # Restart LDAP
 #/etc/init.d/slapd start
