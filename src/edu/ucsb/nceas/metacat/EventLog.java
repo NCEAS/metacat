@@ -75,6 +75,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class EventLog
 {
+    public static final String DELETE = "delete";
     /**
      * The single instance of the event log that is always returned.
      */
@@ -369,6 +370,33 @@ public class EventLog
     }
     
     
+    /**
+     * A utility method to determine if the given docid was deleted. 
+     * @param docid the specified docid
+     * @return true if there is a delete event for the id; false otherwise.
+     */
+    public boolean isDeleted(String docid) {
+        boolean deleted =false;
+        if(docid != null || !docid.trim().equals("")) {
+            String[] docids = new String[1];
+            docids[0] = docid;
+            String[] events = new String[1];
+            events[0]= DELETE;
+            String[] ipAddress = null;
+            String[] principal = null;
+            Timestamp startDate = null;
+            Timestamp endDate = null;
+            boolean anonymous = false;
+            
+            String report =getReport(ipAddress, principal, docids,
+                     events, startDate, endDate, anonymous);
+            //System.out.println("the report is "+report);
+            if(report != null && report.contains("<event>"+DELETE+"</event>") ){
+                deleted = true;
+            }
+        }
+        return deleted;
+    }
     
     public Log getD1Report(String[] ipAddress, String[] principal, String[] docid,
             Event event, Timestamp startDate, Timestamp endDate, boolean anonymous, Integer start, Integer count)
