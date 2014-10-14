@@ -89,4 +89,20 @@ public class EventLogTest extends MCTestCase
                         null, startDate, endDate, false);
         System.out.println(report);
     }
+    
+    /**
+     * Test if the isDeleted method
+     */
+    public void testIsDeleted() throws Exception{
+        long time = System.nanoTime();
+        String id = "test-1934-weme123-3.1"+time;
+        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
+        Thread.sleep(2000);
+        boolean deleted = EventLog.getInstance().isDeleted(id);
+        assertTrue(deleted == false);
+        Thread.sleep(2000);
+        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, EventLog.DELETE);
+        deleted = EventLog.getInstance().isDeleted(id);
+        assertTrue(deleted == true);
+    }
 }
