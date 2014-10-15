@@ -930,7 +930,19 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);        
 
         if (systemMetadata == null ) {
-            throw new NotFound("1420", "Couldn't find an object identified by " + pid.getValue());
+            String error ="";
+            String localId = null;
+            try {
+                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              
+             } catch (Exception e) {
+                logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+            }
+            
+            if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+                error = DELETEDMESSAGE;
+            }
+            throw new NotFound("1420", "Couldn't find an object identified by " + pid.getValue()+". "+error);
         }
         checksum = systemMetadata.getChecksum();
         
@@ -1399,8 +1411,20 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       } else {
           logMetacat.debug("System metadata for identifier " + pid.getValue() +
-          " is null.");          
-          throw new NotFound("4874", "Couldn't find an object identified by " + pid.getValue());
+          " is null.");
+          String error ="";
+          String localId = null;
+          try {
+              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+            
+           } catch (Exception e) {
+              logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+          }
+          
+          if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+              error = DELETEDMESSAGE;
+          }
+          throw new NotFound("4874", "Couldn't find an object identified by " + pid.getValue()+". "+error);
           
       }
 
