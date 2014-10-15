@@ -25,7 +25,6 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
-import CNodeServiceTest;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
