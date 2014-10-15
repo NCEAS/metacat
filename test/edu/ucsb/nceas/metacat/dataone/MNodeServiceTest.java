@@ -26,7 +26,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 
-import MNodeServiceTest;
+
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.BagFile;
