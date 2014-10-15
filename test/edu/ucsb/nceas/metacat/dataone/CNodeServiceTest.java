@@ -45,6 +45,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
+import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Log;
@@ -103,7 +104,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testSearch"));
 		suite.addTest(new CNodeServiceTest("testSetAccessPolicy"));
 		suite.addTest(new CNodeServiceTest("testSetOwner"));
-	
+		suite.addTest(new CNodeServiceTest("readDeletedObject"));
 		return suite;
 	}
 	
@@ -574,6 +575,86 @@ public class CNodeServiceTest extends D1NodeServiceTest {
   		assertTrue(e instanceof NotFound);
   	}
   	
+  }
+  
+  public void readDeletedObject() {
+      printTestHeader("testCreate");
+
+      try {
+          Session session = getTestSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testCreate." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          assertEquals(guid, pid);
+          
+          Thread.sleep(3000);
+          // use MN admin to delete
+          session = getMNSession();
+          Identifier deletedPid = CNodeService.getInstance(request).delete(session, pid);
+          System.out.println("after deleting");
+          assertEquals(pid.getValue(), deletedPid.getValue());
+          // check that we cannot get the object
+          session = getTestSession();
+          InputStream deletedObject = null;
+          try {
+              //System.out.println("before read ===============");
+              deletedObject = CNodeService.getInstance(request).get(session, deletedPid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception is1 "+nf.getMessage());
+              //nf.printStackTrace();
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+          try {
+              //System.out.println("before read ===============");
+              SystemMetadata sysmeta2 = CNodeService.getInstance(request).getSystemMetadata(session, deletedPid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception is "+nf.getMessage());
+              //nf.printStackTrace();
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+          
+          try {
+              //System.out.println("before read ===============");
+              DescribeResponse describeResponse = CNodeService.getInstance(request).describe(session, pid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception is "+nf.getMessage());
+              //nf.printStackTrace();
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+          
+          try {
+              //System.out.println("before read ===============");
+              Checksum checksum = CNodeService.getInstance(request).getChecksum(session, pid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception 3 is "+nf.getMessage());
+              //nf.printStackTrace();
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+          
+          try {
+              //System.out.println("before read ===============");
+              boolean isAuthorized = 
+                      CNodeService.getInstance(request).isAuthorized(session, pid, Permission.READ);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception 4 is "+nf.getMessage());
+              //nf.printStackTrace();
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+          
+         
+          
+          assertNull(deletedObject);
+      } catch(Exception e) {
+          e.printStackTrace();
+          fail("Unexpected error: " + e.getMessage());
+      }
   }
  
 }

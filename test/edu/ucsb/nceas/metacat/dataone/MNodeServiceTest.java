@@ -158,6 +158,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     // MN packaging tests
     suite.addTest(new MNodeServiceTest("testGetPackage"));
     suite.addTest(new MNodeServiceTest("testGetOREPackage"));
+    suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
     
     
     return suite;
@@ -1283,5 +1284,88 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 		}
 	}
 	
+	/**
+	 * Test the extra "delete information" was added to the NotFoundException
+	 * if the object was delete in the following methods:
+	 * MN.get
+     * MN.getSystemmetadata
+     * MN.describe
+     * MN.getChecksum
+     * MN.getRelica
+	 */
+	public void testReadDeletedObject() {
+	    printTestHeader("testDelete");
+
+	    try {
+	      Session session = getTestSession();
+	      Identifier guid = new Identifier();
+	      guid.setValue("testDelete." + System.currentTimeMillis());
+	      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+	      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+	      Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+	      Thread.sleep(3000);
+	      // use MN admin to delete
+	      session = getMNSession();
+	      Identifier deletedPid = MNodeService.getInstance(request).delete(session, pid);
+	      System.out.println("after deleting");
+	      assertEquals(pid.getValue(), deletedPid.getValue());
+	      // check that we cannot get the object
+	      session = getTestSession();
+	      InputStream deletedObject = null;
+	      try {
+	          //System.out.println("before read ===============");
+	          deletedObject = MNodeService.getInstance(request).get(session, deletedPid);
+	          //System.out.println("after read ===============");
+	      } catch (NotFound nf) {
+	          assertTrue(nf.getMessage().contains("deleted"));
+	      }
+	      try {
+              //System.out.println("before read ===============");
+              SystemMetadata sysmeta2 = MNodeService.getInstance(request).getSystemMetadata(session, deletedPid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception is "+nf.getMessage());
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+	      
+	      try {
+              //System.out.println("before read ===============");
+	          DescribeResponse describeResponse = MNodeService.getInstance(request).describe(session, pid);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception is "+nf.getMessage());
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+	      
+	      try {
+              //System.out.println("before read ===============");
+	          Checksum checksum = MNodeService.getInstance(request).getChecksum(session, pid, "MD5");
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              //System.out.println("the exception 3 is "+nf.getMessage());
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+	      
+	      try {
+              //System.out.println("before read ===============");
+	          boolean isAuthorized = 
+	                  MNodeService.getInstance(request).isAuthorized(session, pid, Permission.READ);
+              //System.out.println("after read ===============");
+          } catch (NotFound nf) {
+              System.out.println("the exception 4 is "+nf.getMessage());
+              assertTrue(nf.getMessage().contains("deleted"));
+          }
+	      
+	      assertNull(deletedObject);
+	      
+	    } catch (UnsupportedEncodingException e) {
+	      e.printStackTrace();
+	      
+	    } catch (Exception e) {
+	      e.printStackTrace();
+	      fail("Unexpected error: " + e.getMessage());
+
+	    } 
+	}
   
 }
