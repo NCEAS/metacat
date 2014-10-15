@@ -92,6 +92,8 @@ import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public abstract class D1NodeService {
+    
+  public static final String DELETEDMESSAGE = "The object with the PID has been deleted from the node.";
   
   private static Logger logMetacat = Logger.getLogger(D1NodeService.class);
 
@@ -576,10 +578,14 @@ public abstract class D1NodeService {
       try {
         inputStream = handler.read(localId);
       } catch (Exception e) {
+        String error ="";
+        if(EventLog.getInstance().isDeleted(localId)) {
+              error=DELETEDMESSAGE;
+        }
         throw new NotFound("1020", "The object specified by " + 
             pid.getValue() +
             "could not be returned due to error: " +
-            e.getMessage());
+            e.getMessage()+". "+error);
       }
     }
 
@@ -712,7 +718,19 @@ public abstract class D1NodeService {
         
         // It wasn't in the map
         if ( systemMetadata == null ) {
-            throw new NotFound("1420", "No record found for: " + pid.getValue());
+            String error ="";
+            String localId = null;
+            try {
+                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              
+             } catch (Exception e) {
+                logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+            }
+            
+            if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+                error = DELETEDMESSAGE;
+            }
+            throw new NotFound("1420", "No record found for: " + pid.getValue()+". "+error);
         }
         
         return systemMetadata;
@@ -998,7 +1016,7 @@ public abstract class D1NodeService {
         }
         
         if(localId != null && EventLog.getInstance().isDeleted(localId)) {
-            error = error + ". The object with the PID has been deleted from the node.";
+            error = error + ". "+DELETEDMESSAGE;
         }
         throw new NotFound("1800", error);
     }
