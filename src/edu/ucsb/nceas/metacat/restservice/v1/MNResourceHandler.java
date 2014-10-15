@@ -1071,7 +1071,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         if (pid != null) { //get a specific document                
             Identifier id = new Identifier();
             id.setValue(pid);
-                
+            InputStream data = MNodeService.getInstance(request).get(session, id);
             SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, id);
             
             // set the headers for the content
@@ -1086,9 +1086,6 @@ public class MNResourceHandler extends D1ResourceHandler {
             }
             response.setContentType(mimeType);
             response.setHeader("Content-Disposition", "inline; filename=" + filename);
-            
-            InputStream data = MNodeService.getInstance(request).get(session, id);
-
             out = response.getOutputStream();  
             IOUtils.copyLarge(data, out);
             
