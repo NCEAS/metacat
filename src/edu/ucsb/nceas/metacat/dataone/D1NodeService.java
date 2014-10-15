@@ -988,7 +988,19 @@ public abstract class D1NodeService {
     
     // throw not found if it was not found
     if (systemMetadata == null) {
-    	throw new NotFound("1800", "No system metadata could be found for given PID: " + pidStr);
+        String localId = null;
+        String error = "No system metadata could be found for given PID: " + pidStr;
+        try {
+            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+          
+         } catch (Exception e) {
+            logMetacat.warn("Couldn't find the local id for the pid "+pidStr);
+        }
+        
+        if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+            error = error + ". The object with the PID has been deleted from the node.";
+        }
+        throw new NotFound("1800", error);
     }
 	    
     // do we own it?
