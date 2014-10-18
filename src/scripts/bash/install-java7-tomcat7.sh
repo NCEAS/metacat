@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 #This script will install openjdk-7 and tomcat7.
 #It also updates the alternatives for java, javac, keytool and javaws to openjdk-7.
 #It also modifies the /etc/tomcat7/catalina.properties to allow DataONE idenifiers.
