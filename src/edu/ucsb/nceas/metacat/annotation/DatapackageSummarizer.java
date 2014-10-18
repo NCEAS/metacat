@@ -368,10 +368,12 @@ public class DatapackageSummarizer {
 							Individual m1 = m.createIndividual(ont.getURI() + "#measurement" + cnt, measurementClass);
 							Individual a1 = m.createIndividual(ont.getURI() + "#annotation" + cnt, annotationClass);
 							Individual t1 = m.createIndividual(ont.getURI() + "#target" + cnt, specificResourceClass);
-							String xpointer = "xpointer(/eml/dataSet/" + entityCount + "/attributeList/" + attributeCount + ")";
+							String xpointer = "xpointer(/eml/dataSet/dataTable[" + entityCount + "]/attributeList/attribute[" + attributeCount + "])";
 							Individual s1 = m.createIndividual(ont.getURI() + "#" + xpointer, fragmentSelectorClass);
 							s1.addLiteral(rdfValue, xpointer);
-							s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
+							s1.addProperty(conformsToProperty, "http://tools.ietf.org/rfc/rfc3023");
+							//s1.addProperty(conformsToProperty, "http://www.w3.org/TR/xptr/");
+
 							
 							// statements about the annotation
 							a1.addProperty(hasBodyProperty, m1);
