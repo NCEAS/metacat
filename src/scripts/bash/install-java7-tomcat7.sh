@@ -35,6 +35,8 @@ done < ${JK_CONF}
 echo "the jk workers.properties location is $JK_WORKER_PATH"
 
 echo "update the tomcat home and java home in workers.properties file"
-sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1\/usr\/share\/tomcat7/;
-                s/(workers\.java_home=).*/\1\/usr\/lib\/jvm\/java-7-openjdk-amd64/;"\
-                $JKWORKERPATH
+SAFE_TOMCAT_HOME=$(printf '%s\n' "$NEW_TOMCAT_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
+SAFE_JDK_HOME=$(printf '%s\n' "$NEW_JDK_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
+sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1${SAFE_TOMCAT_HOME}/;
+                s/(workers\.java_home=).*/\1${SAFE_JDK_HOME}/;"\
+                $JK_WORKER_PATH
