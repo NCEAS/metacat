@@ -1,18 +1,24 @@
 #!/bin/bash
 #This script will install openjdk-7 and tomcat7.
-#It also updates the alternatives for java, javac, keytool and javaws to openjdk-7.
-#It also modifies the /etc/tomcat7/catalina.properties to allow DataONE idenifiers.
-#It modifies the workers.properties file for apache-tomcat connector.
+#It will update the alternatives for java, javac, keytool and javaws to openjdk-7.
+#It will modify the /etc/tomcat7/catalina.properties to allow DataONE idenifiers.
+#It will modify the workers.properties file for apache-tomcat connector.
 #The user running the script should have the sudo permission.
 
+NEW_JDK_PACKAGE=openjdk-7-jdk
 NEW_JDK_HOME=/usr/lib/jvm/java-7-openjdk-amd64
-NEW_CATALINA_PROPERTIES=/etc/tomcat7/catalina.properties
+
 JK_CONF=/etc/apache2/mods-enabled/jk.conf
+
+NEW_TOMCAT=tomcat7
+NEW_CATALINA_PROPERTIES=/etc/tomcat7/catalina.properties
 NEW_TOMCAT_HOME=/usr/share/tomcat7
 NEW_TOMCAT_BASE=/var/lib/tomcat7
+TOMCAT_CONFIG_SLASH='org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true'
+TOMCAT_CONFIG_BACKSLASH='org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true'
 
-echo "install openjdk-7-jdk"
-sudo apt-get install openjdk-7-jdk
+echo "install ${NEW_JDK_PACKAGE}"
+sudo apt-get install ${NEW_JDK_PACKAGE}
 sleep 3
 echo "configure java, java, keytool and javaws"
 sudo update-alternatives --set java ${NEW_JDK_HOME}/jre/bin/java
@@ -20,10 +26,23 @@ sudo update-alternatives --set javac ${NEW_JDK_HOME}/bin/javac
 sudo update-alternatives --set keytool ${NEW_JDK_HOME}/jre/bin/keytool
 sudo update-alternatives --set javaws ${NEW_JDK_HOME}/jre/bin/javaws
 
-echo "install tomcat7"
-sudo apt-get install tomcat7
-sudo sed -i.bak '$ a\org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true' ${NEW_CATALINA_PROPERTIES} 
-sudo sed -i '$ a\org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true' ${NEW_CATALINA_PROPERTIES}
+echo "install ${NEW_TOMCAT}"
+sudo apt-get install ${NEW_TOMCAT}
+if grep -q "${TOMCAT_CONFIG_SLASH}" ${NEW_CATALINA_PROPERTIES}; then  
+echo "${TOMCAT_CONFIG_SLASH} exists and don't need to do anything."  
+else  
+   echo "${TOMCAT_CONFIG_SLASH} don't exist and add it."
+   sudo sed -i.bak "$ a\\${TOMCAT_CONFIG_SLASH}" ${NEW_CATALINA_PROPERTIES} 
+fi
+if grep -q "${TOMCAT_CONFIG_BACKSLASH}" ${NEW_CATALINA_PROPERTIES}; then
+echo "${TOMCAT_CONFIG_BACKSLASH} exists and don't need to do anything."  
+else
+   echo "${TOMCAT_CONFIG_BACKSLASH} don't exist and add it."
+   sudo sed -i "$ a\\${TOMCAT_CONFIG_BACKSLASH}" ${NEW_CATALINA_PROPERTIES}
+fi
+
+
+
 
 echo "read the location of the workers.properties file from the jk_conf"
 while read f1 f2 
