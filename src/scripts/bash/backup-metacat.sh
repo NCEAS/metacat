@@ -93,7 +93,7 @@ DVDFLAG=-M
 if [ $DAY == $SWAPDAY ] ; then
   DVDFLAG=-Z
 fi
-growisofs $DVDFLAG $DVD -R -J $ARCHDIR.tgz
+#growisofs $DVDFLAG $DVD -R -J $ARCHDIR.tgz
 
 # clean up any of the backup files that are older than DAYSTOKEEP
 find $ARCHROOT -mtime +$DAYSTOKEEP -exec rm -f {} \;
