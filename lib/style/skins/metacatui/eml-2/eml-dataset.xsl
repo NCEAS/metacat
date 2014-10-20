@@ -207,7 +207,7 @@
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
-						
+		         		<xsl:attribute name="type">party</xsl:attribute>
 		               <xsl:call-template name="party">
 		                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 		                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
@@ -233,7 +233,7 @@
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
-		         		
+		         		<xsl:attribute name="type">party</xsl:attribute>
 	               <xsl:call-template name="party">
 	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
@@ -260,7 +260,7 @@
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
-		         		
+		         		<xsl:attribute name="type">party</xsl:attribute>
 					<xsl:call-template name="party">
 						<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 						<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
@@ -287,7 +287,7 @@
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
-		         		
+		         		<xsl:attribute name="type">party</xsl:attribute>
 	               <xsl:call-template name="party">
 	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
@@ -313,7 +313,7 @@
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>
-		         		
+		         		<xsl:attribute name="type">party</xsl:attribute>
 	               <xsl:call-template name="party">
 	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
