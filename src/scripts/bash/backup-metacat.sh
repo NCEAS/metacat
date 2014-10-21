@@ -34,6 +34,12 @@ METACATPROPERTIESPATH=/var/lib/tomcat6/webapps/knb/WEB-INF/metacat.properties
 
 # Location of the apache configuration file
 APACHECONF=/etc/apache2/sites-enabled
+
+#Location of the server key
+KEYLOCATION=/etc/ssl/private 
+
+#Location of the server certificate
+CERTLOCATION=/etc/ssl/certs/_.test.dataone.org.crt
 #
 # Below here lie demons
 #
@@ -69,7 +75,7 @@ su - postgres -c "pg_dump $DBNAME > $ARCHDIR/metacat-postgres-backup.sql"
 tar czf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
 
 # Backup the apache configuration files
-tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF 
+tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF $KEYLOCATION $CERTLOCATION
 
 # Backup LDAP to an LDIF file
 #slapcat -l $ARCHDIR/$DBNAME-ldap.ldif
@@ -88,11 +94,11 @@ tar czf $ARCHDIR.tgz $ARCHNAME
 rm -rf $ARCHDIR
 
 # Write the backup file to DVD
-DAY=`date +%u`
-DVDFLAG=-M
-if [ $DAY == $SWAPDAY ] ; then
-  DVDFLAG=-Z
-fi
+#DAY=`date +%u`
+#DVDFLAG=-M
+#if [ $DAY == $SWAPDAY ] ; then
+  #DVDFLAG=-Z
+#fi
 #growisofs $DVDFLAG $DVD -R -J $ARCHDIR.tgz
 
 # clean up any of the backup files that are older than DAYSTOKEEP
