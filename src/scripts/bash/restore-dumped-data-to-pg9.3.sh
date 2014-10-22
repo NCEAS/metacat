@@ -37,8 +37,14 @@ echo "the backup file name is $METACAT_BACKUP_FILE_NAME"
 DECOMPRESS_DIR_NAME=`echo "$METACAT_BACKUP_FILE_NAME" | cut -d'.' -f1`
 echo "the decmporessed dir is $DECOMPRESS_DIR_NAME"
 
-echo "back up the old db data at $OLD_DB_DATA_DIR"
-su - $POSTGRES_USER -c "tar -zcvf $DB_BASE/$OLD_DB_BACKUP_FILE $OLD_DB_DATA_DIR"
+if [ -f "$DB_BASE/$OLD_DB_BACKUP_FILE" ]; then
+        echo "$DB_BASE/$OLD_DB_BACKUP_FILE does exist and we don't need to backup it again"   
+else
+	echo "back up the old db data at $OLD_DB_DATA_DIR"
+        su - $POSTGRES_USER -c "tar -zcvf $DB_BASE/$OLD_DB_BACKUP_FILE $OLD_DB_DATA_DIR"
+	echo "delete the data directory - $OLD_DB_DATA_DIR"
+	rm -rf $OLD_DB_DATA_DIR
+fi
 
 echo "stop postgresql"
 /etc/init.d/postgresql stop
@@ -50,14 +56,18 @@ apt-get remove postgresql-$ANOTHER_OLD_DB_VERSION
 echo "modify the port to 5432 in the new db configuration file"
 sed -i.bak --regexp-extended "s/(port =).*/\1${PORT}/;" $NEW_DB_CONFIG
 
-echo "delete the data directory of 8.4"
-rm -rf $OLD_DB_DATA_DIR
+if [ -d "$METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME" ]; then
+        echo "$METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME does exist and we don't need to decompress the metacat backup file again"   
+else
+	echo "decompress the metacat backup file"
+	tar zxvf $METACAT_BACKUP_DIR/$METACAT_BACKUP_FILE_NAME -C $METACAT_BACKUP_DIR
+fi
 
-echo "decompress the metacat backup file"
-tar zxvf $METACAT_BACKUP_DIR/$METACAT_BACKUP_FILE_NAM -C $METACAT_BACKUP_DIR
+echo "restart postgresql"
+/etc/init.d/postgresql start
 
 echo "restore database"
-su - POSTGRES_USER -c "psql -f $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FILE postgres"
+su - $POSTGRES_USER -c "psql -f $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FILE postgres"
 
 echo "end to move database from $OLD_DB_VERSION to $NEW_DB_VERSION at"
 echo `date`
