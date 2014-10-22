@@ -15,6 +15,8 @@ OLD_TOMCAT=tomcat6
 OLD_TOMCAT_BASE=/var/lib/${OLD_TOMCAT}
 
 NEW_TOMCAT=tomcat7
+NEW_TOMCAT_COMMON=${NEW_TOMCAT}-common
+NEW_TOMCAT_LIB=lib${NEW_TOMCAT}-java
 NEW_CATALINA_PROPERTIES=/etc/${NEW_TOMCAT}/catalina.properties
 NEW_TOMCAT_HOME=/usr/share/${NEW_TOMCAT}
 NEW_TOMCAT_BASE=/var/lib/${NEW_TOMCAT}
@@ -26,6 +28,7 @@ TOMCAT_CONFIG_SLASH='org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=tru
 TOMCAT_CONFIG_BACKSLASH='org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true'
 INIT_START_DIR=/etc/init.d
 
+sudo /etc/init.d/apache2 stop
 echo "install ${NEW_JDK_PACKAGE}"
 sudo apt-get install ${NEW_JDK_PACKAGE}
 sleep 3
@@ -36,6 +39,8 @@ sudo update-alternatives --set keytool ${NEW_JDK_HOME}/jre/bin/keytool
 sudo update-alternatives --set javaws ${NEW_JDK_HOME}/jre/bin/javaws
 
 echo "install ${NEW_TOMCAT}"
+sudo apt-get install ${NEW_TOMCAT_LIB}
+sudo apt-get install ${NEW_TOMCAT_COMMON}
 sudo apt-get install ${NEW_TOMCAT}
 echo "configure ${NEW_TOMCAT}"
 if grep -q "${TOMCAT_CONFIG_SLASH}" ${NEW_CATALINA_PROPERTIES}; then  
@@ -90,3 +95,6 @@ if [ -f "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties" ]; then
 else 
   echo "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties doesn't eixt and the application.deployDir will NOT be updated"
 fi
+
+sudo /etc/init.d/apache2 start
+sudo /etc/init.d/tomcat7 start
