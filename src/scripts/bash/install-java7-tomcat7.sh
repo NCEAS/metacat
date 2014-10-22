@@ -6,6 +6,7 @@
 #It will move Metacat and other web applications from the old context directory to the new context directory.
 #The user running the script should have the sudo permission.
 
+APACHE_SITE_FILE=/etc/apache2/sites-available/knb-ssl
 NEW_JDK_PACKAGE=openjdk-7-jdk
 NEW_JDK_HOME=/usr/lib/jvm/java-7-openjdk-amd64
 
@@ -73,6 +74,9 @@ sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1${SAFE_NEW_TOMC
                 s/(workers\.java_home=).*/\1${SAFE_NEW_JDK_HOME}/;"\
                 $JK_WORKER_PATH
 
+echo "update the apache site file by replacing $OLD_TOMCAT by $NEW_TOMCAT"
+sudo sed -i.bak "s/${OLD_TOMCAT}/${NEW_TOMCAT}/;" $APACHE_SITE_FILE
+
 echo "move Metacat and other web applications from $OLD_TOMCAT to $NEW_TOMCAT"
 sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
 sudo ${INIT_START_DIR}/${NEW_TOMCAT} stop
@@ -85,6 +89,7 @@ SAFE_NEW_TOMCAT_WEBAPPS=$(printf '%s\n' "$NEW_TOMCAT_BASE/$WEBAPPS" | sed 's/[[\
 if [ -f "$NEW_TOMCAT_BASE/$WEBAPPS/$KNB/WEB-INF/metacat.properties" ]; then
 	echo "$NEW_TOMCAT_BASE/$WEBAPPS/$KNB/WEB-INF/metacat.properties exists and the application.deployDir will be updated"	
 	sudo sed -i.bak --regexp-extended "s/(application\.deployDir=).*/\1${SAFE_NEW_TOMCAT_WEBAPPS}/;" $NEW_TOMCAT_BASE/$WEBAPPS/$KNB/WEB-INF/metacat.properties
+        sudo sed -i --regexp-extended "s/(geoserver\.GEOSERVER_DATA_DIR=).*/\1${SAFE_NEW_TOMCAT_WEBAPPS}\/${KNB}\/spatial\/geoserver\/data/;" $NEW_TOMCAT_BASE/$WEBAPPS/$KNB/WEB-INF/metacat.properties
 else
 	echo "$NEW_TOMCAT_BASE/$WEBAPPS/$KNB/WEB-INF/metacat.properties does NOT exists and the application.deployDir will NOT be updated"
 fi
@@ -92,6 +97,7 @@ fi
 if [ -f "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties" ]; then
                 echo "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties eixsts and the application.deployDir will be updated" 
                 sudo sed -i.bak --regexp-extended "s/(application\.deployDir=).*/\1${SAFE_NEW_TOMCAT_WEBAPPS}/;" $NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties
+		sudo sed -i --regexp-extended "s/(geoserver\.GEOSERVER_DATA_DIR=).*/\1${SAFE_NEW_TOMCAT_WEBAPPS}\/${METACAT}\/spatial\/geoserver\/data/;" $NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties
 else 
   echo "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties doesn't eixt and the application.deployDir will NOT be updated"
 fi
