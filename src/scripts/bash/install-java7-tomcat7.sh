@@ -21,6 +21,7 @@ NEW_TOMCAT_LIB=lib${NEW_TOMCAT}-java
 NEW_CATALINA_PROPERTIES=/etc/${NEW_TOMCAT}/catalina.properties
 NEW_TOMCAT_HOME=/usr/share/${NEW_TOMCAT}
 NEW_TOMCAT_BASE=/var/lib/${NEW_TOMCAT}
+NEW_TOMCAT_SERVER_CONIF=$NEW_TOMCAT_BASE/conf/server.xml
 
 KNB=knb
 METACAT=metacat
@@ -57,6 +58,21 @@ else
    sudo sed -i "$ a\\${TOMCAT_CONFIG_BACKSLASH}" ${NEW_CATALINA_PROPERTIES}
 fi
 
+echo "remove the 8080 ports and add the 8009 ports to the tomcat7 server.xml"
+sudo cp $NEW_TOMCAT_SERVER_CONIF $NEW_TOMCAT_SERVER_CONIF.bak
+sudo xmlstarlet ed -L -P -d "//Connector[@port='8080']" $NEW_TOMCAT_SERVER_CONIF
+#echo "the configuration file is $NEW_TOMCAT_SERVER_CONIF"
+result=$(sudo xmlstarlet sel -t --value-of "/Server/Service[@name='Catalina']/Connector[@protocol='AJP/1.3']/@port" $NEW_TOMCAT_SERVER_CONIF)
+#echo "the result is $result"
+if [[ -n $result ]]; then
+  echo "An ajp 1.3 connector exists and we don't need to do anything."
+else
+  echo "No aip 1.3 connector found and we should add one"
+  sudo xmlstarlet ed -L -P -s "/Server/Service[@name='Catalina']" -t elem -name Connector -v "" $NEW_TOMCAT_SERVER_CONIF
+  sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@port)]" --type attr -n port -v 8009 $NEW_TOMCAT_SERVER_CONIF
+  sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@protocol)]" --type attr -n protocol -v AJP/1.3 $NEW_TOMCAT_SERVER_CONIF
+  sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@redirectPort)]" --type attr -n redirectPort -v 8443 $NEW_TOMCAT_SERVER_CONIF
+fi
 
 echo "read the location of the workers.properties file from the jk_conf"
 while read f1 f2 
