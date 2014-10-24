@@ -23,6 +23,7 @@ NEW_CATALINA_PROPERTIES=/etc/${NEW_TOMCAT}/catalina.properties
 NEW_TOMCAT_HOME=/usr/share/${NEW_TOMCAT}
 NEW_TOMCAT_BASE=/var/lib/${NEW_TOMCAT}
 NEW_TOMCAT_SERVER_CONIF=$NEW_TOMCAT_BASE/conf/server.xml
+NEW_TOMCAT_CONTEXT_CONF=$NEW_TOMCAT_BASE/conf/context.xml
 
 KNB=knb
 SSL=ssl
@@ -52,6 +53,7 @@ sudo update-alternatives --set keytool ${NEW_JDK_HOME}/jre/bin/keytool
 sudo update-alternatives --set javaws ${NEW_JDK_HOME}/jre/bin/javaws
 
 echo "install ${NEW_TOMCAT}"
+sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
 sudo apt-get install ${NEW_TOMCAT_LIB}
 sudo apt-get install ${NEW_TOMCAT_COMMON}
 sudo apt-get install ${NEW_TOMCAT}
@@ -67,6 +69,22 @@ echo "${TOMCAT_CONFIG_BACKSLASH} exists and don't need to do anything."
 else
    echo "${TOMCAT_CONFIG_BACKSLASH} don't exist and add it."
    sudo sed -i "$ a\\${TOMCAT_CONFIG_BACKSLASH}" ${NEW_CATALINA_PROPERTIES}
+fi
+
+echo "add an attribute useHttpOnly='false' to the element Context if it doesn't have one in the $NEW_TOMCAT_CONTEXT_CONF"
+sudo cp $NEW_TOMCAT_CONTEXT_CONF $NEW_TOMCAT_CONTEXT_CONF.bak
+useHttpOnly=$(sudo xmlstarlet sel -t --value-of "/Context/@useHttpOnly" $NEW_TOMCAT_CONTEXT_CONF)
+echo "the uerHttpOnly is $useHttpOnly"
+if [[ -n $useHttpOnly ]]; then
+	if [[ $useHttpOnly == 'false' ]]; then
+		echo "Attribute useHttpOnly was set to false and we don't need to do anything"
+        else
+		echo "Update the attribute useHttpOnly's value to false"
+		sudo xmlstarlet ed -L -P -u "/Context/@useHttpOnly" -v false $NEW_TOMCAT_CONTEXT_CONF
+	fi
+else 
+	echo "Attribute useHttpOnly hasn't been set and we will add one"
+	sudo xmlstarlet ed -L -P -s "/Context" --type attr -n useHttpOnly -v false $NEW_TOMCAT_CONTEXT_CONF
 fi
 
 echo "remove the 8080 ports and add the 8009 ports to the tomcat7 server.xml"
@@ -87,7 +105,6 @@ fi
 
 
 echo "move Metacat and other web applications from $OLD_TOMCAT to $NEW_TOMCAT"
-sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
 sudo ${INIT_START_DIR}/${NEW_TOMCAT} stop
 sudo rm -rf ${NEW_TOMCAT_BASE}/${WEBAPPS}/*
 sudo cp -R ${OLD_TOMCAT_BASE}/${WEBAPPS}/*  ${NEW_TOMCAT_BASE}/${WEBAPPS}/.
