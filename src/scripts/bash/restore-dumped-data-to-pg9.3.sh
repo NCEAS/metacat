@@ -34,7 +34,7 @@ if [ $# -ne 1 ]; then
 fi
 METACAT_BACKUP_FILE_NAME=$1
 echo "the backup file name is $METACAT_BACKUP_FILE_NAME"
-DECOMPRESS_DIR_NAME=`echo "$METACAT_BACKUP_FILE_NAME" | cut -d'.' -f1`
+DECOMPRESS_DIR_NAME=${METACAT_BACKUP_FILE_NAME%%.*}
 echo "the decmporessed dir is $DECOMPRESS_DIR_NAME"
 
 if [ -f "$DB_BASE/$OLD_DB_BACKUP_FILE" ]; then
@@ -71,3 +71,10 @@ su - $POSTGRES_USER -c "psql -f $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FI
 
 echo "end to move database from $OLD_DB_VERSION to $NEW_DB_VERSION at"
 echo `date`
+
+echo "start to vacuum the db at"
+echo `date` >> /tmp/vacuumdb.out
+su - postgres  -c "/usr/lib/postgresql/$NEW_DB_VERSION/bin/vacuumdb --all"
+echo "end to vacuum the db at "
+echo `date`
+
