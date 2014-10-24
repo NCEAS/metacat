@@ -74,6 +74,9 @@ fi
 echo "restart postgresql"
 /etc/init.d/postgresql start
 
+echo "change the groupship of $METACAT_BACKUP_DIR"
+chown -R :$POSTGRES_USER $METACAT_BACKUP_DIR
+
 echo "restore database"
 su - $POSTGRES_USER -c "psql -f $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FILE postgres"
 
