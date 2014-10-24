@@ -34,6 +34,14 @@ if [ $# -ne 1 ]; then
 fi
 METACAT_BACKUP_FILE_NAME=$1
 echo "the backup file name is $METACAT_BACKUP_FILE_NAME"
+
+if [ -f $METACAT_BACKUP_DIR/$METACAT_BACKUP_FILE_NAME ]; then
+    echo "the metacat backup file $METACAT_BACKUP_DIR/$METACAT_BACKUP_FILE_NAME exists.";
+else 
+    echo "the metacat backup file $METACAT_BACKUP_DIR/$METACAT_BACKUP_FILE_NAME doesn't exist, please double check the name.";
+    exit 1;
+fi
+
 DECOMPRESS_DIR_NAME=${METACAT_BACKUP_FILE_NAME%%.*}
 echo "the decmporessed dir is $DECOMPRESS_DIR_NAME"
 
@@ -77,4 +85,4 @@ echo `date` >> /tmp/vacuumdb.out
 su - postgres  -c "/usr/lib/postgresql/$NEW_DB_VERSION/bin/vacuumdb --all"
 echo "end to vacuum the db at "
 echo `date`
-
+exit 0

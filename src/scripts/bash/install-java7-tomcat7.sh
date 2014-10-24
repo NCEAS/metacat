@@ -157,3 +157,5 @@ sudo a2ensite $HOST_NAME-ssl
 
 sudo /etc/init.d/apache2 start
 sudo /etc/init.d/tomcat7 start
+
+exit 0
