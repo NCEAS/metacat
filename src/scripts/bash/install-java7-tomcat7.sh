@@ -6,7 +6,8 @@
 #It will move Metacat and other web applications from the old context directory to the new context directory.
 #The user running the script should have the sudo permission.
 
-APACHE_SITE_FILE=/etc/apache2/sites-available/knb-ssl
+APACHE_ENABLED_SITES_DIR=/etc/apache2/sites-enabled
+APACHE_AVAILABLE_SITES_DIR=/etc/apache2/sites-available
 NEW_JDK_PACKAGE=openjdk-7-jdk
 NEW_JDK_HOME=/usr/lib/jvm/java-7-openjdk-amd64
 
@@ -24,11 +25,20 @@ NEW_TOMCAT_BASE=/var/lib/${NEW_TOMCAT}
 NEW_TOMCAT_SERVER_CONIF=$NEW_TOMCAT_BASE/conf/server.xml
 
 KNB=knb
+SSL=ssl
 METACAT=metacat
 WEBAPPS=webapps
+METACAT_DATA_DIR=/var/metacat
 TOMCAT_CONFIG_SLASH='org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true'
 TOMCAT_CONFIG_BACKSLASH='org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true'
 INIT_START_DIR=/etc/init.d
+
+
+if [ $# -ne 1 ]; then
+   echo "This script should take one and only one parameter as the name of the host.";
+   exit 1;
+fi
+HOST_NAMEW=$1
 
 sudo /etc/init.d/apache2 stop
 echo "install ${NEW_JDK_PACKAGE}"
@@ -74,24 +84,6 @@ else
   sudo xmlstarlet ed -L -P -s "/Server/Service/Connector[not(@redirectPort)]" --type attr -n redirectPort -v 8443 $NEW_TOMCAT_SERVER_CONIF
 fi
 
-echo "read the location of the workers.properties file from the jk_conf"
-while read f1 f2 
-do
-        if [ "$f1" = "JkWorkersFile" ]; then
-		JK_WORKER_PATH="$f2"	
-	fi
-done < ${JK_CONF}
-echo "the jk workers.properties location is $JK_WORKER_PATH"
-
-echo "update the tomcat home and java home in workers.properties file"
-SAFE_NEW_TOMCAT_HOME=$(printf '%s\n' "$NEW_TOMCAT_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
-SAFE_NEW_JDK_HOME=$(printf '%s\n' "$NEW_JDK_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
-sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1${SAFE_NEW_TOMCAT_HOME}/;
-                s/(workers\.java_home=).*/\1${SAFE_NEW_JDK_HOME}/;"\
-                $JK_WORKER_PATH
-
-echo "update the apache site file by replacing $OLD_TOMCAT by $NEW_TOMCAT"
-sudo sed -i.bak "s/${OLD_TOMCAT}/${NEW_TOMCAT}/;" $APACHE_SITE_FILE
 
 echo "move Metacat and other web applications from $OLD_TOMCAT to $NEW_TOMCAT"
 sudo ${INIT_START_DIR}/${OLD_TOMCAT} stop
@@ -117,6 +109,51 @@ if [ -f "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties" ]; then
 else 
   echo "$NEW_TOMCAT_BASE/$WEBAPPS/$METACAT/WEB-INF/metacat.properties doesn't eixt and the application.deployDir will NOT be updated"
 fi
+
+echo "change the ownership of $METACAT_DATA_DIR to $NEW_TOMCAT"
+sudo chown -R ${NEW_TOMCAT}:${NEW_TOMCAT} ${METACAT_DATA_DIR}
+
+
+echo "Change somethings on apache configuration"
+echo "read the location of the workers.properties file from the jk_conf"
+while read f1 f2 
+do
+        if [ "$f1" = "JkWorkersFile" ]; then
+        JK_WORKER_PATH="$f2"    
+    fi
+done < ${JK_CONF}
+echo "the jk workers.properties location is $JK_WORKER_PATH"
+
+echo "update the tomcat home and java home in workers.properties file"
+SAFE_NEW_TOMCAT_HOME=$(printf '%s\n' "$NEW_TOMCAT_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
+SAFE_NEW_JDK_HOME=$(printf '%s\n' "$NEW_JDK_HOME" | sed 's/[[\.*^$(){}?+|/]/\\&/g')
+sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1${SAFE_NEW_TOMCAT_HOME}/;
+                s/(workers\.java_home=).*/\1${SAFE_NEW_JDK_HOME}/;"\
+                $JK_WORKER_PATH
+
+echo "we need to do some work since the new version of apache only load the site files with .conf extension in the sites-enabled directory"
+echo "delete all links which doesn't end with .conf in the site-enabled directory since they can't be loaded"
+sudo find $APACHE_ENABLED_SITES_DIR -type f ! -name "*.conf" -delete
+
+echo "add .conf to the files which don't end with .conf or .bak or .org"
+for i in $(sudo find $APACHE_AVAILABLE_SITES_DIR -type f \( ! -name "*.conf" -a ! -name "*.bak" -a ! -name "*.org" \)); 
+do
+    sudo mv "$i" "${i}".conf 
+done
+
+echo "update the apache site files by replacing $OLD_TOMCAT by $NEW_TOMCAT"
+for j in $(sudo find $APACHE_AVAILABLE_SITES_DIR -type f -name "*.conf")
+do
+    sudo sed -i.bak "s/${OLD_TOMCAT}/${NEW_TOMCAT}/;" $j
+done
+
+echo "rename the site file knb to $HOST_NAME and knb-ssl to $HOST_NAME-ssl"
+sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
+sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB-ssl $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME-ssl.conf
+
+echo "enable the two sites $HOST_NAME and $HOST_NAME-ssl"
+sudo a2ensite $HOST_NAME
+sudo a2ensite $HOST_NAME-ssl
 
 sudo /etc/init.d/apache2 start
 sudo /etc/init.d/tomcat7 start
