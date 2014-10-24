@@ -169,6 +169,10 @@ echo "rename the site file knb to $HOST_NAME and knb-ssl to $HOST_NAME-ssl"
 sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB.conf $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
 sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB-ssl.conf $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME-ssl.conf
 
+echo "current redirect rules doesn't work. we need to change it"
+sudo sed -i "s|\("RewriteCond" * *\).*|\1%{HTTPS} off|" $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
+sudo sed -i "s|\("RewriteRule" * *\).*|\1(.*) https://%{HTTP_HOST}%{REQUEST_URI}|" $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
+
 echo "enable the two sites $HOST_NAME and $HOST_NAME-ssl"
 sudo a2ensite $HOST_NAME
 sudo a2ensite $HOST_NAME-ssl
