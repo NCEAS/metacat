@@ -38,7 +38,8 @@ if [ $# -ne 1 ]; then
    echo "This script should take one and only one parameter as the name of the host.";
    exit 1;
 fi
-HOST_NAMEW=$1
+HOST_NAME=$1
+echo "Host name is $HOST_NAME"
 
 sudo /etc/init.d/apache2 stop
 echo "install ${NEW_JDK_PACKAGE}"
@@ -148,8 +149,8 @@ do
 done
 
 echo "rename the site file knb to $HOST_NAME and knb-ssl to $HOST_NAME-ssl"
-sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
-sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB-ssl $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME-ssl.conf
+sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB.conf $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME.conf
+sudo mv $APACHE_AVAILABLE_SITES_DIR/$KNB-ssl.conf $APACHE_AVAILABLE_SITES_DIR/$HOST_NAME-ssl.conf
 
 echo "enable the two sites $HOST_NAME and $HOST_NAME-ssl"
 sudo a2ensite $HOST_NAME
