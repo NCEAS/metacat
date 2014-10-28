@@ -12,7 +12,7 @@
 #Check the argument of the script. It only can have one - the metacat backup file name.
 
 METACAT_BACKUP_DIR=/var/metacat/metacat-backup
-SQL_FILE=metacat-postgres-backup.sql
+SQL_FILE=metacat-postgres-backup.gz
 METACAT_BACKUP_FILE_SUFFIX=.tgz
 DB_BASE=/var/lib/postgresql
 OLD_DB_VERSION=8.4
@@ -78,7 +78,7 @@ echo "change the groupship of $METACAT_BACKUP_DIR"
 chown -R :$POSTGRES_USER $METACAT_BACKUP_DIR
 
 echo "restore database"
-su - $POSTGRES_USER -c "psql -f $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FILE postgres"
+su - $POSTGRES_USER -c "gunzip -c $METACAT_BACKUP_DIR/$DECOMPRESS_DIR_NAME/$SQL_FILE | psql postgres"
 
 echo "end to move database from $OLD_DB_VERSION to $NEW_DB_VERSION at"
 echo `date`
