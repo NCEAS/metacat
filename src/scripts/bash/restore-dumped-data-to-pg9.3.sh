@@ -42,6 +42,9 @@ else
     exit 1;
 fi
 
+echo "stop postgresql"
+/etc/init.d/postgresql stop
+
 DECOMPRESS_DIR_NAME=${METACAT_BACKUP_FILE_NAME%%.*}
 echo "the decmporessed dir is $DECOMPRESS_DIR_NAME"
 
@@ -54,12 +57,10 @@ else
 	rm -rf $OLD_DB_DATA_DIR
 fi
 
-echo "stop postgresql"
-/etc/init.d/postgresql stop
-
 echo "remove postgresql 8.4 and 9.1"
-apt-get remove postgresql-$OLD_DB_VERSION
-apt-get remove postgresql-$ANOTHER_OLD_DB_VERSION
+
+apt-get -y remove postgresql-$OLD_DB_VERSION
+apt-get -y remove postgresql-$ANOTHER_OLD_DB_VERSION
 
 echo "modify the port to 5432 in the new db configuration file"
 sed -i.bak --regexp-extended "s/(port =).*/\1${PORT}/;" $NEW_DB_CONFIG
