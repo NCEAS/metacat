@@ -69,7 +69,7 @@ mkdir $ARCHDIR
 cp $METACATPROPERTIESPATH $DATADIR
 
 # Backup postgres
-su - postgres -c "pg_dumpall > $ARCHDIR/metacat-postgres-backup.sql"
+su - postgres -c "pg_dumpall | gzip > $ARCHDIR/metacat-postgres-backup.gz"
 
 # Backup the data files
 tar czf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
