@@ -42,6 +42,12 @@ else
     exit 1;
 fi
 
+echo "stop apache"
+/etc/init.d/apache2 stop
+
+echo "stop tomcat"
+/etc/init.d/tomcat6 stop
+
 echo "stop postgresql"
 /etc/init.d/postgresql stop
 
