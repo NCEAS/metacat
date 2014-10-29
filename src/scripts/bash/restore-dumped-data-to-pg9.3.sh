@@ -60,7 +60,7 @@ else
 	echo "back up the old db data at $OLD_DB_DATA_DIR"
         su - $POSTGRES_USER -c "tar -zcvf $DB_BASE/$OLD_DB_BACKUP_FILE $OLD_DB_DATA_DIR"
 	echo "delete the data directory - $OLD_DB_DATA_DIR"
-	rm -rf $OLD_DB_DATA_DIR
+	rm -rf $OLD_DB_DATA_DIR/main/*
 fi
 
 echo "remove postgresql 8.4 and 9.1"
