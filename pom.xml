@@ -17,7 +17,7 @@
     <repositories>
         <repository>
 			<id>dataone.org</id>
-			<url>http://dev-testing.dataone.org/maven</url>
+			<url>http://maven.dataone.org</url>
 			<releases>
 				<enabled>true</enabled>
 			</releases>
@@ -31,7 +31,7 @@
             </snapshots>
             <id>opengeo</id>
             <name>OpenGeo Maven Repository</name>
-            <url>http://repo.opengeo.org</url>
+            <url>http://download.osgeo.org/webdav/geotools</url>
         </repository>
     </repositories>
     <dependencies>
