@@ -42,6 +42,9 @@ fi
 HOST_NAME=$1
 echo "Host name is $HOST_NAME"
 
+echo "instal xmlstarlet"
+sudo apt-get install xmlstarlet
+
 sudo /etc/init.d/apache2 stop
 echo "install ${NEW_JDK_PACKAGE}"
 sudo apt-get install ${NEW_JDK_PACKAGE}
