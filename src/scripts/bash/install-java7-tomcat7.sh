@@ -151,7 +151,7 @@ sudo sed -i.bak --regexp-extended "s/(workers\.tomcat_home=).*/\1${SAFE_NEW_TOMC
 
 echo "we need to do some work since the new version of apache only load the site files with .conf extension in the sites-enabled directory"
 echo "delete all links which doesn't end with .conf in the site-enabled directory since they can't be loaded"
-sudo find $APACHE_ENABLED_SITES_DIR -type f ! -name "*.conf" -delete
+sudo find $APACHE_ENABLED_SITES_DIR -type l ! -name "*.conf" -delete
 
 echo "add .conf to the files which don't end with .conf or .bak or .org"
 for i in $(sudo find $APACHE_AVAILABLE_SITES_DIR -type f \( ! -name "*.conf" -a ! -name "*.bak" -a ! -name "*.org" \)); 
