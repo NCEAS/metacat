@@ -59,9 +59,9 @@ public class DocumentImplWrapper {
 	}//Constructor
 
 	public String write(DBConnection conn, String xml, String pub, Reader dtd,
-			String action, String docid, String user, String[] groups) throws Exception {
+			String action, String docid, String user, String[] groups, byte[]xmlBytes) throws Exception {
 		return DocumentImpl.write(conn, xml, pub, dtd, action, docid, user, groups,
-				ruleBase, needValidation, writeAccessRules);
+				ruleBase, needValidation, writeAccessRules, xmlBytes);
 	}
 
 	public String writeReplication(DBConnection conn, String xml, String pub, Reader dtd,

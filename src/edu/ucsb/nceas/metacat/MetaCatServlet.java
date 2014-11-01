@@ -931,7 +931,7 @@ public class MetaCatServlet extends HttpServlet {
 				PrintWriter out = response.getWriter();
 				if ((userName != null) && !userName.equals("public")) {
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true);
+							groupNames, true, true, null);
 				} else {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");
