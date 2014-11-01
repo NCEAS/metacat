@@ -1628,7 +1628,7 @@ public class MetacatHandler {
      */
     public String handleInsertOrUpdateAction(String ipAddress, String userAgent,
             HttpServletResponse response, PrintWriter out, Hashtable<String, String[]> params,
-            String user, String[] groups, boolean generateSystemMetadata, boolean writeAccessRules) {
+            String user, String[] groups, boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes) {
         Logger logMetacat = Logger.getLogger(MetacatHandler.class);
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -1805,7 +1805,7 @@ public class MetacatHandler {
               
               } else {*/
               newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
-                          doAction, accNumber, user, groups);
+                          doAction, accNumber, user, groups, xmlBytes);
             
               EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
               
@@ -3166,7 +3166,7 @@ public class MetacatHandler {
                 boolean writeAccessRules = true;
                 //call the insert routine
                 handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, 
-                          params, username, groupnames, true, writeAccessRules);
+                          params, username, groupnames, true, writeAccessRules, null);
               }
               catch(Exception e)
               {

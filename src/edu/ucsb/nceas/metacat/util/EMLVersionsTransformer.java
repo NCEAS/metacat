@@ -165,7 +165,7 @@ public class EMLVersionsTransformer {
                  .getDBConnection("EMLVersionsTransformer.handleSingleEML200Document");
                   serialNumber = dbconn.getCheckOutSerialNumber();
                   documentWrapper.write(dbconn, eml210Content, pub, dtd,
-                          doAction, newId, owner, groups);
+                          doAction, newId, owner, groups, null);
                   logMetacat.warn("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
                   transformLog("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
              }

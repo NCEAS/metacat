@@ -1498,7 +1498,7 @@ public class DocumentImpl
 	 * @param accNumber
 	 *            the document id which is used to name the output file
 	 */
-    private static void writeToFileSystem(String xml, String accNumber, String encoding) throws McdbException {
+    private static void writeToFileSystem(byte[] xml, String accNumber) throws McdbException {
 
 		// write the document to disk
 		String documentDir = null;
@@ -1528,7 +1528,7 @@ public class DocumentImpl
 			    FileOutputStream fos = null;
                 try {
                     fos = new FileOutputStream(documentPath);
-                    IOUtils.write(xml.getBytes(encoding), fos);
+                    IOUtils.write(xml, fos);
 
                     fos.flush();
                     fos.close();
@@ -2657,7 +2657,7 @@ public class DocumentImpl
 
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String docid, String user,
-            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules)
+            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules, byte[] xmlBytes)
             throws Exception
     {
         //this method will be called in handleUpdateOrInsert method
@@ -2665,7 +2665,7 @@ public class DocumentImpl
         // get server location for this doc
         int serverLocation = getServerLocationNumber(docid);
         return write(conn, xmlString, pub, dtd, action, docid, user, groups,
-                serverLocation, false, ruleBase, needValidation, writeAccessRules);
+                serverLocation, false, ruleBase, needValidation, writeAccessRules, xmlBytes);
     }
 
     /**
@@ -2702,12 +2702,24 @@ public class DocumentImpl
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String accnum, String user,
             String[] groups, int serverCode, boolean override, String ruleBase,
-            boolean needValidation, boolean writeAccessRules) throws Exception
+            boolean needValidation, boolean writeAccessRules, byte[] xmlBytes) throws Exception
     {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
     	
     	// Get the xml as a string so we can write to file later
     	StringReader xmlReader = new StringReader(xmlString);
+    	// detect encoding
+        XmlStreamReader xsr = null;
+        if(xmlBytes == null || xmlBytes.length == 0 ) {
+            xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
+        } else {
+            xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
+        }         
+        String encoding = xsr.getEncoding();
+        //get the byte array from xmlString if the xmlbyte is null (this comes from metacat api)
+        if(xmlBytes == null || xmlBytes.length == 0) {
+            xmlBytes = xmlString.getBytes(encoding);
+        }
 
         logMetacat.debug("DocumentImpl.write - conn usage count before writing: "
                 + conn.getUsageCount());
@@ -2767,9 +2779,7 @@ public class DocumentImpl
                 	logReplication.info("lock granted for " + accnum
                             + " from " + server);
                 	
-                	// detect encoding
-                    XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
-			        String encoding = xsr.getEncoding();
+                	
 			        Vector<String>guidsToSync = new Vector<String>();
 
                     /*
@@ -2794,7 +2804,7 @@ public class DocumentImpl
                     
                     //write the file to disk
                     logMetacat.debug("DocumentImpl.write - Writing xml to file system");                    
-                	writeToFileSystem(xmlString, accnum, encoding);
+                	writeToFileSystem(xmlBytes, accnum);
 
                     // write to xml_node complete. start the indexing thread.
                     addDocidToIndexingQueue(docid, rev);
@@ -2878,9 +2888,8 @@ public class DocumentImpl
         }
         XMLReader parser = null;
         try {
-            // detect encoding
-        	XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
-	        String encoding = xsr.getEncoding();
+            
+	        
 	        Vector<String>guidsToSync = new Vector<String>();
 
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
@@ -2900,7 +2909,7 @@ public class DocumentImpl
             updateNodeValues(conn, docid);
             
             //write the file to disk
-        	writeToFileSystem(xmlString, accnum, encoding);
+        	writeToFileSystem(xmlBytes, accnum);
 
             addDocidToIndexingQueue(docid, rev);
     		if (guidsToSync.size() > 0) {
@@ -3103,7 +3112,8 @@ public class DocumentImpl
             conn.setAutoCommit(true);
             
             // Write the file to disk
-        	writeToFileSystem(xmlString, accnum, encoding);
+            byte[] bytes = xmlString.getBytes(encoding);
+        	writeToFileSystem(bytes, accnum);
             
             // write to xml_node complete. start the indexing thread.
             // this only for xml_documents

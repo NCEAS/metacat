@@ -353,11 +353,11 @@ public class MNodeService extends D1NodeService
                 // update the science metadata XML document
                 // TODO: handle non-XML metadata/data documents (like netCDF)
                 // TODO: don't put objects into memory using stream to string
-                String objectAsXML = "";
+                //String objectAsXML = "";
                 try {
-                    objectAsXML = IOUtils.toString(object, "UTF-8");
+                    //objectAsXML = IOUtils.toString(object, "UTF-8");
                     // give the old pid so we can calculate the new local id 
-                    localId = insertOrUpdateDocument(objectAsXML, pid, session, "update");
+                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update");
                     // register the newPid and the generated localId
                     if (newPid != null) {
                         IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
