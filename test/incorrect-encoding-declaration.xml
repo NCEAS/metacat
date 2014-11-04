@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ASCII"?>
+<eml:eml packageId="urn:uuid:163f2bb0-6957-4962-be71-434358453cfc" system="knb" xmlns:eml="eml://ecoinformatics.org/eml-2.1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 eml.xsd">  <dataset>  <title>test weird character through dataone api</title>
+<creator id="1414796166610"> <individualName><surName>test</surName>
+</individualName>
+</creator>
+<abstract><para>abstract
+Ξ</para>
+</abstract>
+ <contact id="1414796171089"><individualName><surName>test</surName>
+</individualName>
+</contact>
+</dataset>
+ </eml:eml>
