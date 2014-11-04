@@ -51,6 +51,7 @@ import java.util.Map;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
@@ -83,6 +84,7 @@ import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
+import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.jibx.runtime.JiBXException;
@@ -98,6 +100,7 @@ import org.junit.Before;
  */
 public class MNodeServiceTest extends D1NodeServiceTest {
 
+    private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
   /**
    * Set up the test fixtures
    * 
@@ -156,7 +159,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testGetPackage"));
     suite.addTest(new MNodeServiceTest("testGetOREPackage"));
     suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
-    
+    suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     return suite;
     
   }
@@ -1341,6 +1344,43 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           fail("Unexpected error: " + e.getMessage());
 
         } 
+    }
+    
+    /**
+     * Test to create and update a metadata which xml declaration is ASCII, but actually
+     * has some special charaters. The saved document should has the same bytes as the origianl.
+     */
+    public void testCreateAndUpdateXMLWithUnmatchingEncoding() throws Exception {
+          String algorithm = "md5";
+          Session session = getTestSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testCreateAndUpdate." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream(FileUtils.readFileToByteArray(new File(unmatchingEncodingFilePath)));
+          Checksum orgChecksum = ChecksumUtil.checksum(object, algorithm);
+          //System.out.println("the original checksum is "+orgChecksum.getValue());
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          Identifier pid = 
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          InputStream readResult = MNodeService.getInstance(request).get(session, pid);
+          byte[] readBytes = IOUtils.toByteArray(readResult);
+          Checksum checksum1 = ChecksumUtil.checksum(readBytes, algorithm);
+          //System.out.println("the read checksum1 is "+checksum1.getValue());
+          assertEquals(orgChecksum.getValue(), checksum1.getValue());
+          
+          Identifier newPid = new Identifier();
+          newPid.setValue("testCreateAndUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+          SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+                
+          // do the update
+          Identifier updatedPid = 
+            MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
+          InputStream readResult2 = MNodeService.getInstance(request).get(session, updatedPid);
+          byte[] readBytes2 = IOUtils.toByteArray(readResult2);
+          Checksum checksum2 = ChecksumUtil.checksum(readBytes2, algorithm);
+          assertEquals(orgChecksum.getValue(), checksum2.getValue());
+          //System.out.println("the read checksum2 is "+checksum2.getValue());
+
+          
     }
   
 }
