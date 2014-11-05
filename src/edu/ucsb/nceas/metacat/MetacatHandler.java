@@ -2654,8 +2654,13 @@ public class MetacatHandler {
             response.setContentType("text/xml");
             out = response.getWriter();
             
-            // Check that the user is authenticated as an administrator account
-            if (!AuthUtil.isAdministrator(username, groups)) {
+            // TODO: Check that the user is allowed to reindex this object, allow everyone for open annotations
+            boolean isAuthorized = true;
+   			//String docid = IdentifierManager.getInstance().getLocalId(pid[0]);
+			//isAuthorized = DocumentImpl.hasWritePermission(username, groups, docid);
+			//isAuthorized = AuthUtil.isAdministrator(username, groups);
+
+            if (!isAuthorized) {
                 out.print("<error>");
                 out.print("The user \"" + username +
                         "\" is not authorized for this action.");
@@ -2721,16 +2726,10 @@ public class MetacatHandler {
                 }
                 results.append("</results>\n");
             }
-        } catch (IOException e) {
-            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
-            		         "Could not open http response for writing: " + 
+        } catch (Exception e) {
+            logMetacat.error("MetacatHandler.handleReindex action - " +
             		         e.getMessage());
             e.printStackTrace();
-        } catch (MetacatUtilException ue) {
-            logMetacat.error("MetacatHandler.handleBuildIndexAction - " +
-            		         "Could not determine if user is administrator: " + 
-            		         ue.getMessage());
-            ue.printStackTrace();
         } finally {
             if(out != null) {
                 out.print(results.toString());

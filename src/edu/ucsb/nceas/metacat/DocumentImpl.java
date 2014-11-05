@@ -3674,7 +3674,7 @@ public class DocumentImpl
      * Check for "WRITE" permission on @docid for @user and/or @groups
      * from DB connection
      */
-    private static boolean hasWritePermission(String user, String[] groups,
+    public static boolean hasWritePermission(String user, String[] groups,
             String docid) throws SQLException, Exception
     {
         // Check for WRITE permission on @docid for @user and/or @groups
@@ -3703,7 +3703,7 @@ public class DocumentImpl
      * Check for "WRITE" permission on @docid for @user and/or @groups
      * from DB connection
      */
-    private static boolean hasAllPermission(String user, String[] groups,
+    public static boolean hasAllPermission(String user, String[] groups,
             String docid) throws SQLException, Exception
     {
         // Check for WRITE permission on @docid for @user and/or @groups
