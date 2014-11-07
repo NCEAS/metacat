@@ -95,10 +95,10 @@ else {
 %>
 
 <h5 class="hiddenStructure">Personal tools</h5>
-<ul id="portal-personaltools">
+<!--<ul id="portal-personaltools">
 	<li><%=loginHTML %></li>
 	<li><a href="<%=USER_MANAGEMENT_URL%>" target="_top"> Join </a></li>
-</ul>
+</ul>-->
 
 </body>
 </html>
