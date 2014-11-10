@@ -64,7 +64,7 @@ public class DocumentImplWrapper {
 				ruleBase, needValidation, writeAccessRules, xmlBytes);
 	}
 
-	public String writeReplication(DBConnection conn, String xml, String pub, Reader dtd,
+	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
 			String homeServer, String notifyServer, Date createDate, Date updateDate)
 			throws Exception {
@@ -72,7 +72,7 @@ public class DocumentImplWrapper {
 		// so rule base is null and need validation is false (first false)
 		// this method is for force replication. so the table name is xml_documents
 		// and timed replication is false (last false)
-		return DocumentImpl.writeReplication(conn, xml, pub, dtd, action, accnum, user,
+		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
 				groups, homeServer, notifyServer, ruleBase, false,
 				DocumentImpl.DOCUMENTTABLE, false, createDate, updateDate);
 		// last false means is not timed replication
@@ -96,14 +96,14 @@ public class DocumentImplWrapper {
 	 * @return
 	 * @throws Exception
 	 */
-	public String writeReplication(DBConnection conn, String xml, String pub, Reader dtd,
+	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
 			String homeServer, String notifyServer, String tableName,
 			boolean timedReplication, Date createDate, Date updateDate)
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false
-		return DocumentImpl.writeReplication(conn, xml, pub, dtd, action, accnum, user,
+		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
 				groups, homeServer, notifyServer, ruleBase, false, tableName,
 				timedReplication, createDate, updateDate);
 	}

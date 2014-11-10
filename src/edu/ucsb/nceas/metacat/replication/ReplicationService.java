@@ -598,7 +598,8 @@ public class ReplicationService extends BaseService {
 			URL u = new URL("https://" + server + "?server="
 					+ MetacatUtil.getLocalReplicationServerName() + "&action=read&docid="
 					+ docid);
-			String xmldoc = ReplicationService.getURLContent(u);
+			byte[] xmlBytes = ReplicationService.getURLBytes(u);
+			String xmldoc = new String(xmlBytes, "UTF-8");
 
 			// get the document info from server
 			URL docinfourl = new URL("https://" + server + "?server="
@@ -678,7 +679,7 @@ public class ReplicationService extends BaseService {
 			DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
 			//try this independently so we can set access even if the update action is invalid (i.e docid has not changed)
 			try {
-				wrapper.writeReplication(dbConn, xmldoc, null, null,
+				wrapper.writeReplication(dbConn, xmldoc, xmlBytes, null, null,
 						dbaction, docid, null, null, homeServer, server, createdDate,
 						updatedDate);
 			} finally {
@@ -2156,16 +2157,8 @@ public class ReplicationService extends BaseService {
 		// get the response content
 		InputStream input = getURLStream(u);
 		logReplication.info("ReplicationService.getURLContent - After getting response from: " + u.toString());
-		InputStreamReader istream = new InputStreamReader(input);
-		StringBuffer serverResponse = new StringBuffer();
-		while ((istreamInt = istream.read()) != -1) {
-			istreamChar = (char) istreamInt;
-			serverResponse.append(istreamChar);
-		}
-		istream.close();
-		input.close();
-
-		return serverResponse.toString();
+		String content = IOUtils.toString(input, "UTF-8");
+		return content;
 	}
 	
 	/**
@@ -2186,6 +2179,18 @@ public class ReplicationService extends BaseService {
 		
 		return input;		
 	}
+	
+	/**
+     * This method returns a byte array after opening a url
+     * @param u the url to return the content from
+     * @return a InputStream representing the content of the url
+     * @throws java.io.IOException
+     */
+    public static byte[] getURLBytes(URL u) throws java.io.IOException {
+        InputStream input = getURLStream(u);
+        byte[] bytes = IOUtils.toByteArray(input);
+        return bytes;       
+    }
 	
 	/**
 	 * Sets up an HttpClient with SSL connection.

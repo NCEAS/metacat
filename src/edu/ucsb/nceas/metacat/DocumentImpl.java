@@ -3033,7 +3033,7 @@ public class DocumentImpl
      *            the server which notify local server the force replication
      *            command
      */
-    public static String writeReplication(DBConnection conn, String xmlString,
+    public static String writeReplication(DBConnection conn, String xmlString, byte[] xmlBytes,
             String pub, Reader dtd, String action, String accnum, String user,
             String[] groups, String homeServer, String notifyServer,
             String ruleBase, boolean needValidation, String tableName, 
@@ -3095,7 +3095,8 @@ public class DocumentImpl
                 isRevision = true;
             }
             // detect encoding
-            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
+            //XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlString.getBytes()));
+            XmlStreamReader xsr = new XmlStreamReader(new ByteArrayInputStream(xmlBytes));
 	        String encoding = xsr.getEncoding();
 	        
 	        // no need to write the EML-contained access rules for replication
@@ -3112,8 +3113,8 @@ public class DocumentImpl
             conn.setAutoCommit(true);
             
             // Write the file to disk
-            byte[] bytes = xmlString.getBytes(encoding);
-        	writeToFileSystem(bytes, accnum);
+            //byte[] bytes = xmlString.getBytes(encoding);
+        	writeToFileSystem(xmlBytes, accnum);
             
             // write to xml_node complete. start the indexing thread.
             // this only for xml_documents

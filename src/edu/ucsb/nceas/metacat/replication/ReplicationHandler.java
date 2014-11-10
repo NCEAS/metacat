@@ -365,7 +365,8 @@ public class ReplicationHandler extends TimerTask
       URL u = new URL(readDocURLString);
 
       // Get docid content
-      String newxmldoc = ReplicationService.getURLContent(u);
+      byte[] xmlBytes = ReplicationService.getURLBytes(u);
+      String newxmldoc = new String(xmlBytes, "UTF-8");
       // If couldn't get skip it
       if ( newxmldoc.indexOf("<error>")!= -1 && newxmldoc.indexOf("</error>")!=-1)
       {
@@ -446,7 +447,7 @@ public class ReplicationHandler extends TimerTask
       // Write the document into local host
       DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
       String newDocid = wrapper.writeReplication(dbConn,
-                              newxmldoc,
+                              newxmldoc, xmlBytes,
                               docinfoHash.get("public_access"),
                               null,  /* the dtd text */
                               actions,
