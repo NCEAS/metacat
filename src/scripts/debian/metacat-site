@@ -17,6 +17,12 @@ NameVirtualHost *:80
                 JkMount /metacat/metacat ajp13
                 JkMount /*.jsp ajp13
                 JkUnMount /metacat/cgi-bin/* ajp13
+                
+        		JkOptions +ForwardURICompatUnparsed
         </IfModule>
+        
+       	AllowEncodedSlashes On
+		AcceptPathInfo      On
+        
 </VirtualHost>
 
