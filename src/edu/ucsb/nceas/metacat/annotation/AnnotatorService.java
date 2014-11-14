@@ -32,18 +32,20 @@ public class AnnotatorService {
 		
 
 		String annotatorUrl = null;
-
+		String consumerKey = null;
 		try {
 			
 			annotatorUrl = PropertyService.getProperty("annotator.store.url");
-			
+			consumerKey = PropertyService.getProperty("annotator.consumerKey");
+
 			// skip if not configured to query the annotator-store
 			if (annotatorUrl == null || annotatorUrl.length() == 0) {
 				return null;
 			}
 			
+			// TODO: query for matching PID only - wasting time iterating over full list
 			//String urlParameters = "pid=" + URLEncoder.encode(pid, "UTF-8");
-			String urlParameters = "user=leinfelder";
+			String urlParameters = "consumer=" + consumerKey;
 			
 			String url = annotatorUrl + "?" + urlParameters;
 			HttpClient client = new HttpClient();
@@ -68,7 +70,7 @@ public class AnnotatorService {
 				JSONObject row = (JSONObject) rows.get(i);
 				
 				// skip this row if it is not about this pid
-				// Bug in annotator-store prevents effective search by pid
+				// FIXME: Bug in annotator-store prevents effective search by pid
 				String pidValue = row.get("pid").toString();
 				if (!pidValue.equals(pid)) {
 					continue;
