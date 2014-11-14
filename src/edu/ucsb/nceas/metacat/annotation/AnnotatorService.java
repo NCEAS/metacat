@@ -110,7 +110,9 @@ public class AnnotatorService {
 				Object commentObj = row.get("text");
 				if (commentObj != null) {
 					String value = commentObj.toString();
-					commentValues.add(value);
+					if (value != null && value.length() > 0) {
+						commentValues.add(value);
+					}
 				}
 				annotations.put(commentKey, commentValues);
 
