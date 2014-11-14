@@ -61,10 +61,14 @@ public class AnnotatorService {
 			JSONArray rows = (JSONArray) jo.get("rows");
 			int count = rows.size();
 			Map<String, List<Object>> annotations = new HashMap<String, List<Object>>();
-			List<Object> values = null;
-
-			// default the tags to a catch-all dynamic field as we develop
-			String solrKey = "annotation_sm";
+			
+			// use catch-all annotation field for the tags
+			List<Object> tagValues = null;
+			String tagKey = "annotation_sm";
+			
+			// track the comments here
+			List<Object> commentValues = null;
+			String commentKey = "comment_sm";
 			
 			for (int i = 0; i < count; i++){
 				JSONObject row = (JSONObject) rows.get(i);
@@ -76,26 +80,39 @@ public class AnnotatorService {
 					continue;
 				}
 				
+				// index the (semantic) tags
 				// if the annotation told us the target index field, then use it
 				Object field = row.get("field");
 				if (field != null) {
-					solrKey = field.toString();
+					tagKey = field.toString();
 				}
 				
-				values = annotations.get(solrKey);
-				if (values == null) {
-					values = new ArrayList<Object>();
+				// make sure we have a place to store the values
+				tagValues = annotations.get(tagKey);
+				if (tagValues == null) {
+					tagValues = new ArrayList<Object>();
 				}
-				String key = "tags";
-				Object obj = row.get(key);
+				Object obj = row.get("tags");
 				if (obj instanceof JSONArray) {
-					JSONArray tags = (JSONArray) row.get(key);
-					values.addAll(tags);
+					JSONArray tags = (JSONArray) obj;
+					tagValues.addAll(tags);
 				} else {
-					String value = row.get(key).toString();
-					values.add(value);
+					String value = obj.toString();
+					tagValues.add(value);
 				}
-				annotations.put(solrKey, values);
+				annotations.put(tagKey, tagValues);
+				
+				// index the comments
+				commentValues = annotations.get(commentKey);
+				if (commentValues == null) {
+					commentValues = new ArrayList<Object>();
+				}
+				Object commentObj = row.get("text");
+				if (commentObj != null) {
+					String value = commentObj.toString();
+					commentValues.add(value);
+				}
+				annotations.put(commentKey, commentValues);
 
 			}
 			// just populate this one field for example
