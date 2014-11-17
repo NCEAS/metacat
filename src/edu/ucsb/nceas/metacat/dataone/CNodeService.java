@@ -404,7 +404,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			    //since this is cn, we don't need worry about the mn solr index.
 				HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
 				HazelcastService.getInstance().getIdentifiers().remove(pid);//.
-				
+				String username = session.getSubject().getValue();//just for logging purpose
+				//since data objects were not registered in the identifier table, we use pid as the docid
+				EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, pid.getValue(), Event.DELETE.xmlValue());
 				
 			  } else {
 				  throw new ServiceFailure("4962", "Couldn't delete the object " + pid.getValue() +
@@ -941,6 +943,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
             
             if(localId != null && EventLog.getInstance().isDeleted(localId)) {
                 error = DELETEDMESSAGE;
+            } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+                error = DELETEDMESSAGE;
             }
             throw new NotFound("1420", "Couldn't find an object identified by " + pid.getValue()+". "+error);
         }
@@ -1422,6 +1426,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           }
           
           if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+              error = DELETEDMESSAGE;
+          } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
               error = DELETEDMESSAGE;
           }
           throw new NotFound("4874", "Couldn't find an object identified by " + pid.getValue()+". "+error);

@@ -728,6 +728,8 @@ public abstract class D1NodeService {
             
             if(localId != null && EventLog.getInstance().isDeleted(localId)) {
                 error = DELETEDMESSAGE;
+            } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+                error = DELETEDMESSAGE;
             }
             throw new NotFound("1420", "No record found for: " + pid.getValue()+". "+error);
         }
@@ -1008,6 +1010,8 @@ public abstract class D1NodeService {
         
         if(localId != null && EventLog.getInstance().isDeleted(localId)) {
             error = error + ". "+DELETEDMESSAGE;
+        } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+            error = DELETEDMESSAGE;
         }
     	throw new NotFound("1800", error);
     }
