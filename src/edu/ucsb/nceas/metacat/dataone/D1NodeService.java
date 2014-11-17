@@ -1011,7 +1011,7 @@ public abstract class D1NodeService {
         if(localId != null && EventLog.getInstance().isDeleted(localId)) {
             error = error + ". "+DELETEDMESSAGE;
         } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
-            error = DELETEDMESSAGE;
+            error = error + ". "+DELETEDMESSAGE;
         }
     	throw new NotFound("1800", error);
     }
