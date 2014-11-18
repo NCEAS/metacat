@@ -29,6 +29,7 @@
     
      
     <import resource="application-context-oa.xml" />
+    <import resource="application-context-annotator.xml" />
     
     
     <!-- <import resource="application-context-ao.xml" /> -->
@@ -101,6 +102,8 @@
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
        <ref bean="rdfXmlSubprocessor" />
+       <ref bean="annotatorSubprocessor" />
+       
       </list>
      </property>
     </bean>

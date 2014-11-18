@@ -2694,10 +2694,10 @@ public class MetacatHandler {
 						try {
 							// submit for indexing
 						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-						    Map<String, List<Object>> annotations = AnnotatorService.lookUpAnnotations(identifier.getValue());
-						    if (annotations != null) {
-						    	fields.putAll(annotations);
-						    }
+//						    Map<String, List<Object>> annotations = AnnotatorService.lookUpAnnotations(identifier.getValue());
+//						    if (annotations != null) {
+//						    	fields.putAll(annotations);
+//						    }
 	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
 						} catch (Exception e) {
 							failedList.add(id);
