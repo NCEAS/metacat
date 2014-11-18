@@ -19,7 +19,7 @@
 		</property>	
 	</bean>
 	
-	<bean id="annotation.standard" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="annotation.standard" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="standard_sm" />
 		<constructor-arg name="query">
 			<value>
@@ -54,7 +54,7 @@
 		<!--property name="multivalue" value="false" /-->
 	</bean>
 	
-	<bean id="annotation.characteristic" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="annotation.characteristic" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="characteristic_sm" />
 		<constructor-arg name="query">
 			<value>
@@ -89,7 +89,7 @@
 		<!--property name="multivalue" value="false" /-->
 	</bean>
 	
-	<bean id="annotation.creator" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="annotation.creator" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="creator_sm" />
 		<constructor-arg name="query">
 			<value>
@@ -116,7 +116,7 @@
 		<!--property name="multivalue" value="false" /-->
 	</bean>
 	
-	<bean id="prov.wasDerivedFrom" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="prov.wasDerivedFrom" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="wasDerivedFrom" />
 		<constructor-arg name="query">
 			<value>
@@ -142,7 +142,7 @@
 		</constructor-arg>
 	</bean>
 	
-	<bean id="prov.wasGeneratedBy" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="prov.wasGeneratedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="wasGeneratedBy" />
 		<constructor-arg name="query">
 			<value>
@@ -168,7 +168,7 @@
 		</constructor-arg>
 	</bean>
 	
-	<bean id="prov.wasInformedBy" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="prov.wasInformedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="wasInformedBy" />
 		<constructor-arg name="query">
 			<value>
@@ -194,7 +194,7 @@
 		</constructor-arg>
 	</bean>
 	
-	<bean id="prov.used" class="edu.ucsb.nceas.metacat.index.annotation.SparqlField">
+	<bean id="prov.used" class="org.dataone.cn.indexer.annotation.SparqlField">
 		<constructor-arg name="name" value="used" />
 		<constructor-arg name="query">
 			<value>

@@ -29,11 +29,7 @@
     
      
     <import resource="application-context-oa.xml" />
-    <import resource="application-context-annotator.xml" />
-    
-    
-    <!-- <import resource="application-context-ao.xml" /> -->
-    
+    <import resource="application-context-annotator.xml" />    
 
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
  <bean id="fgdcDateConverter" class="org.dataone.cn.indexer.convert.FgdcDateConverter"/>

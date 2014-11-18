@@ -3,7 +3,36 @@
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="annotatorSubprocessor" class="org.dataone.cn.indexer.annotation.AnnotatorSubprocessor"/>
-	<!-- no params needed for this processor yet -->
+	<bean id="annotatorSubprocessor" class="org.dataone.cn.indexer.annotation.AnnotatorSubprocessor">
+		
+		<!-- match any document type -->
+		<property name="matchDocument"
+			value="/d200:systemMetadata/formatId[text() != '']" />
+		<property name="fieldList">
+			<list>
+				<ref bean="annotation.expansion" />
+			</list>
+		</property>	
+	</bean>
+	
+	<bean id="annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="annotation_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?annotation_sm
+				FROM <$GRAPH_NAME>				
+				WHERE { 
+						<$CONCEPT_URI> rdfs:subClassOf+ ?annotation_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
 
 </beans>
