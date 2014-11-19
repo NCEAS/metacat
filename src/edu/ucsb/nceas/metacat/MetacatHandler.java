@@ -87,7 +87,6 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
-import edu.ucsb.nceas.metacat.annotation.AnnotatorService;
 import edu.ucsb.nceas.metacat.cart.CartManager;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -2694,10 +2693,6 @@ public class MetacatHandler {
 						try {
 							// submit for indexing
 						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-//						    Map<String, List<Object>> annotations = AnnotatorService.lookUpAnnotations(identifier.getValue());
-//						    if (annotations != null) {
-//						    	fields.putAll(annotations);
-//						    }
 	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
 						} catch (Exception e) {
 							failedList.add(id);
