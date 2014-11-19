@@ -238,6 +238,11 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="wasGeneratedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="wasInformedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="used"	type="string"   indexed="true" stored="true" multiValued="true"/>
+        
+        <!-- Annotations -->
+        <field name="annotation" 		type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="orcid" 			type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="origin_combined" 	type="string"   indexed="true" stored="true" multiValued="true"/>
 
         <!--Permissions-->
         <field name="readPermission"    type="string"   indexed="true" stored="true" multiValued="true"/>
@@ -415,7 +420,10 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
     <copyField source="pubDate" dest="datePublished" />
     <copyField source="dateUploaded" dest="updateDate" />
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
-  
+    
+    <!-- combine origin fields for easier query -->
+    <copyField source="origin" dest="origin_combined"/>
+    <copyField source="orcid" dest="origin_combined"/>
 
     <!-- Similarity is the scoring routine for each document vs a query.
 A custom similarity may be specified here, but the default is fine
