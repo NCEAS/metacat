@@ -60,6 +60,12 @@ This major release adds DataONE V2 API support
 as well as:
 * ......
 
+Release Notes for 2.4.2:
+------------------------
+This release includes:
+* Updates to improve character encoding handling
+* Updated SOLR index and UI to use geohashes for map rendering
+
 Release Notes for 2.4.1:
 ------------------------
 This is a patch release that addresses the following:
