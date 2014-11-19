@@ -55,6 +55,102 @@
 		<property name="multivalue" value="false" />
 		<property name="converter" ref="solrLongitudeConverter" />
 	</bean>
+		
+	<!-- define the root and leafs for accessing multiple bounding coordinates for geohash -->
+	<bean id="eml.geohashRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="geohashRoot"
+		p:xPath="//dataset/coverage/geographicCoverage/boundingCoordinates"
+		p:template="[northBoundingCoordinate] [southBoundingCoordinate] [eastBoundingCoordinate] [westBoundingCoordinate]">
+		<property name="leafs">
+			<list>
+				<ref bean="eml.northBoundingCoordinateLeaf"/>
+				<ref bean="eml.southBoundingCoordinateLeaf"/>
+				<ref bean="eml.eastBoundingCoordinateLeaf"/>
+				<ref bean="eml.westBoundingCoordinateLeaf"/>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="eml.northBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="northBoundingCoordinate"
+		p:xPath="northBoundingCoordinate/text()" />
+		
+	<bean id="eml.westBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="westBoundingCoordinate"
+		p:xPath="westBoundingCoordinate/text()" />
+	
+	<bean id="eml.southBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="southBoundingCoordinate"
+		p:xPath="southBoundingCoordinate/text()" />		
+		
+	<bean id="eml.eastBoundingCoordinateLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="eastBoundingCoordinate"
+		p:xPath="eastBoundingCoordinate/text()" />
+	
+		
+	<!-- use the root to calculate different geohash lengths -->
+	<bean id="eml.geohash1" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_1" />
+		<property name="converter" ref="geohashConverter_1"/>
+	</bean>
+	
+	<bean id="eml.geohash2" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_2" />
+		<property name="converter" ref="geohashConverter_2"/>
+	</bean>
+	
+		<bean id="eml.geohash3" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_3" />
+		<property name="converter" ref="geohashConverter_3"/>
+	</bean>
+	
+		<bean id="eml.geohash4" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_4" />
+		<property name="converter" ref="geohashConverter_4"/>
+	</bean>
+	
+		<bean id="eml.geohash5" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_5" />
+		<property name="converter" ref="geohashConverter_5"/>
+	</bean>
+	
+		<bean id="eml.geohash6" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_6" />
+		<property name="converter" ref="geohashConverter_6"/>
+	</bean>
+	
+		<bean id="eml.geohash7" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_7" />
+		<property name="converter" ref="geohashConverter_7"/>
+	</bean>
+	
+		<bean id="eml.geohash8" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_8" />
+		<property name="converter" ref="geohashConverter_8"/>
+	</bean>
+	
+		<bean id="eml.geohash9" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+		p:multivalue="true"
+		p:root-ref="eml.geohashRoot">
+		<constructor-arg name="name" value="geohash_9" />
+		<property name="converter" ref="geohashConverter_9"/>
+	</bean>
 
 	<bean id="eml.site" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="site" />
@@ -199,9 +295,9 @@
 		<property name="dedupe" value="true"/>
 	</bean>
 	
-	<bean id="eml.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
+	<!-- <bean id="eml.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
 		<constructor-arg name="name" value="fileID" />
-	</bean>
+	</bean> -->
 	
 	<bean id="eml.text" class="org.dataone.cn.indexer.parser.FullTextSolrField">
 		<constructor-arg name="name" value="text" />

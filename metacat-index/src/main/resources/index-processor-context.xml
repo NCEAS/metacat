@@ -37,6 +37,42 @@
   <constructor-arg value="public" />
  </bean>
  <bean id="formatIdToFormatTypeConverter" class="org.dataone.cn.indexer.convert.FormatIdToFormatTypeConverter" />
+ 
+ <bean id="geohashConverter_1" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="1"/>
+ </bean>
+ 
+ <bean id="geohashConverter_2" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="2"/>
+ </bean>
+ 
+  <bean id="geohashConverter_3" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="3"/>
+ </bean>
+ 
+  <bean id="geohashConverter_4" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="4"/>
+ </bean>
+ 
+  <bean id="geohashConverter_5" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="5"/>
+ </bean>
+ 
+  <bean id="geohashConverter_6" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="6"/>
+ </bean>
+ 
+  <bean id="geohashConverter_7" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="7"/>
+ </bean>
+ 
+  <bean id="geohashConverter_8" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="8"/>
+ </bean>
+ 
+  <bean id="geohashConverter_9" class="org.dataone.cn.indexer.convert.GeohashConverter">
+ 	<property name="length" value="9"/>
+ </bean>
 
  <bean id="solrIndexes" class="java.util.ArrayList" autowire="byName">
   <constructor-arg>
@@ -70,6 +106,7 @@
  <bean id="xmlNamespaceConfig" class="org.dataone.cn.indexer.XMLNamespaceConfig">
   <constructor-arg name="namespaceList">
    <list>
+    
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"
       value="http://ns.dataone.org/service/types/v1" />
