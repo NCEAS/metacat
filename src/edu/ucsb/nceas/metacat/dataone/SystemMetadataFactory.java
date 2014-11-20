@@ -86,6 +86,7 @@ import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
@@ -103,8 +104,44 @@ public class SystemMetadataFactory {
 	 */
 	private static boolean updateExisting = true;
 	
+	
+	
+	/**
+	 * Create a system metadata object for insertion into metacat
+	 * @param localId
+	 * @param includeORE
+	 * @param downloadData
+	 * @return
+	 * @throws McdbException
+	 * @throws McdbDocNotFoundException
+	 * @throws SQLException
+	 * @throws IOException
+	 * @throws AccessionNumberException
+	 * @throws ClassNotFoundException
+	 * @throws InsufficientKarmaException
+	 * @throws ParseLSIDException
+	 * @throws PropertyNotFoundException
+	 * @throws BaseException
+	 * @throws NoSuchAlgorithmException
+	 * @throws JiBXException
+	 * @throws AccessControlException
+	 * @throws HandlerException
+	 * @throws SAXException
+	 * @throws AccessException
+	 */
+	public static SystemMetadata createSystemMetadata(String localId, boolean includeORE, boolean downloadData)
+            throws McdbException, McdbDocNotFoundException, SQLException,
+            IOException, AccessionNumberException, ClassNotFoundException,
+            InsufficientKarmaException, ParseLSIDException,
+            PropertyNotFoundException, BaseException, NoSuchAlgorithmException,
+            JiBXException, AccessControlException, HandlerException, SAXException, AccessException {
+	        boolean indexDataFile = false;
+	        return createSystemMetadata(indexDataFile, localId, includeORE, downloadData);
+	}
 	/**
 	 * Creates a system metadata object for insertion into metacat
+	 * @param indexDataFile
+	 *            Indicate if we need to index data file.
 	 * 
 	 * @param localId
 	 *            The local document identifier
@@ -119,7 +156,7 @@ public class SystemMetadataFactory {
 	 * @throws AccessControlException 
 	 * @throws AccessException 
 	 */
-	public static SystemMetadata createSystemMetadata(String localId, boolean includeORE, boolean downloadData)
+	public static SystemMetadata createSystemMetadata(boolean indexDataFile, String localId, boolean includeORE, boolean downloadData)
 			throws McdbException, McdbDocNotFoundException, SQLException,
 			IOException, AccessionNumberException, ClassNotFoundException,
 			InsufficientKarmaException, ParseLSIDException,
@@ -507,6 +544,12 @@ public class SystemMetadataFactory {
 							// update the values
 							HazelcastService.getInstance().getSystemMetadataMap().put(dataSysMeta.getIdentifier(), dataSysMeta);
 							
+							// reindex data file if need it.
+							logMetacat.debug("do we need to reindex guid "+dataGuid.getValue()+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?"+indexDataFile);
+							if(indexDataFile) {
+							    reindexDataFile(dataSysMeta.getIdentifier(), dataSysMeta);
+							}
+
 							// include as part of the ORE package
 							dataIds.add(dataGuid);
 	
@@ -605,6 +648,26 @@ public class SystemMetadataFactory {
 		} // end if()
 
 		return sysMeta;
+	}
+	
+	/*
+	 * Re-index the data file since the access rule was changed during the inserting of the eml document.
+	 * (During first time to index the data file in Metacat API, the eml hasn't been inserted)
+	 */
+	private static void reindexDataFile(Identifier id, SystemMetadata sysmeta) {
+	    try {
+	        logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex"+id.getValue());
+	        //set the archive to true to remove index.
+	        sysmeta.setArchived(true);
+            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+            //re-insert the index
+            sysmeta.setArchived(false);
+            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+        } catch (Exception e) {
+            // TODO Auto-generated catch block
+            logMetacat.warn("Can't reindex the data object "+id.getValue()+" since "+e.getMessage());
+            //e.printStackTrace();
+        }
 	}
 
 	/**
