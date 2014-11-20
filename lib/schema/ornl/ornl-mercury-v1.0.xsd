@@ -1,0 +1,367 @@
+<xs:schema targetNamespace="http://purl.org/ornl/schema/mercury/terms/v1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="metadata">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="idinfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="citation">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="citeinfo">
+                      <xs:complexType>
+                        <xs:sequence  maxOccurs="unbounded" minOccurs="0">
+                          <xs:element type="xs:string" name="origin" maxOccurs="unbounded" minOccurs="0"/>
+                          <xs:element type="xs:string" name="title" maxOccurs="unbounded" minOccurs="0"/>
+                          <xs:element type="xs:string" name="onlink" maxOccurs="unbounded" minOccurs="0"/>
+                          <xs:element type="xs:string" name="alt_onlink" maxOccurs="unbounded" minOccurs="0"/>
+                          <xs:element type="xs:string" name="geoform" maxOccurs="unbounded" minOccurs="0"/>
+                       </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="descript">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="abstract"/>
+                    <xs:element type="xs:string" name="supplinf"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="timeperd">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="timeinfo">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="rngdates">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element type="xs:string" name="begdate"/>
+                                <xs:element type="xs:string" name="enddate"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="status">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="progress"/>
+                    <xs:element type="xs:string" name="update"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="spdom">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="bounding">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="westbc"/>
+                          <xs:element type="xs:string" name="eastbc"/>
+                          <xs:element type="xs:string" name="northbc"/>
+                          <xs:element type="xs:string" name="southbc"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="keywords">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="theme" maxOccurs="unbounded" minOccurs="0">
+                      <xs:complexType>
+                        <xs:sequence  maxOccurs="unbounded" minOccurs="0">
+                          <xs:element type="xs:string" name="themekt" />
+                          <xs:element type="xs:string" name="themekey" maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element name="place">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="placekt"/>
+                          <xs:element type="xs:string" name="placekey"  maxOccurs="unbounded" minOccurs="0"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="ptcontac">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="cntinfo">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="cntperp">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element type="xs:string" name="cntper"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element type="xs:string" name="cntfax"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="distinfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="distrib">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="cntinfo">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="cntperp">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element type="xs:string" name="cntorg"/>
+                                <xs:element type="xs:string" name="cntper"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element type="xs:string" name="cntvoice"/>
+                          <xs:element type="xs:string" name="cntfax"/>
+                          <xs:element type="xs:string" name="cntemail"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="stdorder">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="digform">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="digtopt">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element name="onlinopt">
+                                  <xs:complexType>
+                                    <xs:sequence>
+                                      <xs:element type="xs:string" name="computer"/>
+                                      <xs:element type="xs:string" name="accinstr"/>
+                                    </xs:sequence>
+                                  </xs:complexType>
+                                </xs:element>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="resdesc"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="metainfo">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:string" name="metd"/>
+              <xs:element name="metc">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="cntinfo">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element name="cntorgp">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element type="xs:string" name="cntper"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element name="cntperp">
+                            <xs:complexType>
+                              <xs:sequence>
+                                <xs:element type="xs:string" name="cntper"/>
+                              </xs:sequence>
+                            </xs:complexType>
+                          </xs:element>
+                          <xs:element type="xs:string" name="cntvoice"/>
+                          <xs:element type="xs:string" name="cntemail"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="metstdn"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="mercury">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element type="xs:string" name="begdate"/>
+              <xs:element type="xs:string" name="enddate"/>
+              <xs:element name="Site_Information"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Site"/>
+                    <xs:element type="xs:string" name="Westernmost_Longitude"/>
+                    <xs:element type="xs:string" name="Easternmost_Longitude"/>
+                    <xs:element type="xs:string" name="Northernmost_Latitude"/>
+                    <xs:element type="xs:string" name="Southernmost_Latitude"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="Keywords" maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element name="Parameter_Description" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Parameter"/>
+                    <xs:element type="xs:string" name="Sensor"/>
+                    <xs:element type="xs:string" name="Source"/>
+                    <xs:element type="xs:string" name="Term"/>
+                    <xs:element type="xs:string" name="Topic"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="Project"  maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element type="xs:string" name="Navpath" maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element name="Principal_Investigator" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Name"/>
+                    <xs:element type="xs:string" name="Email"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Data_Set_Link" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="URL"/>
+                    <xs:element type="xs:string" name="Label"/>
+                    <xs:element type="xs:string" name="Link_Note"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Documentation_Link" maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="URL"/>
+                    <xs:element type="xs:string" name="Label"/>
+                    <xs:element type="xs:string" name="Text" minOccurs="0"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Alternate_Data_Access"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Data_Set_Status"/>
+                    <xs:element type="xs:string" name="Data_Set_Restrictions"/>
+                    <xs:element type="xs:string" name="Data_Set_Location"/>
+                    <xs:element name="Data_Contact_Person">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="Email"/>
+                          <xs:element type="xs:string" name="Name"/>
+                          <xs:element type="xs:string" name="Phone"/>
+                          <xs:element type="xs:string" name="Data_Center_URL"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                    <xs:element type="xs:string" name="Data_Center_URL"/>
+                    <xs:element type="xs:string" name="Data_Set_Citation"/>
+                    <xs:element name="Data_Set_Link"   maxOccurs="unbounded" minOccurs="0">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="URL"/>
+                          <xs:element type="xs:string" name="Label"/>
+                          <xs:element type="xs:string" name="Link_Note"/>
+                          <xs:element type="xs:string" name="Data_Center_URL"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="OME_Software_Version"/>
+              <xs:element type="xs:string" name="OME_DTD_Version"/>
+              <xs:element name="Contact_Person"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="Email"/>
+                    <xs:element type="xs:string" name="Name"/>
+                    <xs:element type="xs:string" name="Phone"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element type="xs:string" name="Temporal_Resolution"/>
+              <xs:element type="xs:string" name="enddate_blank"/>
+              <xs:element type="xs:string" name="Harvest_Date"  maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element type="xs:string" name="File_ID"/>
+              <xs:element type="xs:string" name="MD_Entry_id"  minOccurs="0"/>
+              <xs:element type="xs:string" name="Spatial_Reference_Method"  maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element type="xs:string" name="Spatial_Extent"/>
+              <xs:element name="Search_Text_Link"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="URL"/>
+                    <xs:element type="xs:string" name="Label"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="Other_Link"  maxOccurs="unbounded" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element type="xs:string" name="URL"/>
+                    <xs:element type="xs:string" name="Label"/>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element name="Granule_Details" minOccurs="0">
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="Granule" maxOccurs="unbounded" minOccurs="0">
+                      <xs:complexType>
+                        <xs:sequence>
+                          <xs:element type="xs:string" name="Granule_ID"/>
+                          <xs:element type="xs:string" name="Granule_Title"/>
+                          <xs:element type="xs:string" name="Westernmost_Longitude"/>
+                          <xs:element type="xs:string" name="Easternmost_Longitude"/>
+                          <xs:element type="xs:string" name="Northernmost_Latitude"/>
+                          <xs:element type="xs:string" name="Southernmost_Latitude"/>
+                          <xs:element type="xs:string" name="Start_Date"/>
+                          <xs:element type="xs:string" name="End_Date"/>
+                        </xs:sequence>
+                      </xs:complexType>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+
+              <xs:element type="xs:string" name="OGC_URL" maxOccurs="unbounded" minOccurs="0"/>
+              <xs:element type="xs:string" name="THREDDS_URL" maxOccurs="unbounded" minOccurs="0"/>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+        <xs:element type="xs:string" name="sourceData" maxOccurs="unbounded" minOccurs="0"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>
+
