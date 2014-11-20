@@ -470,8 +470,8 @@ lives (described above) and ``<SKIN_NAME>`` is the name of the skin
 
 Additional configuration for Tomcat 7
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In order to make Morpho access Metacat, the <Catalina_HOME>/conf/context.xml 
-(e.g., /var/lib/tomcat7/conf/context.xml) should be modified:
-add a new attribute - "useHttpOnly" and set it to false for the element "Context"::
+In order to allow Morpho to communicate with Metacat, the <Catalina_HOME>/conf/context.xml 
+(e.g., /var/lib/tomcat7/conf/context.xml) file should be modified.
+Add a new attribute - "useHttpOnly" and set it to false for the "Context" element::
 
   <Context useHttpOnly="false">
