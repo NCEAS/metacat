@@ -128,13 +128,14 @@ To install and run the Registry:
 
       sudo apt-get install ant libappconfig-perl libxml-libxml-perl \
       libxml-libxslt-perl libtemplate-perl libcgi-session-perl \
-      libdigest-sha1-perl libnet-ldap-perl libterm-readkey-perl \
+      libnet-ldap-perl libterm-readkey-perl \
       libxml-dom-perl libsoap-lite-perl -y
 
   * Install two more package using cpan 
 
     ::
     
+      sudo cpan -i Digest::SHA1
       sudo cpan -i Config::Properties
       sudo cpan -i Scalar::Util
       sudo cpan -i Captcha:reCAPTCHA
@@ -324,8 +325,8 @@ please see :doc:`replication`.
 |                          | ``operator`` - the Boolean operator to apply to the query. Possible values are: union or intersect                                                                                                                                                                 |
 |                          | ``searchmode`` - the type of search to be performed. Possible values are: contains, starts-with, ends-with, equals, isnot-equal, greater-than, less-than, greater-than-equals, less-than-equals.                                                                   |
 |                          | ``anyfield`` - a free-text search variable. The value placed in this parameter will be searched for in any document in any node.                                                                                                                                   |
-|                          | ``pagesize`` – the number of search results to display on each search results page (e.g., 10). Used with pagestart. See section 4.3.4 for an example.                                                                                                              |
-|                          | ``pagestart`` – the displayed search results page (e.g, 1). Used with pagesize. See section 4.3.4 for an example.                                                                                                                                                  |
+|                          | ``pagesize`` - the number of search results to display on each search results page (e.g., 10). Used with pagestart. See section 4.3.4 for an example.                                                                                                              |
+|                          | ``pagestart`` - the displayed search results page (e.g, 1). Used with pagesize. See section 4.3.4 for an example.                                                                                                                                                  |
 +--------------------------+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------+
 | read                     | Get a document from the database and return it in the specified format. See Searching Metacat for an example.                                                                                                                                                      |
 |                          |                                                                                                                                                                                                                                                                    |
