@@ -657,12 +657,19 @@ public class SystemMetadataFactory {
 	private static void reindexDataFile(Identifier id, SystemMetadata sysmeta) {
 	    try {
 	        logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex"+id.getValue());
-	        //set the archive to true to remove index.
-	        sysmeta.setArchived(true);
-            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-            //re-insert the index
-            sysmeta.setArchived(false);
-            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+	        if(sysmeta != null) {
+	            if(!sysmeta.getArchived()) {
+	                //set the archive to true to remove index.
+	                sysmeta.setArchived(true);
+	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+	                //re-insert the index
+	                sysmeta.setArchived(false);
+	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+	            } else {
+	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+	            }
+	        }
+	       
         } catch (Exception e) {
             // TODO Auto-generated catch block
             logMetacat.warn("Can't reindex the data object "+id.getValue()+" since "+e.getMessage());
