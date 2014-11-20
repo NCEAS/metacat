@@ -470,12 +470,11 @@ lives (described above) and ``<SKIN_NAME>`` is the name of the skin
 
 Additional configuration for Tomcat 7
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-When you log in Morpho which connects Metacat running on Tomcat 7, you may get an 
-error like "Fatal error sending data to Metacat: Bad Set_Cookie header:JSESSIONID=...".
-In order to fix the issue, the <Catalina_HOME>/conf/context.xml 
-(e.g., /var/lib/tomcat7/conf/context.xml) file should be modified.
-Add a new attribute - "useHttpOnly" and set it to false for the "Context" element::
+When running Metacat on Tomcat 7, you may get the following 
+error logging in via the Morpho application: "Fatal error sending data to Metacat: Bad Set_Cookie header:JSESSIONID=...".
+In order to fix the issue, modify <Catalina_HOME>/conf/context.xml 
+(e.g., /var/lib/tomcat7/conf/context.xml) by adding a new attribute - "useHttpOnly" - and set it to false for the "Context" element::
 
   <Context useHttpOnly="false">
 
-After the modification, Tomcat 7 should be restarted.
+Then restart Tomcat 7.
