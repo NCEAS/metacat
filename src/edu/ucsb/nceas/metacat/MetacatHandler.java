@@ -1839,8 +1839,9 @@ public class MetacatHandler {
                   
                   // handle inserts
                   try {
-                	// create the system metadata  
-                    sysMeta = SystemMetadataFactory.createSystemMetadata(newdocid, true, false);
+                	// create the system metadata. During the creatation, the data file in the eml may need to be reindexed.
+                    boolean reindexDataObject = true;
+                    sysMeta = SystemMetadataFactory.createSystemMetadata(reindexDataObject, newdocid, true, false);
                     
                     // save it to the map
                     HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
