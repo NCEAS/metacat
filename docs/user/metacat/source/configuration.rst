@@ -467,3 +467,11 @@ found here::
 Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
 lives (described above) and ``<SKIN_NAME>`` is the name of the skin 
 (e.g., ``default`` or ``nceas``).
+
+Additional configuration for Tomcat 7
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In order to make Morpho access Metacat, the <Catalina_HOME>/conf/context.xml 
+(e.g., /var/lib/tomcat7/conf/context.xml) should be modified:
+add a new attribute - "useHttpOnly" and set it to false for the element "Context"::
+
+  <Context useHttpOnly="false">
