@@ -18,7 +18,7 @@ running correctly:
 
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-* `Java 6`_ (Note: Java 5 is deprecated)
+* `Java 6`_ (Note: Metacat 2.4.2 is last release that will support Java 6)
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -183,8 +183,8 @@ robust Web-serving environment and is required by some Metacat functionality.
 
 Java 6
 ......
-To run Metacat, you should use Java 6 (Java 5 is deprecated and will not be
-supported after Metacat version 1.9.2). Make sure that the JAVA_HOME
+To run Metacat, you should use Java 7 (Java 6 is deprecated and will not be
+supported after Metacat version 2.4.2). Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
@@ -868,7 +868,7 @@ PostgreSQL and Tomcat are installed, configured, and running correctly.
 
 Java 6
 ......
-To run Metacat, you must have Java 6. (Java 5 is deprecated). Make sure that
+To run Metacat, you must have at least Java 6. (Java 7 is preferred). Make sure that
 the JAVA_HOME environment variable is properly set and that both java and javac
 are on your PATH.
 
