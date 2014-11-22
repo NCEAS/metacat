@@ -128,7 +128,7 @@ To install and run the Registry:
 
       sudo apt-get install ant libappconfig-perl libxml-libxml-perl \
       libxml-libxslt-perl libtemplate-perl libcgi-session-perl \
-      libnet-ldap-perl libterm-readkey-perl \
+      build-essential libnet-ldap-perl libterm-readkey-perl \
       libxml-dom-perl libsoap-lite-perl -y
 
   * Install two more package using cpan 
