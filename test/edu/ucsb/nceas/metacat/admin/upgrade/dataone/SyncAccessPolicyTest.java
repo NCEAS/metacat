@@ -36,10 +36,12 @@ import junit.framework.TestSuite;
 
 import org.dataone.client.CNode;
 import org.dataone.client.D1Client;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -136,7 +138,15 @@ public class SyncAccessPolicyTest extends D1NodeServiceTest {
 					"test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid,
 					session.getSubject(), object);
-
+			String nodeId =  Settings.getConfiguration().getString("dataone.nodeId");
+			//System.out.println("the node id from the configuration file (metacat.properties) is =============================="+nodeId);
+			if(nodeId != null && !nodeId.trim().equals("")) {
+			    //System.out.println("set the node id to be ============================== "+nodeId+" which comes from the configuration file");
+			    NodeReference nr = new NodeReference();
+	            nr.setValue(nodeId);
+	            sysmeta.setOriginMemberNode(nr);
+	            sysmeta.setAuthoritativeMemberNode(nr);
+			}
 			pid = MNodeService.getInstance(request).create(session, guid,
 					object, sysmeta);
 		} catch (Exception e) {
