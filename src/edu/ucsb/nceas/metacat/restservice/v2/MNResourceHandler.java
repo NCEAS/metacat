@@ -64,6 +64,7 @@ import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.Log;
@@ -754,9 +755,16 @@ public class MNResourceHandler extends D1ResourceHandler {
 		
 		if (this.session != null) {
 			String userId = this.session.getSubject().getValue();
-
+			String fullName = null;
+			try {
+				Person person = this.session.getSubjectInfo().getPerson(0);
+				fullName = person.getGivenName(0) + " " + person.getFamilyName();
+			} catch (Exception e) {
+				logMetacat.warn(e.getMessage(), e);
+			}
+			
 			String token = null;
-			token = TokenGenerator.getJWT(userId);
+			token = TokenGenerator.getJWT(userId, fullName);
 			
 			response.setStatus(200);
 			response.setContentType("text/plain");
