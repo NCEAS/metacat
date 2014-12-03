@@ -19,10 +19,12 @@ OLD_DB_VERSION=8.4
 ANOTHER_OLD_DB_VERSION=9.1
 NEW_DB_VERSION=9.3
 NEW_DB_CONFIG=/etc/postgresql/$NEW_DB_VERSION/main/postgresql.conf
+OLD_DB_CONFIG=/etc/postgresql/$OLD_DB_VERSION/main/postgresql.conf
 OLD_DB_DATA_DIR=$DB_BASE/$OLD_DB_VERSION
 OLD_DB_BACKUP_FILE=postgresql-$OLD_DB_VERSION.tar.gz
 POSTGRES_USER=postgres
 PORT=5432
+PORT1=5435
 echo "start to move database from $OLD_DB_VERSION to $NEW_DB_VERSION at"
 echo `date`
 
@@ -59,14 +61,17 @@ if [ -f "$DB_BASE/$OLD_DB_BACKUP_FILE" ]; then
 else
 	echo "back up the old db data at $OLD_DB_DATA_DIR"
         su - $POSTGRES_USER -c "tar -zcvf $DB_BASE/$OLD_DB_BACKUP_FILE $OLD_DB_DATA_DIR"
-	echo "delete the data directory - $OLD_DB_DATA_DIR"
-	rm -rf $OLD_DB_DATA_DIR/main/*
+	#echo "delete the data directory - $OLD_DB_DATA_DIR"
+	#rm -rf $OLD_DB_DATA_DIR/main/*
 fi
 
-echo "remove postgresql 8.4 and 9.1"
+#echo "remove postgresql 8.4 and 9.1"
 
-apt-get -y remove postgresql-$OLD_DB_VERSION
-apt-get -y remove postgresql-$ANOTHER_OLD_DB_VERSION
+#apt-get -y remove postgresql-$OLD_DB_VERSION
+#apt-get -y remove postgresql-$ANOTHER_OLD_DB_VERSION
+
+echo "modify the port to 5435 in the old new db configuraiton file"
+sed -i.bak --regexp-extended "s/(port =).*/\1${PORT1}/;" $OLD_DB_CONFIG
 
 echo "modify the port to 5432 in the new db configuration file"
 sed -i.bak --regexp-extended "s/(port =).*/\1${PORT}/;" $NEW_DB_CONFIG
