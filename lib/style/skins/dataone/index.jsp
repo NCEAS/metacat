@@ -175,7 +175,7 @@ function init() {
 		<hr/>		
 
 		Enter this temporary token: 
-		<iframe id="tokenFrame" frameborder="0" marginwidth="0" height="30" width="100%" src="<%=portalURL %>/identity?action=getToken">
+		<iframe id="tokenFrame" frameborder="0" marginwidth="0" height="30" width="100%" src="<%=portalURL %>/identity?action=getCookie">
 		</iframe>
 		<br/>
 
