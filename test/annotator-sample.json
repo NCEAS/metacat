@@ -1,0 +1,30 @@
+{
+  "pid": "tao.1.1", 
+  "field": "annotation_sm", 
+  "reject": false, 
+  "ranges": [
+    {
+      "start": "/section[1]/article[1]/form[1]/section[1]/div[1]/div[1]", 
+      "end": "/section[1]/article[1]/form[1]/section[1]/div[1]/div[1]", 
+      "startOffset": 0, 
+      "endOffset": 4
+    }
+  ], 
+  "permissions": {
+    "read": [
+      "group:__world__"
+    ], 
+    "delete": [], 
+    "admin": [], 
+    "update": []
+  }, 
+  "user": "CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org", 
+  "consumer": "metacat", 
+  "updated": "2014-12-03T23:29:20.262152+00:00", 
+  "quote": "Data", 
+  "oa:Motivation": "oa:tagging", 
+  "tags": [], 
+  "text": "Original annotation content", 
+  "created": "2014-12-03T23:09:25.501665+00:00", 
+  "uri": "https://cn-dev.test.dataone.org/cn/v1/object/tao.1.1"
+}

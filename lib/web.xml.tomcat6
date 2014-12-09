@@ -218,6 +218,31 @@
       </init-param>
       <load-on-startup>20</load-on-startup>
     </servlet>
+    
+    <!-- annotator servlet -->
+    <servlet>
+      <servlet-name>annotatorServlet</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.annotation.store.AnnotatorRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>20</load-on-startup>
+    </servlet>
+    
+    <servlet-mapping>
+        <servlet-name>annotatorServlet</servlet-name>
+        <url-pattern>/annotator</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>annotatorServlet</servlet-name>
+        <url-pattern>/annotator/*</url-pattern>
+    </servlet-mapping>
   
     <servlet-mapping>
         <servlet-name>metacat</servlet-name>
