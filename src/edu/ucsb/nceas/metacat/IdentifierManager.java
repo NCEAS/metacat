@@ -920,6 +920,46 @@ public class IdentifierManager {
         return guid;
     }
     
+    /**
+     * Get the pid of the head (current) version of objects match the specified sid.
+     * DataONE defines the latest version as "current" if the object in question has 
+     * a matching SID and no value in the "obsoletedBy" field, regardless if it is "archived" or not.
+     * @param sid specified sid which should match.
+     * @return the pid of the head version. The null will be returned if there is no pid found.
+     */
+    public Identifier getHeadPID(Identifier sid) {
+        Identifier pid = null;
+        if(sid != null && sid.getValue() != null && !sid.getValue().trim().equals("")) {
+            logMetacat.debug("getting pid of the head version for matching the sid: " + sid.getValue());
+            String sql = "select guid from systemMetadata where obsoleted_by is null and series_id = ?";
+            DBConnection dbConn = null;
+            int serialNumber = -1;
+            try {
+                // Get a database connection from the pool
+                dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getHeadPID");
+                serialNumber = dbConn.getCheckOutSerialNumber();
+                // Execute the insert statement
+                PreparedStatement stmt = dbConn.prepareStatement(sql);
+                stmt.setString(1, sid.getValue());
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) 
+                {
+                    pid = new Identifier();
+                    pid.setValue(rs.getString(1));
+                   
+                } 
+                
+            } catch (SQLException e) {
+                logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
+                        + e.getMessage());
+            } finally {
+                // Return database connection to the pool
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }
+        }
+        return pid;
+    }
+    
     public boolean systemMetadataExists(String guid) {
 		logMetacat.debug("looking up system metadata for guid " + guid);
 		boolean exists = false;
