@@ -926,8 +926,9 @@ public class IdentifierManager {
      * a matching SID and no value in the "obsoletedBy" field, regardless if it is "archived" or not.
      * @param sid specified sid which should match.
      * @return the pid of the head version. The null will be returned if there is no pid found.
+     * @throws SQLException 
      */
-    public Identifier getHeadPID(Identifier sid) {
+    public Identifier getHeadPID(Identifier sid) throws SQLException {
         Identifier pid = null;
         if(sid != null && sid.getValue() != null && !sid.getValue().trim().equals("")) {
             logMetacat.debug("getting pid of the head version for matching the sid: " + sid.getValue());
@@ -952,6 +953,7 @@ public class IdentifierManager {
             } catch (SQLException e) {
                 logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
                         + e.getMessage());
+                throw e;
             } finally {
                 // Return database connection to the pool
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -960,7 +962,44 @@ public class IdentifierManager {
         return pid;
     }
     
-    public boolean systemMetadataExists(String guid) {
+    /**
+     * Check if the specified sid exists on the serial id field on the system metadata table
+     * @param id
+     * @return true if it exists; false otherwise.
+     */
+    public boolean serialIdExists(String sid) throws SQLException {
+        boolean exists = false;
+        if(sid != null && !sid.trim().equals("")) {
+            logMetacat.debug("Check if the  sid: " + sid +" exists on the series_id field of the system metadata table.");
+            String sql = "select guid from systemMetadata where series_id = ?";
+            DBConnection dbConn = null;
+            int serialNumber = -1;
+            try {
+                // Get a database connection from the pool
+                dbConn = DBConnectionPool.getDBConnection("IdentifierManager.serialIdExists");
+                serialNumber = dbConn.getCheckOutSerialNumber();
+                // Execute the insert statement
+                PreparedStatement stmt = dbConn.prepareStatement(sql);
+                stmt.setString(1, sid);
+                ResultSet rs = stmt.executeQuery();
+                if (rs.next()) 
+                {
+                    exists = true;
+                } 
+                
+            } catch (SQLException e) {
+                logMetacat.error("Error while checking if the sid "+sid+" exists on the series_id field of the system metadata table: " 
+                        + e.getMessage());
+                throw e;
+            } finally {
+                // Return database connection to the pool
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }
+        }
+        return exists;
+    }
+    
+    public boolean systemMetadataExists(String guid) throws SQLException {
 		logMetacat.debug("looking up system metadata for guid " + guid);
 		boolean exists = false;
 		String query = "select guid from systemmetadata where guid = ?";
@@ -983,6 +1022,7 @@ public class IdentifierManager {
 		} catch (SQLException e) {
 			logMetacat.error("Error while looking up the system metadata: "
 					+ e.getMessage());
+			throw e;
 		} finally {
 			// Return database connection to the pool
 			DBConnectionPool.returnDBConnection(dbConn, serialNumber);
