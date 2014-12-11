@@ -766,7 +766,7 @@ public class IdentifierManager {
      * @param guid the global identifier to look up
      * @return boolean true if the identifier exists
      */
-    public boolean identifierExists(String guid)
+    public boolean identifierExists(String guid) throws SQLException
     {
         boolean idExists = false;
         try {
@@ -776,11 +776,14 @@ public class IdentifierManager {
             }
         } catch (McdbDocNotFoundException e) {
         	// try system metadata only
-        	try {
-        		idExists = systemMetadataExists(guid);
-            } catch (Exception e2) {
-            	idExists = false;
-            }
+        	    //this will check if the guid field on the system metadata table has the id
+        		idExists = systemMetadataGUIDExists(guid);
+        		if(!idExists) {
+        		    //if the guid field of the system metadata table doesn't have the id,
+        		    //we will check if the serial_id field of the system metadata table has it
+        		    idExists=systemMetadataSIDExists(guid);
+        		}
+            
         }
         return idExists;
     }
@@ -967,7 +970,7 @@ public class IdentifierManager {
      * @param id
      * @return true if it exists; false otherwise.
      */
-    public boolean serialIdExists(String sid) throws SQLException {
+    public boolean systemMetadataSIDExists(String sid) throws SQLException {
         boolean exists = false;
         if(sid != null && !sid.trim().equals("")) {
             logMetacat.debug("Check if the  sid: " + sid +" exists on the series_id field of the system metadata table.");
@@ -999,7 +1002,7 @@ public class IdentifierManager {
         return exists;
     }
     
-    public boolean systemMetadataExists(String guid) throws SQLException {
+    public boolean systemMetadataGUIDExists(String guid) throws SQLException {
 		logMetacat.debug("looking up system metadata for guid " + guid);
 		boolean exists = false;
 		String query = "select guid from systemmetadata where guid = ?";
@@ -1054,7 +1057,7 @@ public class IdentifierManager {
         	dbConn.setAutoCommit(false);
         	
 	    	// insert the record if needed
-        	if (!IdentifierManager.getInstance().systemMetadataExists(guid)) {
+        	if (!IdentifierManager.getInstance().systemMetadataGUIDExists(guid)) {
     	        insertSystemMetadata(guid, dbConn);
 			}
 	        // update with the values

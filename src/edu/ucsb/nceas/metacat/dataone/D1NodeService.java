@@ -350,7 +350,15 @@ public abstract class D1NodeService {
 
     logMetacat.debug("Checking if identifier exists: " + pid.getValue());
     // Check that the identifier does not already exist
-    if (IdentifierManager.getInstance().identifierExists(pid.getValue())) {
+    boolean idExists = false;
+    try {
+        idExists = IdentifierManager.getInstance().identifierExists(pid.getValue());
+    } catch (SQLException e) {
+        throw new ServiceFailure("1190", 
+                                "The requested identifier " + pid.getValue() +
+                                " couldn't be determined if it is unique since : "+e.getMessage());
+    }
+    if (idExists) {
 	    	throw new IdentifierNotUnique("1120", 
 			          "The requested identifier " + pid.getValue() +
 			          " is already used by another object and" +
