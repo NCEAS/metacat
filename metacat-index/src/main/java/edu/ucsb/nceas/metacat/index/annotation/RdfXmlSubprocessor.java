@@ -114,7 +114,15 @@ public class RdfXmlSubprocessor implements IDocumentSubprocessor {
     public void setMatchDocuments(List<String> matchDocuments) {
         this.matchDocuments = matchDocuments;
     }
-    @Override
+    public List<ISolrDataField> getFieldList() {
+		return fieldList;
+	}
+
+	public void setFieldList(List<ISolrDataField> fieldList) {
+		this.fieldList = fieldList;
+	}
+
+	@Override
     public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs, InputStream is) throws Exception {
         SolrDoc resourceMapDoc = docs.get(identifier);
         List<SolrDoc> processedDocs = process(resourceMapDoc, is);
