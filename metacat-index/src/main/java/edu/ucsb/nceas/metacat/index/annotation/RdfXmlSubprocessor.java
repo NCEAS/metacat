@@ -43,9 +43,8 @@ import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.cn.indexer.annotation.SparqlField;
 import org.dataone.cn.indexer.annotation.TripleStoreService;
 import org.dataone.cn.indexer.convert.SolrDateConverter;
-import org.dataone.cn.indexer.parser.AbstractDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
-import org.dataone.cn.indexer.parser.ISolrField;
+import org.dataone.cn.indexer.parser.ISolrDataField;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
@@ -78,10 +77,17 @@ import edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
  * The solr doc of the RDF/XML object only has the system metadata information.
  * The solr docs of the science metadata doc and data file have the annotation information.
  */
-public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements IDocumentSubprocessor {
+public class RdfXmlSubprocessor implements IDocumentSubprocessor {
 
     private static final String QUERY ="q=id:";
     private static Log log = LogFactory.getLog(RdfXmlSubprocessor.class);
+    
+    /**
+     * If xpath returns true execute the processDocument Method
+     */
+    private List<String> matchDocuments = null;
+    private List<ISolrDataField> fieldList = new ArrayList<ISolrDataField>();
+    
     private static SolrServer solrServer =  null;
     static {
         try {
@@ -90,7 +96,24 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
             log.error("RdfXmlSubprocessor - can't generate the SolrServer since - "+e.getMessage());
         }
     }
-          
+    
+    /**
+     * Returns true if subprocessor should be run against object
+     * 
+     * @param formatId the the document to be processed
+     * @return true if this processor can parse the formatId
+     */
+    public boolean canProcess(String formatId) {
+        return matchDocuments.contains(formatId);
+    } 
+    
+    public List<String> getMatchDocuments() {
+        return matchDocuments;
+    }
+
+    public void setMatchDocuments(List<String> matchDocuments) {
+        this.matchDocuments = matchDocuments;
+    }
     @Override
     public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs, InputStream is) throws Exception {
         SolrDoc resourceMapDoc = docs.get(identifier);
@@ -130,7 +153,7 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
 		
 		// process each field query
         Map<String, SolrDoc> documentsToIndex = new HashMap<String, SolrDoc>();
-		for (ISolrField field: this.getFieldList()) {
+		for (ISolrDataField field: this.fieldList) {
 			String q = null;
 			if (field instanceof SparqlField) {
 				q = ((SparqlField) field).getQuery();
