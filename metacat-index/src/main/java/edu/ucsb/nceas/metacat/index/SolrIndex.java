@@ -58,11 +58,9 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.schema.IndexSchema;
 import org.dataone.cn.indexer.XMLNamespaceConfig;
 import org.dataone.cn.indexer.convert.SolrDateConverter;
+import org.dataone.cn.indexer.parser.AbstractDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.SolrField;
-import org.dataone.cn.indexer.resourcemap.ResourceEntry;
-import org.dataone.cn.indexer.resourcemap.ResourceMap;
-import org.dataone.cn.indexer.resourcemap.ResourceMapFactory;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
@@ -156,7 +154,9 @@ public class SolrIndex {
      */
     public void setSubprocessors(List<IDocumentSubprocessor> subprocessorList) {
         for (IDocumentSubprocessor subprocessor : subprocessorList) {
-            subprocessor.initExpression(xpath);
+        	if (subprocessor instanceof AbstractDocumentSubprocessor) {
+        		((AbstractDocumentSubprocessor)subprocessor).initExpression(xpath);
+        	}
         }
         this.subprocessors = subprocessorList;
     }
@@ -197,33 +197,37 @@ public class SolrIndex {
         SolrDoc indexDocument = new SolrDoc(sysSolrFields);
         Map<String, SolrDoc> docs = new HashMap<String, SolrDoc>();
         docs.put(id, indexDocument);
+        
+        // get the format id for this object
+        String formatId = indexDocument.getFirstFieldValue(SolrElementField.FIELD_OBJECTFORMAT);
 
         // Determine if subprocessors are available for this ID
         if (subprocessors != null) {
-                    // for each subprocessor loaded from the spring config
-                    for (IDocumentSubprocessor subprocessor : subprocessors) {
-                        // Does this subprocessor apply?
-                        if (subprocessor.canProcess(sysMetaDoc)) {
-                            // if so, then extract the additional information from the
-                            // document.
-                            try {
-                                // docObject = the resource map document or science
-                                // metadata document.
-                                // note that resource map processing touches all objects
-                                // referenced by the resource map.
-                            	InputStream dataStream = new FileInputStream(objectPath);
-                                Document docObject = generateXmlDocument(dataStream);
-                                if (docObject == null) {
-                                    throw new Exception("Could not load OBJECT for ID " + id );
-                                } else {
-                                    docs = subprocessor.processDocument(id, docs, docObject);
-                                }
-                            } catch (Exception e) {
-                                log.error(e.getMessage(), e);
-                                throw new SolrServerException(e.getMessage());
-                            }
-                        }
-                    }
+	        // for each subprocessor loaded from the spring config
+	        for (IDocumentSubprocessor subprocessor : subprocessors) {
+	            // Does this subprocessor apply?
+	            if (subprocessor.canProcess(formatId)) {
+	                // if so, then extract the additional information from the
+	                // document.
+	                try {
+	                    // docObject = the resource map document or science
+	                    // metadata document.
+	                    // note that resource map processing touches all objects
+	                    // referenced by the resource map.
+	                	FileInputStream dataStream = new FileInputStream(objectPath);
+	                    if (!dataStream.getFD().valid()) {
+	                    	log.error("Could not load OBJECT file for ID,Path=" + id + ", "
+                                    + objectPath);
+	                        //throw new Exception("Could not load OBJECT for ID " + id );
+	                    } else {
+	                        docs = subprocessor.processDocument(id, docs, dataStream);
+	                    }
+	                } catch (Exception e) {
+	                    log.error(e.getMessage(), e);
+	                    throw new SolrServerException(e.getMessage());
+	                }
+	            }
+	        }
        }
 
        // TODO: in the XPathDocumentParser class in d1_cn_index_process module,

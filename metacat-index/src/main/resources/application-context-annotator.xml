@@ -5,9 +5,12 @@
 
 	<bean id="annotatorSubprocessor" class="org.dataone.cn.indexer.annotation.AnnotatorSubprocessor">
 		
-		<!-- match any document type -->
-		<property name="matchDocument"
-			value="/d200:systemMetadata/formatId[text() != '']" />
+		<!-- match annotation documents -->
+		<property name="matchDocuments">
+			<list>
+				<value>http://docs.annotatorjs.org/en/v1.2.x/annotation-format.html</value>
+			</list>
+		</property>
 		<property name="fieldList">
 			<list>
 				<ref bean="annotation.expansion" />

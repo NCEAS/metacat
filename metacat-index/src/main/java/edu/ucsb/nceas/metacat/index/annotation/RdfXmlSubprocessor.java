@@ -15,8 +15,6 @@
  */
 package edu.ucsb.nceas.metacat.index.annotation;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -32,14 +30,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.TransformerFactoryConfigurationError;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -65,7 +55,6 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.util.AccessUtil;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.DateTimeMarshaller;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import com.hp.hpl.jena.ontology.OntModel;
@@ -103,9 +92,9 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     }
           
     @Override
-    public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs, Document doc) throws Exception {
+    public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs, InputStream is) throws Exception {
         SolrDoc resourceMapDoc = docs.get(identifier);
-        List<SolrDoc> processedDocs = process(resourceMapDoc, doc);
+        List<SolrDoc> processedDocs = process(resourceMapDoc, is);
         Map<String, SolrDoc> processedDocsMap = new HashMap<String, SolrDoc>();
         for (SolrDoc processedDoc : processedDocs) {
             processedDocsMap.put(processedDoc.getIdentifier(), processedDoc);
@@ -114,23 +103,13 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
         Map<String, SolrDoc> mergedDocuments = mergeDocs(docs, processedDocsMap);
         return mergedDocuments;
     }
-
-    private InputStream toInputStream(Document doc) throws TransformerConfigurationException, TransformerException, TransformerFactoryConfigurationError {
-    	ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    	Source xmlSource = new DOMSource(doc);
-    	Result outputTarget = new StreamResult(outputStream);
-    	TransformerFactory.newInstance().newTransformer().transform(xmlSource, outputTarget);
-    	InputStream is = new ByteArrayInputStream(outputStream.toByteArray());
-    	return is;
-    }
     
-    private List<SolrDoc> process(SolrDoc indexDocument, Document rdfXmlDocument) throws Exception {
+    private List<SolrDoc> process(SolrDoc indexDocument, InputStream is) throws Exception {
     	
     	// get the triplestore dataset
 		Dataset dataset = TripleStoreService.getInstance().getDataset();
 		
     	// read the annotation
-		InputStream source = toInputStream(rdfXmlDocument);
     	String indexDocId = indexDocument.getIdentifier();
     	String name = indexDocId;
     			
@@ -144,7 +123,7 @@ public class RdfXmlSubprocessor extends AbstractDocumentSubprocessor implements 
     	boolean loaded = dataset.containsNamedModel(name);
 		if (!loaded) {
 			OntModel ontModel = ModelFactory.createOntologyModel();
-			ontModel.read(source, name);
+			ontModel.read(is, name);
 			dataset.addNamedModel(name, ontModel);
 		}
 		//dataset.getDefaultModel().add(ontModel);
