@@ -585,23 +585,31 @@ public abstract class D1NodeService {
     if (allowed) {
       try {
         inputStream = handler.read(localId);
+      } catch (McdbDocNotFoundException de) {
+          String error ="";
+          if(EventLog.getInstance().isDeleted(localId)) {
+                error=DELETEDMESSAGE;
+          }
+          throw new NotFound("1020", "The object specified by " + 
+                           pid.getValue() +
+                           " does not exist at this node. "+error);
       } catch (Exception e) {
-        String error ="";
-        if(EventLog.getInstance().isDeleted(localId)) {
-              error=DELETEDMESSAGE;
-        }
-        throw new NotFound("1020", "The object specified by " + 
+        throw new ServiceFailure("1030", "The object specified by " + 
             pid.getValue() +
-            "could not be returned due to error: " +
-            e.getMessage()+". "+error);
+            " could not be returned due to error: " +
+            e.getMessage()+". ");
       }
     }
 
     // if we fail to set the input stream
     if ( inputStream == null ) {
-      throw new NotFound("1020", "The object specified by " + 
+        String error ="";
+        if(EventLog.getInstance().isDeleted(localId)) {
+              error=DELETEDMESSAGE;
+        }
+        throw new NotFound("1020", "The object specified by " + 
                          pid.getValue() +
-                         "does not exist at this node.");
+                         " does not exist at this node. "+error);
     }
     
 	// log the read event
