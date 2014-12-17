@@ -124,6 +124,8 @@ public class IdentifierManagerTest extends MCTestCase {
             
         } catch (McdbDocNotFoundException e) {
             fail(e.getMessage());
+        } catch (SQLException e) {
+            fail(e.getMessage());
         }
     }
     
@@ -138,6 +140,8 @@ public class IdentifierManagerTest extends MCTestCase {
                  "found exception but did not.");
         } catch (McdbDocNotFoundException e) {
             assertNotNull(e);
+        } catch (SQLException e) {
+            fail(e.getMessage());
         }
     }
     
@@ -204,6 +208,8 @@ public class IdentifierManagerTest extends MCTestCase {
         } catch (McdbDocNotFoundException e) {
             e.printStackTrace();
             fail("createMapping failed to create proper localId from guid: " + e.getMessage());
+        } catch (SQLException e) {
+            fail(e.getMessage());
         }
     }
     
