@@ -2057,9 +2057,21 @@ public class MetacatHandler {
               "Document could not be deleted: "
                     + dnfe.getMessage());
             dnfe.printStackTrace(System.out);
-            
+            return;
           } // end try()
-          
+        
+        } catch (SQLException sqle) {
+            response.setContentType("text/xml");
+            out.println(this.PROLOG);
+            out.println(this.ERROR);
+            //out.println("Error deleting document!!!");
+            out.println(sqle.getMessage());
+            out.println(this.ERRORCLOSE);
+            logMetacat.error("MetacatHandler.handleDeleteAction - " +
+              "Document could not be deleted: "
+                    + sqle.getMessage());
+            sqle.printStackTrace(System.out);
+            return;
         } // end try()
         
         // alert that it happened

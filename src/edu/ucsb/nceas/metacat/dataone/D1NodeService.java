@@ -217,6 +217,8 @@ public abstract class D1NodeService {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
       } catch (McdbDocNotFoundException e) {
           throw new NotFound("1340", "The object with the provided " + "identifier was not found.");
+      } catch (SQLException e) {
+          throw new ServiceFailure("1350", "The object with the provided " + "identifier "+pid.getValue()+" couldn't be identified since "+e.getMessage());
       }
       
       try {
@@ -572,6 +574,9 @@ public abstract class D1NodeService {
       throw new NotFound("1020", "The object specified by " + 
                          pid.getValue() +
                          " does not exist at this node.");
+    } catch (SQLException e) {
+        throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
+                                  " couldn't be identified at this node since "+e.getMessage());
     }
     
     // check for authorization
@@ -1206,6 +1211,9 @@ public abstract class D1NodeService {
             " should have been in the identifier table, but it wasn't: " + 
             e.getMessage());
       
+      } catch (SQLException e) {
+          throw new ServiceFailure("1030", "D1NodeService.insertOrUpdateDocument() -"+
+                     " couldn't identify if the pid "+pid.getValue()+" is in the identifier table since "+e.getMessage());
       }
       
     }
@@ -1389,6 +1397,8 @@ public abstract class D1NodeService {
       } catch (McdbDocNotFoundException e) {
     	  // do nothing, no localId to log with
     	  logMetacat.warn("Could not log 'updateSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+      } catch (SQLException e) {
+          logMetacat.warn("Could not log 'updateSystemMetadata' event because the localId couldn't be identified for the pid: " + pid.getValue());
       }
       
       return true;
@@ -1539,6 +1549,8 @@ public abstract class D1NodeService {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
       } catch (McdbDocNotFoundException e) {
           throw new NotFound("1340", "The object with the provided " + "identifier was not found.");
+      } catch (SQLException e) {
+          throw new ServiceFailure("1350", "The object with the provided identifier "+pid.getValue()+" couldn't be identified since "+e.getMessage());
       }
 
       // does the subject have archive (a D1 CHANGE_PERMISSION level) privileges on the pid?

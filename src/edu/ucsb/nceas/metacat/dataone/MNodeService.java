@@ -308,6 +308,9 @@ public class MNodeService extends D1NodeService
             throw new InvalidRequest("1202", "The object with the provided " + 
                 "identifier was not found.");
             
+        } catch (SQLException ee) {
+            throw new ServiceFailure("1310", "The object with the provided " + 
+                    "identifier "+pid.getValue()+" can't be identified since - "+ee.getMessage());
         }
         
         // set the originating node
@@ -572,6 +575,9 @@ public class MNodeService extends D1NodeService
             } catch (McdbDocNotFoundException e) {
                 logMetacat.info("No replica found. Continuing.");
                 
+            } catch (SQLException ee) {
+                throw new ServiceFailure("2151", "Couldn't identify the local id of the object with the specified identifier "
+                                        +pid.getValue()+" since - "+ee.getMessage());
             }
             
             // no local replica, get a replica
@@ -1015,6 +1021,9 @@ public class MNodeService extends D1NodeService
             throw new ServiceFailure("2161", "The identifier specified by " + 
                     syncFailed.getPid() + " was not found on this node.");
 
+        } catch (SQLException e) {
+            throw new ServiceFailure("2161", "Couldn't identify the local id of the identifier specified by " + 
+                    syncFailed.getPid() + " since "+e.getMessage());
         }
         // TODO: update the CN URL below when the CNRead.SynchronizationFailed
         // method is changed to include the URL as a parameter
@@ -1067,6 +1076,9 @@ public class MNodeService extends D1NodeService
             throw new ServiceFailure("2181", "The object specified by " + 
                     pid.getValue() + " does not exist at this node.");
             
+        } catch (SQLException e) {
+            throw new ServiceFailure("2181", "The local id of the object specified by " + 
+                    pid.getValue() + " couldn't be identified since "+e.getMessage());
         }
 
         Subject targetNodeSubject = session.getSubject();
@@ -1662,7 +1674,12 @@ public class MNodeService extends D1NodeService
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
-		}
+		} catch (SQLException e) {
+            // report as service failure
+            ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
 		
 		return newIdentifier;
 	}

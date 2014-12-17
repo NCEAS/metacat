@@ -795,7 +795,7 @@ public class IdentifierManager {
      * @param guid the global identifier to look up
      * @return boolean true if the identifier exists
      */
-    public boolean mappingExists(String guid)
+    public boolean mappingExists(String guid) throws SQLException
     {
         boolean idExists = false;
         try {
@@ -1456,7 +1456,7 @@ public class IdentifierManager {
      * @return String containing the corresponding LocalId
      * @throws McdbDocNotFoundException if the identifier is not found
      */
-    public String getLocalId(String guid) throws McdbDocNotFoundException {
+    public String getLocalId(String guid) throws McdbDocNotFoundException, SQLException {
       
       String db_guid = "";
       String docid = "";
@@ -1487,6 +1487,7 @@ public class IdentifierManager {
       } catch (SQLException e) {
           logMetacat.error("Error while looking up the local identifier: " 
                   + e.getMessage());
+          throw e;
       } finally {
           // Return database connection to the pool
           DBConnectionPool.returnDBConnection(dbConn, serialNumber);

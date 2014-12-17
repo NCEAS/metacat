@@ -373,6 +373,8 @@ public class AccessControlForSingleFile implements AccessControlInterface
 			docid = IdentifierManager.getInstance().getLocalId(_guid);
 		} catch (McdbDocNotFoundException e) {
 			logMetacat.warn("Could not lookup docid for guid, defaulting to guid: " + _guid, e);
+		} catch (SQLException e){
+		    throw new AccessControlException("Couldn't identify the local id of the object with the specified identifier "+_guid+" since "+e.getMessage());
 		}
 
 		output.append("<access authSystem=\"knb\" order=\"" + permOrder + "\" id=\"" + docid + "\" scope=\"document\"");

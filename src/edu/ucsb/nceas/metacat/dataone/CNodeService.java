@@ -25,6 +25,7 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -430,6 +431,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 //                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
 //                  pid.getValue(), Event.DELETE.xmlValue());
 
+      } catch (SQLException e) {
+          throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
+                  ". The local id of the object with the identifier can't be identified since " + e.getMessage());
       }
 
       // get the node list
@@ -576,6 +580,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 //                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
 //                  pid.getValue(), Event.DELETE.xmlValue());
 
+      } catch (SQLException e) {
+          throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+                  ". The local id of the object with the identifier can't be identified since "+e.getMessage());
       }
 
 	  return pid;
@@ -1157,6 +1164,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } catch (McdbDocNotFoundException e) {
     	  // do nothing, no localId to log with
     	  logMetacat.warn("Could not log 'registerSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+      } catch (SQLException ee) {
+          // do nothing, no localId to log with
+          logMetacat.warn("Could not log 'registerSystemMetadata' event because the localId couldn't be identified for pid: " + pid.getValue());
       }
       
       
