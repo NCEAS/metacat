@@ -24,8 +24,14 @@
 
 package edu.ucsb.nceas.metacattest;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
+
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.AccessionNumber;
@@ -35,10 +41,15 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
-public class IdentifierManagerTest extends MCTestCase {
+public class IdentifierManagerTest extends D1NodeServiceTest {
     private String badGuid = "test:testIdThatDoesNotExist";
     
+    public IdentifierManagerTest(String name) {
+        super(name);
+    }
     /**
      * Initialize the connection to metacat, and insert a document to be 
      * used for testing with a known docid.
@@ -222,6 +233,78 @@ public class IdentifierManagerTest extends MCTestCase {
       String localid = im.generateLocalId("mynewid." + new Date().getTime(), 1);
       System.out.println("localid: " + localid);
       assertTrue(localid != null);
+    }
+    
+    /**
+     * Test the method - getHeadPID for a speicified SID
+     */
+    public void testGetHeadPID() {
+        
+        try {
+            //insert test documents with a series id
+            Session session = getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue(generateDocumentId());
+            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            String sid1= "sid."+System.nanoTime();
+            Identifier seriesId = new Identifier();
+            seriesId.setValue(sid1);
+            System.out.println("the first sid is "+seriesId.getValue());
+            sysmeta.setSeriesId(seriesId);
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            System.out.println("the first pid is "+guid.getValue());
+            Identifier head = IdentifierManager.getInstance().getHeadPID(seriesId);
+            System.out.println("the head 1 is "+head.getValue());
+            assertTrue(head.getValue().equals(guid.getValue()));
+            
+            //do a update with the same series id
+            Thread.sleep(1000);
+            Identifier newPid = new Identifier();
+            newPid.setValue(generateDocumentId()+"1");
+            System.out.println("the second pid is "+newPid.getValue());
+            SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+            newSysMeta.setObsoletes(guid);
+            newSysMeta.setSeriesId(seriesId);
+            MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            // the pid should be the newPid when we try to get the sid1
+            head = IdentifierManager.getInstance().getHeadPID(seriesId);
+            System.out.println("the head 2 is "+head.getValue());
+            assertTrue(head.getValue().equals(newPid.getValue()));
+            
+            //do another update with different series id
+            Thread.sleep(1000);
+            String sid2 = "sid."+System.nanoTime();
+            Identifier seriesId2= new Identifier();
+            seriesId2.setValue(sid2);
+            System.out.println("the second sid is "+seriesId2.getValue());
+            Identifier newPid2 = new Identifier();
+            newPid2.setValue(generateDocumentId()+"2");
+            System.out.println("the third pid is "+newPid2.getValue());
+            SystemMetadata sysmeta3 = createSystemMetadata(newPid2, session.getSubject(), object);
+            sysmeta3.setObsoletes(newPid);
+            sysmeta3.setSeriesId(seriesId2);
+            MNodeService.getInstance(request).update(session, newPid, object, newPid2, sysmeta3);
+            
+            // the pid should be the newPid when we try to get the sid1
+            head =IdentifierManager.getInstance().getHeadPID(seriesId);
+            System.out.println("the head 3 is "+head.getValue());
+            assertTrue(head.getValue().equals(newPid.getValue()));
+            
+            // the pid should be the newPid2 when we try to get the sid2
+            head = IdentifierManager.getInstance().getHeadPID(seriesId2);
+            System.out.println("the head 4 is "+head.getValue());
+            assertTrue(head.getValue().equals(newPid2.getValue()));
+            
+            // the pid should be null when we try to get a no-exist sid
+            Identifier non_exist_sid = new Identifier();
+            non_exist_sid.setValue("no-sid-exist-123qwe");
+            assertTrue(IdentifierManager.getInstance().getHeadPID(non_exist_sid) == null);
+            
+        } catch (Exception e) {
+            fail(e.getMessage());
+        }
+        
     }
 
     /** 
