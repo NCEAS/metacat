@@ -927,6 +927,8 @@ public class IdentifierManager {
      * Get the pid of the head (current) version of objects match the specified sid.
      * DataONE defines the latest version as "current" if the object in question has 
      * a matching SID and no value in the "obsoletedBy" field, regardless if it is "archived" or not.
+     * If we can't find any pid associated with the sid doesn't have a value in obsoletedBy field, 
+     * the pid associated with the sid  which has the max date_uploaded will be returned
      * @param sid specified sid which should match.
      * @return the pid of the head version. The null will be returned if there is no pid found.
      * @throws SQLException 
@@ -951,7 +953,19 @@ public class IdentifierManager {
                     pid = new Identifier();
                     pid.setValue(rs.getString(1));
                    
-                } 
+                } else {
+                    //we don't find any pid associated with the sid doesn't have value in obsoletedBy field.
+                    //The pid associated with the sid  which has the max date_uploaded will be returned.
+                    sql = "select guid from systemMetadata where series_id = ? and date_uploaded=(select max(date_uploaded) from systemMetadata where series_id = ?)";
+                    stmt = dbConn.prepareStatement(sql);
+                    stmt.setString(1, sid.getValue());
+                    stmt.setString(2, sid.getValue());
+                    rs = stmt.executeQuery();
+                    if(rs.next()) {
+                        pid = new Identifier();
+                        pid.setValue(rs.getString(1));
+                    }
+                }
                 
             } catch (SQLException e) {
                 logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
