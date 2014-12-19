@@ -257,6 +257,10 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             Identifier head = IdentifierManager.getInstance().getHeadPID(seriesId);
             System.out.println("the head 1 is "+head.getValue());
             assertTrue(head.getValue().equals(guid.getValue()));
+            assertTrue(IdentifierManager.getInstance().systemMetadataSIDExists(seriesId.getValue()));
+            assertTrue(!IdentifierManager.getInstance().systemMetadataGUIDExists(seriesId.getValue()));
+            assertTrue(IdentifierManager.getInstance().systemMetadataGUIDExists(guid.getValue()));
+            assertTrue(!IdentifierManager.getInstance().systemMetadataSIDExists(guid.getValue()));
             
             //do a update with the same series id
             Thread.sleep(1000);
