@@ -37,9 +37,9 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.servlet.SolrRequestParsers;
-import org.dataone.cn.indexer.XPathDocumentParser;
+import org.dataone.cn.indexer.XmlDocumentUtility;
 import org.dataone.cn.indexer.convert.SolrDateConverter;
-import org.dataone.cn.indexer.parser.AbstractDocumentSubprocessor;
+import org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.resourcemap.ResourceMap;
 import org.dataone.cn.indexer.resourcemap.ResourceMapFactory;
@@ -63,7 +63,7 @@ import edu.ucsb.nceas.metacat.index.SolrIndex;
  * The solr doc of the ResourceMap self only has the system metadata information.
  * The solr docs of the science metadata doc and data file have the resource map package information.
  */
-public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implements IDocumentSubprocessor {
+public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor implements IDocumentSubprocessor {
 
     private static final String QUERY ="q=id:";
     private static final String QUERY2="q="+SolrElementField.FIELD_RESOURCEMAP+":";
@@ -82,7 +82,7 @@ public class ResourceMapSubprocessor extends AbstractDocumentSubprocessor implem
     InputStream is) throws IOException, EncoderException, SAXException,
     XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException {
         SolrDoc resourceMapDoc = docs.get(identifier);
-        Document doc = XPathDocumentParser.generateXmlDocument(is);
+        Document doc = XmlDocumentUtility.generateXmlDocument(is);
 		List<SolrDoc> processedDocs = processResourceMap(resourceMapDoc, doc );
         Map<String, SolrDoc> processedDocsMap = new HashMap<String, SolrDoc>();
         for (SolrDoc processedDoc : processedDocs) {

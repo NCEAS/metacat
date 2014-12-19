@@ -58,7 +58,7 @@ import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.schema.IndexSchema;
 import org.dataone.cn.indexer.XMLNamespaceConfig;
 import org.dataone.cn.indexer.convert.SolrDateConverter;
-import org.dataone.cn.indexer.parser.AbstractDocumentSubprocessor;
+import org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
@@ -154,8 +154,8 @@ public class SolrIndex {
      */
     public void setSubprocessors(List<IDocumentSubprocessor> subprocessorList) {
         for (IDocumentSubprocessor subprocessor : subprocessorList) {
-        	if (subprocessor instanceof AbstractDocumentSubprocessor) {
-        		((AbstractDocumentSubprocessor)subprocessor).initExpression(xpath);
+        	if (subprocessor instanceof BaseXPathDocumentSubprocessor) {
+        		((BaseXPathDocumentSubprocessor)subprocessor).initExpression(xpath);
         	}
         }
         this.subprocessors = subprocessorList;
