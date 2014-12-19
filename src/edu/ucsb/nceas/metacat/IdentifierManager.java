@@ -777,7 +777,7 @@ public class IdentifierManager {
         } catch (McdbDocNotFoundException e) {
         	// try system metadata only
         	    //this will check if the guid field on the system metadata table has the id
-        		idExists = systemMetadataGUIDExists(guid);
+        		idExists = systemMetadataPIDExists(guid);
         		if(!idExists) {
         		    //if the guid field of the system metadata table doesn't have the id,
         		    //we will check if the serial_id field of the system metadata table has it
@@ -1016,7 +1016,7 @@ public class IdentifierManager {
         return exists;
     }
     
-    public boolean systemMetadataGUIDExists(String guid) throws SQLException {
+    public boolean systemMetadataPIDExists(String guid) throws SQLException {
 		logMetacat.debug("looking up system metadata for guid " + guid);
 		boolean exists = false;
 		String query = "select guid from systemmetadata where guid = ?";
@@ -1071,7 +1071,7 @@ public class IdentifierManager {
         	dbConn.setAutoCommit(false);
         	
 	    	// insert the record if needed
-        	if (!IdentifierManager.getInstance().systemMetadataGUIDExists(guid)) {
+        	if (!IdentifierManager.getInstance().systemMetadataPIDExists(guid)) {
     	        insertSystemMetadata(guid, dbConn);
 			}
 	        // update with the values
