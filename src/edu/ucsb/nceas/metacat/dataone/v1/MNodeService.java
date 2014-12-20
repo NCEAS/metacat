@@ -24,6 +24,7 @@
 package edu.ucsb.nceas.metacat.dataone.v1;
 
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
@@ -61,6 +62,8 @@ import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.util.TypeMarshaller;
+
+import edu.ucsb.nceas.metacat.IdentifierManager;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node 
@@ -270,6 +273,17 @@ public class MNodeService
 	@Override
 	public InputStream get(Identifier pid) throws InvalidToken, NotAuthorized,
 			NotImplemented, ServiceFailure, NotFound, InsufficientResources {
+	    boolean exists = false;
+	    try {
+	        exists = IdentifierManager.getInstance().systemMetadataPIDExists(pid);
+	    } catch (SQLException e) {
+	        throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
+                    " couldn't be identified if it exists at this node since "+e.getMessage());
+	    }
+	    if(!exists) {
+	        //the v1 method only handles a pid.
+	        throw new NotFound("1020", "The object specified by "+pid.getValue()+" does not exist at this node");
+	    }
 		return impl.get(null, pid);
 	}
 
@@ -278,6 +292,17 @@ public class MNodeService
 	public InputStream get(Session session, Identifier pid) throws InvalidToken,
 			NotAuthorized, NotImplemented, ServiceFailure, NotFound,
 			InsufficientResources {
+	    boolean exists = false;
+        try {
+            exists = IdentifierManager.getInstance().systemMetadataPIDExists(pid);
+        } catch (SQLException e) {
+            throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
+                    " couldn't be identified if it exists at this node since "+e.getMessage());
+        }
+        if(!exists) {
+            //the v1 method only handles a pid.
+            throw new NotFound("1020", "The object specified by "+pid.getValue()+" does not exist at this node");
+        }
 		return impl.get(session, pid);
 	}
 

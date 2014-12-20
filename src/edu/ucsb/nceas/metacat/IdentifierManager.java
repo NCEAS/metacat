@@ -980,14 +980,28 @@ public class IdentifierManager {
     }
     
     /**
+     * Check if the specified sid object exists on the serial id field on the system metadata table
+     * @param sid
+     * @return true if it exists; false otherwise.
+     * @throws SQLException
+     */
+    public boolean systemMetadataSIDExists(Identifier sid) throws SQLException {
+        if (sid != null && sid.getValue() != null && !sid.getValue().trim().equals("")) {
+            return systemMetadataSIDExists(sid.getValue());
+        } else {
+            return false;
+        }
+    }
+    
+    /**
      * Check if the specified sid exists on the serial id field on the system metadata table
      * @param id
      * @return true if it exists; false otherwise.
      */
     public boolean systemMetadataSIDExists(String sid) throws SQLException {
         boolean exists = false;
+        logMetacat.debug("Check if the  sid: " + sid +" exists on the series_id field of the system metadata table.");
         if(sid != null && !sid.trim().equals("")) {
-            logMetacat.debug("Check if the  sid: " + sid +" exists on the series_id field of the system metadata table.");
             String sql = "select guid from systemMetadata where series_id = ?";
             DBConnection dbConn = null;
             int serialNumber = -1;
@@ -1016,35 +1030,50 @@ public class IdentifierManager {
         return exists;
     }
     
+    /**
+     * Determine if the specified identifier object exists or not.
+     * @param pid - the specified identifier
+     * @return true if it is exists.
+     * @throws SQLException
+     * @throws NullPointerException
+     */
+    public boolean systemMetadataPIDExists(Identifier pid) throws SQLException {
+        if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
+            return systemMetadataPIDExists(pid.getValue());
+        } else {
+            return false;
+        }
+    }
+    
     public boolean systemMetadataPIDExists(String guid) throws SQLException {
 		logMetacat.debug("looking up system metadata for guid " + guid);
 		boolean exists = false;
 		String query = "select guid from systemmetadata where guid = ?";
-
 		DBConnection dbConn = null;
 		int serialNumber = -1;
-		try {
-			// Get a database connection from the pool
-			dbConn = DBConnectionPool.getDBConnection("IdentifierManager.systemMetadataExisits");
-			serialNumber = dbConn.getCheckOutSerialNumber();
+		if(guid != null && !guid.trim().equals("")) {
+		    try {
+	            // Get a database connection from the pool
+	            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.systemMetadataExisits");
+	            serialNumber = dbConn.getCheckOutSerialNumber();
 
-			// Execute the insert statement
-			PreparedStatement stmt = dbConn.prepareStatement(query);
-			stmt.setString(1, guid);
-			ResultSet rs = stmt.executeQuery();
-			if (rs.next()) {
-				exists = true;
-			}
+	            // Execute the insert statement
+	            PreparedStatement stmt = dbConn.prepareStatement(query);
+	            stmt.setString(1, guid);
+	            ResultSet rs = stmt.executeQuery();
+	            if (rs.next()) {
+	                exists = true;
+	            }
 
-		} catch (SQLException e) {
-			logMetacat.error("Error while looking up the system metadata: "
-					+ e.getMessage());
-			throw e;
-		} finally {
-			// Return database connection to the pool
-			DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+	        } catch (SQLException e) {
+	            logMetacat.error("Error while looking up the system metadata: "
+	                    + e.getMessage());
+	            throw e;
+	        } finally {
+	            // Return database connection to the pool
+	            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+	        }
 		}
-
 		return exists;
 	}
     

@@ -561,6 +561,23 @@ public abstract class D1NodeService {
     throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, 
     NotImplemented {
     
+    try {
+        //determine if the given pid is a sid or not.
+        if(IdentifierManager.getInstance().systemMetadataSIDExists(pid)) {
+            try {
+                //set the header pid for the sid if the identifier is a sid.
+                pid = IdentifierManager.getInstance().getHeadPID(pid);
+            } catch (SQLException sqle) {
+                throw new ServiceFailure("1030", "The current pid associated with the sid "+ pid.getValue()+
+                        " couldn't be identified at this node since "+sqle.getMessage());
+            }
+            
+        }
+    } catch (SQLException e) {
+        throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
+                " couldn't be identified at this node since "+e.getMessage());
+    }
+    
     InputStream inputStream = null; // bytes to be returned
     handler = new MetacatHandler(new Timer());
     boolean allowed = false;
