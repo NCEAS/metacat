@@ -561,21 +561,10 @@ public abstract class D1NodeService {
     throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, 
     NotImplemented {
     
-    try {
-        //determine if the given pid is a sid or not.
-        if(IdentifierManager.getInstance().systemMetadataSIDExists(pid)) {
-            try {
-                //set the header pid for the sid if the identifier is a sid.
-                pid = IdentifierManager.getInstance().getHeadPID(pid);
-            } catch (SQLException sqle) {
-                throw new ServiceFailure("1030", "The current pid associated with the sid "+ pid.getValue()+
-                        " couldn't be identified at this node since "+sqle.getMessage());
-            }
-            
-        }
-    } catch (SQLException e) {
-        throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
-                " couldn't be identified at this node since "+e.getMessage());
+    String serviceFailureCode = "1030";
+    Identifier sid = getPIDForSID(pid, serviceFailureCode);
+    if(sid != null) {
+        pid = sid;
     }
     
     InputStream inputStream = null; // bytes to be returned
@@ -1612,6 +1601,58 @@ public abstract class D1NodeService {
       }
 
       return pid;
+  }
+  
+  
+  /**
+   * A utility method for v1 api to check the specified identifier exists as a pid
+   * @param identifier  the specified identifier
+   * @param serviceFailureCode  the detail error code for the service failure exception
+   * @param noFoundCode  the detail error code for the not found exception
+   * @throws ServiceFailure
+   * @throws NotFound
+   */
+  public void checkV1SystemMetaPidExist(Identifier identifier, String serviceFailureCode, String noFoundCode) throws ServiceFailure, NotFound {
+      boolean exists = false;
+      try {
+          exists = IdentifierManager.getInstance().systemMetadataPIDExists(identifier);
+      } catch (SQLException e) {
+          throw new ServiceFailure(serviceFailureCode, "The object specified by "+ identifier.getValue()+
+                  " couldn't be identified if it exists at this node since "+e.getMessage());
+      }
+      if(!exists) {
+        //the v1 method only handles a pid.
+          throw new NotFound(noFoundCode, "The object specified by "+identifier.getValue()+" does not exist at this node");
+      }
+  }
+  
+  /**
+   * Utility method to get the PID for an SID. If the specified identifier is not an SID
+   * , null will be returned.
+   * @param sid  the specified sid
+   * @param serviceFailureCode  the detail error code for the service failure exception
+   * @return the pid for the sid. If the specified identifier is not an SID, null will be returned.
+   * @throws ServiceFailure
+   */
+  protected Identifier getPIDForSID(Identifier sid, String serviceFailureCode) throws ServiceFailure {
+      Identifier id = null;
+      try {
+          //determine if the given pid is a sid or not.
+          if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
+              try {
+                  //set the header pid for the sid if the identifier is a sid.
+                  id = IdentifierManager.getInstance().getHeadPID(sid);
+              } catch (SQLException sqle) {
+                  throw new ServiceFailure(serviceFailureCode, "The current pid associated with the sid "+ sid.getValue()+
+                          " couldn't be identified at this node since "+sqle.getMessage());
+              }
+              
+          }
+      } catch (SQLException e) {
+          throw new ServiceFailure(serviceFailureCode, "The object specified by "+ sid.getValue()+
+                  " couldn't be identified at this node since "+e.getMessage());
+      }
+      return id;
   }
 
 

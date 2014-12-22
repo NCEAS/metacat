@@ -208,17 +208,9 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public InputStream get(Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-	    boolean exists = false;
-        try {
-            exists = IdentifierManager.getInstance().systemMetadataPIDExists(pid);
-        } catch (SQLException e) {
-            throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
-                    " couldn't be identified if it exists at this node since "+e.getMessage());
-        }
-        if(!exists) {
-          //the v1 method only handles a pid.
-            throw new NotFound("1020", "The object specified by "+pid.getValue()+" does not exist at this node");
-        }
+        String serviceFailure = "1030";
+        String notFound = "1020";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, notFound);
 		return impl.get(null, pid);
 	}
 
@@ -226,17 +218,9 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Deprecated
 	public InputStream get(Session session, Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-	    boolean exists = false;
-        try {
-            exists = IdentifierManager.getInstance().systemMetadataPIDExists(pid);
-        } catch (SQLException e) {
-            throw new ServiceFailure("1030", "The object specified by "+ pid.getValue()+
-                    " couldn't be identified if it exists at this node since "+e.getMessage());
-        }
-        if(!exists) {
-          //the v1 method only handles a pid.
-            throw new NotFound("1020", "The object specified by "+pid.getValue()+" does not exist at this node");
-        }
+	    String serviceFailure = "1030";
+        String notFound = "1020";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, notFound);
 		return impl.get(session, pid);
 	}
 
