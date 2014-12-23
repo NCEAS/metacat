@@ -1438,19 +1438,62 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             }
             
             //do a update with the same series id
-            /*Thread.sleep(1000);
+            Thread.sleep(1000);
             Identifier newPid = new Identifier();
             newPid.setValue(generateDocumentId()+"1");
             System.out.println("the second pid is "+newPid.getValue());
-            SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+            InputStream object2 = new ByteArrayInputStream(str2.getBytes("UTF-8"));
+            SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object2);
             newSysMeta.setObsoletes(guid);
             newSysMeta.setSeriesId(seriesId);
-            MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
-            // the pid should be the newPid when we try to get the sid1
-            head = IdentifierManager.getInstance().getHeadPID(seriesId);
-            System.out.println("the head 2 is "+head.getValue());
-            assertTrue(head.getValue().equals(newPid.getValue()));
+            MNodeService.getInstance(request).update(session, guid, object2, newPid, newSysMeta);
+           
+            InputStream result4 = MNodeService.getInstance(request).get(session, guid);
+            // go back to beginning of original stream
+            object1.reset();
+            // check
+            assertTrue(object1.available() > 0);
+            assertTrue(result4.available() > 0);
+            assertTrue(IOUtils.contentEquals(result4, object1));
             
+            InputStream result5 = MNodeService.getInstance(request).get(session, newPid);
+            // go back to beginning of original stream
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result5.available() > 0);
+            assertTrue(IOUtils.contentEquals(result5, object2));
+            
+
+            InputStream result6 = MNodeService.getInstance(request).get(session, seriesId);
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result6.available() > 0);
+            assertTrue(IOUtils.contentEquals(result6, object2));
+            //test the get(pid) for v1
+            InputStream result7 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, guid);
+            object1.reset();
+            // check
+            assertTrue(object1.available() > 0);
+            assertTrue(result7.available() > 0);
+            assertTrue(IOUtils.contentEquals(result7, object1));
+            
+            InputStream result8 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, newPid);
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result8.available() > 0);
+            assertTrue(IOUtils.contentEquals(result8, object2));
+            //test the get(sid) for v1
+            try {
+                InputStream result3 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, seriesId);
+                fail("the get(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch (NotFound ee) {
+                
+            }
+            
+
             //do another update with different series id
             Thread.sleep(1000);
             String sid2 = "sid."+System.nanoTime();
@@ -1460,25 +1503,101 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             Identifier newPid2 = new Identifier();
             newPid2.setValue(generateDocumentId()+"2");
             System.out.println("the third pid is "+newPid2.getValue());
-            SystemMetadata sysmeta3 = createSystemMetadata(newPid2, session.getSubject(), object);
+            InputStream object3 = new ByteArrayInputStream(str3.getBytes("UTF-8"));
+            SystemMetadata sysmeta3 = createSystemMetadata(newPid2, session.getSubject(), object3);
             sysmeta3.setObsoletes(newPid);
             sysmeta3.setSeriesId(seriesId2);
-            MNodeService.getInstance(request).update(session, newPid, object, newPid2, sysmeta3);
+            MNodeService.getInstance(request).update(session, newPid, object3, newPid2, sysmeta3);
             
-            // the pid should be the newPid when we try to get the sid1
-            head =IdentifierManager.getInstance().getHeadPID(seriesId);
-            System.out.println("the head 3 is "+head.getValue());
-            assertTrue(head.getValue().equals(newPid.getValue()));
+            InputStream result9 = MNodeService.getInstance(request).get(session, guid);
+            // go back to beginning of original stream
+            object1.reset();
+            // check
+            assertTrue(object1.available() > 0);
+            assertTrue(result9.available() > 0);
+            assertTrue(IOUtils.contentEquals(result9, object1));
             
-            // the pid should be the newPid2 when we try to get the sid2
-            head = IdentifierManager.getInstance().getHeadPID(seriesId2);
-            System.out.println("the head 4 is "+head.getValue());
-            assertTrue(head.getValue().equals(newPid2.getValue()));
+            InputStream result10 = MNodeService.getInstance(request).get(session, newPid);
+            // go back to beginning of original stream
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result10.available() > 0);
+            assertTrue(IOUtils.contentEquals(result10, object2));
             
-            // the pid should be null when we try to get a no-exist sid
-            Identifier non_exist_sid = new Identifier();
-            non_exist_sid.setValue("no-sid-exist-123qwe");
-            assertTrue(IdentifierManager.getInstance().getHeadPID(non_exist_sid) == null);*/
+            
+            InputStream result11 = MNodeService.getInstance(request).get(session, newPid2);
+            // go back to beginning of original stream
+            object3.reset();
+            // check
+            assertTrue(object3.available() > 0);
+            assertTrue(result11.available() > 0);
+            assertTrue(IOUtils.contentEquals(result11, object3));
+            
+            InputStream result12 = MNodeService.getInstance(request).get(session, seriesId2);
+            object3.reset();
+            // check
+            assertTrue(object3.available() > 0);
+            assertTrue(result12.available() > 0);
+            assertTrue(IOUtils.contentEquals(result12, object3));
+            
+            InputStream result16 = MNodeService.getInstance(request).get(session, seriesId);
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result16.available() > 0);
+            assertTrue(IOUtils.contentEquals(result16, object2));
+           
+            //test the get(pid) for v1
+            InputStream result13 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, guid);
+            object1.reset();
+            // check
+            assertTrue(object1.available() > 0);
+            assertTrue(result13.available() > 0);
+            assertTrue(IOUtils.contentEquals(result13, object1));
+            
+            InputStream result14 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, newPid);
+            object2.reset();
+            // check
+            assertTrue(object2.available() > 0);
+            assertTrue(result14.available() > 0);
+            assertTrue(IOUtils.contentEquals(result14, object2));
+            
+            InputStream result15 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, newPid2);
+            object3.reset();
+            // check
+            assertTrue(object3.available() > 0);
+            assertTrue(result15.available() > 0);
+            assertTrue(IOUtils.contentEquals(result15, object3));
+            
+            
+            //test the get(sid) for v1
+            try {
+                InputStream result3 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, seriesId);
+                fail("the get(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch (NotFound ee) {
+                
+            }
+            
+            //test the get(sid) for v1
+            try {
+                InputStream result3 = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, seriesId2);
+                fail("the get(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch (NotFound ee) {
+                
+            }
+            
+            //test to get non-existing id for v2
+            try {
+             // the pid should be null when we try to get a no-exist sid
+                Identifier non_exist_sid = new Identifier();
+                non_exist_sid.setValue("no-sid-exist-123qwe");
+                InputStream result3 = MNodeService.getInstance(request).get(session, non_exist_sid);
+                fail("the get(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch (NotFound ee) {
+                
+            }
+           
             
         } catch (Exception e) {
             fail(e.getMessage());
