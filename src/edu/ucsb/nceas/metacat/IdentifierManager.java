@@ -250,7 +250,7 @@ public class IdentifierManager {
         SystemMetadata sysMeta = new SystemMetadata();
         String sql = "select guid, date_uploaded, rights_holder, checksum, checksum_algorithm, " +
           "origin_member_node, authoritive_member_node, date_modified, submitter, object_format, size, " +
-          "replication_allowed, number_replicas, obsoletes, obsoleted_by, serial_version, archived " +
+          "replication_allowed, number_replicas, obsoletes, obsoleted_by, serial_version, archived, series_id " +
           "from systemmetadata where guid = ?";
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -287,6 +287,7 @@ public class IdentifierManager {
                 String obsoletedBy = rs.getString(15);
                 serialVersion = new BigInteger(rs.getString(16));
                 archived = new Boolean(rs.getBoolean(17));
+                String series_id = rs.getString(18);
 
                 Identifier sysMetaId = new Identifier();
                 sysMetaId.setValue(guid);
@@ -331,6 +332,11 @@ public class IdentifierManager {
 		            sysMeta.setObsoletedBy(obsoletedById);
                 }
                 sysMeta.setArchived(archived);
+                if(series_id != null) {
+                    Identifier seriesId = new Identifier();
+                    seriesId.setValue(series_id);
+                    sysMeta.setSeriesId(seriesId);
+                }
                 stmt.close();
             } 
             else
