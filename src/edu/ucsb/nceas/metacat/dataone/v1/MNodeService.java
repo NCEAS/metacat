@@ -259,6 +259,10 @@ public class MNodeService
 	@Override
 	public DescribeResponse describe(Identifier pid) throws InvalidToken,
 			NotAuthorized, NotImplemented, ServiceFailure, NotFound {
+	    String serviceFailure = "1030";
+        String notFound = "1020";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No system metadata could be found for given PID: "+pid.getValue());
 		return impl.describe(null, pid);
 	}
 
@@ -267,6 +271,10 @@ public class MNodeService
 	public DescribeResponse describe(Session session, Identifier pid)
 			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			NotFound {
+	    String serviceFailure = "1030";
+        String notFound = "1020";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No system metadata could be found for given PID: "+pid.getValue());
 		return impl.describe(session, pid);
 	}
 
@@ -275,7 +283,8 @@ public class MNodeService
 			NotImplemented, ServiceFailure, NotFound, InsufficientResources {
 	    String serviceFailure = "1030";
         String notFound = "1020";
-        impl.checkV1SystemMetaPidExist(pid, serviceFailure, notFound);
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.get(null, pid);
 	}
 
@@ -286,7 +295,8 @@ public class MNodeService
 			InsufficientResources {
 	    String serviceFailure = "1030";
         String notFound = "1020";
-        impl.checkV1SystemMetaPidExist(pid, serviceFailure, notFound);
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.get(session, pid);
 	}
 

@@ -169,6 +169,12 @@ public abstract class D1NodeService {
    */
   public DescribeResponse describe(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+      
+      String serviceFailureCode = "4931";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
 
     // get system metadata and construct the describe response
       SystemMetadata sysmeta = getSystemMetadata(session, pid);
@@ -1612,17 +1618,17 @@ public abstract class D1NodeService {
    * @throws ServiceFailure
    * @throws NotFound
    */
-  public void checkV1SystemMetaPidExist(Identifier identifier, String serviceFailureCode, String noFoundCode) throws ServiceFailure, NotFound {
+  public void checkV1SystemMetaPidExist(Identifier identifier, String serviceFailureCode, String serviceFailureMessage,  
+          String noFoundCode, String notFoundMessage) throws ServiceFailure, NotFound {
       boolean exists = false;
       try {
           exists = IdentifierManager.getInstance().systemMetadataPIDExists(identifier);
       } catch (SQLException e) {
-          throw new ServiceFailure(serviceFailureCode, "The object specified by "+ identifier.getValue()+
-                  " couldn't be identified if it exists at this node since "+e.getMessage());
+          throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+e.getMessage());
       }
       if(!exists) {
         //the v1 method only handles a pid.
-          throw new NotFound(noFoundCode, "The object specified by "+identifier.getValue()+" does not exist at this node");
+          throw new NotFound(noFoundCode, notFoundMessage);
       }
   }
   
@@ -1636,6 +1642,7 @@ public abstract class D1NodeService {
    */
   protected Identifier getPIDForSID(Identifier sid, String serviceFailureCode) throws ServiceFailure {
       Identifier id = null;
+      String serviceFailureMessage = "The PID "+" couldn't be identified for the sid " + sid.getValue();
       try {
           //determine if the given pid is a sid or not.
           if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
@@ -1643,14 +1650,12 @@ public abstract class D1NodeService {
                   //set the header pid for the sid if the identifier is a sid.
                   id = IdentifierManager.getInstance().getHeadPID(sid);
               } catch (SQLException sqle) {
-                  throw new ServiceFailure(serviceFailureCode, "The current pid associated with the sid "+ sid.getValue()+
-                          " couldn't be identified at this node since "+sqle.getMessage());
+                  throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
               }
               
           }
       } catch (SQLException e) {
-          throw new ServiceFailure(serviceFailureCode, "The object specified by "+ sid.getValue()+
-                  " couldn't be identified at this node since "+e.getMessage());
+          throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
       }
       return id;
   }
