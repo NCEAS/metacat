@@ -273,6 +273,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       SystemMetadata newsysmeta = MNodeService.getInstance(request).getSystemMetadata(session, pid);
       assertEquals(newsysmeta.getIdentifier().getValue(), sysmeta.getIdentifier().getValue());
+      assertEquals(newsysmeta.getSeriesId(), null);
       
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
@@ -1436,6 +1437,39 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             } catch (NotFound ee) {
                 
             }
+            SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+            assertTrue(metadata.getIdentifier().getValue().equals(guid.getValue()));
+            assertTrue(metadata.getSeriesId().getValue().equals(seriesId.getValue()));
+            DescribeResponse describeResponse = MNodeService.getInstance(request).describe(session, seriesId);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata.getFormatId().getValue());
+            
+            metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(metadata.getIdentifier().getValue().equals(guid.getValue()));
+            assertTrue(metadata.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, guid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata.getFormatId().getValue());
+            
+            org.dataone.service.types.v1.SystemMetadata sys1=edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(metadata.getIdentifier().getValue().equals(guid.getValue()));
+            
+            try {
+                org.dataone.service.types.v1.SystemMetadata sys2=edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+                fail("the getSystemMetadata(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch(NotFound nf2) {
+                
+            }
+            
+            describeResponse = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).describe(session, guid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), sys1.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), sys1.getFormatId().getValue());
+            try {
+                describeResponse = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).describe(session, seriesId);
+                fail("the describe(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch(NotFound nf2) {
+                
+            }
             
             //do a update with the same series id
             Thread.sleep(1000);
@@ -1493,7 +1527,27 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 
             }
             
-
+            SystemMetadata metadata1 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+            assertTrue(metadata1.getIdentifier().getValue().equals(newPid.getValue()));
+            assertTrue(metadata1.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, seriesId);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata1.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata1.getFormatId().getValue());
+            
+            SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(metadata2.getIdentifier().getValue().equals(guid.getValue()));
+            assertTrue(metadata2.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, guid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata2.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata2.getFormatId().getValue());
+            
+            SystemMetadata metadata3 = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+            assertTrue(metadata3.getIdentifier().getValue().equals(newPid.getValue()));
+            assertTrue(metadata3.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, newPid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata3.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata3.getFormatId().getValue());
+            
             //do another update with different series id
             Thread.sleep(1000);
             String sid2 = "sid."+System.nanoTime();
@@ -1570,6 +1624,43 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             assertTrue(result15.available() > 0);
             assertTrue(IOUtils.contentEquals(result15, object3));
             
+            SystemMetadata metadata4 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+            assertTrue(metadata4.getIdentifier().getValue().equals(newPid.getValue()));
+            assertTrue(metadata4.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, seriesId);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata4.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata4.getFormatId().getValue());
+            
+            SystemMetadata metadata5 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId2);
+            assertTrue(metadata5.getIdentifier().getValue().equals(newPid2.getValue()));
+            assertTrue(metadata5.getSeriesId().getValue().equals(seriesId2.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, seriesId2);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata5.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata5.getFormatId().getValue());
+            
+            SystemMetadata metadata6 = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertTrue(metadata6.getIdentifier().getValue().equals(guid.getValue()));
+            assertTrue(metadata6.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, guid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata6.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata6.getFormatId().getValue());
+            
+            SystemMetadata metadata7 = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+            assertTrue(metadata7.getIdentifier().getValue().equals(newPid.getValue()));
+            assertTrue(metadata7.getSeriesId().getValue().equals(seriesId.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, newPid);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata7.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata7.getFormatId().getValue());
+            
+            SystemMetadata metadata8 = MNodeService.getInstance(request).getSystemMetadata(session, newPid2);
+            assertTrue(metadata8.getIdentifier().getValue().equals(newPid2.getValue()));
+            assertTrue(metadata8.getSeriesId().getValue().equals(seriesId2.getValue()));
+            describeResponse = MNodeService.getInstance(request).describe(session, newPid2);
+            assertEquals(describeResponse.getDataONE_Checksum().getValue(), metadata8.getChecksum().getValue());
+            assertEquals(describeResponse.getDataONE_ObjectFormatIdentifier().getValue(), metadata8.getFormatId().getValue());
+            
+            
+            
             
             //test the get(sid) for v1
             try {
@@ -1597,6 +1688,26 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             } catch (NotFound ee) {
                 
             }
+            
+            try {
+                // the pid should be null when we try to get a no-exist sid
+                   Identifier non_exist_sid = new Identifier();
+                   non_exist_sid.setValue("no-sid-exist-123qwe");
+                   SystemMetadata result3 = MNodeService.getInstance(request).getSystemMetadata(session, non_exist_sid);
+                   fail("the getSystemMetadata(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+            } catch (NotFound ee) {
+                   
+            }
+            
+            try {
+                // the pid should be null when we try to get a no-exist sid
+                   Identifier non_exist_sid = new Identifier();
+                   non_exist_sid.setValue("no-sid-exist-123qwe");
+                    MNodeService.getInstance(request).describe(session, non_exist_sid);
+                   fail("the describe(sid) methoud should throw a not found exception for the sid "+seriesId.getValue());
+               } catch (NotFound ee) {
+                   
+               }
            
             
         } catch (Exception e) {
