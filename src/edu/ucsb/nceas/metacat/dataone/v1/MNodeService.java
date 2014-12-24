@@ -344,6 +344,10 @@ public class MNodeService
 	public SystemMetadata getSystemMetadata(Session session, Identifier pid)
 			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			NotFound {
+	    String serviceFailure = "1090";
+        String notFound = "1060";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No system metadata could be found for given PID: "+pid.getValue());
 		org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(session, pid);
 		SystemMetadata retSysMeta = null;
 		try {

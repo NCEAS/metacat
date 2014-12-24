@@ -658,6 +658,11 @@ public abstract class D1NodeService {
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
         NotImplemented {
 
+        String serviceFailureCode = "1090";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
         boolean isAuthorized = false;
         SystemMetadata systemMetadata = null;
         List<Replica> replicaList = null;

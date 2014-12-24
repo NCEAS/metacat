@@ -259,6 +259,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public SystemMetadata getSystemMetadata(Identifier pid)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
 			NotImplemented {
+	    String serviceFailure = "1090";
+        String notFound = "1060";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No system metadata could be found for given PID: "+pid.getValue());
 		return impl.getSystemMetadata(null, pid);
 	}
 
@@ -267,6 +271,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public SystemMetadata getSystemMetadata(Session session, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
 			NotImplemented {
+	    String serviceFailure = "1090";
+        String notFound = "1060";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No system metadata could be found for given PID: "+pid.getValue());
 		return impl.getSystemMetadata(session, pid);
 	}
 
