@@ -216,6 +216,11 @@ public class MNodeService
 			InsufficientResources, InvalidRequest, InvalidSystemMetadata,
 			InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			UnsupportedType, NotFound {
+	    //check if the pid exists and not a sid
+	    String serviceFailure = "1310";
+        String notFound = "1280";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
