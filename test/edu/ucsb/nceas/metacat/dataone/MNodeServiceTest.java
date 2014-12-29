@@ -1471,6 +1471,28 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 
             }
             
+            Checksum sum = MNodeService.getInstance(request).getChecksum(session, guid, "md5");
+            assertTrue(sum.getValue().equals("5b78f9689b9aab1ebc0f3c1df916dd97"));
+            
+            try {
+                sum = MNodeService.getInstance(request).getChecksum(session, seriesId, "md5");
+                fail("the getCheckSum shouldn't work for sid");
+            } catch(NotFound nf3) {
+                
+            }
+            
+            sum = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).getChecksum(session, guid, "md5");
+            assertTrue(sum.getValue().equals("5b78f9689b9aab1ebc0f3c1df916dd97"));
+            
+            try {
+                sum = edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).getChecksum(session, seriesId, "md5");
+                fail("the getCheckSum shouldn't work for sid");
+            } catch(NotFound nf3) {
+                
+            }
+            
+            
+            
             //do a update with the same series id
             Thread.sleep(1000);
             Identifier newPid = new Identifier();
