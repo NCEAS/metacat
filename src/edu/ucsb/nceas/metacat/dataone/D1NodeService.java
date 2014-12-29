@@ -1632,8 +1632,17 @@ public abstract class D1NodeService {
           throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+e.getMessage());
       }
       if(!exists) {
-        //the v1 method only handles a pid.
-          throw new NotFound(noFoundCode, notFoundMessage);
+         //the v1 method only handles a pid. so it should throw a not-found exception.
+          // check if the pid was deleted.
+          try {
+              String localId = IdentifierManager.getInstance().getLocalId(identifier.getValue());
+              if(EventLog.getInstance().isDeleted(localId)) {
+                  notFoundMessage=notFoundMessage+" "+DELETEDMESSAGE;
+              } 
+            } catch (Exception e) {
+              logMetacat.info("Couldn't determine if the not-found identifier "+identifier.getValue()+" was deleted since "+e.getMessage());
+            }
+            throw new NotFound(noFoundCode, notFoundMessage);
       }
   }
   
