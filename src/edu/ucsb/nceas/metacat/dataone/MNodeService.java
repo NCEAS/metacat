@@ -729,7 +729,11 @@ public class MNodeService extends D1NodeService
         InvalidRequest, NotImplemented {
 
         Checksum checksum = null;
-
+        String serviceFailure = "1410";
+        String notFound = "1420";
+        //Checkum only handles the pid, not sid
+        checkV1SystemMetaPidExist(pid, serviceFailure, "The checksum for the object specified by "+pid.getValue()+" couldn't be returned ",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
         InputStream inputStream = get(session, pid);
 
         try {
