@@ -395,7 +395,7 @@ public class MNodeService extends D1NodeService
                 Identifier previousSid = existingSysMeta.getSeriesId();
                 if(previousSid != null) {
                     // there is a previous sid, if the new sid doesn't match it, the new sid should be non-existing.
-                    if(!sidInSys.getValue().equals(previousSid)) {
+                    if(!sidInSys.getValue().equals(previousSid.getValue())) {
                         try {
                             idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
                         } catch (SQLException e) {
