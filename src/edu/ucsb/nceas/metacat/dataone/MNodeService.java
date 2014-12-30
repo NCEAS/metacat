@@ -286,6 +286,13 @@ public class MNodeService extends D1NodeService
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
 
+        //transform a sid to a pid if it is applicable
+        String serviceFailureCode = "1310";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
+        
         String localId = null;
         boolean allowed = false;
         boolean isScienceMetadata = false;
@@ -299,6 +306,32 @@ public class MNodeService extends D1NodeService
         if (!isValidIdentifier(pid)) {
         	throw new InvalidRequest("1202", "The provided identifier is invalid.");
         }
+        
+        // verify the new pid is valid format
+        if (!isValidIdentifier(newPid)) {
+            throw new InvalidRequest("1202", "The provided identifier is invalid.");
+        }
+        
+        // make sure that the newPid doesn't exists
+        boolean idExists = true;
+        try {
+            idExists = IdentifierManager.getInstance().identifierExists(newPid.getValue());
+        } catch (SQLException e) {
+            throw new ServiceFailure("1310", 
+                                    "The requested identifier " + newPid.getValue() +
+                                    " couldn't be determined if it is unique since : "+e.getMessage());
+        }
+        if (idExists) {
+                throw new IdentifierNotUnique("1220", 
+                          "The requested identifier " + newPid.getValue() +
+                          " is already used by another object and" +
+                          "therefore can not be used for this object. Clients should choose" +
+                          "a new identifier that is unique and retry the operation or " +
+                          "use CN.reserveIdentifier() to reserve one.");
+            
+        }
+        
+       
 
         // check for the existing identifier
         try {
@@ -352,6 +385,41 @@ public class MNodeService extends D1NodeService
             if (existingObsoletedBy != null) {
             	throw new InvalidRequest("1202", 
             			"The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
+            }
+            //check the sid in the system metadata. If it exists, it should be non-exist or match the old sid in the previous system metadata.
+            Identifier sidInSys = sysmeta.getSeriesId();
+            if(sidInSys != null) {
+                Identifier previousSid = existingSysMeta.getSeriesId();
+                if(previousSid != null) {
+                    // there is a previous sid, if the new sid doesn't match it, the new sid should be non-existing.
+                    if(!sidInSys.getValue().equals(previousSid)) {
+                        try {
+                            idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
+                        } catch (SQLException e) {
+                            throw new ServiceFailure("1310", 
+                                                    "The requested identifier " + sidInSys.getValue() +
+                                                    " couldn't be determined if it is unique since : "+e.getMessage());
+                        }
+                        if(idExists) {
+                            throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata doesn't match the previous series id "
+                                                            +previousSid.getValue()+", so it should NOT exist. However, it was used by another object.");
+                        }
+                    }
+                } else {
+                    // there is no previous sid, the new sid should be non-existing.
+                    try {
+                        idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
+                    } catch (SQLException e) {
+                        throw new ServiceFailure("1310", 
+                                                "The requested identifier " + sidInSys.getValue() +
+                                                " couldn't be determined if it is unique since : "+e.getMessage());
+                    }
+                    if(idExists) {
+                        throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata should NOT exist since the previous series id is null."
+                                                        +"However, it was used by another object.");
+                    }
+                }
+                
             }
 
             isScienceMetadata = isScienceMetadata(sysmeta);
