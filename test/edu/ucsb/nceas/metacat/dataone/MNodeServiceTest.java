@@ -341,6 +341,30 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
       Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       assertEquals(guid.getValue(), pid.getValue());
+      
+      Thread.sleep(1000);
+      try {
+          Identifier guid2 = new Identifier();
+          guid2.setValue("testCreate." + System.currentTimeMillis());
+          SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+          sysmeta2.setSeriesId(guid);
+          MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
+          fail("It should fail since the system metadata using an existing id as the sid");
+      } catch (InvalidSystemMetadata ee) {
+          
+      }
+      
+      Thread.sleep(1000);
+      try {
+          Identifier guid3 = new Identifier();
+          guid3.setValue("testCreate." + System.currentTimeMillis());
+          SystemMetadata sysmeta3 = createSystemMetadata(guid3, session.getSubject(), object);
+          sysmeta3.setSeriesId(guid3);
+          MNodeService.getInstance(request).create(session, guid3, object, sysmeta3);
+          fail("It should fail since the system metadata using the pid as the sid");
+      } catch (InvalidSystemMetadata ee) {
+          
+      }
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
@@ -1730,11 +1754,38 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                } catch (NotFound ee) {
                    
                }
-           
+            
+            
+            //do another update with invalid series ids
+            Thread.sleep(1000);
+            Identifier newPid3 = new Identifier();
+            newPid3.setValue(generateDocumentId()+"3");
+            System.out.println("the third pid is "+newPid3.getValue());
+            InputStream object4 = new ByteArrayInputStream(str3.getBytes("UTF-8"));
+            SystemMetadata sysmeta4 = createSystemMetadata(newPid3, session.getSubject(), object4);
+            sysmeta4.setObsoletes(newPid2);
+            sysmeta4.setSeriesId(seriesId);
+            try {
+                MNodeService.getInstance(request).update(session, newPid2, object4, newPid3, sysmeta4);
+                fail("we can't reach here since the sid is using an old one ");
+            } catch (InvalidSystemMetadata eee) {
+                
+            } 
+            
+            sysmeta4.setSeriesId(newPid3);
+            try {
+                MNodeService.getInstance(request).update(session, newPid2, object4, newPid3, sysmeta4);
+                fail("we can't reach here since the sid is using the pid ");
+            } catch (InvalidSystemMetadata eee) {
+                
+            } 
             
         } catch (Exception e) {
             fail(e.getMessage());
         }
+        
+        
+        
         
     }
 }
