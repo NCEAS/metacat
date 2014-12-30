@@ -355,6 +355,7 @@ public abstract class D1NodeService {
             sysmeta.getIdentifier().getValue() + ".");
         
     }
+    
 
     logMetacat.debug("Checking if identifier exists: " + pid.getValue());
     // Check that the identifier does not already exist
@@ -374,6 +375,30 @@ public abstract class D1NodeService {
 			          "a new identifier that is unique and retry the operation or " +
 			          "use CN.reserveIdentifier() to reserve one.");
     	
+    }
+    
+    // verify the sid in the system metadata
+    Identifier sid = sysmeta.getSeriesId();
+    if(sid != null) {
+        if (!isValidIdentifier(sid)) {
+            throw new InvalidSystemMetadata("1180", "The provided series id is invalid.");
+        }
+        try {
+            idExists = IdentifierManager.getInstance().identifierExists(sid.getValue());
+        } catch (SQLException e) {
+            throw new ServiceFailure("1190", 
+                                    "The series identifier " + sid.getValue() +
+                                    " in the system metadata couldn't be determined if it is unique since : "+e.getMessage());
+        }
+        if (idExists) {
+                throw new InvalidSystemMetadata("1180", 
+                          "The series identifier " + sid.getValue() +
+                          " is already used by another object and" +
+                          "therefore can not be used for this object. Clients should choose" +
+                          "a new identifier that is unique and retry the operation or " +
+                          "use CN.reserveIdentifier() to reserve one.");
+            
+        }
     }
     
     // TODO: this probably needs to be refined more
