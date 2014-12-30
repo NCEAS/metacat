@@ -399,6 +399,10 @@ public abstract class D1NodeService {
                           "use CN.reserveIdentifier() to reserve one.");
             
         }
+        //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
+        if(sid.getValue().equals(pid.getValue())) {
+            throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+        }
     }
     
     // TODO: this probably needs to be refined more

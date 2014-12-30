@@ -422,7 +422,10 @@ public class MNodeService extends D1NodeService
                                                         +"However, it was used by another object.");
                     }
                 }
-                
+                //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario)
+                if(sidInSys.getValue().equals(newPid.getValue())) {
+                    throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+                }
             }
 
             isScienceMetadata = isScienceMetadata(sysmeta);
