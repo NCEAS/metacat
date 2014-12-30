@@ -389,6 +389,9 @@ public class MNodeService extends D1NodeService
             //check the sid in the system metadata. If it exists, it should be non-exist or match the old sid in the previous system metadata.
             Identifier sidInSys = sysmeta.getSeriesId();
             if(sidInSys != null) {
+                if (!isValidIdentifier(sidInSys)) {
+                    throw new InvalidSystemMetadata("1300", "The provided series id in the system metadata is invalid.");
+                }
                 Identifier previousSid = existingSysMeta.getSeriesId();
                 if(previousSid != null) {
                     // there is a previous sid, if the new sid doesn't match it, the new sid should be non-existing.
