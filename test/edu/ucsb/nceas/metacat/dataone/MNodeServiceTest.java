@@ -815,14 +815,23 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // create the object
           Identifier pid = new Identifier();
           pid.setValue("testSystemMetadataChanged." + System.currentTimeMillis());
+          Identifier sid = new Identifier();
+          sid.setValue("testSystemMetadataChangedSid."+System.currentTimeMillis());
           InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
           SystemMetadata sysmeta = createSystemMetadata(pid, session.getSubject(), object);
+          sysmeta.setSeriesId(sid);
           Identifier retPid = MNodeService.getInstance(request).create(session, pid, object, sysmeta);
           assertEquals(retPid.getValue(), pid.getValue());
           
           // pretend the system metadata changed on the CN
           MNodeService.getInstance(request).systemMetadataChanged(session, 
                   retPid, 5000L, Calendar.getInstance().getTime());
+          MNodeService.getInstance(request).systemMetadataChanged(session, 
+                  sid, 5000L, Calendar.getInstance().getTime());
+          edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).systemMetadataChanged(session, 
+                  retPid, 5000L, Calendar.getInstance().getTime());
+          edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).systemMetadataChanged(session, 
+                  sid, 5000L, Calendar.getInstance().getTime());
           
       } catch (Exception e) {
           if (e instanceof NotAuthorized) {
@@ -1515,8 +1524,26 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 
             }
             
+            boolean isAuthorized = 
+                    MNodeService.getInstance(request).isAuthorized(session, guid, Permission.READ);
+            assertEquals(isAuthorized, true);
             
+            isAuthorized = 
+                    MNodeService.getInstance(request).isAuthorized(session, seriesId, Permission.READ);
+            assertEquals(isAuthorized, true);
             
+            isAuthorized = 
+                    edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).isAuthorized(session, guid, Permission.READ);
+            assertEquals(isAuthorized, true);
+            
+            try {
+                isAuthorized = 
+                        edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).isAuthorized(session, seriesId, Permission.READ);
+                fail("we can't reach here since the v1 isAuthorized method doesn't suppport series id");
+            } catch (NotFound e) {
+                
+            }
+
             //do a update with the same series id
             Thread.sleep(1000);
             Identifier newPid = new Identifier();
@@ -1779,6 +1806,76 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             } catch (InvalidSystemMetadata eee) {
                 
             } 
+            
+            //test archive a series id by v1
+            try {
+                edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).archive(session, seriesId2);
+                fail("we can't reach here since the v1 archive method doesn't support the sid ");
+            } catch (NotFound nf2) {
+                
+            }
+            
+            // test delete a series id by v1
+            Session mnSession = getMNSession();
+            try {
+                edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).delete(mnSession, seriesId2);
+                fail("we can't reach here since the v1 delete method doesn't support the sid ");
+            } catch (NotFound nf2) {
+                
+            }
+            
+            // test archive a series id by v2
+            MNodeService.getInstance(request).archive(session, seriesId2);
+            SystemMetadata archived = MNodeService.getInstance(request).getSystemMetadata(session, seriesId2);
+            assertTrue(archived.getArchived());
+            archived = MNodeService.getInstance(request).getSystemMetadata(session, newPid2);
+            assertTrue(archived.getArchived());
+            
+            // test delete a series id by v2
+            MNodeService.getInstance(request).delete(mnSession, seriesId2);
+            try {
+                MNodeService.getInstance(request).get(session, seriesId2);
+                fail("we can't reach here since the series id was deleted ");
+            } catch (NotFound nf3) {
+                System.out.println("the message is ============="+nf3.getMessage());
+                //assertTrue(nf3.getMessage().indexOf("delete") >0);
+            }
+            
+            try {
+                MNodeService.getInstance(request).get(session, newPid2);
+                fail("we can't reach here since the series id was deleted ");
+            } catch (NotFound nf3) {
+                //System.out.println("the message is ============="+nf3.getMessage());
+                assertTrue(nf3.getMessage().indexOf("delete") >0);
+            }
+            
+            try {
+                edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).get(session, newPid2);
+                fail("we can't reach here since the series id was deleted ");
+            } catch (NotFound nf3) {
+                System.out.println("the message is ============="+nf3.getMessage());
+                assertTrue(nf3.getMessage().indexOf("delete") >0);
+            }
+            
+            //archive seriesId
+            MNodeService.getInstance(request).archive(mnSession, seriesId);
+            archived = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+            assertTrue(archived.getArchived());
+            archived = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+            assertTrue(archived.getArchived());
+            
+            
+            //delete seriesId
+            MNodeService.getInstance(request).delete(mnSession, seriesId);
+            try {
+                MNodeService.getInstance(request).get(session, newPid);
+                fail("we can't reach here since the series id was deleted ");
+            } catch (NotFound nf3) {
+                //System.out.println("the message is ============="+nf3.getMessage());
+                assertTrue(nf3.getMessage().indexOf("delete") >0);
+            }
+            SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+            assertTrue(meta.getIdentifier().getValue().equals(guid.getValue()));
             
         } catch (Exception e) {
             fail(e.getMessage());
