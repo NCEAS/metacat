@@ -362,6 +362,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           throw new ServiceFailure("4960", "The provided identifier was invalid.");
           
       }
+      
+      String serviceFailureCode = "4962";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
 
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
@@ -523,6 +529,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 	  // check that it is CN/admin
 	  boolean allowed = isAdminAuthorized(session);
+	  
+	  String serviceFailureCode = "4972";
+	  Identifier sid = getPIDForSID(pid, serviceFailureCode);
+	  if(sid != null) {
+	        pid = sid;
+	  }
 	  
 	  //check if it is the authoritative member node
 	  if(!allowed) {

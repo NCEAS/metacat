@@ -339,6 +339,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public Identifier archive(Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	    String serviceFailure = "4972";
+        String notFound = "4971";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.archive(null, pid);
 	}
 
@@ -347,6 +351,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public Identifier archive(Session session, Identifier pid)
 			throws InvalidToken, ServiceFailure, InvalidRequest, NotAuthorized,
 			NotFound, NotImplemented {
+	    String serviceFailure = "4972";
+        String notFound = "4971";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.archive(session, pid);
 	}
 
@@ -384,6 +392,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public Identifier delete(Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	    String serviceFailure = "4962";
+        String notFound = "4961";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.delete(null, pid);
 	}
 
@@ -392,6 +404,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public Identifier delete(Session session, Identifier pid)
 			throws InvalidToken, ServiceFailure, InvalidRequest, NotAuthorized,
 			NotFound, NotImplemented {
+	    String serviceFailure = "4962";
+        String notFound = "4961";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.delete(session, pid);
 	}
 

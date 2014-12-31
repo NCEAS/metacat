@@ -205,7 +205,7 @@ public abstract class D1NodeService {
    */
   public Identifier delete(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
+      
       String localId = null;
       if (session == null) {
       	throw new InvalidToken("1330", "No session has been provided");
@@ -1588,6 +1588,12 @@ public abstract class D1NodeService {
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
           throw new ServiceFailure("1350", "The provided identifier was invalid.");
+      }
+      
+      String serviceFailureCode = "1350";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
       }
 
       // check for the existing identifier

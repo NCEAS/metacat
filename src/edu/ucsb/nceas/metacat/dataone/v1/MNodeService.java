@@ -130,6 +130,10 @@ public class MNodeService
 	@Override
 	public Identifier archive(Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	    String serviceFailure = "2912";
+        String notFound = "2911";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.archive(null, pid);
 	}
 
@@ -138,6 +142,10 @@ public class MNodeService
 	public Identifier archive(Session session, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
 			NotImplemented {
+	    String serviceFailure = "2912";
+        String notFound = "2911";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.archive(session, pid);
 	}
 
@@ -174,6 +182,10 @@ public class MNodeService
 	@Override
 	public Identifier delete(Identifier pid) throws InvalidToken,
 			ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	    String serviceFailure = "2902";
+        String notFound = "2901";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.delete(null, pid);
 	}
 
@@ -182,6 +194,10 @@ public class MNodeService
 	public Identifier delete(Session session, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
 			NotImplemented {
+	    String serviceFailure = "2902";
+        String notFound = "2901";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.delete(session, pid);
 	}
 

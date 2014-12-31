@@ -242,6 +242,12 @@ public class MNodeService extends D1NodeService
         boolean allowed = false;
         allowed = isAdminAuthorized(session);
         
+        String serviceFailureCode = "2902";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
+        
         //check if it is the authoritative member node
         if(!allowed) {
             allowed = isAuthoritativeMNodeAdmin(session, pid);
