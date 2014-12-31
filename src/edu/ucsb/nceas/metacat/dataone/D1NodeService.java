@@ -1046,6 +1046,12 @@ public abstract class D1NodeService {
         
     }
     
+    String serviceFailureCode = "1760";
+    Identifier sid = getPIDForSID(pid, serviceFailureCode);
+    if(sid != null) {
+        pid = sid;
+    }
+    
     // the authoritative member node of the pid always has the access as well.
     if (isAuthoritativeMNodeAdmin(session, pid)) {
         allowed = true;

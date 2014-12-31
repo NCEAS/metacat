@@ -580,6 +580,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public boolean isAuthorized(Identifier pid, Permission permission)
 			throws ServiceFailure, InvalidToken, NotFound, NotAuthorized,
 			NotImplemented, InvalidRequest {
+	    String serviceFailure = "1760";
+        String notFound = "1800";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.isAuthorized(null, pid, permission);
 	}
 
@@ -588,6 +592,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public boolean isAuthorized(Session session, Identifier pid, Permission permission)
 			throws ServiceFailure, InvalidToken, NotFound, NotAuthorized,
 			NotImplemented, InvalidRequest {
+	    String serviceFailure = "1760";
+        String notFound = "1800";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.isAuthorized(session, pid, permission);
 	}
 

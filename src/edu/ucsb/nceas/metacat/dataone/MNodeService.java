@@ -1236,9 +1236,15 @@ public class MNodeService extends D1NodeService
         
         // cannot be called by public
         if (session == null) {
-        	throw new InvalidToken("2183", "No session was provided.");
+        	throw new InvalidToken("1332", "No session was provided.");
         }
 
+        String serviceFailureCode = "1333";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
+        
         SystemMetadata currentLocalSysMeta = null;
         SystemMetadata newSysMeta = null;
         CNode cn = D1Client.getCN();

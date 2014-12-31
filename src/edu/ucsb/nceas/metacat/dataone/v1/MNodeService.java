@@ -463,6 +463,10 @@ public class MNodeService
 	public boolean isAuthorized(Identifier pid, Permission permission)
 			throws ServiceFailure, InvalidRequest, InvalidToken, NotFound,
 			NotAuthorized, NotImplemented {
+	    String serviceFailure = "1760";
+        String notFound = "1800";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.isAuthorized(null, pid, permission);
 	}
 
@@ -471,6 +475,10 @@ public class MNodeService
 	public boolean isAuthorized(Session session, Identifier pid, Permission permission)
 			throws ServiceFailure, InvalidRequest, InvalidToken, NotFound,
 			NotAuthorized, NotImplemented {
+	    String serviceFailure = "1760";
+        String notFound = "1800";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "The object specified by "+pid.getValue()+" does not exist at this node.");
 		return impl.isAuthorized(session, pid, permission);
 	}
 
@@ -478,6 +486,14 @@ public class MNodeService
 	public boolean systemMetadataChanged(Identifier pid, long serialVersion, Date dateSysMetaLastModified)
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented,
 			InvalidRequest {
+	    String serviceFailure = "1333";
+        String notFound = "1800";
+        try {
+            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                    "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
+        } catch (NotFound e) {
+            throw new ServiceFailure(serviceFailure, e.getMessage());
+        }
 		return impl.systemMetadataChanged(null, pid, serialVersion, dateSysMetaLastModified);
 
 	}
@@ -487,6 +503,14 @@ public class MNodeService
 	public boolean systemMetadataChanged(Session session, Identifier pid,
 			long serialVersion, Date dateSysMetaLastModified) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotImplemented, InvalidRequest {
+	    String serviceFailure = "1333";
+        String notFound = "1800";
+        try {
+            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                    "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
+        } catch (NotFound e) {
+            throw new ServiceFailure(serviceFailure, e.getMessage());
+        }
 		return impl.systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
 	}
     
