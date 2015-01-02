@@ -30,7 +30,9 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.xpath.XPathExpressionException;
 
+import org.apache.commons.codec.EncoderException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrServer;
@@ -310,6 +312,13 @@ public class RdfXmlSubprocessor implements IDocumentSubprocessor {
 
 		}
 		return doc;
+	}
+
+	@Override
+	public SolrDoc mergeWithIndexedDocument(SolrDoc indexDocument)
+			throws IOException, EncoderException, XPathExpressionException {
+		// TODO: actually perform merging 
+		return indexDocument;
 	}
 
 
