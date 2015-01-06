@@ -3,7 +3,7 @@
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="rdfXmlSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.RdfXmlSubprocessor">
+	<bean id="rdfXmlSubprocessor" class="org.dataone.cn.indexer.annotation.RdfXmlSubprocessor">
 		<property name="matchDocuments">
 			<list>
 				<value>http://www.w3.org/TR/rdf-syntax-grammar</value>
