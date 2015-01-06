@@ -1304,6 +1304,36 @@ public class MNodeService extends D1NodeService
                 throw sf;
             }
             
+            //check about the sid in the system metadata
+            Identifier newSID = newSysMeta.getSeriesId();
+            if(newSID != null) {
+                if (!isValidIdentifier(newSID)) {
+                    throw new InvalidRequest("1334", "The series identifier in the new system metadata is invalid.");
+                }
+                Identifier currentSID = currentLocalSysMeta.getSeriesId();
+                if( currentSID != null && currentSID.getValue() != null) {
+                    if(!newSID.getValue().equals(currentSID.getValue())) {
+                        //newSID doesn't match the currentSID. The newSID shouldn't be used.
+                        try {
+                            if(IdentifierManager.getInstance().identifierExists(newSID.getValue())) {
+                                throw new InvalidRequest("1334", "The series identifier "+newSID.getValue()+" in the new system metadata has been used by another object.");
+                            }
+                        } catch (SQLException sql) {
+                            throw new ServiceFailure("1333", "Couldn't determine if the SID "+newSID.getValue()+" in the system metadata exists in the node since "+sql.getMessage());
+                        }
+                        
+                    }
+                } else {
+                    //newSID shouldn't be used
+                    try {
+                        if(IdentifierManager.getInstance().identifierExists(newSID.getValue())) {
+                            throw new InvalidRequest("1334", "The series identifier "+newSID.getValue()+" in the new system metadata has been used by another object.");
+                        }
+                    } catch (SQLException sql) {
+                        throw new ServiceFailure("1333", "Couldn't determine if the SID "+newSID.getValue()+" in the system metadata exists in the node since "+sql.getMessage());
+                    }
+                }
+            }
             // update the local copy of system metadata for the pid
             try {
                 HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
