@@ -15,7 +15,14 @@
 			<list>
 				<ref bean="annotation.expansion" />
 			</list>
-		</property>	
+		</property>
+		<property name="fieldsToMerge">
+     		<list>
+     			<value>annotation_sm</value>
+     			<value>annotates_sm</value>
+     			<value>annotated_by_sm</value>
+     		</list>
+     	</property>	
 	</bean>
 	
 	<bean id="annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
