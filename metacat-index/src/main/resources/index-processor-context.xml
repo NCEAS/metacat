@@ -30,6 +30,9 @@
      
     <import resource="application-context-oa.xml" />
     <import resource="application-context-annotator.xml" />    
+    
+    <import resource="application-context-delete-subprocessors.xml" />    
+    
 
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
  <bean id="fgdcDateConverter" class="org.dataone.cn.indexer.convert.FgdcDateConverter"/>
@@ -100,6 +103,11 @@
        <ref bean="rdfXmlSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        
+      </list>
+     </property>
+     <property name="deleteSubprocessors">
+      <list>
+       <ref bean="annotationDeleteSubprocessor" />
       </list>
      </property>
     </bean>
