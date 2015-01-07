@@ -446,7 +446,11 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			String pidFilter, Integer start, Integer count) throws InvalidToken,
 			InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
 			InsufficientResources {
-		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, event.xmlValue(), pidFilter, start, count);
+	    String eventValue = null;
+        if(event != null) {
+            eventValue = event.xmlValue();
+        }
+		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		Log retLog = null;
 		try {
 			retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
