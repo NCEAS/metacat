@@ -440,7 +440,11 @@ public class MNodeService
 	public Log getLogRecords(Session session, Date fromDate, Date toDate, Event event,
 			String pidFilter, Integer start, Integer count) throws InvalidRequest, InvalidToken,
 			NotAuthorized, NotImplemented, ServiceFailure {
-		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, event.xmlValue(), pidFilter, start, count);
+	    String eventValue = null;
+	    if(event != null) {
+	        eventValue = event.xmlValue();
+	    }
+		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		Log retLog = null;
 		try {
 			retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
