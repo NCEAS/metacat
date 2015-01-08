@@ -446,12 +446,27 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			String pidFilter, Integer start, Integer count) throws InvalidToken,
 			InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
 			InsufficientResources {
+	    Log retLog = new Log();
+        if(pidFilter != null && !pidFilter.equals("")) {
+            String serviceFailure = "1490";
+            String notFound = "1020";
+            Identifier pid = new Identifier();
+            pid.setValue(pidFilter);
+            try {
+                impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                        "The given PID: "+pid.getValue()+" doesn't exist in this node");
+            } catch (NotFound e) {
+                //return 0 record since the pid doesn't exist
+                logMetacat.info(e.getMessage());
+                return retLog;
+            }
+            
+        }
 	    String eventValue = null;
         if(event != null) {
             eventValue = event.xmlValue();
         }
 		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
-		Log retLog = null;
 		try {
 			retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
 		} catch (Exception e) {
