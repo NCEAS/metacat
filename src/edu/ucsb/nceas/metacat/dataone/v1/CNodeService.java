@@ -447,7 +447,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented,
 			InsufficientResources {
 	    Log retLog = new Log();
-        if(pidFilter != null && !pidFilter.equals("")) {
+        if(pidFilter != null && !pidFilter.trim().equals("")) {
             String serviceFailure = "1490";
             String notFound = "1020";
             Identifier pid = new Identifier();

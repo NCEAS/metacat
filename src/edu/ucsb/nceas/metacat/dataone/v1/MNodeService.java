@@ -441,7 +441,7 @@ public class MNodeService
 			String pidFilter, Integer start, Integer count) throws InvalidRequest, InvalidToken,
 			NotAuthorized, NotImplemented, ServiceFailure {
 	    Log retLog = new Log();
-	    if(pidFilter != null && !pidFilter.equals("")) {
+	    if(pidFilter != null && !pidFilter.trim().equals("")) {
 	        String serviceFailure = "1490";
 	        String notFound = "1020";
 	        Identifier pid = new Identifier();

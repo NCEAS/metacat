@@ -526,7 +526,7 @@ public abstract class D1NodeService {
 	  if (!isAdminAuthorized(session)) {
 		  throw new NotAuthorized("1460", "Only the CN or admin is allowed to harvest logs from this node");
 	  }
-	  
+    Log log = new Log();
     IdentifierManager im = IdentifierManager.getInstance();
     EventLog el = EventLog.getInstance();
     if ( fromDate == null ) {
@@ -552,7 +552,16 @@ public abstract class D1NodeService {
     }
 
     String[] filterDocid = null;
-    if (pidFilter != null) {
+    if (pidFilter != null && !pidFilter.trim().equals("")) {
+        //check if the given identifier is a sid. If it is sid, choose the current pid of the sid.
+        Identifier pid = new Identifier();
+        pid.setValue(pidFilter);
+        String serviceFailureCode = "1490";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
+        pidFilter = pid.getValue();
 		try {
 	      String localId = im.getLocalId(pidFilter);
 	      filterDocid = new String[] {localId};
@@ -560,13 +569,14 @@ public abstract class D1NodeService {
 	    	String msg = "Could not find localId for given pidFilter '" + pidFilter + "'";
 	        logMetacat.warn(msg, ex);
 	        //throw new InvalidRequest("1480", msg);
+	        return log; //return 0 record
 	    }
     }
     
     logMetacat.debug("fromDate: " + fromDate);
     logMetacat.debug("toDate: " + toDate);
 
-    Log log = el.getD1Report(null, null, filterDocid, event,
+    log = el.getD1Report(null, null, filterDocid, event,
         new java.sql.Timestamp(fromDate.getTime()),
         new java.sql.Timestamp(toDate.getTime()), false, start, count);
     
