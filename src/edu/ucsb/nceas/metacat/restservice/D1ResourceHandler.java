@@ -157,7 +157,7 @@ public class D1ResourceHandler {
 		            session = CertificateManager.getInstance().getSession(request);
             	} catch (Throwable t) {
             		// don't require configured OAuth4MyProxy
-            		logMetacat.error(t.getMessage(), t);
+            		//logMetacat.error(t.getMessage(), t);
             	}
             }
             
