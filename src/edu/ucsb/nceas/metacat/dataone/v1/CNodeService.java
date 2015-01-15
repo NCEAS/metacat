@@ -146,6 +146,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			ReplicationPolicy policy, long serialVersion) throws NotImplemented, NotFound,
 			NotAuthorized, ServiceFailure, InvalidRequest, InvalidToken,
 			VersionMismatch {
+	    String serviceFailure = "4882";
+        String notFound = "4884";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setReplicationPolicy(null, pid, policy, serialVersion);
 	}
 
@@ -155,6 +159,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			ReplicationPolicy policy, long serialVersion) throws NotImplemented, NotFound,
 			NotAuthorized, ServiceFailure, InvalidRequest, InvalidToken,
 			VersionMismatch {
+	    String serviceFailure = "4882";
+        String notFound = "4884";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setReplicationPolicy(session, pid, policy, serialVersion);
 
 	}
@@ -163,6 +171,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public boolean setReplicationStatus(Identifier pid,
 			NodeReference targetNode, ReplicationStatus status, BaseException failure) 
 			throws ServiceFailure, NotImplemented, InvalidToken, NotAuthorized, InvalidRequest, NotFound {
+	    String serviceFailure = "4700";
+        String notFound = "4740";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setReplicationStatus(null, pid, targetNode, status, failure);
 	}
 
@@ -172,6 +184,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			NodeReference targetNode, ReplicationStatus status, BaseException failure)
 			throws ServiceFailure, NotImplemented, InvalidToken, NotAuthorized,
 			InvalidRequest, NotFound {
+	    String serviceFailure = "4700";
+        String notFound = "4740";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setReplicationStatus(session, pid, targetNode, status, failure);
 	}
 
@@ -582,6 +598,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public boolean setObsoletedBy(Identifier pid, Identifier obsoletedByPid, long serialVersion)
 			throws NotImplemented, NotFound, NotAuthorized, ServiceFailure,
 			InvalidRequest, InvalidToken, VersionMismatch {
+	    String serviceFailure = "4941";
+        String notFound = "4944";
+        impl.checkV1SystemMetaPidExist(obsoletedByPid, serviceFailure, "The object for given PID "+obsoletedByPid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+obsoletedByPid.getValue());
 		return impl.setObsoletedBy(null, pid, obsoletedByPid, serialVersion);
 	}
 
@@ -591,6 +611,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			throws NotImplemented, NotFound,
 			NotAuthorized, ServiceFailure, InvalidRequest, InvalidToken,
 			VersionMismatch {
+	    String serviceFailure = "4941";
+        String notFound = "4944";
+        impl.checkV1SystemMetaPidExist(obsoletedByPid, serviceFailure, "The object for given PID "+obsoletedByPid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+obsoletedByPid.getValue());
 		return impl.setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
 
 	}
@@ -623,6 +647,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			AccessPolicy accessPolicy, long serialVersion)
 			throws InvalidToken, NotFound, NotImplemented, NotAuthorized,
 			ServiceFailure, InvalidRequest, VersionMismatch {
+	    String serviceFailure = "4430";
+        String notFound = "4400";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setAccessPolicy(null, pid, accessPolicy, serialVersion);
 	}
 
@@ -632,6 +660,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			AccessPolicy accessPolicy, long serialVersion) throws InvalidToken, NotFound,
 			NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest,
 			VersionMismatch {
+	    String serviceFailure = "4430";
+        String notFound = "4400";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setAccessPolicy(session, pid, accessPolicy, serialVersion);
 	}
 
