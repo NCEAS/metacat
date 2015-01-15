@@ -138,6 +138,17 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       throws NotImplemented, NotFound, NotAuthorized, ServiceFailure, 
       InvalidRequest, InvalidToken, VersionMismatch {
       
+      // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4883", "The provided identifier was invalid.");
+          
+      }
+      
+      String serviceFailureCode = "4882";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
       // The lock to be used for this identifier
       Lock lock = null;
       
@@ -621,6 +632,33 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			Identifier obsoletedByPid, long serialVersion)
 			throws NotImplemented, NotFound, NotAuthorized, ServiceFailure,
 			InvalidRequest, InvalidToken, VersionMismatch {
+      
+      // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4942", "The provided identifier was invalid.");
+          
+      }
+      
+      String serviceFailureCode = "4941";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
+      
+      // do we have a valid pid?
+      if (obsoletedByPid == null || obsoletedByPid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4942", "The provided obsoletedByPid was invalid.");
+          
+      }
+      
+      try {
+          if(IdentifierManager.getInstance().systemMetadataSIDExists(obsoletedByPid)) {
+              throw new InvalidRequest("4942", "The provided obsoletedByPid "+obsoletedByPid.getValue()+" is an existing SID. However, it must NOT be an SID.");
+          }
+      } catch (SQLException ee) {
+          throw new ServiceFailure("4941", "Couldn't determine if the obsoletedByPid "+obsoletedByPid.getValue()+" is an SID or not. The id shouldn't be an SID.");
+      }
+      
 
 		// The lock to be used for this identifier
 		Lock lock = null;
@@ -719,6 +757,18 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  if (session == null) {
 		  throw new NotAuthorized("4720", "Session cannot be null");
 	  }
+	  
+	// do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4730", "The provided identifier was invalid.");
+          
+      }
+      
+      String serviceFailureCode = "4700";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
       
       // The lock to be used for this identifier
       Lock lock = null;
@@ -1576,6 +1626,17 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, 
       NotImplemented, InvalidRequest, VersionMismatch {
       
+   // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4402", "The provided identifier was invalid.");
+          
+      }
+      
+      String serviceFailureCode = "4430";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
       // The lock to be used for this identifier
       Lock lock = null;
       SystemMetadata systemMetadata = null;

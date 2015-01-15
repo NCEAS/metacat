@@ -600,7 +600,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			InvalidRequest, InvalidToken, VersionMismatch {
 	    String serviceFailure = "4941";
         String notFound = "4944";
-        impl.checkV1SystemMetaPidExist(obsoletedByPid, serviceFailure, "The object for given PID "+obsoletedByPid.getValue()+" couldn't be identified if it exists",  notFound, 
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "No object could be found for given PID: "+obsoletedByPid.getValue());
 		return impl.setObsoletedBy(null, pid, obsoletedByPid, serialVersion);
 	}
@@ -613,7 +613,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			VersionMismatch {
 	    String serviceFailure = "4941";
         String notFound = "4944";
-        impl.checkV1SystemMetaPidExist(obsoletedByPid, serviceFailure, "The object for given PID "+obsoletedByPid.getValue()+" couldn't be identified if it exists",  notFound, 
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "No object could be found for given PID: "+obsoletedByPid.getValue());
 		return impl.setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
 
