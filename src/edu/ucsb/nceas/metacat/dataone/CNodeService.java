@@ -1548,7 +1548,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, 
     NotImplemented, InvalidRequest {
-                  
+       
+   // verify the pid is valid format
+      if (!isValidIdentifier(pid)) {
+          throw new InvalidRequest("4891", "The provided identifier is invalid.");
+      }
       // The lock to be used for this identifier
       Lock lock = null;
 

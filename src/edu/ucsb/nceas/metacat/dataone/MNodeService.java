@@ -505,6 +505,10 @@ public class MNodeService extends D1NodeService
         if (session == null) {
           throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
         }
+        // verify the pid is valid format
+        if (!isValidIdentifier(pid)) {
+            throw new InvalidRequest("1102", "The provided identifier is invalid.");
+        }
         // set the submitter to match the certificate
         sysmeta.setSubmitter(session.getSubject());
         // set the originating node
@@ -531,6 +535,35 @@ public class MNodeService extends D1NodeService
             throw new InvalidSystemMetadata("1180", 
               "The supplied system metadata is invalid. " +
               "The obsoletedBy field cannot have a value when creating entries.");
+        }
+        
+        // verify the sid in the system metadata
+        Identifier sid = sysmeta.getSeriesId();
+        boolean idExists = false;
+        if(sid != null) {
+            if (!isValidIdentifier(sid)) {
+                throw new InvalidSystemMetadata("1180", "The provided series id is invalid.");
+            }
+            try {
+                idExists = IdentifierManager.getInstance().identifierExists(sid.getValue());
+            } catch (SQLException e) {
+                throw new ServiceFailure("1190", 
+                                        "The series identifier " + sid.getValue() +
+                                        " in the system metadata couldn't be determined if it is unique since : "+e.getMessage());
+            }
+            if (idExists) {
+                    throw new InvalidSystemMetadata("1180", 
+                              "The series identifier " + sid.getValue() +
+                              " is already used by another object and" +
+                              "therefore can not be used for this object. Clients should choose" +
+                              "a new identifier that is unique and retry the operation or " +
+                              "use CN.reserveIdentifier() to reserve one.");
+                
+            }
+            //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
+            if(sid.getValue().equals(pid.getValue())) {
+                throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+            }
         }
 
         // call the shared impl
@@ -591,6 +624,10 @@ public class MNodeService extends D1NodeService
 
         // get the referenced object
         Identifier pid = sysmeta.getIdentifier();
+        // verify the pid is valid format
+        if (!isValidIdentifier(pid)) {
+            throw new InvalidRequest("2153", "The provided identifier in the system metadata is invalid.");
+        }
 
         // get from the membernode
         // TODO: switch credentials for the server retrieval?
