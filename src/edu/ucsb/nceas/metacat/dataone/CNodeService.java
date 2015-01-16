@@ -2008,6 +2008,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	        if (!isValidIdentifier(sid)) {
 	            throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The series id "+sid.getValue()+"in the system metadata is invalid in the request.");
 	        }
+	        Identifier pid = sysmeta.getIdentifier();
+	        if (!isValidIdentifier(pid)) {
+                throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The pid in the system metadata is invalid in the request.");
+            }
+	        //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
+            if(sid.getValue().equals(pid.getValue())) {
+                throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+            }
 	        try {
 	            if (IdentifierManager.getInstance().identifierExists(sid.getValue())) {
 	                //the sid exists in system
