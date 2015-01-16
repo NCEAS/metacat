@@ -1168,6 +1168,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           throw new NotAuthorized("4861", "No Session - could not authorize for registration." +
                   "  If you are not logged in, please do so and retry the request.");
       }
+      // the identifier can't be an SID
+      try {
+          if(IdentifierManager.getInstance().systemMetadataSIDExists(pid)) {
+              throw new InvalidRequest("4863", "The provided identifier "+pid.getValue()+" is a series id which is not allowed.");
+          }
+      } catch (SQLException sqle) {
+          throw new ServiceFailure("4862", "Couldn't determine if the pid "+pid.getValue()+" is a series id since "+sqle.getMessage());
+      }
       
       // verify that guid == SystemMetadata.getIdentifier()
       logMetacat.debug("Comparing guid|sysmeta_guid: " + pid.getValue() + 
