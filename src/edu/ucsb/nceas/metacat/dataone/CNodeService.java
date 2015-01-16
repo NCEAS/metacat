@@ -1869,17 +1869,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
       ServiceFailure {
       
-      ObjectList objectList = null;
-        try {
-        	if (count == null || count > MAXIMUM_DB_RECORD_COUNT) {
-            	count = MAXIMUM_DB_RECORD_COUNT;
-            }
-            objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, formatid, replicaStatus, start, count);
-        } catch (Exception e) {
-            throw new ServiceFailure("1580", "Error querying system metadata: " + e.getMessage());
-        }
-
-        return objectList;
+      return super.listObjects(session, startTime, endTime, formatid, identifier, replicaStatus, start, count);
   }
 
   

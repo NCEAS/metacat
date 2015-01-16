@@ -61,6 +61,8 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v1.Event;
@@ -1363,6 +1365,48 @@ public abstract class D1NodeService {
           throw new ServiceFailure("1190", e.getMessage());
           
 	    }  
+  }
+  
+  /**
+   * Retrieve the list of objects present on the MN that match the calling parameters
+   * 
+   * @param session - the Session object containing the credentials for the Subject
+   * @param startTime - Specifies the beginning of the time range from which 
+   *                    to return object (>=)
+   * @param endTime - Specifies the beginning of the time range from which 
+   *                  to return object (>=)
+   * @param objectFormat - Restrict results to the specified object format
+   * @param replicaStatus - Indicates if replicated objects should be returned in the list
+   * @param start - The zero-based index of the first value, relative to the 
+   *                first record of the resultset that matches the parameters.
+   * @param count - The maximum number of entries that should be returned in 
+   *                the response. The Member Node may return less entries 
+   *                than specified in this value.
+   * 
+   * @return objectList - the list of objects matching the criteria
+   * 
+   * @throws InvalidToken
+   * @throws ServiceFailure
+   * @throws NotAuthorized
+   * @throws InvalidRequest
+   * @throws NotImplemented
+   */
+  public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, Boolean replicaStatus, Integer start,
+          Integer count) throws NotAuthorized, InvalidRequest, NotImplemented, ServiceFailure, InvalidToken {
+
+      ObjectList objectList = null;
+
+      try {
+          // safeguard against large requests
+          if (count == null || count > MAXIMUM_DB_RECORD_COUNT) {
+              count = MAXIMUM_DB_RECORD_COUNT;
+          }
+          objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, replicaStatus, start, count);
+      } catch (Exception e) {
+          throw new ServiceFailure("1580", "Error querying system metadata: " + e.getMessage());
+      }
+
+      return objectList;
   }
 
   /**

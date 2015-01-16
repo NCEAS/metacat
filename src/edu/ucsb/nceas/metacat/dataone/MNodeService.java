@@ -922,19 +922,7 @@ public class MNodeService extends D1NodeService
     public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, Boolean replicaStatus, Integer start,
             Integer count) throws NotAuthorized, InvalidRequest, NotImplemented, ServiceFailure, InvalidToken {
 
-        ObjectList objectList = null;
-
-        try {
-        	// safeguard against large requests
-            if (count == null || count > MAXIMUM_DB_RECORD_COUNT) {
-            	count = MAXIMUM_DB_RECORD_COUNT;
-            }
-            objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, replicaStatus, start, count);
-        } catch (Exception e) {
-            throw new ServiceFailure("1580", "Error querying system metadata: " + e.getMessage());
-        }
-
-        return objectList;
+        return super.listObjects(session, startTime, endTime, objectFormatId, identifier, replicaStatus, start, count);
     }
 
     /**
