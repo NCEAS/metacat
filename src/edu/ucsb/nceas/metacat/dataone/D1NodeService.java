@@ -1401,7 +1401,11 @@ public abstract class D1NodeService {
           if (count == null || count > MAXIMUM_DB_RECORD_COUNT) {
               count = MAXIMUM_DB_RECORD_COUNT;
           }
-          objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, replicaStatus, start, count);
+          boolean isSid = false;
+          if(identifier != null) {
+              isSid = IdentifierManager.getInstance().systemMetadataSIDExists(identifier);
+          }
+          objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, replicaStatus, start, count, identifier, isSid);
       } catch (Exception e) {
           throw new ServiceFailure("1580", "Error querying system metadata: " + e.getMessage());
       }

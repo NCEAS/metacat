@@ -1559,7 +1559,7 @@ public class IdentifierManager {
      */
     public ObjectList querySystemMetadata(Date startTime, Date endTime,
         ObjectFormatIdentifier objectFormatId, boolean replicaStatus,
-        int start, int count) 
+        int start, int count, Identifier identifier, boolean isSID) 
         throws SQLException, PropertyNotFoundException, ServiceException {
         ObjectList ol = new ObjectList();
         DBConnection dbConn = null;
@@ -1579,6 +1579,8 @@ public class IdentifierManager {
             boolean f1 = false;
             boolean f2 = false;
             boolean f3 = false;
+            boolean f4 = false;
+
 
             if (startTime != null) {
                 whereClauseSql += " where systemmetadata.date_modified >= ?";
@@ -1602,10 +1604,28 @@ public class IdentifierManager {
                 }
                 f3 = true;
             }
+            
+            if(identifier != null && identifier.getValue() != null && !identifier.getValue().equals("")) {
+                if (!f1 && !f2 && !f3 ) {
+                    if(isSID) {
+                        whereClauseSql += " where series_id = ?";
+                    } else {
+                        whereClauseSql += " where guid = ?";
+                    }
+                    
+                } else {
+                    if(isSID) {
+                        whereClauseSql += " and series_id = ?";
+                    } else {
+                        whereClauseSql += " and guid = ?";
+                    }
+                }
+                f4 = true;
+            }
 
             if (!replicaStatus) {
                 String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId");
-                if (!f1 && !f2 && !f3) {
+                if (!f1 && !f2 && !f3 && !f4) {
                     whereClauseSql += " where authoritive_member_node = '" +
                         currentNodeId.trim() + "'";
                 } else {
@@ -1613,6 +1633,8 @@ public class IdentifierManager {
                         currentNodeId.trim() + "'";
                 }
             }
+            
+           
             
             // connection
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.querySystemMetadata");
@@ -1628,7 +1650,17 @@ public class IdentifierManager {
             String countQuery = countSql + whereClauseSql;
             PreparedStatement countStmt = dbConn.prepareStatement(countQuery);
 
-            if (f1 && f2 && f3) {
+            if (f1 && f2 && f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
+                fieldStmt.setString(3, objectFormatId.getValue());
+                fieldStmt.setString(4, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
+                countStmt.setString(3, objectFormatId.getValue());
+                countStmt.setString(4, identifier.getValue());
+            } if (f1 && f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 fieldStmt.setString(3, objectFormatId.getValue());
@@ -1636,36 +1668,84 @@ public class IdentifierManager {
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 countStmt.setString(3, objectFormatId.getValue());
-            } else if (f1 && f2 && !f3) {
+            } else if (f1 && f2 && !f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
+                fieldStmt.setString(3, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
+                countStmt.setString(3, identifier.getValue());
+            } else if (f1 && f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setTimestamp(2, new Timestamp(endTime.getTime()));
-            } else if (f1 && !f2 && f3) {
+            } else if (f1 && !f2 && f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                fieldStmt.setString(2, objectFormatId.getValue());
+                fieldStmt.setString(3, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                countStmt.setString(2, objectFormatId.getValue());
+                countStmt.setString(3, identifier.getValue());
+            } else if (f1 && !f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
-            } else if (f1 && !f2 && !f3) {
+            } else if (f1 && !f2 && !f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                fieldStmt.setString(2, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
+                countStmt.setString(2, identifier.getValue());
+            } else if (f1 && !f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
-            } else if (!f1 && f2 && f3) {
+            } else if (!f1 && f2 && f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+                fieldStmt.setString(2, objectFormatId.getValue());
+                fieldStmt.setString(3, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+                countStmt.setString(2, objectFormatId.getValue());
+                countStmt.setString(3, identifier.getValue());
+            } else if (!f1 && f2 && f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 fieldStmt.setString(2, objectFormatId.getValue());
                 // count
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 countStmt.setString(2, objectFormatId.getValue());
-            } else if (!f1 && !f2 && f3) {
+            } else if (!f1 && !f2 && f3 && f4) {
+                fieldStmt.setString(1, objectFormatId.getValue());
+                fieldStmt.setString(2, identifier.getValue());
+                // count
+                countStmt.setString(1, objectFormatId.getValue());
+                countStmt.setString(2, identifier.getValue());
+            } else if (!f1 && !f2 && f3 && !f4) {
                 fieldStmt.setString(1, objectFormatId.getValue());
                 // count
                 countStmt.setString(1, objectFormatId.getValue());
-            } else if (!f1 && f2 && !f3) {
+            } else if (!f1 && f2 && !f3 && f4) {
+                fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+                fieldStmt.setString(2, identifier.getValue());
+                // count
+                countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+                countStmt.setString(2, identifier.getValue());
+            } else if (!f1 && f2 && !f3 && !f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
                 // count
                 countStmt.setTimestamp(1, new Timestamp(endTime.getTime()));
+            } else if (!f1 && !f2 && !f3 && f4) {
+                fieldStmt.setString(1, identifier.getValue());
+                // count
+                countStmt.setString(1, identifier.getValue());
+            } else if (!f1 && !f2 && !f3 && !f4) {
+                //do nothing
             }
 
             logMetacat.debug("list objects fieldStmt: " + fieldStmt.toString());

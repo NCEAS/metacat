@@ -344,10 +344,13 @@ public class SyncAccessPolicy {
 			}
 
 			// Get the total count of guids before we start syncing
+			Identifier id = null;
+            boolean isSid = false;
 			try {
+			    
 				objsToSync = IdentifierManager.getInstance()
 						.querySystemMetadata(startTime, endTime,
-								objectFormatId, replicaStatus, start, count);
+								objectFormatId, replicaStatus, start, count, id, isSid);
 
 				logMetacat.debug("syncTask total # of guids: "
 						+ objsToSync.getTotal() + ", count for this page: "
@@ -380,7 +383,7 @@ public class SyncAccessPolicy {
 					objsToSync = IdentifierManager
 							.getInstance()
 							.querySystemMetadata(startTime, endTime,
-									objectFormatId, replicaStatus, start, count);
+									objectFormatId, replicaStatus, start, count, id, isSid);
 				} catch (Exception e) {
 					logMetacat.error("Error syncing ids");
 					syncError = true;
