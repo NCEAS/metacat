@@ -1188,7 +1188,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
       
       //check if the sid is legitimate in the system metadata
-      checkSidInRegisterSystemMetadata(sysmeta, "4864", "4862");
+      checkSidInModifyingSystemMetadata(sysmeta, "4864", "4862");
 
       try {
           lock = HazelcastService.getInstance().getLock(sysmeta.getIdentifier().getValue());
@@ -1578,7 +1578,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // proceed if we're called by a CN
           if ( isAllowed ) {
               //check if the series id is legitimate. It uses the same rules of the method registerSystemMetadata
-              checkSidInRegisterSystemMetadata(sysmeta, "4896", "4893");
+              checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
               // create the coordinating node version of the document      
               lock.lock();
               logMetacat.debug("Locked identifier " + pid.getValue());
@@ -1987,83 +1987,5 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	}
 	
 	
-    /*
-     * Determine if the sid is legitimate in CN.create and CN.registerSystemMetadata methods. Here are the rules:
-     * A. If the sysmeta doesn't have an SID, nothing needs to be checked for the SID.
-     * B. If the sysmeta does have an SID, it may be an identifier which doesn't exist in the system.
-     * C. If the sysmeta does have an SID and it exists as an SID in the system, those scenarios are acceptable:
-     *    i. The sysmeta has an obsoletes field, the SID has the same value as the SID of the system metadata of the obsoleting pid.
-     *    ii. The sysmeta has an obsoletedBy field, the SID has the same value as the SID of the system metadata of the obsoletedBy pid. 
-	 */
-	protected boolean checkSidInRegisterSystemMetadata(SystemMetadata sysmeta, String invalidSystemMetadataCode, String serviceFailureCode) throws InvalidSystemMetadata, ServiceFailure{
-	    boolean pass = false;
-	    if(sysmeta == null) {
-	        throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The system metadata is null in the request.");
-	    }
-	    Identifier sid = sysmeta.getSeriesId();
-	    if(sid != null) {
-	        // the series id exists
-	        if (!isValidIdentifier(sid)) {
-	            throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The series id "+sid.getValue()+"in the system metadata is invalid in the request.");
-	        }
-	        Identifier pid = sysmeta.getIdentifier();
-	        if (!isValidIdentifier(pid)) {
-                throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The pid in the system metadata is invalid in the request.");
-            }
-	        //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
-            if(sid.getValue().equals(pid.getValue())) {
-                throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
-            }
-	        try {
-	            if (IdentifierManager.getInstance().identifierExists(sid.getValue())) {
-	                //the sid exists in system
-	                if(sysmeta.getObsoletes() != null) {
-	                    SystemMetadata obsoletesSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletes());
-	                    if(obsoletesSysmeta != null) {
-	                        Identifier obsoletesSid = obsoletesSysmeta.getSeriesId();
-	                        if(obsoletesSid != null && obsoletesSid.getValue() != null && !obsoletesSid.getValue().trim().equals("")) {
-	                            if(sid.getValue().equals(obsoletesSid.getValue())) {
-	                                pass = true;// the i of rule C
-	                            }
-	                        }
-	                    } else {
-	                        throw new ServiceFailure(serviceFailureCode, "Can't find the system metadata for the pid "+sysmeta.getObsoletes().getValue()+
-	                                                                       " which is the value of the obsoletes. So we can't check if the sid " +sid.getValue()+" is legitimate ");
-	                    }
-	                }
-	                if(!pass) {
-	                    // the sid doesn't match the sid of the obsoleting identifier. So we check the obsoletedBy
-	                    if(sysmeta.getObsoletedBy() != null) {
-	                        SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletedBy());
-	                        if(obsoletedBySysmeta != null) {
-	                            Identifier obsoletedBySid = obsoletedBySysmeta.getSeriesId();
-	                            if(obsoletedBySid != null && obsoletedBySid.getValue() != null && !obsoletedBySid.getValue().trim().equals("")) {
-	                                if(sid.getValue().equals(obsoletedBySid.getValue())) {
-	                                    pass = true;// the ii of the rule C
-	                                }
-	                            }
-	                        } else {
-	                            throw new ServiceFailure(serviceFailureCode, "Can't find the system metadata for the pid "+sysmeta.getObsoletes().getValue() 
-	                                                                          +" which is the value of the obsoletedBy. So we can't check if the sid "+sid.getValue()+" is legitimate.");
-	                        }
-	                    }
-	                }
-	                if(!pass) {
-	                    throw new InvalidSystemMetadata(invalidSystemMetadataCode, "The series id "+sid.getValue()+
-	                            " in the system metadata exists in the system. And it doesn't match either previous object's sid or the next object's sid");
-	                }
-	            } else {
-	                pass = true; //Rule B
-	            }
-	        } catch (SQLException e) {
-	            throw new ServiceFailure(serviceFailureCode, "Can't determine if the sid in the system metadata is unique or not since "+e.getMessage());
-	        }
-	        
-	    } else {
-	        //no sid. Rule A.
-	        pass = true;
-	    }
-	    return pass;
-	    
-	}
+    
 }
