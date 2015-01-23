@@ -72,6 +72,7 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
 
 /**
  * Represents Metacat's implementation of the DataONE Coordinating Node service
@@ -484,7 +485,9 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         }
 		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		try {
-			retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
+			//retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
+            LogV2toV1Converter converter = new LogV2toV1Converter();
+            retLog = converter.convert(log);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1490", e.getMessage());
