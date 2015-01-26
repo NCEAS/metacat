@@ -549,13 +549,28 @@ public class MNodeService
 	public InputStream view(Session session, String format, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
 			NotImplemented, NotFound {
-		
+	    String serviceFailure = "2831";
+        String notFound = "2835";
+        try {
+            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                    "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
+        } catch (NotFound e) {
+            throw new ServiceFailure(serviceFailure, e.getMessage());
+        }
 		return impl.view(session, format, pid);
 	}
 	
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
+	    String serviceFailure = "2871";
+        String notFound = "2875";
+        try {
+            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                    "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
+        } catch (NotFound e) {
+            throw new ServiceFailure(serviceFailure, e.getMessage());
+        }
 		return impl.getPackage(session, formatId, pid);
 	}
 	
