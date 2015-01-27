@@ -542,6 +542,10 @@ public class MNodeService
 	
 	public Identifier publish(Session session, Identifier originalIdentifier) 
 			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+	    String serviceFailure = "1030";
+        String notFound = "1020";
+        impl.checkV1SystemMetaPidExist(originalIdentifier, serviceFailure, "The system metadata of the object specified by "+originalIdentifier.getValue()+" couldn't be identified if it exists",  notFound, 
+                    "The system metadata of the object specified by "+originalIdentifier.getValue()+" does not exist at this node.");
 		return impl.publish(session, originalIdentifier);
 		
 	}
@@ -551,12 +555,9 @@ public class MNodeService
 			NotImplemented, NotFound {
 	    String serviceFailure = "2831";
         String notFound = "2835";
-        try {
-            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                     "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
-        } catch (NotFound e) {
-            throw new ServiceFailure(serviceFailure, e.getMessage());
-        }
+       
 		return impl.view(session, format, pid);
 	}
 	
@@ -565,12 +566,9 @@ public class MNodeService
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    String serviceFailure = "2871";
         String notFound = "2875";
-        try {
-            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata of the object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                     "The system metadata of the object specified by "+pid.getValue()+" does not exist at this node.");
-        } catch (NotFound e) {
-            throw new ServiceFailure(serviceFailure, e.getMessage());
-        }
+        
 		return impl.getPackage(session, formatId, pid);
 	}
 	
