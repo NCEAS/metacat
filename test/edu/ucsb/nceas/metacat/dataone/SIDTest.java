@@ -118,13 +118,51 @@ public class SIDTest extends MCTestCase {
 	}
 	
 	public void testCases() throws Exception {
+	    testCase1();
 	    testCase14();
 	}
 	
 	/**
+	 * case 1. P1(S1) <-> P2(S1),  S1 = P2 (Rule 1)
+	 */
+	private void testCase1() throws Exception {
+	    Identifier s1 = new Identifier();
+        s1.setValue("S1");
+        Identifier s2 = new Identifier();
+        s2.setValue("S2");
+        Identifier p1 = new Identifier();
+        p1.setValue("P1");
+        Identifier p2 = new Identifier();
+        p2.setValue("P2");
+       
+        
+        SystemMetadata p1Sys = new SystemMetadata();
+        p1Sys.setIdentifier(p1);
+        p1Sys.setSeriesId(s1);
+        p1Sys.setObsoletedBy(p2);
+        p1Sys.setDateUploaded(new Date(100));
+        
+        SystemMetadata p2Sys = new SystemMetadata();
+        p2Sys.setIdentifier(p2);
+        p2Sys.setSeriesId(s1);
+        p2Sys.setObsoletes(p1);
+        p2Sys.setDateUploaded(new Date(200));
+        
+       
+        
+        Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
+        chain.add(p1Sys);
+        chain.add(p2Sys);
+      
+        System.out.println("Case 1:");
+        Identifier head = getHeadVersion(s1, chain);
+        //System.out.println("The head is "+head.getValue());
+        assertTrue(head.equals(p2));
+	}
+	
+	/**
 	 * Case 14: P1(S1) <- P2(S1) -> P3(S2).
-	 * After decorating sysmeta, it changed to P1(S1) <-> P2(S1) <-> P3(S2).
-	 * S1 = P2 (Rule 3) 
+	 * It has a missing obsoletedBy fields, we use the uploadedDate field.S1 = P2
 	 * @throws Exception
 	 */
 	private void testCase14() throws Exception {
@@ -160,6 +198,7 @@ public class SIDTest extends MCTestCase {
         chain.add(p2Sys);
         chain.add(p3Sys);
         
+        System.out.println("Case 14:");
         Identifier head = getHeadVersion(s1, chain);
         //System.out.println("The head is "+head.getValue());
         assertTrue(head.equals(p2));
@@ -231,31 +270,56 @@ public class SIDTest extends MCTestCase {
 	    boolean has = false;
 	    if(targetSysmeta != null) {
             if (targetSysmeta.getObsoletes() == null && targetSysmeta.getObsoletedBy() == null) {
-                Identifier obsoletes = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETES, chain);
-                if(obsoletes != null) {
+                if(foundIdentifierInAnotherSystemMetadata(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain)) {
                     has = true;
-                    
                 } else {
-                    Identifier obsoleted = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain);
-                    if(obsoleted != null) {
+                    if(foundIdentifierInAnotherSystemMetadata(targetSysmeta.getIdentifier(), OBSOLETES, chain)) {
                         has = true;
                     }
                 }
                 
             } else if (targetSysmeta.getObsoletes() != null && targetSysmeta.getObsoletedBy() == null) {
-                Identifier obsoleted = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain);
-                if(obsoleted != null) {
+                if(foundIdentifierInAnotherSystemMetadata(targetSysmeta.getIdentifier(), OBSOLETES, chain)) {
                     has = true;
                 }
                 
             } else if (targetSysmeta.getObsoletes() == null && targetSysmeta.getObsoletedBy() != null) {
-                Identifier obsoletes = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETES, chain);
-                if(obsoletes != null) {
+                if(foundIdentifierInAnotherSystemMetadata(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain)) {
                     has = true;
                 }
             }
         }
 	    return has;
+	}
+	
+	/**
+	 * Determine if the sepcified identifier exists in the sepcified field in another system metadata object.
+	 * @param target
+	 * @param fieldName
+	 * @param chain
+	 * @return true if we found it; false otherwise.
+	 */
+	private boolean foundIdentifierInAnotherSystemMetadata(Identifier target, String fieldName, Vector<SystemMetadata> chain) {
+	    boolean found = false;
+	    if(fieldName.equals(OBSOLETES)) {
+            for(SystemMetadata sysmeta :chain) {
+                Identifier obsoletes = sysmeta.getObsoletes();
+                if(obsoletes != null && obsoletes.equals(target)) {
+                    System.out.println("missing obsoletedBy");
+                    found = true;
+                }
+            }
+        } else if(fieldName.equals(OBSOLETEDBY)) {
+            for(SystemMetadata sysmeta :chain) {
+                Identifier obsoletedBy = sysmeta.getObsoletedBy();
+                if(obsoletedBy != null && obsoletedBy.equals(target)) {
+                    System.out.println("missing obsoleteds");
+                    found = true;
+                }
+            }
+            
+        }
+	    return found;
 	}
 	
 	/**
@@ -299,7 +363,7 @@ public class SIDTest extends MCTestCase {
 	    }
 	    
 	    if(hasMissingObsolescenceFields) {
-	        System.out.println("It has an object whose system metadata has missing obsoletes or obsoletedBy field.");
+	        System.out.println("It has an object whose system metadata has a missing obsoletes or obsoletedBy field.");
 	        Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
             pid =sidChain.lastElement().getIdentifier();
 	    } else {
