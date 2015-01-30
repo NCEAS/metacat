@@ -142,12 +142,14 @@ public class SIDTest extends MCTestCase {
         SystemMetadata p1Sys = new SystemMetadata();
 	    p1Sys.setIdentifier(p1);
 	    p1Sys.setSeriesId(s1);
+	    p1Sys.setDateUploaded(new Date(100));
 	    
 	    SystemMetadata p2Sys = new SystemMetadata();
         p2Sys.setIdentifier(p2);
         p2Sys.setSeriesId(s1);
         p2Sys.setObsoletes(p1);
         p2Sys.setObsoletedBy(p3);
+        p2Sys.setDateUploaded(new Date(200));
         
         SystemMetadata p3Sys = new SystemMetadata();
         p3Sys.setIdentifier(p3);
@@ -219,6 +221,43 @@ public class SIDTest extends MCTestCase {
 	}
 	
 	
+	/*
+	 * Decide if a system metadata object missing a obsoletes or obsoletedBy fields:
+	 * 1. The system metadata object has both "oboletes" and "obsoletedBy" fields.
+     * 2. If a system metadata object misses "oboletes" field, another system metadata object whose "obsoletedBy" fields points to the identifier doesn't exist.
+    *  3. If a system metadata object misses "oboletedBy" field, another system metadata object whose "obsoletes" fields points to the identifier doesn't exist.
+	 */
+	private boolean hasMissingObsolescenceFields(SystemMetadata targetSysmeta, Vector<SystemMetadata> chain) {
+	    boolean has = false;
+	    if(targetSysmeta != null) {
+            if (targetSysmeta.getObsoletes() == null && targetSysmeta.getObsoletedBy() == null) {
+                Identifier obsoletes = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETES, chain);
+                if(obsoletes != null) {
+                    has = true;
+                    
+                } else {
+                    Identifier obsoleted = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain);
+                    if(obsoleted != null) {
+                        has = true;
+                    }
+                }
+                
+            } else if (targetSysmeta.getObsoletes() != null && targetSysmeta.getObsoletedBy() == null) {
+                Identifier obsoleted = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETEDBY, chain);
+                if(obsoleted != null) {
+                    has = true;
+                }
+                
+            } else if (targetSysmeta.getObsoletes() == null && targetSysmeta.getObsoletedBy() != null) {
+                Identifier obsoletes = getRelatedIdentifier(targetSysmeta.getIdentifier(), OBSOLETES, chain);
+                if(obsoletes != null) {
+                    has = true;
+                }
+            }
+        }
+	    return has;
+	}
+	
 	/**
 	 * Get the head version of the chain
 	 * @param sid
@@ -228,10 +267,11 @@ public class SIDTest extends MCTestCase {
 	    Identifier pid = null;
 	    Vector<SystemMetadata> sidChain = new Vector<SystemMetadata>();
 	    int noObsoletedByCount =0;
+	    boolean hasMissingObsolescenceFields = false;
 	    if(chain != null) {
 	        for(SystemMetadata sysmeta : chain) {
 	            if(sysmeta.getSeriesId() != null && sysmeta.getSeriesId().equals(sid)) {
-	                decorateSystemMetadata(sysmeta, chain);
+	                //decorateSystemMetadata(sysmeta, chain);
 	                /*System.out.println("identifier "+sysmeta.getIdentifier().getValue()+" :");
 	                if(sysmeta.getObsoletes() == null) {
 	                    System.out.println("obsolets "+sysmeta.getObsoletes());
@@ -243,6 +283,11 @@ public class SIDTest extends MCTestCase {
 	                } else {
 	                    System.out.println("obsoletedBy "+sysmeta.getObsoletedBy().getValue());
 	                }*/
+	                if(!hasMissingObsolescenceFields) {
+	                    if(hasMissingObsolescenceFields(sysmeta, chain)) {
+	                        hasMissingObsolescenceFields = true;
+	                    }
+	                }
 	                
 	                if(sysmeta.getObsoletedBy() == null) {
 	                    pid = sysmeta.getIdentifier();
@@ -253,46 +298,52 @@ public class SIDTest extends MCTestCase {
 	        }
 	    }
 	    
-	    
-	    if(noObsoletedByCount == 1) {
-	       //rule 1 . If there is only one object having NULL value in the chain, return the value
-	        System.out.println("rule 1");
-	        return pid;
-	    } else if (noObsoletedByCount > 1 ) {
-	        // rule 2. If there is more than one object having NULL value in the chain, return last dateUploaded
-	        System.out.println("rule 2");
+	    if(hasMissingObsolescenceFields) {
+	        System.out.println("It has an object whose system metadata has missing obsoletes or obsoletedBy field.");
 	        Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
-	        pid =sidChain.lastElement().getIdentifier();
-	        
-	    } else if (noObsoletedByCount == 0) {
-	        // all pids were obsoleted
-	        for(SystemMetadata sysmeta : sidChain) {
-	            //System.out.println("=== the pid in system metadata "+sysmeta.getIdentifier().getValue());
-	            Identifier obsoletedBy = sysmeta.getObsoletedBy();
-	            SystemMetadata sysOfObsoletedBy = getSystemMetadata(obsoletedBy, chain);
-	            if(sysOfObsoletedBy == null) {
-	                //Rule 4 We have a obsoletedBy id without system metadata. So we can't decide if a different sid exists. we have to sort it.
-	                System.out.println("rule 4");
-	                Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
-	                pid = sidChain.lastElement().getIdentifier();
-	                break;
-	            } else {
-	                Identifier sidOfObsoletedBy = sysOfObsoletedBy.getSeriesId();
-	                if(sidOfObsoletedBy != null && !sidOfObsoletedBy.equals(sid)) {
-	                    //rule 3, if everything in {S1} is obsoleted, then select object that is obsoleted by another object that does not have the same SID
-	                    System.out.println("rule 3-1 (close with another sid "+sidOfObsoletedBy.getValue()+")");
-	                    pid = sysmeta.getIdentifier();
-	                    break;
-	                } else if (sidOfObsoletedBy == null ) {
-	                    //rule 3, If everything in {S1} is obsoleted, then select object that is obsoleted by another object that does not have the same SID (this case, no sid)
-	                    System.out.println("rule 3-2 (close without sid");
-	                    pid = sysmeta.getIdentifier();
-	                    break;
-	                }
-	            }
-	            
-	        }
+            pid =sidChain.lastElement().getIdentifier();
+	    } else {
+	        if(noObsoletedByCount == 1) {
+	            //rule 1 . If there is only one object having NULL value in the chain, return the value
+	             System.out.println("rule 1");
+	             return pid;
+	         } else if (noObsoletedByCount > 1 ) {
+	             // rule 2. If there is more than one object having NULL value in the chain, return last dateUploaded
+	             System.out.println("rule 2");
+	             Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
+	             pid =sidChain.lastElement().getIdentifier();
+	             
+	         } else if (noObsoletedByCount == 0) {
+	             // all pids were obsoleted
+	             for(SystemMetadata sysmeta : sidChain) {
+	                 //System.out.println("=== the pid in system metadata "+sysmeta.getIdentifier().getValue());
+	                 Identifier obsoletedBy = sysmeta.getObsoletedBy();
+	                 SystemMetadata sysOfObsoletedBy = getSystemMetadata(obsoletedBy, chain);
+	                 if(sysOfObsoletedBy == null) {
+	                     //Rule 4 We have a obsoletedBy id without system metadata. So we can't decide if a different sid exists. we have to sort it.
+	                     System.out.println("rule 4");
+	                     Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
+	                     pid = sidChain.lastElement().getIdentifier();
+	                     break;
+	                 } else {
+	                     Identifier sidOfObsoletedBy = sysOfObsoletedBy.getSeriesId();
+	                     if(sidOfObsoletedBy != null && !sidOfObsoletedBy.equals(sid)) {
+	                         //rule 3, if everything in {S1} is obsoleted, then select object that is obsoleted by another object that does not have the same SID
+	                         System.out.println("rule 3-1 (close with another sid "+sidOfObsoletedBy.getValue()+")");
+	                         pid = sysmeta.getIdentifier();
+	                         break;
+	                     } else if (sidOfObsoletedBy == null ) {
+	                         //rule 3, If everything in {S1} is obsoleted, then select object that is obsoleted by another object that does not have the same SID (this case, no sid)
+	                         System.out.println("rule 3-2 (close without sid");
+	                         pid = sysmeta.getIdentifier();
+	                         break;
+	                     }
+	                 }
+	                 
+	             }
+	         }
 	    }
+	    
 	    return pid;
 	}
 	
