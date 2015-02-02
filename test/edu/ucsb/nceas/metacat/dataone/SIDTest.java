@@ -273,6 +273,7 @@ public class SIDTest extends MCTestCase {
         p3Sys.setIdentifier(p3);
         p3Sys.setSeriesId(s2);
         p3Sys.setObsoletes(p2);
+        p3Sys.setDateUploaded(new Date(300));
 
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -319,6 +320,7 @@ public class SIDTest extends MCTestCase {
         p3Sys.setIdentifier(p3);
         p3Sys.setSeriesId(s2);
         p3Sys.setObsoletes(p2);
+        p3Sys.setDateUploaded(new Date(300));
 
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -367,6 +369,7 @@ public class SIDTest extends MCTestCase {
         p3Sys.setIdentifier(p3);
         //p3Sys.setSeriesId(s2);
         p3Sys.setObsoletes(p2);
+        p3Sys.setDateUploaded(new Date(300));
 
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -415,11 +418,13 @@ public class SIDTest extends MCTestCase {
         //p3Sys.setSeriesId(s2);
         p3Sys.setObsoletes(p2);
         p3Sys.setObsoletedBy(p4);
+        p3Sys.setDateUploaded(new Date(300));
         
         SystemMetadata p4Sys = new SystemMetadata();
         p4Sys.setIdentifier(p4);
         p4Sys.setSeriesId(s2);
         p4Sys.setObsoletes(p3);
+        p4Sys.setDateUploaded(new Date(400));
 
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -472,6 +477,7 @@ public class SIDTest extends MCTestCase {
         p4Sys.setIdentifier(p4);
         p4Sys.setSeriesId(s1);
         p4Sys.setObsoletes(p3);
+        p4Sys.setDateUploaded(new Date(400));
 
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -744,6 +750,7 @@ public class SIDTest extends MCTestCase {
         SystemMetadata p3Sys = new SystemMetadata();
         p3Sys.setIdentifier(p3);
         p3Sys.setSeriesId(s2);
+        p3Sys.setDateUploaded(new Date(300));
         
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
         chain.add(p1Sys);
@@ -793,11 +800,13 @@ public class SIDTest extends MCTestCase {
         p4Sys.setSeriesId(s1);
         p4Sys.setObsoletes(p3);
         p4Sys.setObsoletedBy(p5);
+        p4Sys.setDateUploaded(new Date(400));
         
         SystemMetadata p5Sys = new SystemMetadata();
         p5Sys.setIdentifier(p5);
         p5Sys.setSeriesId(s2);
         p5Sys.setObsoletes(p4);
+        p5Sys.setDateUploaded(new Date(500));
         
         
         Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
@@ -935,7 +944,7 @@ public class SIDTest extends MCTestCase {
 	 * @param sid
 	 * @return
 	 */
-	public Identifier getHeadVersion(Identifier sid, Vector<SystemMetadata> chain) {
+	/*public Identifier getHeadVersion(Identifier sid, Vector<SystemMetadata> chain) {
 	    Identifier pid = null;
 	    Vector<SystemMetadata> sidChain = new Vector<SystemMetadata>();
 	    int noObsoletedByCount =0;
@@ -944,7 +953,7 @@ public class SIDTest extends MCTestCase {
 	        for(SystemMetadata sysmeta : chain) {
 	            if(sysmeta.getSeriesId() != null && sysmeta.getSeriesId().equals(sid)) {
 	                //decorateSystemMetadata(sysmeta, chain);
-	                /*System.out.println("identifier "+sysmeta.getIdentifier().getValue()+" :");
+	                System.out.println("identifier "+sysmeta.getIdentifier().getValue()+" :");
 	                if(sysmeta.getObsoletes() == null) {
 	                    System.out.println("obsolets "+sysmeta.getObsoletes());
 	                } else {
@@ -954,7 +963,7 @@ public class SIDTest extends MCTestCase {
 	                    System.out.println("obsoletedBy "+sysmeta.getObsoletedBy());
 	                } else {
 	                    System.out.println("obsoletedBy "+sysmeta.getObsoletedBy().getValue());
-	                }*/
+	                }
 	                if(!hasMissingObsolescenceFields) {
 	                    if(hasMissingObsolescenceFields(sysmeta, chain)) {
 	                        hasMissingObsolescenceFields = true;
@@ -1017,7 +1026,7 @@ public class SIDTest extends MCTestCase {
 	    }
 	    
 	    return pid;
-	}
+	}*/
 	
 	
 	private SystemMetadata getSystemMetadata(Identifier id, Vector<SystemMetadata> chain ){
@@ -1032,4 +1041,74 @@ public class SIDTest extends MCTestCase {
 	    }
 	    return sysmeta;
 	}
+	
+	/**
+     * Get the head version of the chain
+     * @param sid
+     * @return
+     */
+    public Identifier getHeadVersion(Identifier sid, Vector<SystemMetadata> chain) {
+        Identifier pid = null;
+        Vector<SystemMetadata> sidChain = new Vector<SystemMetadata>();
+        int endCounter =0 ;
+        String status = null;
+        if(chain != null) {
+            for(SystemMetadata sysmeta : chain) {
+                if(sysmeta.getSeriesId() != null && sysmeta.getSeriesId().equals(sid)) {
+                    status = endStatus(sysmeta, chain);
+                    if(status.equals(END1) || status.equals(END2)) {
+                        endCounter ++;
+                        pid = sysmeta.getIdentifier();
+                    }
+                    sidChain.add(sysmeta);
+                }
+            }
+            if(endCounter != 1) {
+                System.out.println("The chain has "+endCounter+" ends and it is not an ideal chain.");
+                Collections.sort(sidChain, new SystemMetadataDateUploadedComparator());
+                pid =sidChain.lastElement().getIdentifier();
+            } else {
+                System.out.println(""+status);
+            }
+        }
+        return pid;
+    }
+	
+	
+    /*
+     * Rules for ends:
+     *  Rule 1. An object in the SID chain doesn't have the "obsoletedBy" field.
+     *  Rule 2. An object in the SID chain does have the "obsoletedBy" filed, but the "obsoletedBy" value has different the SID value (including no SID value).
+     *  It is tricky if the object in the "obsoletedBy" filed is missing since we don't have the knowledge of its series id. Generally we consider it an end except: 
+     *  if there is another object in the chain (has the same series id) obsoletes the missing object, the missing object is not an end.
+     */
+    private String endStatus(SystemMetadata targetSysmeta, Vector<SystemMetadata> chain) {
+        String status = END2;
+        if(targetSysmeta.getObsoletedBy() == null) {
+            status = END1;
+        } else {
+            Identifier orgSid = targetSysmeta.getSeriesId();
+            Identifier obsoletedBy = targetSysmeta.getObsoletedBy();
+            SystemMetadata obsoletedBySys = getSystemMetadata(obsoletedBy, chain);
+            if(obsoletedBySys != null) {
+                if(obsoletedBySys.getSeriesId() != null && obsoletedBySys.getSeriesId().equals(orgSid)) {
+                    status = NOTEND;
+                }
+            } else {
+                // the obsoletedBy doesn't exist
+                for(SystemMetadata sys : chain) {
+                    if(sys.getSeriesId() != null && sys.getSeriesId().equals(orgSid)) {
+                        if(sys.getObsoletes() != null && sys.getObsoletes().equals(obsoletedBy)) {
+                            status = NOTEND;
+                        }
+                    }
+                }
+            }
+        }
+        return status;
+    }
+    
+    private static final String END1 = "Rule 1";
+    private static final String END2 = "Rule 2";
+    private static final String NOTEND = "Not an end";
 }
