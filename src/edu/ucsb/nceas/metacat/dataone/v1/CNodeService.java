@@ -26,6 +26,7 @@ package edu.ucsb.nceas.metacat.dataone.v1;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -522,9 +523,19 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public ObjectFormatList listFormats() throws ServiceFailure, NotImplemented {
 		org.dataone.service.types.v2.ObjectFormatList formats = impl.listFormats();
-		ObjectFormatList retFormats = null;
+		ObjectFormatList retFormats = new ObjectFormatList();
 		try {
-			retFormats = TypeMarshaller.convertTypeFromType(formats, ObjectFormatList.class);
+		    if(formats != null) {
+		        List<org.dataone.service.types.v2.ObjectFormat> objectFormatList = formats.getObjectFormatList();
+		        if(objectFormatList != null) {
+		            for(org.dataone.service.types.v2.ObjectFormat format : objectFormatList) {
+	                    ObjectFormat v1Format = TypeMarshaller.convertTypeFromType(format, ObjectFormat.class);
+	                    retFormats.addObjectFormat(v1Format);
+	                }
+		        }
+		        
+		    }
+			//retFormats = TypeMarshaller.convertTypeFromType(formats, ObjectFormatList.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4841", e.getMessage());
