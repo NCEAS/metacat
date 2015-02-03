@@ -144,11 +144,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       }
       
-      String serviceFailureCode = "4882";
+      /*String serviceFailureCode = "4882";
       Identifier sid = getPIDForSID(pid, serviceFailureCode);
       if(sid != null) {
           pid = sid;
-      }
+      }*/
       // The lock to be used for this identifier
       Lock lock = null;
       
