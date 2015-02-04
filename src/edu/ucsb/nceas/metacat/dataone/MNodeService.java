@@ -1647,7 +1647,11 @@ public class MNodeService extends D1NodeService
 	 */
 	public Identifier publish(Session session, Identifier originalIdentifier) throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata {
 		
-		
+	    String serviceFailureCode = "1030";
+	    Identifier sid = getPIDForSID(originalIdentifier, serviceFailureCode);
+	    if(sid != null) {
+	        originalIdentifier = sid;
+	    }
 		// get the original SM
 		SystemMetadata originalSystemMetadata = this.getSystemMetadata(session, originalIdentifier);
 
@@ -1870,6 +1874,12 @@ public class MNodeService extends D1NodeService
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
+	    
+	    String serviceFailureCode = "2871";
+	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
+	    if(sid != null) {
+	        pid = sid;
+	    }
 		InputStream bagInputStream = null;
 		BagFactory bagFactory = new BagFactory();
 		Bag bag = bagFactory.createBag();
@@ -2153,6 +2163,12 @@ public class MNodeService extends D1NodeService
 			NotImplemented, NotFound {
 		InputStream resultInputStream = null;
 		
+		String serviceFailureCode = "2831";
+	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
+	    if(sid != null) {
+	        pid = sid;
+	    }
+	    
 		SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
 		InputStream object = this.get(session, pid);
 
