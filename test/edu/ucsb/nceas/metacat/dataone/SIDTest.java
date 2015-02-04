@@ -135,6 +135,7 @@ public class SIDTest extends MCTestCase {
 	    testCase15();
 	    testCase16();
         testCase17();
+        testCase18();
 	}
 	
 	/**
@@ -928,6 +929,61 @@ public class SIDTest extends MCTestCase {
         Identifier head = getHeadVersion(s1, chain);
         //System.out.println("The head is "+head.getValue());
         assertTrue(head.equals(p4));
+      
+    }
+    
+    /**
+     * case 18. P1(S1) <->P2(S1) -> ??  ???<-P5(S1) S1 = P5 (P2 is a type 2 end and P4  is a type 1 end, not an ideal chain)
+     * @throws Exception
+     */
+    private void testCase18() throws Exception {
+        Identifier s1 = new Identifier();
+        s1.setValue("S1");
+        Identifier s2 = new Identifier();
+        s2.setValue("S2");
+        Identifier p1 = new Identifier();
+        p1.setValue("P1");
+        Identifier p2 = new Identifier();
+        p2.setValue("P2");
+        Identifier p3 = new Identifier();
+        p3.setValue("P3");
+        Identifier p4 = new Identifier();
+        p4.setValue("P4");
+        Identifier p5 = new Identifier();
+        p5.setValue("P5");
+       
+        
+        SystemMetadata p1Sys = new SystemMetadata();
+        p1Sys.setIdentifier(p1);
+        p1Sys.setSeriesId(s1);
+        p1Sys.setObsoletedBy(p2);
+        p1Sys.setDateUploaded(new Date(100));
+        
+        SystemMetadata p2Sys = new SystemMetadata();
+        p2Sys.setIdentifier(p2);
+        p2Sys.setSeriesId(s1);
+        p2Sys.setObsoletes(p1);
+        p2Sys.setObsoletedBy(p3);
+        p2Sys.setDateUploaded(new Date(200));
+        
+        SystemMetadata p5Sys = new SystemMetadata();
+        p5Sys.setIdentifier(p5);
+        p5Sys.setSeriesId(s1);
+        p5Sys.setObsoletes(p4);
+        p5Sys.setDateUploaded(new Date(500));
+        
+ 
+        
+        Vector<SystemMetadata> chain = new Vector<SystemMetadata>();
+        chain.add(p1Sys);
+        chain.add(p2Sys);
+        chain.add(p5Sys);
+        
+        
+        System.out.println("Case 18:");
+        Identifier head = getHeadVersion(s1, chain);
+        //System.out.println("The head is "+head.getValue());
+        assertTrue(head.equals(p5));
       
     }
 	
