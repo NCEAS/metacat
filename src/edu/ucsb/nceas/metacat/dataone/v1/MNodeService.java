@@ -349,7 +349,7 @@ public class MNodeService
 	public InputStream getReplica(Session session, Identifier pid)
 			throws InvalidToken, NotAuthorized, NotImplemented, ServiceFailure,
 			NotFound, InsufficientResources {
-		return impl.get(session, pid);
+		return impl.getReplica(session, pid);
 	}
 
 	@Override
