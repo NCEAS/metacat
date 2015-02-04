@@ -72,7 +72,7 @@ cp $METACATPROPERTIESPATH $DATADIR
 su - postgres -c "pg_dumpall | gzip > $ARCHDIR/metacat-postgres-backup.gz"
 
 # Backup the data files
-tar czf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
+tar czhf $ARCHDIR/datafiles-backup.tgz --exclude=$ARCHROOT $DATADIR
 
 # Backup the apache configuration files
 tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF $KEYLOCATION $CERTLOCATION
@@ -88,7 +88,7 @@ tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF $KEYLOCATION $CERTLOCATIO
 
 # Tar up the archive and copy it to archive media
 cd $ARCHROOT
-tar czf $ARCHDIR.tgz $ARCHNAME
+tar czhf $ARCHDIR.tgz $ARCHNAME
 
 # Clean up the temp files
 rm -rf $ARCHDIR
