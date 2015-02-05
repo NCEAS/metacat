@@ -764,11 +764,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       }
       
-      String serviceFailureCode = "4700";
+      /*String serviceFailureCode = "4700";
       Identifier sid = getPIDForSID(pid, serviceFailureCode);
       if(sid != null) {
           pid = sid;
-      }
+      }*/
       
       // The lock to be used for this identifier
       Lock lock = null;
@@ -1341,6 +1341,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       // get the subject
       Subject subject = session.getSubject();
+      
+      String serviceFailureCode = "4490";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
       
       // are we allowed to do this?
       if (!isAuthorized(session, pid, Permission.CHANGE_PERMISSION)) {

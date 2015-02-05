@@ -685,6 +685,10 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public Identifier setRightsHolder(Identifier pid, Subject userId, long serialVersion)
 			throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
 			NotImplemented, InvalidRequest, VersionMismatch {
+	    String serviceFailure = "4490";
+        String notFound = "4460";
+        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+                "No object could be found for given PID: "+pid.getValue());
 		return impl.setRightsHolder(null, pid, userId, serialVersion);
 	}
 
