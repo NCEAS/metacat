@@ -34,7 +34,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.Writer;
@@ -61,14 +60,11 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpResponse;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.log4j.Logger;
-import org.dataone.client.rest.DefaultHttpMultipartRestClient;
-import org.dataone.client.rest.HttpMultipartRestClient;
-import org.dataone.client.rest.RestClient;
 import org.dataone.client.auth.CertificateManager;
+import org.dataone.client.rest.HttpMultipartRestClient;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -2317,7 +2313,8 @@ public class ReplicationService extends BaseService {
 	 * @return
 	 */
 	private static HttpMultipartRestClient getSSLClient() {
-		HttpMultipartRestClient client = new HttpMultipartRestClient();
+		
+		HttpMultipartRestClient client = null;
 		
 		// set up this server's client identity
 		String subject = null;
@@ -2340,6 +2337,7 @@ public class ReplicationService extends BaseService {
 
 		SSLSocketFactory socketFactory = null;
 		try {
+
 			socketFactory = CertificateManager.getInstance().getSSLSocketFactory(subject);
 		} catch (FileNotFoundException e) {
 			// these are somewhat expected for anonymous client use
@@ -2351,6 +2349,7 @@ public class ReplicationService extends BaseService {
 		try {
 			//443 is the default port, this value is overridden if explicitly set in the URL
 			Scheme sch = new Scheme("https", 443, socketFactory);
+			client = new HttpMultipartRestClient();
 			client.getHttpClient().getConnectionManager().getSchemeRegistry().register(sch);
 		} catch (Exception e) {
 			// this is likely more severe
