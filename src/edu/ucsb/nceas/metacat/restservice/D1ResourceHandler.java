@@ -82,7 +82,7 @@ public class D1ResourceHandler {
     public static final byte HEAD = 5;
 
 	/** Maximum size of uploads, defaults to 1GB if not set in property file */
-	private static int MAX_UPLOAD_SIZE = 1000000000;	
+	protected static int MAX_UPLOAD_SIZE = 1000000000;
 
     /*
      * API Resources

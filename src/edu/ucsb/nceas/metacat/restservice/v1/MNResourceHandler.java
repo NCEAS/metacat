@@ -1425,7 +1425,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		File tmpDir = getTempDirectory();
 		logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
 		MultipartRequestResolver mrr = 
-			new MultipartRequestResolver(tmpDir.getAbsolutePath(), 1000000000, 0);
+			new MultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE, 0);
 		MultipartRequest mr = null;
 		try {
 			mr = mrr.resolveMultipart(request);
