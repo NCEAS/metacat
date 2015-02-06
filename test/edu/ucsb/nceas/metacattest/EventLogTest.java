@@ -58,10 +58,28 @@ public class EventLogTest extends MCTestCase
     /**
      * Test whether the log method can properly insert a log record.
      */
-    public void testLog()
+    public void testLog() throws Exception
     {
-        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", "test.2.1", "read");
-        assertTrue(1 == 1);
+        
+        long time = System.nanoTime();
+        String id = "test-1934-wemewen-3-2"+time+".1";
+        EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
+        Thread.sleep(2000);
+        Timestamp startDate = null;
+        Timestamp endDate = null;
+        boolean anonymous = false;
+        String[] principals = {"public", "someone"};
+        String[] ipList = {"192.168.1.103", "192.168.1.104"};
+        String[] docList = {id};
+        String[] eventList = {"read", "insert", "update"};
+        String report = EventLog.getInstance().getReport(ipList, principals, docList, 
+                eventList, startDate, endDate, anonymous);
+        //System.out.println("the report is "+report);
+        assertTrue(report.contains("<event>read</event>"));
+        assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
+        assertTrue(report.contains("<userAgent>Mozilla</userAgent>"));
+        assertTrue(report.contains("<principal>public</principal>"));
+        assertTrue(report.contains("<docid>"+id+"</docid>"));
     }
 
     /**
@@ -95,7 +113,7 @@ public class EventLogTest extends MCTestCase
      */
     public void testIsDeleted() throws Exception{
         long time = System.nanoTime();
-        String id = "test-1934-weme123-3.1"+time;
+        String id = "test-1934-weme123-3-1"+time+".1";
         EventLog.getInstance().log("192.168.1.103", "Mozilla", "public", id, "read");
         Thread.sleep(2000);
         boolean deleted = EventLog.getInstance().isDeleted(id);
