@@ -47,8 +47,9 @@ public class EventLogData {
 	 * @param revision the revision of the document to which the event applies
 	 * @param event the string code for the event
 	 */
-	public EventLogData(String ipAddress, String principal, String docid, String event) {
+	public EventLogData(String ipAddress, String userAgent, String principal, String docid, String event) {
 		this.ipAddress = ipAddress;
+		this.userAgent = userAgent;
 		this.principal = principal;
 		this.docid = docid;
 		this.event = event;
