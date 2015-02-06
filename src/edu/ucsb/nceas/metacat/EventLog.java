@@ -116,7 +116,7 @@ public class EventLog
 	 * @param event the string code for the event
      */
     public void log(String ipAddress, String userAgent, String principal, String docid, String event) {
-        EventLogData logData = new EventLogData(ipAddress, principal, docid, event);
+        EventLogData logData = new EventLogData(ipAddress, userAgent, principal, docid, event);
         insertLogEntry(logData);
         
         // update the event information in the index
