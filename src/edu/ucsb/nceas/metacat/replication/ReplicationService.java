@@ -66,6 +66,7 @@ import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.log4j.Logger;
 import org.dataone.client.rest.DefaultHttpMultipartRestClient;
+import org.dataone.client.rest.HttpMultipartRestClient;
 import org.dataone.client.rest.RestClient;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.service.types.v1.Identifier;
@@ -2290,7 +2291,7 @@ public class ReplicationService extends BaseService {
 	    logReplication.info("Getting url stream from " + u.toString());
 		logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
 		// use httpclient to set up SSL
-		DefaultHttpMultipartRestClient client = getSSLClient();
+		HttpMultipartRestClient client = getSSLClient();
 		// get the response content
 		InputStream input = client.doGetRequest(u.toString(), CLIENTTIMEOUT);
 		logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
@@ -2315,8 +2316,8 @@ public class ReplicationService extends BaseService {
 	 * Sends client certificate to the server when doing the request.
 	 * @return
 	 */
-	private static DefaultHttpMultipartRestClient getSSLClient() {
-		DefaultHttpMultipartRestClient client = new DefaultHttpMultipartRestClient();
+	private static HttpMultipartRestClient getSSLClient() {
+		HttpMultipartRestClient client = new HttpMultipartRestClient();
 		
 		// set up this server's client identity
 		String subject = null;
