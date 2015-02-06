@@ -81,6 +81,9 @@ public class D1ResourceHandler {
     /**HTTP Verb HEAD*/
     public static final byte HEAD = 5;
 
+	/** Maximum size of uploads, defaults to 1GB if not set in property file */
+	private static int MAX_UPLOAD_SIZE = 1000000000;	
+
     /*
      * API Resources
      */
@@ -120,6 +123,14 @@ public class D1ResourceHandler {
         this.servletContext = servletContext;
         this.request = request;
         this.response = response;
+        logMetacat = Logger.getLogger(D1ResourceHandler.class);
+		try {
+			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
+		} catch (PropertyNotFoundException e) {
+			// Just use our default as no max size is set in the properties file
+			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
+		}
+
     }
 
     /**
@@ -256,7 +267,7 @@ public class D1ResourceHandler {
 
         // handle MMP inputs
         MultipartRequestResolver mrr = 
-            new MultipartRequestResolver(tmpDir.getAbsolutePath(),1000000000, 0);
+            new MultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE, 0);
 
         mr = mrr.resolveMultipart(request);
         logMetacat.debug("Resolved the rights holder info from the mime multipart entity.");
@@ -274,7 +285,7 @@ public class D1ResourceHandler {
      */
     protected Map<String, File> collectMultipartFiles() 
         throws ServiceFailure, InvalidRequest {
-    	
+   
         // Read the incoming data from its Mime Multipart encoding
         logMetacat.debug("Disassembling MIME multipart form");
         
@@ -282,7 +293,7 @@ public class D1ResourceHandler {
         File tmpDir = getTempDirectory();
         logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
         MultipartRequestResolver mrr = 
-        	new MultipartRequestResolver(tmpDir.getAbsolutePath(), 1000000000, 0);
+        	new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
         MultipartRequest mr = null;
 		    try {
 		    	  mr = mrr.resolveMultipart(request);
@@ -366,7 +377,7 @@ public class D1ResourceHandler {
 		File tmpDir = getTempDirectory();
 		logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
 		MultipartRequestResolver mrr = 
-			new MultipartRequestResolver(tmpDir.getAbsolutePath(), 1000000000, 0);
+			new MultipartRequestResolver(tmpDir.getAbsolutePath(),  MAX_UPLOAD_SIZE, 0);
 		MultipartRequest mr = mrr.resolveMultipart(request);
 		
 		multipartparams = mr.getMultipartParameters();
