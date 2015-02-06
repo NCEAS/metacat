@@ -25,6 +25,7 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -84,7 +85,13 @@ public class D1NodeServiceTest extends MCTestCase {
 		NodeLocator nodeLocator = new NodeLocator() {
 			@Override
 			public D1Node getCNode() throws ClientSideException {
-				return new MockCNode();
+			    D1Node node = null;
+			    try {
+			        node = new MockCNode();
+			    } catch (IOException e) {
+			        throw new ClientSideException(e.getMessage());
+			    }
+				return node;
 			}
 		};
 		D1Client.setNodeLocator(nodeLocator );
