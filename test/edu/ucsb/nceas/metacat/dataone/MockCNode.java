@@ -19,6 +19,9 @@
  */
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.IOException;
+
+import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.impl.MultipartCNode;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InvalidToken;
@@ -44,8 +47,9 @@ public class MockCNode extends MultipartCNode {
     /**
      * See superclass for documentation
      */
-    public MockCNode() {
-    	super(null);
+    public MockCNode() throws ClientSideException, IOException {
+        super(null);
+        
     }
     
     @Override
