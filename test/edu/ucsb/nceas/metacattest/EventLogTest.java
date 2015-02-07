@@ -38,7 +38,12 @@ import edu.ucsb.nceas.metacat.EventLog;
  */
 public class EventLogTest extends MCTestCase
 {
-
+    private static final String USERAGENT="useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
+                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
+                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
+                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
+                                    "useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-useragent-"+
+                                    "useragent-12";
     protected void setUp() throws Exception
     {    	
         super.setUp();
@@ -78,6 +83,22 @@ public class EventLogTest extends MCTestCase
         assertTrue(report.contains("<event>read</event>"));
         assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
         assertTrue(report.contains("<userAgent>Mozilla</userAgent>"));
+        assertTrue(report.contains("<principal>public</principal>"));
+        assertTrue(report.contains("<docid>"+id+"</docid>"));
+        
+        //test a case with a user-agent which length is greater than 512.
+        time = System.nanoTime();
+        id = "test-1934-wemewen-3-3"+time+".1";
+        EventLog.getInstance().log("192.168.1.103", USERAGENT+"extral characters", "public", id, "read");
+        Thread.sleep(2000);
+   
+        String[] docs = {id};
+        report = EventLog.getInstance().getReport(ipList, principals, docs, 
+                eventList, startDate, endDate, anonymous);
+        System.out.println("the report is "+report);
+        assertTrue(report.contains("<event>read</event>"));
+        assertTrue(report.contains("<ipAddress>192.168.1.103</ipAddress>"));
+        assertTrue(report.contains("<userAgent>"+USERAGENT+"</userAgent>"));
         assertTrue(report.contains("<principal>public</principal>"));
         assertTrue(report.contains("<docid>"+id+"</docid>"));
     }
