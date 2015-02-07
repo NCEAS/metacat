@@ -81,7 +81,8 @@ public class EventLog
      */
     private static EventLog self = null;
     private Logger logMetacat = Logger.getLogger(EventLog.class);
-
+    private static final int USERAGENTLENGTH = 512;
+    
     /**
      * A private constructor that initializes the class when getInstance() is
      * called.
@@ -184,12 +185,16 @@ public class EventLog
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("EventLog.insertLogEntry");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            
+            String userAgent = logData.getUserAgent();
+            if(userAgent != null && userAgent.length() > USERAGENTLENGTH) {
+                userAgent = userAgent.substring(0, USERAGENTLENGTH);
+            }
+
             // Execute the insert statement
             PreparedStatement stmt = dbConn.prepareStatement(insertString);
             
             stmt.setString(1, logData.getIpAddress());
-            stmt.setString(2, logData.getUserAgent());
+            stmt.setString(2, userAgent);
             stmt.setString(3, logData.getPrincipal());
             stmt.setString(4, logData.getDocid());
             stmt.setString(5, logData.getEvent());
