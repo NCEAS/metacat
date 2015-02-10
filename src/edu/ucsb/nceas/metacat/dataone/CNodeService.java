@@ -1572,6 +1572,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       try {
           lock = HazelcastService.getInstance().getLock(pid.getValue());
+          lock.lock();
           // are we allowed?
           boolean isAllowed = false;
           isAllowed = isAdminAuthorized(session);
@@ -1586,7 +1587,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               //check if the series id is legitimate. It uses the same rules of the method registerSystemMetadata
               checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
               // create the coordinating node version of the document      
-              lock.lock();
               logMetacat.debug("Locked identifier " + pid.getValue());
               sysmeta.setSerialVersion(BigInteger.ONE);
               sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
