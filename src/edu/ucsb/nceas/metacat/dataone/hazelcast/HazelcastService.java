@@ -562,7 +562,11 @@ public class HazelcastService extends BaseService
 			public void run() {
 				try {
 					// this is a push mechanism
+				    System.out.println("Start the hazelcast synchronization");
+                    logMetacat.warn("Start the hazelcast synchronization");
 					resynchToRemote();
+					System.out.println("End the hazelcast synchronization");
+                    logMetacat.warn("End the hazelcast synchronization");
 				} catch (Exception e) {
 					logMetacat.error("Error in resynchInThread: " + e.getMessage(), e);
 				}
