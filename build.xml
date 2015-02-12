@@ -417,7 +417,7 @@
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.git.repository.refname"
-							value="METACATUI_1_6_1" />
+							value="METACATUI_1_6_2" />
 		<!--<property name="metacatui.git.repository.refname"
 									value="master" /> -->
 		<property name="metacatui.build.dir"

@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.4.2 Release
+Version: 2.4.3 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,12 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+Release Notes for 2.4.3:
+------------------------
+This release includes:
+* Support for large file uploads
+* Recording User-Agent when logging requests
 
 Release Notes for 2.4.2:
 ------------------------

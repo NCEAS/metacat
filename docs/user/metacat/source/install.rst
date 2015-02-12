@@ -18,7 +18,7 @@ running correctly:
 
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-* `Java 6`_ (Note: Metacat 2.4.2 is last release that will support Java 6)
+* `Java 7`_ (Note: Metacat 2.4.2 is last release that supports Java 6)
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -83,7 +83,7 @@ Download the Metacat Installer
 Downloading the Metacat Installer is the simplest way to get started with the
 application. To download the installer: 
 
-1.  Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the "GZIP file" (the link should look like: metacat-bin-X.X.X.tar.gz, where X.X.X is the latest version of Metacat e.g., 2.4.2) 
+1.  Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the "GZIP file" (the link should look like: metacat-bin-X.X.X.tar.gz, where X.X.X is the latest version of Metacat e.g., 2.4.3) 
 2.  Save the file locally. 
 3.  Extract the Metacat package files by typing:
 
@@ -115,7 +115,7 @@ Download Metacat Source Code
 ............................
 To get the Metacat source distribution:
 
-1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., 2.4.2).
+1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., 2.4.3).
 2. Save the file locally. 
 3. Extract the Metacat package files by typing (replace X.X.X with the current version number): 
 
@@ -184,7 +184,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 Java 6
 ......
 To run Metacat, you should use Java 7 (Java 6 is deprecated and will not be
-supported after Metacat version 2.4.2). Make sure that the JAVA_HOME
+supported after Metacat version 2.4.3). Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
