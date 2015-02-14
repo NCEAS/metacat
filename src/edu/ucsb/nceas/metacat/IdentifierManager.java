@@ -58,6 +58,7 @@ import edu.ucsb.nceas.metacat.accesscontrol.XMLAccessAccess;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
+import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -931,10 +932,12 @@ public class IdentifierManager {
     
     /**
      * Get the pid of the head (current) version of objects match the specified sid.
-     * DataONE defines the latest version as "current" if the object in question has 
-     * a matching SID and no value in the "obsoletedBy" field, regardless if it is "archived" or not.
-     * If we can't find any pid associated with the sid doesn't have a value in obsoletedBy field, 
-     * the pid associated with the sid  which has the max date_uploaded will be returned
+     * 1. locate all candidate chain-ends for S1:
+     *      determined by:  seriesId == S1 AND (obsoletedBy == null  OR obsoletedBy.seriesId != S1) // these are the type1 and type2 ends
+     *      If obsoletedBy is missing, we generally consider it a type 2 end except:
+     *      there is another object in the chain (has the same series id) that obsoletes the missing object. 
+     * 2. if only 1 candidate chain-end, return it as the HEAD
+     * 3. otherwise return the one in the chain with the latest dateUploaded value.
      * @param sid specified sid which should match.
      * @return the pid of the head version. The null will be returned if there is no pid found.
      * @throws SQLException 
@@ -943,9 +946,11 @@ public class IdentifierManager {
         Identifier pid = null;
         if(sid != null && sid.getValue() != null && !sid.getValue().trim().equals("")) {
             logMetacat.debug("getting pid of the head version for matching the sid: " + sid.getValue());
-            String sql = "select guid from systemMetadata where obsoleted_by is null and series_id = ?";
+            String sql = "select guid from systemMetadata where series_id = ? order by date_uploaded DESC";
             DBConnection dbConn = null;
             int serialNumber = -1;
+            int endsCount = 0;
+            boolean hasError = false;
             try {
                 // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getHeadPID");
@@ -954,23 +959,80 @@ public class IdentifierManager {
                 PreparedStatement stmt = dbConn.prepareStatement(sql);
                 stmt.setString(1, sid.getValue());
                 ResultSet rs = stmt.executeQuery();
-                if (rs.next()) 
+                boolean hasNext = rs.next();
+                boolean first = true;
+                Identifier firstOne = new Identifier();//since the sql using the desc order, the first one has the latest upload date.
+                if (hasNext) 
                 {
-                    pid = new Identifier();
-                    pid.setValue(rs.getString(1));
-                   
-                } else {
-                    //we don't find any pid associated with the sid doesn't have value in obsoletedBy field.
-                    //The pid associated with the sid  which has the max date_uploaded will be returned.
-                    sql = "select guid from systemMetadata where series_id = ? and date_uploaded=(select max(date_uploaded) from systemMetadata where series_id = ?)";
-                    stmt = dbConn.prepareStatement(sql);
-                    stmt.setString(1, sid.getValue());
-                    stmt.setString(2, sid.getValue());
-                    rs = stmt.executeQuery();
-                    if(rs.next()) {
-                        pid = new Identifier();
-                        pid.setValue(rs.getString(1));
+                    while(hasNext) {
+                        String guidStr = rs.getString(1);
+                        Identifier guid = new Identifier();
+                        guid.setValue(guidStr);
+                        if(first) {
+                            firstOne = guid;
+                            first =false;
+                        }
+                        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+                        if(sysmeta.getObsoletedBy() == null) {
+                            //type 1 end
+                            System.out.println("has a type 1 end for sid "+sid.getValue());
+                            pid = guid;
+                            endsCount++;
+                        } else {
+                            Identifier obsoletedBy = sysmeta.getObsoletedBy();
+                            SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBy);
+                            if(obsoletedBySysmeta != null) {
+                                Identifier sidInObsoletedBy = obsoletedBySysmeta.getSeriesId();
+                                if(sidInObsoletedBy == null|| !sidInObsoletedBy.equals(sid)) {
+                                    // type 2 end
+                                    System.out.println("has a type 2 end for sid "+sid.getValue());
+                                    pid = guid;
+                                    endsCount++;
+                                }
+                            } else {
+                                //obsoletedBySysmeta doesn't exist; it means the object is missing
+                                //generally, we consider it we generally consider it a type 2 end except:
+                                 //there is another object in the chain (has the same series id) that obsoletes the missing object. 
+                                String sql2 = "select guid from systemMetadata where  obsoletes = ? and series_id = ?";
+                                PreparedStatement stmt2 = dbConn.prepareStatement(sql2);
+                                stmt2.setString(1, obsoletedBy.getValue());
+                                stmt2.setString(2, sid.getValue());
+                                ResultSet result = stmt2.executeQuery();
+                                boolean next = result.next();
+                                int count = 0;
+                                while(next) {
+                                    count++;
+                                    next = result.next();
+                                }
+                                if(count == 0) {
+                                    //the exception (another object in the chain (has the same series id) that obsoletes the missing object) doesn't exist
+                                    // it is a type 2 end
+                                    System.out.println("has a type 2 end for sid "+sid.getValue());
+                                    pid = guid;
+                                    endsCount++;
+                                } else if (count ==1) {
+                                    // it is not end, do nothing;
+                                } else {
+                                    // something is wrong - there are more than one objects obsolete the missing object!
+                                    hasError = true;
+                                    break;
+                                }
+                            }
+                        }
+                        hasNext = rs.next();
                     }
+                    if(endsCount == 1) {
+                        //it has one end and it is an ideal chain. We already assign the guid to the pid. So do nothing.
+                        System.out.println("It is an ideal for sid "+sid.getValue());
+                    }
+                    if(hasError || endsCount >1) {
+                        // it is not an ideal chain, use the one with latest upload date(the first one in the result set since we have the desc order)
+                        System.out.println("It is NOT an ideal for sid "+sid.getValue());
+                        pid = firstOne;
+                    }
+                } else {
+                    //it is not a sid or at least we don't have anything to match it.
+                    //do nothing, so null will be returned
                 }
                 
             } catch (SQLException e) {
