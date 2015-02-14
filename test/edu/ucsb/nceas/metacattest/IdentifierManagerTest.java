@@ -29,8 +29,13 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.MCTestCase;
@@ -41,8 +46,12 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+
+import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 
 public class IdentifierManagerTest extends D1NodeServiceTest {
     private String badGuid = "test:testIdThatDoesNotExist";
@@ -305,6 +314,29 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             non_exist_sid.setValue("no-sid-exist-123qwe");
             assertTrue(IdentifierManager.getInstance().getHeadPID(non_exist_sid) == null);
             
+            //case-2
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case2 = new Identifier();
+            pid1_case2.setValue(generateDocumentId());
+            String sid_case2_str= "sid."+System.nanoTime();
+            Identifier sid_case2 = new Identifier();
+            sid_case2.setValue(sid_case2_str);
+            SystemMetadata sysmeta_case2 = createSystemMetadata(pid1_case2, session.getSubject(), object);
+            sysmeta_case2.setSeriesId(sid_case2);
+            CNodeService.getInstance(request).create(session, pid1_case2, object, sysmeta_case2);
+            
+            Thread.sleep(1000);
+            Identifier pid2_case2 = new Identifier();
+            pid2_case2.setValue(generateDocumentId());
+            sysmeta = createSystemMetadata(pid2_case2, session.getSubject(), object);
+            sysmeta.setSeriesId(sid_case2);
+            try {
+                CNodeService.getInstance(request).create(session, pid2_case2, object, sysmeta);
+                fail("we shouldn't get here and an InvalidSystemMetacat exception should be thrown.");
+            } catch (InvalidSystemMetadata e) {
+                System.out.println("case 2======= Invalid system metadata");
+            }
+            
         } catch (Exception e) {
             fail(e.getMessage());
         }
@@ -338,4 +370,31 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     {
         System.out.println("*********************** " + s + " ****************************");
     }
+    
+    /**
+     * We want to act as the CN itself
+     * @throws ServiceFailure 
+     * @throws Exception 
+     */
+    @Override
+    public Session getTestSession() throws Exception {
+        Session session = super.getTestSession();
+        
+        // use the first CN we find in the nodelist
+        NodeList nodeList = D1Client.getCN().listNodes();
+        for (Node node : nodeList.getNodeList()) {
+            if ( node.getType().equals(NodeType.CN) ) {
+                
+                List<Subject> subjects = node.getSubjectList();
+                for (Subject subject : subjects) {
+                   session.setSubject(subject);
+                   // we are done here
+                   return session;
+                }
+            }
+        }
+        // in case we didn't find it
+        return session;
+    }
+    
 }
