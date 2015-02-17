@@ -24,6 +24,7 @@ package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -187,6 +188,11 @@ public class CNResourceHandler extends D1ResourceHandler {
                     // post to register system metadata
                     if (httpVerb == POST) {
                         registerSystemMetadata();
+                        status = true;
+                    }
+                    else if (httpVerb == PUT) {
+                        logMetacat.debug("Using resource 'meta' for PUT");
+                        updateSystemMetadata();
                         status = true;
                     }
 
@@ -1701,6 +1707,41 @@ public class CNResourceHandler extends D1ResourceHandler {
         response.setContentType("text/xml");
         return result;
 
+    }
+    
+    /**
+     * Update the system metadata for a specified pid
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws IOException
+     * @throws JiBXException
+     * @throws NotImplemented
+     * @throws NotAuthorized
+     * @throws InvalidSystemMetadata
+     * @throws InvalidToken
+     */
+    protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest, InstantiationException, 
+                        IllegalAccessException, IOException, JiBXException, NotImplemented, NotAuthorized, InvalidSystemMetadata, InvalidToken {
+        // Read the incoming data from its Mime Multipart encoding
+        Map<String, File> files = collectMultipartFiles();
+        
+        // get the encoded pid string from the body and make the object
+        String pidString = multipartparams.get("pid").get(0);
+        Identifier pid = new Identifier();
+        pid.setValue(pidString);
+        
+        logMetacat.debug("updateSystemMetadata: " + pid);
+
+        // get the system metadata from the request
+        File smFile = files.get("sysmeta");
+        FileInputStream sysmeta = new FileInputStream(smFile);
+        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
+
+        logMetacat.debug("updating system metadata with pid " + pid.getValue());
+        
+        CNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
     }
 
 }
