@@ -280,34 +280,11 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             newSysMeta.setObsoletes(guid);
             newSysMeta.setSeriesId(seriesId);
             MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            System.out.println("case 1: =======");
             // the pid should be the newPid when we try to get the sid1
             head = IdentifierManager.getInstance().getHeadPID(seriesId);
-            System.out.println("the head 2 is "+head.getValue());
             assertTrue(head.getValue().equals(newPid.getValue()));
             
-            //do another update with different series id
-            Thread.sleep(1000);
-            String sid2 = "sid."+System.nanoTime();
-            Identifier seriesId2= new Identifier();
-            seriesId2.setValue(sid2);
-            System.out.println("the second sid is "+seriesId2.getValue());
-            Identifier newPid2 = new Identifier();
-            newPid2.setValue(generateDocumentId()+"2");
-            System.out.println("the third pid is "+newPid2.getValue());
-            SystemMetadata sysmeta3 = createSystemMetadata(newPid2, session.getSubject(), object);
-            sysmeta3.setObsoletes(newPid);
-            sysmeta3.setSeriesId(seriesId2);
-            MNodeService.getInstance(request).update(session, newPid, object, newPid2, sysmeta3);
-            
-            // the pid should be the newPid when we try to get the sid1
-            head =IdentifierManager.getInstance().getHeadPID(seriesId);
-            System.out.println("the head 3 is "+head.getValue());
-            assertTrue(head.getValue().equals(newPid.getValue()));
-            
-            // the pid should be the newPid2 when we try to get the sid2
-            head = IdentifierManager.getInstance().getHeadPID(seriesId2);
-            System.out.println("the head 4 is "+head.getValue());
-            assertTrue(head.getValue().equals(newPid2.getValue()));
             
             // the pid should be null when we try to get a no-exist sid
             Identifier non_exist_sid = new Identifier();
@@ -315,6 +292,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             assertTrue(IdentifierManager.getInstance().getHeadPID(non_exist_sid) == null);
             
             //case-2
+            // http://jenkins-1.dataone.org/documentation/unstable/API-Documentation-development/design/ContentMutability.html
             object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             Identifier pid1_case2 = new Identifier();
             pid1_case2.setValue(generateDocumentId());
@@ -337,7 +315,204 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
                 System.out.println("case 2======= Invalid system metadata");
             }
             
+            
+            //case-3
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case3 = new Identifier();
+            pid1_case3.setValue(generateDocumentId());
+            String sid_case3_str= "sid."+System.nanoTime();
+            Identifier sid_case3 = new Identifier();
+            sid_case3.setValue(sid_case3_str);
+            SystemMetadata sysmeta_case3 = createSystemMetadata(pid1_case3, session.getSubject(), object);
+            sysmeta_case3.setSeriesId(sid_case3);
+            CNodeService.getInstance(request).create(session, pid1_case3, object, sysmeta_case3);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid2_case3 = new Identifier();
+            pid2_case3.setValue(generateDocumentId());
+            SystemMetadata sysmeta2_case3 = createSystemMetadata(pid2_case3, session.getSubject(), object);
+            sysmeta2_case3.setSeriesId(sid_case3);
+            sysmeta2_case3.setObsoletes(pid1_case3);
+            CNodeService.getInstance(request).create(session, pid2_case3, object, sysmeta2_case3);
+            System.out.println("case 3: =======");
+            head = IdentifierManager.getInstance().getHeadPID(sid_case3);
+            assertTrue(head.equals(pid2_case3));
+            
+            //case-4
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case4 = new Identifier();
+            pid1_case4.setValue(generateDocumentId());
+            Identifier sid_case4 = new Identifier();
+            sid_case4.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta_case4 = createSystemMetadata(pid1_case4, session.getSubject(), object);
+            sysmeta_case4.setSeriesId(sid_case4);
+            CNodeService.getInstance(request).create(session, pid1_case4, object, sysmeta_case4);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid2_case4 = new Identifier();
+            pid2_case4.setValue(generateDocumentId());
+            SystemMetadata sysmeta2_case4 = createSystemMetadata(pid2_case4, session.getSubject(), object);
+            sysmeta2_case4.setSeriesId(sid_case4);
+            sysmeta2_case4.setObsoletes(pid1_case4);
+            CNodeService.getInstance(request).create(session, pid2_case4, object, sysmeta2_case4);
+            
+            sysmeta_case4.setObsoletedBy(pid2_case4);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid1_case4, sysmeta_case4);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid3_case4 = new Identifier();
+            pid3_case4.setValue(generateDocumentId());
+            Identifier sid2_case4 = new Identifier();
+            sid2_case4.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta3_case4 = createSystemMetadata(pid3_case4, session.getSubject(), object);
+            sysmeta3_case4.setSeriesId(sid2_case4);
+            sysmeta3_case4.setObsoletes(pid2_case4);
+            CNodeService.getInstance(request).create(session, pid3_case4, object, sysmeta3_case4);
+            
+            sysmeta2_case4.setObsoletedBy(pid3_case4);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid2_case4, sysmeta2_case4);
+            
+            
+            System.out.println("case 4: =======");
+            head = IdentifierManager.getInstance().getHeadPID(sid_case4);
+            assertTrue(head.equals(pid2_case4));
+            head = IdentifierManager.getInstance().getHeadPID(sid2_case4);
+            assertTrue(head.equals(pid3_case4));
+            
+            
+            //case-5
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case5 = new Identifier();
+            pid1_case5.setValue(generateDocumentId());
+            Identifier sid_case5 = new Identifier();
+            sid_case5.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta1_case5 = createSystemMetadata(pid1_case5, session.getSubject(), object);
+            sysmeta1_case5.setSeriesId(sid_case5);
+            CNodeService.getInstance(request).create(session, pid1_case5, object, sysmeta1_case5);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid2_case5 = new Identifier();
+            pid2_case5.setValue(generateDocumentId());
+            SystemMetadata sysmeta2_case5 = createSystemMetadata(pid2_case5, session.getSubject(), object);
+            sysmeta2_case5.setSeriesId(sid_case5);
+            sysmeta2_case5.setObsoletes(pid1_case5);
+            CNodeService.getInstance(request).create(session, pid2_case5, object, sysmeta2_case5);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid3_case5 = new Identifier();
+            pid3_case5.setValue(generateDocumentId());
+            Identifier sid2_case5 = new Identifier();
+            sid2_case5.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta3_case5 = createSystemMetadata(pid3_case5, session.getSubject(), object);
+            sysmeta3_case5.setSeriesId(sid2_case5);
+            sysmeta3_case5.setObsoletes(pid2_case5);
+            CNodeService.getInstance(request).create(session, pid3_case5, object, sysmeta3_case5);
+            
+            System.out.println("case 5: =======");
+            head = IdentifierManager.getInstance().getHeadPID(sid_case5);
+            assertTrue(head.equals(pid2_case5));
+            head = IdentifierManager.getInstance().getHeadPID(sid2_case5);
+            assertTrue(head.equals(pid3_case5));
+            
+            
+            //case-6
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case6 = new Identifier();
+            pid1_case6.setValue(generateDocumentId());
+            Identifier sid_case6 = new Identifier();
+            sid_case6.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta_case6 = createSystemMetadata(pid1_case6, session.getSubject(), object);
+            sysmeta_case6.setSeriesId(sid_case6);
+            CNodeService.getInstance(request).create(session, pid1_case6, object, sysmeta_case6);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid2_case6 = new Identifier();
+            pid2_case6.setValue(generateDocumentId());
+            SystemMetadata sysmeta2_case6 = createSystemMetadata(pid2_case6, session.getSubject(), object);
+            sysmeta2_case6.setSeriesId(sid_case6);
+            sysmeta2_case6.setObsoletes(pid1_case6);
+            CNodeService.getInstance(request).create(session, pid2_case6, object, sysmeta2_case6);
+            
+            sysmeta_case6.setObsoletedBy(pid2_case6);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid1_case6, sysmeta_case6);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid3_case6 = new Identifier();
+            pid3_case6.setValue(generateDocumentId());
+            SystemMetadata sysmeta3_case6 = createSystemMetadata(pid3_case6, session.getSubject(), object);
+            sysmeta3_case6.setObsoletes(pid2_case6);
+            CNodeService.getInstance(request).create(session, pid3_case6, object, sysmeta3_case6);
+            
+            sysmeta2_case6.setObsoletedBy(pid3_case6);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid2_case6, sysmeta2_case6);
+            
+            System.out.println("case 6: =======");
+            head = IdentifierManager.getInstance().getHeadPID(sid_case6);
+            assertTrue(head.equals(pid2_case6));
+            
+            
+            //case-7
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid1_case7 = new Identifier();
+            pid1_case7.setValue(generateDocumentId());
+            Identifier sid_case7 = new Identifier();
+            sid_case7.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta_case7 = createSystemMetadata(pid1_case7, session.getSubject(), object);
+            sysmeta_case7.setSeriesId(sid_case7);
+            CNodeService.getInstance(request).create(session, pid1_case7, object, sysmeta_case7);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid2_case7 = new Identifier();
+            pid2_case7.setValue(generateDocumentId());
+            SystemMetadata sysmeta2_case7 = createSystemMetadata(pid2_case7, session.getSubject(), object);
+            sysmeta2_case7.setSeriesId(sid_case7);
+            sysmeta2_case7.setObsoletes(pid1_case7);
+            CNodeService.getInstance(request).create(session, pid2_case7, object, sysmeta2_case7);
+            
+            sysmeta_case7.setObsoletedBy(pid2_case7);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid1_case7, sysmeta_case7);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid3_case7 = new Identifier();
+            pid3_case7.setValue(generateDocumentId());
+            SystemMetadata sysmeta3_case7 = createSystemMetadata(pid3_case7, session.getSubject(), object);
+            sysmeta3_case7.setObsoletes(pid2_case7);
+            CNodeService.getInstance(request).create(session, pid3_case7, object, sysmeta3_case7);
+            
+            sysmeta2_case7.setObsoletedBy(pid3_case7);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid2_case7, sysmeta2_case7);
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid4_case7 = new Identifier();
+            pid4_case7.setValue(generateDocumentId());
+            Identifier sid2_case7 = new Identifier();
+            sid2_case7.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta4_case7 = createSystemMetadata(pid4_case7, session.getSubject(), object);
+            sysmeta4_case7.setObsoletes(pid3_case7);
+            sysmeta4_case7.setSeriesId(sid2_case7);
+            CNodeService.getInstance(request).create(session, pid4_case7, object, sysmeta4_case7);
+            
+            sysmeta3_case7.setObsoletedBy(pid4_case7);
+            CNodeService.getInstance(request).updateSystemMetadata(session, pid3_case7, sysmeta3_case7);
+            
+            System.out.println("case 7: =======");
+            head = IdentifierManager.getInstance().getHeadPID(sid_case7);
+            assertTrue(head.equals(pid2_case7));
+            head = IdentifierManager.getInstance().getHeadPID(sid2_case7);
+            assertTrue(head.equals(pid4_case7));
+         
         } catch (Exception e) {
+            e.printStackTrace();
             fail(e.getMessage());
         }
         
