@@ -639,11 +639,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       }
       
-      String serviceFailureCode = "4941";
+      /*String serviceFailureCode = "4941";
       Identifier sid = getPIDForSID(pid, serviceFailureCode);
       if(sid != null) {
           pid = sid;
-      }
+      }*/
       
       // do we have a valid pid?
       if (obsoletedByPid == null || obsoletedByPid.getValue().trim().equals("")) {
