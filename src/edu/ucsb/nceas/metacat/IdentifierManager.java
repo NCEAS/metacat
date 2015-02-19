@@ -975,7 +975,7 @@ public class IdentifierManager {
                         SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
                         if(sysmeta.getObsoletedBy() == null) {
                             //type 1 end
-                            System.out.println("has a type 1 end for sid "+sid.getValue());
+                            logMetacat.debug(""+guidStr+" is a type 1 end for sid "+sid.getValue());
                             pid = guid;
                             endsCount++;
                         } else {
@@ -985,7 +985,7 @@ public class IdentifierManager {
                                 Identifier sidInObsoletedBy = obsoletedBySysmeta.getSeriesId();
                                 if(sidInObsoletedBy == null|| !sidInObsoletedBy.equals(sid)) {
                                     // type 2 end
-                                    System.out.println("has a type 2 end for sid "+sid.getValue());
+                                    logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue());
                                     pid = guid;
                                     endsCount++;
                                 }
@@ -1007,7 +1007,7 @@ public class IdentifierManager {
                                 if(count == 0) {
                                     //the exception (another object in the chain (has the same series id) that obsoletes the missing object) doesn't exist
                                     // it is a type 2 end
-                                    System.out.println("has a type 2 end for sid "+sid.getValue());
+                                    logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue());
                                     pid = guid;
                                     endsCount++;
                                 } else if (count ==1) {
@@ -1023,11 +1023,11 @@ public class IdentifierManager {
                     }
                     if(endsCount == 1) {
                         //it has one end and it is an ideal chain. We already assign the guid to the pid. So do nothing.
-                        System.out.println("It is an ideal for sid "+sid.getValue());
+                        logMetacat.info("It is an ideal for sid "+sid.getValue());
                     }
                     if(hasError || endsCount >1) {
                         // it is not an ideal chain, use the one with latest upload date(the first one in the result set since we have the desc order)
-                        System.out.println("It is NOT an ideal for sid "+sid.getValue());
+                        logMetacat.info("It is NOT an ideal for sid "+sid.getValue());
                         pid = firstOne;
                     }
                 } else {
