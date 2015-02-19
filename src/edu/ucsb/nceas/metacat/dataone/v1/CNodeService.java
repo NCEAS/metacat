@@ -281,7 +281,17 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         String notFound = "1060";
         impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "No system metadata could be found for given PID: "+pid.getValue());
-		return impl.getSystemMetadata(null, pid);
+        org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(null, pid);
+        SystemMetadata retSysMeta = null;
+        try {
+            retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+        } catch (Exception e) {
+            // report as service failure
+            ServiceFailure sf = new ServiceFailure("1090", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
+        return retSysMeta;
 	}
 
 	@Override
@@ -293,7 +303,17 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         String notFound = "1060";
         impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The system metadata for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "No system metadata could be found for given PID: "+pid.getValue());
-		return impl.getSystemMetadata(session, pid);
+        org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(session, pid);
+        SystemMetadata retSysMeta = null;
+        try {
+            retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+        } catch (Exception e) {
+            // report as service failure
+            ServiceFailure sf = new ServiceFailure("1090", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
+        return retSysMeta;
 	}
 
 	@Override
