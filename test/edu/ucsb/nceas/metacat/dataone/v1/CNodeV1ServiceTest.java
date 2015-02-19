@@ -136,7 +136,8 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
 			// check it
 			assertEquals(sysmeta.getIdentifier().getValue(), retSysmeta.getIdentifier().getValue());
 			assertTrue( retSysmeta instanceof org.dataone.service.types.v1.SystemMetadata);
-			//System.out.println("=== the class name is "+retSysmeta.getClass().getName());
+			assertFalse( retSysmeta instanceof org.dataone.service.types.v2.SystemMetadata);
+			System.out.println("=== the class name is "+retSysmeta.getClass().getName());
         } catch(Exception e) {
             fail("Unexpected error: " + e.getMessage());
         }
