@@ -71,9 +71,7 @@
     <!-- for citation information -->
     <xsl:template name="datasetcitation">
     
-    	<div class="well">
-    		<div class="row-fluid">
-    			<div class="span10">
+    	<cite class="citation">
     				<xsl:for-each select="creator">
     				
     					<xsl:choose>
@@ -136,19 +134,14 @@
 							(<xsl:value-of select="$pid"/>)
 						</a>				        		
 					</xsl:if>
-    			</div>
-    			<div id="downloadPackage" class="span2">
-   					<a class="btn">
+		</cite>
+   					<a class="btn" id="downloadPackage">
    						<xsl:attribute name="href">
 							<xsl:value-of select="$packageURI"/><xsl:value-of select="$pid"/>
 						</xsl:attribute>
    						Download <i class="icon-arrow-down"></i>
    					</a>
-    			</div>	
-  
-    		</div>
-				
-		</div>
+   		<div id="downloadContents"></div>
 
    </xsl:template>
    

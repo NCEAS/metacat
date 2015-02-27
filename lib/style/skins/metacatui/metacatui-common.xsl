@@ -53,12 +53,8 @@
     <xsl:template name="emldocument">
     	<!-- CONTENT SECTION
 	    ======================================================================= -->    
-	    <article id="Metadata">
-	    	<div class="container">
-	    		<div class="row-fluid">
-	        		<xsl:apply-templates select="*[local-name()='eml']"/>
-	        	</div>
-	        </div>
+	    <article id="Metadata" class="container">
+	        	<xsl:apply-templates select="*[local-name()='eml']"/>
 	    </article>  		
 					
     </xsl:template>

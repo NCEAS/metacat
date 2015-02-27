@@ -99,14 +99,14 @@
         <xsl:variable name="references" select="$ids[@id=$ref_id]" />
         <xsl:for-each select="$references">
         	
-          	<div class="row-fluid">
+          	<div class="row-fluid geographicCoverage" data-content="geographicCoverage">
               <xsl:call-template name="geographicCovCommon" />
             </div>
             
         </xsl:for-each>
       </xsl:when>
       <xsl:otherwise>
-          <div class="row-fluid">
+          <div class="row-fluid geographicCoverage" data-content="geographicCoverage">
             <xsl:call-template name="geographicCovCommon" />
           </div>
       </xsl:otherwise>
@@ -129,7 +129,7 @@
   </xsl:template>
 
   <xsl:template match="geographicDescription">
-    <div class="control-group">
+    <div class="control-group geographicDescription" data-content="geographicDescription">
 		<label class="control-label">Geographic Description</label>
       	<div class="controls controls-well">
       		<xsl:value-of select="."/>
@@ -138,7 +138,7 @@
   </xsl:template>
 
   <xsl:template match="boundingCoordinates">
-      <div class="control-group">
+      <div class="control-group boundingCoordinates" data-content="boundingCoordinates">
 		<label class="control-label">Bounding Coordinates</label>
       	<div class="controls controls-well">
       		<xsl:apply-templates select="northBoundingCoordinate"/>
@@ -151,8 +151,10 @@
   </xsl:template>
 
   <xsl:template match="westBoundingCoordinate">
-    <div class="control-group">
-		<label class="control-label"><xsl:text>West</xsl:text></label>
+  	<xsl:variable name="west"><xsl:value-of select="."/></xsl:variable>
+
+    <div class="control-group westBoundingCoordinate" data-content="westBoundingCoordinate" data-value="{$west}">
+		<label class="control-label"><xsl:text>West</xsl:text></label>        
         <div class="controls">
          	<xsl:value-of select="."/>&#160; degrees
         </div>
@@ -160,7 +162,9 @@
   </xsl:template>
 
   <xsl:template match="eastBoundingCoordinate">
-    <div class="control-group">
+	<xsl:variable name="east"><xsl:value-of select="."/></xsl:variable>
+
+    <div class="control-group eastBoundingCoordinate" data-content="eastBoundingCoordinate" data-value="{$east}">
 		<label class="control-label"><xsl:text>East</xsl:text></label>
 		<div class="controls">
 			<xsl:value-of select="."/>&#160; degrees
@@ -169,8 +173,10 @@
   </xsl:template>
 
   <xsl:template match="northBoundingCoordinate">
-    <div class="control-group">
-		<label class="control-label"><xsl:text>North</xsl:text></label>
+   	<xsl:variable name="north"><xsl:value-of select="."/></xsl:variable>
+
+    <div class="control-group northBoundingCoordinate" data-content="northBoundingCoordinate" data-value="{$north}">
+		<label class="control-label"><xsl:text>North</xsl:text></label>        
         <div class="controls">
           <xsl:value-of select="."/>&#160; degrees
         </div>
@@ -178,7 +184,9 @@
   </xsl:template>
 
   <xsl:template match="southBoundingCoordinate">
-    <div class="control-group">
+    <xsl:variable name="south"><xsl:value-of select="."/></xsl:variable>
+  
+    <div class="control-group southBoundingCoordinate" data-content="southBoundingCoordinate"  data-value="{$south}">
 		<label class="control-label"><xsl:text>South</xsl:text></label>
 		<div class="controls">
 			<xsl:value-of select="."/>&#160; degrees
@@ -259,11 +267,15 @@
         <xsl:variable name="ref_id" select="references"/>
         <xsl:variable name="references" select="$ids[@id=$ref_id]" />
         <xsl:for-each select="$references">
-            <xsl:call-template name="temporalCovCommon" />
+        	<div class="row-fluid temporalCoverage" data-content="temporalCoverage">
+            	<xsl:call-template name="temporalCovCommon" />
+            </div>
         </xsl:for-each>
       </xsl:when>
       <xsl:otherwise>
-            <xsl:call-template name="temporalCovCommon" />
+        	<div class="row-fluid temporalCoverage" data-content="temporalCoverage">
+	            <xsl:call-template name="temporalCovCommon" />
+	        </div>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -383,11 +395,15 @@
         <xsl:variable name="ref_id" select="references"/>
         <xsl:variable name="references" select="$ids[@id=$ref_id]" />
         <xsl:for-each select="$references">
-            <xsl:call-template name="taxonomicCovCommon" />
+        	<div class="row-fluid taxonomicCoverage" data-content="taxonomicCoverage">
+            	<xsl:call-template name="taxonomicCovCommon" />
+            </div>
         </xsl:for-each>
       </xsl:when>
       <xsl:otherwise>
-          <xsl:call-template name="taxonomicCovCommon" />
+        	<div class="row-fluid taxonomicCoverage" data-content="taxonomicCoverage">
+	          <xsl:call-template name="taxonomicCovCommon" />
+	         </div>
       </xsl:otherwise>
     </xsl:choose>
   </xsl:template>
@@ -395,7 +411,7 @@
 
   <xsl:template name="taxonomicCovCommon">
       <h4>Taxonomic Range</h4>
-      
+
       <xsl:apply-templates select="taxonomicSystem"/>
       <xsl:apply-templates select="generalTaxonomicCoverage"/>
       <xsl:for-each select="taxonomicClassification">
