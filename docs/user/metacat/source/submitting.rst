@@ -60,14 +60,30 @@ information about installing and configuring Apache to run with Tomcat).
 
 To install and run the Registry:
 
-1. Build the Metacat Perl client library:
 
-  ::
+1. Install the required system libraries using Ubuntu/Debian (instructions 
+   Red Hat in sidebar)
+         
+  * Install the libraries
 
-    cd $METACAT/src/perl/Metacat
-    perl Makefile.PL
-    sudo make
-    sudo make install
+    ::
+
+      sudo apt-get install ant libappconfig-perl libxml-libxml-perl \
+      libxml-libxslt-perl libtemplate-perl libcgi-session-perl \
+      build-essential libnet-ldap-perl libterm-readkey-perl \
+      libxml-dom-perl libsoap-lite-perl -y
+
+  * Install two more package using cpan 
+
+    ::
+    
+      sudo cpan -i Digest::SHA1
+      sudo cpan -i Config::Properties
+      sudo cpan -i Scalar::Util
+      sudo cpan -i Captcha:reCAPTCHA
+      sudo cpan -i DateTime
+      
+
 
 .. sidebar:: Instructions for Red Hat (Alternate Step 2)
 
@@ -119,46 +135,24 @@ To install and run the Registry:
       install DateTime
       
 
-2. Install the required system libraries using Ubuntu/Debian (instructions 
-   Red Hat in sidebar)
-         
-  * Install the libraries
 
-    ::
-
-      sudo apt-get install ant libappconfig-perl libxml-libxml-perl \
-      libxml-libxslt-perl libtemplate-perl libcgi-session-perl \
-      build-essential libnet-ldap-perl libterm-readkey-perl \
-      libxml-dom-perl libsoap-lite-perl -y
-
-  * Install two more package using cpan 
-
-    ::
-    
-      sudo cpan -i Digest::SHA1
-      sudo cpan -i Config::Properties
-      sudo cpan -i Scalar::Util
-      sudo cpan -i Captcha:reCAPTCHA
-      sudo cpan -i DateTime
-      
-
-3. Double-check that Metacat's temporary folder, application.tempDir, is 
+2. Double-check that Metacat's temporary folder, application.tempDir, is 
    writable by the apache user, usually www-data or apache. 
 
-4. Make sure that the following scripts (found in ``<tomcat-home>/webapps/metacat/cgi-bin``) 
+3. Make sure that the following scripts (found in ``<tomcat-home>/webapps/metacat/cgi-bin``) 
    are executable: register-dataset.cgi and ldapweb.cgi.
 
   ::
   
     sudo chmod +x <tomcat-home>/webapps/metacat/cgi-bin/*.cgi
 
-5. Restart Apache.
+4. Restart Apache.
 
   ::
   
     sudo /etc/init.d/apache2 restart
 
-6. Visit the resulting URL: 
+5. Visit the resulting URL: 
    http://<your_context_url>/cgi-bin/register-dataset.cgi?cfg=default
    Where ``<your_context_url>`` is the URL of the server hosting the Metacat 
    followed by the name of the WAR file (i.e., the application context) that 
