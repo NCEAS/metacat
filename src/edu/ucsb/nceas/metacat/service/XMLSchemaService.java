@@ -229,6 +229,9 @@ public class XMLSchemaService extends BaseService {
 				        HttpURLConnection connection = (HttpURLConnection) u.openConnection();
 				        connection.setDoOutput(true);
 			            connection.setRequestMethod("GET");
+                                    connection.setReadTimeout(5000);
+                                    //System.out.println("the ============== the read timeout is ================"+connection.getReadTimeout());
+			            //System.out.println("the ============== the connection timeout is ================"+connection.getConnectTimeout());
 			            connection.connect();
 			            String schema = IOUtils.toString(connection.getInputStream());
 			            
