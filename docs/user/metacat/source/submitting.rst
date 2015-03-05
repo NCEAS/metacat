@@ -146,13 +146,19 @@ To install and run the Registry:
   
     sudo chmod +x <tomcat-home>/webapps/metacat/cgi-bin/*.cgi
 
-4. Restart Apache.
+4. Ensure apache CGI module is enabled
+
+   ::
+  
+    sudo a2enmod cgid
+
+5. Restart Apache.
 
   ::
   
     sudo /etc/init.d/apache2 restart
 
-5. Visit the resulting URL: 
+6. Visit the resulting URL: 
    http://<your_context_url>/cgi-bin/register-dataset.cgi?cfg=default
    Where ``<your_context_url>`` is the URL of the server hosting the Metacat 
    followed by the name of the WAR file (i.e., the application context) that 
