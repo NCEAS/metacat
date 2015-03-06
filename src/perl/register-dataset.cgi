@@ -856,9 +856,11 @@ sub validateParameters {
 	  unless hasContent($FORM::providerSurName);
 	push( @invalidParams, "Dataset title is missing." )
 	  unless hasContent($FORM::title);
-	push( @invalidParams, ucfirst( $config->{'site'} ) . " name is missing." )
-	  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
-		|| $skinName eq "nceas" );
+	if ( $show->{'siteList'} eq 'true' ) { 
+		push( @invalidParams, ucfirst( $config->{'site'} ) . " name is missing." )
+		  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
+			|| $skinName eq "nceas" );
+	}
 	push( @invalidParams, "First name of principal data set owner is missing." )
 	  unless hasContent($FORM::origNamefirst0);
 	push( @invalidParams, "Last name of principal data set owner is missing." )
