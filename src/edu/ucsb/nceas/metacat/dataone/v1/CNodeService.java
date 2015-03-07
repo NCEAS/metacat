@@ -467,7 +467,16 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public ObjectFormat getFormat(ObjectFormatIdentifier fmtid)
 			throws ServiceFailure, NotFound, NotImplemented, InvalidRequest {
-		return impl.getFormat(fmtid);
+	        org.dataone.service.types.v2.ObjectFormat format = impl.getFormat(fmtid);
+	        ObjectFormat v1Format = null;
+	        try {
+	            v1Format = TypeMarshaller.convertTypeFromType(format, ObjectFormat.class);
+	        } catch (Exception e) {
+	            ServiceFailure sf = new ServiceFailure("4846", e.getMessage());
+	            sf.initCause(e);
+	            throw sf;
+	        }
+		return v1Format;
 	}
 
 	@Override
