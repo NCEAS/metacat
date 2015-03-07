@@ -97,6 +97,7 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
 		suite.addTest(new CNodeV1ServiceTest("testGetFormat"));
 		suite.addTest(new CNodeV1ServiceTest("testGetLogRecords"));*/
 		suite.addTest(new CNodeV1ServiceTest("testGetSystemMetadata"));
+		suite.addTest(new CNodeV1ServiceTest("testGetFormat"));
 		/*suite.addTest(new CNodeV1ServiceTest("testIsAuthorized"));
 		suite.addTest(new CNodeV1ServiceTest("testListFormats"));
 		suite.addTest(new CNodeV1ServiceTest("testListNodes"));
@@ -110,7 +111,6 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
 		suite.addTest(new CNodeV1ServiceTest("testSetOwner"));
 		suite.addTest(new CNodeV1ServiceTest("readDeletedObject"));
 		suite.addTest(new CNodeV1ServiceTest("testGetSID"));*/
-	
 		return suite;
 	}
 	
@@ -143,7 +143,29 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
         }
 	}
 	
-	
+	public void testGetFormat() {
+	 // make sure we are set up
+	    setUpFormats();
+	    
+	    String knownFormat = "text/plain";
+	    ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
+	    fmtid.setValue(knownFormat);
+	    try {
+	        
+	        ObjectFormat format = CNodeService.getInstance(request).getFormat(fmtid);
+	        assertTrue( format instanceof org.dataone.service.types.v1.ObjectFormat);
+	        assertFalse( format instanceof org.dataone.service.types.v2.ObjectFormat);
+	        System.out.println("=== the class name is "+format.getClass().getName());
+	        String result = format.getFormatId().getValue();
+	        System.out.println("Expected result: " + knownFormat);
+	        System.out.println("Found    result: " + result);
+	        assertTrue(result.equals(knownFormat));
+	  
+	    } catch (Exception npe) {      
+	        fail("Can't get the returned format : " + npe.getMessage());
+	    
+	    }
+	}
   
   
  
