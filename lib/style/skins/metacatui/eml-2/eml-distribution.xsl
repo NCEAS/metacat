@@ -129,12 +129,18 @@
          <a>
            <xsl:choose>
            <xsl:when test="starts-with($URL,'ecogrid')">
-			<xsl:variable name="URL1" select="substring-after($URL, 'ecogrid://')"/>
-			<xsl:variable name="docID" select="substring-after($URL1, '/')"/>
-			<xsl:attribute name="href"><xsl:value-of select="$tripleURI"/><xsl:value-of select="$docID"/></xsl:attribute>
+		       <xsl:variable name="URL1" select="substring-after($URL, 'ecogrid://')"/>
+			   <xsl:variable name="docID" select="substring-after($URL1, '/')"/>
+			   <xsl:attribute name="data-pid"><xsl:value-of select="$docID"></xsl:value-of></xsl:attribute>
+			   <xsl:attribute name="href"><xsl:value-of select="$tripleURI"/><xsl:value-of select="$docID"/></xsl:attribute>
+           </xsl:when>
+            <xsl:when test="contains($URL,'/object/')">
+			   <xsl:variable name="docID" select="substring-after('$URL', '/object/')"/>
+			   <xsl:attribute name="data-pid"><xsl:value-of select="$docID"></xsl:value-of></xsl:attribute>   
+			   <xsl:attribute name="href"><xsl:value-of select="$URL"/></xsl:attribute>
            </xsl:when>
            <xsl:otherwise>
-			<xsl:attribute name="href"><xsl:value-of select="$URL"/></xsl:attribute>
+			   <xsl:attribute name="href"><xsl:value-of select="$URL"/></xsl:attribute>
            </xsl:otherwise>
           </xsl:choose>
           <xsl:attribute name="target">_blank</xsl:attribute>

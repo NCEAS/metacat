@@ -128,10 +128,11 @@
   <xsl:template name="physicalobjectName">
     <xsl:param name="physicalfirstColStyle"/>
     <xsl:for-each select="objectName">
-      <div class="control-group">
+      <xsl:variable name="objName"><xsl:value-of select="."/></xsl:variable>
+      <div class="control-group objectName" data-object-name="{$objName}">
 		<label class="control-label">Object Name</label>
         <div class="controls controls-well">
-        	<xsl:value-of select="."/>
+        	<xsl:value-of select="$objName"/>
         </div>
       </div>
     </xsl:for-each>
