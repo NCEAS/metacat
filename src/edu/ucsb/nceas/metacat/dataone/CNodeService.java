@@ -42,6 +42,7 @@ import org.dataone.service.cn.v2.CNAuthorization;
 import org.dataone.service.cn.v2.CNCore;
 import org.dataone.service.cn.v2.CNRead;
 import org.dataone.service.cn.v2.CNReplication;
+import org.dataone.service.cn.v2.CNView;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -95,7 +96,7 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
  *
  */
 public class CNodeService extends D1NodeService implements CNAuthorization,
-    CNCore, CNRead, CNReplication {
+    CNCore, CNRead, CNReplication, CNView {
 
   /* the logger instance */
   private Logger logMetacat = null;

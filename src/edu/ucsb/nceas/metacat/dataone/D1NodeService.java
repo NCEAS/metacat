@@ -23,12 +23,15 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -37,6 +40,7 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Set;
 import java.util.Timer;
+import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
@@ -65,6 +69,7 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
@@ -79,18 +84,21 @@ import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.Constants;
 
 import edu.ucsb.nceas.metacat.AccessionNumberException;
+import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
+import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
+import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public abstract class D1NodeService {
@@ -1849,5 +1857,106 @@ public abstract class D1NodeService {
       return pass;
       
   }
+  
+  //@Override
+  public OptionList listViews(Session arg0) throws InvalidToken,
+          ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+      OptionList views = new OptionList();
+      Vector<String> skinNames = null;
+      try {
+          skinNames = SkinUtil.getSkinNames();
+      } catch (PropertyNotFoundException e) {
+          throw new ServiceFailure("2841", e.getMessage());
+      }
+      for (String skinName: skinNames) {
+          views.addOption(skinName);
+      }
+      return views;
+  }
+  
+  public OptionList listViews() throws InvalidToken,
+  ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented { 
+      return listViews(null);
+  }
+
+  //@Override
+  public InputStream view(Session session, String format, Identifier pid)
+          throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
+          NotImplemented, NotFound {
+      InputStream resultInputStream = null;
+      
+      String serviceFailureCode = "2831";
+      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+      if(sid != null) {
+          pid = sid;
+      }
+      
+      SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+      InputStream object = this.get(session, pid);
+
+      try {
+          // can only transform metadata, really
+          ObjectFormat objectFormat = ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId());
+          if (objectFormat.getFormatType().equals("METADATA")) {
+              // transform
+              DBTransform transformer = new DBTransform();
+              String documentContent = IOUtils.toString(object, "UTF-8");
+              String sourceType = objectFormat.getFormatId().getValue();
+              String targetType = "-//W3C//HTML//EN";
+              ByteArrayOutputStream baos = new ByteArrayOutputStream();
+              Writer writer = new OutputStreamWriter(baos , "UTF-8");
+              // TODO: include more params?
+              Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+              String localId = null;
+              try {
+                  localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              } catch (McdbDocNotFoundException e) {
+                  throw new NotFound("1020", e.getMessage());
+              }
+              params.put("qformat", new String[] {format});               
+              params.put("docid", new String[] {localId});
+              params.put("pid", new String[] {pid.getValue()});
+              transformer.transformXMLDocument(
+                      documentContent , 
+                      sourceType, 
+                      targetType , 
+                      format, 
+                      writer, 
+                      params, 
+                      null //sessionid
+                      );
+              
+              // finally, get the HTML back
+              resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
+              ((ContentTypeByteArrayInputStream) resultInputStream).setContentType("text/html");
+  
+          } else {
+              // just return the raw bytes
+              resultInputStream = object;
+          }
+      } catch (IOException e) {
+          // report as service failure
+          ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      } catch (PropertyNotFoundException e) {
+          // report as service failure
+          ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      } catch (SQLException e) {
+          // report as service failure
+          ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      } catch (ClassNotFoundException e) {
+          // report as service failure
+          ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      }
+      
+      return resultInputStream;
+  }   
 
 }
