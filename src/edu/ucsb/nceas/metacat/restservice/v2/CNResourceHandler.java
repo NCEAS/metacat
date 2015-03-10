@@ -60,6 +60,7 @@ import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -80,6 +81,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
+import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
@@ -383,7 +385,42 @@ public class CNResourceHandler extends D1ResourceHandler {
                     extra = parseTrailing(resource, Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
                     deleteReplica(extra);
                     status = true;
-                }
+                } else if (resource.startsWith(RESOURCE_VIEWS)) {
+                    logMetacat.debug("Using resource " + RESOURCE_VIEWS);
+                    // after the command
+                    extra = parseTrailing(resource, RESOURCE_VIEWS);
+                    logMetacat.debug("view extra: " + extra);
+
+                    String format = null;
+                    String pid = null;
+
+                    if (extra != null) {
+                        // get the format
+                        int formatIndex = extra.length();
+                        if (extra.indexOf("/") > -1) {
+                            formatIndex = extra.indexOf("/");
+                        }
+                        format = extra.substring(0, formatIndex);
+                        logMetacat.debug("view format: " + format);
+                        
+                        // get the pid if it is there
+                        pid = extra.substring(formatIndex, extra.length());
+                        if (pid != null && pid.length() == 0) {
+                            pid = null;
+                        } else {
+                            if (pid.startsWith("/")) {
+                                pid = pid.substring(1);
+                            }
+                        }
+                        logMetacat.debug("pid: " + pid);
+
+                    }
+                    logMetacat.debug("verb:" + httpVerb);
+                    if (httpVerb == GET) {
+                        doViews(format, pid);
+                        status = true;
+                    }
+                } 
 
                 if (!status) {
                     throw new ServiceFailure("0000", "Unknown error, status = "
@@ -1742,6 +1779,60 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("updating system metadata with pid " + pid.getValue());
         
         CNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
+    }
+    
+    private void doViews(String format, String pid) {
+        
+        OutputStream out = null;
+        CNodeService cnode = CNodeService.getInstance(request);
+
+        try {
+            // get a list of views
+            if (pid != null) {
+                Identifier identifier = new Identifier();
+                identifier.setValue(pid);
+                InputStream stream = cnode.view(session, format, identifier);
+
+                // set the content-type if we have it from the implementation
+                if (stream instanceof ContentTypeInputStream) {
+                    response.setContentType(((ContentTypeInputStream) stream).getContentType());
+                }
+                response.setStatus(200);
+                out = response.getOutputStream();
+                // write the results to the output stream
+                IOUtils.copyLarge(stream, out);
+                return;
+            } else {
+                // TODO: list the registered views
+                //BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
+                //throw ni;
+                OptionList list = cnode.listViews(session);
+                
+                response.setContentType("text/xml");
+                response.setStatus(200);
+                TypeMarshaller.marshalTypeToOutputStream(list, response.getOutputStream());
+            }
+            
+            
+        } catch (BaseException be) {
+            // report Exceptions as clearly as possible
+            try {
+                out = response.getOutputStream();
+            } catch (IOException e) {
+                logMetacat.error("Could not get output stream from response", e);
+            }
+            serializeException(be, out);
+        } catch (Exception e) {
+            // report Exceptions as clearly and generically as possible
+            logMetacat.error(e.getClass() + ": " + e.getMessage(), e);
+            try {
+                out = response.getOutputStream();
+            } catch (IOException ioe) {
+                logMetacat.error("Could not get output stream from response", ioe);
+            }
+            ServiceFailure se = new ServiceFailure("0000", e.getMessage());
+            serializeException(se, out);
+        }
     }
 
 }

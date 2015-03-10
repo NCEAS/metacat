@@ -97,6 +97,8 @@ public class D1ResourceHandler {
     
     protected static final String RESOURCE_IS_AUTHORIZED = "isAuthorized";
     protected static final String RESOURCE_ACCESS_RULES = "accessRules";
+    
+    protected static final String RESOURCE_VIEWS = "views";
 
     
     /*

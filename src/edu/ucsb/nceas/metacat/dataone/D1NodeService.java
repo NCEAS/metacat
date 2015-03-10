@@ -1862,6 +1862,8 @@ public abstract class D1NodeService {
   public OptionList listViews(Session arg0) throws InvalidToken,
           ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
       OptionList views = new OptionList();
+      views.setKey("views");
+      views.setDescription("List of views for objects on the node");
       Vector<String> skinNames = null;
       try {
           skinNames = SkinUtil.getSkinNames();

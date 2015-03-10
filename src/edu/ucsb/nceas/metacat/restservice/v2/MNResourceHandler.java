@@ -70,6 +70,7 @@ import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -139,7 +140,6 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_GENERATE_ID = "generate";
     protected static final String RESOURCE_PUBLISH = "publish";
     protected static final String RESOURCE_PACKAGE = "package";
-    protected static final String RESOURCE_VIEWS = "views";
     protected static final String RESOURCE_TOKEN = "token";
 
 
@@ -590,8 +590,13 @@ public class MNResourceHandler extends D1ResourceHandler {
                 return;
     		} else {
     			// TODO: list the registered views
-                BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
-				throw ni;
+                //BaseException ni = new NotImplemented("9999", "MN.listViews() is not implemented at this node");
+				//throw ni;
+    		    OptionList list = mnode.listViews(session);
+    	        
+    	        response.setContentType("text/xml");
+    	        response.setStatus(200);
+    	        TypeMarshaller.marshalTypeToOutputStream(list, response.getOutputStream());
     		}
 	    	
 	        
