@@ -29,6 +29,9 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
+import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.utilities.IOUtil;
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.BagFile;
@@ -41,6 +44,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -49,6 +53,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -78,6 +83,7 @@ import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
@@ -163,6 +169,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     suite.addTest(new MNodeServiceTest("testGetSID"));
+    suite.addTest(new MNodeServiceTest("testListViews"));
+    
     return suite;
     
   }
@@ -1885,4 +1893,19 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         
         
     }
+    
+    /**
+     * Test the listView methods.
+     * @throws Excpetion
+     */
+    public void testListViews() throws Exception {
+        Session session = null;
+        OptionList list = MNodeService.getInstance(request).listViews(session);
+        assertTrue(list.sizeOptionList() >0);
+        List<String> names = list.getOptionList();
+        for(String name : names) {
+            System.out.println("It has the view named "+name);
+        }
+    }
+    
 }

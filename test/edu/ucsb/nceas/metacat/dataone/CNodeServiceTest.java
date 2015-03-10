@@ -65,10 +65,12 @@ import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.ObjectFormatList;
+import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 /**
  * A JUnit test for testing the dataone CNCore implementation
@@ -110,6 +112,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testSetOwner"));
 		suite.addTest(new CNodeServiceTest("readDeletedObject"));
 		suite.addTest(new CNodeServiceTest("testGetSID"));
+		suite.addTest(new CNodeServiceTest("testListViews"));
 	
 		return suite;
 	}
@@ -1133,10 +1136,18 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           e.printStackTrace();
           fail(e.getMessage());
       }
-      
-      
-      
-      
   }
  
+  /**
+   * Test the listView methods.
+   * @throws Excpetion
+   */
+  public void testListViews() throws Exception {
+      OptionList list = CNodeService.getInstance(request).listViews();
+      assertTrue(list.sizeOptionList() >0);
+      List<String> names = list.getOptionList();
+      for(String name : names) {
+          System.out.println("It has the view named "+name);
+      }
+  }
 }
