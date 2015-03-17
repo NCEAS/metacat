@@ -60,6 +60,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -2292,8 +2293,9 @@ public class ReplicationService extends BaseService {
 		logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
 		// use httpclient to set up SSL
 		RestClient client = getSSLClient();
-		// get the response content
-		InputStream input = client.doGetRequest(u.toString(), null);
+        HttpResponse response = client.doGetRequest(u.toString(),null);
+        // get the response content
+        InputStream input = response.getEntity().getContent();
 		logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
 		
 		return input;
