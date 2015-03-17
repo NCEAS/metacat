@@ -2345,7 +2345,7 @@ public class ReplicationService extends BaseService {
 	                    .setDefaultRequestConfig(rc)
 	                    .build();
 	            
-	            sslClient = new RestlClient(hc);
+	            sslClient = new RestClient(hc);
 	        } 
 	        catch (FileNotFoundException e) {
 	            // these are somewhat expected for anonymous client use
