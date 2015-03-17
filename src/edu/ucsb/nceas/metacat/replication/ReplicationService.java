@@ -60,11 +60,14 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.ssl.SSLSocketFactory;
+import org.apache.http.client.HttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.log4j.Logger;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.rest.HttpMultipartRestClient;
+import org.dataone.client.rest.RestClient;
+import org.dataone.client.utils.HttpUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -126,6 +129,7 @@ public class ReplicationService extends BaseService {
 	private static final int TIMEINTERVALLIMIT = 7200000;
 	public static final String REPLICATIONUSER = "replication";
 	
+	private static RestClient sslClient = null;
 	private static int CLIENTTIMEOUT = 30000;
 
 	public static final String REPLICATION_LOG_FILE_NAME = "metacatreplication.log";
@@ -2287,12 +2291,12 @@ public class ReplicationService extends BaseService {
 	    logReplication.info("Getting url stream from " + u.toString());
 		logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
 		// use httpclient to set up SSL
-		HttpMultipartRestClient client = getSSLClient();
+		RestClient client = getSSLClient();
 		// get the response content
-		InputStream input = client.doGetRequest(u.toString(), CLIENTTIMEOUT);
+		InputStream input = client.doGetRequest(u.toString(), null);
 		logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
 		
-		return input;		
+		return input;
 	}
 	
 	/**
@@ -2304,7 +2308,7 @@ public class ReplicationService extends BaseService {
     public static byte[] getURLBytes(URL u) throws Exception {
         InputStream input = getURLStream(u);
         byte[] bytes = IOUtils.toByteArray(input);
-        return bytes;       
+        return bytes;
     }
 	
 	/**
@@ -2312,51 +2316,49 @@ public class ReplicationService extends BaseService {
 	 * Sends client certificate to the server when doing the request.
 	 * @return
 	 */
-	private static HttpMultipartRestClient getSSLClient() {
+	private static RestClient getSSLClient() {
 		
-		HttpMultipartRestClient client = null;
+	    if (sslClient == null) {
 		
-		// set up this server's client identity
-		String subject = null;
-		try {
-			// TODO: should there be alternative ways to get the key and certificate?
-			String certificateFile = PropertyService.getProperty("replication.certificate.file");
-	    	String keyFile = PropertyService.getProperty("replication.privatekey.file");
-			String keyPassword = PropertyService.getProperty("replication.privatekey.password");
-			X509Certificate certificate = CertificateManager.getInstance().loadCertificateFromFile(certificateFile);
-			PrivateKey privateKey = CertificateManager.getInstance().loadPrivateKeyFromFile(keyFile, keyPassword);
-			subject = CertificateManager.getInstance().getSubjectDN(certificate);
-			CertificateManager.getInstance().registerCertificate(subject, certificate, privateKey);
-		} catch (Exception e) {
-			// this is pretty much required for replication communication
-			logReplication.warn("Could not find server's client certificate/private key: " + e.getMessage());
-		}
-		
-		// set the configured timeout
-		//client.setTimeouts(CLIENTTIMEOUT);
+	        // set up this server's client identity
+	        String subject = null;
+	        try {
+	            // TODO: should there be alternative ways to get the key and certificate?
+	            String certificateFile = PropertyService.getProperty("replication.certificate.file");
+	            String keyFile = PropertyService.getProperty("replication.privatekey.file");
+	            String keyPassword = PropertyService.getProperty("replication.privatekey.password");
+	            X509Certificate certificate = CertificateManager.getInstance().loadCertificateFromFile(certificateFile);
+	            PrivateKey privateKey = CertificateManager.getInstance().loadPrivateKeyFromFile(keyFile, keyPassword);
+	            subject = CertificateManager.getInstance().getSubjectDN(certificate);
+	            CertificateManager.getInstance().registerCertificate(subject, certificate, privateKey);
+	        } catch (Exception e) {
+	            // this is pretty much required for replication communication
+	            logReplication.warn("Could not find server's client certificate/private key: " + e.getMessage());
+	        }
 
-		SSLSocketFactory socketFactory = null;
-		try {
-
-			socketFactory = CertificateManager.getInstance().getSSLSocketFactory(subject);
-		} catch (FileNotFoundException e) {
-			// these are somewhat expected for anonymous client use
-			logReplication.warn("Could not set up SSL connection for client - likely because the certificate could not be located: " + e.getMessage());
-		} catch (Exception e) {
-			// this is likely more severe
-			logReplication.warn("Funky SSL going on: " + e.getClass() + ":: " + e.getMessage());
-		}
-		try {
-			//443 is the default port, this value is overridden if explicitly set in the URL
-			Scheme sch = new Scheme("https", 443, socketFactory);
-			client = new HttpMultipartRestClient();
-			client.getHttpClient().getConnectionManager().getSchemeRegistry().register(sch);
-		} catch (Exception e) {
-			// this is likely more severe
-			logReplication.error("Failed to set up SSL connection for client. Continuing. " + e.getClass() + ":: " + e.getMessage(), e);
-		}
-		return client;
+	        try {
+	            RequestConfig rc = RequestConfig.custom()
+	                    .setConnectionRequestTimeout(CLIENTTIMEOUT)
+	                    .setConnectTimeout(CLIENTTIMEOUT)
+	                    .setSocketTimeout(CLIENTTIMEOUT).build();
+	            HttpClient hc = HttpUtils.getHttpClientBuilder(HttpUtils.selectSession(subject))
+	                    .setDefaultRequestConfig(rc)
+	                    .build();
+	            
+	            sslClient = new RestlClient(hc);
+	        } 
+	        catch (FileNotFoundException e) {
+	            // these are somewhat expected for anonymous client use
+	            logReplication.warn("Could not set up SSL connection for client - likely because the certificate could not be located: " + e.getMessage());
+	        }
+	        catch (Exception e) {
+	            // this is likely more severe
+	            logReplication.error("Failed to set up SSL connection for client. Continuing. " + e.getClass() + ":: " + e.getMessage(), e);
+	        }
+	    }
+		return sslClient;
 	}
+
 	
 
 //	/**
