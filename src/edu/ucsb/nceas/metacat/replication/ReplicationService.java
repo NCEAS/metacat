@@ -60,8 +60,13 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.StatusLine;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.HttpResponseException;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.client.config.RequestConfig;
@@ -2290,14 +2295,33 @@ public class ReplicationService extends BaseService {
 	 */
 	public static InputStream getURLStream(URL u) throws Exception {
 	    logReplication.info("Getting url stream from " + u.toString());
-		logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
-		// use httpclient to set up SSL
-		RestClient client = getSSLClient();
-        HttpResponse response = client.doGetRequest(u.toString(),null);
-        // get the response content
-        InputStream input = response.getEntity().getContent();
-		logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
-		
+	    logReplication.info("ReplicationService.getURLStream - Before sending request to: " + u.toString());
+	    // use httpclient to set up SSL
+
+	    InputStream input = null;
+	    try {
+	        RestClient client = getSSLClient();
+	        HttpResponse response = client.doGetRequest(u.toString(),null);
+	        // get the response content
+	        StatusLine statusLine = response.getStatusLine();
+	        HttpEntity entity = response.getEntity();
+	        logReplication.info("ReplicationService.getURLStream - After getting response from: " + u.toString());
+	        if (statusLine.getStatusCode() >= 300) {
+	            throw new HttpResponseException(
+	                    statusLine.getStatusCode(),
+	                    "ReplicationService.getURLStream - " + statusLine.getReasonPhrase());
+	        }
+	        if (entity == null) {
+	            throw new ClientProtocolException("ReplicationService.getURLStream - Response contains no content");
+	        }
+	        input = entity.getContent();
+	    } 
+	    catch (Throwable t) {
+	        logReplication.error("Unexpected Throwable encountered.  Logging and moving on: " +
+	                t.getClass().getCanonicalName() + ": " + t.getMessage());
+	        logReplication.error(ExceptionUtils.getStackTrace(t));
+	        throw new Exception(t);
+	    }
 		return input;
 	}
 	
