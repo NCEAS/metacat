@@ -28,17 +28,17 @@
 	<bean id="annotationDeleteSubprocessor" class="edu.ucsb.nceas.metacat.index.MetacatDocumentDeleteSubprocessor">
 		<property name="biDirectionalRelationFields">
 			<list>
-				<value>annotates_sm</value>
-				<value>annotated_by_sm</value>
+				<value>sem_annotates</value>
+				<value>sem_annotated_by</value>
 			</list>
 		</property>
 		<property name="uniDirectionalRelationFields">
 			<list>
-				<value>annotation_sm</value>
+				<value>sem_annotation</value>
 			</list>
 		</property>	
 		<property name="relationSourceFormatId" value="http://docs.annotatorjs.org/en/v1.2.x/annotation-format.html"></property>
-		<property name="relationSourceField" value="annotated_by_sm"></property>
+		<property name="relationSourceField" value="sem_annotated_by"></property>
 	</bean>
  
  </beans>

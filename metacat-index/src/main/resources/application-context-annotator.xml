@@ -18,15 +18,15 @@
 		</property>
 		<property name="fieldsToMerge">
      		<list>
-     			<value>annotation_sm</value>
-     			<value>annotates_sm</value>
-     			<value>annotated_by_sm</value>
+     			<value>sem_annotation</value>
+     			<value>sem_annotates</value>
+     			<value>sem_annotated_by</value>
      		</list>
      	</property>	
 	</bean>
 	
 	<bean id="annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="annotation_sm" />
+		<constructor-arg name="name" value="sem_annotation" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -34,10 +34,10 @@
 				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
 				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
 				
-				SELECT ?annotation_sm
+				SELECT ?sem_annotation
 				FROM <$GRAPH_NAME>				
 				WHERE { 
-						<$CONCEPT_URI> rdfs:subClassOf+ ?annotation_sm .
+						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation .
 				 	} 
 				 ]]>
 			</value>
