@@ -96,7 +96,7 @@ lexicographic ordering isn't equal to the numeric ordering) -->
           <analyzer class="org.apache.lucene.analysis.snowball.SnowballAnalyzer"/>
         </fieldType>
         -->
- 
+
         <!-- A text field that only splits on whitespace for more exact matching -->
         <fieldtype name="text_ws" class="solr.TextField" positionIncrementGap="100">
             <analyzer>
@@ -234,15 +234,6 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="resourceMap"		type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="documents"			type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="isDocumentedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="wasDerivedFrom"	type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="wasGeneratedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="wasInformedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="used"	type="string"   indexed="true" stored="true" multiValued="true"/>
-        
-        <!-- Annotations -->
-        <field name="annotation" 		type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="orcid" 			type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="origin_combined" 	type="string"   indexed="true" stored="true" multiValued="true"/>
 
         <!--Permissions-->
         <field name="readPermission"    type="string"   indexed="true" stored="true" multiValued="true"/>
@@ -275,7 +266,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="scientificName"           type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="relatedOrganizations"     type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="datePublished"            type="date"      multiValued="false" indexed="true" stored="true" />
-        <field name="pubDate" 				   type="date" 							indexed="true" stored="true"/>
+        <field name="pubDate" 				   type="date" 		multiValued="false"	indexed="true" stored="true"/>
 
 		<field name="investigator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
 		<field name="investigatorText" 	type="text" 	indexed="true" stored="false" multiValued="true"/>
@@ -356,6 +347,29 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
    		<field name="geohash_8" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
    		<field name="geohash_9" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
    		
+        <!-- Provenance-based fields -->
+        <field name="prov_wasDerivedFrom"         type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_wasGeneratedBy"         type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_wasInformedBy"          type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_used"                   type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_generatedByProgram"     type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_generatedByExecution"   type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_generatedByUser"        type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_usedByProgram"          type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_usedByExecution"        type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_usedByUser"             type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_wasExecutedByExecution" type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_wasExecutedByUser"      type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_hasSources"             type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_hasDerivations"         type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_instanceOfClass"        type="string" indexed="true" stored="true" multiValued="true" />
+        
+        <!-- semantic fields -->
+        <field name="sem_annotation"        type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="sem_annotated_by"        type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="sem_annotates"        type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="sem_comment"        type="string" indexed="true" stored="true" multiValued="true" />
+        
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
 will be used if the name matches any of the patterns.
@@ -382,6 +396,7 @@ both match, the first appearing in the schema will be used.  -->
         <dynamicField name="*_fm" type="sfloat" indexed="true" stored="true" multiValued="true"/>
         <dynamicField name="*_dm" type="sdouble" indexed="true" stored="true" multiValued="true"/>
         <dynamicField name="*_dtm" type="date" indexed="true" stored="true" multiValued="true"/>
+        
     </fields>
 
 <!-- ======================================================================= -->
@@ -417,13 +432,10 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
     <copyField source="topic" dest="topicText"/>
     <copyField source="investigator" dest="investigatorText"/>
     <copyField source="keywords" dest="keywordsText"/>
-    <copyField source="pubDate" dest="datePublished" />
-    <copyField source="dateUploaded" dest="updateDate" />
+    <copyField source="pubDate" dest="datePublished"/>
+    <copyField source="dateUploaded" dest="updateDate"/>
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
-    
-    <!-- combine origin fields for easier query -->
-    <copyField source="origin" dest="origin_combined"/>
-    <copyField source="orcid" dest="origin_combined"/>
+  
 
     <!-- Similarity is the scoring routine for each document vs a query.
 A custom similarity may be specified here, but the default is fine
