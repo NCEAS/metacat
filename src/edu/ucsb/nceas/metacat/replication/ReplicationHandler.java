@@ -43,6 +43,7 @@ import java.util.Hashtable;
 import java.util.TimerTask;
 import java.util.Vector;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
@@ -258,6 +259,10 @@ public class ReplicationHandler extends TimerTask
           logReplication.error("ReplicationHandler.update - Couldn't parse one responses "+
                                    "because "+ e.getMessage());
           continue;
+        }
+        finally 
+        {
+            IOUtils.closeQuietly(responses.elementAt(i));
         }
         //v is the list of updated documents
         Vector<Vector<String>> updateList = new Vector<Vector<String>>(message.getUpdatesVect());
@@ -558,6 +563,7 @@ public class ReplicationHandler extends TimerTask
     logReplication.info("ReplicationHandler.handleSingleDataFile - Try to replicate data file: " + accNumber);
     DBConnection dbConn = null;
     int serialNumber = -1;
+    InputStream input = null;
     try
     {
       // Get DBConnection from pool
@@ -621,7 +627,7 @@ public class ReplicationHandler extends TimerTask
                                             "&action=readdata&docid="+accNumber;
       readDataURLString = MetacatUtil.replaceWhiteSpaceForURL(readDataURLString);
       URL u = new URL(readDataURLString);
-      InputStream input = ReplicationService.getURLStream(u);
+      input = ReplicationService.getURLStream(u);
       //register data file into xml_documents table and wite data file
       //into file system
       if ( input != null)
@@ -720,8 +726,11 @@ public class ReplicationHandler extends TimerTask
     }
     finally
     {
+       IOUtils.closeQuietly(input);
        //return DBConnection
        DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+
+     
     }//finally
     logMetacat.info("replication.create localId:" + accNumber);
   }

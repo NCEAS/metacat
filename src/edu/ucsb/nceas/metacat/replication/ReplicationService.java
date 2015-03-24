@@ -2281,9 +2281,16 @@ public class ReplicationService extends BaseService {
 		char istreamChar;
 		int istreamInt;
 		// get the response content
-		InputStream input = getURLStream(u);
-		logReplication.info("ReplicationService.getURLContent - After getting response from: " + u.toString());
-		String content = IOUtils.toString(input, "UTF-8");
+		InputStream input = null;
+		String content = null;
+		try {
+		    input = getURLStream(u);
+		    logReplication.info("ReplicationService.getURLContent - After getting response from: " + u.toString());
+		    content = IOUtils.toString(input, "UTF-8");
+		} 
+		finally {
+		    IOUtils.closeQuietly(input);
+		}
         return content;
 	}
 	
@@ -2332,9 +2339,15 @@ public class ReplicationService extends BaseService {
      * @throws java.io.IOException
      */
     public static byte[] getURLBytes(URL u) throws Exception {
-        InputStream input = getURLStream(u);
-        byte[] bytes = IOUtils.toByteArray(input);
-        return bytes;
+        InputStream input = null;
+        try {
+            input = getURLStream(u);
+            byte[] bytes = IOUtils.toByteArray(input);
+            return bytes;
+        } 
+        finally {
+            IOUtils.closeQuietly(input);
+        }
     }
 	
 	/**
