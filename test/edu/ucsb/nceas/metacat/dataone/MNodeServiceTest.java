@@ -733,7 +733,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertNotNull(objectList);
         assertTrue(objectList.getCount() == count);
         assertTrue(objectList.getStart() == 0);
-        assertTrue(objectList.getTotal() > 1);
+        assertTrue(objectList.getTotal() >= 1);
         
       } catch (Exception e) {
         e.printStackTrace();
@@ -1435,6 +1435,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         String str1 = "object1";
         String str2 = "object2";
         String str3 = "object3";
+        Date fromDate = new Date();
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(fromDate);
+        calendar.roll(Calendar.YEAR, false);
+        fromDate = calendar.getTime();
         try {
             //insert test documents with a series id
             Session session = getTestSession();
@@ -1551,6 +1556,20 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             } catch (NotFound e) {
                 
             }
+            
+            Session cnsession = getCNSession();
+            Date toDate = new Date();
+            Event event = Event.READ;
+            int start = 0;
+            int count = 1;
+          Log log = MNodeService.getInstance(request).getLogRecords(cnsession, null, null, 
+            event.xmlValue(), seriesId.getValue(), start, count);
+          
+          assertNotNull(log);      
+          assertTrue(log.getCount() == count);
+          assertTrue(log.getStart() == start);
+          assertTrue(log.getTotal() >= 1);
+          assertTrue(log.getLogEntry(0).getIdentifier().equals(guid));
 
             //do a update with the same series id
             Thread.sleep(1000);
@@ -1790,6 +1809,18 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                    
                }
             
+            toDate = new Date();
+            event = Event.READ;
+            start = 0;
+            count = 1;
+            log = MNodeService.getInstance(request).getLogRecords(cnsession, null, null, 
+            event.xmlValue(), seriesId.getValue(), start, count);
+          
+            assertNotNull(log);      
+            assertTrue(log.getCount() == count);
+            assertTrue(log.getStart() == start);
+            assertTrue(log.getTotal() >= 1);
+            assertTrue(log.getLogEntry(0).getIdentifier().equals(newPid));
             
             //do another update with invalid series ids
             Thread.sleep(1000);
