@@ -89,8 +89,8 @@ public class DBTransform {
   {
     configDir = SystemUtil.getStyleSkinsDir();
     defaultStyle = PropertyService.getProperty("application.default-style");
-    httpServer = SystemUtil.getServerURL();
-    contextURL = SystemUtil.getContextURL();
+    httpServer = SystemUtil.getSecureServerURL();
+    contextURL = SystemUtil.getSecureContextURL();
     servletURL = SystemUtil.getServletURL();
     userManagementURL = PropertyService.getProperty("auth.userManagementUrl");
   }
@@ -353,7 +353,7 @@ public class DBTransform {
     }
     
     //Check if the systemId is relative path, add a postfix - the contextULR to systemID. 
-    if (systemId != null && systemId.indexOf("http://" ) == -1)
+    if (systemId != null && !systemId.startsWith("http"))
     {
     	systemId = contextURL+systemId;
     }
