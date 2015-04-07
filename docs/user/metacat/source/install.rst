@@ -95,9 +95,9 @@ You should see a WAR file and several sample supporting files (Table 2.1). The
 extraction location will be referred to as the ``<metacat_package_dir>`` for the
 remainder of this documentation.
 
-================== ===========================================================
+================== =====================================================================
 File               Description
-================== ===========================================================
+================== =====================================================================
 metacat.war        The Metacat Web archive file (WAR) 
 metacat-site       Sample Web definition file used by Apache on Ubuntu/Debian 
                    Linux systems. 
@@ -107,8 +107,12 @@ jk.conf            Sample JkMount configuration file used by Apache on
                    Ubuntu/Debian Linux systems. 
 workers.properties Sample workers definition file used by Apache on Ubuntu/Debian 
                    Linux systems. 
+metacat-index.war  The Metacat Index WAR for supporting SOLR query features
+					Optional unless Metacat UI is being used.
+metacat-ui.war     The Metacat UI - can be deployed as a webapp or directly in webserver
+					Metacat UI requires metacat-index be deployed and configured.
 authority.war      The optional LSID Server application WAR
-================== ===========================================================
+================== ======================================================================
 
 
 Download Metacat Source Code

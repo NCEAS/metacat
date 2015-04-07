@@ -43,7 +43,8 @@ Index configuration
 ----------------------------
 Metacat-index is deployed as a separate web application (metacat-index.war) and should be deployed 
 as a sibling of the Metacat webapp (metacat.war). Deploying metacat-index.war is only required when SOLR support
-is desired and can safely be omitted if it will not be utilized for any given Metacat deployment.
+is desired (e.g., for MetacatUI) and can safely be omitted if it will not be utilized for any given Metacat deployment.
+
 
 During the initial installation/upgrade, an empty index will be initialized in the configured "solr-home" location.
 Metacat-index will index all the existing Metacat content when the webapp next initializes.
