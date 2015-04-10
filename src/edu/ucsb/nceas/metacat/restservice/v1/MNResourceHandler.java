@@ -478,7 +478,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 				logMetacat.warn(e.getMessage(), e);
 			}
 			String token = null;
-			token = TokenGenerator.getJWT(userId, fullName);
+			token = TokenGenerator.getInstance().getJWT(userId, fullName);
 			
 			response.setStatus(200);
 			response.setContentType("text/plain");

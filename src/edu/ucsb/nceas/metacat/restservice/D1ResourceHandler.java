@@ -47,6 +47,7 @@ import org.dataone.client.auth.CertificateManager;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
+import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -150,6 +151,15 @@ public class D1ResourceHandler {
             session = CertificateManager.getInstance().getSession(request);
             
             // #2
+            // check for token
+            if (session == null) {
+            	String token = request.getHeader("x-dataone-auth-token");
+            	if (token != null) {
+            		session = TokenGenerator.getInstance().getSession(token);
+            	}
+            }
+            
+            // #3
             if (session == null) {
 	        	// check for session-based certificate from the portal
             	try {
@@ -174,7 +184,7 @@ public class D1ResourceHandler {
             	}
             }
             
-            // #3
+            // #4
             // last resort, check for Metacat sessionid
             if (session == null) {
 	            SessionData sessionData = RequestUtil.getSessionData(request);
