@@ -60,6 +60,7 @@ public class LogV2toV1Converter {
     public org.dataone.service.types.v1.Log convert(Log logV2) 
             throws InstantiationException, IllegalAccessException, InvocationTargetException, JiBXException, IOException {
         org.dataone.service.types.v1.Log logV1 = null;
+        int removedLogCount =0;
         if(logV2 != null) {
             //System.out.println("====================== logV2 is not null and the size is "+logV2.getCount());
             LogEntryV2toV1Converter converter = new LogEntryV2toV1Converter();
@@ -67,11 +68,16 @@ public class LogV2toV1Converter {
             for(int i=0; i<logV2.getCount(); i++) {
                 LogEntry v2LogEntry = logV2.getLogEntry(i);
                 org.dataone.service.types.v1.LogEntry v1LogEntry = converter.convert(v2LogEntry);
-                logV1.addLogEntry(v1LogEntry);
+                if(v1LogEntry.getEvent() != null) {
+                    logV1.addLogEntry(v1LogEntry);
+                } else {
+                    removedLogCount ++;
+                }
+                
             }
-            logV1.setCount(logV2.getCount());
+            logV1.setCount(logV2.getCount()-removedLogCount);
             logV1.setStart(logV2.getStart());
-            logV1.setTotal(logV2.getTotal());
+            logV1.setTotal(logV2.getTotal()-removedLogCount);
         }
         return logV1;
     }
