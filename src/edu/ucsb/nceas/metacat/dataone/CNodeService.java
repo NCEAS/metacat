@@ -1189,7 +1189,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
       
       //check if the sid is legitimate in the system metadata
-      checkSidInModifyingSystemMetadata(sysmeta, "4864", "4862");
+      //checkSidInModifyingSystemMetadata(sysmeta, "4864", "4862");
+      Identifier sid = sysmeta.getSeriesId();
+      if(sid != null) {
+          if (!isValidIdentifier(sid)) {
+              throw new InvalidRequest("4863", "The series id in the system metadata is invalid in the request.");
+          }
+      }
 
       try {
           lock = HazelcastService.getInstance().getLock(sysmeta.getIdentifier().getValue());
@@ -1586,7 +1592,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // proceed if we're called by a CN
           if ( isAllowed ) {
               //check if the series id is legitimate. It uses the same rules of the method registerSystemMetadata
-              checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
+              //checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
+              Identifier sid = sysmeta.getSeriesId();
+              if(sid != null) {
+                  if (!isValidIdentifier(sid)) {
+                      throw new InvalidRequest("4891", "The series id in the system metadata is invalid in the request.");
+                  }
+              }
               // create the coordinating node version of the document      
               logMetacat.debug("Locked identifier " + pid.getValue());
               sysmeta.setSerialVersion(BigInteger.ONE);
