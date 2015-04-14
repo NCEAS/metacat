@@ -66,6 +66,8 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.Log;
@@ -141,6 +143,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PUBLISH = "publish";
     protected static final String RESOURCE_PACKAGE = "package";
     protected static final String RESOURCE_TOKEN = "token";
+    protected static final String RESOURCE_WHOAMI = "whoami";
 
 
 
@@ -226,6 +229,15 @@ public class MNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == GET) {
                     	// after the command
                         getToken();
+                        status = true;
+                    }
+                    
+                } else if (resource.startsWith(RESOURCE_WHOAMI)) {
+                    logMetacat.debug("Using resource 'whoami'");
+                    // get
+                    if (httpVerb == GET) {
+                    	// after the command
+                        whoami();
                         status = true;
                     }
                     
@@ -782,6 +794,38 @@ public class MNResourceHandler extends D1ResourceHandler {
 			response.setContentType("text/plain");
 	        OutputStream out = response.getOutputStream();
 	        out.write(token.getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		} else {
+			response.setStatus(401);
+			response.setContentType("text/plain");
+			OutputStream out = response.getOutputStream();
+	        out.write("No session information found".getBytes(MetaCatServlet.DEFAULT_ENCODING));
+	        out.close();
+		}
+		
+    }
+    
+    private void whoami() throws Exception {
+		
+		if (this.session != null) {
+			Subject subject = this.session.getSubject();
+			SubjectInfo subjectInfo = null;
+			try {
+				subjectInfo = this.session.getSubjectInfo();
+			} catch (Exception e) {
+				logMetacat.warn(e.getMessage(), e);
+			}
+			
+			response.setStatus(200);
+			response.setContentType("text/plain");
+	        OutputStream out = response.getOutputStream();
+	        
+	        if (subjectInfo != null) {
+		        TypeMarshaller.marshalTypeToOutputStream(subjectInfo, out);
+	        } else {
+		        TypeMarshaller.marshalTypeToOutputStream(subject, out);
+	        }
+	        
 	        out.close();
 		} else {
 			response.setStatus(401);
