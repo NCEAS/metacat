@@ -1501,6 +1501,7 @@ public abstract class D1NodeService {
               }
           }
       }
+      checkModifiedImmutableFields(currentSysmeta, sysmeta);
       // do the actual update
       this.updateSystemMetadata(sysmeta);
       
@@ -1517,6 +1518,54 @@ public abstract class D1NodeService {
       }
       
       return true;
+	}
+	
+	/*
+	 * Check if the newMeta modifies an immutable field. 
+	 */
+	private void checkModifiedImmutableFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest, InvalidSystemMetadata{
+	    if(orgMeta != null && newMeta != null) {
+	        if(newMeta.getIdentifier() == null) {
+	            throw new InvalidSystemMetadata("The new version of the system metadata is invalid since the identifier is null","4956");
+	        }
+	        if(!orgMeta.getIdentifier().equals(newMeta.getIdentifier())) {
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's identifier "+newMeta.getIdentifier().getValue()+" is "+
+	                  "different to the orginal one "+orgMeta.getIdentifier().getValue(), "4869");
+	        }
+	        if(newMeta.getSize() == null) {
+	            throw new InvalidSystemMetadata("The new version of the system metadata is invalid since the size is null","4956");
+	        }
+	        if(!orgMeta.getSize().equals(newMeta.getSize())) {
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's size "+newMeta.getSize().longValue()+" is "+
+	                      "different to the orginal one "+orgMeta.getSize().longValue(), "4869");
+	        }
+	        if(newMeta.getChecksum()!= null && orgMeta.getChecksum() != null && !orgMeta.getChecksum().getValue().equals(newMeta.getChecksum().getValue())) {
+	            logMetacat.error("The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getChecksum().getValue());
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getChecksum().getValue(), "4869");
+	        }
+	        if(orgMeta.getSubmitter() != null && newMeta.getSubmitter() != null && !orgMeta.getSubmitter().equals(newMeta.getSubmitter())) {
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter "+newMeta.getSubmitter().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getSubmitter().getValue(), "4869");
+	        }
+	        
+	        if(orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() != null && !orgMeta.getDateUploaded().equals(newMeta.getDateUploaded())) {
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded "+newMeta.getDateUploaded()+" is "+
+                        "different to the orginal one "+orgMeta.getDateUploaded(), "4869");
+	        }
+	        
+	        if(orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() != null && !orgMeta.getOriginMemberNode().equals(newMeta.getOriginMemberNode())) {
+	            throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node  "+newMeta.getOriginMemberNode().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getOriginMemberNode().getValue(), "4869");
+	        }
+	        
+	        if(orgMeta.getSeriesId() != null && newMeta.getSeriesId() != null && !orgMeta.getSeriesId().equals(newMeta.getSeriesId())) {
+                throw new InvalidRequest("The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id  "+newMeta.getSeriesId().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getSeriesId().getValue(), "4869");
+            }
+	        
+	    }
 	}
   
   /**
