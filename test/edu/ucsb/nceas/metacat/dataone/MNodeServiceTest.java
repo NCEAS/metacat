@@ -28,6 +28,7 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 
+import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -44,6 +45,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -170,6 +172,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     suite.addTest(new MNodeServiceTest("testGetSID"));
     suite.addTest(new MNodeServiceTest("testListViews"));
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
     
     return suite;
     
@@ -1938,5 +1941,87 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             System.out.println("It has the view named "+name);
         }
     }
+    
+    public void testUpdateSystemMetadata() throws Exception {
+        String str1 = "object1";
+        String str2 = "object2";
+        String str3 = "object3";
+
+        //insert test documents with a series id
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        String sid1= "sid."+System.nanoTime();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(sid1);
+        System.out.println("the first sid is "+seriesId.getValue());
+        sysmeta.setSeriesId(seriesId);
+        sysmeta.setArchived(false);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(metadata.getIdentifier().equals(guid));
+        assertTrue(metadata.getArchived().equals(false));
+        System.out.println("the checksum from request is "+metadata.getChecksum().getValue());
+        assertTrue(metadata.getSize().equals(sysmeta.getSize()));
+        
+        //update system metadata sucessfully
+        metadata.setArchived(true);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+        SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+        assertTrue(metadata2.getIdentifier().equals(guid));
+        assertTrue(metadata2.getSeriesId().equals(seriesId));
+        assertTrue(metadata2.getArchived().equals(true));
+        assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
+        
+        Identifier newId = new Identifier();
+        newId.setValue("newValue");
+        metadata.setIdentifier(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        
+        newId.setValue("newValue");
+        metadata.setSeriesId(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        
+        Date newDate = new Date();
+        metadata.setDateUploaded(newDate);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        
+        Checksum checkSum = new Checksum();
+        checkSum.setValue("12345");
+        metadata.setChecksum(checkSum);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        
+        BigInteger size = new BigInteger("4000");
+        metadata.setSize(size);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+}
     
 }
