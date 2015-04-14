@@ -1050,20 +1050,20 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           SystemMetadata sysmeta4 = createSystemMetadata(newPid3, session.getSubject(), object4);
           sysmeta4.setObsoletes(newPid2);
           sysmeta4.setSeriesId(seriesId);
-          try {
+          /*try {
               CNodeService.getInstance(request).create(session, newPid3, object4, sysmeta4);
               fail("we can't reach here since the sid is using an old one ");
           } catch (InvalidSystemMetadata eee) {
               
-          } 
+          } */
           
-          sysmeta4.setSeriesId(newPid3);
+          /*sysmeta4.setSeriesId(newPid3);
           try {
               CNodeService.getInstance(request).create(session, newPid3, object4, sysmeta4);
               fail("we can't reach here since the sid is using the pid ");
           } catch (InvalidSystemMetadata eee) {
               
-          } 
+          }*/
           
           //test archive a series id by v1
           try {
