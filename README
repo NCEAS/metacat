@@ -60,6 +60,12 @@ This major release adds DataONE V2 API support
 as well as:
 * ......
 
+Release Notes for 2.4.3:
+------------------------
+This release includes:
+* Support for large file uploads
+* Recording User-Agent when logging requests
+
 Release Notes for 2.4.2:
 ------------------------
 This release includes:
