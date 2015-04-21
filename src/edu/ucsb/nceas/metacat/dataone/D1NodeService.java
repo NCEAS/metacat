@@ -1000,6 +1000,11 @@ public abstract class D1NodeService {
   /**
    * Test if the user identified by the provided token has authorization 
    * for the operation on the specified object.
+   * Allowed subjects include:
+   * 1. CNs
+   * 2. Authoritative node
+   * 3. Owner of the object
+   * 4. Users with the specified permission in the access rules.
    * 
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - The identifer of the resource for which access is being checked
@@ -1452,13 +1457,26 @@ public abstract class D1NodeService {
 		
 		// The lock to be used for this identifier
       Lock lock = null;
+      if(pid == null || pid.getValue() == null) {
+          throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
+      }
 
       // TODO: control who can call this?
       if (session == null) {
           //TODO: many of the thrown exceptions do not use the correct error codes
           //check these against the docs and correct them
-          throw new NotAuthorized("4861", "No Session - could not authorize for registration." +
+          throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
                   "  If you are not logged in, please do so and retry the request.");
+      } else {
+          try {
+              boolean allow = isAuthorized(session, pid, Permission.CHANGE_PERMISSION);
+              if(!allow) {
+                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+              }
+          } catch (NotFound e) {
+              throw new InvalidRequest("4863", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+          }
+          
       }
       
       // verify that guid == SystemMetadata.getIdentifier()
