@@ -50,6 +50,7 @@ import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -1534,8 +1535,32 @@ public abstract class D1NodeService {
       } catch (SQLException e) {
           logMetacat.warn("Could not log 'updateSystemMetadata' event because the localId couldn't be identified for the pid: " + pid.getValue());
       }
-      
+      boolean ifAuthoritativeNode = isAuthoritativeNode(pid);
       return true;
+	}
+	
+	private boolean isAuthoritativeNode(Identifier pid) {
+	    boolean isAuthoritativeNode = false;
+	    if(pid != null && pid.getValue() != null) {
+	        SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	        if(sys != null) {
+	            NodeReference node = sys.getAuthoritativeMemberNode();
+	            if(node != null) {
+	                String nodeValue = node.getValue();
+	                logMetacat.debug("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
+	                //System.out.println("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
+	                String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
+	                logMetacat.debug("The node id in metacat.properties is "+currentNodeId);
+	                //System.out.println("The node id in metacat.properties is "+currentNodeId);
+	                if(currentNodeId != null && !currentNodeId.trim().equals("") && currentNodeId.equals(nodeValue)) {
+	                    logMetacat.debug("They are matching");
+	                    //System.out.println("They are matching");
+	                    isAuthoritativeNode = true;
+	                }
+	            }
+	        }
+	    }
+	    return isAuthoritativeNode;
 	}
 	
 	/*
