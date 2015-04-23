@@ -1535,11 +1535,13 @@ public abstract class D1NodeService {
       } catch (SQLException e) {
           logMetacat.warn("Could not log 'updateSystemMetadata' event because the localId couldn't be identified for the pid: " + pid.getValue());
       }
-      boolean ifAuthoritativeNode = isAuthoritativeNode(pid);
       return true;
 	}
 	
-	private boolean isAuthoritativeNode(Identifier pid) {
+	/*
+	 * Determine if the current node is the authoritative node for the given pid.
+	 */
+	protected boolean isAuthoritativeNode(Identifier pid) {
 	    boolean isAuthoritativeNode = false;
 	    if(pid != null && pid.getValue() != null) {
 	        SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);

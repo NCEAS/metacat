@@ -1976,6 +1976,24 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           }
       }
   }
+  
+    public void synchronizeObject(Session session, SystemMetadata sysmeta) throws NotAuthorized, InvalidRequest{
+        if(session == null) {
+            throw new NotAuthorized("4861", "No Session - could not authorize for synchorinzing object." +
+                    "  If you are not logged in, please do so and retry the request.");
+        } 
+        if(sysmeta == null) {
+            throw new InvalidRequest("4863", "The system metadata shouldn't be null in synchronizing an object.");
+        }
+        Identifier pid = sysmeta.getIdentifier();
+        //only the authoritative node can call this method
+        if( !isAuthoritativeMNodeAdmin(session, pid) ){
+            throw new NotAuthorized("4861", "Only the authoritative node "+sysmeta.getAuthoritativeMemberNode().getValue()+
+                    " of the object "+pid.getValue()+" can have the synchroinzeObject request.");
+        }
+        
+        
+    }
 
 	@Override
 	public QueryEngineDescription getQueryEngineDescription(Session session,

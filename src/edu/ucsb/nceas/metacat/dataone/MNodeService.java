@@ -177,6 +177,7 @@ import gov.loc.repository.bagit.writer.impl.ZipWriter;
  * MNStorage.create()
  * MNStorage.update()
  * MNStorage.delete()
+ * MNStorage.updateSystemMetadata()
  * MNReplication.replicate()
  * 
  */
@@ -2141,6 +2142,23 @@ public class MNodeService extends D1NodeService
 		return bagInputStream;
 	}
 
-	
+	@Override
+	public boolean updateSystemMetadata(Session session, Identifier pid,
+            SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
+            ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
+	 if(sysmeta == null) {
+	     throw  new InvalidRequest("4863", "The system metadata object should NOT be null in the updateSystemMetadata request.");
+	 }
+	 if(!isAuthoritativeNode(pid)) {
+	     throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
+	 }
+      //update the system metadata locally  
+      boolean success = super.updateSystemMetadata(session, pid, sysmeta);
+      
+      if(success) {
+          //notify the cns the synchornize the new system metadata.
+      }
+      return success;
+    }
     
 }
