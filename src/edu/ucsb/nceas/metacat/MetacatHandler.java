@@ -2668,9 +2668,12 @@ public class MetacatHandler {
             
             // TODO: Check that the user is allowed to reindex this object, allow everyone for open annotations
             boolean isAuthorized = true;
-   			//String docid = IdentifierManager.getInstance().getLocalId(pid[0]);
-			//isAuthorized = DocumentImpl.hasWritePermission(username, groups, docid);
-			//isAuthorized = AuthUtil.isAdministrator(username, groups);
+   			String docid = IdentifierManager.getInstance().getLocalId(pid[0]);
+			isAuthorized = DocumentImpl.hasWritePermission(username, groups, docid);
+			if(!isAuthorized) {
+			    isAuthorized = AuthUtil.isAdministrator(username, groups);
+			}
+			
 
             if (!isAuthorized) {
                 out.print("<error>");
