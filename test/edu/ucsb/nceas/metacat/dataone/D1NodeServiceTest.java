@@ -33,6 +33,9 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
@@ -76,7 +79,14 @@ public class D1NodeServiceTest extends MCTestCase {
         // set up the fake request (for logging)
         request = new MockHttpServletRequest(null, null, null);
     }
-  
+    
+    public static Test suite() 
+    {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new D1NodeServiceTest("initialize"));
+        return suite;
+    }
+    
     /**
 	 * Establish a testing framework by initializing appropriate objects
 	 */
