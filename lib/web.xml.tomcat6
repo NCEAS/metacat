@@ -323,52 +323,6 @@
   </servlet-mapping>
   -->
   
-	<!-- begin MyProxy portal delegation section. Uncomment to enable MyProxy -->
-	<!--
-	<servlet>
-        <servlet-name>startRequest</servlet-name>
-        <servlet-class>edu.ucsb.nceas.metacat.portal.StartRequest</servlet-class>
-        <load-on-startup>0</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>startRequest</servlet-name>
-        <url-pattern>/startRequest</url-pattern>
-    </servlet-mapping>
-
-    <servlet>
-        <servlet-name>ready</servlet-name>
-        <servlet-class>edu.ucsb.nceas.metacat.portal.SuccessServlet</servlet-class>
-        <load-on-startup>0</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>ready</servlet-name>
-        <url-pattern>/ready</url-pattern>
-    </servlet-mapping>
-    
-    <servlet>
-        <servlet-name>error</servlet-name>
-        <servlet-class>edu.ucsb.nceas.metacat.portal.FailureServlet</servlet-class>
-        <load-on-startup>0</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>error</servlet-name>
-        <url-pattern>/error</url-pattern>
-    </servlet-mapping>
-      
-    <session-config>
-      <session-timeout>30000</session-timeout>
-    </session-config>
-    
-    <listener>
-        <listener-class>edu.uiuc.ncsa.myproxy.oa4mp.client.loader.ClientBootstrapper</listener-class>
-    </listener>
-
-	<context-param>
-        <param-name>oa4mp:client.config.file</param-name>
-        <param-value>/WEB-INF/oa4mp_client.xml</param-value>
-    </context-param>
-    -->
-    <!-- end MyProxy section -->
     
    <!-- currently the W3C havent settled on a media type for WSDL;
     http://www.w3.org/TR/2003/WD-wsdl12-20030303/#ietf-draft
