@@ -27,8 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.security.PrivateKey;
-import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -43,11 +41,9 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.dataone.client.auth.CertificateManager;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
-import org.dataone.portal.TokenGenerator;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -145,46 +141,9 @@ public class D1ResourceHandler {
         logMetacat = Logger.getLogger(D1ResourceHandler.class);
         try {
   
-        	// initialize the session - three options
-        	// #1
-        	// load session from certificate in request
-            session = CertificateManager.getInstance().getSession(request);
-            
-            // #2
-            // check for token
-            if (session == null) {
-            	String token = request.getHeader("x-dataone-auth-token");
-            	if (token != null) {
-            		session = TokenGenerator.getInstance().getSession(token);
-            	}
-            }
-            
-            // #3
-            if (session == null) {
-	        	// check for session-based certificate from the portal
-            	try {
-		        	String configurationFileName = servletContext.getInitParameter("oa4mp:client.config.file");
-		        	String configurationFilePath = servletContext.getRealPath(configurationFileName);
-		        	PortalCertificateManager portalManager = new PortalCertificateManager(configurationFilePath);
-		        	logMetacat.debug("Initialized the PortalCertificateManager using config file: " + configurationFilePath);
-		        	X509Certificate certificate = portalManager.getCertificate(request);
-		        	logMetacat.debug("Retrieved certificate: " + certificate);
-			    	PrivateKey key = portalManager.getPrivateKey(request);
-			    	logMetacat.debug("Retrieved key: " + key);
-			    	if (certificate != null && key != null) {
-			        	request.setAttribute("javax.servlet.request.X509Certificate", certificate);
-			        	logMetacat.debug("Added certificate to the request: " + certificate.toString());
-			    	}
-			    	
-		            // reload session from certificate that we jsut set in request
-		            session = CertificateManager.getInstance().getSession(request);
-            	} catch (Throwable t) {
-            		// don't require configured OAuth4MyProxy
-            		//logMetacat.error(t.getMessage(), t);
-            	}
-            }
-            
-            // #4
+        	// first try the usual methods
+        	session = PortalCertificateManager.getInstance().getSession(request);
+        	
             // last resort, check for Metacat sessionid
             if (session == null) {
 	            SessionData sessionData = RequestUtil.getSessionData(request);
