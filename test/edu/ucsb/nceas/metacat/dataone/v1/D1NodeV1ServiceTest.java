@@ -33,6 +33,9 @@ import java.math.BigInteger;
 import java.util.Date;
 import java.util.List;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
@@ -75,7 +78,16 @@ public class D1NodeV1ServiceTest extends D1NodeServiceTest {
     }
   
    
+    public static Test suite() 
+    {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new D1NodeV1ServiceTest("initialize"));
+        return suite;
+    }
 	
+    public void initialize() {
+        assertTrue(true);
+    }
 	
 	/**
 	 * create system metadata with a specified id
