@@ -25,6 +25,7 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.rest.RestClient;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
@@ -274,10 +275,18 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         }
         System.out.println("================The MODIFIED base url is "+baseURL);
         MNode mnNode = D1Client.getMN(baseURL);
-        input = mnNode.query(querySession, SOLR, generateQuery(id.getValue()));
-        doc = generateDoc(input);
-        String resultId2 = extractElementValue(doc, IDXPATH);
-        assertTrue("In the testDistrustCertificate method, the query result id should be null", resultId2==null);
+        try {
+            input = mnNode.query(querySession, SOLR, generateQuery(id.getValue()));
+            fail("Can't reach here since it is an untrusted certificate");
+        } catch (Exception e) {
+            System.out.println("The exception is "+e.getMessage());
+            System.out.println("the exception class is "+e.getClass().getCanonicalName());
+            assertTrue(e instanceof ServiceFailure);
+        }
+        
+        //doc = generateDoc(input);
+        //String resultId2 = extractElementValue(doc, IDXPATH);
+        //assertTrue("In the testDistrustCertificate method, the query result id should be null", resultId2==null);
         archive(session, id);
         
     }
