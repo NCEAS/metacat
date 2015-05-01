@@ -65,6 +65,7 @@ import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
+import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -984,11 +985,54 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       guid.setValue("testIsAuthorized." + System.currentTimeMillis());
       InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      //non-public readable
+      AccessPolicy accessPolicy = new AccessPolicy();
+      AccessRule allow = new AccessRule();
+      allow.addPermission(Permission.READ);
+      Subject subject = new Subject();
+      subject.setValue("cn=test2,dc=dataone,dc=org");
+      allow.addSubject(subject);
+      accessPolicy.addAllow(allow);
+      sysmeta.setAccessPolicy(accessPolicy);
       Identifier pid = 
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       boolean isAuthorized = 
         MNodeService.getInstance(request).isAuthorized(session, pid, Permission.READ);
       assertEquals(isAuthorized, true);
+      isAuthorized = 
+              MNodeService.getInstance(request).isAuthorized(session, pid, Permission.WRITE);
+      assertEquals(isAuthorized, true);
+      try {
+          isAuthorized = 
+                  MNodeService.getInstance(request).isAuthorized(null, pid, Permission.READ);
+          fail("we can reach here");
+      } catch(NotAuthorized ee) {
+          
+      }
+      
+     
+      Session session2= getAnotherSession();
+      isAuthorized = 
+              MNodeService.getInstance(request).isAuthorized(session2, pid, Permission.READ);
+      assertEquals(isAuthorized, true);
+     
+      try {
+          isAuthorized = 
+                  MNodeService.getInstance(request).isAuthorized(session2, pid, Permission.WRITE);
+          fail("we can reach here");
+      } catch(NotAuthorized ee) {
+          
+      }
+      
+    
+      try {
+          isAuthorized = 
+                  MNodeService.getInstance(request).isAuthorized(session2, pid, Permission.CHANGE_PERMISSION);
+          fail("we can reach here");
+      } catch(NotAuthorized ee) {
+          
+      }
+     
       
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
@@ -1062,10 +1106,20 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).isAuthorized(null, pid, Permission.CHANGE_PERMISSION);
       assertEquals(isAuthorized, false);
       
+      //test write by another session
+      Session session2 = getAnotherSession();
+      isAuthorized = 
+              MNodeService.getInstance(request).isAuthorized(session2, pid, Permission.WRITE);
+            assertEquals(isAuthorized, false);
+      
       // test as admin
       isAuthorized = 
     	        MNodeService.getInstance(request).isAuthorized(getMNSession(), pid, Permission.CHANGE_PERMISSION);
     	      assertEquals(isAuthorized, true);
+     // test as cn
+    	isAuthorized = 
+    	                MNodeService.getInstance(request).isAuthorized(getCNSession(), pid, Permission.CHANGE_PERMISSION);
+    	              assertEquals(isAuthorized, true);      
       
     } catch (Exception e) {
       e.printStackTrace();

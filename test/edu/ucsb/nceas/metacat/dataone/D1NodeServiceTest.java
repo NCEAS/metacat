@@ -158,6 +158,15 @@ public class D1NodeServiceTest extends MCTestCase {
 
 	}
 	
+	public Session getAnotherSession() throws Exception {
+	    Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue("cn=test2,dc=dataone,dc=org");
+        session.setSubject(subject);
+        return session;
+	    
+	}
+	
 	/**
 	 * Run an initial test that always passes to check that the test harness is
 	 * working.
