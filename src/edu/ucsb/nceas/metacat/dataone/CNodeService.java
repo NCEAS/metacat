@@ -2125,6 +2125,36 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
   }
   
+  /**
+   * Update the system metadata of the specified pid.
+   */
+  @Override
+  public boolean updateSystemMetadata(Session session, Identifier pid,
+          SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
+          ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
+   if(sysmeta == null) {
+       throw  new InvalidRequest("4863", "The system metadata object should NOT be null in the updateSystemMetadata request.");
+   }
+   if(pid == null || pid.getValue() == null) {
+       throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
+   }
+
+   if (session == null) {
+       //TODO: many of the thrown exceptions do not use the correct error codes
+       //check these against the docs and correct them
+       throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
+               "  If you are not logged in, please do so and retry the request.");
+   } else {
+         //only CN is allwoed
+         if(!isCNAdmin(session)) {
+               throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+         }
+   }
+    //update the system metadata locally  
+    boolean success = super.updateSystemMetadata(session, pid, sysmeta);
+    return success;
+  }
+  
     @Override
     public boolean synchronize(Session session, Identifier pid) throws NotAuthorized, InvalidRequest, NotImplemented{
         throw new NotImplemented("0000", "CN query services are not implemented in Metacat.");
