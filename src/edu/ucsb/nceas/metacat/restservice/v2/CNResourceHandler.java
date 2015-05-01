@@ -279,6 +279,8 @@ public class CNResourceHandler extends D1ResourceHandler {
                             getFormat(extra);
                         }
                         status = true;
+                    } else if (httpVerb == PUT) {
+                        addFormat(extra);
                     }
 
                 } else if (resource.startsWith(RESOURCE_LOG)) {
@@ -878,6 +880,43 @@ public class CNResourceHandler extends D1ResourceHandler {
 
     }
 
+    /**
+     * Adds a new {@link ObjectFormat} to the object format list.
+     * 
+     * @param formatIdStr the format identifier
+     * 
+     * @throws NotImplemented 
+     * @throws InvalidRequest 
+     * @throws ServiceFailure 
+     * @throws JiBXException 
+     * @throws IOException 
+     * @throws IllegalAccessException 
+     * @throws InstantiationException 
+     * @throws NotFound 
+     * @throws NotAuthorized 
+     * @throws InvalidToken 
+     */
+    private void addFormat(String formatIdStr) 
+            throws NotImplemented, ServiceFailure, InvalidRequest, InstantiationException, 
+            IllegalAccessException, IOException, JiBXException, NotFound, NotAuthorized, InvalidToken {
+        
+        logMetacat.debug("addFormat: " + formatIdStr);
+        
+        Map<String, File> files = collectMultipartFiles();
+        File formatFile = files.get("format");
+        FileInputStream formatStream = new FileInputStream(formatFile);
+        ObjectFormat objectFormat = TypeMarshaller.unmarshalTypeFromStream(ObjectFormat.class, formatStream);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue(formatIdStr);
+        
+        ObjectFormatIdentifier formatID = CNodeService.getInstance(request).addFormat(session, formatId, objectFormat);
+        
+        OutputStream out = response.getOutputStream();
+        response.setStatus(200);
+        response.setContentType("text/xml");
+        TypeMarshaller.marshalTypeToOutputStream(formatID, out);
+    }
+    
     /**
      * Reserve the given Identifier
      * 

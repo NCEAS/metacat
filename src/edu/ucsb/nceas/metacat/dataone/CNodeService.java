@@ -23,7 +23,11 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.PipedInputStream;
+import java.io.PipedOutputStream;
+import java.lang.reflect.InvocationTargetException;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -34,10 +38,11 @@ import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
-import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.cn.v2.CNAuthorization;
 import org.dataone.service.cn.v2.CNCore;
 import org.dataone.service.cn.v2.CNRead;
@@ -58,17 +63,11 @@ import org.dataone.service.exceptions.VersionMismatch;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.ChecksumAlgorithmList;
-import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
-import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
-import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.ObjectLocationList;
 import org.dataone.service.types.v1.Permission;
@@ -77,16 +76,24 @@ import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.types.v2.util.ServiceMethodRestrictionUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
+import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.NodeList;
+import org.dataone.service.types.v2.ObjectFormat;
+import org.dataone.service.types.v2.ObjectFormatList;
+import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v2.util.ServiceMethodRestrictionUtil;
+import org.dataone.service.util.TypeMarshaller;
+import org.jibx.runtime.JiBXException;
 
+import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
  * Represents Metacat's implementation of the DataONE Coordinating Node 
@@ -1104,6 +1111,147 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
   }
 
+    @Override
+    public ObjectFormatIdentifier addFormat(Session session, ObjectFormatIdentifier formatId, ObjectFormat format)
+            throws ServiceFailure, NotFound, NotImplemented, NotAuthorized, InvalidToken {
+
+        logMetacat.debug("CNodeService.addFormat() called.\n" + 
+                "format ID: " + format.getFormatId() + "\n" + 
+                "format name: " + format.getFormatName() + "\n" + 
+                "format type: " + format.getFormatType() );
+        
+        // FIXME remove:
+        if (true)
+            throw new NotImplemented("0000", "Implementation underway... Will need testing too...");
+        
+        if (!isAdminAuthorized(session))
+            throw new NotAuthorized("0000", "Not authorized to call addFormat()");
+
+        String separator = ".";
+        try {
+            separator = PropertyService.getProperty("document.accNumSeparator");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Unable to find property \"document.accNumSeparator\"\n" + e.getMessage());
+        }
+
+        // find pids of last and next ObjectFormatList
+        String OBJECT_FORMAT_DOCID = ObjectFormatService.OBJECT_FORMAT_DOCID;
+        int lastRev = -1;
+        try {
+            lastRev = DBUtil.getLatestRevisionInDocumentTable(OBJECT_FORMAT_DOCID);
+        } catch (SQLException e) {
+            throw new ServiceFailure("0000", "Unable to locate last revision of the object format list.\n" + e.getMessage());
+        }
+        int nextRev = lastRev + 1;
+        String lastDocID = OBJECT_FORMAT_DOCID + separator + lastRev;
+        String nextDocID = OBJECT_FORMAT_DOCID + separator + nextRev;
+        
+        Identifier lastPid = new Identifier();
+        lastPid.setValue(lastDocID);
+        Identifier nextPid = new Identifier();
+        nextPid.setValue(nextDocID);
+        
+        logMetacat.debug("Last ObjectFormatList document ID: " + lastDocID + "\n" 
+                + "Next ObjectFormatList document ID: " + nextDocID);
+        
+        // add new format to the current ObjectFormatList
+        ObjectFormatList objectFormatList = ObjectFormatService.getInstance().listFormats();
+        List<ObjectFormat> innerList = objectFormatList.getObjectFormatList();
+        innerList.add(format);
+
+        // get existing (last) sysmeta and make a copy
+        SystemMetadata lastSysmeta = getSystemMetadata(session, lastPid);
+        SystemMetadata nextSysmeta = new SystemMetadata();
+        try {
+            BeanUtils.copyProperties(nextSysmeta, lastSysmeta);
+        } catch (IllegalAccessException | InvocationTargetException e) {
+            throw new ServiceFailure("0000", "Unable to create system metadata for updated object format list.\n" + e.getMessage());
+        }
+        
+        // create the new object format list, and update the old sysmeta with obsoletedBy
+        createNewObjectFormatList(session, lastPid, nextPid, objectFormatList, nextSysmeta);
+        updateOldObjectFormatList(session, lastPid, nextPid, lastSysmeta);
+        
+        // TODO add to ObjectFormatService local cache?
+        
+        return formatId;
+    }
+
+    /**
+     * Creates the object for the next / updated version of the ObjectFormatList.
+     * 
+     * @param session
+     * @param lastPid
+     * @param nextPid
+     * @param objectFormatList
+     * @param lastSysmeta
+     */
+    private void createNewObjectFormatList(Session session, Identifier lastPid, Identifier nextPid,
+            ObjectFormatList objectFormatList, SystemMetadata lastSysmeta) 
+                    throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented {
+        
+        PipedInputStream is = new PipedInputStream();
+        PipedOutputStream os = null;
+        
+        try {
+            os = new PipedOutputStream(is);
+            TypeMarshaller.marshalTypeToOutputStream(objectFormatList, os);
+        } catch (JiBXException | IOException e) {
+            throw new ServiceFailure("0000", "Unable to marshal object format list.\n" + e.getMessage());
+        } finally {
+            try {
+                os.flush();
+                os.close();
+            } catch (IOException ioe) {
+                throw new ServiceFailure("0000", "Unable to marshal object format list.\n" + ioe.getMessage());
+            }
+        }
+        
+        BigInteger docSize = lastSysmeta.getSize();
+        try {
+            docSize = BigInteger.valueOf(is.available());
+        } catch (IOException e) {
+            logMetacat.warn("Unable to set an accurate size for the new object format list.", e);
+        }
+        
+        lastSysmeta.setIdentifier(nextPid);
+        lastSysmeta.setObsoletes(lastPid);
+        lastSysmeta.setSize(docSize); 
+        lastSysmeta.setSubmitter(session.getSubject());
+        lastSysmeta.setDateUploaded(new Date());
+        
+        // create new object format list
+        try {
+            create(session, nextPid, is, lastSysmeta);
+        } catch (IdentifierNotUnique | UnsupportedType | InsufficientResources
+                | InvalidSystemMetadata | InvalidRequest e) {
+            throw new ServiceFailure("0000", "Unable to create() new object format list" + e.getMessage());
+        }
+    }
+  
+    /**
+     * Updates the SystemMetadata for the old version of the ObjectFormatList
+     * by setting the obsoletedBy value to the pid of the new version of the 
+     * ObjectFormatList.
+     * 
+     * @param session
+     * @param lastPid
+     * @param obsoletedByPid
+     * @param lastSysmeta
+     * @throws ServiceFailure
+     */
+    private void updateOldObjectFormatList(Session session, Identifier lastPid, Identifier obsoletedByPid, SystemMetadata lastSysmeta) 
+            throws ServiceFailure {
+        
+        lastSysmeta.setObsoletedBy(obsoletedByPid);
+        
+        try {
+            this.updateSystemMetadata(session, lastPid, lastSysmeta);
+        } catch (NotImplemented | NotAuthorized | ServiceFailure | InvalidRequest
+                | InvalidSystemMetadata | InvalidToken e) {
+            throw new ServiceFailure("0000", "Unable to update metadata of old object format list.\n" + e.getMessage());
+        }
+    }
   /**
    * Returns a list of all object formats registered in the DataONE Object 
    * Format Vocabulary
@@ -1977,22 +2125,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
   }
   
-    public void synchronizeObject(Session session, SystemMetadata sysmeta) throws NotAuthorized, InvalidRequest{
-        if(session == null) {
-            throw new NotAuthorized("4861", "No Session - could not authorize for synchorinzing object." +
-                    "  If you are not logged in, please do so and retry the request.");
-        } 
-        if(sysmeta == null) {
-            throw new InvalidRequest("4863", "The system metadata shouldn't be null in synchronizing an object.");
-        }
-        Identifier pid = sysmeta.getIdentifier();
-        //only the authoritative node can call this method
-        if( !isAuthoritativeMNodeAdmin(session, pid) ){
-            throw new NotAuthorized("4861", "Only the authoritative node "+sysmeta.getAuthoritativeMemberNode().getValue()+
-                    " of the object "+pid.getValue()+" can have the synchroinzeObject request.");
-        }
-        
-        
+    @Override
+    public boolean synchronize(Session session, Identifier pid) throws NotAuthorized, InvalidRequest, NotImplemented{
+        throw new NotImplemented("0000", "CN query services are not implemented in Metacat.");
+
     }
 
 	@Override
@@ -2022,7 +2158,5 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	public Node getCapabilities() throws NotImplemented, ServiceFailure {
 		throw new NotImplemented("0000", "The CN capabilities are not stored in Metacat.");
 	}
-	
-	
-    
+
 }
