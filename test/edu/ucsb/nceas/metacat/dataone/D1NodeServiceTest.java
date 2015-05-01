@@ -43,6 +43,7 @@ import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -194,8 +195,12 @@ public class D1NodeServiceTest extends MCTestCase {
         sm.setRightsHolder(owner);
         sm.setDateUploaded(new Date());
         sm.setDateSysMetadataModified(new Date());
+        String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
+        if(currentNodeId == null || currentNodeId.trim().equals("")) {
+            throw new Exception("there should be value in the dataone.nodeId in the metacat.properties file.");
+        }
         NodeReference nr = new NodeReference();
-        nr.setValue("metacat");
+        nr.setValue(currentNodeId);
         sm.setOriginMemberNode(nr);
         sm.setAuthoritativeMemberNode(nr);
 		// set the access to public read
