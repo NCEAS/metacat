@@ -2141,7 +2141,10 @@ public class MNodeService extends D1NodeService
 		
 		return bagInputStream;
 	}
-
+    
+	/**
+	 * Update the system metadata of the specified pid.
+	 */
 	@Override
 	public boolean updateSystemMetadata(Session session, Identifier pid,
             SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
@@ -2149,16 +2152,69 @@ public class MNodeService extends D1NodeService
 	 if(sysmeta == null) {
 	     throw  new InvalidRequest("4863", "The system metadata object should NOT be null in the updateSystemMetadata request.");
 	 }
+	 if(pid == null || pid.getValue() == null) {
+         throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
+     }
+
 	 if(!isAuthoritativeNode(pid)) {
 	     throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
 	 }
+
+     if (session == null) {
+         //TODO: many of the thrown exceptions do not use the correct error codes
+         //check these against the docs and correct them
+         throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
+                 "  If you are not logged in, please do so and retry the request.");
+     } else {
+         try {
+             //Following session can do the change:
+           //- Authoritative Member Node (we can use isNodeAdmin since we checked isAuthoritativeNode in line 2159)
+             //- Owner of object (coved by the userHasPermission method)
+             //- user subjects with the change permission
+             //Note: Coordinating Node can not because MN is authoritative
+             if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
+                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+             }
+         } catch (NotFound e) {
+             throw new InvalidRequest("4863", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         }
+         
+     }
       //update the system metadata locally  
       boolean success = super.updateSystemMetadata(session, pid, sysmeta);
       
       if(success) {
+          //TODO
           //notify the cns the synchornize the new system metadata.
       }
       return success;
+    }
+	
+	/*
+     * Determine if the current node is the authoritative node for the given pid.
+     */
+    protected boolean isAuthoritativeNode(Identifier pid) {
+        boolean isAuthoritativeNode = false;
+        if(pid != null && pid.getValue() != null) {
+            SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+            if(sys != null) {
+                NodeReference node = sys.getAuthoritativeMemberNode();
+                if(node != null) {
+                    String nodeValue = node.getValue();
+                    logMetacat.debug("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
+                    //System.out.println("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
+                    String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
+                    logMetacat.debug("The node id in metacat.properties is "+currentNodeId);
+                    //System.out.println("The node id in metacat.properties is "+currentNodeId);
+                    if(currentNodeId != null && !currentNodeId.trim().equals("") && currentNodeId.equals(nodeValue)) {
+                        logMetacat.debug("They are matching");
+                        //System.out.println("They are matching");
+                        isAuthoritativeNode = true;
+                    }
+                }
+            }
+        }
+        return isAuthoritativeNode;
     }
     
 }

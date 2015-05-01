@@ -879,7 +879,7 @@ public abstract class D1NodeService {
    * 
    * @param session - the Session object containing the credentials for the Subject
    * 
-   * @return true if the user is admin
+   * @return true if the user is admin (mn itself or a cn )
    * 
    * @throws ServiceFailure
    * @throws InvalidToken
@@ -907,48 +907,57 @@ public abstract class D1NodeService {
       
       // check the CN list
       if (!allowed) {
-	      List<Node> nodes = null;
-
-    	  try {
-		      // are we allowed to do this? only CNs are allowed
-		      CNode cn = D1Client.getCN();
-		      nodes = cn.listNodes().getNodeList();
-    	  }
-	      catch (Throwable e) {
-	    	  logMetacat.warn(e.getMessage());
-	    	  return false;  
-	      }
-		      
-	      if ( nodes == null ) {
-	    	  return false;
-	          //throw new ServiceFailure("4852", "Couldn't get node list.");
-	      }
-	      
-	      // find the node in the node list
-	      for ( Node node : nodes ) {
-	          
-	          NodeReference nodeReference = node.getIdentifier();
-	          logMetacat.debug("In isAdminAuthorized(), Node reference is: " + nodeReference.getValue());
-	          
-	          Subject subject = session.getSubject();
-	          
-	          if (node.getType() == NodeType.CN) {
-	              List<Subject> nodeSubjects = node.getSubjectList();
-	              
-	              // check if the session subject is in the node subject list
-	              for (Subject nodeSubject : nodeSubjects) {
-	                  logMetacat.debug("In isAdminAuthorized(), comparing subjects: " +
-	                      nodeSubject.getValue() + " and " + subject.getValue());
-	                  if ( nodeSubject.equals(subject) ) {
-	                      allowed = true; // subject of session == target node subject
-	                      break;
-	                      
-	                  }
-	              }              
-	          }
-	      }
+	      allowed = isCNAdmin(session);
       }
       
+      return allowed;
+  }
+  
+  /*
+   * Determine if the specified session is a CN or not. Return true if it is; otherwise false.
+   */
+  protected boolean isCNAdmin (Session session) {
+      boolean allowed = false;
+      List<Node> nodes = null;
+
+      try {
+          // are we allowed to do this? only CNs are allowed
+          CNode cn = D1Client.getCN();
+          nodes = cn.listNodes().getNodeList();
+      }
+      catch (Throwable e) {
+          logMetacat.warn(e.getMessage());
+          return false;  
+      }
+          
+      if ( nodes == null ) {
+          return false;
+          //throw new ServiceFailure("4852", "Couldn't get node list.");
+      }
+      
+      // find the node in the node list
+      for ( Node node : nodes ) {
+          
+          NodeReference nodeReference = node.getIdentifier();
+          logMetacat.debug("In isAdminAuthorized(), Node reference is: " + nodeReference.getValue());
+          
+          Subject subject = session.getSubject();
+          
+          if (node.getType() == NodeType.CN) {
+              List<Subject> nodeSubjects = node.getSubjectList();
+              
+              // check if the session subject is in the node subject list
+              for (Subject nodeSubject : nodeSubjects) {
+                  logMetacat.debug("In isAdminAuthorized(), comparing subjects: " +
+                      nodeSubject.getValue() + " and " + subject.getValue());
+                  if ( nodeSubject.equals(subject) ) {
+                      allowed = true; // subject of session == target node subject
+                      break;
+                      
+                  }
+              }              
+          }
+      }
       return allowed;
   }
   
@@ -1030,9 +1039,6 @@ public abstract class D1NodeService {
     	throw new InvalidRequest("1761", "Permission was not provided or is invalid");
     }
     
-    // permissions are hierarchical
-    List<Permission> expandedPermissions = null;
-    
     // always allow CN access
     if ( isAdminAuthorized(session) ) {
         allowed = true;
@@ -1052,96 +1058,113 @@ public abstract class D1NodeService {
         return allowed;
     }
     
-    // get the subject[s] from the session
-	//defer to the shared util for recursively compiling the subjects	
-	Set<Subject> subjects = AuthUtils.authorizedClientSubjects(session);
-    
-	// track the identities we have checked against
-	StringBuffer includedSubjects = new StringBuffer();
-    	
-    // get the system metadata
-    String pidStr = pid.getValue();
-    SystemMetadata systemMetadata = null;
-    try {
-        systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-
-    } catch (Exception e) {
-        // convert Hazelcast RuntimeException to NotFound
-        logMetacat.error("An error occurred while getting system metadata for identifier " +
-            pid.getValue() + ". The error message was: " + e.getMessage());
-        throw new NotFound("1800", "No record found for " + pidStr);
-        
-    } 
-    
-    // throw not found if it was not found
-    if (systemMetadata == null) {
-        String localId = null;
-        String error = "No system metadata could be found for given PID: " + pidStr;
-        try {
-            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-          
-         } catch (Exception e) {
-            logMetacat.warn("Couldn't find the local id for the pid "+pidStr);
-        }
-        
-        if(localId != null && EventLog.getInstance().isDeleted(localId)) {
-            error = error + ". "+DELETEDMESSAGE;
-        } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
-            error = error + ". "+DELETEDMESSAGE;
-        }
-        throw new NotFound("1800", error);
-    }
-	    
-    // do we own it?
-    for (Subject s: subjects) {
-      logMetacat.debug("Comparing \t" + 
-                       systemMetadata.getRightsHolder().getValue() +
-                       " \tagainst \t" + s.getValue());
-      	includedSubjects.append(s.getValue() + "; ");
-    	allowed = systemMetadata.getRightsHolder().equals(s);
-    	if (allowed) {
-    		return allowed;
-    	}
-    }    
-    
-    // otherwise check the access rules
-    try {
-	    List<AccessRule> allows = systemMetadata.getAccessPolicy().getAllowList();
-	    search: // label break
-	    for (AccessRule accessRule: allows) {
-	      for (Subject s: subjects) {
-	        logMetacat.debug("Checking allow access rule for subject: " + s.getValue());
-	        if (accessRule.getSubjectList().contains(s)) {
-	        	logMetacat.debug("Access rule contains subject: " + s.getValue());
-	        	for (Permission p: accessRule.getPermissionList()) {
-		        	logMetacat.debug("Checking permission: " + p.xmlValue());
-	        		expandedPermissions = expandPermissions(p);
-	        		allowed = expandedPermissions.contains(permission);
-	        		if (allowed) {
-			        	logMetacat.info("Permission granted: " + p.xmlValue() + " to " + s.getValue());
-	        			break search; //label break
-	        		}
-	        	}
-        		
-	        }
-	      }
-	    }
-    } catch (Exception e) {
-    	// catch all for errors - safe side should be to deny the access
-    	logMetacat.error("Problem checking authorization - defaulting to deny", e);
-		allowed = false;
-	  
-    }
+    //is it the owner of the object or the access rules allow the user?
+    allowed = userHasPermission(session,  pid, permission );
     
     // throw or return?
     if (!allowed) {
-      throw new NotAuthorized("1820", permission + " not allowed on " + pidStr + " for subject[s]: " + includedSubjects.toString() );
+     // track the identities we have checked against
+      StringBuffer includedSubjects = new StringBuffer();
+      Set<Subject> subjects = AuthUtils.authorizedClientSubjects(session);
+      for (Subject s: subjects) {
+             includedSubjects.append(s.getValue() + "; ");
+        }    
+      throw new NotAuthorized("1820", permission + " not allowed on " + pid.getValue() + " for subject[s]: " + includedSubjects.toString() );
     }
     
     return allowed;
     
   }
   
+  
+  /*
+   * Determine if a user has the permission to perform the specified permission.
+   * 1. Owner can have any permission.
+   * 2. Access table allow the user has the permission
+   */
+  protected boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound{
+      boolean allowed = false;
+      // permissions are hierarchical
+      List<Permission> expandedPermissions = null;
+      // get the subject[s] from the session
+      //defer to the shared util for recursively compiling the subjects   
+      Set<Subject> subjects = AuthUtils.authorizedClientSubjects(userSession);
+          
+      // get the system metadata
+      String pidStr = pid.getValue();
+      SystemMetadata systemMetadata = null;
+      try {
+          systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+
+      } catch (Exception e) {
+          // convert Hazelcast RuntimeException to NotFound
+          logMetacat.error("An error occurred while getting system metadata for identifier " +
+              pid.getValue() + ". The error message was: " + e.getMessage());
+          throw new NotFound("1800", "No record found for " + pidStr);
+          
+      } 
+      
+      // throw not found if it was not found
+      if (systemMetadata == null) {
+          String localId = null;
+          String error = "No system metadata could be found for given PID: " + pidStr;
+          try {
+              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+            
+           } catch (Exception e) {
+              logMetacat.warn("Couldn't find the local id for the pid "+pidStr);
+          }
+          
+          if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+              error = error + ". "+DELETEDMESSAGE;
+          } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+              error = error + ". "+DELETEDMESSAGE;
+          }
+          throw new NotFound("1800", error);
+      }
+          
+      // do we own it?
+      for (Subject s: subjects) {
+        logMetacat.debug("Comparing \t" + 
+                         systemMetadata.getRightsHolder().getValue() +
+                         " \tagainst \t" + s.getValue());
+          //includedSubjects.append(s.getValue() + "; ");
+          allowed = systemMetadata.getRightsHolder().equals(s);
+          if (allowed) {
+              return allowed;
+          }
+      }    
+      
+      // otherwise check the access rules
+      try {
+          List<AccessRule> allows = systemMetadata.getAccessPolicy().getAllowList();
+          search: // label break
+          for (AccessRule accessRule: allows) {
+            for (Subject s: subjects) {
+              logMetacat.debug("Checking allow access rule for subject: " + s.getValue());
+              if (accessRule.getSubjectList().contains(s)) {
+                  logMetacat.debug("Access rule contains subject: " + s.getValue());
+                  for (Permission p: accessRule.getPermissionList()) {
+                      logMetacat.debug("Checking permission: " + p.xmlValue());
+                      expandedPermissions = expandPermissions(p);
+                      allowed = expandedPermissions.contains(permission);
+                      if (allowed) {
+                          logMetacat.info("Permission granted: " + p.xmlValue() + " to " + s.getValue());
+                          break search; //label break
+                      }
+                  }
+                  
+              }
+            }
+          }
+      } catch (Exception e) {
+          // catch all for errors - safe side should be to deny the access
+          logMetacat.error("Problem checking authorization - defaulting to deny", e);
+          allowed = false;
+        
+      }
+      return allowed;
+  }
   /*
    * parse a logEntry and get the relevant field from it
    * 
@@ -1452,34 +1475,26 @@ public abstract class D1NodeService {
 
     }
     
+    /**
+     * Update the system metadata of the specified pid
+     * @param session - the identity of the client which calls the method
+     * @param pid - the identifier of the object which will be updated
+     * @param sysmeta - the new system metadata  
+     * @return
+     * @throws NotImplemented
+     * @throws NotAuthorized
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
+     * @throws InvalidToken
+     */
 	public boolean updateSystemMetadata(Session session, Identifier pid,
 			SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
 			ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
 		
 		// The lock to be used for this identifier
       Lock lock = null;
-      if(pid == null || pid.getValue() == null) {
-          throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
-      }
-
-      // TODO: control who can call this?
-      if (session == null) {
-          //TODO: many of the thrown exceptions do not use the correct error codes
-          //check these against the docs and correct them
-          throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
-                  "  If you are not logged in, please do so and retry the request.");
-      } else {
-          try {
-              boolean allow = isAuthorized(session, pid, Permission.CHANGE_PERMISSION);
-              if(!allow) {
-                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-              }
-          } catch (NotFound e) {
-              throw new InvalidRequest("4863", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-          }
-          
-      }
-      
+     
       // verify that guid == SystemMetadata.getIdentifier()
       logMetacat.debug("Comparing guid|sysmeta_guid: " + pid.getValue() + 
           "|" + sysmeta.getIdentifier().getValue());
@@ -1538,32 +1553,6 @@ public abstract class D1NodeService {
       return true;
 	}
 	
-	/*
-	 * Determine if the current node is the authoritative node for the given pid.
-	 */
-	protected boolean isAuthoritativeNode(Identifier pid) {
-	    boolean isAuthoritativeNode = false;
-	    if(pid != null && pid.getValue() != null) {
-	        SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-	        if(sys != null) {
-	            NodeReference node = sys.getAuthoritativeMemberNode();
-	            if(node != null) {
-	                String nodeValue = node.getValue();
-	                logMetacat.debug("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
-	                //System.out.println("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
-	                String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
-	                logMetacat.debug("The node id in metacat.properties is "+currentNodeId);
-	                //System.out.println("The node id in metacat.properties is "+currentNodeId);
-	                if(currentNodeId != null && !currentNodeId.trim().equals("") && currentNodeId.equals(nodeValue)) {
-	                    logMetacat.debug("They are matching");
-	                    //System.out.println("They are matching");
-	                    isAuthoritativeNode = true;
-	                }
-	            }
-	        }
-	    }
-	    return isAuthoritativeNode;
-	}
 	
 	/*
 	 * Check if the newMeta modifies an immutable field. 
