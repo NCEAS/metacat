@@ -6,15 +6,11 @@
     <xsl:param name="enableFGDCediting"/>
         
     <xsl:template name="metadata">
-        <article id="Metadata">
-	    	<div class="container">
-	    		<div class="row-fluid">
+        <article id="Metadata" class="container">
 				    <xsl:apply-templates select="metadata/idinfo"/>
 			        <br/>
 			        <xsl:apply-templates
 			            select="metadata/distinfo/resdesc[starts-with(text(),$docid)]/ancestor::distinfo"/>
-	        	</div>
-	        </div>
 	    </article>
         
     </xsl:template>
@@ -40,9 +36,8 @@
     <!-- for citation information -->
     <xsl:template name="fgdcBlockCitation">
     
-    	<div class="well">
-    		<div class="row-fluid">
-    			<div class="span10">
+    	<cite class="citation">
+    			<span class="author">
     				<xsl:for-each select="origin">
 		        		<xsl:if test="position() &gt; 1">
 		        			<xsl:if test="last() &gt; 2">, </xsl:if>
@@ -53,12 +48,14 @@
 		        		<xsl:if test="position() = last()">.</xsl:if>
 		        		<xsl:text> </xsl:text>    		
 		        	</xsl:for-each>
-		        	
+		      </span>   	
+    			<span class="pubdate">
 		        	<xsl:value-of select="substring(string(pubdate),1,4)"/>
 		        	<xsl:if test="substring(string(pubdate),1,4) != ''">
 		        		<xsl:text>. </xsl:text>    				     		
 		        	</xsl:if>
-		        	
+		        </span>
+		        <span class="title">		        	
 		        	<!-- title -->
 					<strong>
 						<xsl:for-each select="./title">
@@ -66,23 +63,19 @@
 			        		<xsl:text> </xsl:text>    				     		
 				     	</xsl:for-each>				
 					</strong>
-					
+				</span>
+				<span class="id">					
 					<!-- show link? -->
-					<a> 
-						<xsl:attribute name="href">
-							<xsl:value-of select="$viewURI"/><xsl:value-of select="$pid"/>
-						</xsl:attribute> 
-						(<xsl:value-of select="$pid"/>)
-					</a>				        		
-    			</div>
-    			<div class="span2">
+						ID: <xsl:value-of select="$pid"/>
+				</span>			        		
+    			<div>
     			
     				<form method="get" action="{$contextURL}/style/common/ClientViewHelper.jspx" enctype="application/octet-stream">
 		               <input name="docid" type="hidden" value="{$docid}"/>
 		               <input name="qformat" type="hidden" value="{$qformat}"/>
 		               <input name="metadataDocId" type="hidden" value="{$docid}"/>
 		               <input name="action" value="Download" type="hidden"/>
-		               <button class="btn" type="submit">
+		               <button class="btn" type="submit" id="downloadPackage">
 		               		<i class="icon-arrow-down"></i> Download Package
 		               </button>
 		           </form>
@@ -95,10 +88,8 @@
    					</a>
    					-->
     			</div>	
-  
-    		</div>
-				
-		</div>
+ 				
+		</cite>
 
    </xsl:template>
     
@@ -178,31 +169,37 @@
     </xsl:template>
     
     <xsl:template match="bounding">
-        <div class="control-group">
+        <div class="control-group boundingCoordinates geographicCoverage" data-content="boundingCoordinates">
 			<label class="control-label">Bounding Coordinates</label>
         	<div class="controls controls-well">
-	            <div class="control-group">
+        	
+        	  	<xsl:variable name="west"><xsl:value-of select="westbc"/></xsl:variable>
+        	  	<xsl:variable name="east"><xsl:value-of select="eastbc"/></xsl:variable>
+        	  	<xsl:variable name="north"><xsl:value-of select="northbc"/></xsl:variable>
+        	  	<xsl:variable name="south"><xsl:value-of select="southbc"/></xsl:variable>
+
+	            <div class="control-group westBoundingCoordinate" data-content="westBoundingCoordinate" data-value="{$west}">
 					<label class="control-label">West</label>
 	                <div class="controls">
-                       	<xsl:value-of select="westbc"/>
+                       	<xsl:value-of select="$west"/>
 	                </div>
 				</div> 
-	            <div class="control-group">
+	            <div class="control-group eastBoundingCoordinate" data-content="eastBoundingCoordinate" data-value="{$east}">
 					<label class="control-label">East</label>
                     <div class="controls">
-                        <xsl:value-of select="eastbc"/>
+                        <xsl:value-of select="$east"/>
                     </div>
 				</div>
-				<div class="control-group">
+				<div class="control-group northBoundingCoordinate" data-content="northBoundingCoordinate" data-value="{$north}">
 					<label class="control-label">North</label>
                     <div class="controls">
-                        <xsl:value-of select="northbc"/>
+                        <xsl:value-of select="$north"/>
                     </div>
                	</div>
-	            <div class="control-group">
+	            <div class="control-group southBoundingCoordinate" data-content="southBoundingCoordinate" data-value="{$south}">
 					<label class="control-label">South</label>
                     <div class="controls">
-                        <xsl:value-of select="southbc"/>
+                        <xsl:value-of select="$south"/>
                     </div>
 	            </div>
 	        </div> 
