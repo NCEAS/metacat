@@ -625,10 +625,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>Data Table</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>Data Table</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">dataTable</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -641,10 +641,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>Spatial Raster</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>Spatial Raster</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">spatialRaster</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -657,10 +657,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>Spatial Vector</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>Spatial Vector</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">spatialVector</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -673,10 +673,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>Stored Procedure</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>Stored Procedure</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">storedProcedure</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -689,10 +689,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>View</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>View</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">view</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
@@ -705,10 +705,10 @@
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
 						<div class="control-group entity">
-							<label class="control-label">
-								<xsl:text>Other Entity</xsl:text>
-							</label>
 							<div class="controls controls-well entitydetails">
+								<label class="control-label">
+									<xsl:text>Other Entity</xsl:text>
+								</label>
 								<xsl:call-template name="chooseentity">
 									<xsl:with-param name="entitytype">otherEntity</xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
