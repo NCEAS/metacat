@@ -624,7 +624,7 @@
 				<xsl:for-each select="dataTable">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>Data Table</xsl:text>
 							</label>
@@ -640,7 +640,7 @@
 				<xsl:for-each select="spatialRaster">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>Spatial Raster</xsl:text>
 							</label>
@@ -656,7 +656,7 @@
 				<xsl:for-each select="spatialVector">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>Spatial Vector</xsl:text>
 							</label>
@@ -672,7 +672,7 @@
 				<xsl:for-each select="storedProcedure">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>Stored Procedure</xsl:text>
 							</label>
@@ -688,7 +688,7 @@
 				<xsl:for-each select="view">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>View</xsl:text>
 							</label>
@@ -704,7 +704,7 @@
 				<xsl:for-each select="otherEntity">
 					<xsl:variable name="currentNode" select="position()" />
 					<xsl:for-each select="../.">
-						<div class="control-group">
+						<div class="control-group entity">
 							<label class="control-label">
 								<xsl:text>Other Entity</xsl:text>
 							</label>
