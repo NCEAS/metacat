@@ -52,7 +52,7 @@ public class PISCOAccountTest extends MetaCatServletTest{
      * Establish a testing framework by initializing appropriate objects
      */
     public void setUp() {
-
+       super.setUp();
     }
 
     /**
