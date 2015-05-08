@@ -385,6 +385,12 @@ public class MNodeService extends D1NodeService
 
             // get the existing system metadata for the object
             SystemMetadata existingSysMeta = getSystemMetadata(session, pid);
+            //System.out.println("the archive is "+existingSysMeta.getArchived());
+            //Base on documentation, we can't update an archived object:
+            //The update operation MUST fail with Exceptions.InvalidRequest on objects that have the Types.SystemMetadata.archived property set to true.
+            if(existingSysMeta.getArchived() != null && existingSysMeta.getArchived()) {
+                throw new InvalidRequest("1202","An archived object"+pid.getValue()+" can't be updated");
+            }
 
             // check for previous update
             // see: https://redmine.dataone.org/issues/3336
