@@ -482,7 +482,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       
       SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
-            
+      newSysMeta.setArchived(true);
       // do the update
       Identifier updatedPid = 
         MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -492,9 +492,20 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).getSystemMetadata(session, updatedPid);
 
       assertEquals(updatedPid.getValue(), newPid.getValue());
-//      assertTrue(updatedSysMeta.getObsolete(0).getValue().equals(pid.getValue()));
-//      assertTrue(updatedSysMeta.getDerivedFrom(0).getValue().equals(pid.getValue()));        
+      //assertTrue(updatedSysMeta.getObsolete(0).getValue().equals(pid.getValue()));
+      //assertTrue(updatedSysMeta.getDerivedFrom(0).getValue().equals(pid.getValue())); 
       
+      //try to update an archived object and need to get an exception
+      Identifier newPid2 = new Identifier();
+      newPid2.setValue("testUpdate." + (System.currentTimeMillis() + 2)); // ensure it is different from original
+      SystemMetadata newSysMeta2 = createSystemMetadata(newPid2, session.getSubject(), object);
+      try {
+           updatedPid = 
+                  MNodeService.getInstance(request).update(session, newPid, object, newPid2, newSysMeta2);
+           fail("update an archived object should get an invalid request exception");
+      } catch (Exception ee) {
+          assertTrue( ee instanceof InvalidRequest);
+      }
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
