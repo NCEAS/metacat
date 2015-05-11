@@ -975,6 +975,8 @@ public class ReplicationService extends BaseService {
 							updatedDate);
 				} catch (Exception e) {
 					writeException = e;
+				} finally {
+				    IOUtils.closeQuietly(inputStream);
 				}
 
 			}
