@@ -135,7 +135,7 @@ public class ReplicationService extends BaseService {
 	private static final int TIMEINTERVALLIMIT = 7200000;
 	public static final String REPLICATIONUSER = "replication";
 	
-	private static RestClient sslClient = null;
+	//private static RestClient sslClient = null;
 	private static int CLIENTTIMEOUT = 30000;
 
 	public static final String REPLICATION_LOG_FILE_NAME = "metacatreplication.log";
@@ -964,11 +964,13 @@ public class ReplicationService extends BaseService {
 				String datafilePath = PropertyService
 						.getProperty("application.datafilepath");
 
-				InputStream inputStream = getURLStream(url);
+				
 				
 				//register data file into xml_documents table and write data file
 				//into file system
+				InputStream inputStream = null;
 				try {
+				    inputStream = getURLStream(url);
 					DocumentImpl.writeDataFileInReplication(inputStream,
 							datafilePath, docName, docType, docid, null, docHomeServer,
 							server, DocumentImpl.DOCUMENTTABLE, false, createdDate,
@@ -2358,7 +2360,7 @@ public class ReplicationService extends BaseService {
 	 * @return
 	 */
 	private static RestClient getSSLClient() {
-		
+	    RestClient sslClient = null;
 	    if (sslClient == null) {
 		
 	        // set up this server's client identity
