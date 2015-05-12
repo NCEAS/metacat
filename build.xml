@@ -989,8 +989,8 @@
 				<include name="skin.configs/**" />
 			</fileset>
 		</copy>
-		<!--<copy file="lib/log4j.properties" todir="${war.webinf}"
-			filtering="yes" /> -->
+		<copy file="lib/log4j.properties" todir="${war.webinf}"
+			filtering="yes" /> 
 		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
 			filtering="yes" />
 		<!--<copy file="lib/oa4mp_client.xml" todir="${war.webinf}"
