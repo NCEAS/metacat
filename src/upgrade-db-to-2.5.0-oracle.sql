@@ -1,8 +1,13 @@
 /*
  * Alter the system metadata table to suport seriesId
  */
-ALTER TABLE systemMetadata ADD (guid VARCHAR2(2000));
+ALTER TABLE systemMetadata ADD (series_id VARCHAR2(2000));
 
+/*
+ * Insert the entry for dataone schema v2.
+ */
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://ns.dataone.org/service/types/v2.0', '/schema/dataone/dataoneTypes_v2.0.xsd');
 /*
  * update the database version
  */
