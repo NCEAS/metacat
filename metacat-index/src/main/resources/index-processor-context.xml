@@ -28,6 +28,9 @@
     <import resource="application-context-systemmeta100.xml" />
     
     <import resource="application-context-annotation.xml" />
+    
+    <import resource="application-context-dc-base.xml" />
+    <import resource="application-context-dcx.xml" />
 
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
  <bean id="fgdcDateConverter" class="org.dataone.cn.indexer.convert.FgdcDateConverter"/>
@@ -96,6 +99,7 @@
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
        <ref bean="rdfXmlSubprocessor" />
+       <ref bean="dublinCoreExtendedSubprocessor" />
       </list>
      </property>
     </bean>
@@ -178,6 +182,11 @@
 	<bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="dryad" />
     	<constructor-arg name="namespace" value="http://purl.org/dryad/terms/" />
+    </bean>   
+    
+    <bean class="org.dataone.cn.indexer.XMLNamespace">
+    	<constructor-arg name="prefix" value="xsi" />
+    	<constructor-arg name="namespace" value="http://www.w3.org/2001/XMLSchema-instance" />
     </bean>   
     
    </list>
