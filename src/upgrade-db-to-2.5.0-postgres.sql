@@ -1,7 +1,7 @@
 /*
  * Alter the system metadata table to suport seriesId
  */
-ALTER TABLE systemMetadata ADD COLUMN series_id text;
+ALTER TABLE systemMetadata ADD COLUMN series_id text, ADD COLUMN media_type text, ADD COLUMN file_name text;
 
 /*
  * Add an entry for dataone schema v2
