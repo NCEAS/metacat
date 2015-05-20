@@ -1,7 +1,7 @@
 /*
  * Alter the system metadata table to suport seriesId
  */
-ALTER TABLE systemMetadata ADD (series_id VARCHAR2(2000));
+ALTER TABLE systemMetadata ADD (series_id VARCHAR2(2000), media_type VARCHAR2(2000), file_name VARCHAR2(2000));
 
 /*
  * Insert the entry for dataone schema v2.
