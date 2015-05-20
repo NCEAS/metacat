@@ -316,6 +316,8 @@ CREATE TABLE systemMetadata (
 	number_replicas INT8, 	-- the number of replicas allowed
 	obsoletes   text,       -- the identifier that this record obsoletes
 	obsoleted_by   text,     -- the identifier of the record that replaces this record
+  media_type   text,      -- the media type of this object
+  file_name    text,      -- the suggested file name for this object
 	CONSTRAINT systemMetadata_pk PRIMARY KEY (guid)
 );
 /*
