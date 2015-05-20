@@ -423,6 +423,8 @@ CREATE TABLE systemMetadata (
    number_replicas NUMBER(8), 	-- the number of replicas allowed
    obsoletes   VARCHAR2(2000),    -- the identifier of the record that this replaces
    obsoleted_by   VARCHAR2(2000),    -- the identifier of the record that replaces this record
+   media_type   VARCHAR2(2000),      -- the media type of the object
+   file_name    VARCHAR2(2000),      -- the suggested file name of the object
    CONSTRAINT systemMetadata_pk 
 		PRIMARY KEY (guid)
 )
