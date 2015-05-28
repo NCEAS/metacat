@@ -986,6 +986,7 @@ public class IdentifierManager {
             e.printStackTrace();
             logMetacat.error("Error while creating " + TYPE_SYSTEM_METADATA + " record: " + guid, e );
             dbConn.rollback();
+            throw new SQLException("Can't save system metadata "+e.getMessage());
         } finally {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
