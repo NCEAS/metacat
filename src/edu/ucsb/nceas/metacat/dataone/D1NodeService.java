@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -393,6 +394,9 @@ public abstract class D1NodeService {
       allowed = true;
     }
     
+    if(!allowed) {
+        throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
+    }
     // verify checksum, only if we can reset the inputstream
     if (object.markSupported()) {
         logMetacat.debug("Checking checksum for: " + pid.getValue());
@@ -416,7 +420,18 @@ public abstract class D1NodeService {
     }
     	
     // we have the go ahead
-    if ( allowed ) {
+    //if ( allowed ) {
+         
+        // save the sysmeta
+        try {
+            // lock and unlock of the pid happens in the subclass
+            HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
+           
+        
+        } catch (Exception e) {
+            logMetacat.error("Problem creating system metadata: " + pid.getValue(), e);
+            throw new ServiceFailure("1190", e.getMessage());
+        }
       
         logMetacat.debug("Allowed to insert: " + pid.getValue());
 
@@ -433,38 +448,50 @@ public abstract class D1NodeService {
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
+            removeSystemMeta(pid);
         	String msg = "The Node is unable to create the object. " +
           "There was a problem converting the object to XML";
         	logMetacat.info(msg);
           throw new ServiceFailure("1190", msg + ": " + e.getMessage());
 
+        } catch (ServiceFailure e) {
+            removeSystemMeta(pid);
+            throw e;
+        } catch (Exception e) {
+            removeSystemMeta(pid);
+            throw new ServiceFailure("1190", "The node is unable to create the object: " + e.getMessage());
         }
                     
       } else {
 	        
 	      // DEFAULT CASE: DATA (needs to be checked and completed)
-	      localId = insertDataObject(object, pid, session);
+          try {
+              localId = insertDataObject(object, pid, session);
+          } catch (ServiceFailure e) {
+              removeSystemMeta(pid);
+              throw e;
+          } catch (Exception e) {
+              removeSystemMeta(pid);
+              throw new ServiceFailure("1190", "The node is unable to create the object: " + e.getMessage());
+          }
+	      
       }   
     
-    }
+    //}
 
     logMetacat.debug("Done inserting new object: " + pid.getValue());
     
-    // save the sysmeta
-    try {
-    	// lock and unlock of the pid happens in the subclass
-    	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
-    	// submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
-        
-    } catch (Exception e) {
-    	logMetacat.error("Problem creating system metadata: " + pid.getValue(), e);
-        throw new ServiceFailure("1190", e.getMessage());
-	}
-    
     // setting the resulting identifier failed
     if (localId == null ) {
+        removeSystemMeta(pid);
       throw new ServiceFailure("1190", "The Node is unable to create the object. ");
+    }
+    
+    try {
+        // submit for indexing
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
+    } catch (Exception e) {
+        logMetacat.warn("Couldn't create solr index for object "+pid.getValue());
     }
 
     resultPid = pid;
@@ -472,6 +499,28 @@ public abstract class D1NodeService {
     logMetacat.debug("create() complete for object: " + pid.getValue());
 
     return resultPid;
+  }
+  
+  /*
+   * Roll-back method when inserting data object fails.
+   */
+  protected void removeSystemMeta(Identifier id){
+      HazelcastService.getInstance().getSystemMetadataMap().remove(id);
+  }
+  
+  /*
+   * Roll-back method when inserting data object fails.
+   */
+  protected void removeSolrIndex(SystemMetadata sysMeta) {
+      sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+      sysMeta.setArchived(true);
+      sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+      try {
+          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
+      } catch (Exception e) {
+          logMetacat.warn("Can't remove the solr index for pid "+sysMeta.getIdentifier().getValue());
+      }
+      
   }
 
   /**
