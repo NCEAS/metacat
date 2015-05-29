@@ -61,27 +61,59 @@ Formatting:
   <xs:import namespace="http://ns.dataone.org/service/types/v1.1" 
         schemaLocation="http://ns.dataone.org/service/types/v1.1" />
 
+ <!-- MediaTypeProperty extension-->
+  <xs:complexType name="MediaTypeProperty">
+      <xs:annotation>
+        <xs:documentation>Additional optional properties for MediaType as 
+          described by IANA.</xs:documentation>
+      </xs:annotation>
+      <xs:simpleContent>
+        <xs:extension base="xs:string">
+          <xs:attribute name="name" type="xs:string" use="required">
+            <xs:annotation>
+                <xs:documentation>The property name for this entry. 
+                </xs:documentation>
+          </xs:annotation>
+          </xs:attribute>
+        </xs:extension>
+      </xs:simpleContent>  
+     </xs:complexType>
+
   <!--  MediaType -->
   <xs:complexType name="MediaType">
     <xs:annotation>
       <xs:documentation>Value drawn from the value space of IANA Media Types (
         http://www.iana.org/assignments/media-types/media-types.xhtml ). When 
         specified, indicates the IANA Media Type (aka MIME-Type) of the object. 
-        The value should include the media type and subtype (e.g. text/csv). The 
-        mediaType value is not case sensitive.
+        The name attribute MUST include the media type and subtype 
+        (e.g. text/csv). The media type value is not case sensitive.
       </xs:documentation>
       <xs:documentation>Any required media type parameters must be provided, and
         optional parameters may be specified. There are no explicit constraints 
-        on the name of attributes or their values, however they SHOULD conform
-        to media type optional and required parameters as specified in the 
-        respective media type RFC.
+        on the name of media-type properties or their values, however they 
+        SHOULD conform to media type optional and required parameters as 
+        specified in the respective media type RFC.
       </xs:documentation>
     </xs:annotation>
-    <xs:simpleContent>
-      <xs:extension base="xs:string">
-        <xs:anyAttribute namespace="##any" processContents="lax" />
-      </xs:extension>
-    </xs:simpleContent>
+    <xs:sequence>
+      <xs:element name="property" 
+                  type="d1_v2.0:MediaTypeProperty" 
+                  minOccurs="0" 
+                  maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>Media-type parameter(s) as specified by the 
+            respective RFC for the media-type.
+          </xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+    <xs:attribute name="name" type="xs:string" use="required" >
+      <xs:annotation>
+        <xs:documentation>The value of the media-type specified as a 
+          required 'name' attribute of the mediaType element.
+        </xs:documentation>
+      </xs:annotation>
+    </xs:attribute>
   </xs:complexType>
 
 
@@ -90,9 +122,9 @@ Formatting:
       <xs:annotation>
         <xs:documentation>System metadata in DataONE APIs version 2.0 extends
         the :class:`types.SystemMetadata` definition of version 1.x by adding 
-        :term:`seriesId`, :term:`charset`, :term:`mediaType`, and 
-        :term:`fileName` elements. Each of these are optional, so Version 1.x 
-        System Metadata is compatible with Version 2.x, though not vice-versa.
+        :term:`seriesId`, :term:`mediaType`, and :term:`fileName` elements. Each 
+        of these are optional, so Version 1.x System Metadata is compatible with 
+        Version 2.x, though not vice-versa.
         </xs:documentation>
       </xs:annotation>
       <xs:complexContent>
