@@ -429,6 +429,19 @@ CREATE TABLE systemMetadata (
 		PRIMARY KEY (guid)
 )
 
+/*
+ * Table used to store the properties for media types. They are part of the system metadata. But a media type
+ * can have multiple properties, we have to store them in a separate table. The guids in this table refer
+ * the guids in the systemMetadata.
+ */
+CREATE TABLE smMediaTypeProperties (
+  guid   VARCHAR2(2000),  -- id refer to guid in the system metadata table
+  name   VARCHAR2(512), -- name of the property
+  value   VARCHAR2(512), -- value of the property
+  CONSTRAINT smMediaTypeProperties_fk 
+     FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
+);
+
 CREATE TABLE smReplicationPolicy (
 	guid VARCHAR2(2000),	-- the globally unique string identifier of the object that the system metadata describes
 	member_node VARCHAR(250),	 -- replication member node
