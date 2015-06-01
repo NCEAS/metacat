@@ -4,6 +4,19 @@
 ALTER TABLE systemMetadata ADD (series_id VARCHAR2(2000), media_type VARCHAR2(2000), file_name VARCHAR2(2000));
 
 /*
+ * Create a table used to store the properties for media types. They are part of the system metadata. But a media type
+ * can have multiple properties, we have to store them in a separate table. The guids in this table refer
+ * the guids in the systemMetadata.
+ */
+CREATE TABLE smMediaTypeProperties (
+  guid   VARCHAR2(2000),  -- id refer to guid in the system metadata table
+  name   VARCHAR2(512), -- name of the property
+  value   VARCHAR2(512), -- value of the property
+  CONSTRAINT smMediaTypeProperties_fk 
+     FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
+);
+
+/*
  * Insert the entry for dataone schema v2.
  */
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
