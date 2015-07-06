@@ -164,6 +164,7 @@ public class GenerateGlobalIdentifiers implements UpgradeUtilityInterface {
         convertIdentifierField(con, "systemmetadata", "guid");
         convertIdentifierField(con, "smreplicationpolicy", "guid");
         convertIdentifierField(con, "smreplicationstatus", "guid");
+        convertIdentifierField(con, "smmediatypeproperties", "guid");
 
         // Now clean up the temporary column we created, but note this makes it much
         // harder to revert our changes
