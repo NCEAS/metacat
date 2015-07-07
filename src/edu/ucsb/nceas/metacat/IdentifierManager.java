@@ -52,6 +52,8 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.MediaType;
+import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.accesscontrol.XMLAccessAccess;
@@ -107,7 +109,7 @@ public class IdentifierManager {
         return self;
     }
     
-    public SystemMetadata asSystemMetadata(Date dateUploaded, String rightsHolder,
+    /*public SystemMetadata asSystemMetadata(Date dateUploaded, String rightsHolder,
             String checksum, String checksumAlgorithm, String originMemberNode,
             String authoritativeMemberNode, Date dateModified, String submitter, 
             String guid, String fmtidStr, BigInteger size, BigInteger serialVersion) {
@@ -153,14 +155,14 @@ public class IdentifierManager {
         sysMeta.setSerialVersion(serialVersion);
         
         return sysMeta;
-    }
+    }*/
     
     /**
      * return a hash of all of the info that is in the systemmetadata table
      * @param localId
      * @return
      */
-    public Hashtable<String, String> getSystemMetadataInfo(String localId)
+    /*public Hashtable<String, String> getSystemMetadataInfo(String localId)
     throws McdbDocNotFoundException
     {
         try
@@ -236,7 +238,7 @@ public class IdentifierManager {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return h;
-    }
+    }*/
     
     /**
      * return a hash of all of the info that is in the systemmetadata table
@@ -251,7 +253,7 @@ public class IdentifierManager {
         SystemMetadata sysMeta = new SystemMetadata();
         String sql = "select guid, date_uploaded, rights_holder, checksum, checksum_algorithm, " +
           "origin_member_node, authoritive_member_node, date_modified, submitter, object_format, size, " +
-          "replication_allowed, number_replicas, obsoletes, obsoleted_by, serial_version, archived, series_id " +
+          "replication_allowed, number_replicas, obsoletes, obsoleted_by, serial_version, archived, series_id, file_name, media_type " +
           "from systemmetadata where guid = ?";
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -289,6 +291,8 @@ public class IdentifierManager {
                 serialVersion = new BigInteger(rs.getString(16));
                 archived = new Boolean(rs.getBoolean(17));
                 String series_id = rs.getString(18);
+                String file_name = rs.getString(19);
+                String media_type = rs.getString(20);
 
                 Identifier sysMetaId = new Identifier();
                 sysMetaId.setValue(guid);
@@ -337,6 +341,30 @@ public class IdentifierManager {
                     Identifier seriesId = new Identifier();
                     seriesId.setValue(series_id);
                     sysMeta.setSeriesId(seriesId);
+                }
+                if(file_name != null ) {
+                    sysMeta.setFileName(file_name);
+                }
+                
+                if(media_type != null ) {
+                    MediaType mediaType = new MediaType();
+                    mediaType.setName(media_type);
+                    // get media type properties from another table.
+                    String mediaTypePropertyQuery = "select name, value from smmediatypeproperties where guid = ?";
+                    PreparedStatement stmt2 = dbConn.prepareStatement(mediaTypePropertyQuery);
+                    stmt2.setString(1, guid);
+                    ResultSet rs2 = stmt2.executeQuery();
+                    while (rs2.next()) {
+                        String name = rs2.getString(1);
+                        String value = rs2.getString(2);
+                        MediaTypeProperty property = new MediaTypeProperty();
+                        property.setName(name);
+                        property.setValue(value);
+                        mediaType.addProperty(property);
+                    }
+                    sysMeta.setMediaType(mediaType);
+                    rs2.close();
+                    stmt2.close();
                 }
                 stmt.close();
             } 
@@ -1249,44 +1277,84 @@ public class IdentifierManager {
         String authoritativeMemberNode, long modifiedDate, String submitter, 
         String guid, String objectFormat, BigInteger size, boolean archived,
         boolean replicationAllowed, int numberReplicas, String obsoletes,
-        String obsoletedBy, BigInteger serialVersion, String seriesId, DBConnection dbConn) throws SQLException  {
-  
-        // Execute the insert statement
-        String query = "update " + TYPE_SYSTEM_METADATA + 
-            " set (date_uploaded, rights_holder, checksum, checksum_algorithm, " +
-            "origin_member_node, authoritive_member_node, date_modified, " +
-            "submitter, object_format, size, archived, replication_allowed, number_replicas, " +
-            "obsoletes, obsoleted_by, serial_version, series_id) " +
-            "= (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) where guid = ?";
-        PreparedStatement stmt = dbConn.prepareStatement(query);
+        String obsoletedBy, BigInteger serialVersion, String seriesId, 
+        String fileName, MediaType mediaType, DBConnection dbConn) throws SQLException  {
+        PreparedStatement stmt = null;
+        PreparedStatement stmt2 = null;
+        try {
+            dbConn.setAutoCommit(false);
+            // Execute the insert statement
+            String query = "update " + TYPE_SYSTEM_METADATA + 
+                " set (date_uploaded, rights_holder, checksum, checksum_algorithm, " +
+                "origin_member_node, authoritive_member_node, date_modified, " +
+                "submitter, object_format, size, archived, replication_allowed, number_replicas, " +
+                "obsoletes, obsoleted_by, serial_version, series_id) " +
+                "= (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?) where guid = ?";
+            stmt = dbConn.prepareStatement(query);
+            
+            //data values
+            stmt.setTimestamp(1, new java.sql.Timestamp(dateUploaded));
+            stmt.setString(2, rightsHolder);
+            stmt.setString(3, checksum);
+            stmt.setString(4, checksumAlgorithm);
+            stmt.setString(5, originMemberNode);
+            stmt.setString(6, authoritativeMemberNode);
+            stmt.setTimestamp(7, new java.sql.Timestamp(modifiedDate));
+            stmt.setString(8, submitter);
+            stmt.setString(9, objectFormat);
+            stmt.setString(10, size.toString());
+            stmt.setBoolean(11, archived);
+            stmt.setBoolean(12, replicationAllowed);
+            stmt.setInt(13, numberReplicas);
+            stmt.setString(14, obsoletes);
+            stmt.setString(15, obsoletedBy);
+            stmt.setString(16, serialVersion.toString());
+            stmt.setString(17, seriesId);
+            stmt.setString(18, fileName);
+            if (mediaType == null) {
+                stmt.setString(19, null);
+            } else {
+                stmt.setString(19, mediaType.getName());
+            }
+            //where clause
+            stmt.setString(20, guid);
+            logMetacat.debug("stmt: " + stmt.toString());
+            //execute
+            int rows = stmt.executeUpdate();
+            
+            //insert media type properties into another table
+            if(mediaType != null && mediaType.getPropertyList() != null) {
+                String sql2 = "insert into smmediatypeproperties " + 
+                        "(guid, name, value) " + "values (?, ?, ?)";
+                stmt2 = dbConn.prepareStatement(sql2);
+                for(MediaTypeProperty item : mediaType.getPropertyList()) {
+                    if(item != null) {
+                        String name = item.getName();
+                        String value = item.getValue();
+                        stmt2.setString(1, guid);
+                        stmt2.setString(2, name);
+                        stmt2.setString(3, value);
+                        logMetacat.debug("insert media type properties query: " + stmt2.toString());
+                        int row =stmt2.executeUpdate();
+                    }
+                    
+                }
+            }
+            dbConn.commit();
+            dbConn.setAutoCommit(true);
+        } catch (Exception e) {
+            dbConn.rollback();
+            dbConn.setAutoCommit(true);
+            throw new SQLException(e.getMessage());
+        } finally {
+            if(stmt != null) {
+                stmt.close();
+            }
+            if(stmt2 != null) {
+                stmt2.close();
+            }
+        }
         
-        //data values
-        stmt.setTimestamp(1, new java.sql.Timestamp(dateUploaded));
-        stmt.setString(2, rightsHolder);
-        stmt.setString(3, checksum);
-        stmt.setString(4, checksumAlgorithm);
-        stmt.setString(5, originMemberNode);
-        stmt.setString(6, authoritativeMemberNode);
-        stmt.setTimestamp(7, new java.sql.Timestamp(modifiedDate));
-        stmt.setString(8, submitter);
-        stmt.setString(9, objectFormat);
-        stmt.setString(10, size.toString());
-        stmt.setBoolean(11, archived);
-        stmt.setBoolean(12, replicationAllowed);
-        stmt.setInt(13, numberReplicas);
-        stmt.setString(14, obsoletes);
-        stmt.setString(15, obsoletedBy);
-        stmt.setString(16, serialVersion.toString());
-        stmt.setString(17, seriesId);
-
-
-        //where clause
-        stmt.setString(18, guid);
-        logMetacat.debug("stmt: " + stmt.toString());
-        //execute
-        int rows = stmt.executeUpdate();
-
-        stmt.close();
                
     }
     
@@ -1405,6 +1473,8 @@ public class IdentifierManager {
 		    sm.getObsoletedBy() == null ? null: sm.getObsoletedBy().getValue(),
 		    sm.getSerialVersion(),
 		    sm.getSeriesId() == null ? null: sm.getSeriesId().getValue(),
+		    sm.getFileName() == null ? null: sm.getFileName(),
+		    sm.getMediaType() == null ? null: sm.getMediaType(),
 		    dbConn
         );
         
@@ -2056,6 +2126,15 @@ public class IdentifierManager {
             stmt = dbConn.prepareStatement(query);
             stmt.setString(1, guid);
             logMetacat.debug("delete smReplicationStatus: " + stmt.toString());
+            rows = stmt.executeUpdate();
+            stmt.close();
+            
+            // remove the smmediatypeproperties
+            query = "delete from smmediatypeproperties " + 
+                    "where guid = ?";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, guid);
+            logMetacat.debug("delete smmediatypeproperties: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
             
