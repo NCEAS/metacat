@@ -29,6 +29,9 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.*;
 
+import junit.framework.Test;
+import junit.framework.TestSuite;
+
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeType;
@@ -59,6 +62,26 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     
     public IdentifierManagerTest(String name) {
         super(name);
+    }
+    
+    /**
+     * Create a suite of tests to be run together
+     */
+    public static Test suite() {
+        TestSuite suite = new TestSuite();
+        suite.addTest(new IdentifierManagerTest("initialize"));
+        // Test basic functions
+        suite.addTest(new IdentifierManagerTest("testGetGUID"));
+        suite.addTest(new IdentifierManagerTest("testGetAllLocalIds"));
+        suite.addTest(new IdentifierManagerTest("testGetInstance"));
+        suite.addTest(new IdentifierManagerTest("testGetLocalId"));
+        suite.addTest(new IdentifierManagerTest("testGetLocalIdNotFound"));
+        suite.addTest(new IdentifierManagerTest("testIdentifierExists"));
+        suite.addTest(new IdentifierManagerTest("testCreateMapping"));
+        suite.addTest(new IdentifierManagerTest("testGenerateLocalId"));
+        suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
+
+        return suite;
     }
     /**
      * Initialize the connection to metacat, and insert a document to be 
@@ -322,7 +345,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             try {
                 CNodeService.getInstance(request).create(session, pid2_case2, object, sysmeta);
                 fail("we shouldn't get here and an InvalidSystemMetacat exception should be thrown.");
-            } catch (InvalidSystemMetadata e) {
+            } catch (Exception e) {
                 System.out.println("case 2======= Invalid system metadata to insert the second object");
                 //check 
                 meta =  CNodeService.getInstance(request).getSystemMetadata(session, pid1_case2);
@@ -331,7 +354,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
                 // the pid should be the newPid when we try to get the sid1
                 head = IdentifierManager.getInstance().getHeadPID(sid_case2);
                 assertTrue(head.getValue().equals(pid1_case2.getValue()));
-            }
+            } 
             
             
             //case-3  P1(S1) <- P2(S1), S1 = P2, Discouraged, but not error condition, S1 = P2 (P1 and P2 are type 1 ends, not an ideal chain )
