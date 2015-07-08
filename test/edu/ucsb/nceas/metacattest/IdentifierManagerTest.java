@@ -37,6 +37,8 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.MediaType;
+import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -80,7 +82,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testCreateMapping"));
         suite.addTest(new IdentifierManagerTest("testGenerateLocalId"));
         suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
-
+        suite.addTest(new IdentifierManagerTest("testMediaType"));
         return suite;
     }
     /**
@@ -1392,6 +1394,86 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             fail(e.getMessage());
         }
         return docid;
+    }
+    
+    /**
+     * Method to test new system metadata field such as media type and file name.
+     */
+    public void testMediaType() throws Exception {
+        String fileName = "new file name";
+        String name = "text/plain";
+        String p1Name = "charset";
+        String p1Value = "UTF8";
+        String p2Name = "n2";
+        String p2Value = "v2";
+        IdentifierManager im = IdentifierManager.getInstance();
+        
+        //test system metadata write/read without mediatype and file name.
+        String docid = "test." + new Date().getTime() + ".1";
+        String guid = "guid:" + docid;
+        //create a mapping (identifier-docid)
+        im.createMapping(guid, docid);
+        Session session = getTestSession();
+        Identifier id = new Identifier();
+        id.setValue(guid);
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(id, session.getSubject(), object);
+        //sysmeta.setFileName(fileName);
+        im.insertOrUpdateSystemMetadata(sysmeta);
+        SystemMetadata read = im.getSystemMetadata(guid);
+        assertTrue(read.getIdentifier().equals(id));
+        assertTrue(read.getFileName() == null);
+        assertTrue(read.getMediaType() == null);
+        //remove the system metadata
+        im.deleteSystemMetadata(guid);
+        //remove the mapping
+        im.removeMapping(guid, docid);
+        
+        
+      //test system metadata write/read with mediatype and file name.
+        Thread.sleep(1000);
+        docid = "test." + new Date().getTime() + ".1";
+        guid = "guid:" + docid;
+        //create a mapping (identifier-docid)
+        im.createMapping(guid, docid);
+        id = new Identifier();
+        id.setValue(guid);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id, session.getSubject(), object);
+        sysmeta.setFileName(fileName);
+        MediaType media = new MediaType();
+        media.setName(name);
+        MediaTypeProperty p1 = new MediaTypeProperty();
+        p1.setName(p1Name);
+        p1.setValue(p1Value);
+        media.addProperty(p1);
+        MediaTypeProperty p2 = new MediaTypeProperty();
+        p2.setName(p2Name);
+        p2.setValue(p2Value);
+        media.addProperty(p2);
+        sysmeta.setMediaType(media);
+        im.insertOrUpdateSystemMetadata(sysmeta);
+        read = im.getSystemMetadata(guid);
+        assertTrue(read.getIdentifier().equals(id));
+        assertTrue(read.getFileName().equals(fileName));
+        MediaType type = read.getMediaType();
+        assertTrue(type.getName().equals(name));
+        List<MediaTypeProperty> list = type.getPropertyList();
+        assertTrue(list.size() == 2);
+        MediaTypeProperty item1 = list.get(0);
+        assertTrue(item1.getName().equals(p1Name));
+        assertTrue(item1.getValue().equals(p1Value));
+        MediaTypeProperty item2 = list.get(1);
+        assertTrue(item2.getName().equals(p2Name));
+        assertTrue(item2.getValue().equals(p2Value));
+        
+        //Thread.sleep(100000);
+        //remove the system metadata
+        im.deleteSystemMetadata(guid);
+        //remove the mapping
+        im.removeMapping(guid, docid);
+        
+        
     }
     
     private void ph(String s)
