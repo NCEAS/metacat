@@ -1288,7 +1288,7 @@ public class IdentifierManager {
                 " set (date_uploaded, rights_holder, checksum, checksum_algorithm, " +
                 "origin_member_node, authoritive_member_node, date_modified, " +
                 "submitter, object_format, size, archived, replication_allowed, number_replicas, " +
-                "obsoletes, obsoleted_by, serial_version, series_id) " +
+                "obsoletes, obsoleted_by, serial_version, series_id, file_name, media_type) " +
                 "= (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?) where guid = ?";
             stmt = dbConn.prepareStatement(query);
             
