@@ -123,8 +123,39 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://rs.tdwg.org/dwc/terms/', '/schema/dwc/tdwg_dwcterms.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://purl.org/ornl/schema/mercury/terms/v1.0', '/schema/ornl/ornl-mercury-v1.0.xsd');
+  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gco', '/schema/isotc211/gco/gco.xsd');
 
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gmd', '/schema/isotc211/gmd/gmd.xsd');
+  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gmi', '/schema/isotc211/gmi/gmi.xsd');
+  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.opengis.net/gml/3.2', '/schema/isotc211/gml321/gml.xsd');
 
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.opengis.net/gml', '/schema/isotc211/gml311/gml.xsd');
+  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gmx', '/schema/isotc211/gmx/gmx.xsd');  
+
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gsr', '/schema/isotc211/gsr/gsr.xsd');
+
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gss', '/schema/isotc211/gss/gss.xsd');
+
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/gts', '/schema/isotc211/gts/gts.xsd');
+  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.isotc211.org/2005/srv', '/schema/isotc211/srv/srv.xsd');
+
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'http://www.w3.org/1999/xlink', '/schema/isotc211/xlink/xlinks.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.5.0',1,CURRENT_DATE);
