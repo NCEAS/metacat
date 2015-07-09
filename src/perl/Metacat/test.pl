@@ -40,9 +40,9 @@ print "ok 1\n";
 # Insert your test code below (better if it prints "ok 13"
 # (correspondingly "not ok 13") depending on the success of chunk 13
 # of the test code):
-my $metacatUrl = "http://snow.joneseckert.org:8080/metacat/metacat";
-my $username = 'uid=jones,o=NCEAS,dc=ecoinformatics,dc=org';
-my $password = 'your-pw-goes-here';
+my $metacatUrl = "https://dev.nceas.ucsb.edu/knb/metacat";
+my $username = 'uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org';
+my $password = 'kepler';
 
 # Set up a date stamp
 my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)=localtime(time);
@@ -138,4 +138,13 @@ if ($response) {
 } else {
   print $metacat->getMessage();
   print "not ok 9 getlastid\n";
+}
+
+# Chunk 10: Test metacat logout
+my $response = $metacat->logout($username, $password);
+if ($response) {
+  print "ok 10 logout\n";
+} else {
+  print $metacat->getMessage();
+  print "not ok 10 logout\n";
 }

@@ -184,11 +184,16 @@ sub logout {
     
     my $response = $self->sendData(%postData);
     
+    my $returnval = 1;
+    if (($response) && $response->content =~ /<logout>/) {
+    	$returnval = 0;
+  	}
+  	
     # clear the cookie
     my $cookie_jar = $self->{'cookies'};
     $$cookie_jar->clear();
     
-    return $response->content;
+    return $returnval;
 }
 
 #############################################################
