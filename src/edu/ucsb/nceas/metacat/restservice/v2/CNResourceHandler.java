@@ -727,7 +727,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // style the object with a processing directive
         String stylesheet = null;
         try {
-            stylesheet = PropertyService.getProperty("dataone.types.xsl");
+            stylesheet = PropertyService.getProperty("dataone.types.xsl.v2");
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("Could not locate DataONE types XSLT: "
                     + e.getMessage());
@@ -1339,7 +1339,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         // style the object with a processing directive
         String stylesheet = null;
         try {
-            stylesheet = PropertyService.getProperty("dataone.types.xsl");
+            stylesheet = PropertyService.getProperty("dataone.types.xsl.v2");
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("Could not locate DataONE types XSLT: "
                     + e.getMessage());
