@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -42,6 +43,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
@@ -71,6 +73,8 @@ import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.MediaType;
+import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -1162,14 +1166,53 @@ public class MNResourceHandler extends D1ResourceHandler {
             SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, id);
             
             // set the headers for the content
-            String mimeType = ObjectFormatInfo.instance().getMimeType(sm.getFormatId().getValue());
-            if (mimeType == null) {
-            	mimeType = "application/octet-stream";
+            String mimeType = null;
+            String charset = null;
+            
+            // do we have mediaType/encoding in SM?
+            MediaType mediaType = sm.getMediaType();
+            if (mediaType == null) {
+            	try {
+            		mediaType = ObjectFormatCache.getInstance().getFormat(sm.getFormatId()).getMediaType();
+            	} catch (BaseException be) {
+            		logMetacat.warn("Could not lookup ObjectFormat MediaType for: " + sm.getFormatId(), be);
+            	}
             }
-            String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
-            String filename = id.getValue();
-            if (extension != null) {
-            	filename = id.getValue() + extension;
+            if (mediaType != null) {
+                mimeType = sm.getMediaType().getName();
+                if (sm.getMediaType().getPropertyList() != null) {
+                	Iterator<MediaTypeProperty> iter = sm.getMediaType().getPropertyList().iterator();
+                	while (iter.hasNext()) {
+                		MediaTypeProperty mtp = iter.next();
+                		if (mtp.getName().equalsIgnoreCase("charset")) {
+                			charset = mtp.getValue();
+                			mimeType += "; charset=" + charset;
+                			break;
+                		}
+                	}
+                }
+            }
+            // check object format
+            
+            // use the fallback from v1 impl
+            if (mimeType == null) {
+	            mimeType = ObjectFormatInfo.instance().getMimeType(sm.getFormatId().getValue());
+	            
+	            // still null?
+	            if (mimeType == null) {
+	            	mimeType = "application/octet-stream";
+	            }
+            }
+            
+            // check for filename in SM first
+            String filename = sm.getFileName();
+            // then fallback to using id and extension
+            if (filename == null) {
+	            String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
+	            filename = id.getValue();
+	            if (extension != null) {
+	            	filename = id.getValue() + extension;
+	            }
             }
             response.setContentType(mimeType);
             response.setHeader("Content-Disposition", "inline; filename=" + filename);
