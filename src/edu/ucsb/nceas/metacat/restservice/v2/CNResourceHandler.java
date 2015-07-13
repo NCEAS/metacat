@@ -388,10 +388,10 @@ public class CNResourceHandler extends D1ResourceHandler {
                     deleteReplica(extra);
                     status = true;
                 } else if (resource.startsWith(RESOURCE_VIEWS)) {
-                    logMetacat.debug("Using resource " + RESOURCE_VIEWS);
+                    logMetacat.info("Using resource " + RESOURCE_VIEWS);
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_VIEWS);
-                    logMetacat.debug("view extra: " + extra);
+                    logMetacat.info("view extra: " + extra);
 
                     String format = null;
                     String pid = null;
@@ -401,9 +401,11 @@ public class CNResourceHandler extends D1ResourceHandler {
                         int formatIndex = extra.length();
                         if (extra.indexOf("/") > -1) {
                             formatIndex = extra.indexOf("/");
+                            format = extra.substring(0, formatIndex);
+                        } else {
+                            throw new InvalidRequest("2853", "The request doesn't specify the name of theme.");
                         }
-                        format = extra.substring(0, formatIndex);
-                        logMetacat.debug("view format: " + format);
+                        logMetacat.info("view format: " + format);
                         
                         // get the pid if it is there
                         pid = extra.substring(formatIndex, extra.length());
