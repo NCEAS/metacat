@@ -76,6 +76,7 @@ import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.MediaType;
 import org.dataone.service.types.v2.MediaTypeProperty;
 import org.dataone.service.types.v2.Node;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
@@ -1168,14 +1169,20 @@ public class MNResourceHandler extends D1ResourceHandler {
             // set the headers for the content
             String mimeType = null;
             String charset = null;
+            ObjectFormat objectFormat = null;
             
+            try {
+            	objectFormat = ObjectFormatCache.getInstance().getFormat(sm.getFormatId());
+        	} catch (BaseException be) {
+        		logMetacat.warn("Could not lookup ObjectFormat for: " + sm.getFormatId(), be);
+        	}
             // do we have mediaType/encoding in SM?
             MediaType mediaType = sm.getMediaType();
             if (mediaType == null) {
             	try {
-            		mediaType = ObjectFormatCache.getInstance().getFormat(sm.getFormatId()).getMediaType();
-            	} catch (BaseException be) {
-            		logMetacat.warn("Could not lookup ObjectFormat MediaType for: " + sm.getFormatId(), be);
+            		mediaType = objectFormat.getMediaType();
+            	} catch (Exception e) {
+            		logMetacat.warn("Could not lookup MediaType for: " + sm.getFormatId(), e);
             	}
             }
             if (mediaType != null) {
@@ -1208,7 +1215,10 @@ public class MNResourceHandler extends D1ResourceHandler {
             String filename = sm.getFileName();
             // then fallback to using id and extension
             if (filename == null) {
-	            String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
+	            String extension = objectFormat.getExtension();
+	            if (extension == null) {
+	            	extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
+	            }
 	            filename = id.getValue();
 	            if (extension != null) {
 	            	filename = id.getValue() + extension;
