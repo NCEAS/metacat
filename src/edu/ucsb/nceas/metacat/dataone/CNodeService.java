@@ -2031,11 +2031,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    */
   @Override
   public ObjectList listObjects(Session session, Date startTime, 
-      Date endTime, ObjectFormatIdentifier formatid, Identifier identifier, Boolean replicaStatus,
+      Date endTime, ObjectFormatIdentifier formatid, NodeReference nodeId,Identifier identifier,
       Integer start, Integer count)
       throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
       ServiceFailure {
-      
+      boolean replicaStatus= true;
       return super.listObjects(session, startTime, endTime, formatid, identifier, replicaStatus, start, count);
   }
 
