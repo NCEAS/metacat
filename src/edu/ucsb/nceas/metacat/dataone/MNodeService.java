@@ -2192,6 +2192,12 @@ public class MNodeService extends D1NodeService
       if(success) {
           //TODO
           //notify the cns the synchornize the new system metadata.
+          this.cn = D1Client.getCN();
+          try {
+              this.cn.synchronize(null, pid);
+          } catch (Exception e) {
+              logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
+          }
       }
       return success;
     }
