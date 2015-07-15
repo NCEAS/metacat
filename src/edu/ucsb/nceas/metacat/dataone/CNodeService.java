@@ -2035,8 +2035,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       Integer start, Integer count)
       throws InvalidRequest, InvalidToken, NotAuthorized, NotImplemented,
       ServiceFailure {
-      boolean replicaStatus= true;
-      return super.listObjects(session, startTime, endTime, formatid, identifier, replicaStatus, start, count);
+
+      return super.listObjects(session, startTime, endTime, formatid, identifier, nodeId, start, count);
   }
 
   

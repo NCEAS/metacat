@@ -1682,7 +1682,7 @@ public class IdentifierManager {
      * @param startTime
      * @param endTime
      * @param objectFormat
-     * @param replicaStatus
+     * @param nodeId
      * @param start
      * @param count
      * @return ObjectList
@@ -1691,7 +1691,7 @@ public class IdentifierManager {
      * @throws PropertyNotFoundException 
      */
     public ObjectList querySystemMetadata(Date startTime, Date endTime,
-        ObjectFormatIdentifier objectFormatId, boolean replicaStatus,
+        ObjectFormatIdentifier objectFormatId, NodeReference nodeId,
         int start, int count, Identifier identifier, boolean isSID) 
         throws SQLException, PropertyNotFoundException, ServiceException {
         ObjectList ol = new ObjectList();
@@ -1756,7 +1756,7 @@ public class IdentifierManager {
                 f4 = true;
             }
 
-            if (!replicaStatus) {
+            /*if (!replicaStatus) {
                 String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId");
                 if (!f1 && !f2 && !f3 && !f4) {
                     whereClauseSql += " where authoritive_member_node = '" +
@@ -1765,8 +1765,17 @@ public class IdentifierManager {
                     whereClauseSql += " and authoritive_member_node = '" +
                         currentNodeId.trim() + "'";
                 }
-            }
+            }*/
             
+            if (nodeId != null && nodeId.getValue() != null && !nodeId.getValue().trim().equals("")) {
+                if (!f1 && !f2 && !f3 && !f4) {
+                    whereClauseSql += " where authoritive_member_node = '" +
+                        nodeId.getValue().trim() + "'";
+                } else {
+                    whereClauseSql += " and authoritive_member_node = '" +
+                        nodeId.getValue().trim() + "'";
+                }
+            }
            
             
             // connection

@@ -1279,7 +1279,8 @@ public class CNResourceHandler extends D1ResourceHandler {
         Date endTime = null;
         ObjectFormatIdentifier formatId = null;
         Identifier identifier = null;
-        boolean replicaStatus = true;
+        //boolean replicaStatus = true;
+        NodeReference nodeId = null;
         int start = 0;
         int count = 1000;
         Enumeration<String> paramlist = request.getParameterNames();
@@ -1315,8 +1316,12 @@ public class CNResourceHandler extends D1ResourceHandler {
             } else if (name.equals("identifier") && value != null) {
             	identifier = new Identifier();
             	identifier.setValue(value);
-            } else if (name.equals("replicaStatus") && value != null) {
-                replicaStatus = Boolean.parseBoolean(value);
+            /*} else if (name.equals("replicaStatus") && value != null) {
+                replicaStatus = Boolean.parseBoolean(value);*/
+            } else if (name.equals("nodeId") && value != null) {
+                nodeId = new NodeReference();
+                nodeId.setValue(value);
+                logMetacat.debug("the nodeId value is "+nodeId.getValue());
             } else if (name.equals("start") && value != null) {
                 start = Integer.valueOf(value);
             } else if (name.equals("count") && value != null) {
@@ -1326,12 +1331,12 @@ public class CNResourceHandler extends D1ResourceHandler {
         // make the call
         logMetacat.debug("session: " + session + " fromDate: " + startTime
                 + " toDate: " + endTime + " formatId: " + formatId
-                + " replicaStatus: " + replicaStatus + " start: " + start
+                + " start: " + start
                 + " count: " + count);        
 
         // get the list
         ObjectList ol = CNodeService.getInstance(request).listObjects(session,
-                startTime, endTime, formatId, identifier, replicaStatus, start, count);
+                startTime, endTime, formatId, identifier, nodeId, start, count);
 
         // send it
         OutputStream out = response.getOutputStream();

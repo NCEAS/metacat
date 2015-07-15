@@ -52,6 +52,7 @@ import org.dataone.service.exceptions.VersionMismatch;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectInfo;
 import org.dataone.service.types.v1.ObjectList;
@@ -316,8 +317,16 @@ public class SyncAccessPolicy {
 			Date startTime = null;
 			Date endTime = null;
 			ObjectFormatIdentifier objectFormatId = null;
-			Boolean replicaStatus = false; // return only pids for which this mn
-											// is
+			//Boolean replicaStatus = false; // return only pids for which this mn
+			NodeReference thisMN = new NodeReference();
+			try {
+			    String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId"); // return only pids for which this mn
+			    thisMN.setValue(currentNodeId);
+			} catch (Exception e) {
+			    logMetacat.error("SyncAccessPolicy.run - can't get the node id of this member node from the metacat property file since :"+e.getMessage());
+			    return;
+			}
+							// is
 			ObjectList objsToSync = null;
 			Integer count = 0;
 			Integer start = 0;
@@ -350,7 +359,7 @@ public class SyncAccessPolicy {
 			    
 				objsToSync = IdentifierManager.getInstance()
 						.querySystemMetadata(startTime, endTime,
-								objectFormatId, replicaStatus, start, count, id, isSid);
+								objectFormatId, thisMN, start, count, id, isSid);
 
 				logMetacat.debug("syncTask total # of guids: "
 						+ objsToSync.getTotal() + ", count for this page: "
@@ -383,7 +392,7 @@ public class SyncAccessPolicy {
 					objsToSync = IdentifierManager
 							.getInstance()
 							.querySystemMetadata(startTime, endTime,
-									objectFormatId, replicaStatus, start, count, id, isSid);
+									objectFormatId, thisMN, start, count, id, isSid);
 				} catch (Exception e) {
 					logMetacat.error("Error syncing ids");
 					syncError = true;

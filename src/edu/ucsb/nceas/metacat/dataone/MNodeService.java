@@ -928,8 +928,18 @@ public class MNodeService extends D1NodeService
     @Override
     public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, Boolean replicaStatus, Integer start,
             Integer count) throws NotAuthorized, InvalidRequest, NotImplemented, ServiceFailure, InvalidToken {
-
-        return super.listObjects(session, startTime, endTime, objectFormatId, identifier, replicaStatus, start, count);
+        NodeReference nodeId = null;
+        if(!replicaStatus) {
+            //not include those objects whose authoritative node is not this mn
+            nodeId = new NodeReference();
+            try {
+                String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId"); // return only pids for which this mn
+                nodeId.setValue(currentNodeId);
+            } catch(Exception e) {
+                throw new ServiceFailure("1580", e.getMessage());
+            }
+        }
+        return super.listObjects(session, startTime, endTime, objectFormatId, identifier, nodeId, start, count);
     }
 
     /**

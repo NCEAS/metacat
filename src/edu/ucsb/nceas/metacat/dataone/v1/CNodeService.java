@@ -74,6 +74,7 @@ import org.dataone.service.util.TypeMarshaller;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
  * Represents Metacat's implementation of the DataONE Coordinating Node service
@@ -321,7 +322,18 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			ObjectFormatIdentifier formatid, Boolean replicaStatus, Integer start,
 			Integer count) throws InvalidRequest, InvalidToken, NotAuthorized,
 			NotImplemented, ServiceFailure {
-		return impl.listObjects(null, startTime, endTime, formatid, null, replicaStatus, start, count);
+	    NodeReference nodeId = null;
+        if(!replicaStatus) {
+            //not include those objects whose authoritative node is not this mn
+            nodeId = new NodeReference();
+            try {
+                String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId"); // return only pids for which this mn
+                nodeId.setValue(currentNodeId);
+            } catch(Exception e) {
+                throw new ServiceFailure("1580", e.getMessage());
+            }
+        }
+		return impl.listObjects(null, startTime, endTime, formatid, null, nodeId, start, count);
 	}
 
 	@Override
@@ -330,7 +342,18 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 			ObjectFormatIdentifier formatid, Boolean replicaStatus, Integer start,
 			Integer count) throws InvalidRequest, InvalidToken, NotAuthorized,
 			NotImplemented, ServiceFailure {
-		return impl.listObjects(session, startTime, endTime, formatid, null, replicaStatus, start, count);
+	    NodeReference nodeId = null;
+        if(!replicaStatus) {
+            //not include those objects whose authoritative node is not this mn
+            nodeId = new NodeReference();
+            try {
+                String currentNodeId = PropertyService.getInstance().getProperty("dataone.nodeId"); // return only pids for which this mn
+                nodeId.setValue(currentNodeId);
+            } catch(Exception e) {
+                throw new ServiceFailure("1580", e.getMessage());
+            }
+        }
+		return impl.listObjects(session, startTime, endTime, formatid, null, nodeId, start, count);
 	}
 
 	@Override

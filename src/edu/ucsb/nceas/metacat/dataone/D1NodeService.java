@@ -1477,7 +1477,7 @@ public abstract class D1NodeService {
    * @throws InvalidRequest
    * @throws NotImplemented
    */
-  public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, Boolean replicaStatus, Integer start,
+  public ObjectList listObjects(Session session, Date startTime, Date endTime, ObjectFormatIdentifier objectFormatId, Identifier identifier, NodeReference nodeId, Integer start,
           Integer count) throws NotAuthorized, InvalidRequest, NotImplemented, ServiceFailure, InvalidToken {
 
       ObjectList objectList = null;
@@ -1491,7 +1491,7 @@ public abstract class D1NodeService {
           if(identifier != null) {
               isSid = IdentifierManager.getInstance().systemMetadataSIDExists(identifier);
           }
-          objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, replicaStatus, start, count, identifier, isSid);
+          objectList = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime, objectFormatId, nodeId, start, count, identifier, isSid);
       } catch (Exception e) {
           throw new ServiceFailure("1580", "Error querying system metadata: " + e.getMessage());
       }
