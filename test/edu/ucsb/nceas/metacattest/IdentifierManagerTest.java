@@ -1487,6 +1487,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     }
     
     public void testQuerySystemMetadata() throws Exception {
+        String nodeIdStr="rtgf:test:ert";
         Date startTime = null;
         Date endTime = null;
         ObjectFormatIdentifier objectFormatId = null;
@@ -1512,6 +1513,25 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
                 objectFormatId, nodeId, start, count, identifier, isSID);
         int size3 = list.sizeObjectInfoList();
         assertTrue(size3==0);
+        
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        nodeId.setValue(nodeIdStr);
+        sysmeta.setAuthoritativeMemberNode(nodeId);
+        String sid1= "sid."+System.nanoTime();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(sid1);
+        System.out.println("the first sid is "+seriesId.getValue());
+        sysmeta.setSeriesId(seriesId);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(5000);
+        list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
+                objectFormatId, nodeId, start, count, identifier, isSID);
+        int size4 = list.sizeObjectInfoList();
+        assertTrue(size4 > 0);
     }
     
     /**
