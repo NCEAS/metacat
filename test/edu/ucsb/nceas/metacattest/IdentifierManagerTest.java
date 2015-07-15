@@ -33,8 +33,12 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
@@ -83,6 +87,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testGenerateLocalId"));
         suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
         suite.addTest(new IdentifierManagerTest("testMediaType"));
+        suite.addTest(new IdentifierManagerTest("testQuerySystemMetadata"));
         return suite;
     }
     /**
@@ -1479,6 +1484,34 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
     private void ph(String s)
     {
         System.out.println("*********************** " + s + " ****************************");
+    }
+    
+    public void testQuerySystemMetadata() throws Exception {
+        Date startTime = null;
+        Date endTime = null;
+        ObjectFormatIdentifier objectFormatId = null;
+        NodeReference nodeId = null;
+        int start = 0;
+        int count =1000;
+        Identifier identifier = null;
+        boolean isSID = false;
+        ObjectList list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
+                objectFormatId, nodeId, start, count, identifier, isSID);
+        int size1= list.sizeObjectInfoList();
+        assertTrue( size1>0);
+        nodeId = new NodeReference();
+        String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
+        nodeId.setValue(currentNodeId);
+        list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
+                objectFormatId, nodeId, start, count, identifier, isSID);
+        int size2= list.sizeObjectInfoList();
+        assertTrue( size2 > 0);
+        assertTrue( size1 >= size2);
+        nodeId.setValue("there_bei_we12");
+        list = IdentifierManager.getInstance().querySystemMetadata(startTime, endTime,
+                objectFormatId, nodeId, start, count, identifier, isSID);
+        int size3 = list.sizeObjectInfoList();
+        assertTrue(size3==0);
     }
     
     /**
