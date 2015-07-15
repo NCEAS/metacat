@@ -1393,6 +1393,13 @@ public class MNodeService extends D1NodeService
                 throw sf;
             }
             
+            // attempt to re-register the identifier (it checks if it is a doi)
+            try {
+    			DOIService.getInstance().registerDOI(newSysMeta);
+    		} catch (Exception e) {
+    			logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
+    		}
+            
             // submit for indexing
             try {
 				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
@@ -2197,6 +2204,13 @@ public class MNodeService extends D1NodeService
               this.cn.synchronize(null, pid);
           } catch (Exception e) {
               logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
+          }
+          
+          // attempt to re-register the identifier (it checks if it is a doi)
+          try {
+        	  DOIService.getInstance().registerDOI(sysmeta);
+          } catch (Exception e) {
+  			logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
           }
       }
       return success;
