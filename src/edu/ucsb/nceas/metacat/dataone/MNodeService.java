@@ -963,43 +963,31 @@ public class MNodeService extends D1NodeService
         String nodeDesc = null;
         String nodeTypeString = null;
         NodeType nodeType = null;
-        String mnCoreServiceVersion = null;
-        String mnReadServiceVersion = null;
-        String mnAuthorizationServiceVersion = null;
-        String mnStorageServiceVersion = null;
-        String mnReplicationServiceVersion = null;
+        List<String> mnCoreServiceVersions = null;
+        List<String> mnReadServiceVersions = null;
+        List<String> mnAuthorizationServiceVersions = null;
+        List<String> mnStorageServiceVersions = null;
+        List<String> mnReplicationServiceVersions = null;
 
         boolean nodeSynchronize = false;
         boolean nodeReplicate = false;
-        boolean mnCoreServiceAvailable = false;
-        boolean mnReadServiceAvailable = false;
-        boolean mnAuthorizationServiceAvailable = false;
-        boolean mnStorageServiceAvailable = false;
-        boolean mnReplicationServiceAvailable = false;
+        List<String> mnCoreServiceAvailables = null;
+        List<String> mnReadServiceAvailables = null;
+        List<String> mnAuthorizationServiceAvailables = null;
+        List<String> mnStorageServiceAvailables = null;
+        List<String> mnReplicationServiceAvailables = null;
 
         try {
             // get the properties of the node based on configuration information
-            nodeName = PropertyService.getProperty("dataone.nodeName");
-            nodeId = PropertyService.getProperty("dataone.nodeId");
-            subject = PropertyService.getProperty("dataone.subject");
-            contactSubject = PropertyService.getProperty("dataone.contactSubject");
-            nodeDesc = PropertyService.getProperty("dataone.nodeDescription");
-            nodeTypeString = PropertyService.getProperty("dataone.nodeType");
+            nodeName = Settings.getConfiguration().getString("dataone.nodeName");
+            nodeId = Settings.getConfiguration().getString("dataone.nodeId");
+            subject = Settings.getConfiguration().getString("dataone.subject");
+            contactSubject = Settings.getConfiguration().getString("dataone.contactSubject");
+            nodeDesc = Settings.getConfiguration().getString("dataone.nodeDescription");
+            nodeTypeString = Settings.getConfiguration().getString("dataone.nodeType");
             nodeType = NodeType.convert(nodeTypeString);
-            nodeSynchronize = new Boolean(PropertyService.getProperty("dataone.nodeSynchronize")).booleanValue();
-            nodeReplicate = new Boolean(PropertyService.getProperty("dataone.nodeReplicate")).booleanValue();
-
-            mnCoreServiceVersion = PropertyService.getProperty("dataone.mnCore.serviceVersion");
-            mnReadServiceVersion = PropertyService.getProperty("dataone.mnRead.serviceVersion");
-            mnAuthorizationServiceVersion = PropertyService.getProperty("dataone.mnAuthorization.serviceVersion");
-            mnStorageServiceVersion = PropertyService.getProperty("dataone.mnStorage.serviceVersion");
-            mnReplicationServiceVersion = PropertyService.getProperty("dataone.mnReplication.serviceVersion");
-
-            mnCoreServiceAvailable = new Boolean(PropertyService.getProperty("dataone.mnCore.serviceAvailable")).booleanValue();
-            mnReadServiceAvailable = new Boolean(PropertyService.getProperty("dataone.mnRead.serviceAvailable")).booleanValue();
-            mnAuthorizationServiceAvailable = new Boolean(PropertyService.getProperty("dataone.mnAuthorization.serviceAvailable")).booleanValue();
-            mnStorageServiceAvailable = new Boolean(PropertyService.getProperty("dataone.mnStorage.serviceAvailable")).booleanValue();
-            mnReplicationServiceAvailable = new Boolean(PropertyService.getProperty("dataone.mnReplication.serviceAvailable")).booleanValue();
+            nodeSynchronize = new Boolean(Settings.getConfiguration().getString("dataone.nodeSynchronize")).booleanValue();
+            nodeReplicate = new Boolean(Settings.getConfiguration().getString("dataone.nodeReplicate")).booleanValue();
 
             // Set the properties of the node based on configuration information and
             // calls to current status methods
@@ -1040,36 +1028,76 @@ public class MNodeService extends D1NodeService
             // services: MNAuthorization, MNCore, MNRead, MNReplication, MNStorage
             Services services = new Services();
 
-            Service sMNCore = new Service();
-            sMNCore.setName("MNCore");
-            sMNCore.setVersion(mnCoreServiceVersion);
-            sMNCore.setAvailable(mnCoreServiceAvailable);
-
-            Service sMNRead = new Service();
-            sMNRead.setName("MNRead");
-            sMNRead.setVersion(mnReadServiceVersion);
-            sMNRead.setAvailable(mnReadServiceAvailable);
-
-            Service sMNAuthorization = new Service();
-            sMNAuthorization.setName("MNAuthorization");
-            sMNAuthorization.setVersion(mnAuthorizationServiceVersion);
-            sMNAuthorization.setAvailable(mnAuthorizationServiceAvailable);
-
-            Service sMNStorage = new Service();
-            sMNStorage.setName("MNStorage");
-            sMNStorage.setVersion(mnStorageServiceVersion);
-            sMNStorage.setAvailable(mnStorageServiceAvailable);
-
-            Service sMNReplication = new Service();
-            sMNReplication.setName("MNReplication");
-            sMNReplication.setVersion(mnReplicationServiceVersion);
-            sMNReplication.setAvailable(mnReplicationServiceAvailable);
-
-            services.addService(sMNRead);
-            services.addService(sMNCore);
-            services.addService(sMNAuthorization);
-            services.addService(sMNStorage);
-            services.addService(sMNReplication);
+            mnCoreServiceVersions = Settings.getConfiguration().getList("dataone.mnCore.serviceVersion");
+            mnCoreServiceAvailables = Settings.getConfiguration().getList("dataone.mnCore.serviceAvailable");
+            if(mnCoreServiceVersions != null && mnCoreServiceAvailables != null && mnCoreServiceVersions.size() == mnCoreServiceAvailables.size()) {
+                for(int i=0; i<mnCoreServiceVersions.size(); i++) {
+                    String version = mnCoreServiceVersions.get(i);
+                    boolean available = new Boolean(mnCoreServiceAvailables.get(i)).booleanValue();
+                    Service sMNCore = new Service();
+                    sMNCore.setName("MNCore");
+                    sMNCore.setVersion(version);
+                    sMNCore.setAvailable(available);
+                    services.addService(sMNCore);
+                }
+            }
+            
+            mnReadServiceVersions = Settings.getConfiguration().getList("dataone.mnRead.serviceVersion");
+            mnReadServiceAvailables = Settings.getConfiguration().getList("dataone.mnRead.serviceAvailable");
+            if(mnReadServiceVersions != null && mnReadServiceAvailables != null && mnReadServiceVersions.size()==mnReadServiceAvailables.size()) {
+                for(int i=0; i<mnReadServiceVersions.size(); i++) {
+                    String version = mnReadServiceVersions.get(i);
+                    boolean available = new Boolean(mnReadServiceAvailables.get(i)).booleanValue();
+                    Service sMNRead = new Service();
+                    sMNRead.setName("MNRead");
+                    sMNRead.setVersion(version);
+                    sMNRead.setAvailable(available);
+                    services.addService(sMNRead);
+                }
+            }
+           
+            mnAuthorizationServiceVersions = Settings.getConfiguration().getList("dataone.mnAuthorization.serviceVersion");
+            mnAuthorizationServiceAvailables = Settings.getConfiguration().getList("dataone.mnAuthorization.serviceAvailable");
+            if(mnAuthorizationServiceVersions != null && mnAuthorizationServiceAvailables != null && mnAuthorizationServiceVersions.size()==mnAuthorizationServiceAvailables.size()) {
+                for(int i=0; i<mnAuthorizationServiceVersions.size(); i++) {
+                    String version = mnAuthorizationServiceVersions.get(i);
+                    boolean available = new Boolean(mnAuthorizationServiceAvailables.get(i)).booleanValue();
+                    Service sMNAuthorization = new Service();
+                    sMNAuthorization.setName("MNAuthorization");
+                    sMNAuthorization.setVersion(version);
+                    sMNAuthorization.setAvailable(available);
+                    services.addService(sMNAuthorization);
+                }
+            }
+           
+            mnStorageServiceVersions = Settings.getConfiguration().getList("dataone.mnStorage.serviceVersion");
+            mnStorageServiceAvailables = Settings.getConfiguration().getList("dataone.mnStorage.serviceAvailable");
+            if(mnStorageServiceVersions != null && mnStorageServiceAvailables != null && mnStorageServiceVersions.size() == mnStorageServiceAvailables.size()) {
+                for(int i=0; i<mnStorageServiceVersions.size(); i++) {
+                    String version = mnStorageServiceVersions.get(i);
+                    boolean available = new Boolean(mnStorageServiceAvailables.get(i)).booleanValue();
+                    Service sMNStorage = new Service();
+                    sMNStorage.setName("MNStorage");
+                    sMNStorage.setVersion(version);
+                    sMNStorage.setAvailable(available);
+                    services.addService(sMNStorage);
+                }
+            }
+            
+            mnReplicationServiceVersions = Settings.getConfiguration().getList("dataone.mnReplication.serviceVersion");
+            mnReplicationServiceAvailables = Settings.getConfiguration().getList("dataone.mnReplication.serviceAvailable");
+            if(mnReplicationServiceVersions != null && mnReplicationServiceAvailables != null && mnReplicationServiceVersions.size() == mnReplicationServiceAvailables.size()) {
+                for (int i=0; i<mnReplicationServiceVersions.size(); i++) {
+                    String version = mnReplicationServiceVersions.get(i);
+                    boolean available = new Boolean(mnReplicationServiceAvailables.get(i)).booleanValue();
+                    Service sMNReplication = new Service();
+                    sMNReplication.setName("MNReplication");
+                    sMNReplication.setVersion(version);
+                    sMNReplication.setAvailable(available);
+                    services.addService(sMNReplication);
+                }
+            }
+            
             node.setServices(services);
 
             // Set the schedule for synchronization
