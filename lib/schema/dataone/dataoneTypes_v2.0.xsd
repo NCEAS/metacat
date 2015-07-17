@@ -132,13 +132,10 @@ Formatting:
           <xs:sequence>
             <xs:element name="seriesId" type="d1:Identifier" minOccurs="0">
                 <xs:annotation>
-                  <xs:documentation>The :term:`seriesId` is a unique Unicode 
-                  string that can be used to identify an object revision chain 
-                  in DataONE. When included, the seriesId can be used to 
-                  reference the latest version of and object in the revision 
-                  chain. API methods that rely on byte fixity (e.g. for content 
-                  replication) will not accept seriesId in place of discrete 
-                  identifiers.</xs:documentation>
+                  <xs:documentation>The :term:`seriesId` is an optional, unique
+                  Unicode string that identifies an object revision chain. A
+                  seriesId will resolve to the latest version of an object. A seriesId can not appear in any other revision chain.
+                  </xs:documentation>
                   <xs:documentation>The values used for seriesId must be unique 
                   within DataONE and cannot be the same as the :term:`primary 
                   identifier` of an object. </xs:documentation>
@@ -160,8 +157,8 @@ Formatting:
                       the associated ObjectFormat.
                     </xs:documentation>
                     <xs:documentation>When specified, the mediaType value here 
-                      should be used in preference to the value recorded in the 
-                      referenced :class:`ObjectFormat`.
+                      overrides the value recorded in the referenced
+                      :class:`ObjectFormat`.
                     </xs:documentation>
                     <xs:documentation>This value SHOULD be set by the content 
                     creator. It MAY be set by any receiving agent if the value 
@@ -169,14 +166,14 @@ Formatting:
                     specific, and a correct value is specified elsewhere such 
                     as by a HTTP Content-Type parameter.
                     </xs:documentation>
-                    <xs:documentation>This value may only be changed to correct 
-                      an erroneous entry.</xs:documentation>
+                    <xs:documentation>This value MAY be changed to correct an
+                    erroneous entry.</xs:documentation>
                 </xs:annotation>
               </xs:element>
               <xs:element name="fileName" type="xs:string" minOccurs="0">
                 <xs:annotation>
-                  <xs:documentation>Optional tough recommended value that 
-                    provides a suggested file name for the object. Values should
+                  <xs:documentation>Optional though recommended value providing 
+                    a suggested file name for the object. Values should
                     conform to cross platform file naming conventions.
                   </xs:documentation>
                   <xs:documentation>This value SHOULD be set by the content 
@@ -214,8 +211,8 @@ Formatting:
   <xs:complexType name="Node">
     <xs:annotation>
       <xs:documentation>Extends the Version 1.x :class:`Types.Node` by adding 
-        an optional unbounded parameter entry that can be used to provide 
-        additional simple metadata relevant to a Node. </xs:documentation>
+        an optional unbounded parameter entry providing additional simple 
+        metadata relevant to a Node. </xs:documentation>
     </xs:annotation>
     <xs:complexContent>
       <xs:extension base="d1:Node">
@@ -240,7 +237,7 @@ Formatting:
       <xs:annotation>
         <xs:documentation>Additional Property elements can be included to 
           describe the Node in more detail. Some properties will come from 
-          controlled vocabularies, indicated by the type attribute, while 
+          controlled vocabularies indicated by the type attribute, while 
           others will be free-form key value pairs.</xs:documentation>
       </xs:annotation>
       <xs:simpleContent>
@@ -340,7 +337,7 @@ Formatting:
           <xs:documentation>A unique identifier for this log entry. The
           identifier should be unique for a particular node; This is not drawn
           from the same value space as other identifiers in DataONE, and so is
-          not subjec to the same restrictions.</xs:documentation>
+          not subject to the same restrictions.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="identifier" type="d1:Identifier" 
@@ -369,16 +366,16 @@ Formatting:
         <xs:annotation>
           <xs:documentation>The :term:`Subject` used for making the request.
           This may be the DataONE :term:`public` user if the request is not
-          authenticated, otherwise it will be the *Subject* of the certificate
+          authenticated, otherwise it will be the *subject* of the certificate
           used for authenticating the request.</xs:documentation>
         </xs:annotation>
       </xs:element>
       <xs:element name="event" type="d1:NonEmptyString"
           minOccurs="1" maxOccurs="1">
         <xs:annotation>
-          <xs:documentation>A non-empty string that indicates the type of even 
+          <xs:documentation>A non-empty string indicating the type of event 
             logged. A value from the :class:`Types.Event` enumeration is 
-            recommended but no longer required for Version 2.x.
+            recommended though no longer required for Version 2.x.
           </xs:documentation>
         </xs:annotation>
       </xs:element>
@@ -428,16 +425,16 @@ Formatting:
     </xs:sequence>
     <xs:attribute name="key" use="required" type="xs:string">
       <xs:annotation>
-        <xs:documentation>A value that can be used with a DataONE
-        service. Key values must not contain any characters that need to be 
-        URL escaped, and should be short and informative. 
+        <xs:documentation>A value that can be used with a DataONE service. Key
+        values must not contain any characters that need to be URL escaped, and
+        should be short and informative. 
         </xs:documentation>
       </xs:annotation>
     </xs:attribute>
     <xs:attribute name="description" use="required" type="xs:string">
       <xs:annotation>
-        <xs:documentation>The description of an option, indicating its
-        intended use and impact on a DataONE service invocation.</xs:documentation>
+        <xs:documentation>The description of an option, indicating its intended 
+          use and impact on a DataONE service invocation.</xs:documentation>
       </xs:annotation>
     </xs:attribute>
   </xs:complexType>
