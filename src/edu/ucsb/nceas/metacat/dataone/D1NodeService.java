@@ -1557,6 +1557,10 @@ public abstract class D1NodeService {
       
       //check the sid
       SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+      logMetacat.debug("The current dateUploaded is ============"+currentSysmeta.getDateUploaded());
+      logMetacat.debug("the dateUploaded in the new system metadata is "+sysmeta.getDateUploaded());
+      logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
+      logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
           //do we need throw an exception
       } else {
@@ -1633,7 +1637,7 @@ public abstract class D1NodeService {
                         "different to the orginal one "+orgMeta.getSubmitter().getValue());
 	        }
 	        
-	        if(orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() != null && !orgMeta.getDateUploaded().equals(newMeta.getDateUploaded())) {
+	        if(orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() != null && orgMeta.getDateUploaded().getTime() != newMeta.getDateUploaded().getTime()) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded "+newMeta.getDateUploaded()+" is "+
                         "different to the orginal one "+orgMeta.getDateUploaded());
 	        }
