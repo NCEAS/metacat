@@ -2244,7 +2244,10 @@ public class MNodeService extends D1NodeService
               } else {
                   this.cn.synchronize(null, pid);
               }
-              
+          } catch (BaseException e) {
+              e.printStackTrace();
+              logMetacat.error("It is a DataONEBaseException and its detail code is "+e.getDetail_code() +" and its code is "+e.getCode());
+              logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
           } catch (Exception e) {
               e.printStackTrace();
               logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
