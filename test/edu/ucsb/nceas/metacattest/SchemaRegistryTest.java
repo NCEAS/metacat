@@ -183,11 +183,12 @@ public class SchemaRegistryTest extends MCTestCase {
 					new HashMap<String, String>());
 
 			String testDocument = getTestDocument(testFileLocation + goodSchemaXMLFile);
-			
+			System.out.println(""+testDocument);
 			// login
 			debug("logging in as: username=" + username + " password=" + password);
 			m.login(username, password);
 			
+			Thread.sleep(2000);
 			// insert document.  We expect to succeed.
 			insertDocid(newdocid + ".1", testDocument, SUCCESS, false);
 			
@@ -273,6 +274,8 @@ public class SchemaRegistryTest extends MCTestCase {
 			String newdocid2 = generateDocid();
 			insertDocid(newdocid2 + ".1", testDocument, SUCCESS, false);
 			
+	         Thread.sleep(2000);
+			
 			// Check the db for registered schemas.  We should find two and only
 			// two.
 			debug("Checking db for registered schemas");
@@ -338,7 +341,8 @@ public class SchemaRegistryTest extends MCTestCase {
 			// insert document.  We expect to fail with a MetacatException because the schemaLocation
 			// does not exist.
 			insertDocidExpectException(newdocid1 + ".1", testDocument, "Failed to read schema document");
-			
+	         Thread.sleep(2000);
+
 			// Check the db for registered schemas.  We should find none.
 			debug("Checking db for registered schemas");
 			Vector<Hashtable<String,Object>> sqlResults = 
@@ -426,6 +430,8 @@ public class SchemaRegistryTest extends MCTestCase {
 			// insert document.  We expect to fail with a MetacatException because the schemaLocation
 			// does not exist.
 			insertDocidExpectException(newdocid1 + ".1", testDocument, "is not allowed to appear in element");
+			
+	         Thread.sleep(2000);
 			
 			// Check the db for registered schemas.  We should find none.
 			debug("Checking db for registered schemas");
@@ -517,6 +523,7 @@ public class SchemaRegistryTest extends MCTestCase {
 			// because the xml does not conform to the schema
 			insertDocidExpectException(newdocid2 + ".1", testDocument2, "is not allowed to appear in element");
 			
+	         Thread.sleep(2000);
 			// Check the db for registered schemas.  We should find none.
 			debug("Checking db for registered schemas");
 			Vector<Hashtable<String,Object>> sqlResults = 
@@ -591,6 +598,8 @@ public class SchemaRegistryTest extends MCTestCase {
 			// create a second doc id and insert another document
 			String newdocid2 = generateDocid();
 			insertDocid(newdocid2 + ".1", testDocument, SUCCESS, false);
+			
+	         Thread.sleep(2000);
 			
 			// Check the db for registered schemas.  We should find two and only
 			// two.
@@ -672,6 +681,9 @@ public class SchemaRegistryTest extends MCTestCase {
       
       // insert document.  We expect to succeed.
       insertDocid(newdocid + ".1", testDocument, SUCCESS, false);
+      
+      Thread.sleep(2000);
+
       
       debug("Checking db for registered schemas");
       Vector<Hashtable<String,Object>> sqlResults = 
