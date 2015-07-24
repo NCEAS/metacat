@@ -121,7 +121,7 @@ public class MetacatProfilerTest extends MCTestCase
 	    Hashtable<String, Profile> h = mp.getProfiles();
 	    Profile p = h.get("test1");
 	    System.out.println("p: " + p.toString());
-	    assertTrue(p.total >= 100 && p.total < 105);
+	    assertTrue(p.total >= 100 && p.total < 150);
 	    assertTrue(p.methodcalls == 1);
 	    
 	    
@@ -139,11 +139,11 @@ public class MetacatProfilerTest extends MCTestCase
 	    assertTrue(h.size() == 2);
 	    p = h.get("test2");
 	    System.out.println("p: " + p.toString());
-	    assertTrue(p.total >= 300 && p.total < 310);
+	    assertTrue(p.total >= 300 && p.total < 350);
 	    assertTrue(p.methodcalls == 2);
 	    Profile p2 = h.get("test3");
 	    System.out.println("p2: " + p2.toString());
-	    assertTrue(p2.total >= 50 && p2.total < 55);
+	    assertTrue(p2.total >= 50 && p2.total < 100);
 	    assertTrue(p2.methodcalls == 1);
 	}
 	
