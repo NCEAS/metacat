@@ -371,8 +371,9 @@ public class MNodeService extends D1NodeService
         }
 
         // does the subject have WRITE ( == update) priveleges on the pid?
-        allowed = isAuthorized(session, pid, Permission.WRITE);
-
+        //allowed = isAuthorized(session, pid, Permission.WRITE);
+        //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
+        allowed = allowUpdating(session, pid, Permission.WRITE);
         if (allowed) {
         	
         	// check quality of SM
@@ -2207,10 +2208,6 @@ public class MNodeService extends D1NodeService
          throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
      }
 
-	 if(!isAuthoritativeNode(pid)) {
-	     throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
-	 }
-
      if (session == null) {
          //TODO: many of the thrown exceptions do not use the correct error codes
          //check these against the docs and correct them
@@ -2219,11 +2216,17 @@ public class MNodeService extends D1NodeService
      } else {
          try {
              //Following session can do the change:
-           //- Authoritative Member Node (we can use isNodeAdmin since we checked isAuthoritativeNode in line 2159)
+           //- Authoritative Member Node (we can use isNodeAdmin since we checked isAuthoritativeNode )
              //- Owner of object (coved by the userHasPermission method)
              //- user subjects with the change permission
              //Note: Coordinating Node can not because MN is authoritative
+             /*if(!isAuthoritativeNode(pid)) {
+                throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
+             }
              if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
+                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+             }*/
+             if(!allowUpdating(session, pid, Permission.CHANGE_PERMISSION)) {
                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
              }
          } catch (NotFound e) {
@@ -2288,6 +2291,30 @@ public class MNodeService extends D1NodeService
             }
         }
         return isAuthoritativeNode;
+    }
+    
+    /*
+     * Rules are:
+     * 1. If the session has an cn object, it is allowed.
+     * 2. If it is not a cn object, the client should have approperate permission and it should also happen on the authorative node.
+     */
+    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound{
+        boolean allow = false;
+        if(isCNAdmin (session)) {
+            allow = true;
+        } else {
+            if(isAuthoritativeNode(pid)) {
+                if(userHasPermission(session, pid, permission)) {
+                    allow = true;
+                } else {
+                    allow = false;
+                }
+            } else {
+                throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node.");
+            }
+        }
+        return allow;
+        
     }
     
 }
