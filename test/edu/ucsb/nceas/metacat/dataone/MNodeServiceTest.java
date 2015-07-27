@@ -506,6 +506,25 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       } catch (Exception ee) {
           assertTrue( ee instanceof InvalidRequest);
       }
+      
+      //update the authoritative node on the existing pid (newPid)
+      NodeReference newMN = new NodeReference();
+      newMN.setValue("urn:node:river1");
+      newSysMeta.setAuthoritativeMemberNode(newMN);
+      newSysMeta.setArchived(false);
+      MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+      try {
+          updatedPid = 
+                 MNodeService.getInstance(request).update(session, newPid, object, newPid2, newSysMeta2);
+          fail("update an object on non-authoritatvie node should get anexception");
+     } catch (Exception ee) {
+         assertTrue( ee instanceof NotAuthorized);
+     }
+     //cn can succeed even though it updates an object on the non-authoritative node.
+     Session cnSession = getCNSession();
+     updatedPid = 
+             MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
+     assertEquals(updatedPid.getValue(), newPid2.getValue());
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
