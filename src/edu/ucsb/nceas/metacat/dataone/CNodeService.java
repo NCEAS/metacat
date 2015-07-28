@@ -257,7 +257,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 		Subject subject = session.getSubject();
 
 		// are we allowed to do this?
-		boolean isAuthorized = false;
+		/*boolean isAuthorized = false;
 		try {
 			isAuthorized = isAuthorized(session, pid, Permission.WRITE);
 		} catch (InvalidRequest e) {
@@ -268,6 +268,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 					+ " not allowed by " + subject.getValue() + " on "
 					+ pid.getValue());
 
+		}*/
+		if(session == null) {
+		    throw new NotAuthorized("4882", "Session cannot be null. It is not authorized for deleting the replication metadata of the object "+pid.getValue());
+		} else {
+		    if(!isCNAdmin(session)) {
+		        throw new NotAuthorized("4882", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for deleting the replication metadata of the object "+pid.getValue());
+		    }
 		}
 
 		SystemMetadata systemMetadata = null;
@@ -764,6 +771,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  // cannot be called by public
 	  if (session == null) {
 		  throw new NotAuthorized("4720", "Session cannot be null");
+	  } else {
+	      if(!isCNAdmin(session)) {
+              throw new NotAuthorized("4720", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for setting the replication status of the object "+pid.getValue());
+        }
 	  }
 	  
 	// do we have a valid pid?
@@ -1316,6 +1327,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           //check these against the docs and correct them
           throw new NotAuthorized("4861", "No Session - could not authorize for registration." +
                   "  If you are not logged in, please do so and retry the request.");
+      } else {
+          //only CN is allwoed
+          if(!isCNAdmin(session)) {
+                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for registering the system metadata of the object "+pid.getValue());
+          }
       }
       // the identifier can't be an SID
       try {
@@ -1924,7 +1940,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       Subject subject = session.getSubject();
       
       // are we allowed to do this?
-      try {
+      if(session == null) {
+          throw new NotAuthorized("4851", "Session cannot be null. It is not authorized for updating the replication metadata of the object "+pid.getValue());
+      } else {
+          if(!isCNAdmin(session)) {
+              throw new NotAuthorized("4851", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for updating the replication metadata of the object "+pid.getValue());
+        }
+      }
+      /*try {
 
           // what is the controlling permission?
           if (!isAuthorized(session, pid, Permission.WRITE)) {
@@ -1937,7 +1960,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           throw new NotAuthorized("4851", "not allowed by " + subject.getValue() + 
                   " on " + pid.getValue());  
           
-      }
+      }*/
 
       SystemMetadata systemMetadata = null;
       try {
