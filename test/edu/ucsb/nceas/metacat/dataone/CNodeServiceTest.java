@@ -128,7 +128,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testRegisterSystemMetadata");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testRegisterSystemMetadata." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -149,7 +149,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testGetSystemMetadata");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testGetSystemMetadata." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -169,7 +169,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testGetLogRecords");
 	    try {
 
-		    Session session = getTestSession();
+		    Session session = getCNSession();
 		    SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 		    Date fromDate = sdf.parse("2010-01-01");
 		    Date toDate = new Date();
@@ -193,7 +193,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testCreate");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testCreate." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -210,7 +210,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testGet");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testGet." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -233,7 +233,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testChecksum");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testChecksum." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -266,7 +266,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testReserveIdentifier");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testReserveIdentifier." + System.currentTimeMillis());
 			// reserve it
@@ -286,7 +286,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testSearch");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			
 			// search for objects, but expect a NotImplemented exception
 			try {
@@ -306,7 +306,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testSetOwner");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testSetOwner." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -335,7 +335,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testSetAccessPolicy");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testSetAccessPolicy." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -367,7 +367,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testIsAuthorized");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testIsAuthorized." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -400,7 +400,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testReplicationPolicy");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testReplicationPolicy." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -433,7 +433,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testReplicationStatus");
 
 	    try {
-            Session session = getTestSession();
+            Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testReplicationStatus." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -479,7 +479,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	 * @throws ServiceFailure 
 	 * @throws Exception 
 	 */
-	@Override
+	/*@Override
 	public Session getTestSession() throws Exception {
 		Session session = super.getTestSession();
 		
@@ -498,7 +498,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
         }
         // in case we didn't find it
         return session;
-	}
+	}*/
 	
 
 	/**
@@ -594,7 +594,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       printTestHeader("testCreate");
 
       try {
-          Session session = getTestSession();
+          Session session = getCNSession();
           Identifier guid = new Identifier();
           guid.setValue("testCreate." + System.currentTimeMillis());
           InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -679,7 +679,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       String str3 = "object3";
       try {
           //insert test documents with a series id
-          Session session = getTestSession();
+          Session session = getCNSession();
           Identifier guid = new Identifier();
           guid.setValue(generateDocumentId());
           InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
@@ -1160,7 +1160,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           String str3 = "object3";
   
           //insert test documents with a series id
-          Session session = getTestSession();
+          Session session = getCNSession();
           Identifier guid = new Identifier();
           guid.setValue(generateDocumentId());
           InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
