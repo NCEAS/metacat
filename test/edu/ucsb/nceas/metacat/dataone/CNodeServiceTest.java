@@ -128,11 +128,18 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testRegisterSystemMetadata");
 
 	    try {
+	        Session testSession = getTestSession();
             Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testRegisterSystemMetadata." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+			try {
+			    CNodeService.getInstance(request).registerSystemMetadata(testSession, guid, sysmeta);
+			    fail("We shouldn't get there since the test session can't regsiter system metadata");
+			} catch (NotAuthorized ee) {
+			    
+			}
 			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
 			assertEquals(guid.getValue(), retGuid.getValue());
 			return retGuid;
@@ -451,6 +458,15 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			// set it
 			ReplicationStatus status = ReplicationStatus.COMPLETED;
 			BaseException failure = new NotAuthorized("000", "Mock exception for " + this.getClass().getName());
+			//Test the failure of setReplicationStatus by a non-cn subject
+			Session testSession = getTestSession();
+			try {
+			    CNodeService.getInstance(request).setReplicationStatus(testSession, guid, replicaMemberNode, status, failure);
+			    fail("It can't reach here since the non-cn subject can't call setReplicationStatus");
+			} catch (NotAuthorized ee) {
+			    
+			}
+			//Test the success of setReplicationStatus by a cn subject
 			boolean result = CNodeService.getInstance(request).setReplicationStatus(session, guid, replicaMemberNode, status, failure);
 			assertTrue(result);
 			// get it
@@ -1178,6 +1194,17 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           assertTrue(metadata.getArchived().equals(false));
           System.out.println("the checksum from request is "+metadata.getChecksum().getValue());
           assertTrue(metadata.getSize().equals(sysmeta.getSize()));
+          
+          //test to fail to update system metadata by a non-cn subject
+          Session testSession = getTestSession();
+          metadata.setArchived(true);
+          try {
+              CNodeService.getInstance(request).updateSystemMetadata(testSession, guid, metadata);
+              fail("It shouldn't get there since the test session can't update system metadata");
+          } catch (NotAuthorized e) {
+              
+          }
+         
           
           //update system metadata sucessfully
           metadata.setArchived(true);
