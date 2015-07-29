@@ -1186,9 +1186,9 @@ public class MNResourceHandler extends D1ResourceHandler {
             	}
             }
             if (mediaType != null) {
-                mimeType = sm.getMediaType().getName();
-                if (sm.getMediaType().getPropertyList() != null) {
-                	Iterator<MediaTypeProperty> iter = sm.getMediaType().getPropertyList().iterator();
+                mimeType = mediaType.getName();
+                if (mediaType.getPropertyList() != null) {
+                	Iterator<MediaTypeProperty> iter = mediaType.getPropertyList().iterator();
                 	while (iter.hasNext()) {
                 		MediaTypeProperty mtp = iter.next();
                 		if (mtp.getName().equalsIgnoreCase("charset")) {
