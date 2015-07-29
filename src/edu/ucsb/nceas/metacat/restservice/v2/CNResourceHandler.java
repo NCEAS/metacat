@@ -1672,10 +1672,12 @@ public class CNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("Parsing ReplicaStatus from the mime multipart entity");
 
         try {
-        	// parse the policy
+        	// parse the failure, if we have it
             Map<String, File> files = collectMultipartFiles();        
-            failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")), 
-                    "Replication failed for an unknown reason.");
+            if (files.containsKey("failure")) {
+            	failure = ExceptionHandler.deserializeXml(new FileInputStream(files.get("failure")), 
+                        "Replication failed for an unknown reason.");
+            }
             
         } catch (Exception e2) {
             throw new ServiceFailure("4700", "Couldn't resolve the multipart request: " +
