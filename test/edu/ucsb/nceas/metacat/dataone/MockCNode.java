@@ -56,6 +56,7 @@ public class MockCNode extends MultipartCNode {
 	public NodeList listNodes() throws NotImplemented, ServiceFailure {
 		NodeList list = new NodeList();
 		list.addNode(getCapabilities());
+		list.addNode(getTestMN());
 		return list;
 	}
     
@@ -105,6 +106,21 @@ public class MockCNode extends MultipartCNode {
         NotAuthorized, IdentifierNotUnique, NotImplemented {
     	// always return true
         return true;
+    }
+    
+    /*
+     * Create a test mn in this env.
+     */
+    private Node getTestMN() {
+        Node node = new Node();
+        NodeReference nodeRef = new NodeReference();
+        nodeRef.setValue("urn:node:test_MN-12346");
+        node.setIdentifier(nodeRef);
+        Subject subject = new Subject();
+        subject.setValue("cn=" + getNodeId() + ",dc=dataone,dc=org");
+        node.addSubject(subject );
+        node.setType(NodeType.MN);
+        return node;
     }
     
 }

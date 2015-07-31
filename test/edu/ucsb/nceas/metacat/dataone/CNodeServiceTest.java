@@ -38,6 +38,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
+import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -456,7 +457,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
 			assertEquals(guid.getValue(), retGuid.getValue());
 			// set it
-			ReplicationStatus status = ReplicationStatus.COMPLETED;
+			ReplicationStatus status = ReplicationStatus.QUEUED;
 			BaseException failure = new NotAuthorized("000", "Mock exception for " + this.getClass().getName());
 			//Test the failure of setReplicationStatus by a non-cn subject
 			Session testSession = getTestSession();
@@ -474,6 +475,15 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertNotNull(sysmeta);
 			// check it
 			assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+			
+			//Test the success of setReplicationStatus by a register mn subject
+			Session mnSession = getMNSessionFromCN();
+			status = ReplicationStatus.COMPLETED;
+			result = CNodeService.getInstance(request).setReplicationStatus(mnSession, guid, replicaMemberNode, status, failure);
+			sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertNotNull(sysmeta);
+            // check it
+            assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
 			
         } catch(Exception e) {
             fail("Unexpected error: " + e.getMessage());
@@ -1262,4 +1272,23 @@ public class CNodeServiceTest extends D1NodeServiceTest {
               assertTrue(e instanceof InvalidRequest);
           }
   }
+  
+  public Session getMNSessionFromCN() throws NotImplemented, ServiceFailure {
+      Session session = new Session();
+      Subject subject = null;
+      CNode cn = D1Client.getCN();
+      System.out.println("the cn is "+cn.getNodeBaseServiceUrl());
+      List<Node> nodes = cn.listNodes().getNodeList();
+      System.out.println("the size of the list is "+nodes.size());
+      // find the first CN in the node list
+      for (Node node : nodes) {
+          if (node.getType().equals(NodeType.MN)) {
+              subject = node.getSubject(0);
+              break;
+          }
+      }
+      session.setSubject(subject);
+      return session;
+  }
+  
 }

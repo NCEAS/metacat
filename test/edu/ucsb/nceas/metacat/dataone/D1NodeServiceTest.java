@@ -148,7 +148,7 @@ public class D1NodeServiceTest extends MCTestCase {
 
 		// find the first CN in the node list
 		for (Node node : nodes) {
-			if (node.getType() == NodeType.CN) {
+			if (node.getType().equals(NodeType.CN)) {
 				subject = node.getSubject(0);
 				break;
 			}
