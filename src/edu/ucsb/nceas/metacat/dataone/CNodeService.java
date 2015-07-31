@@ -311,11 +311,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			  
 			// check permissions
 			// TODO: is this necessary?
-			List<Node> nodeList = D1Client.getCN().listNodes().getNodeList();
+			/*List<Node> nodeList = D1Client.getCN().listNodes().getNodeList();
 			boolean isAllowed = ServiceMethodRestrictionUtil.isMethodAllowed(session.getSubject(), nodeList, "CNReplication", "deleteReplicationMetadata");
 			if (!isAllowed) {
 				throw new NotAuthorized("4881", "Caller is not authorized to deleteReplicationMetadata");
-			}
+			}*/
 			  
 			// delete the replica from the given node
 			// CSJ: use CN.delete() to truly delete a replica, semantically
@@ -771,11 +771,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  // cannot be called by public
 	  if (session == null) {
 		  throw new NotAuthorized("4720", "Session cannot be null");
-	  } else {
+	  } 
+	  
+	  /*else {
 	      if(!isCNAdmin(session)) {
               throw new NotAuthorized("4720", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for setting the replication status of the object "+pid.getValue());
         }
-	  }
+	  }*/
 	  
 	// do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
@@ -881,14 +883,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
               if ( !allowed ) {
                   //check for CN admin access
-                  allowed = isAuthorized(session, pid, Permission.WRITE);
+                  //allowed = isAuthorized(session, pid, Permission.WRITE);
+                  allowed = isCNAdmin(session);
                   
               }              
               
               if ( !allowed ) {
                   String msg = "The subject identified by "
                           + subject.getValue()
-                          + " does not have permission to set the replication status for "
+                          + " is not a CN or MN, and does not have permission to set the replication status for "
                           + "the replica identified by "
                           + targetNode.getValue() + ".";
                   logMetacat.info(msg);
