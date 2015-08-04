@@ -1663,12 +1663,14 @@ public abstract class D1NodeService {
 	private void checkOneTimeSettableSysmMetaFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest {
 	    if(orgMeta.getObsoletedBy() != null ) {
 	        if(newMeta.getObsoletedBy() == null || !orgMeta.getObsoletedBy().equals(newMeta.getObsoletedBy())) {
-	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletedBy field in the SystemMeta. Once the obsoletedBy filed is set, you can't change it again.");
+	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletedBy field in the system metadata of the object "
+	                    + orgMeta.getIdentifier().getValue() +". This is illegal since the obsoletedBy filed is set, you can't change it again.");
 	        }
         }
 	    if(orgMeta.getObsoletes() != null) {
 	        if(newMeta.getObsoletes() == null || !orgMeta.getObsoletes().equals(newMeta.getObsoletes())) {
-	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletes field in the SystemMeta. Once the obsoletedBy filed is set, you can't change it again.");
+	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletes field in the system metadata of the object"+
+	               orgMeta.getIdentifier().getValue()+". This is illegal since the obsoletedBy filed is set, you can't change it again.");
 	        }
 	    }
 	}
