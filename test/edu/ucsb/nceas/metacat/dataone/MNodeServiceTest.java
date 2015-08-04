@@ -174,6 +174,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testGetSID"));
     suite.addTest(new MNodeServiceTest("testListViews"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
+    suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
     
     return suite;
     
@@ -2107,5 +2108,127 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidRequest);
         }
 }
+    
+    public void testUpdateObsoletesAndObsoletedBy() throws Exception {
+        String str1 = "object1";
+        String str2 = "object2";
+        String str3 = "object3";
+
+        //insert two documents 
+        Session session = getTestSession();
+        Identifier guid1 = new Identifier();
+        guid1.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta1 = createSystemMetadata(guid1, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid1, object1, sysmeta1);
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        assertTrue(metadata.getIdentifier().equals(guid1));
+        assertTrue(metadata.getSize().equals(sysmeta1.getSize()));
+        
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        InputStream object2 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        //Test the generating object succeeded. 
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        assertTrue(metadata.getIdentifier().equals(guid2));
+        assertTrue(metadata.getSize().equals(sysmeta2.getSize()));
+        
+        
+        
+        //update the system metadata without touching the obsoletes and obsoletdBy
+        AccessPolicy accessPolicy = new AccessPolicy();
+        AccessRule allow = new AccessRule();
+        allow.addPermission(Permission.WRITE);
+        Subject subject = new Subject();
+        subject.setValue("user_foo");
+        allow.addSubject(subject);
+        accessPolicy.addAllow(allow);
+        sysmeta1.setAccessPolicy(accessPolicy);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta1);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        assertTrue(metadata.getIdentifier().equals(guid1));
+        assertTrue(metadata.getObsoletedBy() == null);
+        assertTrue(metadata.getObsoletes() == null);
+        Session newSession = new Session();
+        newSession.setSubject(subject);
+        boolean isAuthorized = MNodeService.getInstance(request).isAuthorized(newSession, guid1, Permission.WRITE);
+        assertTrue(isAuthorized);
+        
+        sysmeta2.setAccessPolicy(accessPolicy);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid2, sysmeta2);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        assertTrue(metadata.getIdentifier().equals(guid2));
+        assertTrue(metadata.getObsoletes() == null);
+        assertTrue(metadata.getObsoletedBy() == null);
+        assertTrue(metadata.getChecksum().getValue().equals(sysmeta2.getChecksum().getValue()));
+        isAuthorized = MNodeService.getInstance(request).isAuthorized(newSession, guid2, Permission.WRITE);
+        assertTrue(isAuthorized);
+        
+        
+        
+        //update obsolets and obsoletedBy sucessfully
+        sysmeta1.setObsoletedBy(guid2);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta1);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        assertTrue(metadata.getIdentifier().equals(guid1));
+        assertTrue(metadata.getObsoletedBy().equals(guid2));
+        assertTrue(metadata.getObsoletes() == null);
+        assertTrue(metadata.getChecksum().getValue().equals(sysmeta1.getChecksum().getValue()));
+        
+        sysmeta2.setObsoletes(guid1);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid2, sysmeta2);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        assertTrue(metadata.getIdentifier().equals(guid2));
+        assertTrue(metadata.getObsoletes().equals(guid1));
+        assertTrue(metadata.getObsoletedBy() == null);
+        assertTrue(metadata.getChecksum().getValue().equals(sysmeta2.getChecksum().getValue()));
+        
+        
+        
+        
+        //update obsolets and obsoletedBy sucessfully
+        sysmeta1.setObsoletedBy(guid2);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta1);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        assertTrue(metadata.getIdentifier().equals(guid1));
+        assertTrue(metadata.getObsoletedBy().equals(guid2));
+        assertTrue(metadata.getObsoletes() == null);
+        assertTrue(metadata.getChecksum().getValue().equals(sysmeta1.getChecksum().getValue()));
+        
+        sysmeta2.setObsoletes(guid1);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid2, sysmeta2);
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        assertTrue(metadata.getIdentifier().equals(guid2));
+        assertTrue(metadata.getObsoletes().equals(guid1));
+        assertTrue(metadata.getObsoletedBy() == null);
+        assertTrue(metadata.getChecksum().getValue().equals(sysmeta2.getChecksum().getValue()));
+        
+
+        
+        
+        
+        //resetting the obsoletes and obsoletedBy fails
+        Identifier newId = new Identifier();
+        newId.setValue("newValue");
+        sysmeta1.setObsoletedBy(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta1);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            e.printStackTrace();
+            assertTrue(e instanceof InvalidRequest);
+        }
+       
+        sysmeta2.setObsoletes(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid2, sysmeta2);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+    }
     
 }
