@@ -1557,6 +1557,7 @@ public abstract class D1NodeService {
               ") does not match identifier in system metadata (" +
               sysmeta.getIdentifier().getValue() + ").");
       }
+      //compare serial version.
       
       //check the sid
       SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
@@ -1590,26 +1591,27 @@ public abstract class D1NodeService {
                   checkSidInModifyingSystemMetadata(sysmeta, "4956", "4868");
               }
           }
-      }
-      checkModifiedImmutableFields(currentSysmeta, sysmeta);
-      checkOneTimeSettableSysmMetaFields(currentSysmeta, sysmeta);
-      if(currentSysmeta.getObsoletes() == null && sysmeta.getObsoletes() != null) {
-          //we are setting a value to the obsoletes field, so we should make sure if there is not object obsoletes the value
-          String obsoletes = existsInObsoletes(sysmeta.getObsoletes());
-          if( obsoletes != null) {
-              throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletes +
-                      " already obsoletes the pid "+sysmeta.getObsoletes().getValue() +". You can't set the object "+pid.getValue()+" to obsolete the pid "+sysmeta.getObsoletes().getValue()+" again.");
+          checkModifiedImmutableFields(currentSysmeta, sysmeta);
+          checkOneTimeSettableSysmMetaFields(currentSysmeta, sysmeta);
+          if(currentSysmeta.getObsoletes() == null && sysmeta.getObsoletes() != null) {
+              //we are setting a value to the obsoletes field, so we should make sure if there is not object obsoletes the value
+              String obsoletes = existsInObsoletes(sysmeta.getObsoletes());
+              if( obsoletes != null) {
+                  throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletes +
+                          " already obsoletes the pid "+sysmeta.getObsoletes().getValue() +". You can't set the object "+pid.getValue()+" to obsolete the pid "+sysmeta.getObsoletes().getValue()+" again.");
+              }
+          }
+          
+          if(currentSysmeta.getObsoletedBy() == null && sysmeta.getObsoletedBy() != null) {
+              //we are setting a value to the obsoletedBy field, so we should make sure that the no another object obsoletes the pid we are updating. 
+              String obsoletedBy = existsInObsoletedBy(sysmeta.getObsoletedBy());
+              if( obsoletedBy != null) {
+                  throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletedBy +
+                          " already is obsoleted by the pid "+sysmeta.getObsoletedBy().getValue() +". You can't set the pid "+pid.getValue()+" to be obsoleted by the pid "+sysmeta.getObsoletedBy().getValue()+" again.");
+              }
           }
       }
       
-      if(currentSysmeta.getObsoletedBy() == null && sysmeta.getObsoletedBy() != null) {
-          //we are setting a value to the obsoletedBy field, so we should make sure that the no another object obsoletes the pid we are updating. 
-          String obsoletedBy = existsInObsoletedBy(sysmeta.getObsoletedBy());
-          if( obsoletedBy != null) {
-              throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletedBy +
-                      " already is obsoleted by the pid "+sysmeta.getObsoletedBy().getValue() +". You can't set the pid "+pid.getValue()+" to be obsoleted by the pid "+sysmeta.getObsoletedBy().getValue()+" again.");
-          }
-      }
       // do the actual update
       this.updateSystemMetadata(sysmeta);
       
