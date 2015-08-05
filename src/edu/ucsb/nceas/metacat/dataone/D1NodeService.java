@@ -33,6 +33,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigInteger;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -85,6 +87,7 @@ import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.Constants;
 
+import edu.ucsb.nceas.metacat.AccessionNumber;
 import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
@@ -1590,6 +1593,23 @@ public abstract class D1NodeService {
       }
       checkModifiedImmutableFields(currentSysmeta, sysmeta);
       checkOneTimeSettableSysmMetaFields(currentSysmeta, sysmeta);
+      if(currentSysmeta.getObsoletes() == null && sysmeta.getObsoletes() != null) {
+          //we are setting a value to the obsoletes field, so we should make sure if there is not object obsoletes the value
+          String obsoletes = existsInObsoletes(sysmeta.getObsoletes());
+          if( obsoletes != null) {
+              throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletes +
+                      " already obsoletes the pid "+sysmeta.getObsoletes().getValue() +". You can't set the object "+pid.getValue()+" to obsolete the pid "+sysmeta.getObsoletes().getValue()+" again.");
+          }
+      }
+      
+      if(currentSysmeta.getObsoletedBy() == null && sysmeta.getObsoletedBy() != null) {
+          //we are setting a value to the obsoletedBy field, so we should make sure that the no another object obsoletes the pid we are updating. 
+          String obsoletedBy = existsInObsoletedBy(sysmeta.getObsoletedBy());
+          if( obsoletedBy != null) {
+              throw new InvalidSystemMetadata("4956", "There is an object with id "+obsoletedBy +
+                      " already is obsoleted by the pid "+sysmeta.getObsoletedBy().getValue() +". You can't set the pid "+pid.getValue()+" to be obsoleted by the pid "+sysmeta.getObsoletedBy().getValue()+" again.");
+          }
+      }
       // do the actual update
       this.updateSystemMetadata(sysmeta);
       
@@ -1670,7 +1690,7 @@ public abstract class D1NodeService {
 	    if(orgMeta.getObsoletes() != null) {
 	        if(newMeta.getObsoletes() == null || !orgMeta.getObsoletes().equals(newMeta.getObsoletes())) {
 	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletes field in the system metadata of the object"+
-	               orgMeta.getIdentifier().getValue()+". This is illegal since the obsoletedBy filed is set, you can't change it again.");
+	               orgMeta.getIdentifier().getValue()+". This is illegal since the obsoletes filed is set, you can't change it again.");
 	        }
 	    }
 	}
@@ -2115,6 +2135,70 @@ public abstract class D1NodeService {
       }
       
       return resultInputStream;
-  }   
+  } 
+  
+  /*
+   * Determine if the given identifier exists in the obsoletes field in the system metadata table.
+   * If the return value is not null, the given identifier exists in the given cloumn. The return value is 
+   * the guid of the first row.
+   */
+  protected String existsInObsoletes(Identifier id) throws InvalidRequest, ServiceFailure{
+      String guid = existsInFields("obsoletes", id);
+      return guid;
+  }
+  
+  /*
+   * Determine if the given identifier exists in the obsoletes field in the system metadata table.
+   * If the return value is not null, the given identifier exists in the given cloumn. The return value is 
+   * the guid of the first row.
+   */
+  protected String existsInObsoletedBy(Identifier id) throws InvalidRequest, ServiceFailure{
+      String guid = existsInFields("obsoleted_by", id);
+      return guid;
+  }
 
+  /*
+   * Determine if the given identifier exists in the given column in the system metadata table. 
+   * If the return value is not null, the given identifier exists in the given cloumn. The return value is 
+   * the guid of the first row.
+   */
+  private String existsInFields(String column, Identifier id) throws InvalidRequest, ServiceFailure {
+      String guid = null;
+      if(id == null ) {
+          throw new InvalidRequest("4863", "The given identifier is null and we can't determine if the guid exists in the field "+column+" in the systemmetadata table");
+      }
+      String sql = "SELECT guid FROM systemmetadata WHERE "+column+" = ?";
+      int serialNumber = -1;
+      DBConnection dbConn = null;
+      PreparedStatement stmt = null;
+      ResultSet result = null;
+      try {
+          dbConn = 
+                  DBConnectionPool.getDBConnection("D1NodeService.existsInFields");
+          serialNumber = dbConn.getCheckOutSerialNumber();
+          stmt = dbConn.prepareStatement(sql);
+          stmt.setString(1, id.getValue());
+          result = stmt.executeQuery();
+          if(result.next()) {
+              guid = result.getString(1);
+          }
+          stmt.close();
+      } catch (SQLException e) {
+          e.printStackTrace();
+          throw new ServiceFailure("4862","We can't determine if the id "+id.getValue()+" exists in field "+column+" in the systemmetadata table since "+e.getMessage());
+      } finally {
+          // Return database connection to the pool
+          DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+          if(stmt != null) {
+              try {
+                  stmt.close();
+              } catch (SQLException e) {
+                  logMetacat.warn("We can close the PreparedStatment in D1NodeService.existsInFields since "+e.getMessage());
+              }
+          }
+          
+      }
+      return guid;
+      
+  }
 }
