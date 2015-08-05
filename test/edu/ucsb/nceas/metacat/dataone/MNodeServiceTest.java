@@ -138,7 +138,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
   public static Test suite() {
     
     TestSuite suite = new TestSuite();
-    /*suite.addTest(new MNodeServiceTest("initialize"));
+    suite.addTest(new MNodeServiceTest("initialize"));
     // MNStorage tests
     suite.addTest(new MNodeServiceTest("testCreate"));
     suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
@@ -173,7 +173,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     suite.addTest(new MNodeServiceTest("testGetSID"));
     suite.addTest(new MNodeServiceTest("testListViews"));
-    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));*/
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
     suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
     
     return suite;
