@@ -477,7 +477,12 @@ public class MNodeService extends D1NodeService
             
             // add the newPid to the obsoletedBy list for the existing sysmeta
             existingSysMeta.setObsoletedBy(newPid);
-
+            //increase version
+            BigInteger current = existingSysMeta.getSerialVersion();
+            //System.out.println("the current version is "+current);
+            current = current.add(BigInteger.ONE);
+            //System.out.println("the new current version is "+current);
+            existingSysMeta.setSerialVersion(current);
             // then update the existing system metadata
             updateSystemMetadata(existingSysMeta);
 
