@@ -484,6 +484,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       
       SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
       newSysMeta.setArchived(true);
+      System.out.println("the pid is =======!!!!!!!!!!!! "+pid.getValue());
       // do the update
       Identifier updatedPid = 
         MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -509,6 +510,10 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
       
       //update the authoritative node on the existing pid (newPid)
+      SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+      BigInteger version = meta.getSerialVersion();
+      version.add(BigInteger.ONE);
+      newSysMeta.setSerialVersion(version);
       NodeReference newMN = new NodeReference();
       newMN.setValue("urn:node:river1");
       newSysMeta.setAuthoritativeMemberNode(newMN);
