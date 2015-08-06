@@ -833,6 +833,10 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           CNodeService.getInstance(request).create(session, newPid, object2, newSysMeta);
           //update the system metadata of previous version.
           sysmeta.setObsoletedBy(newPid);
+          SystemMetadata read = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+          BigInteger version = read.getSerialVersion();
+          version = version.add(BigInteger.ONE);
+          sysmeta.setSerialVersion(version);
           CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
           InputStream result4 = CNodeService.getInstance(request).get(session, guid);
           // go back to beginning of original stream
@@ -918,6 +922,10 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           CNodeService.getInstance(request).create(session, newPid2, object3, sysmeta3);
           //update the system metadata of the previous version 
           newSysMeta.setObsoletedBy(newPid2);
+          SystemMetadata read2 = CNodeService.getInstance(request).getSystemMetadata(session, newPid);
+          BigInteger version2= read2.getSerialVersion();
+          version2 = version2.add(BigInteger.ONE);
+          newSysMeta.setSerialVersion(version2);
           CNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
           
           InputStream result9 = CNodeService.getInstance(request).get(session, guid);
@@ -1207,9 +1215,13 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           //test to fail to update system metadata by a non-cn subject
           Session testSession = getTestSession();
-          metadata.setArchived(true);
+          SystemMetadata sysmeta1 = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+          BigInteger version = sysmeta.getSerialVersion();
+          version = version.add(BigInteger.ONE);
+          sysmeta1.setSerialVersion(version);
+          sysmeta1.setArchived(true);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(testSession, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(testSession, guid, sysmeta1);
               fail("It shouldn't get there since the test session can't update system metadata");
           } catch (NotAuthorized e) {
               
@@ -1217,37 +1229,41 @@ public class CNodeServiceTest extends D1NodeServiceTest {
          
           
           //update system metadata sucessfully
-          metadata.setArchived(true);
-          CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+          sysmeta1.setArchived(true);
+          CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1);
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
           assertTrue(metadata2.getSeriesId().equals(seriesId));
           assertTrue(metadata2.getArchived().equals(true));
           assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
           
+          SystemMetadata sysmeta2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+          version = sysmeta2.getSerialVersion();
+          version = version.add(BigInteger.ONE);
+          sysmeta2.setSerialVersion(version);
           Identifier newId = new Identifier();
           newId.setValue("newValue");
-          metadata.setIdentifier(newId);
+          sysmeta2.setIdentifier(newId);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta2);
               fail("We shouldn't get there");
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
           }
           
           newId.setValue("newValue");
-          metadata.setSeriesId(newId);
+          sysmeta2.setSeriesId(newId);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta2);
               fail("We shouldn't get there");
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
           }
           
           Date newDate = new Date();
-          metadata.setDateUploaded(newDate);
+          sysmeta2.setDateUploaded(newDate);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta2);
               fail("We shouldn't get there");
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
@@ -1255,18 +1271,18 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           Checksum checkSum = new Checksum();
           checkSum.setValue("12345");
-          metadata.setChecksum(checkSum);
+          sysmeta2.setChecksum(checkSum);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta2);
               fail("We shouldn't get there");
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
           }
           
           BigInteger size = new BigInteger("4000");
-          metadata.setSize(size);
+          sysmeta2.setSize(size);
           try {
-              CNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+              CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta2);
               fail("We shouldn't get there");
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
