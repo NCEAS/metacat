@@ -1566,8 +1566,19 @@ public abstract class D1NodeService {
       logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
       logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
-          //do we need throw an exception
+          //do we need throw an exception?
+          
       } else {
+          
+          BigInteger newVersion = sysmeta.getSerialVersion();
+          if(newVersion == null) {
+              throw new InvalidSystemMetadata("4956", "The serial version can't be null in the new system metadata");
+          }
+          BigInteger currentVersion = currentSysmeta.getSerialVersion();
+          if(currentVersion != null && newVersion.compareTo(currentVersion) <= 0) {
+              throw new InvalidSystemMetadata("4956", "The serial version in the new system metadata is "+newVersion.toString()+
+                      " which is less than or equals the previous version "+currentVersion.toString()+". This is illegal in the updateSystemMetadata method.");
+          }
           Identifier currentSid = currentSysmeta.getSeriesId();
           if(currentSid != null) {
               //new sid must match the current sid
