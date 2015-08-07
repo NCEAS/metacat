@@ -712,9 +712,17 @@ public class MNodeService extends D1NodeService
             
             // no local replica, get a replica
             if ( object == null ) {
-                // session should be null to use the default certificate
-                // location set in the Certificate manager
-                object = mn.getReplica(thisNodeSession, pid);
+                if(!supportV2Replication(mn.getCapabilities())) {
+                    //the source node is not a v2 node, we should use the v1 replication
+                    //this should be change when v3, v4 and et al comes out
+                    org.dataone.client.v1.MNode mNodeV1 =  org.dataone.client.v1.itk.D1Client.getMN(sourceNode);
+                    object = mNodeV1.get(thisNodeSession, pid);
+                } else {
+                 // session should be null to use the default certificate
+                    // location set in the Certificate manager
+                    object = mn.getReplica(thisNodeSession, pid);
+                }
+                
                 logMetacat.info("MNodeService.getReplica() called for identifier "
                                 + pid.getValue());
 
@@ -812,6 +820,42 @@ public class MNodeService extends D1NodeService
         setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.COMPLETED, null);
         return result;
 
+    }
+    
+    /*
+     * If the given node supports v2 replication.
+     */
+    private boolean supportV2Replication(Node node) throws InvalidRequest {
+        return supportVersionReplication(node, "v2");
+    }
+    
+    /*
+     * If the given node support the the given version replication. Return true if it does.
+     */
+    private boolean supportVersionReplication(Node node, String version) throws InvalidRequest{
+        boolean support = false;
+        if(node == null) {
+            throw new InvalidRequest("2153", "There is no capacity information about the node in the replicate.");
+        } else {
+            Services services = node.getServices();
+            if(services == null) {
+                throw new InvalidRequest("2153", "Can't get replica from a node which doesn't have the replicate service.");
+            } else {
+               List<Service> list = services.getServiceList();
+               if(list == null) {
+                   throw new InvalidRequest("2153", "Can't get replica from a node which doesn't have the replicate service.");
+               } else {
+                   for(Service service : list) {
+                       if(service != null && service.getName() != null && service.getName().equals("MNReplication") && 
+                               service.getVersion() != null && service.getVersion().equalsIgnoreCase(version) && service.getAvailable() == true ) {
+                           support = true;
+                           
+                       }
+                   }
+               }
+            }
+        }
+        return support;
     }
 
     /**
