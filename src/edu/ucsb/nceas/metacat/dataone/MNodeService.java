@@ -712,9 +712,18 @@ public class MNodeService extends D1NodeService
             
             // no local replica, get a replica
             if ( object == null ) {
-                if(!supportV2Replication(mn.getCapabilities())) {
-                    //the source node is not a v2 node, we should use the v1 replication
-                    //this should be change when v3, v4 and et al comes out
+                boolean success = true;
+                try {
+                    //use the v2 ping api to connect the source node
+                    mn.ping();
+                } catch (Exception e) {
+                    success = false;
+                }
+                
+                if(!success) {
+                    //The failure maybe is caused by that the source node is not a v2 node. We try to use the v1 replication.
+                    //If the failure is not caused by the version issue (e.g., it is a network connection issue), the following 
+                    //command will fail as well.
                     org.dataone.client.v1.MNode mNodeV1 =  org.dataone.client.v1.itk.D1Client.getMN(sourceNode);
                     object = mNodeV1.get(thisNodeSession, pid);
                 } else {
