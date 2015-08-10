@@ -1985,7 +1985,11 @@ public class MNodeService extends D1NodeService
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-	    
+	    if(formatId == null) {
+	        throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
+	    } else if(!formatId.getValue().equals("application/bagit")) {
+	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
+	    }
 	    String serviceFailureCode = "2871";
 	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
 	    if(sid != null) {
