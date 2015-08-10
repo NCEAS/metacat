@@ -83,6 +83,7 @@ import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
@@ -1270,7 +1271,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
 			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, null, pid);
+			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+			format.setValue("application/bagit");
+			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
 			BagFactory bagFactory = new BagFactory();
@@ -1347,7 +1350,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
 			
 			// get the package we uploaded
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, null, pid);
+			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+            format.setValue("application/bagit");
+			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
 			BagFactory bagFactory = new BagFactory();
