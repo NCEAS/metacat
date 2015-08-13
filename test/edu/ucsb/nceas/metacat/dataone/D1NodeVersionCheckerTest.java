@@ -169,7 +169,7 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
   }
   
   /**
-   * Test getting a known object
+   * Test getting versions from different cns
    */
   public void testGetVersion() throws Exception {
       Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn-dev.test.dataone.org/cn");
@@ -182,6 +182,15 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
       assertTrue(checker.getVersion("MNReplication") == null);
       assertTrue(checker.getVersion("CNRegister").equals("v1"));
       
+      
+      Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
+      node.setValue("urn:node:KNB");
+      checker = new D1NodeVersionChecker(node);
+      assertTrue(checker.getVersion("MNReplication").equals("v1"));
+      node.setValue("urn:node:CN");
+      checker = new D1NodeVersionChecker(node);
+      assertTrue(checker.getVersion("MNReplication") == null);
+      assertTrue(checker.getVersion("CNRegister").equals("v1"));
   }
 
   
