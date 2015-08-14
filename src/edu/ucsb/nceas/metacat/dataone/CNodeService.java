@@ -2092,7 +2092,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
       Session session = null;
       List<Replica> replicaList = currentSystemMetadata.getReplicaList();
-      MNode mn = null;
+      //MNode mn = null;
       NodeReference replicaNodeRef = null;
       CNode cn = null;
       NodeType nodeType = null;
@@ -2114,7 +2114,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
           // iterate through the replicas and inform  MN replica nodes
           for (Replica replica : replicaList) {
-              
+              String replicationVersion = null;
               replicaNodeRef = replica.getReplicaMemberNode();
               try {
                   if (nodeList != null) {
@@ -2122,6 +2122,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                       for (Node node : nodeList) {
                           if ( node.getIdentifier().getValue().equals(replicaNodeRef.getValue()) ) {
                               nodeType = node.getType();
+                              D1NodeVersionChecker checker = new D1NodeVersionChecker(replicaNodeRef);
+                              replicationVersion = checker.getVersion("MNRead");
                               break;
               
                           }
@@ -2129,12 +2131,23 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   }
               
                   // notify only MNs
-                  if (nodeType != null && nodeType == NodeType.MN) {
-                      mn = D1Client.getMN(replicaNodeRef);
-                      mn.systemMetadataChanged(session, 
-                          currentSystemMetadata.getIdentifier(), 
-                          currentSystemMetadata.getSerialVersion().longValue(),
-                          currentSystemMetadata.getDateSysMetadataModified());
+                  if (replicationVersion != null && nodeType != null && nodeType == NodeType.MN) {
+                      if(replicationVersion.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                          //connect to a v2 mn
+                          MNode mn = D1Client.getMN(replicaNodeRef);
+                          mn.systemMetadataChanged(session, 
+                              currentSystemMetadata.getIdentifier(), 
+                              currentSystemMetadata.getSerialVersion().longValue(),
+                              currentSystemMetadata.getDateSysMetadataModified());
+                      } else if (replicationVersion.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                          //connect to a v1 mn
+                          org.dataone.client.v1.MNode mn = org.dataone.client.v1.itk.D1Client.getMN(replicaNodeRef);
+                          mn.systemMetadataChanged(session, 
+                                  currentSystemMetadata.getIdentifier(), 
+                                  currentSystemMetadata.getSerialVersion().longValue(),
+                                  currentSystemMetadata.getDateSysMetadataModified());
+                      }
+                      
                   }
               
               } catch (Exception e) { // handle BaseException and other I/O issues
