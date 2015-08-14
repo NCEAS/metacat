@@ -193,7 +193,7 @@ public class MNodeService extends D1NodeService
     private Logger logMetacat = null;
     
     /* A reference to a remote Memeber Node */
-    private MNode mn;
+    //private MNode mn;
     
     /* A reference to a Coordinating Node */
     private CNode cn;
@@ -644,7 +644,6 @@ public class MNodeService extends D1NodeService
 
         // get from the membernode
         // TODO: switch credentials for the server retrieval?
-        this.mn = D1Client.getMN(sourceNode);
         this.cn = D1Client.getCN();
         InputStream object = null;
         Session thisNodeSession = null;
@@ -712,24 +711,26 @@ public class MNodeService extends D1NodeService
             
             // no local replica, get a replica
             if ( object == null ) {
-                boolean success = true;
+                /*boolean success = true;
                 try {
                     //use the v2 ping api to connect the source node
                     mn.ping();
                 } catch (Exception e) {
                     success = false;
-                }
-                
-                if(!success) {
-                    //The failure maybe is caused by that the source node is not a v2 node. We try to use the v1 replication.
-                    //If the failure is not caused by the version issue (e.g., it is a network connection issue), the following 
-                    //command will fail as well.
+                }*/
+                D1NodeVersionChecker checker = new D1NodeVersionChecker(sourceNode);
+                String nodeVersion = checker.getVersion("MNRead");
+                if(nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V1)) {
+                    //The source node is a v1 node, we use the v1 api
                     org.dataone.client.v1.MNode mNodeV1 =  org.dataone.client.v1.itk.D1Client.getMN(sourceNode);
-                    object = mNodeV1.get(thisNodeSession, pid);
-                } else {
+                    object = mNodeV1.getReplica(thisNodeSession, pid);
+                } else if (nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V2)){
                  // session should be null to use the default certificate
                     // location set in the Certificate manager
+                    MNode mn = D1Client.getMN(sourceNode);
                     object = mn.getReplica(thisNodeSession, pid);
+                } else {
+                    throw new ServiceFailure("2151", "The version of MNRead service is "+nodeVersion+" in the source node "+sourceNode.getValue()+" and it is supported. Please check the information in the cn");
                 }
                 
                 logMetacat.info("MNodeService.getReplica() called for identifier "
