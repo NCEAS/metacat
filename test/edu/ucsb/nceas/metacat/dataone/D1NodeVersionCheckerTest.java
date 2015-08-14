@@ -176,7 +176,7 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
       NodeReference node = new NodeReference();
       node.setValue("urn:node:mnDemo6");
       D1NodeVersionChecker checker = new D1NodeVersionChecker(node);
-      assertTrue(checker.getVersion("MNReplication").equals("v1"));
+      assertTrue(checker.getVersion("MNReplication").equals("v2"));
       node.setValue("urn:node:cnDevUCSB1");
       checker = new D1NodeVersionChecker(node);
       assertTrue(checker.getVersion("MNReplication") == null);
