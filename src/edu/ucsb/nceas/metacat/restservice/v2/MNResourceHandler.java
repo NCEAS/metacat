@@ -250,6 +250,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == GET) {
                     	// after the command
                         extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
+                        extra = decode(extra);
 	                	// check the access rules
 	                    isAuthorized(extra);
 	                    status = true;
@@ -262,6 +263,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                         logMetacat.debug("Using resource 'meta' for GET");
                     	// after the command
                         extra = parseTrailing(resource, RESOURCE_META);
+                        extra = decode(extra);
                         getSystemMetadataObject(extra);
                         status = true;
                     } else if (httpVerb == PUT) {
@@ -274,6 +276,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     logMetacat.debug("Using resource 'object'");
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_OBJECTS);
+                    extra = decode(extra);
                     logMetacat.debug("objectId: " + extra);
                     logMetacat.debug("verb:" + httpVerb);
 
@@ -307,6 +310,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     // handle archive events
                     if (httpVerb == PUT) {
                         extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
+                        extra = decode(extra);
                         archive(extra);
                         status = true;
                     }
@@ -316,6 +320,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == GET) {
                     	// after the command
                         extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
+                        extra = decode(extra);
                         checksum(extra);
                         status = true;
                     }
@@ -324,7 +329,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == GET) {
                     	// after the command
                         extra = parseTrailing(resource, RESOURCE_MONITOR);
-                        
+                        extra = decode(extra);
                         // ping
                         if (extra.toLowerCase().equals("ping")) {
                             logMetacat.debug("processing ping request");
@@ -357,6 +362,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     // get replica
                     if (httpVerb == GET) {
                         extra = parseTrailing(resource, RESOURCE_REPLICAS);
+                        extra = decode(extra);
                         getReplica(extra);
                         status = true;
                     }
@@ -376,6 +382,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                	engineIndex = extra.indexOf("/");
 		                }
 		                engine = extra.substring(0, engineIndex);
+		                engine = decode(engine);
 		                logMetacat.debug("query engine: " + engine);
 		                
 		                // get the query if it is there
@@ -391,6 +398,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                		query = query.substring(1);
 		                    }
 		                }
+		                query = decode(query);
 		                logMetacat.debug("query: " + query);
 
 	                }
@@ -411,6 +419,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == PUT) {
                     	// after the command
                         extra = parseTrailing(resource, RESOURCE_PUBLISH);
+                        extra = decode(extra);
                         publish(extra);
                         status = true;
                     }  
@@ -429,6 +438,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                	formatIndex = extra.indexOf("/");
 		                }
 		                format = extra.substring(0, formatIndex);
+		                format = decode(format);
 		                logMetacat.debug("package format: " + format);
 		                
 		                // get the pid if it is there
@@ -440,6 +450,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                		pid = pid.substring(1);
 		                    }
 		                }
+		                pid = decode(pid);
 		                logMetacat.debug("pid: " + pid);
 
 	                }
@@ -466,6 +477,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                	formatIndex = extra.indexOf("/");
 		                }
 		                format = extra.substring(0, formatIndex);
+		                format = decode(format);
 		                logMetacat.debug("view format: " + format);
 		                
 		                // get the pid if it is there
@@ -477,6 +489,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                		pid = pid.substring(1);
 		                    }
 		                }
+		                pid = decode(pid);
 		                logMetacat.debug("pid: " + pid);
 
 	                }
