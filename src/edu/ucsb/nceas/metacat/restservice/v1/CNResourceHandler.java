@@ -81,6 +81,7 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.dataone.v1.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.D1HttpRequest;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -169,6 +170,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                     logMetacat.debug("Setting access policy");
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_ACCESS_RULES);
+                    extra = decode(extra);
                     setAccess(extra);
                     status = true;
                     logMetacat.debug("done setting access");
@@ -178,7 +180,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_META);
-
+                    extra = decode(extra);
                     // get
                     if (httpVerb == GET) {
                         getSystemMetadataObject(extra);
@@ -200,7 +202,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_RESOLVE);
-
+                    extra = decode(extra);
                     // resolve the object location
                     if (httpVerb == GET) {
                         resolve(extra);
@@ -210,7 +212,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_OWNER);
-
+                    extra = decode(extra);
                     // set the owner
                     if (httpVerb == PUT) {
                         owner(extra);
@@ -220,7 +222,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_IS_AUTHORIZED);
-
+                    extra = decode(extra);
                     // authorized?
                     if (httpVerb == GET) {
                         isAuthorized(extra);
@@ -233,7 +235,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_OBJECTS);
-
+                    extra = decode(extra);
                     logMetacat.debug("objectId: " + extra);
                     logMetacat.debug("verb:" + httpVerb);
 
@@ -260,7 +262,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, RESOURCE_FORMATS);
-
+                    extra = decode(extra);
                     // handle each verb
                     if (httpVerb == GET) {
                         if (extra == null) {
@@ -286,6 +288,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                     // handle archive events
                     if (httpVerb == PUT) {
                         extra = parseTrailing(resource, Constants.RESOURCE_ARCHIVE);
+                        extra = decode(extra);
                         archive(extra);
                         status = true;
                     }
@@ -294,7 +297,7 @@ public class CNResourceHandler extends D1ResourceHandler {
 
                     // after the command
                     extra = parseTrailing(resource, Constants.RESOURCE_CHECKSUM);
-
+                    extra = decode(extra);
                     // handle checksum requests
                     if (httpVerb == GET) {
 
@@ -315,6 +318,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                             + RESOURCE_REPLICATION_POLICY);
                     // get the trailing pid
                     extra = parseTrailing(resource, RESOURCE_REPLICATION_POLICY);
+                    extra = decode(extra);
                     setReplicationPolicy(extra);
                     status = true;
 
@@ -325,6 +329,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                             + RESOURCE_REPLICATION_META);
                     // get the trailing pid
                     extra = parseTrailing(resource, RESOURCE_REPLICATION_META);
+                    extra = decode(extra);
                     updateReplicationMetadata(extra);
                     status = true;
 
@@ -335,6 +340,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                             + RESOURCE_REPLICATION_NOTIFY);
                     // get the trailing pid
                     extra = parseTrailing(resource, RESOURCE_REPLICATION_NOTIFY);
+                    extra = decode(extra);
                     setReplicationStatus(extra);
                     status = true;
 
@@ -346,6 +352,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                     // get the trailing pid
                     extra = parseTrailing(resource,
                             RESOURCE_REPLICATION_AUTHORIZED);
+                    extra = decode(extra);
                     isNodeAuthorized(extra);
                     status = true;
 
@@ -353,7 +360,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                     if (httpVerb == GET) {
                     	// after the command
                         extra = parseTrailing(resource, Constants.RESOURCE_MONITOR_PING);
-                        
+                        extra = decode(extra);
                         logMetacat.debug("processing ping request");
                         Date result = CNodeService.getInstance(request).ping();
                         // TODO: send to output	
@@ -366,6 +373,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                             + Constants.RESOURCE_META_OBSOLETEDBY);
                     // get the trailing pid
                     extra = parseTrailing(resource, Constants.RESOURCE_META_OBSOLETEDBY);
+                    extra = decode(extra);
                     setObsoletedBy(extra);
                     status = true;
                 } else if (resource.startsWith(Constants.RESOURCE_REPLICATION_DELETE_REPLICA)
@@ -375,6 +383,7 @@ public class CNResourceHandler extends D1ResourceHandler {
                             + Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
                     // get the trailing pid
                     extra = parseTrailing(resource, Constants.RESOURCE_REPLICATION_DELETE_REPLICA);
+                    extra = decode(extra);
                     deleteReplica(extra);
                     status = true;
                 }

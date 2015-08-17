@@ -27,6 +27,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -461,5 +463,27 @@ public class D1ResourceHandler {
                     + e1.getMessage());
         }
     }
-
+    
+    /**
+     * A method to decode the given string which is a part of a uri.
+     * The default encoding is utf-8. If the utf-8 is not support in this system, the default one in the systme will be used.
+     * @param s
+     * @return null if the given string is null
+     */
+    public static String decode(String s) {
+        String result = null;
+        if(s != null) {
+            try
+            {
+                result = URLDecoder.decode(s, "UTF-8");
+            }
+            catch (UnsupportedEncodingException e)
+            {
+                result = URLDecoder.decode(s);
+            }
+            System.out.println("After decoded: " + result);
+        }
+        
+        return result;
+    }
 }

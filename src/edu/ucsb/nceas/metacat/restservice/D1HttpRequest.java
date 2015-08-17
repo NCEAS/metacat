@@ -58,15 +58,16 @@ public class D1HttpRequest extends HttpServletRequestWrapper
         String strip = this.getContextPath() + this.getServletPath();
         System.out.println("stripping " + strip + " from requestURI");
         s = reqUri.substring(strip.length());
-        try
+        /*try
         {
             s = URLDecoder.decode(s, "UTF-8");
         }
         catch (UnsupportedEncodingException e)
         {
             s = URLDecoder.decode(s);
-        }
+        }*/
         System.out.println("new pathinfo: " + s);
         return s;
     }
+    
 }
