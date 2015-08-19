@@ -138,7 +138,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_META_CHANGED = "dirtySystemMetadata";
     protected static final String RESOURCE_GENERATE_ID = "generate";
     protected static final String RESOURCE_PUBLISH = "publish";
-    protected static final String RESOURCE_PACKAGE = "package";
+    protected static final String RESOURCE_PACKAGE = "packages";
     protected static final String RESOURCE_VIEWS = "views";
     protected static final String RESOURCE_TOKEN = "token";
 
@@ -448,6 +448,8 @@ public class MNResourceHandler extends D1ResourceHandler {
 	                    doViews(format, pid);
 	                    status = true;
 	                }
+                } else {
+                    throw new InvalidRequest("0000", "No resource matched for " + resource);
                 } 
                 
                 if (!status) {
