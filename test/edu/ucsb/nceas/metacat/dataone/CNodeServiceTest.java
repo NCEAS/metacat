@@ -37,6 +37,7 @@ import java.util.List;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -1229,8 +1230,11 @@ public class CNodeServiceTest extends D1NodeServiceTest {
          
           
           //update system metadata sucessfully
-          sysmeta1.setArchived(true);
-          CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1);
+          SystemMetadata sysmeta1c = new SystemMetadata();
+          BeanUtils.copyProperties(sysmeta1c, sysmeta1);
+          version = version.add(BigInteger.ONE);
+          sysmeta1c.setSerialVersion(version);
+          CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1c);
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
           assertTrue(metadata2.getSeriesId().equals(seriesId));
