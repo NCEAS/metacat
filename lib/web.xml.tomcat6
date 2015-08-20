@@ -27,6 +27,7 @@
     <filter-name>D1URLFilter</filter-name>
     <url-pattern>/d1/*</url-pattern>
     <dispatcher>REQUEST</dispatcher>
+    <dispatcher>FORWARD</dispatcher>
   </filter-mapping>
 
     <servlet>
