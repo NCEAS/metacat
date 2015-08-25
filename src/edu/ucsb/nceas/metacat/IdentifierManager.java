@@ -1697,6 +1697,10 @@ public class IdentifierManager {
         ObjectList ol = new ObjectList();
         DBConnection dbConn = null;
         int serialNumber = -1;
+        PreparedStatement countStmt=null;
+        ResultSet totalResult=null;
+        PreparedStatement fieldStmt = null;
+        ResultSet rs= null;
 
         try {
             String fieldSql = "select guid, date_uploaded, rights_holder, checksum, "
@@ -1708,6 +1712,7 @@ public class IdentifierManager {
             
             // the clause
             String whereClauseSql = "";
+            
 
             boolean f1 = false;
             boolean f2 = false;
@@ -1786,11 +1791,11 @@ public class IdentifierManager {
             String orderBySql = " order by guid ";
             String fieldQuery = fieldSql + whereClauseSql + orderBySql;
             String finalQuery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(fieldQuery, start, count);
-            PreparedStatement fieldStmt = dbConn.prepareStatement(finalQuery);
+            fieldStmt = dbConn.prepareStatement(finalQuery);
             
             // construct the count query and statment
             String countQuery = countSql + whereClauseSql;
-            PreparedStatement countStmt = dbConn.prepareStatement(countQuery);
+            countStmt = dbConn.prepareStatement(countQuery);
 
             if (f1 && f2 && f3 && f4) {
                 fieldStmt.setTimestamp(1, new Timestamp(startTime.getTime()));
@@ -1896,7 +1901,7 @@ public class IdentifierManager {
             
             // get the total object count no matter what
             int total = 0;
-            ResultSet totalResult = countStmt.executeQuery();
+            totalResult = countStmt.executeQuery();
             if (totalResult.next()) {
             	total = totalResult.getInt(1);
             }
@@ -1906,12 +1911,11 @@ public class IdentifierManager {
         	// set the totals
         	ol.setStart(start);
             ol.setCount(count);
-            ol.setTotal(total);
             
             // retrieve the actual records if requested
             if (count != 0) {
             	
-                ResultSet rs = fieldStmt.executeQuery();
+                rs = fieldStmt.executeQuery();
 	            while (rs.next()) {                
 	                
 	                String guid = rs.getString(1);
@@ -1959,25 +1963,45 @@ public class IdentifierManager {
 	                oi.setFormatId(fmtid);
 	
 	                oi.setSize(size);
-	
+	                
 	                ol.addObjectInfo(oi);                    
 
 	            }
 	            
 	            logMetacat.debug("list objects count: " + ol.sizeObjectInfoList());
-
 	            // set the actual count retrieved
 	            ol.setCount(ol.sizeObjectInfoList());
+	            ol.setTotal(total);
 	
 	        }
             
-        }
-
-        finally {
+        } finally {
             // Return database connection to the pool
+            try {
+                if(totalResult !=null ){
+                    totalResult.close();
+                }
+                if(countStmt!=null ) {
+                    countStmt.close();
+                }
+                if(rs != null) {
+                    rs.close();
+                }
+                if(fieldStmt != null) {
+                    fieldStmt.close();
+                }
+                
+            } catch (SQLException sql) {
+                
+            }
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            
         }
-
+        if(ol != null) {
+            logMetacat.debug("list objects start(before returning): " + ol.getStart());
+            logMetacat.debug("list objects count: " + ol.getCount());
+            logMetacat.debug("list objects total: " + ol.getTotal());
+        }
         return ol;
     }
     
