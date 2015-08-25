@@ -1272,7 +1272,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
 			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
 			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
-			format.setValue("application/bagit");
+			format.setValue("application/bagit-097");
 			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
@@ -1351,7 +1351,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			
 			// get the package we uploaded
 			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
-            format.setValue("application/bagit");
+            format.setValue("application/bagit-097");
 			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
 			File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
