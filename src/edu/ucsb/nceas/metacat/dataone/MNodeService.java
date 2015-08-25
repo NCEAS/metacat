@@ -1988,7 +1988,7 @@ public class MNodeService extends D1NodeService
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    if(formatId == null) {
 	        throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
-	    } else if(!formatId.getValue().equals("application/bagit")) {
+	    } else if(!formatId.getValue().equals("application/bagit-097")) {
 	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
 	    }
 	    String serviceFailureCode = "2871";
