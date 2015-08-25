@@ -70,7 +70,7 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
-import org.dataone.service.util.TypeMarshaller;
+import org.dataone.service.types.v2.TypeFactory;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
@@ -285,7 +285,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(null, pid);
         SystemMetadata retSysMeta = null;
         try {
-            retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+            retSysMeta = TypeFactory.convertTypeFromType(sysMeta, SystemMetadata.class);
         } catch (Exception e) {
             // report as service failure
             ServiceFailure sf = new ServiceFailure("1090", e.getMessage());
@@ -307,7 +307,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(session, pid);
         SystemMetadata retSysMeta = null;
         try {
-            retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+            retSysMeta = TypeFactory.convertTypeFromType(sysMeta, SystemMetadata.class);
         } catch (Exception e) {
             // report as service failure
             ServiceFailure sf = new ServiceFailure("1090", e.getMessage());
@@ -439,7 +439,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
-			v2Sysmeta = TypeMarshaller.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
@@ -493,7 +493,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	        org.dataone.service.types.v2.ObjectFormat format = impl.getFormat(fmtid);
 	        ObjectFormat v1Format = null;
 	        try {
-	            v1Format = TypeMarshaller.convertTypeFromType(format, ObjectFormat.class);
+	            v1Format = TypeFactory.convertTypeFromType(format, ObjectFormat.class);
 	        } catch (Exception e) {
 	            ServiceFailure sf = new ServiceFailure("4846", e.getMessage());
 	            sf.initCause(e);
@@ -538,7 +538,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         }
 		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		try {
-			//retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
+			//retLog = TypeFactory.convertTypeFromType(log, Log.class);
             LogV2toV1Converter converter = new LogV2toV1Converter();
             retLog = converter.convert(log);
 		} catch (Exception e) {
@@ -581,13 +581,13 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		        List<org.dataone.service.types.v2.ObjectFormat> objectFormatList = formats.getObjectFormatList();
 		        if(objectFormatList != null) {
 		            for(org.dataone.service.types.v2.ObjectFormat format : objectFormatList) {
-	                    ObjectFormat v1Format = TypeMarshaller.convertTypeFromType(format, ObjectFormat.class);
+	                    ObjectFormat v1Format = TypeFactory.convertTypeFromType(format, ObjectFormat.class);
 	                    retFormats.addObjectFormat(v1Format);
 	                }
 		        }
 		        
 		    }
-			//retFormats = TypeMarshaller.convertTypeFromType(formats, ObjectFormatList.class);
+			//retFormats = TypeFactory.convertTypeFromType(formats, ObjectFormatList.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4841", e.getMessage());
@@ -602,7 +602,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		org.dataone.service.types.v2.NodeList nodes = impl.listNodes();
 		NodeList retNodes = null;
 		try {
-			retNodes = TypeMarshaller.convertTypeFromType(nodes, NodeList.class);
+			retNodes = TypeFactory.convertTypeFromType(nodes, NodeList.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4801", e.getMessage());
@@ -634,7 +634,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
-			v2Sysmeta = TypeMarshaller.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());

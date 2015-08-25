@@ -26,11 +26,9 @@ package edu.ucsb.nceas.metacat.dataone.convert;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
-import org.dataone.service.util.TypeMarshaller;
 import org.jibx.runtime.JiBXException;
 /**
  * This class represents a converter to convert an DataONE v2 Log object to a v1 Log object.

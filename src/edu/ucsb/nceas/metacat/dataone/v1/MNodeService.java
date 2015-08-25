@@ -61,7 +61,7 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
-import org.dataone.service.util.TypeMarshaller;
+import org.dataone.service.types.v2.TypeFactory;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
@@ -169,7 +169,7 @@ public class MNodeService
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
-			v2Sysmeta = TypeMarshaller.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1190", e.getMessage());
@@ -241,7 +241,7 @@ public class MNodeService
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
-			v2Sysmeta = TypeMarshaller.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
@@ -268,7 +268,7 @@ public class MNodeService
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
-			v2Sysmeta = TypeMarshaller.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
@@ -373,7 +373,7 @@ public class MNodeService
 		org.dataone.service.types.v2.SystemMetadata sysMeta = impl.getSystemMetadata(session, pid);
 		SystemMetadata retSysMeta = null;
 		try {
-			retSysMeta = TypeMarshaller.convertTypeFromType(sysMeta, SystemMetadata.class);
+			retSysMeta = TypeFactory.convertTypeFromType(sysMeta, SystemMetadata.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4801", e.getMessage());
@@ -419,7 +419,7 @@ public class MNodeService
 		org.dataone.service.types.v2.Node node = impl.getCapabilities();
 		Node retNode = null;
 		try {
-			retNode = TypeMarshaller.convertTypeFromType(node, Node.class);
+			retNode = TypeFactory.convertTypeFromType(node, Node.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4801", e.getMessage());
@@ -465,7 +465,7 @@ public class MNodeService
 		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		
 		try {
-			//retLog = TypeMarshaller.convertTypeFromType(log, Log.class);
+			//retLog = TypeFactory.convertTypeFromType(log, Log.class);
 		    LogV2toV1Converter converter = new LogV2toV1Converter();
 		    retLog = converter.convert(log);
 		} catch (Exception e) {
