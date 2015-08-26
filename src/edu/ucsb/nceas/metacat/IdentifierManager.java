@@ -1971,10 +1971,10 @@ public class IdentifierManager {
 	            logMetacat.debug("list objects count: " + ol.sizeObjectInfoList());
 	            // set the actual count retrieved
 	            ol.setCount(ol.sizeObjectInfoList());
-	            ol.setTotal(total);
+	            
 	
 	        }
-            
+            ol.setTotal(total);
         } finally {
             // Return database connection to the pool
             try {
