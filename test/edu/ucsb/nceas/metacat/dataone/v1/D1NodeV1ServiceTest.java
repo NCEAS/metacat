@@ -53,8 +53,9 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
+import org.dataone.service.types.v2.TypeFactory;
 import org.dataone.service.util.Constants;
-import org.dataone.service.util.TypeMarshaller;
+
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.client.Metacat;
@@ -96,7 +97,7 @@ public class D1NodeV1ServiceTest extends D1NodeServiceTest {
 	  throws Exception
 	{
 	    org.dataone.service.types.v2.SystemMetadata v2Sysmeta = super.createSystemMetadata(id, owner, object);
-	    SystemMetadata sm = TypeMarshaller.convertTypeFromType(v2Sysmeta, SystemMetadata.class);
+	    SystemMetadata sm = TypeFactory.convertTypeFromType(v2Sysmeta, SystemMetadata.class);
         return sm;
 	}
 	
