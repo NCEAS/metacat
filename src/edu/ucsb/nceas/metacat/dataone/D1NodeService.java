@@ -955,7 +955,12 @@ public abstract class D1NodeService {
            session.getSubject().getValue());
       
       // check if this is the node calling itself (MN)
-      allowed = isNodeAdmin(session);
+      try {
+          allowed = isNodeAdmin(session);
+      } catch (Exception e) {
+          logMetacat.warn("We can't determine if the session is a node subject. But we will contiune to check if it is a cn subject.");
+      }
+      
       
       // check the CN list
       if (!allowed) {
@@ -978,7 +983,7 @@ public abstract class D1NodeService {
           nodes = cn.listNodes().getNodeList();
       }
       catch (Throwable e) {
-          logMetacat.warn(e.getMessage());
+          logMetacat.warn("Couldn't get the node list from the cn since "+e.getMessage()+". So we can't determine if the subject is a CN.");
           return false;  
       }
           
