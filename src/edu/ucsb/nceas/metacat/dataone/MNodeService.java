@@ -1265,7 +1265,7 @@ public class MNodeService extends D1NodeService
      */
     @Override
     public InputStream getReplica(Session session, Identifier pid) 
-        throws NotAuthorized, NotImplemented, ServiceFailure, InvalidToken {
+        throws NotAuthorized, NotImplemented, ServiceFailure, InvalidToken, NotFound {
 
         logMetacat.info("MNodeService.getReplica() called.");
 
@@ -1287,7 +1287,7 @@ public class MNodeService extends D1NodeService
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         } catch (McdbDocNotFoundException e) {
-            throw new ServiceFailure("2181", "The object specified by " + 
+            throw new NotFound("2185", "The object specified by " + 
                     pid.getValue() + " does not exist at this node.");
             
         } catch (SQLException e) {
@@ -1305,7 +1305,7 @@ public class MNodeService extends D1NodeService
                 + e1.getMessage());
             
         } catch (NotFound e1) {
-            throw new ServiceFailure("2181", "Could not determine if node is authorized: " 
+            throw new NotFound("2185", "Could not find the object "+pid.getValue()+" in this node - " 
                     + e1.getMessage());
 
         } catch (InvalidRequest e1) {
@@ -1322,15 +1322,17 @@ public class MNodeService extends D1NodeService
             try {
                 inputStream = MetacatHandler.read(localId);
             } catch (Exception e) {
-                throw new ServiceFailure("1020", "The object specified by " + 
+                throw new ServiceFailure("2181", "The object specified by " + 
                     pid.getValue() + "could not be returned due to error: " + e.getMessage());
             }
+        } else {
+            throw new NotAuthorized("2182", "The pid "+pid.getValue()+" is not authorized to be read by the client.");
         }
 
         // if we fail to set the input stream
         if (inputStream == null) {
             throw new ServiceFailure("2181", "The object specified by " + 
-                pid.getValue() + "does not exist at this node.");
+                pid.getValue() + " can't be returned from the node.");
         }
 
         // log the replica event
