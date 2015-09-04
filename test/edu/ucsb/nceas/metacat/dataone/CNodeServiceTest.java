@@ -473,15 +473,60 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertTrue(result);
 			// get it
 			sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+			BigInteger version = sysmeta.getSerialVersion();
+			System.out.println("the version of system metadata is "+version.intValue());
 			assertNotNull(sysmeta);
 			// check it
 			assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
 			
+			//set it failed.
+			status = ReplicationStatus.FAILED;
+            result = CNodeService.getInstance(request).setReplicationStatus(session, guid, replicaMemberNode, status, failure);
+            assertTrue(result);
+            // get it
+            sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            BigInteger version1 = sysmeta.getSerialVersion();
+            System.out.println("the version of system metadata is "+version1.intValue());
+            assertTrue(version1.compareTo(version) == 1);
+            assertNotNull(sysmeta);
+            // check it
+            assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+			
+            //set it failed again
+            status = ReplicationStatus.FAILED;
+            result = CNodeService.getInstance(request).setReplicationStatus(session, guid, replicaMemberNode, status, failure);
+            assertTrue(result);
+            // get it
+            sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            BigInteger version2 = sysmeta.getSerialVersion();
+            System.out.println("the version of system metadata is "+version2.intValue());
+            assertTrue(version2.compareTo(version1) ==0);
+            assertNotNull(sysmeta);
+            // check it
+            assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+			
+			//requeque it
+			status = ReplicationStatus.QUEUED;
+			result = CNodeService.getInstance(request).setReplicationStatus(session, guid, replicaMemberNode, status, failure);
+            assertTrue(result);
+            // get it
+            sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            BigInteger version3 = sysmeta.getSerialVersion();
+            System.out.println("the version of system metadata is "+version3.intValue());
+            assertTrue(version3.compareTo(version2) ==1);
+            assertNotNull(sysmeta);
+            // check it
+            assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
+			
+            
 			//Test the success of setReplicationStatus by a register mn subject
 			Session mnSession = getMNSessionFromCN();
 			status = ReplicationStatus.COMPLETED;
 			result = CNodeService.getInstance(request).setReplicationStatus(mnSession, guid, replicaMemberNode, status, failure);
 			sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+			BigInteger version4 = sysmeta.getSerialVersion();
+			            System.out.println("the version of system metadata is "+version4.intValue());
+			            assertTrue(version4.compareTo(version3) ==1);
             assertNotNull(sysmeta);
             // check it
             assertEquals(status, sysmeta.getReplica(0).getReplicationStatus());
