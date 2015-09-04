@@ -826,6 +826,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                  String msg = "The replication request of the object identified by " + 
                      pid.getValue() + " failed.  The error message was " +
                      failure.getMessage() + ".";
+                 logMetacat.error(msg);
               }
               
               if (replicas.size() > 0 && replicas != null) {
@@ -919,6 +920,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
             			  status.toString() + "is prohibited for identifier " +
             			  pid.getValue() + " and target node " + 
             			  targetReplica.getReplicaMemberNode().getValue());
+              }
+              
+              if(targetReplica.getReplicationStatus().equals(status)) {
+                  //There is no change in the status, we do nothing.
+                  return true;
               }
               
               targetReplica.setReplicationStatus(status);
