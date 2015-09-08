@@ -538,9 +538,9 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
         }
 		org.dataone.service.types.v2.Log log = impl.getLogRecords(session, fromDate, toDate, eventValue, pidFilter, start, count);
 		try {
-			//retLog = TypeFactory.convertTypeFromType(log, Log.class);
-            LogV2toV1Converter converter = new LogV2toV1Converter();
-            retLog = converter.convert(log);
+			retLog = TypeFactory.convertTypeFromType(log, Log.class);
+            //LogV2toV1Converter converter = new LogV2toV1Converter();
+            //retLog = converter.convert(log);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1490", e.getMessage());
@@ -577,7 +577,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		org.dataone.service.types.v2.ObjectFormatList formats = impl.listFormats();
 		ObjectFormatList retFormats = new ObjectFormatList();
 		try {
-		    if(formats != null) {
+		    /*if(formats != null) {
 		        List<org.dataone.service.types.v2.ObjectFormat> objectFormatList = formats.getObjectFormatList();
 		        if(objectFormatList != null) {
 		            for(org.dataone.service.types.v2.ObjectFormat format : objectFormatList) {
@@ -586,8 +586,8 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	                }
 		        }
 		        
-		    }
-			//retFormats = TypeFactory.convertTypeFromType(formats, ObjectFormatList.class);
+		    }*/
+			retFormats = TypeFactory.convertTypeFromType(formats, ObjectFormatList.class);
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("4841", e.getMessage());
