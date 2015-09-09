@@ -1577,11 +1577,11 @@ public abstract class D1NodeService {
           
           BigInteger newVersion = sysmeta.getSerialVersion();
           if(newVersion == null) {
-              throw new InvalidSystemMetadata("4956", "The serial version can't be null in the new system metadata");
+              throw new InvalidRequest("4869", "The serial version can't be null in the new system metadata");
           }
           BigInteger currentVersion = currentSysmeta.getSerialVersion();
           if(currentVersion != null && newVersion.compareTo(currentVersion) <= 0) {
-              throw new InvalidSystemMetadata("4956", "The serial version in the new system metadata is "+newVersion.toString()+
+              throw new InvalidRequest("4869", "The serial version in the new system metadata is "+newVersion.toString()+
                       " which is less than or equals the previous version "+currentVersion.toString()+". This is illegal in the updateSystemMetadata method.");
           }
           Identifier currentSid = currentSysmeta.getSeriesId();
@@ -1589,10 +1589,10 @@ public abstract class D1NodeService {
               //new sid must match the current sid
               Identifier newSid = sysmeta.getSeriesId();
               if (!isValidIdentifier(newSid)) {
-                  throw new InvalidSystemMetadata("4956", "The series id in the system metadata is invalid in the request.");
+                  throw new InvalidRequest("4869", "The series id in the system metadata is invalid in the request.");
               } else {
                   if(!newSid.getValue().equals(currentSid.getValue())) {
-                      throw new InvalidSystemMetadata("4956", "The series id "+newSid.getValue() +" in the system metadata doesn't match the current sid "+currentSid.getValue());
+                      throw new InvalidRequest("4869", "The series id "+newSid.getValue() +" in the system metadata doesn't match the current sid "+currentSid.getValue());
                   }
               }
           } else {
@@ -1649,17 +1649,17 @@ public abstract class D1NodeService {
 	/*
 	 * Check if the newMeta modifies an immutable field. 
 	 */
-	private void checkModifiedImmutableFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest, InvalidSystemMetadata{
+	private void checkModifiedImmutableFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest{
 	    if(orgMeta != null && newMeta != null) {
 	        if(newMeta.getIdentifier() == null) {
-	            throw new InvalidSystemMetadata("4956", "The new version of the system metadata is invalid since the identifier is null");
+	            throw new InvalidRequest("4869", "The new version of the system metadata is invalid since the identifier is null");
 	        }
 	        if(!orgMeta.getIdentifier().equals(newMeta.getIdentifier())) {
 	            throw new InvalidRequest("4869","The request is trying to modify an immutable field in the SystemMeta: the new system meta's identifier "+newMeta.getIdentifier().getValue()+" is "+
 	                  "different to the orginal one "+orgMeta.getIdentifier().getValue());
 	        }
 	        if(newMeta.getSize() == null) {
-	            throw new InvalidSystemMetadata("4956", "The new version of the system metadata is invalid since the size is null");
+	            throw new InvalidRequest("4869", "The new version of the system metadata is invalid since the size is null");
 	        }
 	        if(!orgMeta.getSize().equals(newMeta.getSize())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's size "+newMeta.getSize().longValue()+" is "+
