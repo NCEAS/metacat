@@ -40,6 +40,7 @@ import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
@@ -437,9 +438,17 @@ public class D1Admin extends MetacatAdmin {
         // check if this is new or an update
         boolean update = isNodeRegistered(node.getIdentifier().getValue());
         
-        // Session is null, because the libclient code automatically sets up an
-        // SSL session for us using the client certificate provided
+        // Set DN so we can look up session in libclient
         Session session = null;
+        try {
+	        session = new Session();
+	        Subject subject = new Subject();
+	        subject.setValue(CertificateManager.getInstance().getSubjectDN(CertificateManager.getInstance().loadCertificateFromFile(mnCertificatePath)));
+			session.setSubject(subject);
+        } catch (Exception e) {
+        	logMetacat.error("Could not set session subject using certificate location" + e.getMessage(), e);
+        }
+		
         if (update) {
         	logMetacat.debug("Updating node with DataONE. " + cn.getNodeBaseServiceUrl());
             boolean result = cn.updateNodeCapabilities(session, node.getIdentifier(), node);
