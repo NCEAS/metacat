@@ -1686,6 +1686,11 @@ public abstract class D1NodeService {
                         "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
 	        }
 	        
+	        if (orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() == null ) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node is null and it "+" is "+
+                        "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
+	        }
+	        
 	        if(orgMeta.getSeriesId() != null && newMeta.getSeriesId() != null && !orgMeta.getSeriesId().equals(newMeta.getSeriesId())) {
                 throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id  "+newMeta.getSeriesId().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getSeriesId().getValue());
