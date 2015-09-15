@@ -581,7 +581,7 @@ public class EventLog
 					
 					String logEventString = rs.getString(6);
 					if(logEventString == null) {
-					    continue;
+					    logEventString = "unknown";
 					}
 					logEntry.setEvent(logEventString);
 					logEntry.setDateLogged(rs.getTimestamp(7));
