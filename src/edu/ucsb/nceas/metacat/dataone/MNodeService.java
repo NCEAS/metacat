@@ -1422,6 +1422,9 @@ public class MNodeService extends D1NodeService
             throw sf; 
         }
         
+        if(currentLocalSysMeta == null) {
+            throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
+        }
         if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
             try {
                 newSysMeta = cn.getSystemMetadata(null, pid);
@@ -1431,7 +1434,8 @@ public class MNodeService extends D1NodeService
                 "for pid " + pid.getValue() +", the CN reports it is not found." +
                 " The error message was: " + e.getMessage();
                 logMetacat.error(msg);
-                ServiceFailure sf = new ServiceFailure("1333", msg);
+                //ServiceFailure sf = new ServiceFailure("1333", msg);
+                InvalidRequest sf = new InvalidRequest("1334", msg);
                 sf.initCause(e);
                 throw sf;
             }
