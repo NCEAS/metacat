@@ -580,6 +580,9 @@ public class EventLog
 					logEntry.setSubject(subject);
 					
 					String logEventString = rs.getString(6);
+					if(logEventString == null) {
+					    continue;
+					}
 					logEntry.setEvent(logEventString);
 					logEntry.setDateLogged(rs.getTimestamp(7));
 					
