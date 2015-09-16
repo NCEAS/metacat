@@ -948,7 +948,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // update the metadata
           try {
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-              systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              // Based on CN behavior discussion 9/16/15, we no longer want to 
+              // update the modified date for changes to the replica list
+              //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
 
               if ( !status.equals(ReplicationStatus.QUEUED) && 
@@ -2030,7 +2032,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // update the metadata
           try {
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-              systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              // Based on CN behavior discussion 9/16/15, we no longer want to 
+              // update the modified date for changes to the replica list
+              //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
               
               // inform replica nodes of the change if the status is complete
