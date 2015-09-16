@@ -1572,7 +1572,7 @@ public abstract class D1NodeService {
       logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
           //do we need throw an exception?
-          
+          logMetacat.warn("Currently there is no system metadata in this node associated with the pid "+pid.getValue());
       } else {
           
           BigInteger newVersion = sysmeta.getSerialVersion();
@@ -1586,6 +1586,7 @@ public abstract class D1NodeService {
           }
           Identifier currentSid = currentSysmeta.getSeriesId();
           if(currentSid != null) {
+              logMetacat.debug("In the branch that the sid is not null in the current system metadata and the current sid is "+currentSid.getValue());
               //new sid must match the current sid
               Identifier newSid = sysmeta.getSeriesId();
               if (!isValidIdentifier(newSid)) {
@@ -1650,7 +1651,9 @@ public abstract class D1NodeService {
 	 * Check if the newMeta modifies an immutable field. 
 	 */
 	private void checkModifiedImmutableFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest{
+	    logMetacat.debug("in the start of the checkModifiedImmutableFields method");
 	    if(orgMeta != null && newMeta != null) {
+	        logMetacat.debug("in the checkModifiedImmutableFields method when the org and new system metadata is not null");
 	        if(newMeta.getIdentifier() == null) {
 	            throw new InvalidRequest("4869", "The new version of the system metadata is invalid since the identifier is null");
 	        }
@@ -1671,6 +1674,13 @@ public abstract class D1NodeService {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getChecksum().getValue());
 	        }
+	        if(orgMeta.getSubmitter() != null) {
+	            logMetacat.debug("in the checkModifiedImmutableFields method and orgMeta.getSubmitter is not null and the orginal submiter is "+orgMeta.getSubmitter().getValue());
+	        }
+	        
+	        if(newMeta.getSubmitter() != null) {
+                logMetacat.debug("in the checkModifiedImmutableFields method and newMeta.getSubmitter is not null and the submiter in the new system metadata is "+newMeta.getSubmitter().getValue());
+            }
 	        if(orgMeta.getSubmitter() != null && newMeta.getSubmitter() != null && !orgMeta.getSubmitter().equals(newMeta.getSubmitter())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter "+newMeta.getSubmitter().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getSubmitter().getValue());
