@@ -667,11 +667,9 @@ public class MNResourceHandler extends D1ResourceHandler {
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, 
         InvalidToken {
 
-        long serialVersion = 0L;
+        //final long serialVersion = 0L;
         String serialVersionStr = null;
-        Date dateSysMetaLastModified = null;
         String dateSysMetaLastModifiedStr = null;
-        Identifier pid = null;
         
         // mkae sure we have the multipart params
         try {
@@ -681,32 +679,33 @@ public class MNResourceHandler extends D1ResourceHandler {
 		}
         
         // get the pid
+        String id = null;
         try {
-        	String id = multipartparams.get("pid").get(0);
-        	pid = new Identifier();
-            pid.setValue(id);            
+        	id = multipartparams.get("pid").get(0);
         } catch (NullPointerException e) {
             String msg = "The 'pid' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("1334", msg);
-        }      
+        }  
+        final Identifier pid = new Identifier();
+        pid.setValue(id);
         
         // get the serialVersion
         try {
             serialVersionStr = multipartparams.get("serialVersion").get(0);
-            serialVersion = new Long(serialVersionStr).longValue();
-            
         } catch (NullPointerException e) {
             String msg = "The 'serialVersion' must be provided as a parameter and was not.";
             logMetacat.error(msg);
             throw new InvalidRequest("1334", msg);
             
-        }       
+        }  
+        
+        final long serialVersion = (new Long(serialVersionStr)).longValue();
         
         // get the dateSysMetaLastModified
         try {
             dateSysMetaLastModifiedStr = multipartparams.get("dateSysMetaLastModified").get(0);
-            dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
+            
             
         } catch (NullPointerException e) {
             String msg = 
@@ -715,10 +714,26 @@ public class MNResourceHandler extends D1ResourceHandler {
             logMetacat.error(msg);
             throw new InvalidRequest("1334", msg);
             
-        }       
+        }      
+        final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
         
-        // call the service
-        MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+        // run it in a thread to avoid connection timeout
+        Runnable runner = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                   // call the service
+                    MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                } catch (Exception e) {
+                    logMetacat.error("Error running replication: " + e.getMessage(), e);
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        };
+        // submit the task, and that's it
+        executor.submit(runner);
+        
+        // thread was started, so we return success
         response.setStatus(200);
     }
     
