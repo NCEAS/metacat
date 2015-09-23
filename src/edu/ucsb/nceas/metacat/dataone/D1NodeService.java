@@ -1575,10 +1575,10 @@ public abstract class D1NodeService {
       logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
           //do we need throw an exception?
-          logMetacat.warn("Currently there is no system metadata in this node associated with the pid "+pid.getValue());
+          logMetacat.warn("D1NodeService.updateSystemMetadata: Currently there is no system metadata in this node associated with the pid "+pid.getValue());
       } else {
           
-          BigInteger newVersion = sysmeta.getSerialVersion();
+          /*BigInteger newVersion = sysmeta.getSerialVersion();
           if(newVersion == null) {
               throw new InvalidRequest("4869", "The serial version can't be null in the new system metadata");
           }
@@ -1586,7 +1586,7 @@ public abstract class D1NodeService {
           if(currentVersion != null && newVersion.compareTo(currentVersion) <= 0) {
               throw new InvalidRequest("4869", "The serial version in the new system metadata is "+newVersion.toString()+
                       " which is less than or equals the previous version "+currentVersion.toString()+". This is illegal in the updateSystemMetadata method.");
-          }
+          }*/
           Identifier currentSid = currentSysmeta.getSeriesId();
           if(currentSid != null) {
               logMetacat.debug("In the branch that the sid is not null in the current system metadata and the current sid is "+currentSid.getValue());
