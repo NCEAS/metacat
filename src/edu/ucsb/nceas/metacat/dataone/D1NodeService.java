@@ -976,11 +976,13 @@ public abstract class D1NodeService {
   protected boolean isCNAdmin (Session session) {
       boolean allowed = false;
       List<Node> nodes = null;
-
+      logMetacat.debug("D1NodeService.isCNAdmin - the beginning");
       try {
           // are we allowed to do this? only CNs are allowed
           CNode cn = D1Client.getCN();
+          logMetacat.debug("D1NodeService.isCNAdmin - after getting the cn.");
           nodes = cn.listNodes().getNodeList();
+          logMetacat.debug("D1NodeService.isCNAdmin - after getting the node list.");
       }
       catch (Throwable e) {
           logMetacat.warn("Couldn't get the node list from the cn since "+e.getMessage()+". So we can't determine if the subject is a CN.");
@@ -996,7 +998,7 @@ public abstract class D1NodeService {
       for ( Node node : nodes ) {
           
           NodeReference nodeReference = node.getIdentifier();
-          logMetacat.debug("In isAdminAuthorized(), Node reference is: " + nodeReference.getValue());
+          logMetacat.debug("In isCNAdmin(), Node reference is: " + nodeReference.getValue());
           
           Subject subject = session.getSubject();
           
@@ -1005,7 +1007,7 @@ public abstract class D1NodeService {
               
               // check if the session subject is in the node subject list
               for (Subject nodeSubject : nodeSubjects) {
-                  logMetacat.debug("In isAdminAuthorized(), comparing subjects: " +
+                  logMetacat.debug("In isCNAdmin(), comparing subjects: " +
                       nodeSubject.getValue() + " and " + subject.getValue());
                   if ( nodeSubject.equals(subject) ) {
                       allowed = true; // subject of session == target node subject
@@ -1015,6 +1017,7 @@ public abstract class D1NodeService {
               }              
           }
       }
+      logMetacat.debug("D1NodeService.isCNAdmin. Is it a cn admin? "+allowed);
       return allowed;
   }
   
@@ -1060,7 +1063,7 @@ public abstract class D1NodeService {
               }
           }              
       }
-      
+      logMetacat.debug("In is NodeAdmin method. Is this a node admin? "+allowed);
       return allowed;
   }
   
