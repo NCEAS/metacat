@@ -2303,8 +2303,29 @@ public class MNodeService extends D1NodeService
          }
          
      }
-      //update the system metadata locally  
-      boolean success = super.updateSystemMetadata(session, pid, sysmeta);
+      //update the system metadata locally
+      boolean success = false;
+      try {
+          HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+          SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          if(currentSysmeta == null) {
+              throw  new InvalidRequest("4863", "We can't find the current system metadata on the member node for the id "+pid.getValue());
+          }
+          Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
+          Date commingModiDate = sysmeta.getDateSysMetadataModified();
+          if(commingModiDate == null) {
+              throw  new InvalidRequest("4863", "The system metadata modification date can't be null.");
+          }
+          if(currentModiDate != null && commingModiDate.getTime() != currentModiDate.getTime()) {
+              throw new InvalidRequest("4863", "Your system metadata modification date is "+commingModiDate.toString()+
+                      ". It doesn't match our current system metadata modification date in the member node - "+currentModiDate.toString()+
+                      ". Please check if you have got the newest version of the system metadata before the modification.");
+          }
+          boolean needUpdateModificationDate = true;
+          success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta);
+      } finally {
+          HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+      }
       
       if(success) {
           //TODO

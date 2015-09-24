@@ -1517,17 +1517,13 @@ public abstract class D1NodeService {
    */
     protected void updateSystemMetadata(SystemMetadata sysMeta)
         throws ServiceFailure {
-
         logMetacat.debug("D1NodeService.updateSystemMetadata() called.");
-        sysMeta.setDateSysMetadataModified(new Date());
         try {
             HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
-            HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-            // submit for indexing
-            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+            boolean needUpdateModificationDate = true;
+            updateSystemMetadataWithoutLock(sysMeta, needUpdateModificationDate);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
-
         } finally {
             HazelcastService.getInstance().getSystemMetadataMap().unlock(sysMeta.getIdentifier());
 
@@ -1536,7 +1532,30 @@ public abstract class D1NodeService {
     }
     
     /**
-     * Update the system metadata of the specified pid
+     * Update system metadata without locking the system metadata in hazelcast server. So the caller should lock it first. 
+     * @param sysMeta
+     * @param needUpdateModificationDate
+     * @throws ServiceFailure
+     */
+    private void updateSystemMetadataWithoutLock(SystemMetadata sysMeta, boolean needUpdateModificationDate) throws ServiceFailure {
+        logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() called.");
+        if(needUpdateModificationDate) {
+            logMetacat.debug("D1NodeService.updateSystemMetadataWithoutLock() - update the modification date.");
+            sysMeta.setDateSysMetadataModified(new Date());
+        }
+        
+        // submit for indexing
+        try {
+            HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+        } catch (Exception e) {
+            throw new ServiceFailure("4862", e.getMessage());
+            //logMetacat.warn("D1NodeService.updateSystemMetadataWithoutLock - we can't submit the change of the system metadata to the solr index since "+e.getMessage());
+        }
+    }
+    
+    /**
+     * Update the system metadata of the specified pid. The caller of this method should lock the system metadata in hazelcast server.
      * @param session - the identity of the client which calls the method
      * @param pid - the identifier of the object which will be updated
      * @param sysmeta - the new system metadata  
@@ -1548,11 +1567,11 @@ public abstract class D1NodeService {
      * @throws InvalidSystemMetadata
      * @throws InvalidToken
      */
-	public boolean updateSystemMetadata(Session session, Identifier pid,
-			SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
+	protected boolean updateSystemMetadata(Session session, Identifier pid,
+			SystemMetadata sysmeta, boolean needUpdateModificationDate, SystemMetadata currentSysmeta) throws NotImplemented, NotAuthorized,
 			ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
 		
-		// The lock to be used for this identifier
+	  // The lock to be used for this identifier
       Lock lock = null;
      
       // verify that guid == SystemMetadata.getIdentifier()
@@ -1568,7 +1587,7 @@ public abstract class D1NodeService {
       //compare serial version.
       
       //check the sid
-      SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+      //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
       logMetacat.debug("The current dateUploaded is ============"+currentSysmeta.getDateUploaded());
       logMetacat.debug("the dateUploaded in the new system metadata is "+sysmeta.getDateUploaded());
       logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
@@ -1633,7 +1652,7 @@ public abstract class D1NodeService {
       }
       
       // do the actual update
-      this.updateSystemMetadata(sysmeta);
+      updateSystemMetadataWithoutLock(sysmeta, needUpdateModificationDate);
       
       try {
     	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());

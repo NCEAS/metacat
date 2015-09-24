@@ -2199,8 +2199,20 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
          }
    }
-    //update the system metadata locally  
-    boolean success = super.updateSystemMetadata(session, pid, sysmeta);
+
+    //update the system metadata locally
+    boolean success = false;
+    try {
+        HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+        SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+        if(currentSysmeta == null) {
+            throw  new InvalidRequest("4863", "We can't find the current system metadata on the member node for the id "+pid.getValue());
+        }
+        boolean needUpdateModificationDate = false;//cn doesn't need to change the modification date.
+        success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta);
+    } finally {
+        HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+    }
     return success;
   }
   
