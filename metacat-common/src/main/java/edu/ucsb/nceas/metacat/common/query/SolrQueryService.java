@@ -178,14 +178,14 @@ public abstract class SolrQueryService {
                             query.append(OPENPARENTHESE+READPERMISSION+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
                             if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
                                 query.append(OR+OPENPARENTHESE+RIGHTSHOLDER+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
-                            } else if (subjectName.equals(Constants.SUBJECT_PUBLIC) {
+                            } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
                                 query.append(OR+OPENPARENTHESE+IS_PUBLIC+COLON+"true"+CLOSEPARENTHESE);
                             }
                         } else {
                             query.append(OR + OPENPARENTHESE+READPERMISSION+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
                             if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
                                 query.append(OR + OPENPARENTHESE+RIGHTSHOLDER+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
-                            } else if (subjectName.equals(Constants.SUBJECT_PUBLIC) {
+                            } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
                                 query.append(OR+OPENPARENTHESE+IS_PUBLIC+COLON+"true"+CLOSEPARENTHESE);
                             }
                         }
