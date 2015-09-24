@@ -363,20 +363,22 @@ public class MNResourceHandler extends D1ResourceHandler {
 		                engine = decode(engine);
 		                logMetacat.debug("query engine: " + engine);
 		                
-		                // get the query if it is there
-		                query = extra.substring(engineIndex, extra.length());
-		                query = decode(query);
-		                if (query != null && query.length() == 0) {
-		                	query = null;
-		                } else {
-		                	if (query.startsWith("/")) {
-		                		query = query.substring(1);
-		                    }
-		                	// remove the query delimiter if it exists
-		                	if (query.startsWith("?")) {
-		                		query = query.substring(1);
-		                    }
+		                // check the query string first
+		                query = request.getQueryString();
+		                
+		                // if null, look at the whole endpoint
+		                if (query == null) {
+			                // get the query if it is there
+			                query = extra.substring(engineIndex, extra.length());
+			                if (query != null && query.length() == 0) {
+			                	query = null;
+			                } else {
+			                	if (query.startsWith("/")) {
+			                		query = query.substring(1);
+			                    }
+			                }
 		                }
+		                query = decode(query);
 		                logMetacat.debug("query: " + query);
 
 	                }
