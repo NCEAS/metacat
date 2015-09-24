@@ -158,7 +158,7 @@
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="isPublic" />
 					<constructor-arg name="xpath"
-						value="(//accessPolicy/allow[permission= 'read']/subject[text()='public']/text() | //accessPolicy/allow[permission= 'write']/subject[text()='public']/text() | //accessPolicy/allow[permission= 'changePermission']/subject[text()='public']/text() | //rightsHolder/text())[1]" />
+						value="(//accessPolicy/allow[permission= 'read']/subject[text()='public']/text() | //accessPolicy/allow[permission= 'write']/subject[text()='public']/text() | //accessPolicy/allow[permission= 'changePermission']/subject[text()='public']/text() | //rightsHolder[text()='public']/text())[1] />
 					<property name="converter" ref="booleanPublicConverter" />
 				</bean>
 		        <!-- <bean class="org.dataone.cn.indexer.parser.ResolveSolrField">
