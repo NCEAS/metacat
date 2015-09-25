@@ -2041,7 +2041,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         String str1 = "object1";
         String str2 = "object2";
         String str3 = "object3";
-
+        
+        Date date = new Date();
+        Thread.sleep(2000);
         //insert test documents with a series id
         Session session = getTestSession();
         Identifier guid = new Identifier();
@@ -2063,21 +2065,30 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(metadata.getSize().equals(sysmeta.getSize()));
         System.out.println("the identifier is "+guid.getValue());
         
-        
-        
-        //update system metadata sucessfully
+        Date current = sysmeta.getDateSysMetadataModified();
+        //updating system metadata failed since the date doesn't match
         sysmeta.setArchived(true);
+        sysmeta.setDateSysMetadataModified(date);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        //update system metadata sucessfully
+        sysmeta.setDateSysMetadataModified(current);
         BigInteger serialVersion = metadata.getSerialVersion();
-        System.out.println("the current version is "+serialVersion.toString());
-        serialVersion = serialVersion.add(BigInteger.ONE);
-        System.out.println("the new version is "+serialVersion.toString());
-        sysmeta.setSerialVersion(serialVersion);
+        //System.out.println("the current version is "+serialVersion.toString());
+        //serialVersion = serialVersion.add(BigInteger.ONE);
+        //System.out.println("the new version is "+serialVersion.toString());
+        //sysmeta.setSerialVersion(serialVersion);
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
         SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
         assertTrue(metadata2.getIdentifier().equals(guid));
         assertTrue(metadata2.getSeriesId().equals(seriesId));
         assertTrue(metadata2.getArchived().equals(true));
         assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
+        assertTrue(metadata2.getDateSysMetadataModified().getTime() > current.getTime());
         
         Identifier newId = new Identifier();
         newId.setValue("newValue");
@@ -2128,7 +2139,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
-}
+    }
     
     public void testUpdateObsoletesAndObsoletedBy() throws Exception {
         String str1 = "object1";

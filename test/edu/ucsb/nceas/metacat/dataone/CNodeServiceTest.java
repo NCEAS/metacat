@@ -1239,6 +1239,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           String str2 = "object2";
           String str3 = "object3";
   
+          Date date = new Date();
           //insert test documents with a series id
           Session session = getCNSession();
           Identifier guid = new Identifier();
@@ -1277,14 +1278,14 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           //update system metadata sucessfully
           SystemMetadata sysmeta1c = new SystemMetadata();
           BeanUtils.copyProperties(sysmeta1c, sysmeta1);
-          version = version.add(BigInteger.ONE);
-          sysmeta1c.setSerialVersion(version);
+          sysmeta1c.setDateSysMetadataModified(date);
           CNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta1c);
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
           assertTrue(metadata2.getSeriesId().equals(seriesId));
           assertTrue(metadata2.getArchived().equals(true));
           assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
+          assertTrue(metadata2.getDateSysMetadataModified().getTime() == date.getTime());
           
           SystemMetadata sysmeta2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           version = sysmeta2.getSerialVersion();
