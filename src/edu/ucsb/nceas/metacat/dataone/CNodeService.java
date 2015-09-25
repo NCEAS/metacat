@@ -2205,9 +2205,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     try {
         HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
         SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+       
         if(currentSysmeta == null) {
             throw  new InvalidRequest("4863", "We can't find the current system metadata on the member node for the id "+pid.getValue());
         }
+        // CN will ignore the comming serial version and replica list fields from the mn node. 
+        BigInteger currentSerialVersion = currentSysmeta.getSerialVersion();
+        sysmeta.setSerialVersion(currentSerialVersion);
+        List<Replica> replicas = currentSysmeta.getReplicaList();
+        sysmeta.setReplicaList(replicas);
         boolean needUpdateModificationDate = false;//cn doesn't need to change the modification date.
         success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta);
     } finally {
