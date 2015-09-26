@@ -33,6 +33,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.ArrayList;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -97,7 +98,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new CNodeServiceTest("initialize"));
 		
-		suite.addTest(new CNodeServiceTest("testChecksum"));
+		/*suite.addTest(new CNodeServiceTest("testChecksum"));
 		suite.addTest(new CNodeServiceTest("testCreate"));
 		suite.addTest(new CNodeServiceTest("testGet"));
 		suite.addTest(new CNodeServiceTest("testGetFormat"));
@@ -116,7 +117,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testSetOwner"));
 		suite.addTest(new CNodeServiceTest("readDeletedObject"));
 		suite.addTest(new CNodeServiceTest("testGetSID"));
-		suite.addTest(new CNodeServiceTest("testListViews"));
+		suite.addTest(new CNodeServiceTest("testListViews"));*/
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
 	
 		return suite;
@@ -1337,6 +1338,81 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           } catch (Exception e) {
               assertTrue(e instanceof InvalidRequest);
           }
+          
+          // test cn.updateSystemMetadata will ignore the serial version and replica list
+          Identifier id = new Identifier();
+          id.setValue(generateDocumentId());
+          object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+          SystemMetadata sysmeta10 = createSystemMetadata(id, session.getSubject(), object1);
+          List<Replica> replicas = new ArrayList<Replica>();
+          Replica replica1= new Replica();
+          NodeReference node1 = new NodeReference();
+          node1.setValue("node1");
+          replica1.setReplicaMemberNode(node1);
+          replica1.setReplicationStatus(ReplicationStatus.FAILED);
+          replica1.setReplicaVerified(date);
+          replicas.add(replica1);
+          Replica replica2= new Replica();
+          NodeReference node2 = new NodeReference();
+          node2.setValue("node2");
+          replica2.setReplicaMemberNode(node2);
+          replica2.setReplicationStatus(ReplicationStatus.FAILED);
+          replica2.setReplicaVerified(date);
+          replicas.add(replica2);
+          sysmeta10.setReplicaList(replicas);
+          sysmeta10.setArchived(false);
+          CNodeService.getInstance(request).create(session, id, object1, sysmeta10);
+          SystemMetadata result = CNodeService.getInstance(request).getSystemMetadata(session, id);
+          assertTrue(result.getIdentifier().equals(id));
+          System.out.println("the serial version is "+result.getSerialVersion().intValue());
+          assertTrue(result.getSerialVersion().intValue() == 1);
+          List<Replica> list1 = result.getReplicaList();
+          assertTrue(list1.size()==2);
+          assertTrue(result.getReplica(0).getReplicaMemberNode().getValue().equals("node1"));
+          assertTrue(result.getReplica(0).getReplicationStatus().equals(ReplicationStatus.FAILED));
+          assertTrue(result.getReplica(0).getReplicaVerified().getTime() == date.getTime());
+          assertTrue(result.getReplica(1).getReplicaMemberNode().getValue().equals("node2"));
+          assertTrue(result.getReplica(1).getReplicationStatus().equals(ReplicationStatus.FAILED));
+          assertTrue(result.getReplica(1).getReplicaVerified().getTime() == date.getTime());
+          assertTrue(result.getArchived() ==false);
+          
+          Date date2 = new Date();
+          SystemMetadata sysmeta11 = new SystemMetadata();
+          BeanUtils.copyProperties(sysmeta11, result);
+          List<Replica> replicaList = new ArrayList<Replica>();
+          Replica replica3= new Replica();
+          NodeReference node3 = new NodeReference();
+          node3.setValue("node3");
+          replica3.setReplicaMemberNode(node3);
+          replica3.setReplicationStatus(ReplicationStatus.COMPLETED);
+          replica3.setReplicaVerified(date2);
+          replicaList.add(replica3);
+          sysmeta11.setReplicaList(replicaList);
+          sysmeta11.setSerialVersion(BigInteger.TEN);
+          sysmeta11.setArchived(true);
+          
+          //make sure the sysmmeta11 has the new replca list and serial version
+          assertTrue(sysmeta11.getSerialVersion().equals(BigInteger.TEN));
+          assertTrue(sysmeta11.getReplicaList().size()==1);
+          assertTrue(sysmeta11.getReplica(0).getReplicaMemberNode().getValue().equals("node3"));
+          assertTrue(sysmeta11.getReplica(0).getReplicationStatus().equals(ReplicationStatus.COMPLETED));
+          assertTrue(sysmeta11.getReplica(0).getReplicaVerified().getTime() == date2.getTime());
+         
+          // update the system metadata with the new serial version and new replica list
+          // the new serial version and replica list should be ignored.
+          CNodeService.getInstance(request).updateSystemMetadata(session, id, sysmeta11);
+          SystemMetadata result2 = CNodeService.getInstance(request).getSystemMetadata(session, id);
+          assertTrue(result2.getIdentifier().equals(id));
+          assertTrue(result2.getSerialVersion().intValue() == 1);
+          List<Replica> list2 = result.getReplicaList();
+          assertTrue(list2.size()==2);
+          assertTrue(result2.getReplica(0).getReplicaMemberNode().getValue().equals("node1"));
+          assertTrue(result2.getReplica(0).getReplicationStatus().equals(ReplicationStatus.FAILED));
+          assertTrue(result2.getReplica(0).getReplicaVerified().getTime() == date.getTime());
+          assertTrue(result2.getReplica(1).getReplicaMemberNode().getValue().equals("node2"));
+          assertTrue(result2.getReplica(1).getReplicationStatus().equals(ReplicationStatus.FAILED));
+          assertTrue(result2.getReplica(1).getReplicaVerified().getTime() == date.getTime());
+          assertTrue(result2.getArchived() ==true);
   }
   
   public Session getMNSessionFromCN() throws NotImplemented, ServiceFailure {
