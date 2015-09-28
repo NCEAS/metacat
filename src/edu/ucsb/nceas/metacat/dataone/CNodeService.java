@@ -2176,6 +2176,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   
   /**
    * Update the system metadata of the specified pid.
+   * Note: the serial version and the replica list in the new system metadata will be ignored and the old values will be kept.
    */
   @Override
   public boolean updateSystemMetadata(Session session, Identifier pid,
