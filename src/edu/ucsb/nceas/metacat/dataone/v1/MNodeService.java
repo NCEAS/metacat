@@ -518,7 +518,8 @@ public class MNodeService
         } catch (NotFound e) {
             throw new ServiceFailure(serviceFailure, e.getMessage());
         }
-		return impl.systemMetadataChanged(null, pid, serialVersion, dateSysMetaLastModified);
+        boolean needCheckAuthoriativeNode = false; 
+		return impl.systemMetadataChanged(needCheckAuthoriativeNode, null, pid, serialVersion, dateSysMetaLastModified);
 
 	}
 
@@ -535,7 +536,8 @@ public class MNodeService
         } catch (NotFound e) {
             throw new ServiceFailure(serviceFailure, e.getMessage());
         }
-		return impl.systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+        boolean needCheckAuthoriativeNode = false; 
+		return impl.systemMetadataChanged(needCheckAuthoriativeNode,session, pid, serialVersion, dateSysMetaLastModified);
 	}
     
 	// methods not defined in v1, but implemented in metacat pre-v2 release

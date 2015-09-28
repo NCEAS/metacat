@@ -103,6 +103,7 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Ping;
+import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Schedule;
 import org.dataone.service.types.v1.Service;
@@ -1345,11 +1346,11 @@ public class MNodeService extends D1NodeService
 
         return inputStream;
     }
-
+    
     /**
      * A method to notify the Member Node that the authoritative copy of 
      * system metadata on the Coordinating Nodes has changed.
-     * 
+     *
      * @param session   Session information that contains the identity of the 
      *                  calling user as retrieved from the X.509 certificate 
      *                  which must be traceable to the CILogon service.
@@ -1362,6 +1363,33 @@ public class MNodeService extends D1NodeService
      * @throws InvalidToken
      */
     public boolean systemMetadataChanged(Session session, Identifier pid,
+        long serialVersion, Date dateSysMetaLastModified) 
+        throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
+        InvalidToken {
+        boolean needCheckAuthoriativeNode = true; 
+        return systemMetadataChanged(needCheckAuthoriativeNode, session, pid,serialVersion, dateSysMetaLastModified);
+    }
+
+    /**
+     * A method to notify the Member Node that the authoritative copy of 
+     * system metadata on the Coordinating Nodes has changed.
+     * @param needCheckAuthoriativeNode  this is for the dataone version 2. In the
+     * version 2, there are two scenarios:
+     * 1. If the node is the authoritative node, it only accepts serial version and replica list.
+     * 2. If the node is a replica, it accepts everything.
+     * For the v1, api, the parameter should be false. 
+     * @param session   Session information that contains the identity of the 
+     *                  calling user as retrieved from the X.509 certificate 
+     *                  which must be traceable to the CILogon service.
+     * @param serialVersion   The serialVersion of the system metadata
+     * @param dateSysMetaLastModified  The time stamp for when the system metadata was changed
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws InvalidToken
+     */
+    public boolean systemMetadataChanged(boolean needCheckAuthoriativeNode, Session session, Identifier pid,
         long serialVersion, Date dateSysMetaLastModified) 
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
         InvalidToken {
@@ -1407,49 +1435,62 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("1331", msg);
             
         }
-        
-        // compare what we have locally to what is sent in the change notification
         try {
-            currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-             
-        } catch (RuntimeException e) {
-            String msg = "SystemMetadata for pid " + pid.getValue() +
-              " couldn't be updated because it couldn't be found locally: " +
-              e.getMessage();
-            logMetacat.error(msg);
-            ServiceFailure sf = new ServiceFailure("1333", msg);
-            sf.initCause(e);
-            throw sf; 
-        }
+            HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
         
-        if(currentLocalSysMeta == null) {
-            throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
-        }
-        if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
+            // compare what we have locally to what is sent in the change notification
             try {
-                newSysMeta = cn.getSystemMetadata(null, pid);
-            } catch (NotFound e) {
-                // huh? you just said you had it
-            	String msg = "On updating the local copy of system metadata " + 
-                "for pid " + pid.getValue() +", the CN reports it is not found." +
-                " The error message was: " + e.getMessage();
+                currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+                 
+            } catch (RuntimeException e) {
+                String msg = "SystemMetadata for pid " + pid.getValue() +
+                  " couldn't be updated because it couldn't be found locally: " +
+                  e.getMessage();
                 logMetacat.error(msg);
-                //ServiceFailure sf = new ServiceFailure("1333", msg);
-                InvalidRequest sf = new InvalidRequest("1334", msg);
+                ServiceFailure sf = new ServiceFailure("1333", msg);
                 sf.initCause(e);
-                throw sf;
+                throw sf; 
             }
             
-            //check about the sid in the system metadata
-            Identifier newSID = newSysMeta.getSeriesId();
-            if(newSID != null) {
-                if (!isValidIdentifier(newSID)) {
-                    throw new InvalidRequest("1334", "The series identifier in the new system metadata is invalid.");
+            if(currentLocalSysMeta == null) {
+                throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
+            }
+            if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
+                try {
+                    newSysMeta = cn.getSystemMetadata(null, pid);
+                } catch (NotFound e) {
+                    // huh? you just said you had it
+                	String msg = "On updating the local copy of system metadata " + 
+                    "for pid " + pid.getValue() +", the CN reports it is not found." +
+                    " The error message was: " + e.getMessage();
+                    logMetacat.error(msg);
+                    //ServiceFailure sf = new ServiceFailure("1333", msg);
+                    InvalidRequest sf = new InvalidRequest("1334", msg);
+                    sf.initCause(e);
+                    throw sf;
                 }
-                Identifier currentSID = currentLocalSysMeta.getSeriesId();
-                if( currentSID != null && currentSID.getValue() != null) {
-                    if(!newSID.getValue().equals(currentSID.getValue())) {
-                        //newSID doesn't match the currentSID. The newSID shouldn't be used.
+                
+                //check about the sid in the system metadata
+                Identifier newSID = newSysMeta.getSeriesId();
+                if(newSID != null) {
+                    if (!isValidIdentifier(newSID)) {
+                        throw new InvalidRequest("1334", "The series identifier in the new system metadata is invalid.");
+                    }
+                    Identifier currentSID = currentLocalSysMeta.getSeriesId();
+                    if( currentSID != null && currentSID.getValue() != null) {
+                        if(!newSID.getValue().equals(currentSID.getValue())) {
+                            //newSID doesn't match the currentSID. The newSID shouldn't be used.
+                            try {
+                                if(IdentifierManager.getInstance().identifierExists(newSID.getValue())) {
+                                    throw new InvalidRequest("1334", "The series identifier "+newSID.getValue()+" in the new system metadata has been used by another object.");
+                                }
+                            } catch (SQLException sql) {
+                                throw new ServiceFailure("1333", "Couldn't determine if the SID "+newSID.getValue()+" in the system metadata exists in the node since "+sql.getMessage());
+                            }
+                            
+                        }
+                    } else {
+                        //newSID shouldn't be used
                         try {
                             if(IdentifierManager.getInstance().identifierExists(newSID.getValue())) {
                                 throw new InvalidRequest("1334", "The series identifier "+newSID.getValue()+" in the new system metadata has been used by another object.");
@@ -1457,59 +1498,65 @@ public class MNodeService extends D1NodeService
                         } catch (SQLException sql) {
                             throw new ServiceFailure("1333", "Couldn't determine if the SID "+newSID.getValue()+" in the system metadata exists in the node since "+sql.getMessage());
                         }
-                        
-                    }
-                } else {
-                    //newSID shouldn't be used
-                    try {
-                        if(IdentifierManager.getInstance().identifierExists(newSID.getValue())) {
-                            throw new InvalidRequest("1334", "The series identifier "+newSID.getValue()+" in the new system metadata has been used by another object.");
-                        }
-                    } catch (SQLException sql) {
-                        throw new ServiceFailure("1333", "Couldn't determine if the SID "+newSID.getValue()+" in the system metadata exists in the node since "+sql.getMessage());
                     }
                 }
-            }
-            // update the local copy of system metadata for the pid
-            try {
-                HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
-                logMetacat.info("Updated local copy of system metadata for pid " +
-                    pid.getValue() + " after change notification from the CN.");
+                // update the local copy of system metadata for the pid
+                try {
+                    if(needCheckAuthoriativeNode) {
+                        //this is for the v2 api.
+                        if(isAuthoritativeNode(pid)) {
+                            //this is the authoritative node, so we only accept replica and serial version
+                            List<Replica> replicas = newSysMeta.getReplicaList();
+                            newSysMeta = currentLocalSysMeta;
+                            newSysMeta.setSerialVersion(new BigInteger((new Long(serialVersion)).toString()));
+                            newSysMeta.setReplicaList(replicas);
+                        }
+                    }
+                    HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
+                    logMetacat.info("Updated local copy of system metadata for pid " +
+                        pid.getValue() + " after change notification from the CN.");
+                    
+                    // TODO: consider inspecting the change for archive
+                    // see: https://projects.ecoinformatics.org/ecoinfo/issues/6417
+    //                if (newSysMeta.getArchived() != null && newSysMeta.getArchived().booleanValue()) {
+    //                	try {
+    //						this.archive(session, newSysMeta.getIdentifier());
+    //					} catch (NotFound e) {
+    //						// do we care? nothing to do about it now
+    //						logMetacat.error(e.getMessage(), e);
+    //					}
+    //                }
+                    
+                } catch (RuntimeException e) {
+                    String msg = "SystemMetadata for pid " + pid.getValue() +
+                      " couldn't be updated: " +
+                      e.getMessage();
+                    logMetacat.error(msg);
+                    ServiceFailure sf = new ServiceFailure("1333", msg);
+                    sf.initCause(e);
+                    throw sf;
+                }
                 
-                // TODO: consider inspecting the change for archive
-                // see: https://projects.ecoinformatics.org/ecoinfo/issues/6417
-//                if (newSysMeta.getArchived() != null && newSysMeta.getArchived().booleanValue()) {
-//                	try {
-//						this.archive(session, newSysMeta.getIdentifier());
-//					} catch (NotFound e) {
-//						// do we care? nothing to do about it now
-//						logMetacat.error(e.getMessage(), e);
-//					}
-//                }
-                
-            } catch (RuntimeException e) {
-                String msg = "SystemMetadata for pid " + pid.getValue() +
-                  " couldn't be updated: " +
-                  e.getMessage();
-                logMetacat.error(msg);
-                ServiceFailure sf = new ServiceFailure("1333", msg);
-                sf.initCause(e);
-                throw sf;
+               
             }
-            
+        } finally {
+            HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+        }
+        
+        if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
             // attempt to re-register the identifier (it checks if it is a doi)
             try {
-    			DOIService.getInstance().registerDOI(newSysMeta);
-    		} catch (Exception e) {
-    			logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
-    		}
+                DOIService.getInstance().registerDOI(newSysMeta);
+            } catch (Exception e) {
+                logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
+            }
             
             // submit for indexing
             try {
-				MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
-			} catch (Exception e) {
+                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
+            } catch (Exception e) {
                 logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
-			}
+            }
         }
         
         return true;
