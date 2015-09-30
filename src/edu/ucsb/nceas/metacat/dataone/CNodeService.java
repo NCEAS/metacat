@@ -127,7 +127,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     
   /**
    * Set the replication policy for an object given the object identifier
-   * 
+   * It only is applied to objects whose authoritative mn is a v1 node.
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - the object identifier for the given object
    * @param policy - the replication policy to be applied
