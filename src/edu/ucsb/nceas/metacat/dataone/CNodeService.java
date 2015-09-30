@@ -107,6 +107,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
   /* the logger instance */
   private Logger logMetacat = null;
+  public final static String V2V1MISSMATCH = "The Coordinating Node is not authorized to make systemMetadata changes on this object. Please make changes directly on the authoritative Member Node.";
 
   /**
    * singleton accessor
@@ -152,6 +153,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       }
       
+      //only allow pid to be passed
+      String serviceFailure = "4882";
+      String notFound = "4884";
+      checkV1SystemMetaPidExist(pid, serviceFailure, "The object for given PID "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+              "No object could be found for given PID: "+pid.getValue());
+      
       /*String serviceFailureCode = "4882";
       Identifier sid = getPIDForSID(pid, serviceFailureCode);
       if(sid != null) {
@@ -188,7 +195,17 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   throw new NotFound("4884", "Couldn't find an object identified by " + pid.getValue());
                   
               }
-
+              D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
+              String version = checker.getVersion("MNStorage");
+              if(version == null) {
+                  throw new ServiceFailure("4882", "Couldn't determine the version of the MNStorge for the "+pid.getValue());
+              } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                  //we don't apply this method to an object whose authoritative node is v2
+                  throw new NotAuthorized("4881", V2V1MISSMATCH);
+              } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                  //we don't understand this version (it is not v1 or v2)
+                  throw new InvalidRequest("4883", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+              }
               // does the request have the most current system metadata?
               if ( systemMetadata.getSerialVersion().longValue() != serialVersion ) {
                  String msg = "The requested system metadata version number " + 
