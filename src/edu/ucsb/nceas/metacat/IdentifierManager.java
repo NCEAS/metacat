@@ -1308,7 +1308,12 @@ public class IdentifierManager {
             stmt.setInt(13, numberReplicas);
             stmt.setString(14, obsoletes);
             stmt.setString(15, obsoletedBy);
-            stmt.setString(16, serialVersion.toString());
+            if(serialVersion != null) {
+                stmt.setString(16, serialVersion.toString());
+            } else {
+                stmt.setString(16, null);
+            }
+            
             stmt.setString(17, seriesId);
             stmt.setString(18, fileName);
             if (mediaType == null) {
@@ -1345,6 +1350,7 @@ public class IdentifierManager {
         } catch (Exception e) {
             dbConn.rollback();
             dbConn.setAutoCommit(true);
+            e.printStackTrace();
             throw new SQLException(e.getMessage());
         } finally {
             if(stmt != null) {
