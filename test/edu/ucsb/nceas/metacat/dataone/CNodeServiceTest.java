@@ -98,7 +98,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new CNodeServiceTest("initialize"));
 		
-		/*suite.addTest(new CNodeServiceTest("testChecksum"));
+		suite.addTest(new CNodeServiceTest("testChecksum"));
 		suite.addTest(new CNodeServiceTest("testCreate"));
 		suite.addTest(new CNodeServiceTest("testGet"));
 		suite.addTest(new CNodeServiceTest("testGetFormat"));
@@ -117,7 +117,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testSetOwner"));
 		suite.addTest(new CNodeServiceTest("readDeletedObject"));
 		suite.addTest(new CNodeServiceTest("testGetSID"));
-		suite.addTest(new CNodeServiceTest("testListViews"));*/
+		suite.addTest(new CNodeServiceTest("testListViews"));
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
 	
 		return suite;
