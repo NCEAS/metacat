@@ -369,7 +369,11 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			result = CNodeService.getInstance(request).isAuthorized(session, guid, Permission.WRITE);
 			assertTrue(result);
         } catch(Exception e) {
-            fail("Unexpected error: " + e.getMessage());
+            if(e instanceof ServiceFailure) {
+                assertTrue(e.getMessage().contains("Couldn't determine the version"));
+            } else {
+                fail("Unexpected error: " + e.getMessage());
+            }
         }
 	}
 	
