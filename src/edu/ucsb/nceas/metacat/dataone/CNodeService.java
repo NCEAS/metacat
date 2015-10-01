@@ -1836,7 +1836,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   /**
    * Set access for a given object using the object identifier and a Subject
    * under a given Session.
-   * 
+   * This method only applies the objects whose authoritative mn is a v1 node.
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - the object identifier for the given object to apply the policy
    * @param policy - the access policy to be applied
@@ -1900,6 +1900,18 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                      ". Please get the latest copy in order to modify it.";
                  throw new VersionMismatch("4402", msg);
                  
+              }
+              
+              D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
+              String version = checker.getVersion("MNStorage");
+              if(version == null) {
+                  throw new ServiceFailure("4430", "Couldn't determine the version of the MNStorge for the "+pid.getValue());
+              } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                  //we don't apply this method to an object whose authoritative node is v2
+                  throw new NotAuthorized("4420", V2V1MISSMATCH);
+              } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                  //we don't understand this version (it is not v1 or v2)
+                  throw new InvalidRequest("4402", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
               }
               
           } catch (RuntimeException e) {
