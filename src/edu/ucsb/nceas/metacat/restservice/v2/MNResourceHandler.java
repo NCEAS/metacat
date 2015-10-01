@@ -720,6 +720,14 @@ public class MNResourceHandler extends D1ResourceHandler {
         }      
         final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
         
+        // check authorization before sending to implementation
+        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
+        if (!authorized) {
+        	String msg = "User is not authorized to call systemMetadataChanged";
+            NotAuthorized failure = new NotAuthorized("1331", msg);
+        	throw failure;
+        }
+        
         // run it in a thread to avoid connection timeout
         Runnable runner = new Runnable() {
             @Override
