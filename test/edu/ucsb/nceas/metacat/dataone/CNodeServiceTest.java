@@ -119,6 +119,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testGetSID"));
 		suite.addTest(new CNodeServiceTest("testListViews"));
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
+		suite.addTest(new CNodeServiceTest("testArchive"));
 	
 		return suite;
 	}
@@ -1422,6 +1423,18 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           assertTrue(result2.getReplica(1).getReplicationStatus().equals(ReplicationStatus.FAILED));
           assertTrue(result2.getReplica(1).getReplicaVerified().getTime() == date.getTime());
           assertTrue(result2.getArchived() ==true);
+  }
+  
+  public void testArchive() throws Exception {
+      Session session = getCNSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testArchive." + System.currentTimeMillis());
+      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+      CNodeService.getInstance(request).archive(session, guid);
+      SystemMetadata result = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+      assertTrue(result.getArchived());
   }
   
   public Session getMNSessionFromCN() throws NotImplemented, ServiceFailure {

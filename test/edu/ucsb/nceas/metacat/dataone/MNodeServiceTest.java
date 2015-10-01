@@ -176,6 +176,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testListViews"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
     suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
+    suite.addTest(new MNodeServiceTest("testArchive"));
     
     return suite;
     
@@ -464,6 +465,18 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 
     } 
 
+  }
+  
+  public void testArchive() throws Exception {
+          Session session = getTestSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testUpdate." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          MNodeService.getInstance(request).archive(session, guid);
+          SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+          assertTrue(result.getArchived());
   }
 
   /**
