@@ -36,6 +36,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -454,12 +455,14 @@ public class MNodeService extends D1NodeService
                 //String objectAsXML = "";
                 try {
                     //objectAsXML = IOUtils.toString(object, "UTF-8");
-                    // give the old pid so we can calculate the new local id 
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update");
+                	
+                	InputStream editedObject = editScienceMetadata(session, object, pid, newPid);
+                	
+                    localId = insertOrUpdateDocument(editedObject, "UTF-8", pid, session, "update");
+                	
                     // register the newPid and the generated localId
                     if (newPid != null) {
                         IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
-
                     }
 
                 } catch (IOException e) {
