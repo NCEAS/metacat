@@ -591,60 +591,83 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 		  throw new NotAuthorized("4970", msg);
 	  }
 	  
-      // Check for the existing identifier
       try {
-          localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-          super.archive(session, pid);
+          HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+          logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
           SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-          notifyReplicaNodes(sysMeta);
+          boolean notifyReplica = true;
+          archiveCNObject(session, pid, sysMeta, notifyReplica);
       
-      } catch (McdbDocNotFoundException e) {
-          // This object is not registered in the identifier table. Assume it is of formatType DATA,
-    	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
-    	  
-          try {
-  			  lock = HazelcastService.getInstance().getLock(pid.getValue());
-  			  lock.lock();
-  			  logMetacat.debug("Locked identifier " + pid.getValue());
-
-			  SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-			  if ( sysMeta != null ) {
-				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-				sysMeta.setArchived(true);
-				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-			    // notify the replicas
-				notifyReplicaNodes(sysMeta);
-				  
-			  } else {
-				  throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
-					  ". Couldn't obtain the system metadata record.");
-				  
-			  }
-			  
-		  } catch (RuntimeException re) {
-			  throw new ServiceFailure("4972", "Couldn't archive " + pid.getValue() + 
-				  ". The error message was: " + re.getMessage());
-			  
-		  } finally {
-			  lock.unlock();
-			  logMetacat.debug("Unlocked identifier " + pid.getValue());
-
-		  }
-
-          // NOTE: cannot log the archive without localId
-//          EventLog.getInstance().log(request.getRemoteAddr(), 
-//                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
-//                  pid.getValue(), Event.DELETE.xmlValue());
-
-      } catch (SQLException e) {
-          throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
-                  ". The local id of the object with the identifier can't be identified since "+e.getMessage());
+      } finally {
+          HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+          logMetacat.debug("CNodeService.archive - unlock the system metadata for "+pid.getValue());
       }
 
 	  return pid;
       
   }
+  
+  
+  /**
+   * Archive a object on cn. This method doesn't lock the system metadata map. The caller should lock it.
+   * This method doesn't check the authorization; this method only accept a pid.
+   * @param session
+   * @param pid
+   * @param sysMeta
+   * @param notifyReplica
+   * @return
+   * @throws InvalidToken
+   * @throws ServiceFailure
+   * @throws NotAuthorized
+   * @throws NotFound
+   * @throws NotImplemented
+   */
+  public Identifier archiveCNObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean notifyReplica) 
+          throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+
+          String localId = null; // The corresponding docid for this pid
+          
+          // Check for the existing identifier
+          try {
+              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              super.archiveObject(session, pid, sysMeta);
+          
+          } catch (McdbDocNotFoundException e) {
+              // This object is not registered in the identifier table. Assume it is of formatType DATA,
+              // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
+              
+              try {
+                  if ( sysMeta != null ) {
+                    sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+                    sysMeta.setArchived(true);
+                    sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                    HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                      
+                  } else {
+                      throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+                          ". Couldn't obtain the system metadata record.");
+                      
+                  }
+                  
+              } catch (RuntimeException re) {
+                  throw new ServiceFailure("4972", "Couldn't archive " + pid.getValue() + 
+                      ". The error message was: " + re.getMessage());
+                  
+              } 
+
+          } catch (SQLException e) {
+              throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+                      ". The local id of the object with the identifier can't be identified since "+e.getMessage());
+          }
+          if(notifyReplica) {
+              // notify the replicas
+              notifyReplicaNodes(sysMeta);
+          }
+          return pid;
+          
+    }
+  
+  
   
   /**
    * Set the obsoletedBy attribute in System Metadata

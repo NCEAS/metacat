@@ -100,6 +100,7 @@ import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeState;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v2.ObjectFormat;
+import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
@@ -2312,6 +2313,61 @@ public class MNodeService extends D1NodeService
 		
 		return bagInputStream;
 	}
+	
+	 /**
+	   * Archives an object, where the object is either a 
+	   * data object or a science metadata object.
+	   * 
+	   * @param session - the Session object containing the credentials for the Subject
+	   * @param pid - The object identifier to be archived
+	   * 
+	   * @return pid - the identifier of the object used for the archiving
+	   * 
+	   * @throws InvalidToken
+	   * @throws ServiceFailure
+	   * @throws NotAuthorized
+	   * @throws NotFound
+	   * @throws NotImplemented
+	   * @throws InvalidRequest
+	   */
+	  public Identifier archive(Session session, Identifier pid) 
+	      throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	      boolean allowed = false;
+	      // do we have a valid pid?
+	      if (pid == null || pid.getValue().trim().equals("")) {
+	          throw new ServiceFailure("1350", "The provided identifier was invalid.");
+	      }
+	      
+	      String serviceFailureCode = "1350";
+	      Identifier sid = getPIDForSID(pid, serviceFailureCode);
+	      if(sid != null) {
+	          pid = sid;
+	      }
+	      // does the subject have archive (a D1 CHANGE_PERMISSION level) privileges on the pid?
+	      try {
+	            allowed = isAuthorized(session, pid, Permission.CHANGE_PERMISSION);
+	        } catch (InvalidRequest e) {
+	          throw new ServiceFailure("1350", e.getDescription());
+	        } 
+
+	      if (allowed) {
+	         try {
+	             HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+	             logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
+	             SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	             super.archiveObject(session, pid, sysmeta); 
+	         } finally {
+	             HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+	             logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");
+	         }
+	        
+
+	      } else {
+	          throw new NotAuthorized("1320", "The provided identity does not have " + "permission to archive the object on the Node.");
+	      }
+
+	      return pid;
+	  }
     
 	/**
 	 * Update the system metadata of the specified pid.

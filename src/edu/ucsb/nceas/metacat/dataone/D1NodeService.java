@@ -1937,7 +1937,7 @@ public abstract class D1NodeService {
   /**
    * Archives an object, where the object is either a 
    * data object or a science metadata object.
-   * 
+   * Note: it doesn't check the authorization; it doesn't lock the system metadata;it only accept pid.
    * @param session - the Session object containing the credentials for the Subject
    * @param pid - The object identifier to be archived
    * 
@@ -1950,39 +1950,26 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    * @throws InvalidRequest
    */
-  public Identifier archive(Session session, Identifier pid) 
+  protected Identifier archiveObject(Session session, Identifier pid, SystemMetadata sysMeta) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
       String localId = null;
       boolean allowed = false;
       String username = Constants.SUBJECT_PUBLIC;
-      String[] groupnames = null;
       if (session == null) {
       	throw new InvalidToken("1330", "No session has been provided");
       } else {
           username = session.getSubject().getValue();
-          if (session.getSubjectInfo() != null) {
-              List<Group> groupList = session.getSubjectInfo().getGroupList();
-              if (groupList != null) {
-                  groupnames = new String[groupList.size()];
-                  for (int i = 0; i < groupList.size(); i++) {
-                      groupnames[i] = groupList.get(i).getGroupName();
-                  }
-              }
-          }
       }
-
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
           throw new ServiceFailure("1350", "The provided identifier was invalid.");
       }
       
-      String serviceFailureCode = "1350";
-      Identifier sid = getPIDForSID(pid, serviceFailureCode);
-      if(sid != null) {
-          pid = sid;
+      if(sysMeta == null) {
+          throw new NotFound("2911", "There is no system metadata associated with "+pid.getValue());
       }
-
+      
       // check for the existing identifier
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
@@ -1992,23 +1979,17 @@ public abstract class D1NodeService {
           throw new ServiceFailure("1350", "The object with the provided identifier "+pid.getValue()+" couldn't be identified since "+e.getMessage());
       }
 
-      // does the subject have archive (a D1 CHANGE_PERMISSION level) privileges on the pid?
-      try {
-			allowed = isAuthorized(session, pid, Permission.CHANGE_PERMISSION);
-		} catch (InvalidRequest e) {
-          throw new ServiceFailure("1350", e.getDescription());
-		}
-          
 
-      if (allowed) {
           try {
               // archive the document
               DocumentImpl.delete(localId, null, null, null, false);
-              EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
-
+              try {
+                  EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
+              } catch (Exception e) {
+                  logMetacat.warn("D1NodeService.archiveObject - can't log the delete event since "+e.getMessage());
+              }
+              
               // archive it
-              HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-              SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               sysMeta.setArchived(true);
               sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
               sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
@@ -2030,14 +2011,8 @@ public abstract class D1NodeService {
 
           } catch (Exception e) { // for some reason DocumentImpl throws a general Exception
               throw new ServiceFailure("1350", "There was a problem archiving the object." + "The error message was: " + e.getMessage());
-          } finally {
-              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
-              logMetacat.debug("D1NodeService.archive - unlock the system metadata map in hazelcast for the pid "+pid.getValue());
-          }
+          } 
 
-      } else {
-          throw new NotAuthorized("1320", "The provided identity does not have " + "permission to archive the object on the Node.");
-      }
 
       return pid;
   }
