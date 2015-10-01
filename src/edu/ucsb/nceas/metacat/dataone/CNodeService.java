@@ -595,7 +595,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
           super.archive(session, pid);
-          
+          SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          notifyReplicaNodes(sysMeta);
+      
       } catch (McdbDocNotFoundException e) {
           // This object is not registered in the identifier table. Assume it is of formatType DATA,
     	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)

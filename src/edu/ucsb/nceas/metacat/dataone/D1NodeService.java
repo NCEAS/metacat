@@ -1920,10 +1920,13 @@ public abstract class D1NodeService {
               EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
 
               // archive it
+              HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
               SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               sysMeta.setArchived(true);
               sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
               HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+              
               // submit for indexing
               // DocumentImpl call above should do this.
               // see: https://projects.ecoinformatics.org/ecoinfo/issues/6030
@@ -1940,6 +1943,9 @@ public abstract class D1NodeService {
 
           } catch (Exception e) { // for some reason DocumentImpl throws a general Exception
               throw new ServiceFailure("1350", "There was a problem archiving the object." + "The error message was: " + e.getMessage());
+          } finally {
+              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+              logMetacat.debug("D1NodeService.archive - unlock the system metadata map in hazelcast for the pid "+pid.getValue());
           }
 
       } else {
