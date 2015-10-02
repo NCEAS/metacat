@@ -24,6 +24,7 @@
 package edu.ucsb.nceas.metacat.dataone.v1;
 
 import java.io.InputStream;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
@@ -73,6 +74,7 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.TypeFactory;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.dataone.D1NodeVersionChecker;
 import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
@@ -623,17 +625,39 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	public Identifier registerSystemMetadata(Session session, Identifier pid,
 			SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
 			ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
+	    if (pid == null || pid.getValue().trim().equals("")) {
+	        throw new InvalidRequest("4863", "The pid should not be null in the register system metadata request");
+	    }
+	    if(sysmeta == null) {
+	        throw new InvalidRequest("4863", "The system metadata object should not be null in the register system metadata request for the pid"+pid.getValue());
+	    }
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
 			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
+			
 		} catch (Exception e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
 		}
-		
+		//this method will apply to the objects whose authoritative mn is v1.
+        D1NodeVersionChecker checker = new D1NodeVersionChecker(v2Sysmeta.getAuthoritativeMemberNode());
+        String version = checker.getVersion("MNStorage");
+        if(version == null) {
+            throw new ServiceFailure("4862", "Couldn't determine the authoritative member node version of the MNStorge for the "+pid.getValue());
+        } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+            //we don't apply this method to an object whose authoritative node is v2
+            throw new NotAuthorized("4861", edu.ucsb.nceas.metacat.dataone.CNodeService.V2V1MISSMATCH);
+        } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+            //we don't understand this version (it is not v1 or v2)
+            throw new InvalidRequest("4863", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+        }
+        //set the serial version to one
+        v2Sysmeta.setSerialVersion(BigInteger.ONE);
+        // the v2(impl).registerSysteMetadata will reset the system metadata modification date 
+        //for the objects whose authoritative member node is v1. 
 		return impl.registerSystemMetadata(session, pid, v2Sysmeta);
 	}
 

@@ -1416,8 +1416,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           // insert the system metadata into the object store
           logMetacat.debug("Starting to insert SystemMetadata...");
           try {
-              sysmeta.setSerialVersion(BigInteger.ONE);
-              sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              //for the object whose authoriative mn is v1. we need reset the modification date.
+              //d1-sync already set the serial version. so we don't need do again.
+              D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
+              String version = checker.getVersion("MNStorage");
+              if(version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                  sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+              }
               HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
               
           } catch (RuntimeException e) {
