@@ -732,6 +732,19 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 					throw new VersionMismatch("4886", msg);
 
 				}
+				
+				 //only apply to the object whose authoritative member node is v1.
+	              D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
+	              String version = checker.getVersion("MNStorage");
+	              if(version == null) {
+	                  throw new ServiceFailure("4941", "Couldn't determine the version of the MNStorge for the "+pid.getValue());
+	              } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+	                  //we don't apply this method to an object whose authoritative node is v2
+	                  throw new NotAuthorized("4945", V2V1MISSMATCH);
+	              } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+	                  //we don't understand this version (it is not v1 or v2)
+	                  throw new InvalidRequest("4942", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+	              }
 
 			} catch (RuntimeException e) { // Catch is generic since HZ throws RuntimeException
 				throw new NotFound("4884", "No record found for: " + pid.getValue());
@@ -1536,6 +1549,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
       // The lock to be used for this identifier
       Lock lock = null;
+      
+      // do we have a valid pid?
+      if (pid == null || pid.getValue().trim().equals("")) {
+          throw new InvalidRequest("4442", "The provided identifier was invalid.");
+          
+      }
 
       // get the subject
       Subject subject = session.getSubject();
@@ -1562,6 +1581,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           try {
               systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
               
+              if(systemMetadata == null) {
+                  throw new NotFound("4460", "The object "+pid.getValue()+" doesn't exist in the node.");
+              }
               // does the request have the most current system metadata?
               if ( systemMetadata.getSerialVersion().longValue() != serialVersion ) {
                  String msg = "The requested system metadata version number " + 
@@ -1570,6 +1592,20 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                      ". Please get the latest copy in order to modify it.";
                  throw new VersionMismatch("4443", msg);
               }
+              
+              //only apply to the object whose authoritative member node is v1.
+              D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
+              String version = checker.getVersion("MNStorage");
+              if(version == null) {
+                  throw new ServiceFailure("4490", "Couldn't determine the version of the MNStorge for the "+pid.getValue());
+              } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+                  //we don't apply this method to an object whose authoritative node is v2
+                  throw new NotAuthorized("4440", V2V1MISSMATCH);
+              } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+                  //we don't understand this version (it is not v1 or v2)
+                  throw new InvalidRequest("4442", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+              }
+              
               
           } catch (RuntimeException e) { // Catch is generic since HZ throws RuntimeException
               throw new NotFound("4460", "No record found for: " + pid.getValue());
