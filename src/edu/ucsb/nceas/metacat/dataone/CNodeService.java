@@ -352,7 +352,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			// update the metadata
 			try {
 				systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
-				systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
+				//we don't need to update the modification date.
+				//systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
 			} catch (RuntimeException e) {
 				throw new ServiceFailure("4882", e.getMessage());
