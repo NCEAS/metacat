@@ -1255,6 +1255,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           Session session = getCNSession();
           Identifier guid = new Identifier();
           guid.setValue(generateDocumentId());
+          System.out.println("?????????????update the id without archive is "+guid.getValue());
           InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
           SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
           String sid1= "sid."+System.nanoTime();
@@ -1277,7 +1278,20 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           BigInteger version = sysmeta.getSerialVersion();
           version = version.add(BigInteger.ONE);
           sysmeta1.setSerialVersion(version);
-          sysmeta1.setArchived(true);
+          AccessPolicy accessPolicy = new AccessPolicy();
+          AccessRule accessRule = new AccessRule();
+          accessRule.addPermission(Permission.WRITE);
+          Subject publicSubject = new Subject();
+          publicSubject.setValue("hello");
+          accessRule.addSubject(publicSubject);
+          accessPolicy.addAllow(accessRule);
+          AccessRule allow = new AccessRule();
+          allow.addPermission(Permission.READ);
+          Subject publicSubject2 = new Subject();
+          publicSubject2.setValue(Constants.SUBJECT_PUBLIC);
+          allow.addSubject(publicSubject2);
+          accessPolicy.addAllow(allow);
+          sysmeta1.setAccessPolicy(accessPolicy);
           try {
               CNodeService.getInstance(request).updateSystemMetadata(testSession, guid, sysmeta1);
               fail("It shouldn't get there since the test session can't update system metadata");
@@ -1294,7 +1308,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           SystemMetadata metadata2 = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(metadata2.getIdentifier().equals(guid));
           assertTrue(metadata2.getSeriesId().equals(seriesId));
-          assertTrue(metadata2.getArchived().equals(true));
+          //assertTrue(metadata2.getArchived().equals(true));
+          assertTrue(metadata2.getAccessPolicy().getAllowList().size() == 2);
           assertTrue(metadata2.getChecksum().getValue().equals(metadata.getChecksum().getValue()));
           assertTrue(metadata2.getDateSysMetadataModified().getTime() == date.getTime());
           
@@ -1352,6 +1367,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           // test cn.updateSystemMetadata will ignore the serial version and replica list
           Identifier id = new Identifier();
           id.setValue(generateDocumentId());
+          System.out.println("?????????????update the id with archive is "+id.getValue());
           object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
           SystemMetadata sysmeta10 = createSystemMetadata(id, session.getSubject(), object1);
           List<Replica> replicas = new ArrayList<Replica>();
