@@ -1655,7 +1655,7 @@ public abstract class D1NodeService {
      * @throws InvalidToken
      */
 	protected boolean updateSystemMetadata(Session session, Identifier pid,
-			SystemMetadata sysmeta, boolean needUpdateModificationDate, SystemMetadata currentSysmeta) throws NotImplemented, NotAuthorized,
+			SystemMetadata sysmeta, boolean needUpdateModificationDate, SystemMetadata currentSysmeta, boolean fromCN) throws NotImplemented, NotAuthorized,
 			ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
 		
 	  // The lock to be used for this identifier
@@ -1739,8 +1739,28 @@ public abstract class D1NodeService {
       }
       
       // do the actual update
-      updateSystemMetadataWithoutLock(sysmeta, needUpdateModificationDate);
-      
+      if(sysmeta.getArchived() != null && sysmeta.getArchived() == true && 
+                 ((currentSysmeta.getArchived() != null && currentSysmeta.getArchived() == false ) || currentSysmeta.getArchived() == null)) {
+          if(fromCN) {
+              logMetacat.debug("D1Node.update - this is to archive a cn object "+pid.getValue());
+              try {
+                  archiveCNObject(session, pid, sysmeta, needUpdateModificationDate);
+              } catch (NotFound e) {
+                  throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
+              }
+          } else {
+              logMetacat.debug("D1Node.update - this is to archive a MN object "+pid.getValue());
+              try {
+                  archiveObject(session, pid, sysmeta, needUpdateModificationDate);
+              } catch (NotFound e) {
+                  throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
+              }
+          }
+      } else {
+          logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "+pid.getValue());
+          updateSystemMetadataWithoutLock(sysmeta, needUpdateModificationDate);
+      }
+
       try {
     	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
     	  EventLog.getInstance().log(request.getRemoteAddr(), 
@@ -1950,7 +1970,7 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    * @throws InvalidRequest
    */
-  protected Identifier archiveObject(Session session, Identifier pid, SystemMetadata sysMeta) 
+  protected Identifier archiveObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
       String localId = null;
@@ -1991,8 +2011,10 @@ public abstract class D1NodeService {
               
               // archive it
               sysMeta.setArchived(true);
-              sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-              sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+              if(needModifyDate) {
+                  sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                  sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+              }
               HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
               
               // submit for indexing
@@ -2016,6 +2038,63 @@ public abstract class D1NodeService {
 
       return pid;
   }
+  
+  /**
+   * Archive a object on cn and notify the replica. This method doesn't lock the system metadata map. The caller should lock it.
+   * This method doesn't check the authorization; this method only accept a pid.
+   * It wouldn't notify the replca that the system metadata has been changed.
+   * @param session
+   * @param pid
+   * @param sysMeta
+   * @param notifyReplica
+   * @return
+   * @throws InvalidToken
+   * @throws ServiceFailure
+   * @throws NotAuthorized
+   * @throws NotFound
+   * @throws NotImplemented
+   */
+  protected void archiveCNObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
+          throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+
+          String localId = null; // The corresponding docid for this pid
+          
+          // Check for the existing identifier
+          try {
+              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              archiveObject(session, pid, sysMeta, needModifyDate);
+          
+          } catch (McdbDocNotFoundException e) {
+              // This object is not registered in the identifier table. Assume it is of formatType DATA,
+              // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
+              
+              try {
+                  if ( sysMeta != null ) {
+                    sysMeta.setArchived(true);
+                    if (needModifyDate) {
+                        sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+                        sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                    }
+                    HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                      
+                  } else {
+                      throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+                          ". Couldn't obtain the system metadata record.");
+                      
+                  }
+                  
+              } catch (RuntimeException re) {
+                  throw new ServiceFailure("4972", "Couldn't archive " + pid.getValue() + 
+                      ". The error message was: " + re.getMessage());
+                  
+              } 
+
+          } catch (SQLException e) {
+              throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
+                      ". The local id of the object with the identifier can't be identified since "+e.getMessage());
+          }
+          
+    }
   
   
   /**

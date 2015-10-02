@@ -595,8 +595,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
           logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
           SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-          boolean notifyReplica = true;
-          archiveCNObject(session, pid, sysMeta, notifyReplica);
+          boolean needModifyDate = true;
+          archiveCNObjectWithNotificationReplica(session, pid, sysMeta, needModifyDate);
       
       } finally {
           HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
@@ -609,7 +609,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   
   
   /**
-   * Archive a object on cn. This method doesn't lock the system metadata map. The caller should lock it.
+   * Archive a object on cn and notify the replica. This method doesn't lock the system metadata map. The caller should lock it.
    * This method doesn't check the authorization; this method only accept a pid.
    * @param session
    * @param pid
@@ -622,49 +622,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    * @throws NotFound
    * @throws NotImplemented
    */
-  public Identifier archiveCNObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean notifyReplica) 
-          throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-
-          String localId = null; // The corresponding docid for this pid
-          
-          // Check for the existing identifier
-          try {
-              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-              super.archiveObject(session, pid, sysMeta);
-          
-          } catch (McdbDocNotFoundException e) {
-              // This object is not registered in the identifier table. Assume it is of formatType DATA,
-              // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
-              
-              try {
-                  if ( sysMeta != null ) {
-                    sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
-                    sysMeta.setArchived(true);
-                    sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-                    HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-                      
-                  } else {
-                      throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
-                          ". Couldn't obtain the system metadata record.");
-                      
-                  }
-                  
-              } catch (RuntimeException re) {
-                  throw new ServiceFailure("4972", "Couldn't archive " + pid.getValue() + 
-                      ". The error message was: " + re.getMessage());
-                  
-              } 
-
-          } catch (SQLException e) {
-              throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
-                      ". The local id of the object with the identifier can't be identified since "+e.getMessage());
-          }
-          if(notifyReplica) {
-              // notify the replicas
-              notifyReplicaNodes(sysMeta);
-          }
+  private Identifier archiveCNObjectWithNotificationReplica(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
+                  throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+          archiveCNObject(session, pid, sysMeta, needModifyDate);
+          // notify the replicas
+          notifyReplicaNodes(sysMeta);
           return pid;
-          
     }
   
   
@@ -2270,7 +2233,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         List<Replica> replicas = currentSysmeta.getReplicaList();
         sysmeta.setReplicaList(replicas);
         boolean needUpdateModificationDate = false;//cn doesn't need to change the modification date.
-        success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta);
+        boolean fromCN = true;
+        success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
     } finally {
         HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
     }
