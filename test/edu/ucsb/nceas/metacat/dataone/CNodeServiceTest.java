@@ -338,7 +338,11 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertTrue(rightsHolder.equals(sysmeta.getRightsHolder()));
 			
         } catch(Exception e) {
-            fail("Unexpected error: " + e.getMessage());
+            if(e instanceof ServiceFailure) {
+                assertTrue(e.getMessage().contains("Couldn't determine the version"));
+            } else {
+                fail("Unexpected error: " + e.getMessage());
+            }
         }
 	}
 	
@@ -1158,7 +1162,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           //test archive a series id by v1
           try {
-              edu.ucsb.nceas.metacat.dataone.v1.CNodeService.getInstance(request).archive(session, seriesId2);
+              edu.ucsb.nceas.metacat.dataone.v1.MNodeService.getInstance(request).archive(session, seriesId2);
               fail("we can't reach here since the v1 archive method doesn't support the sid ");
           } catch (NotFound nf2) {
               
@@ -1174,7 +1178,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           }
           
           // test archive a series id by v2
-          CNodeService.getInstance(request).archive(session, seriesId2);
+          MNodeService.getInstance(request).archive(session, seriesId2);
           SystemMetadata archived = CNodeService.getInstance(request).getSystemMetadata(session, seriesId2);
           assertTrue(archived.getArchived());
           archived = CNodeService.getInstance(request).getSystemMetadata(session, newPid2);
@@ -1207,7 +1211,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           }
           
           //archive seriesId
-          CNodeService.getInstance(request).archive(mnSession, seriesId);
+          MNodeService.getInstance(request).archive(mnSession, seriesId);
           archived = CNodeService.getInstance(request).getSystemMetadata(session, seriesId);
           assertTrue(archived.getArchived());
           archived = CNodeService.getInstance(request).getSystemMetadata(session, newPid);
@@ -1448,9 +1452,15 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
       Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
-      CNodeService.getInstance(request).archive(session, guid);
-      SystemMetadata result = CNodeService.getInstance(request).getSystemMetadata(session, guid);
-      assertTrue(result.getArchived());
+      try {
+          CNodeService.getInstance(request).archive(session, guid);
+      } catch (Exception e) {
+         if(e instanceof ServiceFailure) {
+          assertTrue(e.getMessage().contains("Couldn't determine the version"));
+        } else {
+          fail("Unexpected error: " + e.getMessage());
+        }
+     }
   }
   
   public Session getMNSessionFromCN() throws NotImplemented, ServiceFailure {
