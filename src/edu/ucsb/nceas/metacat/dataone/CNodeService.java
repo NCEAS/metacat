@@ -595,6 +595,17 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
           logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
           SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          D1NodeVersionChecker checker = new D1NodeVersionChecker(sysMeta.getAuthoritativeMemberNode());
+          String version = checker.getVersion("MNStorage");
+          if(version == null) {
+              throw new ServiceFailure("4972", "Couldn't determine the version of the MNStorge for the "+pid.getValue());
+          } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
+              //we don't apply this method to an object whose authoritative node is v2
+              throw new NotAuthorized("4970", V2V1MISSMATCH);
+          } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
+              //we don't understand this version (it is not v1 or v2)
+              throw new NotImplemented("4974", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+          }
           boolean needModifyDate = true;
           archiveCNObjectWithNotificationReplica(session, pid, sysMeta, needModifyDate);
       
