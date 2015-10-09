@@ -338,8 +338,9 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertTrue(rightsHolder.equals(sysmeta.getRightsHolder()));
 			
         } catch(Exception e) {
+            e.printStackTrace();
             if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the version"));
+                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -374,8 +375,9 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			result = CNodeService.getInstance(request).isAuthorized(session, guid, Permission.WRITE);
 			assertTrue(result);
         } catch(Exception e) {
+            e.printStackTrace();
             if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the version"));
+                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -444,8 +446,9 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertEquals(policy.getPreferredMemberNode(0).getValue(), sysmeta.getReplicationPolicy().getPreferredMemberNode(0).getValue());
 			
         } catch(Exception e) {
+            e.printStackTrace();
             if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the version"));
+                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -1455,8 +1458,9 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       try {
           CNodeService.getInstance(request).archive(session, guid);
       } catch (Exception e) {
+         e.printStackTrace();
          if(e instanceof ServiceFailure) {
-          assertTrue(e.getMessage().contains("Couldn't determine the version"));
+          assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
         } else {
           fail("Unexpected error: " + e.getMessage());
         }
