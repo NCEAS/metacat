@@ -2666,6 +2666,15 @@ public class MetacatHandler {
             response.setContentType("text/xml");
             out = response.getWriter();
             
+            if (pid == null || pid.length == 0) {
+                //report the error
+                results = new StringBuffer();
+                results.append("<error>");
+                results.append("The parameter - pid is missing. Please check your parameter list.");
+                results.append("</error>");
+                //out.close(); it will be closed in the finally statement
+                return;
+            }
             // TODO: Check that the user is allowed to reindex this object, allow everyone for open annotations
             boolean isAuthorized = true;
    			String docid = IdentifierManager.getInstance().getLocalId(pid[0]);
@@ -2676,22 +2685,16 @@ public class MetacatHandler {
 			
 
             if (!isAuthorized) {
-                out.print("<error>");
-                out.print("The user \"" + username +
+                results.append("<error>");
+                results.append("The user \"" + username +
                         "\" is not authorized for this action.");
-                out.print("</error>");
-                out.close();
+                results.append("</error>");
+                //out.close(); it will be closed in the finally statement
                 return;
             }
             
            
-            if (pid == null || pid.length == 0) {
-                //report the error
-                results = new StringBuffer();
-                results.append("<error>");
-                results.append("The parameter - pid is missing. Please check your parameter list.");
-                results.append("</error>");
-            } else {
+            
                 Vector<String> successList = new Vector<String>();
                 Vector<String> failedList = new Vector<String>();
                 
@@ -2736,13 +2739,18 @@ public class MetacatHandler {
                     results.append("</error>");
                 }
                 results.append("</results>\n");
-            }
+            
         } catch (Exception e) {
             logMetacat.error("MetacatHandler.handleReindex action - " +
             		         e.getMessage());
             e.printStackTrace();
+            results.append("<error>");
+            results.append("There was an error - "+e.getMessage());
+            results.append("</error>");
         } finally {
+            logMetacat.debug("================= in the finally statement");
             if(out != null) {
+                logMetacat.debug("================= in the finally statement which out is not null");
                 out.print(results.toString());
                 out.close();
             }
