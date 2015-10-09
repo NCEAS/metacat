@@ -130,7 +130,7 @@ public class CNodeV1ServiceTest extends D1NodeV1ServiceTest {
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createV1SystemMetadata(guid, session.getSubject(), object);
 			Session cnSession = getCNSession();
-			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(cnSession, guid, sysmeta);
+			Identifier retGuid = CNodeService.getInstance(request).create(cnSession, guid, object, sysmeta);
 			assertEquals(guid.getValue(), retGuid.getValue());
 			// get it
 			SystemMetadata retSysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
