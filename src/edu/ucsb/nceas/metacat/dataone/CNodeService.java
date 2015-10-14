@@ -1524,7 +1524,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
   @Override
   public boolean hasReservation(Session session, Subject subject, Identifier pid) 
-      throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, IdentifierNotUnique, 
+      throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, 
       NotImplemented, InvalidRequest {
   
       throw new NotImplemented("4191", "hasReservation not implemented on this node");

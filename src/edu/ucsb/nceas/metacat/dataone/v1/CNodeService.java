@@ -547,7 +547,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Override
 	public boolean hasReservation(Subject subject, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
-			NotImplemented, InvalidRequest, IdentifierNotUnique {
+			NotImplemented, InvalidRequest {
 		return impl.hasReservation(null, subject, pid);
 	}
 
@@ -555,7 +555,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	@Deprecated
 	public boolean hasReservation(Session session, Subject subject, Identifier pid)
 			throws InvalidToken, ServiceFailure, NotFound, NotAuthorized,
-			NotImplemented, InvalidRequest, IdentifierNotUnique {
+			NotImplemented, InvalidRequest {
 		return impl.hasReservation(session, subject, pid);
 
 	}
