@@ -1002,8 +1002,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                       failure.getMessage());
               }
               
-			  // update the replica nodes about the completed replica when complete
-              if (status.equals(ReplicationStatus.COMPLETED)) {
+			  // update the replica nodes about the completed replica when complete, failed or invalid
+              if (status.equals(ReplicationStatus.COMPLETED) || status.equals(ReplicationStatus.FAILED) ||
+                      status.equals(ReplicationStatus.INVALIDATED)) {
 				notifyReplicaNodes(systemMetadata);
 			}
           
