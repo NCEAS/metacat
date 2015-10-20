@@ -555,7 +555,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         }
 
         try {
-            pidFilter = params.get("pidFilter")[0];
+            pidFilter = params.get("idFilter")[0];
         } catch (Exception e) {
             logMetacat.warn("Could not parse pidFilter: " + e.getMessage());
         }
