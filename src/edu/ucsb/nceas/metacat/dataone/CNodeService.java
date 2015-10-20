@@ -636,7 +636,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    */
   private Identifier archiveCNObjectWithNotificationReplica(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
                   throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
-          archiveCNObject(session, pid, sysMeta, needModifyDate);
+          boolean logArchive = true;
+          archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate);
           // notify the replicas
           notifyReplicaNodes(sysMeta);
           return pid;

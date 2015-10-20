@@ -1741,17 +1741,18 @@ public abstract class D1NodeService {
       // do the actual update
       if(sysmeta.getArchived() != null && sysmeta.getArchived() == true && 
                  ((currentSysmeta.getArchived() != null && currentSysmeta.getArchived() == false ) || currentSysmeta.getArchived() == null)) {
+          boolean logArchive = false;//we log it as the update system metadata event. So don't log it again.
           if(fromCN) {
               logMetacat.debug("D1Node.update - this is to archive a cn object "+pid.getValue());
               try {
-                  archiveCNObject(session, pid, sysmeta, needUpdateModificationDate);
+                  archiveCNObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
               } catch (NotFound e) {
                   throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
               }
           } else {
               logMetacat.debug("D1Node.update - this is to archive a MN object "+pid.getValue());
               try {
-                  archiveObject(session, pid, sysmeta, needUpdateModificationDate);
+                  archiveObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
               } catch (NotFound e) {
                   throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
               }
@@ -1970,7 +1971,7 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    * @throws InvalidRequest
    */
-  protected Identifier archiveObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
+  protected Identifier archiveObject(boolean log, Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
       String localId = null;
@@ -2003,11 +2004,14 @@ public abstract class D1NodeService {
           try {
               // archive the document
               DocumentImpl.delete(localId, null, null, null, false);
-              try {
-                  EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
-              } catch (Exception e) {
-                  logMetacat.warn("D1NodeService.archiveObject - can't log the delete event since "+e.getMessage());
+              if(log) {
+                   try {
+                      EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
+                   } catch (Exception e) {
+                      logMetacat.warn("D1NodeService.archiveObject - can't log the delete event since "+e.getMessage());
+                   }
               }
+             
               
               // archive it
               sysMeta.setArchived(true);
@@ -2054,7 +2058,7 @@ public abstract class D1NodeService {
    * @throws NotFound
    * @throws NotImplemented
    */
-  protected void archiveCNObject(Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
+  protected void archiveCNObject(boolean log, Session session, Identifier pid, SystemMetadata sysMeta, boolean needModifyDate) 
           throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
           String localId = null; // The corresponding docid for this pid
@@ -2062,7 +2066,7 @@ public abstract class D1NodeService {
           // Check for the existing identifier
           try {
               localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-              archiveObject(session, pid, sysMeta, needModifyDate);
+              archiveObject(log, session, pid, sysMeta, needModifyDate);
           
           } catch (McdbDocNotFoundException e) {
               // This object is not registered in the identifier table. Assume it is of formatType DATA,

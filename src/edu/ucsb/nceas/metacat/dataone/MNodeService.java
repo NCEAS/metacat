@@ -2356,7 +2356,8 @@ public class MNodeService extends D1NodeService
 	             logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	             SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	             boolean needModifyDate = true;
-	             super.archiveObject(session, pid, sysmeta, needModifyDate); 
+	             boolean logArchive = true;
+	             super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 
 	         } finally {
 	             HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	             logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");
