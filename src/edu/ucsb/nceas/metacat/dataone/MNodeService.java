@@ -2468,7 +2468,7 @@ public class MNodeService extends D1NodeService
 	/*
      * Determine if the current node is the authoritative node for the given pid.
      */
-    protected boolean isAuthoritativeNode(Identifier pid) {
+    protected boolean isAuthoritativeNode(Identifier pid) throws InvalidRequest {
         boolean isAuthoritativeNode = false;
         if(pid != null && pid.getValue() != null) {
             SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
@@ -2486,8 +2486,14 @@ public class MNodeService extends D1NodeService
                         //System.out.println("They are matching");
                         isAuthoritativeNode = true;
                     }
+                } else {
+                    throw new InvalidRequest("4869", "Coudn't find the authoritative member node in the system metadata associated with the pid "+pid.getValue());
                 }
+            } else {
+                throw new InvalidRequest("4869", "Coudn't find the system metadata associated with the pid "+pid.getValue());
             }
+        } else {
+            throw new InvalidRequest("4869", "The request pid is null");
         }
         return isAuthoritativeNode;
     }
@@ -2497,7 +2503,7 @@ public class MNodeService extends D1NodeService
      * 1. If the session has an cn object, it is allowed.
      * 2. If it is not a cn object, the client should have approperate permission and it should also happen on the authorative node.
      */
-    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound{
+    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest {
         boolean allow = false;
         if(isCNAdmin (session)) {
             allow = true;
