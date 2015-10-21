@@ -1510,10 +1510,28 @@ public class MNodeService extends D1NodeService
                         //this is for the v2 api.
                         if(isAuthoritativeNode(pid)) {
                             //this is the authoritative node, so we only accept replica and serial version
+                            logMetacat.debug("MNodeService.systemMetadataChanged - this is the authoritative node for the pid "+pid.getValue());
                             List<Replica> replicas = newSysMeta.getReplicaList();
                             newSysMeta = currentLocalSysMeta;
                             newSysMeta.setSerialVersion(new BigInteger((new Long(serialVersion)).toString()));
                             newSysMeta.setReplicaList(replicas);
+                        } else {
+                            //we need to archive the object in the replica node
+                            logMetacat.debug("MNodeService.systemMetadataChanged - this is NOT the authoritative node for the pid "+pid.getValue());
+                            logMetacat.debug("MNodeService.systemMetadataChanged - the new value of archive is "+newSysMeta.getArchived()+" for the pid "+pid.getValue());
+                            logMetacat.debug("MNodeService.systemMetadataChanged - the local value of archive is "+currentLocalSysMeta.getArchived()+" for the pid "+pid.getValue());
+                            if (newSysMeta.getArchived() != null && newSysMeta.getArchived() == true  && 
+                                    ((currentLocalSysMeta.getArchived() != null && currentLocalSysMeta.getArchived() == false ) || currentLocalSysMeta.getArchived() == null)){
+                                logMetacat.debug("MNodeService.systemMetadataChanged - start to archive object "+pid.getValue());
+                                boolean logArchive = false;
+                                boolean needUpdateModificationDate = false;
+                                try {
+                                    archiveObject(logArchive, session, pid, newSysMeta, needUpdateModificationDate);
+                                } catch (NotFound e) {
+                                    throw new InvalidRequest("1334", "Can't find the pid "+pid.getValue()+" for archive.");
+                                }
+                                
+                            }
                         }
                     }
                     HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
@@ -1540,6 +1558,16 @@ public class MNodeService extends D1NodeService
                     sf.initCause(e);
                     throw sf;
                 }
+                
+                try {
+                    String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                    EventLog.getInstance().log(request.getRemoteAddr(), 
+                            request.getHeader("User-Agent"), session.getSubject().getValue(), 
+                            localId, "updateSystemMetadata");
+                } catch (Exception e) {
+                    // do nothing, no localId to log with
+                    logMetacat.warn("MNodeService.systemMetadataChanged - Could not log 'updateSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+                } 
                 
                
             }
