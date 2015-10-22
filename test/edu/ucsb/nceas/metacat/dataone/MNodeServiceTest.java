@@ -144,6 +144,10 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreate"));
     suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
     suite.addTest(new MNodeServiceTest("testUpdate"));
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
+    suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
+    suite.addTest(new MNodeServiceTest("testArchive"));
+    suite.addTest(new MNodeServiceTest("testUpdateSciMetadata"));
     // this requires MN certificate
     suite.addTest(new MNodeServiceTest("testDelete"));
     
@@ -153,6 +157,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testGetSystemMetadata"));
     suite.addTest(new MNodeServiceTest("testDescribe"));
     suite.addTest(new MNodeServiceTest("testListObjects"));
+    suite.addTest(new MNodeServiceTest("testGetSID"));
     // this requires CN certificate
     suite.addTest(new MNodeServiceTest("testSynchronizationFailed"));
     
@@ -172,12 +177,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testGetOREPackage"));
     suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
-    suite.addTest(new MNodeServiceTest("testGetSID"));
     suite.addTest(new MNodeServiceTest("testListViews"));
-    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
-    suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
-    suite.addTest(new MNodeServiceTest("testArchive"));
-    suite.addTest(new MNodeServiceTest("testUpdateSciMetadata"));
+   
     
     
     return suite;
@@ -627,7 +628,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
       SystemMetadata sysmeta2 = createSystemMetadata(newPid, session.getSubject(), object);
       sysmeta2.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.1").getFormatId());
-      //sysmeta2.setObsoletes(guid);
+      sysmeta2.setObsoletes(guid);
       Checksum sum1= sysmeta2.getChecksum();
       System.out.println("the checksum before sending is "+sum1.getValue());
       object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
