@@ -177,6 +177,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadata"));
     suite.addTest(new MNodeServiceTest("testUpdateObsoletesAndObsoletedBy"));
     suite.addTest(new MNodeServiceTest("testArchive"));
+    suite.addTest(new MNodeServiceTest("testUpdateSciMetadata"));
+    
     
     return suite;
     
@@ -477,6 +479,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           MNodeService.getInstance(request).archive(session, guid);
           SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
           assertTrue(result.getArchived());
+          System.out.println("the identifier is ==================="+pid.getValue());
   }
 
   /**
@@ -545,6 +548,93 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      updatedPid = 
              MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
      assertEquals(updatedPid.getValue(), newPid2.getValue());
+    } catch (UnsupportedEncodingException e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (InvalidToken e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (ServiceFailure e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (NotAuthorized e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (IdentifierNotUnique e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (UnsupportedType e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (InsufficientResources e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (InvalidSystemMetadata e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (NotImplemented e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (InvalidRequest e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      fail("Unexpected error: " + e.getMessage());
+
+    }
+  }
+  
+  
+  /**
+   * Test object updating
+   */
+  public void testUpdateSciMetadata() {
+    printTestHeader("testUpdate");
+    
+    try {
+      String st1="<eml:eml xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" packageId=\"tao.13397.1\" system=\"knb\" xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.1 eml.xsd\">"
+                  +"<access authSystem=\"knb\" order=\"allowFirst\">"
+                  +"<allow><principal>public</principal><permission>read</permission></allow></access>"
+                  +"<dataset><title>test</title><creator id=\"1445543475577\"><individualName><surName>test</surName></individualName></creator>"
+                  +"<contact id=\"1445543479900\"><individualName><surName>test</surName></individualName></contact></dataset></eml:eml>";
+      Session session = getTestSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testUpdate." + System.currentTimeMillis());
+      InputStream object = new ByteArrayInputStream(st1.getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.1").getFormatId());
+      MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+      
+      String st2="<eml:eml xmlns:eml=\"eml://ecoinformatics.org/eml-2.1.1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" packageId=\"tao.13397.1\" system=\"knb\" xsi:schemaLocation=\"eml://ecoinformatics.org/eml-2.1.1 eml.xsd\">"
+              +"<access authSystem=\"knb\" order=\"allowFirst\">"
+              +"<allow><principal>public</principal><permission>read</permission></allow></access>"
+              +"<dataset><title>test2</title><creator id=\"1445543475577\"><individualName><surName>test</surName></individualName></creator>"
+              +"<contact id=\"1445543479900\"><individualName><surName>test</surName></individualName></contact></dataset></eml:eml>";
+      Identifier newPid = new Identifier();
+      newPid.setValue("testUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+      System.out.println("=================the pid is "+newPid.getValue());
+      object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
+      SystemMetadata sysmeta2 = createSystemMetadata(newPid, session.getSubject(), object);
+      sysmeta2.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.1").getFormatId());
+      //sysmeta2.setObsoletes(guid);
+      Checksum sum1= sysmeta2.getChecksum();
+      System.out.println("the checksum before sending is "+sum1.getValue());
+      object = new ByteArrayInputStream(st2.getBytes("UTF-8"));
+      MNodeService.getInstance(request).update(session, guid, object, newPid, sysmeta2);
+      SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+      System.out.println("the checksum getting from the server is "+meta.getChecksum().getValue());
+      assertTrue(meta.getChecksum().getValue().equals(sum1.getValue()));
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
@@ -2095,6 +2185,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         //serialVersion = serialVersion.add(BigInteger.ONE);
         //System.out.println("the new version is "+serialVersion.toString());
         //sysmeta.setSerialVersion(serialVersion);
+        System.out.println("the identifier is ----------------------- "+guid.getValue());
         MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
         SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
         assertTrue(metadata2.getIdentifier().equals(guid));
