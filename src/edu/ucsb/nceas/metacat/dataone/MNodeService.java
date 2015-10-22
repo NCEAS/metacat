@@ -457,10 +457,10 @@ public class MNodeService extends D1NodeService
                 try {
                     //objectAsXML = IOUtils.toString(object, "UTF-8");
                 	
-                	InputStream editedObject = editScienceMetadata(session, object, pid, newPid);
-                	
-                    localId = insertOrUpdateDocument(editedObject, "UTF-8", pid, session, "update");
-                	
+                	//InputStream editedObject = editScienceMetadata(session, object, pid, newPid);
+                    //localId = insertOrUpdateDocument(editedObject, "UTF-8", pid, session, "update");
+                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update");
+                    
                     // register the newPid and the generated localId
                     if (newPid != null) {
                         IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
