@@ -1246,9 +1246,10 @@ public class MNodeService extends D1NodeService
         }
         // TODO: update the CN URL below when the CNRead.SynchronizationFailed
         // method is changed to include the URL as a parameter
-        logMetacat.debug("Synchronization for the object identified by " + 
+        logMetacat.warn("Synchronization for the object identified by " + 
                 pid.getValue() + " failed from " + syncFailed.getNodeId() + 
-                " Logging the event to the Metacat EventLog as a 'syncFailed' event.");
+                " with message: " + syncFailed.getDescription() + 
+                ". Logging the event to the Metacat EventLog as a 'syncFailed' event.");
         // TODO: use the event type enum when the SYNCHRONIZATION_FAILED event is added
         String principal = Constants.SUBJECT_PUBLIC;
         if (session != null && session.getSubject() != null) {
