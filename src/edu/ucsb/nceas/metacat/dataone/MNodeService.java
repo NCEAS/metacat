@@ -1460,7 +1460,7 @@ public class MNodeService extends D1NodeService
             if(currentLocalSysMeta == null) {
                 throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
             }
-            if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
+            if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
                 try {
                     newSysMeta = cn.getSystemMetadata(null, pid);
                 } catch (NotFound e) {
@@ -1576,7 +1576,7 @@ public class MNodeService extends D1NodeService
             HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
         }
         
-        if (currentLocalSysMeta.getSerialVersion().longValue() < serialVersion ) {
+        if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // attempt to re-register the identifier (it checks if it is a doi)
             try {
                 DOIService.getInstance().registerDOI(newSysMeta);
