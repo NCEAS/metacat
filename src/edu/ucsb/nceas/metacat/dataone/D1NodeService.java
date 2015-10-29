@@ -1749,6 +1749,8 @@ public abstract class D1NodeService {
               } catch (NotFound e) {
                   throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
               }
+          } else if((currentSysmeta.getArchived() != null && currentSysmeta.getArchived() == true) && (sysmeta.getArchived() == null || sysmeta.getArchived() == false)) {
+              throw new InvalidRequest("4869", "The pid "+pid.getValue()+" has been archived and it can't be set archive false again.");
           } else {
               logMetacat.debug("D1Node.update - this is to archive a MN object "+pid.getValue());
               try {
