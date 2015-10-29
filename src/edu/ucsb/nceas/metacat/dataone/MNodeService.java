@@ -1532,6 +1532,8 @@ public class MNodeService extends D1NodeService
                                     throw new InvalidRequest("1334", "Can't find the pid "+pid.getValue()+" for archive.");
                                 }
                                 
+                            } else if((newSysMeta.getArchived() == null || newSysMeta.getArchived() == false) && (currentLocalSysMeta.getArchived() != null && currentLocalSysMeta.getArchived() == true )) {
+                                throw new InvalidRequest("1334", "The pid "+pid.getValue()+" has been archived and it can't be reset to false.");
                             }
                         }
                     }
