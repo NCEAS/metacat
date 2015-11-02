@@ -185,7 +185,7 @@ configuration page, uncheck the boxes beside any form elements that you do not
 wish to appear in the registry.
 
 Once you have saved your changes, you must restart Tomcat for them to come 
-into effect. To restart Tomcat, type: ``sudo /etc/init.d/tomcat6 restart`` or an 
+into effect. To restart Tomcat, type: ``sudo /etc/init.d/tomcat7 restart`` or an 
 equivalent command appropriate to your operating system. 
 
 .. figure:: images/screenshots/image037.jpg

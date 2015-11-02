@@ -18,7 +18,7 @@ running correctly:
 
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-* `Java 6`_ (Note: Java 5 is deprecated)
+* `Java 7`_ (Note: Java 6 is deprecated)
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -30,7 +30,7 @@ running correctly:
 
 .. _Apache HTTPD Server: http://httpd.apache.org/
 
-.. _Java 6: http://www.oracle.com/technetwork/java/javaee/overview/index.html
+.. _Java 7: http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html
 
 System requirements for running Metacat:
 
@@ -59,7 +59,7 @@ instructions for each step are in the next section.
 4. Download Metacat from the `Metacat Download Page`_ and extract the archive
 5. ``sudo mkdir /var/metacat; sudo chown -R <tomcat_user> /var/metacat``
 6. ``sudo cp <metacat_package_dir>/metacat.war <tomcat_app_dir>``
-7. ``sudo /etc/init.d/tomcat6 restart``
+7. ``sudo /etc/init.d/tomcat7 restart``
 8. Configure Metacat through the Web interface
 
 .. _Metacat Download Page: http://knb.ecoinformatics.org/software/metacat/
@@ -99,9 +99,9 @@ remainder of this documentation.
 File               Description
 ================== =====================================================================
 metacat.war        The Metacat Web archive file (WAR) 
-metacat-site       Sample Web definition file used by Apache on Ubuntu/Debian 
+metacat-site.conf       Sample Web definition file used by Apache on Ubuntu/Debian 
                    Linux systems. 
-metacat-site-ssl   Sample SSL definition file used by Apache on Ubuntu/Debian 
+metacat-site-ssl.conf   Sample SSL definition file used by Apache on Ubuntu/Debian 
                    Linux systems.
 jk.conf            Sample JkMount configuration file used by Apache on 
                    Ubuntu/Debian Linux systems. 
@@ -179,33 +179,21 @@ installing from source), and Tomcat are installed and running correctly. We
 also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
 
-* `Java 6`_
+* `Java 7`_
 * `Apache Tomcat`_ 
 * `Apache HTTPD Server`_ (Highly Recommended)
 * PostgreSQL_ Database (or Oracle_)
 * `Apache Ant`_ (if building from Source)
 
-Java 6
+Java 7
 ......
-To run Metacat, you should use Java 6 (Java 5 is deprecated and will not be
-supported after Metacat version 1.9.2). Make sure that the JAVA_HOME
+To run Metacat, you should use Java 7. Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
-To install Java if you are running Ubuntu_/Debian, you can download the appropriate self-extracting installer:: 
+To install Java if you are running Ubuntu_/Debian, you can install using apt-get:: 
 
-  wget http://download.oracle.com/otn-pub/java/jdk/6u30-b12/jdk-6u30-linux-x64.bin
-  
-and follow these commands to install::
-  
-  sudo mkdir -p /opt/java/64
-  sudo mv jdk-6u30-linux-x64.bin /opt/java/64
-  cd /opt/java/64
-  sudo chmod +x jdk-6u30-linux-x64.bin
-  sudo ./jdk-6u30-linux-x64.bin
-  sudo update-alternatives --install "/usr/bin/java" "java" "/opt/java/64/jdk1.6.0_30/bin/java" 1
-
-You must accept the license agreement during the install process.
+  sudo apt-get install openjdk-7-jdk
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM or other installer (Windows).
 
@@ -213,7 +201,7 @@ If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website a
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat 6 into the directory of your choice.
+We recommend that you install Tomcat 6 or 7 into the directory of your choice.
 Included with the Metacat download is a Tomcat-friendly start-up script that
 should be installed as well.
 
@@ -222,7 +210,7 @@ the remainder of the documentation.
 
 If you are running Ubuntu_/Debian, get Tomcat by typing::
 
-  sudo apt-get install tomcat6
+  sudo apt-get install tomcat7
 
 Otherwise, get Tomcat from the `Apache Tomcat`_ page.
 
@@ -238,7 +226,7 @@ If using Tomcat with Apache/mod_jk, enable the AJP connector on port 8009 by unc
   
 For DataONE deployments edit::  
 
-	/etc/tomcat6/catalina.properties
+	/etc/tomcat7/catalina.properties
 	
 to include::
 
@@ -354,12 +342,12 @@ these helper files will be in one of two locations:
   sudo a2dismod jk
   sudo a2enmod jk
 
-4. Apache needs to know about the Metacat site. The helper file named "metacat-site" has rules that tell Apache which traffic to route to Metacat. Set up Metacat site by dropping the metacat-site file into the sites-available directory and running a2ensite to enable the site:
+4. Apache needs to know about the Metacat site. The helper file named "metacat-site.conf" has rules that tell Apache which traffic to route to Metacat. Set up Metacat site by dropping the metacat-site file into the sites-available directory and running a2ensite to enable the site:
 
 ::
 
-  sudo cp <metacat_helper_dir>/metacat-site <apache_install_dir>/sites-available
-  sudo a2ensite metacat-site
+  sudo cp <metacat_helper_dir>/metacat-site.conf <apache_install_dir>/sites-available
+  sudo a2ensite metacat-site.conf
   
 5. Disable the default Apache site configuration:
 
@@ -537,7 +525,7 @@ To install a new Metacat servlet:
     sudo chown -R <tomcat_user> /var/metacat
 
 
-3.  Install the Metacat WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat6/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
+3.  Install the Metacat WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat7/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
 
   ::
 
@@ -548,7 +536,7 @@ To install a new Metacat servlet:
 
   ::
 
-    sudo /etc/init.d/tomcat6 restart
+    sudo /etc/init.d/tomcat7 restart
 
 Congratulations! You have now installed Metacat. If everything is installed
 correctly, you should see the Authentication Configuration screen (Figure 2.1)
@@ -574,7 +562,7 @@ instructions for installing from source:
 
   ::
 
-    /etc/init.d/tomcat6 stop
+    /etc/init.d/tomcat7 stop
 
 3. Back up the existing Metacat installation. Although not required, we highly recommend that you back up your existing Metacat to a backup directory (<backup_dir>) before installing a new one. You can do so by typing:
 
@@ -606,7 +594,7 @@ instructions for installing from source:
 
   ::
 
-    /etc/init.d/tomcat6 restart
+    /etc/init.d/tomcat7 restart
 
 
 7. Run your new Metacat servlet. Go to a Web browser and visit your installed
@@ -732,7 +720,7 @@ To install the LSID server using the binary installation:
 
   ::
 
-    sudo cp <metacat_package_directory>/authority.war /usr/share/tomcat6/webapps
+    sudo cp <metacat_package_directory>/authority.war /usr/share/tomcat7/webapps
  
 2. Set up the LSID server by dropping the authority file into Apache's
    sites-available directory and running a2ensite to enable the site:
@@ -787,7 +775,7 @@ To install the LSID server from a source
 
   ::
 
-    /etc/init.d/tomcat6 restart
+    /etc/init.d/tomcat7 restart
 
 5. If you are running Tomcat behind the Apache server (the recommended
    configuration), set up and enable the authority service site configurations by
@@ -866,20 +854,20 @@ Install Required Software
 Before you can install and run Metacat, you must ensure that a recent Java SDK,
 PostgreSQL and Tomcat are installed, configured, and running correctly. 
 
-* `Java 6`_
+* `Java 7`_
 * `Apache Tomcat`_
 * PostgreSQL_ Database
 
-Java 6
+Java 7
 ......
-To run Metacat, you must have Java 6. (Java 5 is deprecated). Make sure that
+To run Metacat, you must have Java 7. Make sure that
 the JAVA_HOME environment variable is properly set and that both java and javac
 are on your PATH.
 
 To download and install Java:
 
-1. Browse to: http://java.sun.com/javase/downloads/widget/jdk6.jsp and follow
-   the instructions to download JDK 6.
+1. Browse to: http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html and follow
+   the instructions to download JDK 7.
 
 2. Run the downloaded installer to install Java.
 
@@ -888,12 +876,12 @@ To download and install Java:
 
   ::
 
-    System Variable: JAVA_HOME C:\Program Files\Java\jdk1.6.0_18 
+    System Variable: JAVA_HOME C:\Program Files\Java\jdk1.7.0_79 
     (or whichever version you downloaded)
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat version 6.  To download and install Tomcat:
+We recommend that you install Tomcat version 7.  To download and install Tomcat:
 
 1. Browse to: http://tomcat.apache.org/
 2. Download the Tomcat core zip file 

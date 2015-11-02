@@ -447,8 +447,8 @@ optional properties that are only relevant when optional Metacat features
   <CONTEXT_DIR>/WEB_INF/metacat.properties
 
 Where ``<CONTEXT_DIR>`` is the directory in which the Metacat application code 
-lives (e.g., ``/var/lib/tomcat6/webapps/metacat``). The path is a combination 
-of the Web application directory (e.g., ``/var/lib/tomcat6/webapps/``) and 
+lives (e.g., ``/var/lib/tomcat7/webapps/metacat``). The path is a combination 
+of the Web application directory (e.g., ``/var/lib/tomcat7/webapps/``) and 
 the Metacat context directory (e.g., ``metacat``). Both values depend upon how your 
 system was set up during installation.
 

@@ -234,7 +234,7 @@ are included below:
 
   ::
   
-    /etc/init.d/tomcat6 restart
+    /etc/init.d/tomcat7 restart
 
 Navigate to Metacat's Configuration utility  and select the Configure Skins 
 option. Your custom skin should appear as a choice in the skins list. Change 
