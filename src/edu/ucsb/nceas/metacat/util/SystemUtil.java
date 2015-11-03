@@ -164,7 +164,7 @@ public class SystemUtil {
 	    
 	    serverURL += PropertyService.getProperty("server.name");
 		
-		if (!httpPort.equals("80")) {
+		if (!httpPort.equals("80") && !httpPort.equals("443")) {
 			serverURL += ":" + httpPort;
 		}
 

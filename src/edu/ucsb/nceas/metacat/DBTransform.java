@@ -89,8 +89,8 @@ public class DBTransform {
   {
     configDir = SystemUtil.getStyleSkinsDir();
     defaultStyle = PropertyService.getProperty("application.default-style");
-    httpServer = SystemUtil.getSecureServerURL();
-    contextURL = SystemUtil.getSecureContextURL();
+    httpServer = SystemUtil.getServerURL();
+    contextURL = SystemUtil.getContextURL();
     servletURL = SystemUtil.getServletURL();
     userManagementURL = PropertyService.getProperty("auth.userManagementUrl");
   }
