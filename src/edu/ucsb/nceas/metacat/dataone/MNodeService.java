@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
@@ -53,6 +54,12 @@ import java.util.UUID;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -129,6 +136,7 @@ import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
+import org.w3c.dom.Document;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
@@ -191,6 +199,8 @@ public class MNodeService extends D1NodeService
 	public static final String UUID_SCHEME = "UUID";
 	public static final String DOI_SCHEME = "DOI";
 	private static final String UUID_PREFIX = "urn:uuid:";
+	
+	private static String XPATH_EML_ID = "/eml:eml/@packageId";
 
 	/* the logger instance */
     private Logger logMetacat = null;
@@ -457,8 +467,6 @@ public class MNodeService extends D1NodeService
                 try {
                     //objectAsXML = IOUtils.toString(object, "UTF-8");
                 	
-                	//InputStream editedObject = editScienceMetadata(session, object, pid, newPid);
-                    //localId = insertOrUpdateDocument(editedObject, "UTF-8", pid, session, "update");
                     localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update");
                     
                     // register the newPid and the generated localId
@@ -1845,7 +1853,9 @@ public class MNodeService extends D1NodeService
 	 * @throws UnsupportedType 
 	 * @throws IdentifierNotUnique 
 	 */
-	public Identifier publish(Session session, Identifier originalIdentifier) throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+	public Identifier publish(Session session, Identifier originalIdentifier) throws InvalidToken, 
+	ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+	UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
 		
 	    String serviceFailureCode = "1030";
 	    Identifier sid = getPIDForSID(originalIdentifier, serviceFailureCode);
@@ -1879,8 +1889,19 @@ public class MNodeService extends D1NodeService
 		// ensure it is publicly readable
 		sysmeta = makePublicIfNot(sysmeta, originalIdentifier);
 		
-		// get the bytes
-		InputStream inputStream = this.get(session, originalIdentifier);
+		//Get the bytes
+		InputStream inputStream = null;		
+		boolean isScienceMetadata = isScienceMetadata(sysmeta);
+		//If it's a science metadata doc, we want to update the packageId first
+		if(isScienceMetadata){
+			InputStream originalObject = this.get(session, originalIdentifier);
+			
+			//Edit the science metadata with the new package Id (EML)
+			inputStream = editScienceMetadata(session, originalObject, originalIdentifier, newIdentifier);
+		}
+		else{
+			inputStream = this.get(session, originalIdentifier);
+		}
 		
 		// update the object
 		this.update(session, originalIdentifier, inputStream, newIdentifier, sysmeta);
@@ -2032,6 +2053,83 @@ public class MNodeService extends D1NodeService
 		
 		return newIdentifier;
 	}
+	
+	/**
+	   * Update a science metadata document with its new Identifier  
+	   * 
+	   * @param session - the Session object containing the credentials for the Subject
+	   * @param object - the InputStream for the XML object to be edited
+	   * @param pid - the Identifier of the XML object to be updated
+	   * @param newPid = the new Identifier to give to the modified XML doc
+	   * 
+	   * @return newObject - The InputStream for the modified XML object
+	   * 
+	   * @throws ServiceFailure
+	   * @throws IOException
+	   * @throws UnsupportedEncodingException
+	   * @throws InvalidToken
+	   * @throws NotAuthorized
+	   * @throws NotFound
+	   * @throws NotImplemented
+	   */
+	  public InputStream editScienceMetadata(Session session, InputStream object, Identifier pid, Identifier newPid)
+	  	throws ServiceFailure, IOException, UnsupportedEncodingException, InvalidToken, NotAuthorized, NotFound, NotImplemented {
+	    
+		logMetacat.debug("D1NodeService.editScienceMetadata() called.");
+		
+		 InputStream newObject = null;
+		
+	    try{   	
+	    	//Get the root node of the XML document
+	    	byte[] xmlBytes  = IOUtils.toByteArray(object);
+	        String xmlStr = new String(xmlBytes, "UTF-8");
+	        
+	    	Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new StringReader(xmlStr));
+		    org.w3c.dom.Node docNode = doc.getDocumentElement();
+
+		    //Get the system metadata for this object
+		    SystemMetadata sysMeta = null;
+		    try{
+		    	sysMeta = getSystemMetadata(session, pid);
+		    } catch(NotAuthorized e){
+		    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
+		    			"This session is not authorized to access the system metadata for " +
+		    			pid.getValue() + " : " + e.getMessage());
+		    } catch(NotFound e){
+		    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
+		    			"Could not find the system metadata for " +
+		    			pid.getValue() + " : " + e.getMessage());
+		    }
+		    
+		    //Get the formatId
+	        ObjectFormatIdentifier objFormatId = sysMeta.getFormatId();
+	        String formatId = objFormatId.getValue();
+	        
+	    	//For all EML formats
+	        if(formatId.indexOf("eml") == 0){
+	        	//Update or add the id attribute
+	    	    XMLUtilities.addAttributeNodeToDOMTree(docNode, XPATH_EML_ID, newPid.getValue());
+	        }
+
+	        //The modified object InputStream
+		    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+		    Source xmlSource = new DOMSource(docNode);
+		    Result outputTarget = new StreamResult(outputStream);
+		    TransformerFactory.newInstance().newTransformer().transform(xmlSource, outputTarget);
+		    newObject = new ByteArrayInputStream(outputStream.toByteArray());
+		    
+	    } catch(TransformerException e) {
+	    	throw new ServiceFailure("1030", "MNNodeService.editScienceMetadata(): " +
+	                "Could not update the ID in the XML document for " +
+	                "pid " + pid.getValue() +" : " + e.getMessage());
+	    } catch(IOException e){
+	    	throw new ServiceFailure("1030", "MNNodeService.editScienceMetadata(): " +
+	                "Could not update the ID in the XML document for " +
+	                "pid " + pid.getValue() +" : " + e.getMessage());
+	    }
+	    
+	    return newObject;
+	  }
 	
 	/**
 	 * Determines if we already have registered an ORE map for this package

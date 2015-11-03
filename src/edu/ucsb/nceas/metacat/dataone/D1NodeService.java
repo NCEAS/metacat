@@ -23,7 +23,6 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,11 +31,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
-import java.nio.charset.Charset;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -50,12 +46,6 @@ import java.util.Timer;
 import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
-import javax.xml.transform.Result;
-import javax.xml.transform.Source;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
@@ -96,7 +86,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.Constants;
-import org.w3c.dom.Document;
 
 import edu.ucsb.nceas.metacat.AccessionNumber;
 import edu.ucsb.nceas.metacat.AccessionNumberException;
@@ -116,14 +105,11 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
-import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public abstract class D1NodeService {
     
   public static final String DELETEDMESSAGE = "The object with the PID has been deleted from the node.";
-  
-  private static String XPATH_EML_ID = "/eml:eml/@packageId";
-  
+    
   private static Logger logMetacat = Logger.getLogger(D1NodeService.class);
 
   /** For logging the operations */
@@ -1523,79 +1509,7 @@ public abstract class D1NodeService {
 
       return objectList;
   }
-  
-  /**
-   * Update a science metadata document with its new Identifier  
-   * 
-   * @param session - the Session object containing the credentials for the Subject
-   * @param object - the InputStream for the XML object to be edited
-   * @param pid - the Identifier of the XML object to be updated
-   * @param newPid = the new Identifier to give to the modified XML doc
-   * 
-   * @return newObject - The InputStream for the modified XML object
-   * 
-   * @throws ServiceFailure
-   * @throws IOException
-   * @throws UnsupportedEncodingException
-   * @throws InvalidToken
-   * @throws NotAuthorized
-   * @throws NotFound
-   * @throws NotImplemented
-   */
-  public InputStream editScienceMetadata(Session session, InputStream object, Identifier pid, Identifier newPid)
-  	throws ServiceFailure, IOException, UnsupportedEncodingException, InvalidToken, NotAuthorized, NotFound, NotImplemented {
-    
-	logMetacat.debug("D1NodeService.editScienceMetadata() called.");
-	
-	 InputStream newObject = null;
-	
-    try{   	
-    	//Get the root node of the XML document
-    	byte[] xmlBytes  = IOUtils.toByteArray(object);
-        String xmlStr = new String(xmlBytes, "UTF-8");
-        
-    	Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new StringReader(xmlStr));
-	    org.w3c.dom.Node docNode = doc.getDocumentElement();
 
-	    //Get the system metadata for this object
-	    SystemMetadata sysMeta = null;
-	    try{
-	    	sysMeta = getSystemMetadata(session, pid);
-	    } catch(NotAuthorized e){
-	    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
-	    			"This session is not authorized to access the system metadata for " +
-	    			pid.getValue() + " : " + e.getMessage());
-	    } catch(NotFound e){
-	    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
-	    			"Could not find the system metadata for " +
-	    			pid.getValue() + " : " + e.getMessage());
-	    }
-	    
-	    //Get the formatId
-        ObjectFormatIdentifier objFormatId = sysMeta.getFormatId();
-        String formatId = objFormatId.getValue();
-        
-    	//For all EML formats
-        if(formatId.indexOf("eml") == 0){
-        	//Update or add the id attribute
-    	    XMLUtilities.addAttributeNodeToDOMTree(docNode, XPATH_EML_ID, newPid.getValue());
-        }
-
-        //The modified object InputStream
-	    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-	    Source xmlSource = new DOMSource(docNode);
-	    Result outputTarget = new StreamResult(outputStream);
-	    TransformerFactory.newInstance().newTransformer().transform(xmlSource, outputTarget);
-	    newObject = new ByteArrayInputStream(outputStream.toByteArray());
-	    
-    } catch(TransformerException e) {
-    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " +
-                "Could not update the ID in the XML document for " +
-                "pid " + pid.getValue() +" : " + e.getMessage());
-    }
-    
-    return newObject;
-  }
 
   /**
    * Update a systemMetadata document
@@ -1757,9 +1671,6 @@ public abstract class D1NodeService {
                   throw new InvalidRequest("4869", "Can't find the pid "+pid.getValue()+" for archive.");
               }
           }
-      
-      } else if((currentSysmeta.getArchived() != null && currentSysmeta.getArchived() == true) && (sysmeta.getArchived() == null || sysmeta.getArchived() == false)) {
-          throw new InvalidRequest("4869", "The pid "+pid.getValue()+" has been archived and it can't be set archive false again.");
       } else {
           logMetacat.debug("D1Node.update - regularly update the system metadata of the pid "+pid.getValue());
           updateSystemMetadataWithoutLock(sysmeta, needUpdateModificationDate);
