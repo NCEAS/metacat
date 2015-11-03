@@ -23,6 +23,7 @@
 
 package edu.ucsb.nceas.metacat.dataone.v1;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.Date;
@@ -543,7 +544,7 @@ public class MNodeService
 	// methods not defined in v1, but implemented in metacat pre-v2 release
 	
 	public Identifier publish(Session session, Identifier originalIdentifier) 
-			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+			throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
 	    String serviceFailure = "1030";
         String notFound = "1020";
         impl.checkV1SystemMetaPidExist(originalIdentifier, serviceFailure, "The system metadata of the object specified by "+originalIdentifier.getValue()+" couldn't be identified if it exists",  notFound, 
