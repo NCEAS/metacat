@@ -187,6 +187,32 @@ in turn rendering the ``DataCatalogView`` view.
 For more information about ``Backbone.js``, see the Backbone.js documentation at `www.backbonejs.org <http://www.backbonejs.org>`_
 
 
+Using Custom Endpoints
+-----------------------
+MetacatUI can also be configured to use custom DataONE endpoints for both Member Node and Coordinating Node APIs.
+The ``dataone`` theme shows an example of this endpoint customization in the ``AppModel.js`` file.
+In custom themes, the AppModel.js values can be edited to suit your particular deployment needs.
+
+For querying the DataONE Coordinating Node, for example, the following properties would be set:
+
+	::
+	  		
+	  	context: '',
+		d1Service: "/cn/v2",
+		d1CNBaseUrl:  "https://cn.dataone.org",
+		d1CNService: "/cn/v2",
+	
+	
+But querying a Metacat Member Node would be configured as:
+
+	::
+	  		
+	  	context: '/metacat',
+		d1Service: '/d1/mn/v2',
+		d1CNBaseUrl: "https://cn.dataone.org/",
+		d1CNService: "cn/v2",
+
+
 
 Creating a Custom Skin
 ----------------------
