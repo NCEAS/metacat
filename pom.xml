@@ -225,7 +225,7 @@
 		<dependency>
 			<groupId>edu.ucsb.nceas</groupId>
 			<artifactId>ezid</artifactId>
-			<version>1.0.1-SNAPSHOT</version>
+			<version>1.0.1</version>
 		</dependency>
 		<!-- geotools -->
 		<dependency>
