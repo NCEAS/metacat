@@ -406,7 +406,7 @@
 		<property name="svn.eml211SchemaUrl"
 			value="https://code.ecoinformatics.org/code/eml/tags/${eml2_1_1-schema-tag}" />
 		<property name="svn.eml2StyleUrl"
-			value="https://code.ecoinformatics.org/code/eml/${eml2-style-tag}" />
+			value="https://code.ecoinformatics.org/code/eml/tags/${eml2-style-tag}" />
 		
 		<!-- the git repo -->
 		<property name="metacatui.git.repository.url"
