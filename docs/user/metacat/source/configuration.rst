@@ -305,11 +305,6 @@ Select the checkbox next to your customized skin or and click the
 select the ``default`` skin. Once you have selected a skin, Metacat will open 
 a list of options that apply to the Registry interface.
 
-.. figure:: images/screenshots/image025.png
-   :align: center
-
-   Configuring Metacat skins.
-
 Select the lists and modules that you would like to appear in the Registry 
 form-interface by checking the box beside each. When you save the configuration, 
 the customized interface will appear to site visitors.

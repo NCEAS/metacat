@@ -174,9 +174,9 @@
   <body>
   <div id="metacatDocs">
 	  <div class="banner">
-	      <img class="logo" src="_static/metacat-logo-white.png" />
+	      <a href="index.html"><img class="logo" src="_static/metacat-logo-white.png" /></a>
+	      <a href="index.html"><h1 class="title">Metacat: Metadata and Data Management Server</h1></a>
 	      <img class="logo-right" src="_static/nceas-logo-white.png" />
-	      <p class="title">Metacat: Metadata and Data Management Server</p>
 	  </div>
 			
 	{%- block header %}{% endblock %}
@@ -186,7 +186,7 @@
 	{# Comment out the sidebar
   		{%- block sidebar1 %} {# possible location for sidebar  {% endblock %}
 	#}
-    <div class="document">
+    <div class="document">  
 	{%- block document %}
      	 <div class="documentwrapper">
 	      	{%- if not embedded %}{% if not theme_nosidebar|tobool %}

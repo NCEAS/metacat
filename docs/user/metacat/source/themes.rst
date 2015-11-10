@@ -4,8 +4,10 @@ Modifying and Creating Themes
 
 .. contents::
   
-Metacat's theming system, MetacatUI, is deployed separately from Metacat, allowing more 
-independent user interface customization. MetacatUI is structured in a model-view-controller
+Metacat's theming system, `MetacatUI <https://github.com/NCEAS/metacatui>`_, is deployed separately from Metacat, allowing more 
+independent user interface customization. Check the `MetacatUI GitHub <https://github.com/NCEAS/metacatui>`_ for the most up to date version.
+
+MetacatUI is structured in a model-view-controller
 architecture using `Backbone.js <http://www.backbonejs.org>`_. Some background knowledge on Backbone.js may be helpful for 
 advanced modification of MetacatUI, but is not necessary for editing the CSS styling and HTML of 
 the included MetacatUI views. 

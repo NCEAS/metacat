@@ -39,16 +39,7 @@ html{
 	height: 100%;
 }
 body{
-	background: url(../docs/_static/bg.jpg) no-repeat center center fixed;
-	background-size: cover;
-     -webkit-background-size: cover;
-	 -moz-background-size: cover;
-	 -o-background-size: cover;
-	 font-weight: 400;
-	 font-size: 1em;
-	 line-height: 1.2em;
 	 font-family: "Helvetica", "Source Sans Pro", sans-serif;
-	 overflow-x: hidden;
 }
 
 
@@ -151,7 +142,7 @@ table{
 }
 
 .footer > p{
-	font: 400 1em/1em Source Sans Pro, Arial;
+	color: white;
 	float: right;
 	clear: both;
 	display: block;
@@ -171,6 +162,18 @@ table{
 	margin-left: 20px;
 }
 
+.header{
+	background-color: #166194;
+	margin: 0px;
+}
+.header > ul{
+	float: left;
+}
+.header > ul > li > img {
+    height: 50px;
+    width: auto;
+}
+
 .footer li > a,
 .header li > a{
 	color: #FFFFFF;
@@ -185,8 +188,9 @@ table{
 }
 
 .header{
-	height: 100px;
-	margin: 10px;
+	height: 60px;
+	margin: 0px;
+	padding-top: 10px;
 }
 
 /* FORMS
@@ -356,6 +360,7 @@ input[type="text"] {
 	text-align: center;
 	padding-top: 5px;
 	padding-bottom: 5px;
+	border: 1px solid #333;
 }
 
 
