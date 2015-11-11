@@ -19,22 +19,30 @@ Bold 700
 ---------------------------------------------------- */
 .banner{
 	width: 100%;
-	height: 100px;
+	height: 84px;
+	background-color: #166194;
 }
 
+.banner > a,
 .banner > img{
 	float: left;
 	width: auto;
 	margin: 20px 10px;
+}
+.banner > a > img,
+.banner > img{
 	max-height: 100%;
-	height: 80px;
+	height: 50px;
 }
 
-.banner > .title{
-	font: 300 18px/18px Oswald;
-	color: #CCCCCC;
-	float: left;
-	margin: 38px 10px;
+.banner .title{
+    font-size: 1em;
+    color: white;
+    font-weight: lighter;
+    font-family: Helvetica, Arial;
+    width: 200px;
+    line-height: 1.5em;
+    margin-top: 0px;
 }
 
 /* RELATED/NAVIGATION CSS
@@ -42,7 +50,7 @@ Bold 700
 #metacatDocs > .related {
 	width: 100%;
 	position: relative;
-	top: -80px;
+	top: -60px;
 	left: -20px;
 }
 
@@ -82,14 +90,11 @@ Bold 700
 
 .related > ul input[type="submit"]{	/*"Go" button on navigation search bar */
 	position: relative;
-	left: -30px;
-	top: 0px;
-	height: 27px;
-	background: none;
-	border-radius: 0 4px 4px 0;
-	-webkit-border-radius: 0 4px 4px 0;
-	-moz-border-radius: 0 4px 4px 0;
-	font: 300 16px/16px "Oswald", sans-serif;
+    top: -4px;
+    height: 30px;
+    color: white;
+    background: transparent;
+    border: 1px solid white;
 }
 
 .related > ul input[type="submit"]:hover{	/*"Go" button on navigation search bar */
@@ -98,10 +103,9 @@ Bold 700
 }
 
 .related > ul > li > a{
-	color: #FFFFFF;
-	font: 400 2em/1em Oswald, Arial;
-	text-transform: uppercase;
-	line-height: 25px;
+    color: #FFFFFF;
+    font-size: 2em;
+    text-transform: capitalize;
 }
 
 .related > ul > li > span#searchbox{
@@ -126,14 +130,8 @@ Bold 700
 /* DOCUMENT / MAIN CONTENT AREA
 ------------------------------------------------------*/
 .document{
-	background: rgba(244, 244, 244, 0.9);
-	margin: 20px auto;
-	padding: 5px 2%;
-	width: 85%;
-	padding-bottom: 360px;
-			border-radius: 10px;
-	   -moz-border-radius: 10px;
-	-webkit-border-radius: 10px;
+    padding-bottom: 100px;
+    padding: 0px 30px 100px 30px;
 }
 
 h1{
@@ -201,7 +199,7 @@ h4 a{
 ---------------------------------------------------- */
 .footer{
 	height: 100px;
-	color: #fdfdfd;
+	background-color: #7B8D99;
 	bottom: 0;
 	width: 100%;
 	margin: 50px auto 0 auto;
@@ -222,6 +220,13 @@ h4 a{
 	height: 40px;
 	margin-bottom: 10px;
 }
+.footerNav .related {
+    top: 20px;
+    position: relative;
+}
+.footer a {
+    color: yellow;
+}
 
 
 /* Body CSS
@@ -230,12 +235,6 @@ h4 a{
     	margin: 0;
     	padding: 0;
     	height: 100%;
-    }
-    
-    body {
-      background: #166194;
-      background: url(bg.jpg) no-repeat center center fixed;
-      background-size: cover;
     }
     
 /* TABLES 
@@ -335,14 +334,15 @@ h4 a{
  }
  
  pre{
-	 padding: 10px;
-	background: rgba(22,97,148,0.7);
-	color: #FFFFFF;
-	font-size: 15px;
-	border-radius: 5px;
-	-moz-border-radius: 5px;
-	-webkit-border-radius: 5px;
-	margin: 20px auto;
+    padding: 10px;
+    background: #EEE;
+    color: #008477;
+    font-size: 15px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    margin: 20px auto;
+    border-color: #DDD;
  }
  
     
