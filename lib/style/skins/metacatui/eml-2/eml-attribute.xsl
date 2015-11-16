@@ -114,6 +114,7 @@
   	
   	<!-- Mark each attribute section -->
 	<div class="tab-pane">
+		<xsl:attribute name="id">entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
 		<xsl:if test="position() = 1">
 			<xsl:attribute name="class">tab-pane active</xsl:attribute>
 		</xsl:if>
@@ -133,7 +134,7 @@
 
 		<!--  Header for the section and annotation target -->
 		<div class="annotation-target">
-			<xsl:attribute name="id">entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
+			<xsl:attribute name="id">sem_entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
 			<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$attributeindex"/>])</xsl:attribute>
 			
 			<xsl:choose>
