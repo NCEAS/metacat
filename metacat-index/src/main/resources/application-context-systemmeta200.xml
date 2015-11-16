@@ -1,11 +1,8 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-	
-	<bean id="systemMetadata200Subprocessor"
-	  	class="org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor">
-	  	<property name="xmlNamespaceConfig" ref="xmlNamespaceConfig" />
-	    <property name="fieldList">
+	<bean id="xpath_system_metadata_200" class="java.util.ArrayList">
+		<constructor-arg>
 			<list>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="id" />
@@ -158,6 +155,6 @@
 					<constructor-arg name="name" value="dataUrl" />
 		        </bean>
 			</list>
-		</property>
+		</constructor-arg>	
 	</bean>
 </beans>

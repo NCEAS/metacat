@@ -86,7 +86,7 @@
    <list>
     <bean class="edu.ucsb.nceas.metacat.index.SolrIndex">
      <constructor-arg name="xmlNamespaceConfig" ref="xmlNamespaceConfig" />
-     <constructor-arg name="sysmetaSolrFields" ref="xpath_system_metadata_100"/>
+     <constructor-arg name="sysmetaSolrFields" ref="xpath_system_metadata_200"/>
      <!--<property name="solrBaseUri" value="${solr.base.uri}" />
      <property name="httpService" ref="httpService" /> -->
      <property name="subprocessors">
