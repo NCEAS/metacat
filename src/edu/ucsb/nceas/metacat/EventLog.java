@@ -519,9 +519,12 @@ public class EventLog
 
         // select the count
         String countQuery = countClause + queryWhereClause.toString();
-        
+        logMetacat.debug("The count query is "+countQuery);
 		// select the fields
         String pagedQuery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(fieldsClause + queryWhereClause.toString() + orderByClause, start, count);
+        logMetacat.debug("The selection query is "+pagedQuery);
+        logMetacat.debug("The startDate in the query is "+startDate);
+        logMetacat.debug("The endDate in the query is "+startDate);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -557,7 +560,11 @@ public class EventLog
 
             // get the fields form the query
             if (count != 0) {
+                long startTime = System.currentTimeMillis();
+                logMetacat.debug("Time to start to execute the selection query "+startTime);
 	            fieldsStmt.execute();
+	            long endTime = System.currentTimeMillis();
+	            logMetacat.debug("Time to run the selection query is "+(endTime-startTime)/1000+" seconds.");
 	            ResultSet rs = fieldsStmt.getResultSet();
 	            //process the result and return it            
 	            while (rs.next()) {
@@ -590,6 +597,8 @@ public class EventLog
 					logs.add(logEntry);
 	            }
 	            fieldsStmt.close();
+	            long endTime2 = System.currentTimeMillis();
+	            logMetacat.debug("Time to put the query result to the log is "+(endTime2-endTime)/1000+" seconds.");
             }
             
             // set what we have
@@ -599,7 +608,11 @@ public class EventLog
             			
 			// get total for out query
 		    int total = 0;
+		    long startTime = System.currentTimeMillis();
+            logMetacat.debug("Time to start to execute the counting query "+startTime);
             countStmt.execute();
+            long endTime = System.currentTimeMillis();
+            logMetacat.debug("Time to run the counting query is "+(endTime-startTime)/1000+" seconds.");
             ResultSet countRs = countStmt.getResultSet();
             if (countRs.next()) {
             	total = countRs.getInt(1);
