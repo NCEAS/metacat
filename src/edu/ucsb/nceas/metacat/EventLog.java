@@ -417,8 +417,109 @@ public class EventLog
         }
         memberNode.setValue(nodeId);
         
-        String countClause = "select count(*) ";
-        String fieldsClause = "select " +
+        // subquery does the heavy lifting
+        StringBuffer subQueryFrom = new StringBuffer();
+        subQueryFrom.append("from access_log ");
+        
+        boolean clauseAdded = false;
+        
+        List<String> paramValues = new ArrayList<String>();
+        if (ipAddress != null) {
+        	if (clauseAdded) {
+        		subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+        	subQueryFrom.append("ip_address in (");
+        	for (int i = 0; i < ipAddress.length; i++) {
+        		if (i > 0) {
+        			subQueryFrom.append(", ");
+        		}
+        		subQueryFrom.append("?");
+        		paramValues.add(ipAddress[i]);
+        	}
+        	subQueryFrom.append(") ");
+            clauseAdded = true;
+        }
+        if (principal != null) {
+        	if (clauseAdded) {
+        		subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+        	subQueryFrom.append("principal in (");
+        	for (int i = 0; i < principal.length; i++) {
+        		if (i > 0) {
+        			subQueryFrom.append(", ");
+        		}
+        		subQueryFrom.append("?");
+        		paramValues.add(principal[i]);
+        	}
+        	subQueryFrom.append(") ");
+            clauseAdded = true;
+        }
+        if (docid != null) {
+        	if (clauseAdded) {
+        		subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+        	subQueryFrom.append("al.docid in (");
+        	for (int i = 0; i < docid.length; i++) {
+        		if (i > 0) {
+        			subQueryFrom.append(", ");
+        		}
+        		subQueryFrom.append("?");
+        		paramValues.add(docid[i]);
+        	}
+        	subQueryFrom.append(") ");
+            clauseAdded = true;
+        }
+        if (event != null) {
+        	if (clauseAdded) {
+        		subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+        	subQueryFrom.append("event in (");
+        	subQueryFrom.append("?");
+    		String eventString = event;
+    		if (eventString.equals(Event.CREATE.xmlValue())) {
+    			eventString = "insert";
+    		}
+    		paramValues.add(eventString);
+    		subQueryFrom.append(") ");
+            clauseAdded = true;
+        }
+        
+        if (startDate != null) {
+            if (clauseAdded) {
+            	subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+            subQueryFrom.append("date_logged >= ?");
+            clauseAdded = true;
+        }
+        if (endDate != null) {
+            if (clauseAdded) {
+            	subQueryFrom.append(" and ");
+            } else {
+            	subQueryFrom.append(" where ");
+            }
+            subQueryFrom.append("date_logged < ?");
+            clauseAdded = true;
+        }
+
+        // count query
+        String countSelect = "select count(*) ";
+        
+        // subquery select
+        String subquerySelect = "select entryid ";
+        
+        // for selecting fields we want in the join
+        String fieldSelect = 
+        		"select " +
         		"entryid, " +
         		"id.guid as identifier, " +
         		"ip_address, " +
@@ -428,103 +529,23 @@ public class EventLog
         		"	when event = 'insert' then 'create' " +
         		"	else event " +
         		"end as event, " +
-        		"date_logged ";
-        
-        StringBuffer queryWhereClause = new StringBuffer();
-        queryWhereClause.append(		 
+        		"date_logged " +	 
         		"from access_log al, identifier id " +
-        		"where al.docid = id.docid||'.'||id.rev "
-        );
+        		"where al.docid = id.docid||'.'||id.rev " +
+        		"and al.entryid in ";
         
-        boolean clauseAdded = true;
-        
-        List<String> paramValues = new ArrayList<String>();
-        if (ipAddress != null) {
-        	if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-        	queryWhereClause.append("ip_address in (");
-        	for (int i = 0; i < ipAddress.length; i++) {
-        		if (i > 0) {
-            		queryWhereClause.append(", ");
-        		}
-        		queryWhereClause.append("?");
-        		paramValues.add(ipAddress[i]);
-        	}
-        	queryWhereClause.append(") ");
-            clauseAdded = true;
-        }
-        if (principal != null) {
-        	if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-        	queryWhereClause.append("principal in (");
-        	for (int i = 0; i < principal.length; i++) {
-        		if (i > 0) {
-            		queryWhereClause.append(", ");
-        		}
-        		queryWhereClause.append("?");
-        		paramValues.add(principal[i]);
-        	}
-        	queryWhereClause.append(") ");
-            clauseAdded = true;
-        }
-        if (docid != null) {
-        	if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-        	queryWhereClause.append("al.docid in (");
-        	for (int i = 0; i < docid.length; i++) {
-        		if (i > 0) {
-            		queryWhereClause.append(", ");
-        		}
-        		queryWhereClause.append("?");
-        		paramValues.add(docid[i]);
-        	}
-        	queryWhereClause.append(") ");
-            clauseAdded = true;
-        }
-        if (event != null) {
-        	if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-        	queryWhereClause.append("event in (");
-    		queryWhereClause.append("?");
-    		String eventString = event;
-    		if (eventString.equals(Event.CREATE.xmlValue())) {
-    			eventString = "insert";
-    		}
-    		paramValues.add(eventString);
-        	queryWhereClause.append(") ");
-            clauseAdded = true;
-        }
-        
-        if (startDate != null) {
-            if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-            queryWhereClause.append("date_logged >= ?");
-            clauseAdded = true;
-        }
-        if (endDate != null) {
-            if (clauseAdded) {
-                queryWhereClause.append(" and ");
-            }
-            queryWhereClause.append("date_logged < ?");
-            clauseAdded = true;
-        }
-
         // order by
         String orderByClause = " order by entryid ";
-
+        
         // select the count
-        String countQuery = countClause + queryWhereClause.toString();
-        logMetacat.debug("The count query is "+countQuery);
-		// select the fields
-        String pagedQuery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(fieldsClause + queryWhereClause.toString() + orderByClause, start, count);
-        logMetacat.debug("The selection query is "+pagedQuery);
-        logMetacat.debug("The startDate in the query is "+startDate);
-        logMetacat.debug("The endDate in the query is "+startDate);
+        String countQuery = countSelect + subQueryFrom.toString();
+        logMetacat.debug("The count query is " + countQuery);
+		// select the fields using paged subquery and fields join query
+        String pagedSubquery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(subquerySelect + subQueryFrom.toString() + orderByClause, start, count);
+        String pagedQuery = fieldSelect + " ( " + pagedSubquery + " ) " + orderByClause; 
+        logMetacat.debug("The selection query is " + pagedQuery);
+        logMetacat.debug("The startDate in the query is " + startDate);
+        logMetacat.debug("The endDate in the query is " + startDate);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
