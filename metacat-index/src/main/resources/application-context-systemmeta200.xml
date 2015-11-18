@@ -1,6 +1,11 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	xsi:schemaLocation="http://www.springframework.org/schema/beans 
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context  
+    					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+    					
 	<bean id="xpath_system_metadata_200" class="java.util.ArrayList">
 		<constructor-arg>
 			<list>
@@ -13,6 +18,21 @@
 					<constructor-arg name="name" value="seriesId" />
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/seriesId/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+					<constructor-arg name="name" value="fileName" />
+					<constructor-arg name="xpath"
+						value="/d200:systemMetadata/fileName/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+					<constructor-arg name="name" value="mediaType" />
+					<constructor-arg name="xpath"
+						value="/d200:systemMetadata/mediaType/@name" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+						p:multivalue="true"
+						p:root-ref="mediaTypePropertyListRoot">
+						<constructor-arg name="name" value="mediaTypeProperty" />
 				</bean>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="formatId" />
@@ -157,4 +177,29 @@
 			</list>
 		</constructor-arg>	
 	</bean>
+	
+		
+	<bean id="mediaTypePropertyListRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+		p:name="mediaTypeProperty"
+		p:xPath='/d200:systemMetadata/mediaType/property'
+		p:template="[mediaTypePropertyName] [mediaTypePropertyValue]">
+		<property name="leafs">
+			<list>
+				<ref bean="mediaTypePropertyNameLeaf" />
+				<ref bean="mediaTypePropertyValueLeaf" />
+			</list>
+		</property>
+	</bean>	
+	
+	<bean id="mediaTypePropertyNameLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="mediaTypePropertyName"
+		p:xPath='@name' />
+		
+	<bean id="mediaTypePropertyValueLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		p:name="mediaTypePropertyValue"
+		p:xPath='text()' />
+	
+	
+	
+	
 </beans>
