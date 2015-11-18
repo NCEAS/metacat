@@ -103,7 +103,7 @@
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
        <ref bean="rdfXmlSubprocessor" />
-       <ref bean="annotatorSubprocessor" />
+       <!--  <ref bean="annotatorSubprocessor" /> -->
        <ref bean="dublinCoreExtendedSubprocessor" />
       </list>
      </property>
