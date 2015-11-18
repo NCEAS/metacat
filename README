@@ -58,7 +58,8 @@ Release Notes for 2.5.0:
 ------------------------
 This major release adds DataONE V2 API support
 as well as:
-* ......
+* MetacatUI 1.8.1
+* Data registry bug fixes
 
 Release Notes for 2.4.3:
 ------------------------
