@@ -539,7 +539,7 @@ public class SolrIndex {
         }
         String objectPath = null;
         try {
-            if(!systemMetadata.getArchived()) {
+            if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
                 objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             }
             update(pid, systemMetadata, objectPath);
@@ -1064,7 +1064,7 @@ public class SolrIndex {
             action = Event.CREATE.xmlValue();
             event.setAction(Event.CREATE);
         }
-        else if(systemMetadata.getArchived()) {
+        else if(systemMetadata.getArchived() != null && systemMetadata.getArchived()) {
             action = Event.DELETE.xmlValue();
             event.setAction(Event.DELETE);
         } else {
