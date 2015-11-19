@@ -3,7 +3,7 @@
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="annotatorSubprocessor" class="org.dataone.cn.indexer.annotation.AnnotatorSubprocessor">
+	<bean id="annotatorSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.MetacatAnnotatorSubprocessor">
 		
 		<!-- match annotation documents -->
 		<property name="matchDocuments">
@@ -14,15 +14,30 @@
 		<property name="fieldList">
 			<list>
 				<ref bean="annotation.expansion" />
+				<ref bean="annotation.bioportal.expansion" />
+				<ref bean="annotation.esor.expansion" />
 			</list>
 		</property>
 		<property name="fieldsToMerge">
      		<list>
      			<value>sem_annotation</value>
+     			<value>sem_annotation_bioportal_sm</value>
+     			<value>sem_annotation_esor_sm</value>     			
      			<value>sem_annotates</value>
      			<value>sem_annotated_by</value>
      		</list>
-     	</property>	
+     	</property>
+     	<property name="ontologyList">
+			<list>
+				<value>http://purl.org/spar/datacite/</value>
+				<value>http://purl.org/dc/terms/</value>
+				<value>http://www.w3.org/2006/time</value>
+				<value>http://purl.dataone.org/ontologies/observation/d1-ECSO.owl</value>
+				<value>http://purl.dataone.org/ontologies/provenance/ProvONE/v1/owl/provone.owl</value>
+				<value>http://purl.obolibrary.org/obo/envo.owl</value>
+				<value>http://purl.obolibrary.org/obo/chebi.owl</value>
+			</list>
+		</property>
 	</bean>
 	
 	<bean id="annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
@@ -35,7 +50,6 @@
 				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
 				
 				SELECT ?sem_annotation
-				FROM <$GRAPH_NAME>				
 				WHERE { 
 						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation .
 				 	} 
@@ -43,6 +57,78 @@
 			</value>
 		</constructor-arg>
 		<!--property name="multivalue" value="false" /-->
+	</bean>
+	
+	<!-- bioportal-based annotation -->
+	<bean id="annotation.bioportal.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation_bioportal_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation_bioportal_sm
+				WHERE { 
+						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation_bioportal_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	<bean id="annotation.bioportal.raw" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation_bioportal_raw_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation_bioportal_raw_sm
+				WHERE { 
+						<$CONCEPT_URI> rdf:about ?sem_annotation_bioportal_raw_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	
+		<!-- esor-based annotation -->
+	<bean id="annotation.esor.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation_esor_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation_esor_sm
+				WHERE { 
+						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation_esor_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	<bean id="annotation.esor.raw" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation_esor_raw_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation_esor_raw_sm
+				WHERE { 
+						<$CONCEPT_URI> rdf:about ?sem_annotation_esor_raw_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
 	</bean>
 
 </beans>
