@@ -464,7 +464,7 @@ public class EventLog
             } else {
             	subQueryFrom.append(" where ");
             }
-        	subQueryFrom.append("al.docid in (");
+        	subQueryFrom.append("docid in (");
         	for (int i = 0; i < docid.length; i++) {
         		if (i > 0) {
         			subQueryFrom.append(", ");
