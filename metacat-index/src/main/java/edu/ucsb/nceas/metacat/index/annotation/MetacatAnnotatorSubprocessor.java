@@ -19,7 +19,7 @@ import edu.ucsb.nceas.metacat.index.resourcemap.ResourceMapSubprocessor;
 
 public class MetacatAnnotatorSubprocessor extends AnnotatorSubprocessor {
 	
-    private static Log log = LogFactory.getLog(AnnotatorSubprocessor.class);
+    private static Log log = LogFactory.getLog(MetacatAnnotatorSubprocessor.class);
 	
     
     @Override
@@ -33,6 +33,7 @@ public class MetacatAnnotatorSubprocessor extends AnnotatorSubprocessor {
             SolrDoc referencedDoc = docs.get(referencedPid);
 
             // make sure we have a reference for the document we annotating
+            boolean referenceExists = true;
             if (referencedDoc == null) {
                 try {
                     referencedDoc = ResourceMapSubprocessor.getSolrDoc(referencedPid);
@@ -41,8 +42,10 @@ public class MetacatAnnotatorSubprocessor extends AnnotatorSubprocessor {
                             + ".  Exception attempting to communicate with solr server.", e);
                 }
 
+                
                 if (referencedDoc == null) {
                     referencedDoc = new SolrDoc();
+                    referenceExists = false;
                 }
                 docs.put(referencedPid, referencedDoc);
             }
@@ -57,7 +60,8 @@ public class MetacatAnnotatorSubprocessor extends AnnotatorSubprocessor {
             Iterator<SolrElementField> annotationIter = annotations.getFieldList().iterator();
             while (annotationIter.hasNext()) {
                 SolrElementField annotation = annotationIter.next();
-                if (!this.getFieldsToMerge().contains(annotation.getName())) {
+                // only skip merge field if there was an existing record
+                if (referenceExists && !this.getFieldsToMerge().contains(annotation.getName())) {
                     log.debug("SKIPPING field (not in fieldsToMerge): " + annotation.getName());
                     continue;
                 }
