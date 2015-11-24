@@ -1,0 +1,26 @@
+<deployment-descriptor xmlns="http://www.ibm.com/LSID/Standard/rsdl">
+	<component-handlers>
+		<!-- These handlers (along with "class" and "caching") are added by default, we include these as examples -->
+		<component-handler type="asdl" classname="com.ibm.lsid.server.conf.ASDLComponentHandler" />
+		<component-handler type="msdl" classname="com.ibm.lsid.server.conf.MSDLComponentHandler" />
+	</component-handlers>
+	<maps>
+		<map name="all">
+			<pattern auth="*" ns="*" />
+		</map>
+	</maps>
+	<services>
+		<service name="ReallySimpleAssigningService" >
+			<components>
+				<assn type="class">com.ibm.lsid.server.impl.ReallySimpleAssigningService</assn>
+			</components>
+		</service>
+		<service name="CachingProxyResolutionService" >
+			<components>
+				<auth map="all" type="class">com.ibm.lsid.server.impl.CachingProxyAuthority</auth>
+				<meta map="all" type="class">com.ibm.lsid.server.impl.CachingProxyAuthority</meta> 	
+				<data map="all" type="class">com.ibm.lsid.server.impl.CachingProxyAuthority</data>
+			</components>
+		</service>	
+	</services>
+</deployment-descriptor>

@@ -1,0 +1,44 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>PARC Data Repository</title>
+
+  <link rel="stylesheet" type="text/css"
+    href="[% styleSkinsPath %]/parc/parc.css">
+  <script language="Javascript" type="text/JavaScript"
+    src="[% styleSkinsPath %]/parc/parc.js"></script>
+  <script language="Javascript" type="text/JavaScript"
+    src="[% styleCommonPath %]/branding.js"></script>
+  <script language="Javascript" type="text/javascript"
+    src="[% styleSkinsPath %]/parc/navigation.js"></script>
+</head>
+<body id="Overview" onload="loginStatus('[% metacatUrl %]', '[% cgiPrefix %]');">
+  <div id="main_wrapper">
+
+  <div id="header">
+  </div>
+  <div id="navigation">
+    <ul id="main_nav">
+      <ul class="menu">
+        <li class="collapsed">
+          <a href="http://www.palmyraresearch.org">
+            Home
+          </a>
+        </li>
+        <li class="collapsed">
+          <a href="[% contextUrl %]">
+            Repository
+          </a>
+        </li>
+        <li class="collapsed">
+          <a href="[% cgiPrefix %]/register-dataset.cgi?cfg=parc">
+            Register
+          </a>
+        </li>
+        <li class="collapsed">
+            <span id="login_block"></span>
+        </li>
+      </ul>
+    </ul>
+  </div>
+  <div id="content_wrapper">

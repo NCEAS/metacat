@@ -1,0 +1,14 @@
+<ord:order xmlns:ord="http://example.org/ord"
+   xmlns:prod="http://example.org/prod"
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://example.org/prod @contextUrl@/test/chapter05prod.xsd
+                       http://example.org/ord @contextUrl@/test/chapter05ord.xsd">
+  <items>
+    <prod:product>
+      <number xsi:type="xs:short">557</number>
+      <name>Short-Sleeved Linen Blouse</name>
+      <size xsi:nil="true"></size>
+    </prod:product>
+  </items>
+</ord:order>

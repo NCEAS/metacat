@@ -1,0 +1,85 @@
+<rdf:RDF
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:ore="http://www.openarchives.org/ore/terms/"
+    xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:j.0="http://purl.org/spar/cito/"
+    xmlns:prov="http://www.w3.org/ns/prov#">
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_data.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
+    <prov:wasGeneratedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1"/>
+    <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1"/>
+    <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.2.1"/>
+  </rdf:Description>
+      
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_smith .1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">smith_data.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_metadata.1.1"/>
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation">
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <ore:isDescribedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1"/>
+    <dc:title>DataONE Aggregation</dc:title>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_img.1.1"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_script.1.1"/>
+    <ore:aggregates rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1"/>
+  </rdf:Description>
+    
+  <rdf:Description rdf:nodeID="A0">
+    <foaf:name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Java libclient</foaf:name>
+    <rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1">
+    <dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2013-09-03T09:54:06.392-07:00</dcterms:modified>
+    <ore:describes rdf:resource="https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+    <dc:creator rdf:nodeID="A0"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">resourceMap_couture.1.1</dcterms:identifier>
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_metadata.1.1</dcterms:identifier>
+    <j.0:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1"/>
+    <j.0:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_img.1.1"/>
+    <j.0:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_script.1.1"/>
+    <j.0:documents rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1"/>
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_img.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_img.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
+    <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1"/>
+    <prov:wasGeneratedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_script.1.1"/>
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_script.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_script.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
+    <prov:used rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1"/>
+    <prov:generated rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_img.1.1"/>
+    <prov:wasInformedby rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1" />
+  </rdf:Description>
+    
+  <rdf:Description rdf:about="https://cn.dataone.org/cn/v1/resolve/couture_composeScript.1.1">
+    <ore:isAggregatedBy>https://cn.dataone.org/cn/v1/resolve/resourceMap_couture.1.1#aggregation</ore:isAggregatedBy>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">couture_composeScript.1.1</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_metadata.1.1"/>
+    <prov:used rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.1.1"/>
+    <prov:used rdf:resource="https://cn.dataone.org/cn/v1/resolve/smith_data.2.1"/>
+    <prov:generated rdf:resource="https://cn.dataone.org/cn/v1/resolve/couture_data.1.1"/>
+  </rdf:Description>
+    
+</rdf:RDF>

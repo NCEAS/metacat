@@ -1,0 +1,51 @@
+Replication set up for tomcat4 standalone (java1.4)
+1. Generate keys in java default key store - $jAVA_HOME/jre/lib/security/cacerts:
+   keytool -genkey -alias pinetomcat -keyalg RSA -validity 800 -keystore cacerts
+   Note: when ask you name, you should put your host name, such as "pine.nceas.ucsb.edu"
+         The state name should be full name, e.g. California.
+
+2. Generate certificate:
+   keytool -export -alias pinetomcat -file pinetomcatjava14.cert -keystore cacerts
+
+3. Configure server.xml for tomcat 4.
+   Removed the comment for port 8443. In factory element add an attribute:
+   keystoreFile="/usr/java/j2sdk1.4.1_01/jre/lib/security/cacerts"
+   In windows machine, it will look like keystoreFile="C:\usr\java\j2sdk1.4.1_01\jre\lib\security\cacerts"
+   
+4. Import other server's certificate to cacerts:
+    keytool -import -alias fatalitomcatjava14 -file ~/keys/fatalitomcat/fatalitomcatjava14.cert -keystore cacerts
+
+5. Restart tomcat
+
+6. Set up xml_replication table in metacat
+
+Replication set up for Apache2 (with Tomcat4):
+1. Generate keys by openssl (In pine machine)
+   openssl req -new -out REQ.pem -keyout server.key
+   Note: the first quetion is asked to set your password.
+
+2. Generate certificate:
+   openssl req -x509 -days 800 -in REQ.pem -key server.key -out server.crt
+
+3. Put server.key into $APACHE_HOME/conf/ssl.key and server.crt into APACHE_HOME/conf/ssl.crt
+
+4. Import other server's certificate to java's cacerts:
+   keytool -import -alias pinetomcat14 -file pinetomcatjava14.cert -keystore cacerts
+
+5. Restart apache and tomcat
+
+6. Set up xml_replication table in metacat
+
+The example to set up a key:
+Country Name (2 letter code) [GB]:US
+State or Province Name (full name) [Berkshire]:California
+Locality Name (eg, city) [Newbury]:Santa Barbara
+Organization Name (eg, company) [My Company Ltd]:UCSB
+Organizational Unit Name (eg, section) []:NCEAS
+Common Name (eg, your name or your server's hostname) []:dev.nceas.ucsb.edu
+(Note: don't put port number here)
+Email Address []:tao@nceas.ucsb.edu
+
+For generate no password key and certificate (Alternative way):
+1. openssl genrsa -out server.key 1024
+2. openssl req -new -x509 -days 900  -key server.key -out server.crt

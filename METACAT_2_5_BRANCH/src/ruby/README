@@ -1,0 +1,64 @@
+# = Ruby Ecoinformatics Library
+# == What is it?
+# A tool for accessing ecological datasets and their metadata in ruby.
+# It's a way to do this:
+#    squery = '<pathquery version="1.2">...</pathquery>' # looks for all pisco-subtidal data
+#    Metacat.new('http://data.piscoweb.org/catalog/metacat') do |metacat|
+#     eml_docs = metacat.find(:squery => squery)
+#     eml_docs.each do |eml|
+#       puts eml.docid
+#       eml.data_tables.each do |data_table|
+#         puts "\t --#{data_table.entity_name}"
+#       end
+#     end
+#    end
+# Spits out :
+#    pisco_subtidal.40.1
+#             --quad_taxon_lookup_table.csv
+#             --pisco_quad_data.csv
+#    pisco_subtidal.12.4
+#             --fish_taxon_lookup_table.csv
+#             --pisco_fish_data.csv
+#    pisco_subtidal.21.7
+#             --swath_taxon_lookup_table.csv
+#             --pisco_swath_data.csv
+#    pisco_subtidal.30.2
+#             --upc_taxon_lookup_table.csv
+#             --pisco_upc_data.csv
+# For now, this library is for dealing with EML metadata and data coming out of
+# the Metacat data catalog (http://knb.ecoinformatics.org/software/metacat).
+# The Metacat client class will generally return Eml objects representing their
+# corresponding EML document. This object can then be used to access document-wide
+# metadata. Furthermore, each Eml object contains DataTable objects representing
+# their corresponding DataTable elements. For now, Eml and DataTable are mostly
+# a wrapper for a REXML:Document DOM representation of the XML data. In the future
+# they may contain more functionality.
+#
+# One very important feature of classes Metacat and DataTable is the ability to
+# read plain-text data tables by passing a block(closure) that handles fragments
+# of the file. This way data can be read without the costs of loading a huge dataset
+# directly into RAM.
+# == Status
+# The Metacat client library is very usable and I'm happy with the current documentation
+#
+# The Eml and even worse, DataTable classes are minimally functional. They also still
+# contain fragments of the original application that inspired them which should be removed
+# as they are not generally applicable. Documentation is also not up to par.
+#
+# I would recommend using the REXML:Document contained within both Eml and DataTable
+# where their methods are lacking to access metadata attributes. DataTable.read() is 
+# in a usable state and handles blocks the same way as Metacat.read.
+#
+# Where documentation is lacking check the unit tests under ./tests. These sometimes
+# give a clearer picture of intended usage.
+#
+# == Examples
+# See classes Metacat, Eml, and DataTable for more examples
+# == Author
+# Chad Burt
+#
+# Marine Science Institude
+#
+# University of California, Santa Barbara
+#
+# chad@underbluewaters.net

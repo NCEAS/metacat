@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<pathquery version="1.0">
+  <meta_file_id>test</meta_file_id>
+  <returndoctype />
+  <querygroup operator="UNION">
+    <queryterm casesensitive="false" searchmode="contains">
+      <value>%</value>
+     <pathexpr>/PLAY</pathexpr>
+     <!-- <pathexpr>/PLAY/ACT/SCENE/TITLE</pathexpr> -->
+     <!-- <pathexpr>/PLAY/ACT/SCENE/SPEECH/LINE</pathexpr> -->
+    </queryterm>
+  </querygroup>
+</pathquery>

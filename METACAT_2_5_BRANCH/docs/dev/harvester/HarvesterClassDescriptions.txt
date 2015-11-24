@@ -1,0 +1,104 @@
+Harvester Class Descriptions               Revision 1.1         12/12/03
+
+Class       Description
+
+Harvester
+            The main controller class. Reads the harvest site schedule from the
+            database, creating a HarvestSiteSchedule object for each entry in
+            the HARVEST_SITE_SCHEDULE table. Manages a list of HarvestLog 
+            entries to keep a permanent record of harvest operations. Provides 
+            operations to read the harvest log from the database, insert new
+            log entries, and write the harvest log to the database.
+
+HarvestSiteSchedule
+            Manages site scheduling and other data for a site.
+            Corresponds to a single entry in the HARVEST_SITE_SCHEDULE 
+            table. For a given site, stores its contactEmail address, the 
+            date of its last harvest, the date of its next harvest (if stored
+            explicitly), the document list URL, the LDAP DN, the harvest 
+            frequency, and the frequency unit (e.g. days, weeks, or months). 
+            If the date of the next harvest has not been stored explicitly, 
+            it is derived from the date of the last harvest and the 
+            harvest frequency. Provides operations to get and parse the site’s
+            document list. Provides operations to interact with the 
+            HARVEST_SITE_SCHEDULE database table. Manages a list a 
+            HarvestDocument objects, one for each entry in the site's 
+            document list.
+
+HarvestDocument
+            Represents a single document to be harvested. Stores data about
+            the document (documentURL, documentType, identifier, revision,
+            scope). Provides operations to get the document from the site 
+            and put (insert or update) the document to Metacat. Queries
+            Metacat to determine whether Metacat already has the document
+            and to determine the highest revision number of the document
+            stored in Metacat.
+
+HarvestLog
+            Represents a single harvest log entry. For a given Harvest
+            operation, records the date, type of operation, message string,
+            status, and detailLogID (if this operation generated an error
+            that involved a harvest document; see HarvestDetailLog below).
+            Interacts with the HARVEST_LOG database table, and retrieves 
+            information about operations from the HARVEST_OPERATION table.
+
+HarvestDetailLog
+            Stores detailed information about a harvest operation on a document
+            when the operation results in an error (e.g. the document could not 
+            be retrieved from the site, or could not be inserted or updated into 
+            Metacat). Stores a unique identifier (detailLogID), the identifier 
+            of its associated HarvestLog object (harvestLogID), the error message, 
+            and a HarvestDocument object. Interacts with the HARVEST_DETAIL_LOG 
+            table.
+
+            
+Sequence of Events for Harvester Pull Operation
+
+1. Harvester starts up. (Add log entry to record startup operation.)
+
+2. Harvester reads the Harvest registry from the database, creating a
+   HarvestSiteSchedule object for every record in the
+   HARVEST_SITE_SCHEDULE table.
+
+3. For each HarvestSiteSchedule object:
+
+    4. If this site is due to be harvested today:
+
+        5. Get the harvest configuration from the documentListURL.
+
+        6. Parse the document list file, creating a HarvestDocument 
+           object for each document element in the file. (If file is not a 
+           valid document list, log an exception, send email report, and exit.)
+
+        7. For each HarvestDocument object:
+
+            8. Query Metacat as to whether it already has this document.
+
+            9. If Metacat does not already have the document:
+
+                10. Get the document from the site, using the document URL.
+
+                11. Parse the document to check that it is valid EML. (If not valid, 
+                    log an exception and continue.)
+
+                12. Insert or update the document to Metacat.
+
+                13. Log the result of inserting or updating the document to
+                    Metacat (including any exceptions).
+
+            14. Else, Metacat already has the document. Determine the
+                highest revision of the document in Metacat and provide
+                this information in the report to the site contact (15).
+
+        15. Generate and send an email report to the site contact. The report 
+            will contain results of this harvest, and the (tentatively)
+            scheduled date of the next harvest.
+
+16. Generate and send an email report to the harvester administrator. The report
+    is a composite of all the individual site reports. (Alternatively, this 
+    could be written to a log file instead of emailed. An email message could 
+    simply contain the location of the log file and a brief summary.)
+
+17. Harvester shuts down. (Add log entry for shutdown.)
+                             
+

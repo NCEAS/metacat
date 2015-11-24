@@ -1,0 +1,943 @@
+<?xml version="1.0"?><eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.0.1" xmlns:stmml="http://www.xml-cml.org/schema/stmml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ds="eml://ecoinformatics.org/dataset-2.0.1" packageId="knb-lter-gce.109.6" system="knb" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.0.1 http://gce-lter.marsci.uga.edu/lter/files/schemas/eml-201/eml.xsd" scope="system">
+<dataset scope="document">
+<alternateIdentifier>INV-GCEM-0305a1.1.1</alternateIdentifier>
+<title>Mollusc population abundance monitoring: Fall 2000 mid-marsh and creekbank infaunal and epifaunal mollusc abundance based on collections from GCE marsh, monitoring sites 1-10</title>
+<creator id="GCE-LTER" scope="document"><organizationName>Georgia Coastal Ecosystems LTER Project</organizationName>
+<address scope="document">
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+<onlineUrl>http://gce-lter.marsci.uga.edu/lter/</onlineUrl>
+</creator>
+<creator scope="document">
+<individualName>
+<salutation>Dr.</salutation>
+<givenName>Dale</givenName>
+<surName>Bishop</surName>
+</individualName>
+<organizationName>University of Georgia</organizationName>
+<address scope="document">
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>tdbish@uga.edu</electronicMailAddress>
+<onlineUrl>http://lmer.marsci.uga.edu/bios/bishop.html</onlineUrl>
+</creator>
+<metadataProvider scope="document"><references>GCE-LTER</references></metadataProvider>
+<associatedParty scope="document">
+<individualName>
+<salutation>Dr.</salutation>
+<givenName>Merryl</givenName>
+<surName>Alber</surName>
+</individualName>
+<organizationName>University of Georgia</organizationName>
+<electronicMailAddress>malber@uga.edu</electronicMailAddress>
+<role>co-author</role>
+</associatedParty>
+<associatedParty scope="document">
+<individualName>
+<salutation>Mr.</salutation>
+<givenName>Kenneth</givenName>
+<surName>Helm</surName>
+</individualName>
+<organizationName>University of Georgia Marine Institute</organizationName>
+<electronicMailAddress>khelm@darientel.net</electronicMailAddress>
+<role>co-author</role>
+</associatedParty>
+<pubDate>2003</pubDate>
+<abstract>
+<para>This data set is the Fall 2000 estimate of infaunal and epifaunal mollusc abundance at the GCE-LTER marsh sites used for population monitoring.  Species abundance was determined by hand-collecting all the infaunal and epifaunal molluscs from within quadrats of known area in mid-marsh and creekbank zones (n = 4 quadrats per zone) at all sites.  The molluscs were returned to the lab, fixed in fomalin, transferred to and preserved in ethanol, counted and measured (size data is reported separately).  The counts were converted to number per square meter.  Gastropod species are listed first, followed by bivalve species.  Size distribution data for these collections may be found in the GCE-LTER data set INV-GCEM-0305a2.</para>
+</abstract>
+<keywordSet><keyword keywordType="place">Sapelo Island</keyword>
+<keyword keywordType="place">Georgia</keyword>
+<keyword keywordType="place">USA</keyword>
+</keywordSet>
+<keywordSet>
+<keyword keywordType="theme">GCE</keyword>
+<keyword keywordType="theme">LTER</keyword>
+<keyword keywordType="theme">Population Dynamics</keyword>
+<keyword keywordType="theme">2000</keyword>
+<keyword keywordType="theme">abundance</keyword>
+<keyword keywordType="theme">Crassostrea</keyword>
+<keyword keywordType="theme">creekbank</keyword>
+<keyword keywordType="theme">density</keyword>
+<keyword keywordType="theme">Detracia</keyword>
+<keyword keywordType="theme">epifauna</keyword>
+<keyword keywordType="theme">Fall</keyword>
+<keyword keywordType="theme">Geukensia</keyword>
+<keyword keywordType="theme">Hydrobiidae</keyword>
+<keyword keywordType="theme">infauna</keyword>
+<keyword keywordType="theme">intertidal</keyword>
+<keyword keywordType="theme">Littoraria</keyword>
+<keyword keywordType="theme">Littorina</keyword>
+<keyword keywordType="theme">marsh</keyword>
+<keyword keywordType="theme">Melampus</keyword>
+<keyword keywordType="theme">mid-marsh</keyword>
+<keyword keywordType="theme">molluscs</keyword>
+<keyword keywordType="theme">monitoring</keyword>
+<keyword keywordType="theme">Polymesoda</keyword>
+<keyword keywordType="theme">population</keyword>
+<keyword keywordType="theme">vegetated</keyword>
+</keywordSet>
+<intellectualRights>
+<para>All publications based on this data set must cite the contributor and Georgia Coastal Ecosystems LTER project, and two copies of the manuscript must be submitted to the GCE-LTER Information Management Office.</para>
+</intellectualRights>
+<distribution scope="document">
+<online>
+<url function="download">http://gce-lter.marsci.uga.edu/lter/asp/db/dataset_details.asp?INV-GCEM-0305a1</url>
+</online>
+</distribution>
+<coverage scope="document">
+<geographicCoverage scope="document">
+<geographicDescription>Overall bounding box describing the geographic region within the Georgia Coastal Ecosystems LTER study domain represented in data set INV-GCEM-0305a1</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.494228</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.194083</eastBoundingCoordinate>
+<northBoundingCoordinate>31.550249</northBoundingCoordinate>
+<southBoundingCoordinate>31.303976</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<temporalCoverage scope="document">
+<rangeOfDates>
+<beginDate>
+<calendarDate>2000-10-24</calendarDate>
+</beginDate>
+<endDate>
+<calendarDate>2000-10-30</calendarDate>
+</endDate>
+</rangeOfDates>
+</temporalCoverage>
+<taxonomicCoverage scope="document">
+<generalTaxonomicCoverage>Participants were trained to recognize mollusc species in the field by D. Bishop.  Final species identifications were made (under the supervision of D. Bishop) when specimens were sorted and counted in the lab.  Most species were common and easily recognizeable.  Useful references for marsh species and molluscs in general are:  1) Heard, R.W.  1982.  Guide to Common Tidal Marsh Invertebrates of the Northeastern Gulf of Mexico.  Mississippi Alabama Sea Grant Consortium, MASGP-79-004.  82 pp. and 2) Abbott, R.T. 1974.  American Seashells.  Van Nostrand Reinhold Co., New York, Second Edition.  663 pp.</generalTaxonomicCoverage>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Bivalvia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Filibranchia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Crassostrea</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Crassostrea virginica</taxonRankValue>
+<commonName>Eastern or American Oyster</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Gastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Basommatophora</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Detracia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Detracia floridana</taxonRankValue>
+<commonName>Florida Melampus</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Bivalvia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Filibranchia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Geukensia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Geukensia demissa</taxonRankValue>
+<commonName>Ribbed Mussel</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Gastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Mesogastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Family</taxonRankName>
+<taxonRankValue>Hydrobiidae</taxonRankValue>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Gastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Mesogastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Ilyanassa</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Ilyanassa obsoleta</taxonRankValue>
+<commonName>Mud Snail</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Gastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Mesogastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Littoraria</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Littoraria irrorata</taxonRankValue>
+<commonName>Marsh Periwinkle</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Gastropoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Basommatophora</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Melampus</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Melampus bidentatus</taxonRankValue>
+<commonName>Eastern Melampus</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+<taxonomicClassification>
+<taxonRankName>Kingdom</taxonRankName>
+<taxonRankValue>Animalia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Phylum</taxonRankName>
+<taxonRankValue>Mollusca</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Class</taxonRankName>
+<taxonRankValue>Bivalvia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Order</taxonRankName>
+<taxonRankValue>Eulamellibranchia</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Genus</taxonRankName>
+<taxonRankValue>Polymesoda</taxonRankValue>
+<taxonomicClassification>
+<taxonRankName>Species</taxonRankName>
+<taxonRankValue>Polymesoda caroliniana</taxonRankValue>
+<commonName>Carolina Marsh Clam</commonName>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicClassification>
+</taxonomicCoverage>
+</coverage>
+<contact scope="document"><positionName>GCE-LTER Information Manager</positionName>
+<address scope="document">
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+</contact>
+<publisher scope="document"><references>GCE-LTER</references></publisher>
+<methods>
+<methodStep>
+<description>
+<section>
+<title>Mollusc Collection</title>
+<para>A quadrat device, constructed of treated, 1&quot; X 3/4&quot; slats, drilled and joined with bolts and wing nuts, was designed to enclose selectable areas of 0.0625, 0.25 or 0.5 m^2.  The quadrat size used for each sample may have varied between plots, zones, and sites and was dependent on apparent density of molluscs (particularly Littoraria) in the immediate area.  In high density areas, smaller quadrats were used and vice versa.  Quadrat selection was guided by the need to balance accuracy of abundance estimates, prevention of excessive removal of fauna and ensurance that field sampling was kept to a reasonable amount of time.  The quadrat was placed around the bases of the plants in the selected sampling area.  Snails are collected first, from the standing plants.  Collection started at the tops of the plants and proceeded downward to the marsh surface.  Particular attention was given to enrolled, scenescing leaves, when present, as new recruits and small species were often concentrated there.  After the plants had been inspected, the marsh surface was examined for snails and signs of infaunal bivalves.  After all epifaunal molluscs were removed, the infaunal bivalves were dug from the sediment.  This often required feeling (centimeter by centimeter) along the marsh surface and probing down inside large crab holes to make sure all individuals were collected.  All molluscs were placed in pre-labeled plastic bags and transported back to the lab.  The molluscs were washed free of sediment over a sieve (&amp;lt; 500 micron-mesh), fixed with 10% formalin and ultimately transferred to and preserved in 70% ethanol.</para>
+</section>
+</description>
+</methodStep>
+<methodStep>
+<description>
+<section>
+<title>Density Estimation</title>
+<para>Individuals were identified to the lowest practicable taxonomic unit and the number of individuals of each species was determined.  The identity of small individuals was confirmed with a stereomicroscope.  Per meter square density for each species was determined by dividing total count data for a sample by the quadrat size used for the sample.</para>
+</section>
+</description>
+<instrumentation>Stereomicroscope; manufacturer: Leica (model: MZ 7.5)</instrumentation>
+<instrumentation>Stereomicroscope; manufacturer: Wild (model: M5)</instrumentation>
+</methodStep>
+<sampling>
+<studyExtent>
+<coverage scope="document">
+<temporalCoverage scope="document">
+<rangeOfDates>
+<beginDate>
+<calendarDate>2000-10-24</calendarDate>
+</beginDate>
+<endDate>
+<calendarDate>2000-10-30</calendarDate>
+</endDate>
+</rangeOfDates>
+</temporalCoverage>
+</coverage>
+<coverage scope="document">
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE1 -- Eulonia, Georgia, USA.  Transitional salt marsh/upland forest site at the upper reach of the Sapelo River near Eulonia, Georgia. The main marsh area is to the north of the channel where the upland is controlled by DNR. Several small creeks lie within the study area.  Residential development is increasing on the upland areas south of the channel. A hydrographic sonde is deployed within this site attached to a private dock to the south of the main channel near the HW-17 bridge.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.427321</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.410390</eastBoundingCoordinate>
+<northBoundingCoordinate>31.546173</northBoundingCoordinate>
+<southBoundingCoordinate>31.535095</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE2 -- Four Mile Island, Georgia, USA.  Low salt marsh/estuary site encompassing the southwestern end of Four Mile Island and the Sapelo River near Sapelo Sound. The large island is totally marsh, with no upland, and no development. Nearby areas, like &quot;Sutherland Bluff&quot;, are developing with golf courses. A hydrographic sonde is deployed within this site attached to channel marker 4 (under U.S. Coast Guard permit). Salinity regime is similar to seawater.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.320771</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.293259</eastBoundingCoordinate>
+<northBoundingCoordinate>31.550249</northBoundingCoordinate>
+<southBoundingCoordinate>31.532138</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE3 -- North Sapelo, Sapelo Island, Georgia, USA.  High salinity marsh/Sapelo Sound site.  Few or no small creeks, but one large creek is easily accessed. Further upstream upland drainage is affected by culvert at Reynolds&apos; duck pond. Upland is heavily forested. Hydrographic sonde is deployed adjacent to this site attached to a channel marker (under U.S. Coast Guard permit). A huge mud flat is present at the northern tip of Sapelo Island.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.232911</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.194083</eastBoundingCoordinate>
+<northBoundingCoordinate>31.547261</northBoundingCoordinate>
+<southBoundingCoordinate>31.515840</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE4 -- Meridian, Georgia, USA.  Inland marsh and tidal creek site near Meridian, Georgia. The primary marsh site is to the south of the dock in front of the Sapelo Island Visitor Center. Some small creeks and one large creek (Hudson Creek) are present. Upland is heavily forested. Marsh to the north of the dock can be used for additional studies if larger areas are required. Upland to the North is being developed for residential use, so future access is uncertain. The USGS super station site (weather station plus multiple-sensor sonde) is deployed off the ferry dock. Salinity is similar to seawater because there is little freshwater input from the upland.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.370812</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.358187</eastBoundingCoordinate>
+<northBoundingCoordinate>31.462771</northBoundingCoordinate>
+<southBoundingCoordinate>31.447213</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE5 -- Folly River, Georgia, USA.  Salt marsh/tidal creek site at the Folly River near Doboy Sound.  No upland areas present. The north side of Doboy Sound immediately opposite is similar, but creeks are not as nice. No existing markers are close enough for sonde deployment, so we will initially use the existing sonde at Marsh Landing operated by UGAMI for surrogate hydrographic data.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.354636</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.327494</eastBoundingCoordinate>
+<northBoundingCoordinate>31.442310</northBoundingCoordinate>
+<southBoundingCoordinate>31.418161</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE6 -- Dean Creek, Sapelo Island, Georgia, USA.  Doboy Sound/salt marsh site at the southern end of Sapelo Island near Dean Creek and the Sapelo lighthouse.  A few small creeks are present, but a large creek (Dean Creek) is easily accessed. Upland is composed of small hammocks and some constructed causeways, with sand dune complexes east of Dean Creek and extending to the beach. Upper end of the watershed is affected by a culvert at Beach Road and heavy student use of marsh immediately adjacent to culvert. A hydrographic sonde is deployed in Doboy Sound near Commodore Island approximately 1.5km from this site. GCE6 is also the focus of Sapelo Island Microbial Observatory research on microbial diversity  and  genomics (http://simo.marsci.uga.edu)</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.300786</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.264957</eastBoundingCoordinate>
+<northBoundingCoordinate>31.393522</northBoundingCoordinate>
+<southBoundingCoordinate>31.371279</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE7 -- Carrs Island, Georgia, USA.  Freshwater marsh site along the northern bank of Hammersmith Creek at the south end of Carrs Island. Upland area is heavily forested. Northern 3/4 of the island was diked for rice agriculture, but the southern 1/4 is undisturbed. A hydrographic sonde is deployed in the Altamaha River near Hammersmith Creek, adjacent to this site.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.494228</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.475991</eastBoundingCoordinate>
+<northBoundingCoordinate>31.349002</northBoundingCoordinate>
+<southBoundingCoordinate>31.334587</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE8 -- Alligator Creek, Georgia, USA.  Mid-estuary/salt marsh site on the west side of Friday Cap Creek along the Altamaha River. This is a brackish marsh with salinities around 14 PSU during drought, less than 5 PSU normally. A hydrographic sonde is deployed adjacent to this site in the Altamaha River near Alligator Creek, attached to the US Coast Guard Daymarker 2 pilings.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.426316</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.410043</eastBoundingCoordinate>
+<northBoundingCoordinate>31.317771</northBoundingCoordinate>
+<southBoundingCoordinate>31.303976</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE9 -- Rockdedundy Island, Georgia, USA.  Lower estuary tidal creek and marsh site at Rockdedundy Island west of Wolf Island. A hydrographic sonde is deployed approximately 2km from this site in the Altamaha River near Rockdedundy Island, attached to the US Coast Guard Daymarker 201 pilings.</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.346982</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.326749</eastBoundingCoordinate>
+<northBoundingCoordinate>31.358146</northBoundingCoordinate>
+<southBoundingCoordinate>31.339162</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage scope="document">
+<geographicDescription>GCE Study Site GCE10 -- Hunt Camp, Sapelo Island, Georgia, USA.  Barrier island/marsh site on western Sapelo Island.  This site is located at the upper reaches of the Duplin River, and is within the Sapelo Island National Estuarine Research Reserve. Existing well fields border small marsh area to northwest, some wells have been installed to south end of hammock where marsh is more extensive and permanent plots are located. Two existing hydrographic sondes and weather stations within this site are operated by SINERR (Hunt Camp dock) and UGAMI (flume dock).</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.296229</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.261288</eastBoundingCoordinate>
+<northBoundingCoordinate>31.497780</northBoundingCoordinate>
+<southBoundingCoordinate>31.464728</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+</coverage>
+</studyExtent>
+<samplingDescription>
+<section>
+<title>Mollusc Abundance Survey</title>
+<para>Samples were taken within 3 meters of the GCE permanent monitoring plots, which were established in the marsh areas at each GCE sampling site prior to this first sample trip.  Each site was divided into two nominal zones -- creekbank and mid-marsh -- and eight plots were randomly located in each zone and marked with stakes.</para>
+<para>This study represents a regular component of the population monitoring program of the GCE-LTER.  It was designed to document abundance and spatial distribution of common infaunal and epifaunal molluscs and track their changes over time at each of the ten intertidal marsh monitoring sites within the GCE-LTER domain.  All molluscs within randomly placed, small quadrats at four plots in the mid and creekbank marshes at each of the permanent monitoring sites were collected by hand.  This design resulted in four replicate samples per zone (n = 4) at each site (n = 8 per site).  Collections were made by different teams of trained individuals (staff and volunteers).  Molluscs were returned to the lab, preserved and enumerated.</para>
+<para>For each sample, an area of marsh was selected that was similar in gross appearance and near to (within 3 m of) a GCE permanent monitoring plot. The permanent plots were not used so as to avoid damaging the plants within them. Permanent plots 1, 3, 6, and 8 in each zone were chosen to be the anchor plots for selecting actual sample areas. When wrack or other disturbances necessitated the use of alternate plots, these are indicated in the data set and noted as anomalies.</para>
+</section>
+</samplingDescription>
+</sampling>
+</methods>
+<project scope="document"><title>Georgia Coastal Ecosystems LTER Project</title>
+<personnel scope="document">
+<individualName>
+<givenName>James</givenName>
+<givenName>T.</givenName>
+<surName>Hollibaugh</surName>
+</individualName>
+<role>principalInvestigator</role>
+</personnel>
+<personnel scope="document">
+<individualName>
+<givenName>Steven</givenName>
+<givenName>C.</givenName>
+<surName>Pennings</surName>
+</individualName>
+<role>principalInvestigator</role>
+</personnel>
+<personnel scope="document">
+<individualName>
+<givenName>Wade</givenName>
+<givenName>M.</givenName>
+<surName>Sheldon</surName>
+</individualName>
+<role>informationManager</role>
+</personnel>
+<abstract>
+<para>We propose to establish a Long Term Ecological Research site on the central Georgia coast in the vicinity of Sapelo Island. This is a barrier island and marsh complex with the Altamaha River, one of the largest and least developed rivers on the east coast of the US, as the primary source of fresh water. The proposed study would investigate the linkages between local and distant upland areas mediated by water - surface water and ground water - delivery to the coastal zone. We would explicitly examine the relationship between variability in environmental factors driven by river flow, primarily salinity because we can measure it at high frequency, and ecosystem processes and structure. We will accomplish this by comparing estuary/marsh complexes separated from the Altamaha River by one or two lagoonal estuary/marsh complexes that damp and attenuate the river signal. This spatial gradient is analogous to the temporal trend in riverine influence expected as a result of development in the watershed. We will implement a monitoring system that documents physical and biological variables and use the time trends and spatial distributions of these variables and of their variance structure to address questions about the factors controlling distributions, trophic structure, diversity, and biogeochemistry. An existing GIS-based hydrologic model will be modified to incorporate changes in river water resulting from changes in land use patterns that can be expected as the watershed develops. This model will be linked to ecosystem models and will serve as an heuristic and management tool. Another consequence of coastal development is that as river flow decreases, groundwater flow increases and becomes nutrified. We will compare the effects of ground water discharge from the surficial aquifer in relatively pristine (Sapelo Island) versus more urbanized (mainland) sites to assess the relative importance of fresh water versus nutrients to productivity, structure and biomass turnover rate in marshes influenced by groundwater. We will also investigate the effect of marine processes (tides, storm surge) on mixing across the fresh/salt interface in the surficial aquifer. Additional physical studies will relate the morphology of salt marsh - tidal creek channel complexes to tidal current distributions and exchange. These findings will be incorporated into a physical model that will be coupled to an existing ecosystem model. The land/ocean margin ecosystem lies at the interface between two ecosystems in which distinctly different groups of decomposers control organic matter degradation. The terrestrial ecosystem is largely dominated by fungal decomposers, while bacterial decomposers dominate the marine ecosystem. Both groups are important in salt marsh-dominated ecosystems. Specific studies will examine, at the level of individual cells and hyphae, the relationship bacteria and fungi in the consortia that decompose standing dead Spartina and other marsh plants and examine how, or if, this changes along the salinity gradient.</para>
+</abstract>
+<funding>
+<para>This material is based upon work supported by the National Science Foundation under Cooperative Agreement #OCE-9982133 (May 2000 to May 2006). Any opinions, findings, conclusions, or recommendations expressed in the material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.</para>
+</funding>
+</project>
+<access authSystem="knb" order="allowFirst" scope="document">
+<allow>
+<principal>uid=GCE,o=lter,dc=ecoinformatics,dc=org</principal>
+<permission>all</permission>
+</allow>
+<allow>
+<principal>public</principal>
+<permission>read</permission>
+</allow>
+</access>
+<dataTable scope="document">
+<entityName>INV-GCEM-0305a1_1_1.TXT</entityName>
+<physical scope="document">
+<objectName>INV-GCEM-0305a1_1_1.TXT</objectName>
+<size unit="rows">641</size>
+<characterEncoding>ASCII</characterEncoding>
+<dataFormat>
+<textFormat>
+<numHeaderLines>1</numHeaderLines>
+<numFooterLines>0</numFooterLines>
+<recordDelimiter>\r</recordDelimiter>
+<numPhysicalLinesPerRecord>1</numPhysicalLinesPerRecord>
+<attributeOrientation>column</attributeOrientation>
+<simpleDelimited>
+<fieldDelimiter>\t</fieldDelimiter>
+</simpleDelimited>
+</textFormat>
+</dataFormat>
+<distribution scope="document">
+<online>
+<url function="download">http://gce-lter.marsci.uga.edu/lter/asp/db/send_file.asp?name=metacat-user&amp;email=none&amp;affiliation=LNO&amp;notify=0&amp;accession=INV-GCEM-0305a1&amp;filename=INV-GCEM-0305a1_1_1.TXT</url>
+</online>
+</distribution>
+</physical>
+<method>
+<methodStep>
+<description><para>Data file post-processing in the GCE-LTER Information Management Office</para></description>
+<software id="gcetoolbox" scope="document">
+<title>GCE Data Toolbox for MATLAB(r)</title>
+<creator scope="document">
+<individualName>
+<salutation>Mr.</salutation>
+<givenName>Wade</givenName>
+<givenName>M.</givenName>
+<surName>Sheldon</surName>
+</individualName>
+<address scope="document">
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>sheldon@uga.edu</electronicMailAddress>
+<onlineUrl>http://gce-lter.marsci.uga.edu/lter/bios/wsheldon.htm</onlineUrl>
+</creator>
+<associatedParty scope="document">
+<organizationName>Georgia Coastal Ecosystems LTER Project</organizationName>
+<address scope="document">
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+<role>sponsoring research program</role>
+</associatedParty>
+<abstract>
+<para>The GCE Data Toolbox is a comprehensive library of functions for managing, analyzing and displaying ecological data and metadata (i.e. documentation) stored using the GCE Data Structure specification. These data structures are specialized arrays designed to store a single tabular data set along with all information required to interpret the data and generate formatted documentation.  The various metadata fields in the structures are queried by toolbox functions for all operations, allowing functions to process and format values appropriately based on the type of information they represent. This semantic processing approach supports highly automated and intelligent analysis of data stored in GCE Data Structures.</para>
+</abstract>
+<implementation>
+<distribution scope="document">
+<online>
+<url function="download">http://gce-lter.marsci.uga.edu/lter/research/tools/toolbox_download.htm</url>
+</online>
+</distribution>
+<operatingSystem>Linux</operatingSystem>
+<operatingSystem>Windows NT4</operatingSystem>
+<operatingSystem>Windows 2000</operatingSystem>
+<operatingSystem>Windows XP</operatingSystem>
+<operatingSystem>Sun Solaris</operatingSystem>
+<operatingSystem>Mac OS X</operatingSystem>
+<programmingLanguage>MATLAB</programmingLanguage>
+</implementation>
+<version>1.9x</version>
+</software>
+<subStep>
+<description>
+<para>05/21/2003: new GCE Data Structure 1.1 created (&apos;newstruct&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: 640 rows imported from ASCII data file &apos;INV-GCEM-0305a1.TXT&apos; (&apos;imp_ascii&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: 10 metadata fields in file header parsed (&apos;parse_header&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: data structure validated (&apos;gce_valid&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: Q/C flagging criteria applied, &apos;flags&apos; field updated (&apos;dataflag&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: imported Data, Dataset, Project, Site, Study, Status, Supplement metadata descriptors from the GCE Metabase (&apos;imp_gcemetadata&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: Q/C flagging criteria applied, &apos;flags&apos; field updated (&apos;dataflag&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/21/2003: manually edited data set metadata (&apos;ui_editmetadata&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: imported Data, Dataset, Project, Site, Study, Status, Supplement metadata descriptors from the GCE Metabase (&apos;imp_gcemetadata&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: Q/C flagging criteria applied, &apos;flags&apos; field updated (&apos;dataflag&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: updated 4 metadata fields (&apos;addmeta&apos;)</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: updated 15 metadata fields in the Status, Data sections (&apos;updatecols&apos;)</para>
+</description>
+</subStep>
+</methodStep>
+<qualityControl>
+<description>
+<para>QA/QC flags are generated automatically according to domain criteria specified for each data column.  A flag column is generated and appended to the data table if any flags are assigned to any value, listing the flags for each column on each row.</para>
+</description>
+<software scope="document">
+<references>gcetoolbox</references>
+</software>
+</qualityControl>
+</method>
+<additionalInfo>
+<para>Data Anomalies: Site 4, zone 1, plots 2 and 4 substitute for plots 1 and 6.</para>
+</additionalInfo>
+<attributeList>
+<attribute id="att.1" scope="document">
+<attributeName>Year</attributeName>
+<attributeDefinition>Calendar year of observation</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<datetime>
+<formatString>YYYY</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain></dateTimeDomain>
+</datetime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.2" scope="document">
+<attributeName>Month</attributeName>
+<attributeDefinition>Calendar month of observation</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<datetime>
+<formatString>MM</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain>
+<bounds>
+<minimum exclusive="false">1</minimum>
+<maximum exclusive="false">12</maximum>
+</bounds>
+</dateTimeDomain>
+</datetime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.3" scope="document">
+<attributeName>Day</attributeName>
+<attributeDefinition>Calendar day of observation</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<datetime>
+<formatString>DD</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain>
+<bounds>
+<minimum exclusive="false">1</minimum>
+<maximum exclusive="false">31</maximum>
+</bounds>
+</dateTimeDomain>
+</datetime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.4" scope="document">
+<attributeName>Site</attributeName>
+<attributeDefinition>GCE-LTER sampling site number</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<ordinal>
+<nonNumericDomain>
+<enumeratedDomain enforced="yes">
+<codeDefinition>
+<code>1</code>
+<definition>GCE1</definition>
+</codeDefinition>
+<codeDefinition>
+<code>2</code>
+<definition>GCE2</definition>
+</codeDefinition>
+<codeDefinition>
+<code>3</code>
+<definition>GCE3</definition>
+</codeDefinition>
+<codeDefinition>
+<code>4</code>
+<definition>GCE4</definition>
+</codeDefinition>
+<codeDefinition>
+<code>5</code>
+<definition>GCE5</definition>
+</codeDefinition>
+<codeDefinition>
+<code>6</code>
+<definition>GCE6</definition>
+</codeDefinition>
+<codeDefinition>
+<code>7</code>
+<definition>GCE7</definition>
+</codeDefinition>
+<codeDefinition>
+<code>8</code>
+<definition>GCE8</definition>
+</codeDefinition>
+<codeDefinition>
+<code>9</code>
+<definition>GCE9</definition>
+</codeDefinition>
+<codeDefinition>
+<code>10</code>
+<definition>GCE10</definition>
+</codeDefinition>
+</enumeratedDomain>
+</nonNumericDomain>
+</ordinal>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.5" scope="document">
+<attributeName>Zone</attributeName>
+<attributeDefinition>Marsh zone code (1=Creekbank, 2=Mid-marsh)</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<ordinal>
+<nonNumericDomain>
+<enumeratedDomain enforced="yes">
+<codeDefinition>
+<code>1</code>
+<definition>Creekbank zone</definition>
+</codeDefinition>
+<codeDefinition>
+<code>2</code>
+<definition>Mid-marsh zone</definition>
+</codeDefinition>
+</enumeratedDomain>
+</nonNumericDomain>
+</ordinal>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.6" scope="document">
+<attributeName>Plot</attributeName>
+<attributeDefinition>GCE-LTER permanent plot number</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<nominal>
+<nonNumericDomain>
+<textDomain>
+<definition>GCE-LTER permanent plot number</definition>
+</textDomain>
+</nonNumericDomain>
+</nominal>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.7" scope="document">
+<attributeName>Species</attributeName>
+<attributeDefinition>Latinized name of the mollusc species collected</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">string</storageType>
+<measurementScale>
+<nominal>
+<nonNumericDomain>
+<enumeratedDomain enforced="yes">
+<codeDefinition>
+<code>Littoraria</code>
+<definition>Littoraria irrorata</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Melampus</code>
+<definition>Melampus bidentatus</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Detracia</code>
+<definition>Detracia floridana</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Hydrobiidae</code>
+<definition>undifferentiated Hydrobiidae species</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Ilyanassa</code>
+<definition>Ilyanassa obsoleta</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Geukensia</code>
+<definition>Geukensia demissa</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Polymesoda</code>
+<definition>Polymesoda caroliniana</definition>
+</codeDefinition>
+<codeDefinition>
+<code>Crassostrea</code>
+<definition>Crassostrea virginica</definition>
+</codeDefinition>
+</enumeratedDomain>
+</nonNumericDomain>
+</nominal>
+</measurementScale>
+</attribute>
+<attribute id="att.8" scope="document">
+<attributeName>Mollusc_Count</attributeName>
+<attributeDefinition>Number of individuals collected in the specified quadrat</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">integer</storageType>
+<measurementScale>
+<interval>
+<unit>
+<standardUnit>number</standardUnit>
+</unit>
+<precision>1</precision>
+<numericDomain>
+<numberType>whole</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</interval>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.9" scope="document">
+<attributeName>Quadrat_Area</attributeName>
+<attributeDefinition>Number of square meters in the quadrat sampled</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>squareMeter</standardUnit>
+</unit>
+<precision>0.0001</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.10" scope="document">
+<attributeName>Mollusc_Density</attributeName>
+<attributeDefinition>Calculated number of individuals per meter squared</attributeDefinition>
+<storageType typeSystem="http://www.w3.org/2001/XMLSchema-datatypes">float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>numberPerMeterSquared</standardUnit>
+</unit>
+<precision>1</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+<method>
+<methodStep>
+<description>
+<para>Calculations: Mollusc_Density = Mollusc_Count / Quadrat_Area</para>
+</description>
+</methodStep>
+</method>
+</attribute>
+</attributeList>
+</dataTable>
+</dataset>
+</eml:eml>

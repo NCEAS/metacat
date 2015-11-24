@@ -1,0 +1,397 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY oa "http://www.w3.org/ns/oa#" >
+    <!ENTITY terms "http://purl.org/dc/terms/" >
+    <!ENTITY foaf "http://xmlns.com/foaf/0.1/" >
+    <!ENTITY prov "http://www.w3.org/ns/prov#" >
+    <!ENTITY cito "http://purl.org/spar/cito/" >
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+]>
+
+
+<rdf:RDF xmlns="file:///Users/leinfelder/ontologies/brl/oa_sample.owl#"
+     xml:base="file:///Users/leinfelder/ontologies/brl/oa_sample.owl"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:prov="http://www.w3.org/ns/prov#"
+     xmlns:foaf="http://xmlns.com/foaf/0.1/"
+     xmlns:oa="http://www.w3.org/ns/oa#"
+     xmlns:cito="http://purl.org/spar/cito/"
+     xmlns:terms="http://purl.org/dc/terms/"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+    <owl:Ontology rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl">
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl"/>
+        <owl:imports rdf:resource="http://purl.org/NET/dc_owl2dl/terms_od"/>
+        <owl:imports rdf:resource="http://purl.org/spar/cito/"/>
+        <owl:imports rdf:resource="http://www.w3.org/ns/oa#"/>
+        <owl:imports rdf:resource="http://www.w3.org/ns/prov#"/>
+        <owl:imports rdf:resource="http://xmlns.com/foaf/0.1/"/>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://purl.org/dc/terms/identifier -->
+
+    <owl:AnnotationProperty rdf:about="&terms;identifier"/>
+    
+
+
+    <!-- http://purl.org/spar/cito/documents -->
+
+    <owl:AnnotationProperty rdf:about="&cito;documents"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#Body -->
+
+    <owl:Class rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#Body"/>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Individuals
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder">
+        <rdf:type rdf:resource="&prov;Person"/>
+        <foaf:name rdf:datatype="&xsd;string">Benjamin River Leinfelder</foaf:name>
+        <terms:identifier rdf:datatype="&xsd;anyURI">http://sandbox-1.orcid.org/doesNotExist</terms:identifier>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones">
+        <rdf:type rdf:resource="&prov;Person"/>
+        <foaf:name rdf:datatype="&xsd;string">Matthew Bently Jones</foaf:name>
+        <terms:identifier rdf:datatype="&xsd;anyURI">http://sandbox-1.orcid.org/0000-0003-2141-4459</terms:identifier>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.1.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.1.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:b1"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t1"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.2.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.2.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:b1"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t2"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.3.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.3.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:annotatedBy rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#patient"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t3"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.4.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.4.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:annotatedBy rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t4"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#weight"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.5.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.5.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:annotatedBy rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#height"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t4"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.6.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.6.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:annotatedBy rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#BenLeinfelder"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:rev"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t6"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.7.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#ann.7.1">
+        <rdf:type rdf:resource="&oa;Annotation"/>
+        <oa:annotatedBy rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones"/>
+        <oa:hasBody rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:alt"/>
+        <oa:hasTarget rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t7"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#data.1.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#data.1.1">
+        <rdf:type rdf:resource="&prov;Entity"/>
+        <terms:identifier rdf:datatype="&xsd;string">doi:10.1234/data.1.1</terms:identifier>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1">
+        <rdf:type rdf:resource="&prov;Entity"/>
+        <terms:identifier rdf:datatype="&xsd;string">urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39098</terms:identifier>
+        <prov:wasAttributedTo rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#MattJones"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1">
+        <rdf:type rdf:resource="&prov;Entity"/>
+        <terms:identifier rdf:datatype="&xsd;string">urn:uuid:606a19dd-b531-4bf4-b5a5-6d06c3d39099</terms:identifier>
+        <prov:wasRevisionOf rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#height -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#height">
+        <rdf:type rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#Measurement"/>
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#usesStandard"/>
+                <owl:allValuesFrom rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Meter"/>
+            </owl:Restriction>
+        </rdf:type>
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#ofCharacteristic"/>
+                <owl:allValuesFrom rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Length"/>
+            </owl:Restriction>
+        </rdf:type>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#patient -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#patient">
+        <rdf:type rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#Measurement"/>
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#ofCharacteristic"/>
+                <owl:allValuesFrom rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#Name"/>
+            </owl:Restriction>
+        </rdf:type>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:alt -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:alt">
+        <rdf:type rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#Body"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:b1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:b1">
+        <rdf:type rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#Body"/>
+        <cito:documents rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#data.1.1"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:rev -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:rev">
+        <rdf:type rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#Body"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t1 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t1">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t2 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t2">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t3 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t3">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/1)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t4 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t4">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/2)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t5 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t5">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.1.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/3)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t6 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t6">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/1)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t7 -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#urn:t7">
+        <rdf:type rdf:resource="&oa;SpecificResource"/>
+        <oa:hasSource rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#eml.2.1"/>
+        <oa:hasSelector rdf:resource="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/1)"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#weight -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#weight">
+        <rdf:type rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#Measurement"/>
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#usesStandard"/>
+                <owl:allValuesFrom rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram"/>
+            </owl:Restriction>
+        </rdf:type>
+        <rdf:type>
+            <owl:Restriction>
+                <owl:onProperty rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#ofCharacteristic"/>
+                <owl:allValuesFrom rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Mass"/>
+            </owl:Restriction>
+        </rdf:type>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1) -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1)">
+        <rdf:type rdf:resource="&oa;FragmentSelector"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/1) -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/1)">
+        <rdf:type rdf:resource="&oa;FragmentSelector"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/2) -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/2)">
+        <rdf:type rdf:resource="&oa;FragmentSelector"/>
+    </owl:NamedIndividual>
+    
+
+
+    <!-- https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/3) -->
+
+    <owl:NamedIndividual rdf:about="https://code.ecoinformatics.org/code/semtools/trunk/docs/design/dataone/oa_sample.owl#xpointer(/eml/dataSet/1/attributeList/3)">
+        <rdf:type rdf:resource="&oa;FragmentSelector"/>
+    </owl:NamedIndividual>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.4.2) http://owlapi.sourceforge.net -->
+

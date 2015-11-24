@@ -1,0 +1,6 @@
+#!/bin/sh
+APPDIR=`dirname $0`;
+GWT=/home/berkley/tools/gwt
+CLASSPATH="$APPDIR/src:$APPDIR/bin:$GWT/gwt-user.jar:$GWT/gwt-dev.jar:$APPDIR/lib/client.jar:$APPDIR/lib/utilities.jar:$APPDIR/lib/xalan.jar:$APPDIR/lib/xml-apis.jar"
+
+java -cp $CLASSPATH com.google.gwt.dev.GWTShell -out "$APPDIR/www" "$@" org.kepler.web.KeplerClient/KeplerClient.html;

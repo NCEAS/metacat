@@ -1,0 +1,484 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+    This work was created by participants in the DataONE project, and is
+    jointly copyrighted by participating institutions in DataONE. For
+    more information on DataONE, see our web site at http://dataone.org.
+
+      Copyright ${year}
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.0.1" xmlns:stmml="http://www.xml-cml.org/schema/stmml" xmlns:sw="eml://ecoinformatics.org/software-2.0.1" xmlns:cit="eml://ecoinformatics.org/literature-2.0.1" xmlns:ds="eml://ecoinformatics.org/dataset-2.0.1" xmlns:prot="eml://ecoinformatics.org/protocol-2.0.1" xmlns:doc="eml://ecoinformatics.org/documentation-2.0.1" xmlns:res="eml://ecoinformatics.org/resource-2.0.1" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.0.1 C:/eml-2.0.1/eml.xsd" packageId="knb-lter-luq.76.2" system="knb" scope="system">
+	<dataset>
+		<shortName>LUQMetadata76</shortName>
+		<title>Frog abundance in fertilization plots</title>
+		<creator>
+			<individualName>
+				<givenName>Lawrence L.</givenName>
+				<surName>Woolbright</surName>
+			</individualName>
+			<organizationName>Siena College</organizationName>
+			<positionName>Investigator</positionName>
+			<address>
+				<deliveryPoint>Department of Biology</deliveryPoint>
+				<city>Loudonville</city>
+				<administrativeArea>NY</administrativeArea>
+				<postalCode>12211-1462</postalCode>
+				<country>USA</country>
+			</address>
+			<phone phonetype="voice">(518)783-2440</phone>
+			<phone phonetype="fax">voice</phone>
+			<electronicMailAddress>LWoolbright@siena.edu</electronicMailAddress>
+		</creator>
+		<metadataProvider>
+			<individualName>
+				<givenName>Lawrence L.</givenName>
+				<surName>Woolbright</surName>
+			</individualName>
+			<organizationName>Siena College</organizationName>
+			<positionName>Investigator</positionName>
+			<address>
+				<deliveryPoint>Department of Biology</deliveryPoint>
+				<city>Loudonville</city>
+				<administrativeArea>NY</administrativeArea>
+				<postalCode>12211-1462</postalCode>
+				<country>USA</country>
+			</address>
+			<phone phonetype="voice">(518)783-2440</phone>
+			<phone phonetype="fax">voice</phone>
+			<electronicMailAddress>LWoolbright@siena.edu</electronicMailAddress>
+		</metadataProvider>
+		<language>english</language>
+		<abstract>
+			<para>
+				<literalLayout>Population estimates and body sizes of E. coqui were collected on fertilization, litter removal, and control plots. </literalLayout>
+			</para>
+		</abstract>
+		<keywordSet>
+			<keyword>productivity</keyword>
+			<keyword>population density</keyword>
+			<keyword>leptodactylidae</keyword>
+			<keyword>eleutherodactylus coqui</keyword>
+			<keyword>demography</keyword>
+			<keyword>ancura</keyword>
+			<keyword>amphibia</keyword>
+			<keywordThesaurus>Assigned by Principal Investigator</keywordThesaurus>
+		</keywordSet>
+		<keywordSet>
+			<keyword>population dynamics</keyword>
+			<keywordThesaurus>LTER Core</keywordThesaurus>
+		</keywordSet>
+		<keywordSet>
+			<keyword>tabonuco</keyword>
+			<keyword>MRCE</keyword>
+			<keyword>population dynamics</keyword>
+			<keyword>amphibians</keyword>
+			<keywordThesaurus>LEF LTER Data Sets</keywordThesaurus>
+		</keywordSet>
+		<keywordSet>
+			<keyword>Animal Population Dynamics</keyword>
+			<keywordThesaurus>LEF LTER Data Categories</keywordThesaurus>
+		</keywordSet>
+		<intellectualRights>
+			<section>
+				<title>ADEQUATE ACKNOWLEDGEMENT</title>
+				<para>
+					<literalLayout>The scientists, the LEF-LTER Program, and the USDA International Institute of Tropical Forestry (IITF) must receive adequate acknowledgement for the use of data by other scientists, and the LEF LTER program must receive two copies of any publication using that data. One copy will be placed at the IITF library and one copy will stay with the LEF LTER Data Manager. A suggested format for this acknowledgement will be distributed along with the requested data.</literalLayout>
+				</para>
+				<section>
+					<title>Acknowledgements for NSF Support.</title>
+					<para>
+						<literalLayout>The following paragraph should be included in the acknowledgements of all publications funded in any way by current and future LTER grants:</literalLayout>
+						<literalLayout>This research was performed under grant #DEB-0218039 from the National Science Foundation to the Institute of Tropical Ecosystem Studies (IEET), University of Puerto Rico, and the International Institute of Tropical Forestry (IITFR) as part of the Long-Term Ecological Research Program in the Luquillo Experimental Forest. Additional support was provided by the Forest Service (U.S. Department of Agriculture) and the University of Puerto Rico.</literalLayout>
+					</para>
+				</section>
+			</section>
+		</intellectualRights>
+		<distribution>
+			<online>
+				<url>http://luq.lternet.edu/data/lterdb76/metadata/lterdb76.htm#DATA</url>
+			</online>
+		</distribution>
+		<coverage>
+			<geographicCoverage id="geoReference">
+				<geographicDescription>The Luquillo Experimental Forest (LEF) covers 11,231 hectares and reaches 1079 m above sea level. It has a warm and wet climate and includes a variety of tropical habitats and forest types and streams, and a high diversity of plants and animals. A key feature of these ecosystems is disturbance. Hurricanes, landslides, and human disturbance have shaped the forest, and research by LUQ has stimulated a new appreciation of the significance of large-scale disturbances in tropical forested ecosystems and the key role of plants and animals in shaping the response to these events. Hurricanes occurring one and 10 years after LUQ began in 1988 provided landscape-scale natural experiments which are still followed closely.</geographicDescription>
+				<boundingCoordinates>
+					<westBoundingCoordinate>-65.92</westBoundingCoordinate>
+					<eastBoundingCoordinate>-65.7</eastBoundingCoordinate>
+					<northBoundingCoordinate>18.35</northBoundingCoordinate>
+					<southBoundingCoordinate>18.23</southBoundingCoordinate>
+					<boundingAltitudes>
+						<altitudeMinimum>20</altitudeMinimum>
+						<altitudeMaximum>1060</altitudeMaximum>
+						<altitudeUnits>meter</altitudeUnits>
+					</boundingAltitudes>
+				</boundingCoordinates>
+			</geographicCoverage>
+		</coverage>
+		<contact>
+			<individualName>
+				<givenName>Lawrence L.</givenName>
+				<surName>Woolbright</surName>
+			</individualName>
+			<organizationName>Siena College</organizationName>
+			<positionName>Investigator</positionName>
+			<address>
+				<deliveryPoint>Department of Biology</deliveryPoint>
+				<city>Loudonville</city>
+				<administrativeArea>NY</administrativeArea>
+				<postalCode>12211-1462</postalCode>
+				<country>USA</country>
+			</address>
+			<phone phonetype="voice">(518)783-2440</phone>
+			<phone phonetype="fax">voice</phone>
+			<electronicMailAddress>LWoolbright@siena.edu</electronicMailAddress>
+		</contact>
+		<publisher>
+			<organizationName>Luquillo Experimental Forest LTER</organizationName>
+			<address>
+				<deliveryPoint>University of Puerto Rico, Rio Piedras</deliveryPoint>
+				<deliveryPoint>P. O. Box 21910</deliveryPoint>
+				<city>San Juan</city>
+				<administrativeArea>PR</administrativeArea>
+				<postalCode>00931-1910</postalCode>
+				<country>USA</country>
+			</address>
+			<phone phonetype="voice"> (787) 764 - 0000 (ext. 4940)</phone>
+			<phone phonetype="fax">(787) 772 -1481</phone>
+			<electronicMailAddress>nbrokaw@lternet.edu</electronicMailAddress>
+			<onlineUrl>http://luq.lternet.edu</onlineUrl>
+		</publisher>
+		<methods>
+			<methodStep>
+				<description>
+					<para>
+						<literalLayout>Mark-recapture. Adult coquies (725 mm SVL) were and measured with dial calipers. Each was toedipped, individually in some plots, by cohorts or others. Sex and reproductive condition were noted. Juveniles were counted.</literalLayout>
+					</para>
+				</description>
+			</methodStep>
+		</methods>
+		<project>
+			<title>Frog Population Dynamics</title>
+			<personnel>
+				<individualName>
+					<givenName>Lawrence L.</givenName>
+					<surName>Woolbright</surName>
+				</individualName>
+				<role>Professor</role>
+			</personnel>
+			<abstract>
+				<para>
+					<literalLayout>El Verde Station, located in the tabonuco forest zone on the NW side of the Luquillo Experimental Forest (LEF), has hosted numerous scientific efforts since the 1960s. Thus, a great deal of information exists concerning anuran populations at the site over the past 30 years. Although past surveys did not use consistent techniques, they clearly document the general status of the anuran community of the area. I began working at El Verde in the 1970s and have collected data on the anuran community primarily in the 1980s and 1990s. Until recently, these surveys also lacked a consistent sampling protocol, although they clearly document declines in species richness in comparison to earlier records.  Most Puerto Rican Eleutherodactylus are terrestrial frogs that breed for prolonged periods of time in more or less continuous habitat. Because their life cycle lacks a free living larvae stage, reproductive behavior is not tied to bodies of water and they do not have the large aggregations typical of many aquatic breeders. For these reasons, assessing their population status requires examining fairly large areas of habitat. I began systematically sampling the anuran community on a 12 ha grid at the Bisley watersheds in 1989 and a second 16 ha grid at El Verde in 1993. These efforts have provided a comprehensive data set that can be used to evaluate future changes in the anuran community in this forest. </literalLayout>
+				</para>
+			</abstract>
+			<funding>
+				<para>
+					<literalLayout>LTER</literalLayout>
+				</para>
+			</funding>
+		</project>
+		<access scope="document" order="allowFirst" authSystem="knb">
+			<allow>
+				<principal>uid=LUQ,o=lter,dc=ecoinformatics,dc=org</principal>
+				<permission>all</permission>
+			</allow>
+			<allow>
+				<principal>public</principal>
+				<permission>read</permission>
+			</allow>
+		</access>
+		<dataTable>
+			<entityName>allBlocksdata.txt</entityName>
+			<entityDescription>Fertilization</entityDescription>
+			<physical>
+				<objectName>allBlocksdata.txt</objectName>
+				<dataFormat>
+					<textFormat>
+						<numHeaderLines>1</numHeaderLines>
+						<recordDelimiter>\n</recordDelimiter>
+						<physicalLineDelimiter>\n</physicalLineDelimiter>
+						<attributeOrientation>column</attributeOrientation>
+						<simpleDelimited>
+							<fieldDelimiter>,</fieldDelimiter>
+						</simpleDelimited>
+					</textFormat>
+				</dataFormat>
+				<distribution>
+					<online>
+						<url>http://luq.lternet.edu/data/lterdb76/data/allBlocksdata.txt</url>
+					</online>
+				</distribution>
+			</physical>
+			<coverage>
+				<geographicCoverage>
+					<references>geoReference</references>
+				</geographicCoverage>
+				<temporalCoverage id="temporalReferenceallBlocksdata.txt">
+					<rangeOfDates>
+						<beginDate>
+							<calendarDate>1993-06-13</calendarDate>
+						</beginDate>
+						<endDate>
+							<calendarDate>1993-06-27</calendarDate>
+						</endDate>
+					</rangeOfDates>
+				</temporalCoverage>
+			</coverage>
+			<method>
+				<methodStep>
+					<description>
+						<para>
+							<literalLayout>Mark-recapture. Adult coquies (725 mm SVL) were and measured with dial calipers. Each was toedipped, individually in some plots, by cohorts or others. Sex and reproductive condition were noted. Juveniles were counted.</literalLayout>
+						</para>
+					</description>
+				</methodStep>
+				<sampling>
+					<studyExtent>
+						<coverage>
+							<geographicCoverage>
+								<references>geoReference</references>
+							</geographicCoverage>
+							<temporalCoverage>
+								<references>temporalReferenceallBlocksdata.txt</references>
+							</temporalCoverage>
+						</coverage>
+					</studyExtent>
+					<samplingDescription>
+						<section>
+							<para>
+								<literalLayout>once</literalLayout>
+							</para>
+						</section>
+					</samplingDescription>
+				</sampling>
+			</method>
+			<attributeList>
+				<attribute>
+					<attributeName>MRCE Plot Block Number</attributeName>
+					<attributeLabel>MRCEBLOCKPLOT</attributeLabel>
+					<attributeDefinition>MRCE fertilization plot plot identifier using the same nopnmenclature as the original MRCE proyect. Each contain the corresponding MRCE Proyect's data variable -Block-; a Roman number representing a 20x20 m square with 10x10 m inner measurement plots.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<enumeratedDomain>
+									<codeDefinition>
+										<code>BLOCK I </code>
+										<definition> block names I in the MRCE project</definition>
+									</codeDefinition>
+									<codeDefinition>
+										<code> BLOCK II </code>
+										<definition> block names II in the MRCE project</definition>
+									</codeDefinition>
+									<codeDefinition>
+										<code> BLOCK III </code>
+										<definition> block names III in the MRCE project. All records have a value in this field.</definition>
+									</codeDefinition>
+								</enumeratedDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>File name</attributeName>
+					<attributeLabel>FILENAME</attributeLabel>
+					<attributeDefinition>file name designation</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>file name designation, Control, Litter Removal and Fertilization are the three values.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Sex of frog</attributeName>
+					<attributeLabel>SEX</attributeLabel>
+					<attributeDefinition>Sex of captured frog; It is left blank if the sex could not be determined.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<enumeratedDomain>
+									<codeDefinition>
+										<code>F </code>
+										<definition> female</definition>
+									</codeDefinition>
+									<codeDefinition>
+										<code> M </code>
+										<definition> male</definition>
+									</codeDefinition>
+								</enumeratedDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Frog ID (Identification)</attributeName>
+					<attributeLabel>FROGID</attributeLabel>
+					<attributeDefinition>This codes the reproductive status; pattern morph; and toc-clip of each animal marked. The codification is as follows: A1 2345 b where A represents the reproductive status: male - female; 1 represents a pattern morph ( 9- wild type mottled; 11-vertebral stripe; 16-dorsalatesal stripes; 5-spots; 6-interocular bar; 1-smooth monocolor; 2-5=toe numbers); the 4 digit represent the 4 feet (2-left hand; 3-right; 4-left foot; 5-each ranges from 1-4 where its left most toe and 4 is right most); b means thumbs;Blank-is an optional and determined series representing no thumbs clipperd; T- is an optional and determined series meaning a tumb was found clipped on left footO-is an optional and determined series meaning a thumb was found clipped on right foot.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>This codes the reproductive status; pattern morph; and toc-clip of each animal marked. The codification is as follows: A1 2345 b where A represents the reproductive status: male - female; 1 represents a pattern morph ( 9- wild type mottled; 11-vertebral stripe; 16-dorsalatesal stripes; 5-spots; 6-interocular bar; 1-smooth monocolor; 2-5=toe numbers); the 4 digit represent the 4 feet (2-left hand; 3-right; 4-left foot; 5-each ranges from 1-4 where its left most toe and 4 is right most); b means thumbs;Blank-is an optional and determined series representing no thumbs clipperd; T- is an optional and determined series meaning a tumb was found clipped on left footO-is an optional and determined series meaning a thumb was found clipped on right foot.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName/>
+					<attributeLabel>DATE6/14/1993</attributeLabel>
+					<attributeDefinition/>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition/>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Recapture Data for Date 1</attributeName>
+					<attributeLabel>DATE1</attributeLabel>
+					<attributeDefinition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on06/14/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/13/1993 when blocknumber is Block Iand Treatment is Litter Removal or Fertilization; Recapture data gathered on 06/7/1993 when blocknumber is Block II for all Treatment; Recapture data gathered on 06/22/1993 when blocknumber is Block III for all Treatment; When left blank, the frog wasnot captured. Note: a "c" was used in earlier data files for 1990.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<enumeratedDomain>
+									<codeDefinition>
+										<code>X1</code>
+										<definition>=frog was captured that night and sex uncertain</definition>
+									</codeDefinition>
+									<codeDefinition>
+										<code>X2</code>
+										<definition> frog was captured that night with baggy throat if a male or eggs visible but small if female;</definition>
+									</codeDefinition>
+									<codeDefinition>
+										<code>X3</code>
+										<definition>frog was captured that nightand found calling if male orwithgrand large eggs visible if female</definition>
+									</codeDefinition>
+								</enumeratedDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Recapture Data for Date 2</attributeName>
+					<attributeLabel>DATE2</attributeLabel>
+					<attributeDefinition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state.Recapture data gathered on 06/17/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/14/1993 when blocknumber is Block Iand Treatment is Litter Removal or Fertilization; Recapture data gathered on 06/8/1993 when blocknumber is Block II and Treatment is Control or Control New or Fertilization; Recapture data gathered on 06/9/1993 when blocknumber is Block II and Treatment is Litter Removal; Recapture data gathered on 06/23/1993 when blocknumber is Block III for all Treatment.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on06/14/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/13/1993 when blocknumber is Block Iand Treatment is Litter Removal or Fertilization; Recapture data gathered on 06/7/1993 when blocknumber is Block II for all Treatment; Recapture data gathered on 06/22/1993 when blocknumber is Block III for all Treatment; When left blank, the frog wasnot captured. Note: a "c" was used in earlier data files for 1990.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Recapture Data for Date 3</attributeName>
+					<attributeLabel>DATE3</attributeLabel>
+					<attributeDefinition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state.Recapture data gathered on 06/18/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/17/1993 when blocknumber is Block Iand TREATMENT is Litter Removal or Fertilization; Recapture data gathered on 06/9/1993 when blocknumber is Block II and TREATMENT is Control or Control New; Recapture data gathered on 06/10/1993 when blocknumber is Block II and TREATMENT is Litter Removal or Fertilization; Recapture data gathered on 06/27/1993 when blocknumber is Block III for all Treatment.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state.Recapture data gathered on 06/18/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/17/1993 when blocknumber is Block Iand TREATMENT is Litter Removal or Fertilization; Recapture data gathered on 06/9/1993 when blocknumber is Block II and TREATMENT is Control or Control New; Recapture data gathered on 06/10/1993 when blocknumber is Block II and TREATMENT is Litter Removal or Fertilization; Recapture data gathered on 06/27/1993 when blocknumber is Block III for all Treatment.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Recapture data for day 4</attributeName>
+					<attributeLabel>DATE4</attributeLabel>
+					<attributeDefinition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on 06/20/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/18/1993 when blocknumber is Block Iand Treatment is Litter Removal or Fertilization; Recapture data gathered on 06/10/1993 when blocknumber is Block II and Treatment is Control or Control New; Recapture data gathered on 06/18/1993 when blocknumber is Block II and Treatment is Litter Removal or Fertilization.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on 06/20/1993 when blocknumber is Block Iand Treatment is Control; Recapture data gathered on 06/18/1993 when blocknumber is Block Iand Treatment is Litter Removal or Fertilization; Recapture data gathered on 06/10/1993 when blocknumber is Block II and Treatment is Control or Control New; Recapture data gathered on 06/18/1993 when blocknumber is Block II and Treatment is Litter Removal or Fertilization.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Recapture data for day 5</attributeName>
+					<attributeLabel>DATE5</attributeLabel>
+					<attributeDefinition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on 06/18/1993 when blocknumber is Block II and Treatment is Control or Control New.</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>This shows whether each animal was seen on each night with an optional addition number shows reproductive state. Recapture data gathered on 06/18/1993 when blocknumber is Block II and Treatment is Control or Control New.</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Body size</attributeName>
+					<attributeLabel>BODYSIZE</attributeLabel>
+					<attributeDefinition>The body size from tip of snout to posterior tip of urostyle, taken with frog pressed flat against a notebook. Instrument measures to 0.1 mm sizes recorded to 0.5 mm measurement repeatable to � 1.0 mm. Body sizes ranges from 25.0 (Arbitrary cut-off adult status) to largest posible sizes of 50mm +</attributeDefinition>
+					<measurementScale>
+						<ratio>
+							<unit>
+								<standardUnit>millimeter</standardUnit>
+							</unit>
+							<numericDomain>
+								<numberType>real</numberType>
+							</numericDomain>
+						</ratio>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Sub-Total indicator</attributeName>
+					<attributeLabel>COMMENTS</attributeLabel>
+					<attributeDefinition>Indicates when values represents sub-totals</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>Indicates when values represents sub-totals</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+				<attribute>
+					<attributeName>Data collectorsm or observers</attributeName>
+					<attributeLabel>DATACOLLECTORS</attributeLabel>
+					<attributeDefinition>Observers; people that obtained the data</attributeDefinition>
+					<measurementScale>
+						<nominal>
+							<nonNumericDomain>
+								<textDomain>
+									<definition>Observers; people that obtained the data</definition>
+								</textDomain>
+							</nonNumericDomain>
+						</nominal>
+					</measurementScale>
+				</attribute>
+			</attributeList>
+		</dataTable>
+	</dataset>
+</eml:eml>

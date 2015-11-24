@@ -1,0 +1,44 @@
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-dataset//EN" "../dtd/eml-dataset.dtd" 
+SYSTEM "urn:nceas:test-eml-dataset" "../dtd/eml-dataset.dtd" 
+SYSTEM "eml-dataset.dtd" "../dtd/eml-dataset.dtd" 
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-context//EN" "../dtd/eml-context.dtd" 
+SYSTEM "urn:nceas:test-eml-context" "../dtd/eml-context.dtd" 
+SYSTEM "eml-context.dtd" "../dtd/eml-context.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-access//EN" "../dtd/eml-access.dtd" 
+SYSTEM "urn:nceas:test-eml-access" "../dtd/eml-access.dtd" 
+SYSTEM "eml-access.dtd" "../dtd/eml-access.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-file//EN" "../dtd/eml-file.dtd" 
+SYSTEM "urn:nceas:test-eml-file" "../dtd/eml-file.dtd" 
+SYSTEM "eml-file.dtd" "../dtd/eml-file.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-variable//EN" "../dtd/eml-variable.dtd" 
+SYSTEM "urn:nceas:test-eml-variable" "../dtd/eml-variable.dtd" 
+SYSTEM "eml-variable.dtd" "../dtd/eml-variable.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-status//EN" "../dtd/eml-status.dtd" 
+SYSTEM "urn:nceas:test-eml-status" "../dtd/eml-status.dtd" 
+SYSTEM "eml-status.dtd" "../dtd/eml-status.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-supplement//EN" "../dtd/eml-supplement.dtd" 
+SYSTEM "urn:nceas:test-eml-supplement" "../dtd/eml-supplement.dtd" 
+SYSTEM "eml-supplement.dtd" "../dtd/eml-supplement.dtd"
+
+OVERRIDE YES 
+PUBLIC "-//NCEAS//eml-software//EN" "../dtd/eml-software.dtd" 
+SYSTEM "urn:nceas:test-eml-software" "../dtd/eml-software.dtd" 
+SYSTEM "eml-software.dtd" "../dtd/eml-software.dtd"
+
+OVERRIDE YES
+PUBLIC "-//NCEAS//eml-resource//EN" "../dtd/resource.dtd"
+SYSTEM "urn:nceas:test-resource" "../dtd/resource.dtd"
+SYSTEM "resource.dtd" "../dtd/resource.dtd"

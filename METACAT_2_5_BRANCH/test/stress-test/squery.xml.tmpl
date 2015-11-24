@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+    <pathquery version="1.0">
+        <meta_file_id>test</meta_file_id>
+        <returnField>dataset/title</returnField>
+        <returnField>entityName</returnField>
+        <querygroup operator="INTERSECT">
+            <querygroup operator="UNION">
+                <queryterm casesensitive="false" searchmode="contains">
+                	<value>@!search-word!@</value>
+                	<pathexpr>dataset/title</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="contains">
+                	<value>@!search-word!@</value>
+                	<pathexpr>keyword</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="contains">
+                	<value>@!search-word!@</value>
+                	<pathexpr>creator/individualName/surName</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="contains">
+                	<value>@!search-word!@</value>
+                	<pathexpr>taxonRankValue</pathexpr> 
+                </queryterm>	
+            </querygroup>
+            <querygroup operator="UNION">
+                <queryterm casesensitive="false" searchmode="starts-with">
+                	<value>http://</value>
+                	<pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="starts-with">
+                	<value>ecogrid://</value>
+                	<pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="starts-with">
+                	<value>srb://</value>
+                	<pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr> 
+                </queryterm>
+                <queryterm casesensitive="false" searchmode="starts-with">
+                	<value>srb://</value>
+                	<pathexpr>dataset/spatialRaster/physical/distribution/online/url</pathexpr> 
+                </queryterm>	
+            </querygroup>
+       </querygroup>
+   </pathquery>
+   
+   <?xml version="1.0"?>

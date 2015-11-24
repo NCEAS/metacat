@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>temporal_coverage (Eml)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/eml.rb, line 109</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">temporal_coverage</span>
+    <span class="ruby-identifier">beginDates</span> = <span class="ruby-identifier">endDates</span> = <span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>()
+    <span class="ruby-identifier">path</span> = <span class="ruby-value str">&quot;dataset/coverage/temporalCoverage/rangeOfDates&quot;</span>
+    <span class="ruby-ivar">@doc</span>.<span class="ruby-identifier">root</span>.<span class="ruby-identifier">elements</span>.<span class="ruby-identifier">each</span>(<span class="ruby-identifier">path</span>){ <span class="ruby-operator">|</span><span class="ruby-identifier">range</span><span class="ruby-operator">|</span>  
+      <span class="ruby-identifier">beginDates</span>.<span class="ruby-identifier">push</span>(
+        <span class="ruby-constant">Date</span>.<span class="ruby-identifier">strptime</span>(<span class="ruby-identifier">range</span>.<span class="ruby-identifier">elements</span>[<span class="ruby-value str">&quot;beginDate&quot;</span>].<span class="ruby-identifier">elements</span>[<span class="ruby-value">1</span>].<span class="ruby-identifier">text</span>)
+      )
+      <span class="ruby-identifier">endDates</span>.<span class="ruby-identifier">push</span>(
+        <span class="ruby-constant">Date</span>.<span class="ruby-identifier">strptime</span>(<span class="ruby-identifier">range</span>.<span class="ruby-identifier">elements</span>[<span class="ruby-value str">&quot;endDate&quot;</span>].<span class="ruby-identifier">elements</span>[<span class="ruby-value">1</span>].<span class="ruby-identifier">text</span>)
+      )
+    }
+    <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">beginDates</span>.<span class="ruby-identifier">min</span>, <span class="ruby-identifier">endDates</span>.<span class="ruby-identifier">max</span>
+  <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema  targetNamespace="http://ns.dataone.org/service/types/v1.1"
+	xmlns:d1="http://ns.dataone.org/service/types/v1"
+    xmlns:d1_v1.1="http://ns.dataone.org/service/types/v1.1"
+    xmlns:xs="http://www.w3.org/2001/XMLSchema"
+    version="1.1.0"
+    elementFormDefault="unqualified" attributeFormDefault="unqualified">
+
+<!-- 
+$HeadURL: https://repository.dataone.org/software/cicore/branches/D1_SCHEMA_v1.1/dataoneTypes.xsd $
+$Id: dataoneTypes.xsd 10341 2012-10-10 14:07:49Z vieglais $
+
+About this document:
+
+  This XML Schema document defines the common data structures that are used
+  to support messaging between the major components of the DataONE
+  infrastructure and to guide structure design for storage of information
+  required for normal operations.
+
+License:
+
+  This work was created by participants in the DataONE project, and is
+  jointly copyrighted by participating institutions in DataONE. For
+  more information on DataONE, see our web site at http://dataone.org.
+
+    Copyright 2011
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+
+Formatting: 
+
+  - This document should be saved as a UTF-8 encoded file.
+
+  - Indent using spaces, not tabs, with two spaces per indent level.
+
+  - Line wrapping should be set to 80 chars, adjusted as necessary
+
+  - Documentation entries contain formatting instructions for integration with
+    the DataONE architecture documentation, available at:
+
+      http://mule1.dataone.org/ArchitectureDocs-current
+
+-->
+
+<!-- ************************************
+        DEFINE REUSABLE SIMPLE TYPES HERE 
+        ************************************ -->
+
+
+
+  <!-- ***************************************
+          DEFINE REUSABLE COMPLEX  TYPES HERE 
+          *************************************** -->
+
+  <!-- NOTE THAT ALL SERIALIZEABLE ROOT ELEMENTS FOR MESSAGES SHOULD BE OF A
+       COMPLEX TYPE -->
+    <xs:import namespace="http://ns.dataone.org/service/types/v1" 
+        schemaLocation="http://ns.dataone.org/service/types/v1" />
+
+
+  <!-- QueryEngineDescription -->
+  <xs:complexType name="QueryEngineDescription">
+    <xs:annotation>
+      <xs:documentation>Describes a query engine that can be used to search content on the node. 
+      Query engines may be general purpose or specialized for particular communities or domains.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="queryEngineVersion" type="xs:string" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The version of the underlying query engine. Used by clients to determine possible
+          compatibility concerns or features available.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="querySchemaVersion" type="xs:string" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Version of the schema in use by the query engine, e.g. &quot;1.0.1&quot;</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="name" type="xs:string" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The full, human readable name of the query engine. For example: 
+            &quot;Apache SOLR&quot;</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="additionalInfo" type="d1:NonEmptyString" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>An optional human readable description of the query engine. This can be 
+            used to describe any special capabilities or intended uses for the query engine. For example, 
+            a query engine may be tuned to suit a particular audience or domain as opposed to providing 
+            a general purpose discovery mechanism.</xs:documentation>
+          <xs:documentation>This field may also contain links to additional information about the query engine, 
+          such as documentation for the search syntax provided by the query engine implemntors.</xs:documentation>
+          </xs:annotation>
+      </xs:element>
+      <xs:element name="queryField" type="d1_v1.1:QueryField" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>A list of query fields supported by the query engine.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+  
+  <!-- QueryEngineList -->
+  <xs:complexType name="QueryEngineList">
+    <xs:annotation>
+      <xs:documentation>A list of query engine names that indicate the possible values for 
+        CNRead.getQueryEngineDescription and CNRead.query REST API endpoints.</xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name ="queryEngine" type="d1:NonEmptyString" 
+        minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>The name of a queryEngine. This value will be used as a path element in 
+            REST API calls and so should not contain characters that will need to be escaped.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <!-- QueryField -->
+  <xs:complexType name="QueryField">
+    <xs:annotation>
+      <xs:documentation></xs:documentation>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="name" type="d1:NonEmptyString" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The name of the field as used programmatically when 
+            constructing queries or other rferences to the field.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="description" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:documentation>An optional, repeatable, brief description of the field that can be
+          used to help guide developers or end users in appropriate use of the field. May for 
+          example, contain a links to additional documentation.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="type" type="d1:NonEmptyString" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>The type of the field, expressed in the language peculiar to the 
+          query engine being described.</xs:documentation>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="searchable" type="xs:boolean" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Indicates if the field may be used in constructing queries (as opposed 
+            to only appearing in results)</xs:documentation>
+        </xs:annotation>        
+      </xs:element>
+      <xs:element name="returnable" type="xs:boolean" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Indicates if the field values may be returned in search results.</xs:documentation>
+        </xs:annotation>        
+      </xs:element>
+      <xs:element name="sortable" type="xs:boolean" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Indicates if the field can be used for sorting results.</xs:documentation>
+        </xs:annotation>        
+      </xs:element>
+      <xs:element name="multivalued" type="xs:boolean" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:documentation>Indicates if the field may contain multiple values. Some query engines
+          such as SOLR support this capability.</xs:documentation>
+        </xs:annotation>        
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+
+  <!-- ******************************************
+          DEFINE ROOT ELEMENTS OF MESSAGES HERE 
+          ****************************************** -->
+  <!-- NOTE THAT ALL SERIALIZEABLE ROOT ELEMENTS FOR MESSAGES SHOULD BE OF A 
+       COMPLEX TYPE -->
+
+  <!-- These root-level element definitions are provided for selected types so
+       that those types can be used in serialized messages in method calls in
+       DataONE. Any type that is included as a parameter to or a return type
+       from a DataONE service should have a corresponding root element of that
+       type defined here.
+  -->
+
+  <xs:element name="queryEngineList" type="d1_v1.1:QueryEngineList" />
+  <xs:element name="queryEngineDescription" type="d1_v1.1:QueryEngineDescription"></xs:element>
+</xs:schema>
+

@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class: Eml</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">Eml</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../files/lib/eml_rb.html">
+                lib/eml.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                Object
+            </td>
+        </tr>
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <h2>What is it</h2>
+<p>
+The goal of this object is to encapsulate a dom representation of an EML(<a
+href="http://knb.ecoinformatics.org/software/eml">knb.ecoinformatics.org/software/eml</a>)
+document and provide quick helper methods to access commonly needed
+attributes. These methods will return a more &quot;ruby friendly&quot;
+representation of this metadata.
+</p>
+<p>
+At their core <a href="Eml.html">Eml</a> objects contain a REXML::Document
+in the instance variable @doc. Until this object is feature-complete, this
+dom document can be used when this object is returned from this
+module&#8217;s <a href="Metacat.html">Metacat</a> client.
+</p>
+<h2>Examples</h2>
+<h3>Get temporal coverage</h3>
+<pre>
+  metacat = Metacat.new('http://data.piscoweb.org/catalog/metacat')
+  eml_object = metacat.find(:docid =&gt; 'HMS001_020ADCP019R00_20060612.50.1')
+  geographic_coverage = eml_object.geographic_coverage
+  =&gt; [{ &quot;latitude&quot;=&gt;-121.8996,
+        &quot;longitude&quot;=&gt;36.6214,
+        &quot;id&quot;=&gt;&quot;HMS001&quot;,
+        &quot;description&quot;=&gt;
+        &quot;Hopkins Marine Station: HMS001: This inner-shelf mooring is located offshore
+        of the city of Monterey, California, USA, near Hopkins Marine Station.  The
+        mooring is located in an overall water depth of 020 meters (referenced to Mean
+        Sea Level, MSL).  The altitudeMinimum and altitudeMaximum tags in this initial
+        coverage section refer to the ADCP measurement range and are also referenced to
+        MSL.  They do not represent the overall water depth.  Note the nominal range of
+        the ADCP may extend from near-bottom (a depth expressed as a negative altitude)
+        to slightly above MSL (a height expressed as a positive altitude).&quot;}]
+</pre>
+<h3>Get associated data table(<a href="DataTable.html">DataTable</a>) and write it to disk</h3>
+<pre>
+  eml_object.data_tables.each do |data_table|
+    file = File.new(&quot;./store/#{data_table.id}&quot;)
+    # data_table is an object, with method read
+    data_table.read do |buffer|
+      file.write(buffer)
+    end
+    file.close()
+  end
+</pre>
+
+    </div>
+
+
+   </div>
+
+    <div id="method-list">
+      <h3 class="section-bar">Methods</h3>
+
+      <div class="name-list">
+      <a href="#M000048">coverage</a>&nbsp;&nbsp;
+      <a href="#M000044">data_tables</a>&nbsp;&nbsp;
+      <a href="#M000047">geographic_coverage</a>&nbsp;&nbsp;
+      <a href="#M000045">largest_data_table</a>&nbsp;&nbsp;
+      <a href="#M000042">new</a>&nbsp;&nbsp;
+      <a href="#M000050">short_name</a>&nbsp;&nbsp;
+      <a href="#M000046">temporal_coverage</a>&nbsp;&nbsp;
+      <a href="#M000049">title</a>&nbsp;&nbsp;
+      <a href="#M000043">to_s</a>&nbsp;&nbsp;
+      </div>
+    </div>
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+    <div id="attribute-list">
+      <h3 class="section-bar">Attributes</h3>
+
+      <div class="name-list">
+        <table>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">doc</td>
+          <td class="context-item-value">&nbsp;[R]&nbsp;</td>
+          <td class="context-item-desc"></td>
+        </tr>
+        <tr class="top-aligned-row context-row">
+          <td class="context-item-name">docid</td>
+          <td class="context-item-value">&nbsp;[R]&nbsp;</td>
+          <td class="context-item-desc"></td>
+        </tr>
+        </table>
+      </div>
+    </div>
+      
+
+
+    <!-- if method_list -->
+    <div id="methods">
+      <h3 class="section-bar">Public Class methods</h3>
+
+      <div id="method-M000042" class="method-detail">
+        <a name="M000042"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000042.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000042.html');return false;">
+          <span class="method-name">new</span><span class="method-args">(metadata)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Accepts an EML REXML::Document
+</p>
+        </div>
+      </div>
+
+      <h3 class="section-bar">Public Instance methods</h3>
+
+      <div id="method-M000048" class="method-detail">
+        <a name="M000048"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000048.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000048.html');return false;">
+          <span class="method-name">coverage</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000044" class="method-detail">
+        <a name="M000044"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000044.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000044.html');return false;">
+          <span class="method-name">data_tables</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000047" class="method-detail">
+        <a name="M000047"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000047.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000047.html');return false;">
+          <span class="method-name">geographic_coverage</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000045" class="method-detail">
+        <a name="M000045"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000045.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000045.html');return false;">
+          <span class="method-name">largest_data_table</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000050" class="method-detail">
+        <a name="M000050"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000050.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000050.html');return false;">
+          <span class="method-name">short_name</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000046" class="method-detail">
+        <a name="M000046"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000046.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000046.html');return false;">
+          <span class="method-name">temporal_coverage</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Pulls a date range from the temporalCoverage element
+</p>
+<p>
+Note : EML supports multiple date ranges to account for gaps this code just
+lumps them into one Also, it does not support cases of singleDateTime
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000049" class="method-detail">
+        <a name="M000049"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000049.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000049.html');return false;">
+          <span class="method-name">title</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000043" class="method-detail">
+        <a name="M000043"></a>
+
+        <div class="method-heading">
+          <a href="Eml.src/M000043.html" target="Code" class="method-signature"
+            onclick="popupCode('Eml.src/M000043.html');return false;">
+          <span class="method-name">to_s</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

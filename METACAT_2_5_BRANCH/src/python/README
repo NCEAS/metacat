@@ -1,0 +1,82 @@
+PyMetacat 
+Python client library to work with Metacat XML Databases.
+Author: Matthew Perry
+Date: 12/06/2006
+
+Introduction
+-------------
+Metacat is a flexible XML database. It can store, search and rerieve XML documents of any schema and it used primarily for storing metadata documents. This library provides a python interface to any Metacat server allowing you to add, insert, update, delete and query documents.
+
+
+Installation
+------------
+
+To install pymetcat, copy the metacat.py file into your python site-packages directory (eg. /usr/lib/python2.4/site-packages) or anywhere in $PYTHONPATH  including the current working directory.
+
+
+Examples
+------------
+
+Along with transferEml.py (a full working example of pymetacat usage), here are some basic usage examples:
+
+
+
+# Load the metacat library
+import metacat
+
+# Initialize a metacat client connection
+mc = metacat.MetacatClient('www.server.net','/context/metacat')
+
+# Inspect the methods available through the MetacatClient object
+dir(mc)
+
+# Print the url
+print mc.getMetacatUrl()
+
+# Login
+response = mc.login('uid=user,o=ORG,dc=ecoinformatics,dc=org','PassW0Rd!')
+print "login : ", response
+
+# Read the eml 
+docid = 'org.99.4.1'
+eml = mc.read(docid)
+print eml
+
+# Insert the read document as a new copy w/ new docid
+newdocid = 'anotherorg.905'
+response = mc.insert(newdocid + ".1",eml)
+print response
+
+# Make some change to the xml text and update it
+eml.replace("Serengeti", "Some other")
+response = mc.update(newdocid + ".2",eml)
+print response
+
+# Delete the document
+response = mc.delete(newdocid + ".2")
+print "DELETE"
+print response
+
+
+pathquery = """
+   <pathquery version="1.0">
+      <meta_file_id>unspecified</meta_file_id>
+      <querytitle>unspecified</querytitle>
+      <returnfield>dataset/title</returnfield>
+      <returndoctype></returndoctype>
+      <querygroup operator="UNION">
+        <queryterm casesensitive="false" searchmode="contains">
+          <value>%</value>
+        </queryterm>
+        <queryterm casesensitive="false" searchmode="contains">
+          <value>Africa</value>
+          <pathexpr>keyword</pathexpr>
+        </queryterm>
+      </querygroup>
+    </pathquery> 
+"""
+response = mc.squery(pathquery)
+print response
+
+response = mc.logout()
+print "logout : ", response

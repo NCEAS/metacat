@@ -1,0 +1,80 @@
+<!--
+  * utilities-classes.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2009 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2009 January 19
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<html>
+<head>
+<title>Metacat Utilities Classes</title>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</head> 
+
+<body>
+  <table class="tabledefault" width="100%">
+    <tr>
+      <td rowspan="2"><img src="./images/KNBLogo.gif"></td>
+      <td colspan="7"><div class="title">KNB Software Development Guide: Metacat Utilities Classes</div></td>
+    </tr>
+    <tr>
+      <td><a href="/" class="toollink"> KNB Home </a></td>
+      <td><a href="/data.html" class="toollink"> Data </a></td>
+      <td><a href="/people.html" class="toollink"> People </a></td>
+      <td><a href="/informatics" class="toollink"> Informatics </a></td>
+      <td><a href="/biodiversity" class="toollink"> Biocomplexity </a></td>
+      <td><a href="/education" class="toollink"> Education </a></td>
+      <td><a href="/software" class="toollink"> Software </a></td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Metacat Utilities Classes</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="service-base.html">Back</a> | <a href="./index.html">Home</a> | 
+        <!-- a href="add next file here when one exists" -->Next<!-- /a -->
+      </td>
+    </tr>
+  </table>
+  
+  <div class="header1">Table of Contents</div>
+  <div class="toc">
+    <div class="toc1"><a href="#Overview">Overview</a></div>
+  </div>  
+  
+  <a name="Overview"></a><div class="header1">UtiltiesOverview</div>   
+  <p>Metacat contains its own utilities classes (as opposed to the utilities classes
+  available in the generic utilities module).  These utilities classes provide services
+  that are specific to Metacat.  Some of the properties that typify a utility are:</p>
+  
+  <ul>
+    <li>Static methods - all methods are called statically.</li>
+    <li>No state - there are no state variables in a utility.</li>
+    <li>Return UtilException on error - this should be the only checked exception 
+    that gets thrown</li>
+  </ul>
+  
+  <p/> If state becomes an issue, you may want to use a service class to provide
+  the functionality you need.  See the 
+  <a href="./service-base.html">Metacat Service Based Architecture page</a> for more 
+  information on services.</p>
+    
+  <br>
+  <a href="service-base.html">Back</a> | <a href="./index.html">Home</a> | 
+  <!-- a href="add next file here when one exists" -->Next<!-- /a -->
+  </ul>
+
+</body>
+</html>

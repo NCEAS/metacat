@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class: MetacatTest</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">MetacatTest</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../files/test/metacat_test_rb.html">
+                test/metacat_test.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                Test::Unit::TestCase
+            </td>
+        </tr>
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+
+
+   </div>
+
+    <div id="method-list">
+      <h3 class="section-bar">Methods</h3>
+
+      <div class="name-list">
+      <a href="#M000051">setup</a>&nbsp;&nbsp;
+      <a href="#M000052">teardown</a>&nbsp;&nbsp;
+      <a href="#M000056">test_error_if_docid_and_squery_set?</a>&nbsp;&nbsp;
+      <a href="#M000064">test_failed_login</a>&nbsp;&nbsp;
+      <a href="#M000054">test_initial_login</a>&nbsp;&nbsp;
+      <a href="#M000062">test_login</a>&nbsp;&nbsp;
+      <a href="#M000055">test_login_and_yield</a>&nbsp;&nbsp;
+      <a href="#M000063">test_logout</a>&nbsp;&nbsp;
+      <a href="#M000053">test_new</a>&nbsp;&nbsp;
+      <a href="#M000057">test_nil_if_document_does_not_exist?</a>&nbsp;&nbsp;
+      <a href="#M000058">test_permission_denied</a>&nbsp;&nbsp;
+      <a href="#M000067">test_read_data_table</a>&nbsp;&nbsp;
+      <a href="#M000065">test_read_eml</a>&nbsp;&nbsp;
+      <a href="#M000066">test_read_xml</a>&nbsp;&nbsp;
+      <a href="#M000061">test_returns_array_of_eml_objects?</a>&nbsp;&nbsp;
+      <a href="#M000059">test_returns_eml?</a>&nbsp;&nbsp;
+      <a href="#M000068">test_returns_xml</a>&nbsp;&nbsp;
+      <a href="#M000069">test_string_formatting</a>&nbsp;&nbsp;
+      <a href="#M000060">test_will_not_return_data_table</a>&nbsp;&nbsp;
+      </div>
+    </div>
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+    <div id="methods">
+      <h3 class="section-bar">Public Instance methods</h3>
+
+      <div id="method-M000051" class="method-detail">
+        <a name="M000051"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000051.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000051.html');return false;">
+          <span class="method-name">setup</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000052" class="method-detail">
+        <a name="M000052"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000052.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000052.html');return false;">
+          <span class="method-name">teardown</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000056" class="method-detail">
+        <a name="M000056"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000056.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000056.html');return false;">
+          <span class="method-name">test_error_if_docid_and_squery_set?</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Metacat.html#M000072">Metacat.find</a>()
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000064" class="method-detail">
+        <a name="M000064"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000064.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000064.html');return false;">
+          <span class="method-name">test_failed_login</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000054" class="method-detail">
+        <a name="M000054"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000054.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000054.html');return false;">
+          <span class="method-name">test_initial_login</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000062" class="method-detail">
+        <a name="M000062"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000062.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000062.html');return false;">
+          <span class="method-name">test_login</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Metacat.html#M000073">Metacat.login</a>/logout
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000055" class="method-detail">
+        <a name="M000055"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000055.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000055.html');return false;">
+          <span class="method-name">test_login_and_yield</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000063" class="method-detail">
+        <a name="M000063"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000063.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000063.html');return false;">
+          <span class="method-name">test_logout</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000053" class="method-detail">
+        <a name="M000053"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000053.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000053.html');return false;">
+          <span class="method-name">test_new</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Metacat.html#M000070">Metacat.new</a>
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000057" class="method-detail">
+        <a name="M000057"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000057.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000057.html');return false;">
+          <span class="method-name">test_nil_if_document_does_not_exist?</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000058" class="method-detail">
+        <a name="M000058"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000058.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000058.html');return false;">
+          <span class="method-name">test_permission_denied</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000067" class="method-detail">
+        <a name="M000067"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000067.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000067.html');return false;">
+          <span class="method-name">test_read_data_table</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000065" class="method-detail">
+        <a name="M000065"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000065.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000065.html');return false;">
+          <span class="method-name">test_read_eml</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Metacat.html#M000075">Metacat.read</a>
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000066" class="method-detail">
+        <a name="M000066"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000066.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000066.html');return false;">
+          <span class="method-name">test_read_xml</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000061" class="method-detail">
+        <a name="M000061"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000061.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000061.html');return false;">
+          <span class="method-name">test_returns_array_of_eml_objects?</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000059" class="method-detail">
+        <a name="M000059"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000059.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000059.html');return false;">
+          <span class="method-name">test_returns_eml?</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000068" class="method-detail">
+        <a name="M000068"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000068.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000068.html');return false;">
+          <span class="method-name">test_returns_xml</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+<a href="Metacat.html#M000076">Metacat.squery</a>
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000069" class="method-detail">
+        <a name="M000069"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000069.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000069.html');return false;">
+          <span class="method-name">test_string_formatting</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+query_string
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000060" class="method-detail">
+        <a name="M000060"></a>
+
+        <div class="method-heading">
+          <a href="MetacatTest.src/M000060.html" target="Code" class="method-signature"
+            onclick="popupCode('MetacatTest.src/M000060.html');return false;">
+          <span class="method-name">test_will_not_return_data_table</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

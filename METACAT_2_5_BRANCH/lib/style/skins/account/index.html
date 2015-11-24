@@ -1,0 +1,80 @@
+
+<!--
+/**
+ *  '$RCSfile$'
+ *    Copyright: 2004 Regents of the University of California and the
+ *               National Center for Ecological Analysis and Synthesis
+ *  For Details: http://www.nceas.ucsb.edu/
+ *
+ *   '$Author: daigle $'
+ *     '$Date: 2008-07-06 21:25:34 -0700 (Sun, 06 Jul 2008) $'
+ * '$Revision: 4080 $'
+ * 
+ * This is an HTML document for displaying metadata catalog tools
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title>Account Management</title>
+  <link rel="stylesheet" type="text/css" 
+        href="account.css"></link>
+  <script language="JavaScript" type="text/JavaScript"
+          src="account.js"></script>
+  <script language="JavaScript" type="text/JavaScript"
+          src="../../common/branding.js"></script>
+</head>
+<body>
+      <script language="JavaScript">
+          insertTemplateOpening(CONTEXT_URL);
+      </script>
+      
+      <div id="Content">
+      
+      	<h1>Identity Management</h1>
+		<table width="760" border="0" cellspacing="0" cellpadding="0">
+			<tr>
+				<td colspan="5">
+					<p>The <b>Account Manager</b> is used to manage your preferences regarding your
+					NCEAS account. Currently you can create a new account, lookup your account if your have
+					forgotten your account name, change your password if you
+					know your previous password, and if you have forgotten your password,
+					you can reset it to a new value that will be emailed to the address on 
+					record for the account.</p>
+					<br/>
+				</td>
+			</tr>	
+			<tr>
+				<td colspan="5">
+					<b>Choose an action:</b>
+				    <ul>
+				        <li><script type="text/javascript">document.write('<a href="'+CGI_URL+'/ldapweb.cgi?cfg=account">Create a new account</a>');</script>
+				        <li><script type="text/javascript">document.write('<a href="'+CGI_URL+'/ldapweb.cgi?cfg=account&amp;stage=lookupname">Lookup your account</a>');</script>
+				        <li><script type="text/javascript">document.write('<a href="'+CGI_URL+'/ldapweb.cgi?cfg=account&amp;stage=changepass">Change your password</a>');</script>
+				        <li><script type="text/javascript">document.write('<a href="'+CGI_URL+'/ldapweb.cgi?cfg=account&amp;stage=resetpass">Reset your password</a>');</script>
+				    </ul>
+				</td>
+			</tr>
+		</table>
+      
+	</div>
+      
+	<script language="JavaScript">          
+	    insertTemplateClosing(CONTEXT_URL);
+	</script>
+</body>
+</html>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>geographic_coverage (Eml)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/eml.rb, line 123</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">geographic_coverage</span>
+    <span class="ruby-identifier">sites</span> = <span class="ruby-constant">Array</span>.<span class="ruby-identifier">new</span>
+    <span class="ruby-identifier">coverage</span>.<span class="ruby-identifier">elements</span>.<span class="ruby-identifier">each</span>(<span class="ruby-value str">'geographicCoverage'</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">g</span><span class="ruby-operator">|</span>
+      <span class="ruby-identifier">site</span> = {
+        <span class="ruby-value str">'id'</span>          =<span class="ruby-operator">&gt;</span>  <span class="ruby-identifier">g</span>.<span class="ruby-identifier">attributes</span>[<span class="ruby-value str">'id'</span>],
+        <span class="ruby-value str">'description'</span> =<span class="ruby-operator">&gt;</span>  <span class="ruby-identifier">g</span>.<span class="ruby-identifier">elements</span>[<span class="ruby-value str">'geographicDescription'</span>].<span class="ruby-identifier">text</span>,
+        <span class="ruby-value str">'latitude'</span>    =<span class="ruby-operator">&gt;</span>  <span class="ruby-identifier">g</span>.<span class="ruby-identifier">elements</span>[<span class="ruby-value str">'boundingCoordinates/westBoundingCoordinate'</span>].<span class="ruby-identifier">text</span>.<span class="ruby-identifier">to_f</span>,
+        <span class="ruby-value str">'longitude'</span>   =<span class="ruby-operator">&gt;</span>  <span class="ruby-identifier">g</span>.<span class="ruby-identifier">elements</span>[<span class="ruby-value str">'boundingCoordinates/northBoundingCoordinate'</span>].<span class="ruby-identifier">text</span>.<span class="ruby-identifier">to_f</span>
+      }
+      <span class="ruby-identifier">sites</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-identifier">site</span>
+    <span class="ruby-keyword kw">end</span>
+    <span class="ruby-keyword kw">return</span> <span class="ruby-identifier">sites</span>
+  <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

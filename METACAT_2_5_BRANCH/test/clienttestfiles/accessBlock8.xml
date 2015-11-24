@@ -1,0 +1,8 @@
+<access authSystem="knb" order="denyFirst" id="accessTest8.1" scope="document">
+	<allow>
+		<principal>uid=test30,o=NCEAS,dc=ecoinformatics,dc=org</principal>
+		<principal>uid=test31,o=NCEAS,dc=ecoinformatics,dc=org</principal>
+		<permission>read</permission>
+		<permission>write</permission>
+	</allow>
+</access>

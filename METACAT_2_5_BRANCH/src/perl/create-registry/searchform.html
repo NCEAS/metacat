@@ -1,0 +1,25 @@
+﻿<form method="POST" action="@servlet-path@" target="_top">
+Search for: 
+  <input value="INTERSECT" name="operator" type="hidden">   
+  <input size="14" name="anyfield" type="text" value="">
+  <input name="organizationName" value="<@organization@>" type="hidden">
+  <input name="action" value="query" type="hidden">
+  <input name="qformat" value="<@scope@>" type="hidden">
+  <input name="enableediting" value="true" type="hidden">
+  <input name="operator" value="UNION" type="hidden">
+  <input name="returnfield" value="originator/individualName/surName" type="hidden">
+  <input name="returnfield" value="originator/individualName/givenName" type="hidden">
+  <input name="returnfield" value="creator/individualName/surName" type="hidden">
+  <input name="returnfield" value="creator/individualName/givenName" type="hidden">
+  <input name="returnfield" value="originator/organizationName" type="hidden">
+  <input name="returnfield" value="creator/organizationName" type="hidden">
+  <input name="returnfield" value="dataset/title" type="hidden">
+  <input name="returnfield" value="keyword" type="hidden">
+  <input name="returndoctype" value="eml://ecoinformatics.org/eml-2.0.1" type="hidden">
+  <input name="returndoctype" value="eml://ecoinformatics.org/eml-2.0.0" type="hidden">
+  <input name="returndoctype" value="-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN" type="hidden">
+  <input name="returndoctype" value="-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN" type="hidden">
+  <input name="returndoctype" value="-//NCEAS//resource//EN" type="hidden">
+  <input name="returndoctype" value="-//NCEAS//eml-dataset//EN" type="hidden">
+  <input value="Start Search" type="submit">
+</form>

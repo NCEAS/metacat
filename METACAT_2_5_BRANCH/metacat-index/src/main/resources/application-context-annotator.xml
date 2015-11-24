@@ -1,0 +1,48 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="annotatorSubprocessor" class="org.dataone.cn.indexer.annotation.AnnotatorSubprocessor">
+		
+		<!-- match annotation documents -->
+		<property name="matchDocuments">
+			<list>
+				<value>http://docs.annotatorjs.org/en/v1.2.x/annotation-format.html</value>
+			</list>
+		</property>
+		<property name="fieldList">
+			<list>
+				<ref bean="annotation.expansion" />
+			</list>
+		</property>
+		<property name="fieldsToMerge">
+     		<list>
+     			<value>sem_annotation</value>
+     			<value>sem_annotates</value>
+     			<value>sem_annotated_by</value>
+     		</list>
+     	</property>	
+	</bean>
+	
+	<bean id="annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation
+				FROM <$GRAPH_NAME>				
+				WHERE { 
+						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+
+</beans>

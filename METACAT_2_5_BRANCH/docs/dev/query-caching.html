@@ -1,0 +1,172 @@
+<!--
+  * query-caching.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2009 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2009 March 4
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<html>
+<head>
+<title>Metacat Query Caching and Indexing Mechanisms</title>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</head> 
+
+<body>
+  <table class="tabledefault" width="100%">
+    <tr>
+      <td rowspan="2"><img src="./images/KNBLogo.gif"></td>
+      <td colspan="7"><div class="title">KNB Software Development Guide: Metacat Query Caching and Indexing Mechanisms</div></td>
+    </tr>
+    <tr>
+      <td><a href="/" class="toollink"> KNB Home </a></td>
+      <td><a href="/data.html" class="toollink"> Data </a></td>
+      <td><a href="/people.html" class="toollink"> People </a></td>
+      <td><a href="/informatics" class="toollink"> Informatics </a></td>
+      <td><a href="/biodiversity" class="toollink"> Biocomplexity </a></td>
+      <td><a href="/education" class="toollink"> Education </a></td>
+      <td><a href="/software" class="toollink"> Software </a></td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Metacat Service Based Architecture</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <!-- a href="add back file here when one exists" -->Back<!-- /a --> | <a href="./index.html">Home</a> | 
+        <a href="./service-base.html">Next</a>
+      </td>
+    </tr>
+  </table>
+  
+  <div class="header1">Table of Contents</div>
+  <div class="toc">
+    <div class="toc1"><a href="#Overview">Overview</a></div>
+    <div class="toc1"><a href="#XMLNodesIndex">All XML Path Indexing</a></div>
+      <div class="toc2"><a href="#HowXMLNodesIndexWorks">How All XML Path Indexing Works</a></div>
+      <div class="toc2"><a href="#XMLNodesIndexDrawbacks">Drawbacks to All XML Path Indexing</a></div>
+    <div class="toc1"><a href="#MemoryCaching">Query Caching in Memory</a></div>
+      <div class="toc2"><a href="#HowMemoryCachingWorks">How Memory Caching Works</a></div>
+      <div class="toc2"><a href="#MemoryCachingDrawbacks">Memory Caching Drawbacks</a></div>
+    <div class="toc1"><a href="#PathIndexing">Common XML Path Indexing</a></div>
+      <div class="toc2"><a href="#HowPathIndexingWorks">How Common Path Indexing Works</a></div>
+      <div class="toc2"><a href="#PathIndexingDrawbacks">Common Path Indexing Drawbacks</a></div>
+    <div class="toc1"><a href="#UniqueResultset">Storing Unique Return Fields</a></div>
+      <div class="toc2"><a href="#HowUniqueResultsetWorks">How Storing Unique Return Fields Works</a></div>
+      <div class="toc2"><a href="#UniqueResultsetDrawbacks">Drawbacks to Storing Unique Return Fields</a></div>
+  </div>  
+  
+  <a name="Overview"></a><div class="header1">Overview</div>   
+  <p>Unfortunately, the act of searching (querying) an xml document that has
+  been deconstructed and put into a relational database is somewhat slow.  The table that 
+  stores xml elements (xml_nodes) becomes very large, very fast. In an
+  effort to speed up these queries, metacat has implemented several levels of query
+  caching and indexing:</p>
+  
+  <ul>
+    <li>All XML path indexing - store all xml paths in a separate table.</li>
+    <li>Memory caching - recent query results are held in memory.</li>
+    <li>Common XML path indexing - store predetermined xml paths in a separate table.</li>
+    <li>Store unique resultset combinations - unique resultsets are stored in the
+    database on a per-docid basis.</li>
+  </ul>  
+    
+  <p>We will discuss each of these caching strategies in turn.</p>
+  
+  <a name="XMLNodesIndex"></a><div class="header1">All XML Path Indexing</div>
+  <a name="HowXMLNodesIndexWorks"></a><div class="header2">How All XML Path Indexing Works</div>
+  <p>Aside from the column indexing that is typical with performance tuning on any 
+  database, an additional table named xml_index was created to improve search 
+  performance against the xml_nodes table.  The xml_index table keeps track of the 
+  xml paths for each node in the nodes table.  This includes subpaths, so if you
+  had an element in the xml that looked like: </p>
+  
+  <div class="code">&lt;a&gt;&lt;b&gt;&lt;c&gt;value&lt;/c&gt;&lt;/b&gt;&lt;/a&gt;</div>
+  
+  <p>the paths that would get indexed for this node would be:</p>
+  
+  <div class="code">c<br>b/c<br>a/b/c</div>
+  
+  <p>When querying, the query path is first looked up in xml_index and then joined to
+  the xml_nodes table via the nodeid.  
+  
+  <a name="XMLNodesIndexDrawbacks"></a><div class="header2">Drawbacks to All XML Path Indexing</div>
+  <p>Indexing all paths improves performance, but is still relatively slow since a join 
+  against the xml_nodes table takes time.</p>
+  
+  <a name="MemoryCaching"></a><div class="header1">Query Caching in Memory</div> 
+    <a name="HowMemoryCachingWorks"></a><div class="header2">How Memory Caching Works</div>  
+    <p>Metacat keeps a Hashtable of recent queries and their results.  This information is only
+    held for queries that were run by the "public" user.  The key is the sql that
+    that was run for the query.  The value is the html that was returned from the query.
+    This cache is checked first to see if the current sql statement was already run.  If so,
+    the associated result html is returned.</p>
+    <a name="MemoryCachingDrawbacks"></a><div class="header2">Memory Caching Drawbacks</div>  
+    <p>The first issue is that every time a document is inserted, updated or deleted, the 
+    query cache is potentially out of sync.  So anytime any document is changed, the entire
+    cache is cleared, and the process of filling the cache starts over.</p>
+    <p>The second issue is that the cache could potentially become large, using a lot of
+    memory.  This could be caused if a large number of different queries are performed 
+    inbetween any documents being inserted, updated or deleted, and many of those queries
+    return large result sets.  Note that this is a corner case, and the cache size is 
+    configurable using the database.queryresultCacheSize property in metacat.properties.<p>
+    <p>Third, as mentioned before, this caching is only done on searches performed by
+    the "public" user.  Any logged in user searches will not be cached.</p>
+  
+  <a name="PathIndexing"></a><div class="header1">Common XML Path Indexing</div> 
+    <a name="HowPathIndexingWorks"></a><div class="header2">How Common Path Indexing Works</div> 
+    <p>Metacat queries work in two stages.  The first is to get the matching document IDs.  
+    The second is to get the requested return fields for those IDs.  As discussed in the 
+    <a href="#XMLNodesIndex">All XML Path Indexing</a> section above, some effort was made to 
+    improve the first step, but it was still slow.  Metacat made use of the fact that 
+    there are certain paths in EML that are frequently searched to further speed up queries.</p>
+    
+    <p>Paths that are determined to be searched frequently are entered as a comma delimited
+    list in the xml.indexPaths property in metacat.properties.  At startup time, metacat determines
+    if there are any changes to the xml.indexPaths property, scans the xml_nodes table and adds
+    any nodes with matching paths to the xml_path_index table.  In this case, unlike the xml_index
+    table, the node value is stored.  So if a desired value is found for the given path, the 
+    docid is returned and the nodes table is never touched.
+    
+    <a name="PathIndexingDrawbacks"></a><div class="header2">Common Path Indexing Drawbacks</div> 
+    <p>An obvious issue with the xml_path_index table is that is only holds values for predetermined
+    paths.  Any other path will not benefit from this indexing.</p>
+    
+    <p>Also, if a wildcard has been used in the search value, the database index for the value 
+    column will not be used.  This will slow down the search.</p>
+      
+  <a name="UniqueResultset"></a><div class="header1">Storing Unique Return Fields</div> 
+    <a name="HowUniqueResultsetWorks"></a><div class="header2">How Storing Unique Return Fields Works</div> 
+    <p>Once the matching docids have been retrieved, metacat makes a second pass and gets the desired
+    return fields for each document. To help speed this up, metacat databases unique combinations of 
+    query return fields for each document.</p>
+    
+    <p>This process involves two tables.  The first, xml_returnfield, keeps unique return field combinations.
+    The return fields are a pipe (|) delimited string in the table. The second table, xml_queryresult, keeps 
+    the id for the row in the xml_returnfield that has the appropriate return fields, the docid and the 
+    query result.</p>
+    
+    <p>If the desired docid and result fields are found in these two tables, the query results are returned
+    directly from the xml_queryresult table and the xml_indes and xml_nodes tables are never touched.</p>
+    
+    <a name="UniqueResultsetDrawbacks"></a><div class="header2">Drawbacks to Storing Unique Return Fields</div> 
+    <p>The main issue with storing unique query results is that the query must be performed at least once for
+    each unique set of results and docid before it is added to the xml_returnfield and xml_queryresult tables. 
+    This first run goes against the xml_index and xml_nodes tables and is slow.</p>
+  <br>
+  <!-- a href="add back file here when one exists" -->Back<!-- /a --> | <a href="./index.html">Home</a> | 
+  <a href="./service-base.html">Next</a>
+  </ul>
+
+</body>
+</html>

@@ -1,0 +1,3 @@
+A series of queries and commands being developed to improve metacat
+performance.  Very incomplete. WARNING: running some of these commmands
+WILL DELETE DATA.  Do not run these commands in a production environment.

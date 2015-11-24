@@ -1,0 +1,42 @@
+<featureType>
+  <id>FeatureTypeInfoImpl-52f95bd6:12daa96d3cb:-7ffa</id>
+  <name>SANParks_Boundaries_gcs_wgs84</name>
+  <nativeName>SANParks_Boundaries_gcs_wgs84</nativeName>
+  <namespace>
+    <id>NamespaceInfoImpl-57a97633:12da07fa7c4:-7ff7</id>
+  </namespace>
+  <title>SANParks_Boundaries_gcs_wgs84</title>
+  <nativeCRS>GEOGCS[&quot;GCS_WGS_1984&quot;, 
+  DATUM[&quot;D_WGS_1984&quot;, 
+    SPHEROID[&quot;WGS_1984&quot;, 6378137.0, 298.257223563]], 
+  PRIMEM[&quot;Greenwich&quot;, 0.0], 
+  UNIT[&quot;degree&quot;, 0.017453292519943295], 
+  AXIS[&quot;Longitude&quot;, EAST], 
+  AXIS[&quot;Latitude&quot;, NORTH]]</nativeCRS>
+  <srs>EPSG:4326</srs>
+  <nativeBoundingBox>
+    <minx>16.882</minx>
+    <maxx>32.033</maxx>
+    <miny>-34.834</miny>
+    <maxy>-22.167</maxy>
+    <crs>EPSG:4326</crs>
+  </nativeBoundingBox>
+  <latLonBoundingBox>
+    <minx>16.882</minx>
+    <maxx>32.033</maxx>
+    <miny>-34.834</miny>
+    <maxy>-22.167</maxy>
+  </latLonBoundingBox>
+  <projectionPolicy>FORCE_DECLARED</projectionPolicy>
+  <enabled>true</enabled>
+  <metadata>
+    <entry key="kml.regionateAttribute">the_geom</entry>
+    <entry key="cachingEnabled">false</entry>
+    <entry key="kml.regionateStrategy">geometry</entry>
+  </metadata>
+  <store class="dataStore">
+    <id>DataStoreInfoImpl-2fa2b758:12da08ba3b0:-8000</id>
+  </store>
+  <maxFeatures>0</maxFeatures>
+  <numDecimals>0</numDecimals>
+</featureType>

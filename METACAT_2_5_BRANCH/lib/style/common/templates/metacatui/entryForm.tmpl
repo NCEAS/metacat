@@ -1,0 +1,1427 @@
+
+  <script language="JavaScript">
+	    var contextUrl = '[% contextUrl %]';
+	</script>
+  <script language="JavaScript" type="text/javascript" src="[% styleCommonPath %]/templates/metacatui/entryForm.js">
+  </script>
+
+	<!-- CONTENT SECTION
+    ======================================================================= -->
+	<article id="RegistryEntryForm">
+	
+		<!-- Modal area for the guide-->
+		<div id="myModal" class="modal hide fade large" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-remote="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide">
+		  <div class="modal-header">
+		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
+		    <h3 id="myModalLabel">Registry Guide</h3>
+		  </div>
+		  <div class="modal-body">
+		  	<p>Loading...</p>
+		  </div>
+		  <div class="modal-footer">
+		    <button class="btn" data-dismiss="modal" aria-hidden="true">Close</button>
+		    <!--<button class="btn btn-primary" data-dismiss="modal">Ok</button>-->
+		  </div>
+		</div>
+		<script language="JavaScript" type="text/JavaScript">
+			// get it out of special containers with 'position: blah' CSS
+			$('#myModal').appendTo("body");
+		</script>
+		
+		<div class="container">
+		
+			<div class="row-fluid">
+			
+				[% IF form != 're_entry' %]  
+				
+					<h2>Upload your data</h2>
+					<p class="lead">
+						Use this form to submit a new data package to the repository.
+					</p>
+					
+				[% ELSE %]
+				
+					<h2>Edit your data</h2>
+					<p class="lead">
+						Use this form to edit a data package submitted earlier.
+					</p>
+					
+					[%IF docid !=''%]
+						<p>
+							The ID of this data set is: <a href="[% metacatUrl %]?action=read&qformat=[% cfg %]&docid=[% docid %]">[% docid %]</a>
+						</p>	
+					[%END%]
+				
+				[% END %]
+				
+				<p>
+					Please have a look at the 
+					<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide" target="guide">
+					Guide for Completing the Data Repository Form</a> 
+	        		before you start filling in this form.
+				</p>
+				<p>
+					If you have any questions, comments or problems 
+					regarding this form, please contact the repository administrator at 
+					<a href="mailto:[% email.recipient %]">[% email.recipient %]</a>
+				</p>
+				<p class="text-info">*Denotes a required field.</p>
+			</div>
+
+			<!--  the main form -->
+			<div class="row-fluid">
+			
+				<form id="entryForm" action="[% cgiPrefix %]/register-dataset.cgi" enctype="multipart/form-data" method="post" class="form-horizontal">
+					<input type="hidden" name="cfg" value="[% cfg %]">
+					<input type="hidden" name="docid" value="[% docid %]">
+					<input type="hidden" name="stage" value="insert">
+  
+  				<div class="accordion" id="entryFormAccordian">
+					<div class="accordion-group">
+					
+						<!-- SUBMITTER -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseSubmitter">
+								Submitter  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Submitter" ><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseSubmitter" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="providerGivenName">*First Name</label>
+									<div class="controls">
+										<input type="text" name="providerGivenName" value="[%providerGivenName%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="providerSurName">*Last Name</label>
+									<div class="controls">
+										<input type="text" name="providerSurName" value="[%providerSurName%]">
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+						<!-- BASIC -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseBasic" >
+								Basic Information  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#BasicInformation"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseBasic" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="title">*Data Set Title</label>
+									<div class="controls">
+										<input type="text" name="title" value="[%title%]">
+									</div>
+								</div>
+								[% IF show.siteList == 'true' %]
+									<div class="control-group">
+										<label class="control-label" for="site">*[% config.site | ucfirst %] Name</label>
+										<div class="controls">
+											<select name="site">
+												[% IF form == 're_entry' %]
+													<option selected>[%site%]</option>
+												[% ELSE %]
+													<option>Select your [% config.site %] here.</option>
+												[% END %]
+												[% FOREACH site = siteList %]
+													<option>[% site %]</option>
+												[% END %]
+											</select>
+										</div>
+									</div>
+								[% END %]
+								[% IF show.wgList == 'true' %]
+									<div class="control-group">
+										<label class="control-label" for="site">*NCEAS Project(s):</label>
+										<div class="controls">
+											<select name="wg" multiple="multiple" size="5">
+												[% FOREACH project = projects %]
+													[% SET pname = $project.3 %]
+													[% IF pname.length > 50 %]
+														[% SET sname = $project.4 %]
+													[% END %]
+													[% SET label = "NCEAS ${project.0}: ${project.1}: $project.4" %]
+													[% SET value = "NCEAS ${project.0}: ${project.1}: $project.3" %]
+													[% SET sel = '' %]
+													[% FOREACH group = wg %]
+														[% IF group == value %]
+															[% SET sel = 'selected="selected"' %]
+														[% END %]
+													[% END %]
+													<option value="[% value %]" [% sel %]>[% label %]</option>
+												[% END %]
+											</select>
+										</div>
+									</div>
+								[% END %]
+								[% IF show.organization == 'true' %]
+									<div class="control-group">
+										<label class="control-label" for="site">*Organization</label>
+										<div class="controls">
+											<input type="text" name="site" value="[%site%]">
+										</div>
+									</div>
+								[% END %]
+								
+						    </div>
+						</div>
+						
+						<!-- PRINCIPAL DATA SET OWNER -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseOwner" >
+								Data Set Owner  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseOwner" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="origNamefirst0">*First Name</label>
+									<div class="controls">
+										<input type="text" name="origNamefirst0" id="origNameFirst" value="[%origNamefirst0%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNamelast0">*Last Name</label>
+									<div class="controls">
+										<input type="text" name="origNamelast0" id="origNameLast" value="[%origNamelast0%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNameOrg">Organization Name</label>
+									<div class="controls">
+										<input type="text" name="origNameOrg" id="origNameOrg" value="[%origNameOrg%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origEmail">Email</label>
+									<div class="controls">
+										<input type="text" name="origEmail" id="origEmail" value="[%origEmail%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origPhone">Phone</label>
+									<div class="controls">
+										<input type="text" name="origPhone" id="origPhone" value="[%origPhone%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origFAX">Fax</label>
+									<div class="controls">
+										<input type="text" name="origFAX" id="origFAX" value="[%origFAX%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origDelivery">Street Address</label>
+									<div class="controls">
+										<textarea class="span8" id="origDelivery" name="origDelivery">[%origDelivery%]</textarea>
+										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCity">City</label>
+									<div class="controls">
+										<input type="text" name="origCity" id="origCity" value="[%origCity%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origState">U.S. State or Territory</label>
+									<div class="controls">
+										<select name="origState" id="origState">
+											[% IF form == 're_entry' %]
+												<option selected>[%origState%]</option>
+											[% ELSE %]
+												<option>Select state or territory here.</option>
+											[% END %]
+											<option>Alabama</option>
+											<option>Alaska</option>
+											<option>American Samoa</option>
+											<option>Arizona</option>
+											<option>Arkansas</option>
+											<option>California</option>
+											<option>Colorado</option>
+											<option>Connecticut</option>
+											<option>Delaware</option>
+											<option>District of Columbia</option>
+											<option>Florida</option>
+											<option>Georgia</option>
+											<option>Guam</option>
+											<option>Hawaii</option>
+											<option>Idaho</option>
+											<option>Illinois</option>
+											<option>Indiana</option>
+											<option>Iowa</option>
+											<option>Kansas</option>
+											<option>Kentucky</option>
+											<option>Louisiana</option>
+											<option>Maine</option>
+											<option>Maryland</option>
+											<option>Massachusetts</option>
+											<option>Michigan</option>
+											<option>Minnesota</option>
+											<option>Mississippi</option>
+											<option>Missouri</option>
+											<option>Montana</option>
+											<option>Nebraska</option>
+											<option>Nevada</option>
+											<option>New Hampshire</option>
+											<option>New Jersey</option>
+											<option>New Mexico</option>
+											<option>New York</option>
+											<option>North Carolina</option>
+											<option>North Dakota</option>
+											<option>Northern Mariana Islands</option>
+											<option>Ohio</option>
+											<option>Oklahoma</option>
+											<option>Oregon</option>
+											<option>Pennsylvania</option>
+											<option>Puerto Rico</option>
+											<option>Rhode Island</option>
+											<option>South Carolina</option>
+											<option>South Dakota</option>
+											<option>Tennessee</option>
+											<option>Texas</option>
+											<option>Utah</option>
+											<option>Vermont</option>
+											<option>Virgin Islands</option>
+											<option>Virginia</option>
+											<option>Washington</option>
+											<option>West Virginia</option>
+											<option>Wisconsin</option>
+											<option>Wyoming</option>
+										</select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origStateOther">Other State/Province</label>
+									<div class="controls">
+										<input type="text" name="origStateOther" id="origStateOther" value="[%origStateOther%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origZip">Postal Code</label>
+									<div class="controls">
+										<input type="text" name="origZIP" id="origZip" value="[%origZIP%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCountry">Country</label>
+									<div class="controls">
+										<input type="text" name="origCountry" id="origCountry" value="[%origCountry%]">
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+						<!-- ASSOCIATED PARTIES -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
+								Associated Parties  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseParties" class="accordion-body collapse in">
+							<div class="accordion-inner">
+							
+								<div class="control-group">
+									<label class="control-label" for="aoFirstName">First Name</label>
+									<div class="controls">
+										<input type="text" name="aoFirstName" id="AONameFirst"">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="aoLastName">Last Name</label>
+									<div class="controls">
+										<input type="text" name="aoLastName" id="AONameLast"">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="aoRole">Role</label>
+									<div class="controls">
+										<select id="AORole" name="aoRole">
+								            <option>Co-owner</option>
+								            <option>Custodian/Steward</option>
+								            <option>Metadata Provider</option>
+								      		<option>User</option>
+								        </select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="addaobutton1"></label>
+									<div class="controls">
+										<input type="button" class="btn" value="Add Associated Party" id="addaobutton1" onClick="addAssociatedParty()">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="associatePartyTable"></label>
+									<div class="controls">
+										<table id="associatePartyTable">   
+											<tr id="addAssociatedParty"> 
+								            	<td colspan=6 />
+								            </tr>    
+										    [% numAO = 0 %]
+										    [% IF aoCount %]
+										        [% numAO = aoCount %]
+										        <tr class="sectbody" id="aoHRRow">
+										            <td colSpan="6">
+										                <hr width = "85%"/>
+										            </td>
+										        </tr>
+										    [% END %]
+										    [% cnt = 1 %]
+										    [% WHILE cnt < numAO%]
+										            
+										        <tr class="sectbody">
+										            [% SET aofn = "origNamefirst${cnt}" %]
+										            [% SET aoln = "origNamelast${cnt}" %]
+										            [% SET aorole = "origRole${cnt}" %]
+										     
+										            <td class="rightCol">
+										                <a style="cursor:pointer">
+										                	<i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveUpRow(event)"
+										                    class="icon-arrow-up"
+										                    alt="Move Up"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveDownRow(event, 'addaorow')"
+										                    class="icon-arrow-down"
+										                    alt="Move Down"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i class="icon-remove-sign"
+										                    onClick="delRow(event)" alt="Delete"></i>
+										                </a>
+										            </td>
+										            <td colspan="5" align ="left" style="cursor:pointer"
+										                onClick="aoEditRow(event, 0, '[%$aofn%]', '[%$aoln%]' , '[%$aorole%]')">
+										                [%$aofn%] [%$aoln%] (Role: [%$aorole%])
+										                <input name="aoFirstName" type="hidden" value="[%$aofn%]"/>
+										                <input name="aoLastName" type="hidden" value="[%$aoln%]"/>
+										                <input name="aoRole" type="hidden" value="[%$aorole%]"/>
+										            </td>
+										        </tr>
+										        [% cnt = cnt + 1 %]
+										    [% END %]
+										    <input type="hidden" name="aoCount" value="[%numAO%]" id="aoCount">
+										    <tr class="sectbody" id="addaorow"><td colspan=6 /></tr>
+										</table>
+									</div>
+								</div>
+								    								
+						    </div>
+						</div>
+						
+						<!-- ABSTRACT -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseAbstract" >
+								Abstract  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetAbstract"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseAbstract" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="abstract">*Data Set Abstract</label>
+									<div class="controls">
+										<textarea class="span8" rows="6" cols="60" name="abstract">[%abstract%]</textarea>
+										<span class="help-block">(~350 words)</span>
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+					[% IF modules.keyword == 'true' %]
+						<!-- KEYWORDS -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseKeywords">
+								Keywords  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#KeywordInformation"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseKeywords" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="keyword">Keyword</label>
+									<div class="controls">
+										<input type="text" name="keyword" id="keyword" value="[%keyword%]">
+										<span class="help-block">For samples, see <a href=
+											"http://gcmd.nasa.gov/Resources/valids/gcmd_parameters.html" target="nasa">NASA Global Change Master Directory (GCMD)</a>.
+										</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="keywordType">Keyword Type</label>
+									<div class="controls">
+										<select name="keywordType" id="keywordType" class="shortwidth">
+											<option>None</option>
+								            <option>Theme</option>
+								            <option>Place</option>
+								            <option>Stratum</option>
+								            <option>Temporal</option>
+								            <option>Taxonomic</option>
+										</select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="keywordTh">Keyword Thesaurus</label>
+									<div class="controls">
+										<select name="keywordTh" id="keywordTh" class="shortwidth">
+											<option>None</option>
+											<option>GCMD</option>
+										</select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="addKeywordButton"></label>
+									<div class="controls">
+										<input type="button" class="btn" value="Add Keyword" onClick="addKeyword()">
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="keywordTable"></label>
+									<div class="controls">
+										<!-- the orginal table -->
+										<table>
+											<tr id="addKeyword">
+          										<td colSpan="6"/>
+          									</tr>	
+										 [% numKey = 0 %]
+										 [% IF keyCount %]
+										   [% numKey = keyCount %]
+										        [% numAO = aoCount %]
+										        <tr class="sectbody" id="keywordHRRow">
+										            <td colSpan="6">
+										                <hr width = "85%"/>
+										            </td>
+										        </tr>
+										 [% END %]
+										 <input type="hidden" name="keyCount" value="[%numKey%]" 
+										            id="keyCount">
+										   
+										      [% cnt = 1 %]
+										        [% WHILE cnt < numKey %]
+										        
+										           <tr class="sectbody">
+										            <td class="rightCol">
+										                <a style="cursor:pointer">
+										                    <i onClick="cleanTextNodes('keywordHRRow', 'addkeyrow');moveUpRow(event)"
+										                    class="icon-arrow-up"
+										                    alt="Move Up"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i onClick="cleanTextNodes('keywordHRRow', 'addkeyrow');moveDownRow(event, 'addkeyrow')"
+										                    class="icon-arrow-down"
+										                    alt="Move Down"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i class="icon-remove-sign"
+										                    onClick="delRow(event)" alt="Delete"></i>
+										                </a>
+										            </td>
+										            [% SET keyword = "keyword${cnt}" %]
+										            [% SET keywordType = "kwType${cnt}" %]
+										            [% SET keywordTh = "kwTh${cnt}" %]
+										            <td colspan="5" align ="left" style="cursor:pointer"
+										                onClick="keywordEditRow(event, 0, '[%$keyword%]', '[%$keywordType%]' , '[%$keywordTh%]')">
+										                [%$keyword%] (Type: [%$keywordType%], Thesaurus: [%$keywordTh%])
+										                <input name="keyword" type="hidden" value="[%$keyword%]"/>
+										                <input name="keywordType" type="hidden" value="[%$keywordType%]"/>
+										                <input name="keywordTh" type="hidden" value="[%$keywordTh%]"/>
+										            </td>
+										        </tr>
+										        [% cnt = cnt + 1 %]
+										       [% END %]
+											<tr class="sectbody" id="addkeyrow"><td colspan=6 /></tr>
+										</table>
+									</div>
+								</div>
+	
+						    </div>
+						</div>
+					[% END %]
+						
+					[% IF modules.temporal == 'true' %]	
+						<!-- TEMPORAL COVERAGE -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseTemporal">
+								Temporal Coverage  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TemporalCoverageOfData"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseTemporal" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+									<div class="row-fluid">
+										
+										<div class="span6">
+											<p>Start Date</p>									
+											<div class="control-group">
+												[% IF required.temporal == 'true' %]
+													<label class="control-label" for="beginningYear">*Year (yyyy)</label>
+												[% ELSE %]
+													<label class="control-label" for="beginningYear">Year (yyyy)</label>
+												[% END %]
+												<div class="controls">
+													<input type="text" name="beginningYear" value="[%beginningYear%]" size="8" maxlength="4">
+												</div>
+											</div>
+											<div class="control-group">
+												<label class="control-label" for="beginningMonth">Month</label>
+												<div class="controls">
+													<select name="beginningMonth">
+														[% IF form == 're_entry' && beginningMonth != ""%]
+															<option selected>[%beginningMonth%]</option>
+														[% END %]
+											            <option>MM</option>            <option>01</option>            <option>02</option>            <option>03</option>
+											            <option>04</option>            <option>05</option>            <option>06</option>            <option>07</option>
+											            <option>08</option>            <option>09</option>            <option>10</option>            <option>11</option>
+											            <option>12</option>
+													</select>
+												</div>
+											</div>
+											<div class="control-group">
+												<label class="control-label" for="beginningDay">Day</label>
+												<div class="controls">
+													<select name="beginningDay">
+														[% IF form == 're_entry' && beginningDay != ""%]
+															<option selected>[%beginningDay%]</option>
+														[% END %]
+											            <option>DD</option>            <option>01</option>            <option>02</option>            <option>03</option>
+											            <option>04</option>            <option>05</option>            <option>06</option>            <option>07</option>
+											            <option>08</option>            <option>09</option>            <option>10</option>            <option>11</option>
+											            <option>12</option>            <option>13</option>            <option>14</option>            <option>15</option>
+											            <option>16</option>            <option>17</option>            <option>18</option>            <option>19</option>
+											            <option>20</option>            <option>21</option>            <option>22</option>            <option>23</option>
+											            <option>24</option>            <option>25</option>            <option>26</option>            <option>27</option>
+											            <option>28</option>            <option>29</option>            <option>30</option>            <option>31</option>
+													</select>
+												</div>
+											</div>
+										</div>
+										<div class="span6">
+											<p>
+												End Date
+												<span class="text-info">(leave blank if your data set is open-ended)</span>
+											</p>								
+											<div class="control-group">
+												<label class="control-label" for="endingYear">Year (yyyy)</label>
+												<div class="controls">
+													<input type="text" name="endingYear" value="[%endingYear%]" size="8" maxlength="4">
+												</div>
+											</div>
+											<div class="control-group">
+												<label class="control-label" for="endingMonth">Month</label>
+												<div class="controls">
+													<select name="endingMonth">
+														[% IF form == 're_entry' && endingMonth != ""%]
+															<option selected>[%endingMonth%]</option>
+														[% END %]
+											            <option>MM</option>            <option>01</option>            <option>02</option>            <option>03</option>
+											            <option>04</option>            <option>05</option>            <option>06</option>            <option>07</option>
+											            <option>08</option>            <option>09</option>            <option>10</option>            <option>11</option>
+											            <option>12</option>
+													</select>
+												</div>
+											</div>
+											<div class="control-group">
+												<label class="control-label" for="endingDay">Day</label>
+												<div class="controls">
+													<select name="endingDay">
+														[% IF form == 're_entry' && endingDay != ""%]
+															<option selected>[%endingDay%]</option>
+														[% END %]
+											            <option>DD</option>            <option>01</option>            <option>02</option>            <option>03</option>
+											            <option>04</option>            <option>05</option>            <option>06</option>            <option>07</option>
+											            <option>08</option>            <option>09</option>            <option>10</option>            <option>11</option>
+											            <option>12</option>            <option>13</option>            <option>14</option>            <option>15</option>
+											            <option>16</option>            <option>17</option>            <option>18</option>            <option>19</option>
+											            <option>20</option>            <option>21</option>            <option>22</option>            <option>23</option>
+											            <option>24</option>            <option>25</option>            <option>26</option>            <option>27</option>
+											            <option>28</option>            <option>29</option>            <option>30</option>            <option>31</option>
+													</select>
+												</div>
+											</div>
+										</div	
+									</div>
+									
+								</div>	
+								
+						    </div>
+						</div>
+
+					[% END %]
+					
+						
+					[% IF modules.spatial == 'true' %]
+						
+						<!-- SPATIAL -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseSpatial">
+								Spatial Coverage  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#SpatialCoverageOfData"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseSpatial" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									[% IF required.spatial == 'true' %]
+										<label class="control-label" for="geogdesc">*Geographic Description</label>
+									[% ELSE %]
+										<label class="control-label" for="geogdesc">Geographic Description</label>
+									[% END %] 	
+									<div class="controls">
+										<textarea class="span8" rows="3" cols="60" name="geogdesc">[% geogdesc %]</textarea>
+										<span class="help-block">General description of the geographic area in which the data were collected. 
+										It can be a simple place name (e.g., Santa Barbara) or a fuller description.</span>
+									</div>
+								</div>
+								
+								<div class="row-fluid">
+									<h4>Coordinates</h4>
+									
+									[% IF show.siteList == 'true' %]
+	    								<div class="control-group">
+											<label class="control-label" for="useSiteCoord">Use Site?</label>
+											<div class="controls">
+												<input type="checkbox" name="useSiteCoord" [%useSiteCoord%]>
+										        <span class="help-block">Use [% config.site %] coordinates. (This indicates that the data were
+										        collected at the [% config.site %]. If you check this box, you don't need
+										        to fill in the lat./long. fields below).</span>
+											</div>
+										</div>
+									[% END %]
+									
+									<table>
+									    <tr class="sectbody">
+									      <td width="190"></td><td width="100" align="left"><span class="text-info">Degrees</span></td>
+									      <td width="110" align="left"><span class="text-info">Minutes</span></td>
+									      <td width="70" align="left"><span class="text-info">Seconds</span></td>
+									      <td width="200"></td><td width="90"></td>
+									   </tr>
+									      
+									   <tr class="sectbody">
+									     <td class="rightCol">
+									      [% IF required.spatial == 'true' %]
+									        <span class="text-info">*Latitude</span>
+									      [% ELSE %]
+									        <span class="text-info">Latitude</span>
+									      [% END %]</td> 
+									     <td> 
+									          <input type="TEXT" name="latDeg1" value="[%latDeg1%]" size="3" maxlength="3"></td>
+									      <td> <input type="TEXT" name="latMin1" value="[%latMin1%]" size="2" maxlength="2"></td>
+									      <td>  <input type="TEXT" name="latSec1" value="[%latSec1%]" size="2" maxlength="2"></td>
+									      
+									      <td Align="left" colspan="2"> 
+									      [% IF form == 're_entry' && hemisphLat1 == "N"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat1" value="N" CHECKED>
+									        	North
+									        </label>	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat1" value="N">
+									        	North
+									        </label>	
+									      [%END%]
+									      [% IF form == 're_entry' && hemisphLat1 == "S"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat1" value="S" CHECKED>
+									        	South
+									        </label>	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat1" value="S">
+									        	South
+									        </label>	
+									      [%END%]
+									      </td>
+									    </tr>
+									
+									    <tr class="sectbody">
+									      <td class="rightCol"> 
+									      [% IF required.spatial == 'true' %]
+									        <span class="text-info">*Longitude</span>
+									      [% ELSE %]
+									        <span class="text-info">Longitude</span>
+									      [% END %]</td>
+									     
+									      <td> <input type="TEXT" name="longDeg1" value="[%longDeg1%]" size="3" maxlength="3"></td>
+									      <td> <input type="TEXT" name="longMin1" value="[%longMin1%]" size="2" maxlength="2"></td>
+									      <td> <input type="TEXT" name="longSec1" value="[%longSec1%]" size="2" maxlength="2"></td>
+									      
+									      
+									      <td align="left" colspan="2"> 
+									    [% IF form == 're_entry' && hemisphLong1 == "W"%]
+									    	<label class="radio inline">        
+									      		<input type="radio"  name="hemisphLong1" value="W" CHECKED>
+									      		West
+									      	</label>	
+									    [%ELSE%]
+									    	<label class="radio inline">
+									      		<input type="radio"  name="hemisphLong1" value="W">
+									      		West
+									      	</label>	
+									    [%END%]
+									    [% IF form == 're_entry' && hemisphLong1 == "E"%]
+									    	<label class="radio inline">
+									      		<input type="radio"  name="hemisphLong1" value="E" CHECKED>
+									      		East
+									      	</label>	
+									    [%ELSE%]
+									    	<label class="radio inline">
+									      		<input type="radio"  name="hemisphLong1" value="E">
+									      		East
+									      	</label>	
+									    [%END%]
+									      </td>
+									    </tr>
+									      
+									      
+									    <tr class="sectbody"><td><td colspan="4" align="left"><span class="regtext">If only this first lat/long pair is entered, this indicates a point location. If both lat/long pairs are entered, then this first pair represents the northwest corner of a bounding box.</span>
+									      </td><td></td></tr>
+									      
+									    <tr class="sectbody"> 
+									      <td class="rightCol"><span class="text-info">Latitude</span></td>
+									  <td ><input type="TEXT" name="latDeg2" value="[%latDeg2%]" size="3" maxlength="3"></td>
+									      <td><input type="TEXT" name="latMin2" value="[%latMin2%]" size="2" maxlength="2"></td>
+									      <td><input type="TEXT" name="latSec2" value="[%latSec2%]" size="2" maxlength="2"></td>
+									        
+									      <td align="left" colspan="2"> 
+									      [% IF form == 're_entry' && hemisphLat2 == "N"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat2" value="N" CHECKED>
+									        	North
+									        </label>	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat2" value="N">
+									        	North
+									        </label>	
+									      [%END%]
+									      [% IF form == 're_entry' && hemisphLat2 == "S"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat2" value="S" CHECKED>
+									        	South
+									        </label>	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLat2" value="S">
+												South
+									        </label>
+									      [%END%]
+									      </td>
+									    </tr>
+									    
+									    <tr class="sectbody"><td class="rightCol"><span class="text-info">Longitude</span></td>
+									       <td> <input type="TEXT" name="longDeg2" value="[%longDeg2%]" size="3" maxlength="3"></td>
+									       <td> <input type="TEXT" name="longMin2" value="[%longMin2%]" size="2" maxlength="2"></td>
+									       <td> <input type="TEXT" name="longSec2" value="[%longSec2%]" size="2" maxlength="2"></td>
+									       <td align="left" colspan="2">
+									       
+									      [% IF form == 're_entry' && hemisphLong2 == "W"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLong2" value="W" CHECKED>
+									        	West
+									        </label	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLong2" value="W">
+									        	West
+									        </label>	
+									      [%END%]
+									      [% IF form == 're_entry' && hemisphLong2 == "E"%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLong2" value="E" CHECKED>
+									        	East
+									        </label>	
+									      [%ELSE%]
+									      	<label class="radio inline">
+									        	<input type="radio"  name="hemisphLong2" value="E">
+									        	East
+									        </label>	
+									      [%END%]
+									      </td>
+									    </tr>
+									    <tr class="sectbody"><td></td>
+									       <td align="left" colspan="4"><span class="regtext">
+									        If entered, this lat/long pair represents the southeast corner of a bounding box.</span>
+									      </td><td></td>
+									    </tr>
+									</table>
+								
+								</div>									
+								
+						    </div>
+						</div>						
+						
+					[% END %]
+						
+						
+					[% IF modules.taxonomic == 'true' %]
+						
+						<!-- TAXONOMIC -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseTaxonomic">
+								Taxonomic Coverage  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TaxonomicCoverage"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseTaxonomic" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="taxonRank">Taxonomic Rank</label>
+									<div class="controls">
+										<input name="taxonRank" id="taxonRank">
+										<span class="help-block">(e.g., Species)</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="taxonName">Taxonomic Name</label>
+									<div class="controls">
+										<input name="taxonName" id="taxonName">
+										<span class="help-block">(e.g., <i>Ursus arctos</i>)</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="addTaxonButton"></label>
+									<div class="controls">
+										<input type="button" class="btn" value="Add Taxon" onClick="addTaxon()">
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="taxonTable"></label>
+									<div class="controls">
+										<table>
+											<tr id="addTaxon">
+												<td colspan="6">
+											</tr>	
+											[% numTaxa = 0 %]
+									        [% IF taxaCount %]
+									            [% numTaxa = taxaCount %]
+									            <tr class="sectbody" id="taxonHRRow">
+									                <td colSpan="6">
+									                    <hr width = "85%"/>
+									                </td>
+									            </tr>
+									        [% END %]
+									        <input type="hidden" name="taxaCount" value="[%numTaxa%]" id="taxaCount">
+									    
+									        [% cnt = 1 %]
+									        [% WHILE cnt <= numTaxa%]        
+									            <tr class="sectbody">
+									                <td class="rightCol">
+									                    <a style="cursor:pointer">
+									                        <i onClick="cleanTextNodes('taxonHRRow', 'addtaxarow');moveUpRow(event)"
+									                        class="icon-arrow-up"
+									                        alt="Move Up"></i>
+									                    </a>
+									                    <a style="cursor:pointer">
+									                        <i onClick="cleanTextNodes('taxonHRRow', 'addtaxarow');moveDownRow(event, 'addtaxarow')"
+									                        class="icon-arrow-down"
+									                        alt="Move Down"></i>
+									                    </a>
+									                    <a style="cursor:pointer">
+									                        <i class="icon-remove-sign"
+									                        onClick="delRow(event)" alt="Delete"></i>
+									                    </a>
+									                </td>
+									                [% SET rank = "taxonRankName${cnt}" %]
+									                [% SET name = "taxonRankValue${cnt}" %]
+									                <td colspan="5" align ="left" style="cursor:pointer"
+									                    onClick="taxonEditRow(event, 0, '[%$rank%]', '[%$name%]')">
+									                    Rank: [%$rank%], Name: [%$name%]
+									                    <input name="taxonName" type="hidden" value="[%$name%]"/>
+									                    <input name="taxonRank" type="hidden" value="[%$rank%]"/>
+									            </tr>
+									            [% cnt = cnt + 1 %]
+									        [% END %]
+									
+									     <tr class="sectbody" id="addtaxarow"> 
+									        <td class="bordertop" valign="top" align="right"></td>
+									        <td class="bordertop" align="left" colspan="5"></td>
+									     </tr>
+									     
+									   </table>
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="taxaAuth">Taxonomic Reference</label>
+									<div class="controls">
+										<textarea class="span8" rows="3" cols="30" name="taxaAuth">[% taxaAuth %]</textarea>
+										<span class="help-block">List the source(s) used for identifying and naming taxa (e.g., name of a field guide, key, or nomenclature revision).</span>
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+					[% END %]  
+						
+					[% IF modules.method == 'true' %]
+  
+						<!-- METHODS -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseMethods">
+								Data Collection Methods  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Methods"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseMethods" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="methodTitle">Method Title</label>
+									<div class="controls">
+										<input type="text" name="methodTitle" value="[%methodTitle%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="methodPara">Method Description</label>
+									<div class="controls">
+								        <table width="100%">
+										[% IF !methodPara %]
+											<tr><td><textarea class="span8" rows="6" cols="60" name="methodPara"></textarea></td></tr>
+								        [% END %]
+								        [% FOREACH para = methodPara %]
+								           <tr><td><textarea class="span8" rows="6" cols="60" name="methodPara">[% para %]</textarea></td></tr>
+								        [% END %]
+								        	<tr class="sectbody" id="addparabutton1">
+									    		<td align="left">
+									          		<input type="button" class="btn" value="Add Paragraph to Method Description" onClick="addParagraph()">
+									          	</td>
+											</tr>
+										</table>	
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="studyExtentDescription">Extent of Study Description</label>
+									<div class="controls">
+										<textarea class="span8" rows="6" cols="60" name="studyExtentDescription">[% studyExtentDescription %]</textarea>
+										<span class="help-block">
+									        Describe the temporal, spatial and taxonomic extent of the study,
+									        supplementing the information on coverage provided above.  
+									        For example, if the temporal coverage of the data is 1990-2000, you 
+									        might provide details about any years that were missed or the months 
+									        in which sampling occurred.</span>
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="samplingDescription">Sampling Description</label>
+									<div class="controls">
+										<textarea class="span8" rows="6" cols="60" name="samplingDescription">[% samplingDescription %]</textarea>
+										<span class="help-block">
+									        Describe the sampling design of the study.  For example, you might 
+        									describe the way in which treatments were assigned to sampling units.</span>
+									</div>
+								</div>
+								
+								
+						    </div>
+						</div>
+						
+					[% END %]
+					
+						
+						<!-- DATA SET CONTACT -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseContact">
+								Data Set Contact  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseContact" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<label class="checkbox inline" for="useOrigAddress">
+									<input type="CHECKBOX" name="useOrigAddress" onClick="copyContact()" id="copyCheckBox" [%useOrigAddress%]>
+        							Use the same name and address as the <em>PRINCIPAL DATA SET OWNER</em> above.
+								</label>
+									
+								<div class="control-group">
+									<label class="control-label" for="origNamefirstContact">*First Name</label>
+									<div class="controls">
+										<input type="text" name="origNamefirstContact" id="contactNameFirst" value="[%origNamefirstContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNamelastContact">*Last Name</label>
+									<div class="controls">
+										<input type="text" name="origNamelastContact" id="contactNameLast" value="[%origNamelastContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNameOrgContact">Organization Name</label>
+									<div class="controls">
+										<input type="text" name="origNameOrgContact" id="contactNameOrg" value="[%origNameOrgContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									[% IF required.contactEmailAddress == 'true' %]
+										<label class="control-label" for="origEmailContact">*Email</label>
+									[% ELSE %]
+										<label class="control-label" for="origEmailContact">Email</label>
+									[% END %]
+									<div class="controls">
+										<input type="text" name="origEmailContact" id="contactEmail" value="[%origEmailContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origPhoneContact">Phone</label>
+									<div class="controls">
+										<input type="text" name="origPhoneContact" id="contactPhone" value="[%origPhoneContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origFAXContact">Fax</label>
+									<div class="controls">
+										<input type="text" name="origFAXContact" id="contactFAX" value="[%origFAXContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origDeliveryContact">Street Address</label>
+									<div class="controls">
+										<textarea class="span8" id="contactDelivery" name="origDeliveryContact">[%origDeliveryContact%]</textarea>
+										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCityContact">City</label>
+									<div class="controls">
+										<input type="text" name="origCityContact" id="contactCity" value="[%origCityContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origStateContact">U.S. State or Territory</label>
+									<div class="controls">
+										<select name="origStateContact" id="contactState">
+											[% IF form == 're_entry' %]
+												<option selected>[%origStateContact%]</option>
+											[% ELSE %]
+												<option>Select state or territory here.</option>
+											[% END %]
+											<option>Alabama</option>
+											<option>Alaska</option>
+											<option>American Samoa</option>
+											<option>Arizona</option>
+											<option>Arkansas</option>
+											<option>California</option>
+											<option>Colorado</option>
+											<option>Connecticut</option>
+											<option>Delaware</option>
+											<option>District of Columbia</option>
+											<option>Florida</option>
+											<option>Georgia</option>
+											<option>Guam</option>
+											<option>Hawaii</option>
+											<option>Idaho</option>
+											<option>Illinois</option>
+											<option>Indiana</option>
+											<option>Iowa</option>
+											<option>Kansas</option>
+											<option>Kentucky</option>
+											<option>Louisiana</option>
+											<option>Maine</option>
+											<option>Maryland</option>
+											<option>Massachusetts</option>
+											<option>Michigan</option>
+											<option>Minnesota</option>
+											<option>Mississippi</option>
+											<option>Missouri</option>
+											<option>Montana</option>
+											<option>Nebraska</option>
+											<option>Nevada</option>
+											<option>New Hampshire</option>
+											<option>New Jersey</option>
+											<option>New Mexico</option>
+											<option>New York</option>
+											<option>North Carolina</option>
+											<option>North Dakota</option>
+											<option>Northern Mariana Islands</option>
+											<option>Ohio</option>
+											<option>Oklahoma</option>
+											<option>Oregon</option>
+											<option>Pennsylvania</option>
+											<option>Puerto Rico</option>
+											<option>Rhode Island</option>
+											<option>South Carolina</option>
+											<option>South Dakota</option>
+											<option>Tennessee</option>
+											<option>Texas</option>
+											<option>Utah</option>
+											<option>Vermont</option>
+											<option>Virgin Islands</option>
+											<option>Virginia</option>
+											<option>Washington</option>
+											<option>West Virginia</option>
+											<option>Wisconsin</option>
+											<option>Wyoming</option>
+										</select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origStateOtherContact">Other State/Province</label>
+									<div class="controls">
+										<input type="text" name="origStateOtherContact" id="contactStateOther" value="[%origStateOtherContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origZIPContact">Postal Code</label>
+									<div class="controls">
+										<input type="text" name="origZIPContact" id="contactZip" value="[%origZIPContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCountryContact">Country</label>
+									<div class="controls">
+										<input type="text" name="origCountryContact" id="contactCountry" value="[%origCountryContact%]">
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+						<!-- DISTRIBUTION INFO -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseDistribution">
+								Distribution Information  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DistributionIinformation"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseDistribution" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<div class="control-group">
+									<label class="control-label" for="identifier">Data Set Identifier</label>
+									<div class="controls">
+										<input type="text" name="identifier" value="[%identifier%]">
+										<span class="help-block">
+									     If available, please enter a name or number that uniquely identifies and
+									     describes concisely the data set. Alternatively, provide other pertinent
+									     information that can identify and locate the data set within your site's
+									     data management system.</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="dataMedium">*Data Medium</label>
+									<div class="controls">
+										[% IF form == 're_entry' && (dataMedium == "digital " || dataMedium == "digital")  %]  
+											<label class"radio inline">
+									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital" CHECKED>
+									            Digital
+									        </label>
+								        [%ELSE%]
+								        	<label class"radio inline">
+									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital">
+									            Digital
+									        </label> 
+								        [% END %]
+								        [% IF form == 're_entry' && (dataMedium == "hardcopy " || dataMedium == "hardcopy") %]  
+								        	<label class"radio inline">
+								           		<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy" CHECKED>
+								           		Hardcopy
+								           	</label>
+								        [%ELSE%]
+								        	<label class"radio inline">
+												<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy">
+								           		Hardcopy
+								           	</label>
+								        [% END %]
+								        [% IF form == 're_entry' && dataMedium == "other" %]
+								        	<label class"radio inline">
+									           <input type="radio" name="dataMedium" value="other" onClick="handleOther(1, 'otherDM')" CHECKED>
+									           Other
+									        </label>    
+								        [%ELSE%]
+								        	<label class"radio inline">
+								           		<input type="radio"  name="dataMedium" onClick="handleOther(1, 'otherDM')" value="other">
+								           		Other
+								           	</label>									           		
+								        [% END %]
+								  		<input type="text" name="dataMediumOther" value="[%dataMediumOther%]" id="otherDM"></input>
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="useConstraints">*Usage Rights</label>
+									<div class="controls">
+										[% IF form == 're_entry' && useConstraints == "no restrictions" %]
+											<label class"radio inline">      
+												<input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions" CHECKED>
+												No restrictions
+											</label>	
+										[%ELSE%]
+											<label class"radio inline">
+									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions">
+									            No restrictions
+									        </label>
+										[%END%]
+										[% IF form == 're_entry' && useConstraints == "Obtain permission from data set owner(s)" %]   
+											<label class"radio inline">   
+										        <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" CHECKED>
+										        Obtain permission from data set owner(s)
+										    </label> 
+										[%ELSE%]
+											<label class"radio inline">
+									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)">
+									            Obtain permission from data set owner(s)
+									        </label>
+										[%END%]
+										
+										[% IF form == 're_entry' && useConstraints == "other" %] 
+											<label class"radio inline">     
+												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" CHECKED>
+											    Other
+											</label>    
+									    [%ELSE%]
+									    	<label class"radio inline">
+												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other">
+												Other
+											</label>	
+									    [%END%]
+										<input type="text" name="useConstraintsOther" id="otherUC" value="[%useConstraintsOther%]" size="49">
+									</div>
+								</div>
+								
+								<div class="control-group">
+									<label class="control-label" for="url">URL</label>
+									<div class="controls">
+										<input type="text" name="url" value="[%url%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="addComments">Additional Information</label>
+									<div class="controls">
+										<textarea class="span8" rows="6" cols="60" name="addComments">[%addComments%]</textarea>
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
+						
+					[% IF modules.upload == 'true' %]	
+						
+						<!-- DATA UPLOAD -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseUploadData">
+								Upload Data  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#UploadData"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseUploadData" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								
+								<!--  the INPUT -->
+								<table class="tables" cellpadding="5" cellspacing="0" id="uploadTable">
+									<tr class="sectbody">
+									    <td class="rightCol"><span class="text-info">Upload Data File</span></td>
+									    <td colspan="5">
+								        	<input type="file" id="file_element" name="file_1" class="longwidth">
+								
+									        [% IF form == 're_entry' && upCount %]
+									           [% cnt = 0 %]
+									           [% WHILE cnt < upCount %]
+									                [% SET fileSum = "upload_${cnt}" %]
+									                [% SET fileName = "uploadname_${cnt}" %]
+									                [% SET fileType = "uploadtype_${cnt}" %] 
+									                [% SET filePerm = "uploadperm_${cnt}" %]
+									                [% IF fileSum %]
+									                    <input type="hidden" name="[%fileSum%]" value="[% $fileSum %]"> 
+									                    <input type="hidden" name="[%fileName%]" value="[% $fileName %]"> 
+									                    <input type="hidden" name="[%fileType%]" value="[% $fileType %]"> 
+									                [% END %]
+									                [% cnt = cnt + 1 %]
+									            [% END %]
+									        <input type="hidden" id="upCount" name="upCount" value="[%upCount%]">
+									        [% END %]
+									
+									        <input type="hidden" id="fileCount" name="fileCount" value="[%fileCount%]">
+										</td>
+									</tr>
+									<tr class="sectbody">
+										<td class="rightCol" valign="top"><span class="text-info">Attached Files</span></td>
+										<td colspan="5" class="regtext">
+										    [% IF !upCount %]
+										        <div id="file_comment">
+										            (<i>None currently attached</i>)
+										        </div>
+										    [% END %]
+										    <div id="files_list">
+											    [% IF form == 're_entry' && upCount %]
+											    	[% cnt = 0 %]
+											
+												    [% WHILE cnt < upCount %]
+												        [% SET fileName = "uploadname_${cnt}" %]
+												        [% SET filePerm = "uploadperm_${cnt}" %]
+												        [% IF $filePerm == 'public' %]
+												          [% SET perm_a = "checked" %]
+												          [% SET perm_b = "" %]
+												        [% ELSE %]
+												          [% SET perm_a = "" %]
+												          [% SET perm_b = "checked" %]
+												        [% END %]
+												        [% IF fileName %]
+													        <div>
+													          [% $fileName %]
+													          <label class="radio inline">
+																<input type="radio" name="[% filePerm %]" value="public" [% perm_a %]> Public
+													          </label>
+													          <label class="radio inline">	
+													          	<input type="radio" name="[% filePerm %]" value="private" [% perm_b %]> Private
+													          </label>
+													          <label class="text inline">	
+																<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [%fileName%]);"/>
+															</div>
+														[% END %]
+												
+												        [% cnt = cnt + 1 %]
+												    [% END %]
+										    	[% END %]
+										    </div>
+										</td>
+									</tr>
+								</table>
+								  
+								<script language="JavaScript" type="text/JavaScript">
+									var multi_selector = new MultiSelector( document.getElementById( 'files_list' ), 10);
+								    multi_selector.addElement( document.getElementById( 'file_element' ) );
+								</script>
+							
+								
+						    </div>
+						</div>
+						
+					[% END %]
+						  
+              
+    					</div>
+					</div> <!-- end the accordinan -->
+					
+					<input id="entryFormSubmit" name="submit" type="button" class="btn" onClick="sortInputTags();" value="Submit Data Set Description">
+				</form>
+				
+			</div> <!-- end the row -->
+			
+		</div>
+		
+	</article>

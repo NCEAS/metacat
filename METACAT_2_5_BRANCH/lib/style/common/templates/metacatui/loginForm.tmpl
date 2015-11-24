@@ -1,0 +1,78 @@
+	
+	<!-- CONTENT SECTION
+    ======================================================================= -->
+	<article id="RegistryLogin">
+		<div class="container">
+			<h2>Login</h2>
+			<div class="row-fluid">
+				<div class="span6 pagination-left">  
+					<form id="loginForm" method="post" action="[% cgiPrefix %]/register-dataset.cgi" onsubmit="return submitform(this);" >
+						<input type="hidden" name="stage" value="login"> 
+						<input type="hidden" name="username" value=""> 
+						<input type="hidden" name="cfg" value="[%cfg%]"> 
+					
+						<div>
+							<div class="row-fluid">
+								<div class="span4 text-left">Username</div>
+								<div class="span8 text-left"><input name="uid" type="text" value=""></div>
+							</div>
+							<div class="row-fluid">
+								<div class="span4 text-left">Organization</div>
+								<div class="span8 text-left"><select name="organization">
+										<option value="" selected>&#8212; choose one &#8212;</option>
+										<option value="NCEAS">NCEAS</option>
+										<option value="LTER">LTER</option>
+										<option value="KU">KU</option>
+										<option value="OBFS">OBFS</option>
+										<option value="OSUSB">OSUSB</option>
+										<option value="PARC">PARC</option>
+										<option value="PISCO">PISCO</option>
+										<option value="SAEON">SAEON</option>
+										<option value="SANParks">SANParks</option>
+										<option value="SDSC">SDSC</option>
+										<option value="UCNRS">UCNRS</option>
+										<option value="unaffiliated">unaffiliated</option>
+								</select></div>
+							</div>
+							<div class="row-fluid">
+								<div class="span4 text-left">Password</div>
+								<div class="span8 text-left"><input name="password" type="password" maxlength="50"
+									value=""></div>
+							</div>
+							<div class="row-fluid">
+								<div class="offset4 span8 text-left">
+									<input type="hidden" name="loginAction" value="Login">
+									<input type="button" class="btn" id="loginButton" value="Login">
+								</div>
+							</div>
+						</div>
+						
+					</form>
+				</div>
+				
+				<div class="span6 pagination-left">
+					[% IF message != '' %]
+						<p class="lead">[% message %]</p>
+					[% END %]
+					
+					<!-- surround in div so that we can replace the content easily -->
+					<div id ="ldapAccountTools">
+						<div class="row-fluid">
+							<div class="span6 text-left">
+								<p>Don't have an account yet? Forgot your username?</p>
+							</div>
+							<div class="span6 text-left">
+								<a id="createAccount" href="[%userManagementUrl%]">
+									<i class="icon-user"></i>
+									Create a new account
+								</a>
+							</div>
+						</div>
+
+					</div>	
+						
+				</div>
+				
+			</div>
+		</div>
+	</article>

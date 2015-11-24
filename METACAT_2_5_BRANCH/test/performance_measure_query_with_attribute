@@ -1,0 +1,53 @@
+
+<?xml version="1.0"?>
+ <pathquery version="1.2">
+  <querytitle>Web-Search</querytitle>
+  <returndoctype>eml://ecoinformatics.org/eml-2.0.1</returndoctype><returndoctype>eml://ecoinformatics.org/eml-2.0.0</returndoctype>   <returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN</returndoctype>
+<returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN</returndoctype><returndoctype>-//NCEAS//resource//EN</returndoctype><returndoctype>-//NCEAS//eml-dataset//EN</returndoctype>
+<returnfield>originator/individualName/surName</returnfield>
+<returnfield>originator/individualName/givenName</returnfield>
+<returnfield>creator/individualName/surName</returnfield>
+<returnfield>creator/individualName/givenName</returnfield>
+<returnfield>originator/organizationName</returnfield>
+<returnfield>creator/organizationName</returnfield>
+<returnfield>dataset/title</returnfield>
+<returnfield>keyword</returnfield>
+<returnfield>@packageId</returnfield>
+ <querygroup operator="UNION">
+        <queryterm searchmode="contains" casesensitive="false">
+             <value>land</value>
+             <pathexpr>surName</pathexpr>
+        </queryterm>
+        <queryterm searchmode="contains" casesensitive="false">
+              <value>land</value>
+              <pathexpr>givenName</pathexpr>
+         </queryterm>
+          <queryterm searchmode="contains" casesensitive="false">
+                <value>land</value>
+                <pathexpr>keyword</pathexpr>
+          </queryterm>
+           <queryterm searchmode="contains" casesensitive="false">
+                 <value>land</value>
+           <pathexpr>para</pathexpr></queryterm>
+           <queryterm searchmode="contains" casesensitive="false">
+                <value>land</value>
+                 <pathexpr>geographicDescription</pathexpr>
+            </queryterm>
+            <queryterm searchmode="contains" casesensitive="false">
+                  <value>land</value>
+                  <pathexpr>literalLayout</pathexpr>
+             </queryterm>
+             <queryterm searchmode="contains" casesensitive="false">
+                     <value>land</value>
+                     <pathexpr>title</pathexpr>
+            </queryterm>
+            <queryterm searchmode="contains" casesensitive="false">
+                  <value>land</value>
+                  <pathexpr>@packageId</pathexpr>
+            </queryterm>
+            <queryterm searchmode="contains" casesensitive="false">
+                <value>land</value>
+                <pathexpr>abstract/para</pathexpr>
+            </queryterm>
+    </querygroup>
+</pathquery>

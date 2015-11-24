@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE PARENT [
+<!ELEMENT PARENT (CHILD*)>
+<!ELEMENT CHILD (MARK?,NAME+)>
+<!ELEMENT MARK EMPTY>
+<!ELEMENT NAME (LASTNAME+,FIRSTNAME+)*>
+<!ELEMENT LASTNAME (#PCDATA)>
+<!ELEMENT FIRSTNAME (#PCDATA)>
+<!ATTLIST MARK
+            NUMBER ID #REQUIRED
+            LISTED CDATA #FIXED "yes"
+            TYPE (natural|adopted) "natural">
+<!ENTITY STATEMENT "This is well-formed XML">
+]>
+<PARENT>
+&STATEMENT;
+<CHILD>
+<MARK NUMBER="1" LISTED="yes" TYPE="natural"/>
+<NAME>
+<LASTNAME>child</LASTNAME>
+<FIRSTNAME>second</FIRSTNAME>
+</NAME>
+</CHILD>
+</PARENT>
+

@@ -1,0 +1,227 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="rdfXmlSubprocessor" class="org.dataone.cn.indexer.annotation.RdfXmlSubprocessor">
+		<property name="matchDocuments">
+			<list>
+				<value>http://www.w3.org/TR/rdf-syntax-grammar</value>
+				<value>http://www.openarchives.org/ore/terms</value>
+			</list>
+		</property>	
+		<property name="fieldList">
+			<list>
+				<ref bean="annotation.standard" />
+				<ref bean="annotation.characteristic" />
+				<ref bean="annotation.creator" />
+				<ref bean="prov.wasDerivedFrom" />
+				<ref bean="prov.wasGeneratedBy" />
+				<ref bean="prov.wasInformedBy" />
+				<ref bean="prov.used" />
+			</list>
+		</property>	
+	</bean>
+	
+	<bean id="annotation.standard" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="standard_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> 
+				PREFIX oa: <http://www.w3.org/ns/oa#>
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT ?standard_sm ?pid
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+						?measurement rdf:type oboe-core:Measurement .
+						?measurement rdf:type ?restriction .
+						?restriction owl:onProperty oboe-core:usesStandard .
+						?restriction owl:allValuesFrom ?standard .
+						?standard rdfs:subClassOf+ ?standard_sm .
+						?standard_sm rdfs:subClassOf oboe-core:Standard .
+						
+						?annotation oa:hasBody ?measurement .												
+						?annotation oa:hasTarget ?target .
+						?target oa:hasSource ?metadata .
+						?metadata dcterms:identifier ?pid . 
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+	
+	<bean id="annotation.characteristic" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="characteristic_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX oboe-core: <http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#> 
+				PREFIX oa: <http://www.w3.org/ns/oa#>
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT ?characteristic_sm ?pid
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+						?measurement rdf:type oboe-core:Measurement .
+						?measurement rdf:type ?restriction .
+						?restriction owl:onProperty oboe-core:ofCharacteristic .
+						?restriction owl:allValuesFrom ?characteristic .
+						?characteristic rdfs:subClassOf+ ?characteristic_sm .
+						?characteristic_sm rdfs:subClassOf oboe-core:Characteristic .
+						
+						?annotation oa:hasBody ?measurement .												
+						?annotation oa:hasTarget ?target .
+						?target oa:hasSource ?metadata .
+						?metadata dcterms:identifier ?pid . 
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+	
+	<bean id="annotation.creator" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="creator_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX oa: <http://www.w3.org/ns/oa#>				
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+				PREFIX prov: <http://www.w3.org/ns/prov#>
+				PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+
+				SELECT ?creator_sm ?pid
+				FROM <$GRAPH_NAME>
+				WHERE { 
+								
+						?metadata dcterms:identifier ?pid .
+						?metadata prov:wasAttributedTo ?person .
+						?person dcterms:identifier ?creator_sm .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+		<!--property name="multivalue" value="false" /-->
+	</bean>
+	
+	<bean id="prov.wasDerivedFrom" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="wasDerivedFrom" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT (str(?pidValue) as ?pid) (str(?wasDerivedFromValue) as ?wasDerivedFrom)
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+					?derived_data		prov:wasDerivedFrom	?primary_data .
+					?derived_data		dcterms:identifier 	?pidValue . 
+					?primary_data		dcterms:identifier 	?wasDerivedFromValue .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="prov.wasGeneratedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="wasGeneratedBy" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT (str(?pidValue) as ?pid) (str(?wasGeneratedByValue) as ?wasGeneratedBy)
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+					?result			prov:wasGeneratedBy	?activity .
+					?result			dcterms:identifier	?pidValue . 
+					?activity		dcterms:identifier	?wasGeneratedByValue .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="prov.wasInformedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="wasInformedBy" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT (str(?pidValue) as ?pid) (str(?wasInformedByValue) as ?wasInformedBy)
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+					?activity				prov:wasInformedBy	?previousActivity .
+					?activity				dcterms:identifier	?pidValue . 
+					?previousActivity		dcterms:identifier	?wasInformedByValue .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	
+	<bean id="prov.used" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="used" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				PREFIX prov: <http://www.w3.org/ns/prov#> 
+				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
+				PREFIX dcterms: <http://purl.org/dc/terms/>
+
+				SELECT (str(?pidValue) as ?pid) (str(?usedValue) as ?used)
+				FROM <$GRAPH_NAME>
+				WHERE { 
+						
+					?activity		prov:used			?data .
+					?activity		dcterms:identifier	?pidValue . 
+					?data			dcterms:identifier	?usedValue .
+						
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+
+</beans>

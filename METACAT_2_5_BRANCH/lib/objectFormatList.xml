@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+ *  '$RCSfile$'
+ *    Purpose: Lists object formats registered with Metacat for DataONE services
+ *  Copyright: 2011 Regents of the University of California and the
+ *             National Center for Ecological Analysis and Synthesis
+ *    Authors: Christopher Jones
+ * 
+ *   '$Author$'
+ *     '$Date$'
+ * '$Revision$'
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ -->
+<!-- 
+  The object format list is the default list of object formats used
+  by Metacat's ObjectFormatService. In the event that the service cannot
+  get the authoritative object format list from the DataONE Coordinating
+  Node listed in the metacat properties file or from a cached version in
+  the metacat database, it will revert to this file.
+ -->
+<d1:objectFormatList count="31" start="0" total="31"
+  xmlns:d1="http://ns.dataone.org/service/types/0.6.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://ns.dataone.org/service/types/0.6.0 dataoneTypes.xsd">
+  <objectFormat>
+    <fmtid>eml://ecoinformatics.org/eml-2.0.0</fmtid>
+    <formatName>Ecological Metadata Language, version 2.0.0</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>eml://ecoinformatics.org/eml-2.0.1</fmtid>
+    <formatName>Ecological Metadata Language, version 2.0.1</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>eml://ecoinformatics.org/eml-2.1.0</fmtid>
+    <formatName>Ecological Metadata Language, version 2.1.0</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>eml://ecoinformatics.org/eml-2.1.1</fmtid>
+    <formatName>Ecological Metadata Language, version 2.1.1</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>FGDC-STD-001.1-1999</fmtid>
+    <formatName>
+      Content Standard for Digital Geospatial Metadata, 
+      Biological Data Profile, version 001.1-1999
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>FGDC-STD-001.2-1999</fmtid>
+    <formatName>
+      Content Standard for Digital Geospatial Metadata, 
+      Metadata Profile for Shoreline Data, version 001.2-1999
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>FGDC-STD-001-1998</fmtid>
+    <formatName>
+      Content Standard for Digital Geospatial Metadata, version 001-1998
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>INCITS 453-2009</fmtid>
+    <formatName>
+      North American Profile of ISO 19115: 2003 Geographic Information - Metadata
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://www.unidata.ucar.edu/namespaces/netcdf/ncml-2.2</fmtid>
+    <formatName>NetCDF Markup Language, version 2.2</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>CF-1.0</fmtid>
+    <formatName>
+      NetCDF Climate and Forecast Metadata Convention, version 1.0
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>CF-1.1</fmtid>
+    <formatName>
+      NetCDF Climate and Forecast Metadata Convention, version 1.1
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>CF-1.2</fmtid>
+    <formatName>
+      NetCDF Climate and Forecast Metadata Convention, version 1.2
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>CF-1.3</fmtid>
+    <formatName>
+      NetCDF Climate and Forecast Metadata Convention, version 1.3
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>CF-1.4</fmtid>
+    <formatName>
+      NetCDF Climate and Forecast Metadata Convention, version 1.4
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://www.cuahsi.org/waterML/1.0/</fmtid>
+    <formatName>
+      Water Markup Language, version 1.0
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://www.cuahsi.org/waterML/1.1/</fmtid>
+    <formatName>
+      Water Markup Language, version 1.0
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://www.loc.gov/METS/</fmtid>
+    <formatName>
+      Metadata Encoding and Transmission Standard, version 1
+    </formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>netCDF-3</fmtid>
+    <formatName>Network Common Data Format, version 3</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>netCDF-4</fmtid>
+    <formatName>Network Common Data Format, version 3</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>text/plain</fmtid>
+    <formatName>Plain Text</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>text/csv</fmtid>
+    <formatName>Comma Separated Values Text</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/bmp</fmtid>
+    <formatName>Bitmap Image File</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/gif</fmtid>
+    <formatName>Graphics Interchange Format</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/jp2</fmtid>
+    <formatName>JPEG 2000</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/jpeg</fmtid>
+    <formatName>JPEG</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/png</fmtid>
+    <formatName>Portable Network Graphics</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/svg+xml</fmtid>
+    <formatName>Scalable Vector Graphics</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>image/tiff</fmtid>
+    <formatName>Tagged Image File Format</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://rs.tdwg.org/dwc/xsd/simpledarwincore/</fmtid>
+    <formatName>Simple Darwin Core</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>http://digir.net/schema/conceptual/darwin/2003/1.0/darwin2.xsd</fmtid>
+    <formatName>Darwin Core, version 2.0</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>application/octet-stream</fmtid>
+    <formatName>Octet Stream</formatName>
+  </objectFormat>
+</d1:objectFormatList>

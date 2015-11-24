@@ -1,0 +1,13 @@
+    <h3>Your password has been reset!</h3>    
+    
+    <table class="intro" cellpadding="3" cellspacing="0">
+      
+    
+    [% IF errorMessage %]
+    <tr><td align="left"><span class="label"> [% errorMessage %]</span></td></tr>
+    [% ELSE %]
+    <tr><td align="left"><span class="regtext">Your new password has been sent to the e-mail address registered for 
+    this account.</span></td></tr>
+    [% END %]
+    </table>
+

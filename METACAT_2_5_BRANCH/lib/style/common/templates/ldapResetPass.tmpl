@@ -1,0 +1,59 @@
+    <h3>Forgot your password?</h3>
+    
+  <table class="intro" cellpadding="3" cellspacing="0">
+    <tr><td align="left"><span class="regtext">Enter the required information below to reset your password.  
+    You will need to know your username and organization.  We will change the password
+    for you to a new random password, and send it to you at the e-mail 
+    address registered for the account. Required fields are denoted by an asterisk (*).</td></tr>
+   
+       
+    <tr><td align="left"><span class="label">[% errorMessage %]</td></tr>
+   </table>
+    
+    
+    <table class="intro" cellpadding="3" cellspacing="0"><tr><td>
+    <form name="passwdForm" action="[% cgiurl %]" method="post">
+      <input type="hidden" name="stage" value="[% stage %]"/>
+      <input type="hidden" name="cfg" value="[% cfg %]"/>
+          
+      <p>&nbsp;</p>
+      <table border="0">
+        <tr>
+          <td align="left" class="label">
+            *Username:
+          </td>
+          <td align="right">
+            <input name="uid" type="text"
+                   [% IF allParams.uid %]
+                   value="[% allParams.uid %]"
+                   [% END %]/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Organization:
+          </td>
+          <td align="right">
+            <select name="o">
+                [% FOREACH orgDisplayHash = orgList %]
+                  [% FOREACH pair IN orgDisplayHash.pairs %]
+                    [% IF allParams.o == pair.key %]
+                        <option value="[% pair.key %]" selected>[% pair.value %]</option>
+                    [% ELSE %]
+                        <option value="[% pair.key %]">[% pair.value %]</option>
+                    [% END %]
+                  [% END %]
+                [% END %]
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td>
+          </td>
+          <td align="right">
+            <input name="action" type="submit" value="Reset password"/>
+          </td>
+        </tr>
+      </table>
+    </form>
+    </td></tr></table>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.1.0"
+	packageId="jscientist.7.2" system="knb"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.0 eml.xsd">
+	<access authSystem="knb" order="allowFirst">
+		<allow>
+			<principal>public</principal>
+			<permission>read</permission>
+		</allow>
+	</access>
+	<dataset>
+		<title>測試中的數據包 (Test Chinese data package) _DOCID_</title>
+		<creator>
+			<individualName>
+				<givenName>Joe</givenName>
+				<surName>Scientist</surName>
+			</individualName>
+			<address>
+				<deliveryPoint>Marine Science Institute</deliveryPoint>
+				<city>Santa Barbara</city>
+				<administrativeArea>CA</administrativeArea>
+				<postalCode>90024</postalCode>
+				<country>USA</country>
+			</address>
+			<phone>(310) 206-1984</phone>
+			<electronicMailAddress>jsci@msi.ucsb.edu</electronicMailAddress>
+		</creator>
+		<associatedParty>
+			<individualName>
+				<givenName>Joe</givenName>
+				<surName>Scientist</surName>
+			</individualName>
+			<address>
+				<deliveryPoint>Marine Science Institute</deliveryPoint>
+				<city>Santa Barbara</city>
+				<administrativeArea>CA</administrativeArea>
+				<postalCode>90024</postalCode>
+				<country>USA</country>
+			</address>
+			<phone>(310) 206-1984</phone>
+			<electronicMailAddress>jsci@msi.ucsb.edu</electronicMailAddress>
+			<role>owner</role>
+		</associatedParty>
+		<abstract>
+			<para>人口抽樣數據的各種浮游動物物種在大湖區，2000年。抽樣樣本採用凡德恩在1米，深5米放置一個隨機抽樣的網格。物種名稱根據 ITIS的分類數據庫（http://www.itis.usda.gov/）。這是虛構的樣本數據，並應以任何方式被解釋為有意義的信息！</para>
+		</abstract>
+		<keywordSet>
+			<keyword keywordType="theme">zooplankton</keyword>
+			<keyword keywordType="theme">Van Dorn sampling</keyword>
+			<keyword keywordType="theme">population survey</keyword>
+			<keyword keywordType="theme">fictitious sample data</keyword>
+			<keyword keywordType="place">Great Lakes</keyword>
+		</keywordSet>
+		<contact>
+			<individualName>
+				<givenName>Joe</givenName>
+				<surName>Scientist</surName>
+			</individualName>
+			<address>
+				<deliveryPoint>Marine Science Institute</deliveryPoint>
+				<city>Santa Barbara</city>
+				<administrativeArea>CA</administrativeArea>
+				<postalCode>90024</postalCode>
+				<country>USA</country>
+			</address>
+			<phone>(310) 206-1984</phone>
+			<electronicMailAddress>jsci@msi.ucsb.edu</electronicMailAddress>
+		</contact>
+	</dataset>
+</eml:eml>

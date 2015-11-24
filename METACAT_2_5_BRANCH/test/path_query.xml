@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<pathquery version="1.2">
+	<querytitle>Untitled-Search-1</querytitle>
+	<returndoctype>eml://ecoinformatics.org/eml-2.0.0</returndoctype>
+	<returndoctype>eml://ecoinformatics.org/eml-2.0.1</returndoctype>
+	<returndoctype>eml://ecoinformatics.org/eml-2.1.0</returndoctype>
+	<returndoctype>eml://ecoinformatics.org/eml-2.1.1</returndoctype>
+	<returnfield>dataset/title</returnfield>
+	<returnfield>entityName</returnfield>
+	<querygroup operator="INTERSECT">
+		<querygroup operator="UNION">
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>Insects</value>
+				<pathexpr>dataset/title</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>Insects</value>
+				<pathexpr>keyword</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>Insects</value>
+				<pathexpr>creator/individualName/surName
+				</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>Insects</value>
+				<pathexpr>abstract/para</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>Insects</value>
+				<pathexpr>taxonRankValue</pathexpr>
+			</queryterm>
+		</querygroup>
+		<querygroup operator="UNION">
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>http://%</value>
+				<pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>ecogrid://%</value>
+				<pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr>
+			</queryterm>
+			<queryterm searchmode="contains" casesensitive="false">
+				<value>ecogrid://%</value>
+	     		<pathexpr>dataset/spatialRaster/physical/distribution/online/url</pathexpr>
+	       </queryterm>
+     	</querygroup>
+     	<querygroup operator="UNION">
+			<queryterm searchmode="equals" casesensitive="false">
+				<value>download</value>
+				<pathexpr>dataset/dataTable/physical/distribution/online/url/@function</pathexpr>
+			</queryterm>
+			<queryterm searchmode="equals" casesensitive="false">
+				<value>download</value>
+				<pathexpr>dataset/spatialRaster/physical/distribution/online/url/@function</pathexpr>
+			</queryterm>
+     	</querygroup>
+	</querygroup>
+</pathquery>

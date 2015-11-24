@@ -1,0 +1,645 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml packageId="knb-lter-gce.114.11" system="knb" xmlns:ds="eml://ecoinformatics.org/dataset-2.1.0" xmlns:eml="eml://ecoinformatics.org/eml-2.1.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.0 http://gce-lter.marsci.uga.edu/public/files/schemas/eml-210/eml.xsd">
+<access authSystem="knb" order="allowFirst" scope="document">
+<allow>
+<principal>uid=GCE,o=lter,dc=ecoinformatics,dc=org</principal>
+<permission>all</permission>
+</allow>
+<allow>
+<principal>public</principal>
+<permission>read</permission>
+</allow>
+</access>
+<dataset>
+<alternateIdentifier>ALG-GCED-0304d.1.1</alternateIdentifier>
+<title>Benthic chlorophyll, density, porosity, and organic content concentrations in surficial estuarine intertidal sediments at sites on Sapelo Island and near the Satilla River from June and August 2002</title>
+<creator id="GCE-LTER"><organizationName>Georgia Coastal Ecosystems LTER Project</organizationName>
+<address>
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+<onlineUrl>http://gce-lter.marsci.uga.edu/</onlineUrl>
+</creator>
+<creator>
+<individualName>
+<salutation>Dr.</salutation>
+<givenName>Samantha</givenName>
+<givenName>B.</givenName>
+<surName>Joye</surName>
+</individualName>
+<organizationName>University of Georgia</organizationName>
+<address>
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>mjoye@uga.edu</electronicMailAddress>
+<onlineUrl>http://www.marsci.uga.edu/FacultyPages/Joye/</onlineUrl>
+</creator>
+<metadataProvider><references>GCE-LTER</references></metadataProvider>
+<associatedParty>
+<individualName>
+<givenName>Rosalynn</givenName>
+<givenName>Y.</givenName>
+<surName>Lee</surName>
+</individualName>
+<organizationName>University of Georgia</organizationName>
+<electronicMailAddress>rosalynn@uga.edu</electronicMailAddress>
+<role>co-author</role>
+</associatedParty>
+<pubDate>2005</pubDate>
+<abstract>
+<para>Seasonal patterns of estuarine creek-bank and intertidal marsh benthic chlorophyll, density, porosity, and organic content were investigated at several sites on Sapelo Island and the Satilla River in coastal Georgia.  Benthic chlorophyll, density, porosity, and organic content were measured in the bulk surface centimeter depth of sediment.  Several relatively pristine sites on Sapelo Island (Moses Hammock and Dean Creek) and a presumably heavily impacted site (Dover Bluff) show similar levels of chlorophyll concentration across bank and marsh zones with higher photosynthetic biomass in the spring season.</para>
+</abstract>
+<keywordSet><keyword keywordType="place">Sapelo Island</keyword>
+<keyword keywordType="place">Georgia</keyword>
+<keyword keywordType="place">USA</keyword></keywordSet>
+<keywordSet>
+<keyword keywordType="theme">GCE</keyword>
+<keyword keywordType="theme">LTER</keyword>
+<keyword keywordType="theme">Primary Production</keyword>
+<keyword keywordType="theme">benthic</keyword>
+<keyword keywordType="theme">chlorophyll</keyword>
+<keyword keywordType="theme">density</keyword>
+<keyword keywordType="theme">organic</keyword>
+<keyword keywordType="theme">porosity</keyword>
+<keyword keywordType="theme">sediment</keyword>
+</keywordSet>
+<intellectualRights>
+<para>All publications based on this data set must cite the contributor and Georgia Coastal Ecosystems LTER project, and two copies of the manuscript must be submitted to the GCE-LTER Information Management Office.</para>
+</intellectualRights>
+<distribution>
+<online>
+<url function="information">http://gce-lter.marsci.uga.edu/public/app/dataset_details.asp?accession=ALG-GCED-0304d</url>
+</online>
+</distribution>
+<coverage>
+<geographicCoverage>
+<geographicDescription>Overall bounding box describing the geographic region within the Georgia Coastal Ecosystems LTER study domain represented in data set ALG-GCED-0304d, based on the maximum geographic extents of all site polygons referenced in the data set</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.299522</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.258908</eastBoundingCoordinate>
+<northBoundingCoordinate>31.497026</northBoundingCoordinate>
+<southBoundingCoordinate>31.371003</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<temporalCoverage>
+<rangeOfDates>
+<beginDate>
+<calendarDate>2002-06-20</calendarDate>
+</beginDate>
+<endDate>
+<calendarDate>2002-08-02</calendarDate>
+</endDate>
+</rangeOfDates>
+</temporalCoverage>
+</coverage>
+<contact><positionName>GCE-LTER Information Manager</positionName>
+<address>
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+</contact>
+<publisher><references>GCE-LTER</references></publisher>
+<methods>
+<methodStep>
+<description>
+<section>
+<title>Sample collection</title>
+<para>1 cm^3 volume surface sediment samples (with a surface area of 1 cm^2 and a depth of 1 cm) were collected using a syringe with a cut-off tip, then analysed for chlorophyll, density, porosity and organic content.</para>
+</section>
+</description>
+</methodStep>
+<methodStep>
+<description>
+<section>
+<title>Chlorophyll a measurement</title>
+<para>1 cm^3 volume surface sediment samples collected as above were immediately preserved with 0.2 ml of saturated MgCO3 and frozen for transport to and analysis in the laboratory.  Samples were extracted and sonicated in a 45:45:10 solvent mixture of methanol:acetone:water.  Chlorophyll a concentrations were determined using spectrophotometry of centrifuged supernatant.  Reference: Strickland, J. D. H., and Parsons, T. R.  1972.  A practical handbook of seawater analysis.  Fisheries Research Board of Canada.  pp. 49-52.</para>
+</section>
+</description>
+<instrumentation>Sonic Dismembrator; manufacturer: Fisher Scientific (model: 550)</instrumentation>
+<instrumentation>Centrifuge; manufacturer: Fisher Scientific (model: Marathon 21000R)</instrumentation>
+<instrumentation>Spectrophotometer; manufacturer: Shimadzu Instruments (model: UV-1601); parameter: Chlorophyll a concentration (accuracy: 1 mg/m^2, range: 1 to 500 mg/m^2)</instrumentation>
+</methodStep>
+<methodStep>
+<description>
+<section>
+<title>Density measurement</title>
+<para>1 cm^3 volume surface sediment samples collected as above were weighed immediately.</para>
+</section>
+</description>
+<instrumentation>Electronic balance; manufacturer: Denver Instruments (model: TR-203); parameter: Mass (accuracy: 0.001 g, range: 0.001 to 210 g)</instrumentation>
+</methodStep>
+<methodStep>
+<description>
+<section>
+<title>Porosity measurement</title>
+<para>After weighing 1 cm^3 volume surface sediment samples collected as above for density, the sediment samples were dried in an 80 C oven for 48 h.  Porosity was determined as weight lost (i.e. water weight) as a fraction of original wet weight.</para>
+</section>
+</description>
+<instrumentation>Electronic balance; manufacturer: Denver Instruments (model: TR-203); parameter: Mass (accuracy: 0.001 g, range: 0.001 to 210 g)</instrumentation>
+<instrumentation>Drying oven; manufacturer: Fisher Scientific (model: Isotemp 516G)</instrumentation>
+</methodStep>
+<methodStep>
+<description>
+<section>
+<title>Organic content analysis</title>
+<para>After drying 1 cm^3 volume surface sediment samples collected as above for porosity, the sediment samples were ashed in a 500 C muffle furnace for 12 h.  Organic content was determined as weight lost by ashing as a fraction of dry weight.</para>
+</section>
+</description>
+<instrumentation>Electronic balance; manufacturer: Denver Instruments (model: TR-203); parameter: Mass (accuracy: 0.001 g, range: 0.001 to 210 g)</instrumentation>
+<instrumentation>Muffle furnace; manufacturer: Fisher Scientific (model: Isotemp Series 650 Model 126)</instrumentation>
+</methodStep>
+<sampling>
+<studyExtent>
+<coverage>
+<temporalCoverage>
+<rangeOfDates>
+<beginDate>
+<calendarDate>2002-06-20</calendarDate>
+</beginDate>
+<endDate>
+<calendarDate>2002-08-02</calendarDate>
+</endDate>
+</rangeOfDates>
+</temporalCoverage>
+</coverage>
+<coverage>
+<geographicCoverage>
+<geographicDescription>GCE Study Site GCE6 -- Dean Creek, Sapelo Island, Georgia, USA.  Doboy Sound/salt marsh site at the southern end of Sapelo Island near Dean Creek and the Sapelo lighthouse.  A few small creeks are present, but a large creek (Dean Creek) is easily accessed. Upland is composed of small hammocks and some constructed causeways, with sand dune complexes east of Dean Creek and extending to the beach. Upper end of the watershed is affected by a culvert at Beach Road and heavy student use of marsh immediately adjacent to culvert. A hydrographic sonde is deployed in Doboy Sound near Commodore Island approximately 1.5km from this site. GCE6 is also the focus of Sapelo Island Microbial Observatory research on microbial diversity  and  genomics (http://simo.marsci.uga.edu)</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.299522</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.264378</eastBoundingCoordinate>
+<northBoundingCoordinate>31.394072</northBoundingCoordinate>
+<southBoundingCoordinate>31.371003</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+<geographicCoverage>
+<geographicDescription>GCE Study Site GCE10 -- Hunt Camp, Sapelo Island, Georgia, USA.  Barrier island/marsh site on western Sapelo Island.  This site is located at the upper reaches of the Duplin River, and is within the Sapelo Island National Estuarine Research Reserve. Existing well fields border small marsh area to northwest, some wells have been installed to south end of hammock where marsh is more extensive and permanent plots are located. Two existing hydrographic sondes and weather stations within this site are operated by SINERR (Hunt Camp dock) and UGAMI (flume dock).</geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-81.295506</westBoundingCoordinate>
+<eastBoundingCoordinate>-81.258908</eastBoundingCoordinate>
+<northBoundingCoordinate>31.497026</northBoundingCoordinate>
+<southBoundingCoordinate>31.462320</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+</coverage>
+</studyExtent>
+<samplingDescription>
+<section>
+<title>Benthic Chlorophyll and Sediment Analysis</title>
+<para>Sediment samples were collected in triplicate for chlorophyll, density, porosity and organic content analysis using cut-off syringes for a sediment surface area of 1 cm^2 and a depth of 1 cm.</para>
+<para>Sediment samples were collected as described above from the Dover Bluff (DB), Moses Hammock (MH), and Dean Creek (DC) sites on 20 June and 2 August 2002.</para>
+</section>
+</samplingDescription>
+</sampling>
+</methods>
+<project><title>Georgia Coastal Ecosystems LTER Project</title>
+<personnel>
+<individualName>
+<givenName>James</givenName>
+<givenName>T.</givenName>
+<surName>Hollibaugh</surName>
+</individualName>
+<role>principalInvestigator</role>
+</personnel>
+<personnel>
+<individualName>
+<givenName>Steven</givenName>
+<givenName>C.</givenName>
+<surName>Pennings</surName>
+</individualName>
+<role>principalInvestigator</role>
+</personnel>
+<personnel>
+<individualName>
+<givenName>Wade</givenName>
+<givenName>M.</givenName>
+<surName>Sheldon</surName>
+</individualName>
+<role>informationManager</role>
+</personnel>
+<abstract>
+<para>We propose to establish a Long Term Ecological Research site on the central Georgia coast in the vicinity of Sapelo Island. This is a barrier island and marsh complex with the Altamaha River, one of the largest and least developed rivers on the east coast of the US, as the primary source of fresh water. The proposed study would investigate the linkages between local and distant upland areas mediated by water - surface water and ground water - delivery to the coastal zone. We would explicitly examine the relationship between variability in environmental factors driven by river flow, primarily salinity because we can measure it at high frequency, and ecosystem processes and structure. We will accomplish this by comparing estuary/marsh complexes separated from the Altamaha River by one or two lagoonal estuary/marsh complexes that damp and attenuate the river signal. This spatial gradient is analogous to the temporal trend in riverine influence expected as a result of development in the watershed. We will implement a monitoring system that documents physical and biological variables and use the time trends and spatial distributions of these variables and of their variance structure to address questions about the factors controlling distributions, trophic structure, diversity, and biogeochemistry. An existing GIS-based hydrologic model will be modified to incorporate changes in river water resulting from changes in land use patterns that can be expected as the watershed develops. This model will be linked to ecosystem models and will serve as an heuristic and management tool. Another consequence of coastal development is that as river flow decreases, groundwater flow increases and becomes nutrified. We will compare the effects of ground water discharge from the surficial aquifer in relatively pristine (Sapelo Island) versus more urbanized (mainland) sites to assess the relative importance of fresh water versus nutrients to productivity, structure and biomass turnover rate in marshes influenced by groundwater. We will also investigate the effect of marine processes (tides, storm surge) on mixing across the fresh/salt interface in the surficial aquifer. Additional physical studies will relate the morphology of salt marsh - tidal creek channel complexes to tidal current distributions and exchange. These findings will be incorporated into a physical model that will be coupled to an existing ecosystem model. The land/ocean margin ecosystem lies at the interface between two ecosystems in which distinctly different groups of decomposers control organic matter degradation. The terrestrial ecosystem is largely dominated by fungal decomposers, while bacterial decomposers dominate the marine ecosystem. Both groups are important in salt marsh-dominated ecosystems. Specific studies will examine, at the level of individual cells and hyphae, the relationship bacteria and fungi in the consortia that decompose standing dead Spartina and other marsh plants and examine how, or if, this changes along the salinity gradient.</para>
+</abstract>
+<funding>
+<para>This material is based upon work supported by the National Science Foundation under grant number OCE-9982133. Any opinions, findings, conclusions, or recommendations expressed in the material are those of the author(s) and do not necessarily reflect the views of the National Science Foundation.</para>
+</funding>
+</project>
+<dataTable>
+<entityName>ALG-GCED-0304d_1_1.TXT</entityName>
+<physical>
+<objectName>ALG-GCED-0304d_1_1.TXT</objectName>
+<size unit="rows">214</size>
+<characterEncoding>ASCII</characterEncoding>
+<dataFormat>
+<textFormat>
+<numHeaderLines>1</numHeaderLines>
+<numFooterLines>0</numFooterLines>
+<recordDelimiter>\r</recordDelimiter>
+<numPhysicalLinesPerRecord>1</numPhysicalLinesPerRecord>
+<attributeOrientation>column</attributeOrientation>
+<simpleDelimited>
+<fieldDelimiter>\t</fieldDelimiter>
+</simpleDelimited>
+</textFormat>
+</dataFormat>
+<distribution>
+<online>
+<url function="download">http://metacat.lternet.edu/das/dataAccessServlet?docid=knb-lter-gce.114.11&amp;amp;urlTail=accession=ALG-GCED-0304d&amp;amp;filename=ALG-GCED-0304d_1_1.TXT</url>
+</online>
+<access authSystem="knb" order="allowFirst" scope="document">
+<allow>
+<principal>uid=GCE,o=lter,dc=ecoinformatics,dc=org</principal>
+<permission>all</permission>
+</allow>
+<allow>
+<principal>public</principal>
+<permission>read</permission>
+</allow>
+</access>
+</distribution>
+</physical>
+<methods>
+<methodStep>
+<description><para>Data file post-processing in the GCE-LTER Information Management Office</para></description>
+<software id="gcetoolbox">
+<title>GCE Data Toolbox for MATLAB(r)</title>
+<creator>
+<individualName>
+<salutation>Mr.</salutation>
+<givenName>Wade</givenName>
+<givenName>M.</givenName>
+<surName>Sheldon</surName>
+</individualName>
+<address>
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>sheldon@uga.edu</electronicMailAddress>
+<onlineUrl>http://gce-lter.marsci.uga.edu/public/app/personnel_bios.asp?id=wsheldon</onlineUrl>
+</creator>
+<associatedParty>
+<organizationName>Georgia Coastal Ecosystems LTER Project</organizationName>
+<address>
+<deliveryPoint>Dept. of Marine Sciences</deliveryPoint>
+<deliveryPoint>University of Georgia</deliveryPoint>
+<city>Athens</city>
+<administrativeArea>Georgia</administrativeArea>
+<postalCode>30602-3636</postalCode>
+<country>USA</country>
+</address>
+<electronicMailAddress>gcelter@uga.edu</electronicMailAddress>
+<role>sponsoring research program</role>
+</associatedParty>
+<abstract>
+<para>The GCE Data Toolbox is a comprehensive library of functions for metadata-based analysis, visualization, transformation and management of ecological data sets. The toolbox is based on the GCE Data Structure specification, a standard for storing tabular data along with all information required to interpret the data and generate formatted metadata (documentation).  The various metadata fields in the structure are queried by toolbox functions for all operations, allowing functions to process and format values appropriately based on the type of information they represent. This semantic processing approach supports highly automated and intelligent data analysis and ensures data set validity throughout all processing steps.</para>
+</abstract>
+<implementation>
+<distribution>
+<online>
+<url function="information">http://gce-lter.marsci.uga.edu/public/im/tools/toolbox_download.htm</url>
+</online>
+</distribution>
+<operatingSystem>Linux</operatingSystem>
+<operatingSystem>Windows NT4</operatingSystem>
+<operatingSystem>Windows 2000</operatingSystem>
+<operatingSystem>Windows XP</operatingSystem>
+<operatingSystem>Sun Solaris</operatingSystem>
+<operatingSystem>Mac OS X</operatingSystem>
+<programmingLanguage>MATLAB</programmingLanguage>
+</implementation>
+<version>1.9x</version>
+</software>
+<subStep>
+<description>
+<para>05/22/2003: new GCE Data Structure 1.1 created ('newstruct')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: 213 rows imported from ASCII data file 'ALG-GCED-0304d.TXT' ('imp_ascii')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: 10 metadata fields in file header parsed ('parse_header')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: data structure validated ('gce_valid')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: Q/C flagging criteria applied, 'flags' field updated ('dataflag')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: imported Data, Dataset, Project, Site, Study, Status, Supplement metadata descriptors from the GCE Metabase ('imp_gcemetadata')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>05/22/2003: Q/C flagging criteria applied, 'flags' field updated ('dataflag')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: imported Data, Dataset, Project, Site, Study, Status, Supplement metadata descriptors from the GCE Metabase ('imp_gcemetadata')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>10/29/2003: Q/C flagging criteria applied, 'flags' field updated ('dataflag')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>11/08/2005: imported Dataset, Project, Site, Study, Status, Supplement metadata descriptors from the GCE Metabase ('imp_gcemetadata')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>11/08/2005: updated 66 metadata fields in the Data, Dataset, Project, Site, Status, Study, Supplement sections ('imp_gcemetadata')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>04/17/2006: standardized case of date component column units to prevent unit conversion issues ('batch_update_datetime'): updated units for column Year from 'yyyy' to 'YYYY'; updated units for column Month from 'mm' to 'MM'; updated units for column Day from 'dd' to 'DD'</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>04/17/2006: updated 4 metadata fields ('addmeta')</para>
+</description>
+</subStep>
+<subStep>
+<description>
+<para>04/17/2006: updated 15 metadata fields in the Status, Data sections to reflect attribute metadata ('updatecols')</para>
+</description>
+</subStep>
+</methodStep>
+<qualityControl>
+<description>
+<para>QA/QC flags are generated automatically according to domain criteria specified for each data column. A flag column is generated and appended to the data table if any flags are assigned to any value, listing the flags for each column on each row.</para>
+</description>
+<software>
+<references>gcetoolbox</references>
+</software>
+</qualityControl>
+</methods>
+<additionalInfo>
+<para>Data Anomalies: Sediment density, porosity and organic content were not measured for many samples</para>
+</additionalInfo>
+<attributeList>
+<attribute id="att.1">
+<attributeName>Year</attributeName>
+<attributeDefinition>Year of sample collection</attributeDefinition>
+<storageType>integer</storageType>
+<measurementScale>
+<dateTime>
+<formatString>YYYY</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain/>
+</dateTime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.2">
+<attributeName>Month</attributeName>
+<attributeDefinition>Month of sample collection</attributeDefinition>
+<storageType>integer</storageType>
+<measurementScale>
+<dateTime>
+<formatString>MM</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain>
+<bounds>
+<minimum exclusive="false">1</minimum>
+<maximum exclusive="false">12</maximum>
+</bounds>
+</dateTimeDomain>
+</dateTime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.3">
+<attributeName>Day</attributeName>
+<attributeDefinition>Day of sample collection</attributeDefinition>
+<storageType>integer</storageType>
+<measurementScale>
+<dateTime>
+<formatString>DD</formatString>
+<dateTimePrecision>1</dateTimePrecision>
+<dateTimeDomain>
+<bounds>
+<minimum exclusive="false">1</minimum>
+<maximum exclusive="false">31</maximum>
+</bounds>
+</dateTimeDomain>
+</dateTime>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.4">
+<attributeName>Station</attributeName>
+<attributeDefinition>Site location code</attributeDefinition>
+<storageType>string</storageType>
+<measurementScale>
+<nominal>
+<nonNumericDomain>
+<enumeratedDomain>
+<codeDefinition>
+<code>DB</code>
+<definition>Dover Bluff</definition>
+</codeDefinition>
+<codeDefinition>
+<code>MH</code>
+<definition>Moses Hammock GCE site 10</definition>
+</codeDefinition>
+<codeDefinition>
+<code>MI</code>
+<definition>Marine Institute</definition>
+</codeDefinition>
+<codeDefinition>
+<code>DC</code>
+<definition>Dean Creek GCE site 6</definition>
+</codeDefinition>
+</enumeratedDomain>
+</nonNumericDomain>
+</nominal>
+</measurementScale>
+</attribute>
+<attribute id="att.5">
+<attributeName>Zone</attributeName>
+<attributeDefinition>Site location zone</attributeDefinition>
+<storageType>integer</storageType>
+<measurementScale>
+<nominal>
+<nonNumericDomain>
+<enumeratedDomain>
+<codeDefinition>
+<code>0</code>
+<definition>unvegetated bank</definition>
+</codeDefinition>
+<codeDefinition>
+<code>1</code>
+<definition>short marsh</definition>
+</codeDefinition>
+<codeDefinition>
+<code>2</code>
+<definition>mid marsh</definition>
+</codeDefinition>
+<codeDefinition>
+<code>3</code>
+<definition>tall marsh</definition>
+</codeDefinition>
+</enumeratedDomain>
+</nonNumericDomain>
+</nominal>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.6">
+<attributeName>Replicate</attributeName>
+<attributeDefinition>Sample replicate number</attributeDefinition>
+<storageType>string</storageType>
+<measurementScale>
+<nominal>
+<nonNumericDomain>
+<textDomain>
+<definition>Sample replicate number</definition>
+</textDomain>
+</nonNumericDomain>
+</nominal>
+</measurementScale>
+</attribute>
+<attribute id="att.7">
+<attributeName>Chl_a_Conc</attributeName>
+<attributeDefinition>Surface sediment chlorophyll a concentration</attributeDefinition>
+<storageType>float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>milligramsPerSquareMeter</standardUnit>
+</unit>
+<precision>0.1</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.8">
+<attributeName>Sed_Density</attributeName>
+<attributeDefinition>Surface sediment density (grams wet sediment per volume)</attributeDefinition>
+<storageType>float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>gramsPerCubicCentimeter</standardUnit>
+</unit>
+<precision>0.01</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.9">
+<attributeName>Sed_Porosity</attributeName>
+<attributeDefinition>Surface sediment porosity (grams water per gram wet sediment)</attributeDefinition>
+<storageType>float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>dimensionless</standardUnit>
+</unit>
+<precision>0.01</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+<maximum exclusive="false">1</maximum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+<attribute id="att.10">
+<attributeName>Organic_Content</attributeName>
+<attributeDefinition>Organic content (grams per gram dry sediment)</attributeDefinition>
+<storageType>float</storageType>
+<measurementScale>
+<ratio>
+<unit>
+<standardUnit>dimensionless</standardUnit>
+</unit>
+<precision>0.01</precision>
+<numericDomain>
+<numberType>real</numberType>
+<bounds>
+<minimum exclusive="false">0</minimum>
+</bounds>
+</numericDomain>
+</ratio>
+</measurementScale>
+<missingValueCode>
+<code>NaN</code>
+<codeExplanation>value not recorded or invalid</codeExplanation>
+</missingValueCode>
+</attribute>
+</attributeList>
+</dataTable>
+</dataset>
+</eml:eml>

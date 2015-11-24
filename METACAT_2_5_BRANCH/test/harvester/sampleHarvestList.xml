@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<hrv:harvestList xmlns:hrv="eml://ecoinformatics.org/harvestList" >
+    <document>
+        <docid>
+            <scope>demoDocument</scope>
+            <identifier>1</identifier>
+            <revision>1</revision>
+        </docid>
+        <documentType>eml://ecoinformatics.org/eml-2.0.1</documentType>
+        <documentURL>http://www.lternet.edu/~dcosta/testHarvest/document1.xml</documentURL>
+    </document>
+    <document>
+        <docid>
+            <scope>demoDocument</scope>
+            <identifier>2</identifier>
+            <revision>1</revision>
+        </docid>
+        <documentType>eml://ecoinformatics.org/eml-2.0.1</documentType>
+        <documentURL>http://www.lternet.edu/~dcosta/testHarvest/document2.xml</documentURL>
+    </document>
+</hrv:harvestList>

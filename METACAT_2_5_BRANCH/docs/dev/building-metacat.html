@@ -1,0 +1,139 @@
+<!--
+  * sitemaps.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2008 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2008 November 4
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<HTML>
+<HEAD>
+<TITLE>Building Metacat</TITLE>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</HEAD> 
+<BODY>
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Building Metacat</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="./metacat-eclipse-project.html">Back</a> | <a href="./index.html">Home</a> | 
+        <a href="./testing-metacat.html">Next</a>
+      </td>
+    </tr>
+  </table>
+      
+  <div class="header1">Table of Contents</div>
+  <div class="toc">
+    <div class="toc1"><a href="#Intro">About Building Metacat</a></div>
+    <div class="toc1"><a href="#Prep">Prep the Build Configuration</a></div>
+      <div class="toc2"><a href="#BuildProperties">build.properties</a></div>
+      <div class="toc2"><a href="#BuildXml">build.xml</a></div>
+    <div class="toc1"><a href="#Cleaning">Cleaning the Codebase</a></div>
+    <div class="toc1"><a href="#AutomatedBuild">Automated Build</a></div>
+    <div class="toc1"><a href="#ManualBuild">Manual Build</a></div>
+  </div>  
+  
+  <a name="Intro"></a><div class="header1">About Building Metacat</div>
+  <p>This documentation covers building Metacat on a local development environment. 
+  In essence, the local development build is no different than the production build,
+  but a few convenience options have been added to help the developer. </p>  
+  
+  <p>These instructions are meant to augment the Install Metacat War section of the
+  following guides
+  <ul>
+  <li><a href="../user/metacat-linux-install.html">Metacat Linux Installation Guide</a>.</li>
+  <li><a href="../user/metacat-windows-install.html">Metacat Windows Installation Guide</a>.</li>
+  </ul>
+  
+  <p>Metacat is built using the Ant build utility.  You will need to have Ant
+  installed on your development system to build Metacat</p>
+  
+  <a name="Prep"></a><div class="header1">Prep the Build Configuration</div>
+  <a name="BuildProperties"></a><div class="header2">build.properties</div>
+  <p>You will need to edit <metacat_workspace>/build.properties and make sure
+  the following values are correct:
+  <ul>
+  <li>build.tomcat.dir - Metacat will look for some HttpServlet libraries in the local
+  Tomcat directories.  Make sure this value is set to your local Tomcat installation 
+  directory.</li>
+  <li>app.deploy.dir - the automated installation build (install) will deploy your
+  war file for you and clean up old application directories.  Make sure this is set
+  to the directory where Tomcat looks for its applications.</li>
+  <li>cvsroot - if your cvs user is different than the user you are using to build metacat, 
+  you will need to change
+    <div class="code">:ext:${env.USER}@cvs.ecoinformatics.org:/cvs</div>
+  to
+    <div class="code">:ext:&lt;your_cvs_user&gt;@cvs.ecoinformatics.org:/cvs</div>
+  If you do not have a personal account with cvs, you can set the username to 
+  "anonymous".  The password will be "guestaccess".
+  </li>
+  </ul>
+  
+  <a name="BuildXml"></a><div class="header2">build.xml</div>
+  <p>There are several adjustments you can make to the build by editing 
+  &gt;metacat_workspace&lt;/build.xml.  Some of the common ones are:
+  <ul>
+  <li>eml2_1_0-schema-tag - the tag in the eml repository that Metacat will use to
+  check out EML schema code.  You would change this if you want to check out the latest code 
+  on the head (leave as "") or if you want to run against an older version.</li>
+  <li>eml2_1_0-style-tag - the tag in the eml repository that Metacat will use to
+  check out EML style code.  You would change this if you want to check out the latest code 
+  on the head (leave as "") or if you want to run against an older version.</li>
+  <li>util-module - this tells metacat where to checkout to and/or look for 
+  the common utilities code.  Typically this is in a directory named utilities at the 
+  same level as Metacat code.  You could change this to point to an alternative directory
+  which may have different utilities code (from a different branch for instance).</li>
+  <li>utilities-tag - the tag in the utility repository that Metacat will use to
+  check out utility code.  You would change this if you want to check out the latest code 
+  on the head (leave as "") or if you want to run against an older version.</li>
+  </ul>
+
+  <a name="Cleaning"></a><div class="header1">Cleaning the Codebase</div>
+  <p>The metacat build.xml has several methods for cleaning the codebase.  The format
+  for running these is:</p>
+  <div class="code">ant &lt;clean-target&gt;</div>
+  The available clean-targets are:
+  <ul>
+  <li>clean - removes build and dist dirs.  This will cause a rebuild of code in the 
+  metacat project.</li>
+  <li>localclean - does a clean plus removes utilities and httpclient jars.  This 
+  causes a rebuild of utilities and the metacat project.  This is provided so the 
+  developer does not need to download all eml files every time utilities change.</li>
+  <li>ant fullclean - do a localclean plus remove eml files, so the system will 
+  checkout eml files from the eml module in CVS.</li>
+  </ul>
+  
+  <a name="AutomatedBuild"></a><div class="header1">Automated Build</div>
+  <p>The ant "install" target controls deploying Metacat locally.  This can be 
+  used for source distributions or code that was checked out of the repository.
+  What is does is:</p>
+  <ul>
+  <li>Builds the Metacat project, resulting in a war file.</li>
+  <li>Moves the war file to the app.deploy.dir that you set in build.properties</li>
+  <li>Removes the existing application directory from the app.deploy.dir.</li>
+  </ul>
+  Typical usage would be something like:</p>
+  <div class="code">ant fullclean install</div>
+  
+  <a name="ManualBuild"></a><div class="header1">Manual Build</div>  
+  <p>You can also build the Metacat war file and deploy manually.  To build and create the 
+  war, run:</p>
+  <div class="code">ant build-metacat</div> 
+  <p>The war file will appear in your &gt;metacat_workspace&lt;/dist directory.  Copy the war
+  file into your tomcat webapps directory.  Delete the existing code that was expanded
+  from the old jar.</p>
+  
+  <br>
+  <a href="./metacat-eclipse-project.html">Back</a> | <a href="./index.html">Home</a> | 
+  <a href="./testing-metacat.html">Next</a>
+</BODY>
+</HTML>

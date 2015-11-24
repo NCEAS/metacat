@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sleep 5
+echo Starting Tomcat
+/etc/init.d/tomcat6 start

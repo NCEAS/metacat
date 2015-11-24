@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>setup (MetacatTest)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File test/metacat_test.rb, line 7</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">setup</span>
+    <span class="ruby-comment cmt"># This test case is setup for use against the ucsb/msi metacat server</span>
+    <span class="ruby-comment cmt"># You need a valid login to run the test case as well as an squery, eml-docid,</span>
+    <span class="ruby-comment cmt"># and datatable docid that will all return documents</span>
+    <span class="ruby-ivar">@username</span> = <span class="ruby-value str">'uid=cburt,o=PISCO,dc=ecoinformatics,dc=org'</span>
+    <span class="ruby-ivar">@password</span> = <span class="ruby-value str">'7lobster'</span>
+    <span class="ruby-ivar">@metacat</span> = <span class="ruby-constant">Metacat</span>.<span class="ruby-identifier">new</span>(<span class="ruby-value str">&quot;http://data.piscoweb.org/catalog/metacat&quot;</span>)
+    <span class="ruby-comment cmt">#must return at least one eml document</span>
+    <span class="ruby-ivar">@squery</span> = <span class="ruby-value str">'&lt;?xml version=&quot;1.0&quot;?&gt;
+                 &lt;pathquery version=&quot;1.2&quot;&gt;
+                   &lt;returndoctype&gt;eml://ecoinformatics.org/eml-2.0.1&lt;/returndoctype&gt;
+                   &lt;returndoctype&gt;eml://ecoinformatics.org/eml-2.0.0&lt;/returndoctype&gt;
+                   &lt;returnfield&gt;dataset/title&lt;/returnfield&gt;
+                   &lt;returnfield&gt;dataTable/entityName&lt;/returnfield&gt;
+                   &lt;returnfield&gt;creator/individualName/surName&lt;/returnfield&gt;
+                   &lt;returnfield&gt;creator/organizationName&lt;/returnfield&gt;
+                   &lt;returnfield&gt;dataTable/physical/distribution/online/url&lt;/returnfield&gt;
+                   &lt;querygroup operator=&quot;INTERSECT&quot;&gt;
+                     &lt;queryterm casesensitive=&quot;false&quot; searchmode=&quot;starts-with&quot;&gt;
+                       &lt;value&gt;PISCO:&lt;/value&gt;
+                       &lt;pathexpr&gt;title&lt;/pathexpr&gt;
+                     &lt;/queryterm&gt;
+                     &lt;querygroup operator=&quot;INTERSECT&quot;&gt;
+                       &lt;queryterm casesensitive=&quot;true&quot; searchmode=&quot;equals&quot;&gt;
+                         &lt;value&gt;Subtidal Community Survey Data&lt;/value&gt;
+                         &lt;pathexpr&gt;keywordSet/keyword&lt;/pathexpr&gt;
+                       &lt;/queryterm&gt;
+                       &lt;queryterm casesensitive=&quot;true&quot; searchmode=&quot;equals&quot;&gt;
+                         &lt;value&gt;PISCO Categories&lt;/value&gt;
+                         &lt;pathexpr&gt;keywordSet/keywordThesaurus&lt;/pathexpr&gt;
+                       &lt;/queryterm&gt;
+                     &lt;/querygroup&gt;
+                   &lt;/querygroup&gt;
+                 &lt;/pathquery&gt;'</span>
+    <span class="ruby-ivar">@data_table_docid</span> = <span class="ruby-value str">'HMS001_020ADCP019R00_20060612.40.1'</span>
+    <span class="ruby-ivar">@eml_docid</span> = <span class="ruby-value str">'HMS001_020ADCP019R00_20060612.50.1'</span>
+    <span class="ruby-comment cmt"># Not accessable to user Public</span>
+    <span class="ruby-ivar">@locked_docid</span> = <span class="ruby-value str">'chad.1.1'</span>
+  <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>
