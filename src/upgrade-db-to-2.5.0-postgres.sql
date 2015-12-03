@@ -1,3 +1,5 @@
+SELECT setval('xml_catalog_id_seq', (SELECT max(catalog_id) from xml_catalog));
+
 /*
  * Alter the system metadata table to suport seriesId
  */
