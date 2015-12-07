@@ -106,6 +106,7 @@ public class DBAdmin extends MetacatAdmin {
 		sqlCommandSet.add("BEGIN");
 		sqlCommandSet.add("COMMIT");
 		sqlCommandSet.add("WITH");
+		sqlCommandSet.add("SELECT");
 
 		// gets all the upgrade version objects
 		try {
