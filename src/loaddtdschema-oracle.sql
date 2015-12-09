@@ -158,4 +158,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.w3.org/1999/xlink', '/schema/isotc211/xlink/xlinks.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.5.0',1,CURRENT_DATE);
+  VALUES ('2.5.1',1,CURRENT_DATE);
