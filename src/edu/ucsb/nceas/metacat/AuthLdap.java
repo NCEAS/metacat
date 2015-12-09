@@ -48,6 +48,7 @@ import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
 
 import org.apache.log4j.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -1285,6 +1286,8 @@ public class AuthLdap implements AuthInterface {
 				}
 			}
 			logMetacat.info("AuthLdap.getPrincipals - org name is  " + orgName);
+			orgName = StringEscapeUtils.escapeXml(orgName);
+			logMetacat.info("AuthLdap.getPrincipals - org name (after the xml escaping) is  " + orgName);
 			out.append("  <authSystem URI=\"" + this.ldapUrl + this.ldapBase
 					+ "\" organization=\"" + orgName + "\">\n");
 
@@ -1299,29 +1302,29 @@ public class AuthLdap implements AuthInterface {
 			if (groups != null && users != null && groups.length > 0) {
 				for (int i = 0; i < groups.length; i++) {
 					out.append("    <group>\n");
-					out.append("      <groupname>" + groups[i][0] + "</groupname>\n");
-					out.append("      <description>" + groups[i][1] + "</description>\n");
+					out.append("      <groupname>" + StringEscapeUtils.escapeXml(groups[i][0]) + "</groupname>\n");
+					out.append("      <description>" + StringEscapeUtils.escapeXml(groups[i][1]) + "</description>\n");
 					String[] usersForGroup = getUsers(user, password, groups[i][0]);
 					for (int j = 0; j < usersForGroup.length; j++) {
 						userIndex = searchUser(usersForGroup[j], users);
 						out.append("      <user>\n");
 
 						if (userIndex < 0) {
-							out.append("        <username>" + usersForGroup[j]
+							out.append("        <username>" + StringEscapeUtils.escapeXml(usersForGroup[j])
 									+ "</username>\n");
 						} else {
-							out.append("        <username>" + users[userIndex][0]
+							out.append("        <username>" + StringEscapeUtils.escapeXml(users[userIndex][0])
 									+ "</username>\n");
-							out.append("        <name>" + users[userIndex][1]
+							out.append("        <name>" + StringEscapeUtils.escapeXml(users[userIndex][1])
 									+ "</name>\n");
-							out.append("        <organization>" + users[userIndex][2]
+							out.append("        <organization>" + StringEscapeUtils.escapeXml(users[userIndex][2])
 									+ "</organization>\n");
 							if (users[userIndex][3].compareTo("null") != 0) {
 								out.append("      <organizationUnitName>"
-										+ users[userIndex][3]
+										+ StringEscapeUtils.escapeXml(users[userIndex][3])
 										+ "</organizationUnitName>\n");
 							}
-							out.append("        <email>" + users[userIndex][4]
+							out.append("        <email>" + StringEscapeUtils.escapeXml(users[userIndex][4])
 									+ "</email>\n");
 						}
 
@@ -1335,16 +1338,16 @@ public class AuthLdap implements AuthInterface {
 				// for the users not belonging to any grou8p
 				for (int j = 0; j < users.length; j++) {
 					out.append("    <user>\n");
-					out.append("      <username>" + users[j][0] + "</username>\n");
-					out.append("      <name>" + users[j][1] + "</name>\n");
+					out.append("      <username>" + StringEscapeUtils.escapeXml(users[j][0]) + "</username>\n");
+					out.append("      <name>" + StringEscapeUtils.escapeXml(users[j][1]) + "</name>\n");
 					out
-							.append("      <organization>" + users[j][2]
+							.append("      <organization>" + StringEscapeUtils.escapeXml(users[j][2])
 									+ "</organization>\n");
 					if (users[j][3].compareTo("null") != 0) {
-						out.append("      <organizationUnitName>" + users[j][3]
+						out.append("      <organizationUnitName>" + StringEscapeUtils.escapeXml(users[j][3])
 								+ "</organizationUnitName>\n");
 					}
-					out.append("      <email>" + users[j][4] + "</email>\n");
+					out.append("      <email>" + StringEscapeUtils.escapeXml(users[j][4]) + "</email>\n");
 					out.append("    </user>\n");
 				}
 			}
