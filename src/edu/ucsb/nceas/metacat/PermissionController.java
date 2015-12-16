@@ -39,11 +39,13 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
+import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -149,7 +151,9 @@ public class PermissionController
 		userSession.setSubject(subject);
 		Identifier pid = new Identifier();
 		pid.setValue(guid);
-		isOwner = D1NodeService.userHasPermission(userSession, pid, Permission.CHANGE_PERMISSION);
+		//isOwner = D1NodeService.userHasPermission(userSession, pid, Permission.CHANGE_PERMISSION);
+		SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+		isOwner = (sysMeta.getRightsHolder().equals(subject));
     } catch (Exception e) {
 		logMetacat.warn("Error checking for DataONE permissions: " + e.getMessage(), e);
 		isOwner = false;
