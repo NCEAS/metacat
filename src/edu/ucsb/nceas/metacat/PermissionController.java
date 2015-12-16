@@ -35,10 +35,15 @@ import java.util.Hashtable;
 import java.util.Vector;
 
 import org.apache.log4j.Logger;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Permission;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -134,6 +139,24 @@ public class PermissionController
 		// not much we can do here, except treat them as normal
 		logMetacat.warn("Error checking for administrator: " + e.getMessage(), e);
 	}
+    
+    // for DataONE rightsHolder permission
+    boolean isOwner = false;
+    try {
+		Session userSession = new Session();
+		Subject subject = new Subject();
+		subject.setValue(user);
+		userSession.setSubject(subject);
+		Identifier pid = new Identifier();
+		pid.setValue(guid);
+		isOwner = D1NodeService.userHasPermission(userSession, pid, Permission.CHANGE_PERMISSION);
+    } catch (Exception e) {
+		logMetacat.warn("Error checking for DataONE permissions: " + e.getMessage(), e);
+		isOwner = false;
+    }
+    if (isOwner) {
+    	return true;
+    }
 
     //create a userpackage including user, public and group member
     userPackage=createUsersPackage(user, groups);
