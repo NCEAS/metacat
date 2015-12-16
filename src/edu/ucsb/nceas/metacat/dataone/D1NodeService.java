@@ -1142,7 +1142,7 @@ public abstract class D1NodeService {
    * 1. Owner can have any permission.
    * 2. Access table allow the user has the permission
    */
-  protected boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound{
+  public static boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound{
       boolean allowed = false;
       // permissions are hierarchical
       List<Permission> expandedPermissions = null;
@@ -1778,7 +1778,7 @@ public abstract class D1NodeService {
    * @param permission
    * @return list of included Permissions for the given permission
    */
-  protected List<Permission> expandPermissions(Permission permission) {
+  protected static List<Permission> expandPermissions(Permission permission) {
 	  	List<Permission> expandedPermissions = new ArrayList<Permission>();
 	    if (permission.equals(Permission.READ)) {
 	    	expandedPermissions.add(Permission.READ);
