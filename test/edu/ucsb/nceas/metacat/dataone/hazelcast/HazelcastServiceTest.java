@@ -97,6 +97,7 @@ public class HazelcastServiceTest extends MCTestCase {
 			Identifier pid = null;
 			// create the systemMetadata the normal way
 			CNodeServiceTest cnst = new CNodeServiceTest("testRegisterSystemMetadata");
+			cnst.setUp();
 			pid = cnst.testRegisterSystemMetadata();
 			assertNotNull(pid);
 			// look it up from the "shared" map
@@ -113,6 +114,7 @@ public class HazelcastServiceTest extends MCTestCase {
 		try {
 			// create the systemMetadata and save to map
 			CNodeServiceTest cnst = new CNodeServiceTest("testGetSystemMetadata");
+			cnst.setUp();
 			Session session = cnst.getTestSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testCreate." + System.currentTimeMillis());
