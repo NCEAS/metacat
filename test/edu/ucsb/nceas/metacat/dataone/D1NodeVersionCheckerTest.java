@@ -180,7 +180,7 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
       node.setValue("urn:node:cnDevUCSB1");
       checker = new D1NodeVersionChecker(node);
       assertTrue(checker.getVersion("MNReplication") == null);
-      assertTrue(checker.getVersion("CNRegister").equals("v1"));
+      assertTrue(checker.getVersion("CNRegister").equals("v2"));
       
       
       Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
