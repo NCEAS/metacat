@@ -501,14 +501,17 @@ public class DatapackageSummarizer {
 	private void summarize(List<Identifier> identifiers) throws SQLException {
 		
 		DBConnection dbconn = null;
-
+		int serialNumber = -1;
+		PreparedStatement dropStatement = null;
+		PreparedStatement createStatement = null;
+		PreparedStatement insertStatement = null;
 		try {
 			dbconn = DBConnectionPool.getDBConnection("DatapackageSummarizer.summarize");
-			
-			PreparedStatement dropStatement = dbconn.prepareStatement("DROP TABLE IF EXISTS entity_summary");
+			serialNumber = dbconn.getCheckOutSerialNumber();
+			dropStatement = dbconn.prepareStatement("DROP TABLE IF EXISTS entity_summary");
 			dropStatement.execute();
 	
-			PreparedStatement createStatement = dbconn.prepareStatement(
+			createStatement = dbconn.prepareStatement(
 					"CREATE TABLE entity_summary (" +
 					"guid text, " +
 					"title text, " +
@@ -524,7 +527,7 @@ public class DatapackageSummarizer {
 					")");
 			createStatement.execute();
 			
-			PreparedStatement insertStatement = dbconn.prepareStatement(
+			insertStatement = dbconn.prepareStatement(
 					"INSERT INTO entity_summary " +
 					"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 			
@@ -590,10 +593,25 @@ public class DatapackageSummarizer {
 			// just throw it
 			throw sqle;
 		} finally {
-			if (dbconn != null) {
-				DBConnectionPool.returnDBConnection(dbconn, 0);
-				dbconn.close();
-			}
+		    try {
+		        if(dropStatement != null) {
+		            dropStatement.close();
+		        }
+		        if(createStatement != null) {
+		            createStatement.close();
+		        }
+		        if(insertStatement != null) {
+		            insertStatement.close();
+		        }
+		    } catch (Exception e) {
+		        logMetacat.warn("couldn't close the prepared statement "+e.getMessage());
+		    } finally {
+		        if (dbconn != null) {
+	                DBConnectionPool.returnDBConnection(dbconn, serialNumber);
+	                //dbconn.close();
+	            }
+		    }
+			
 		}
 	}
 	
