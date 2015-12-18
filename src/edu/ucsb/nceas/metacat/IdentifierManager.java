@@ -928,13 +928,14 @@ public class IdentifierManager {
         
         DBConnection dbConn = null;
         int serialNumber = -1;
+        PreparedStatement stmt = null;
         try {
             // Get a database connection from the pool
             dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getGUID");
             serialNumber = dbConn.getCheckOutSerialNumber();
             
             // Execute the insert statement
-            PreparedStatement stmt = dbConn.prepareStatement(query);
+            stmt = dbConn.prepareStatement(query);
             stmt.setString(1, docid);
             stmt.setInt(2, rev);
             ResultSet rs = stmt.executeQuery();
@@ -946,13 +947,24 @@ public class IdentifierManager {
             {
             	throw new McdbDocNotFoundException("No guid registered for docid " + docid + "." + rev);
             }
-            
+            if(rs != null) {
+                rs.close();
+            }
         } catch (SQLException e) {
             logMetacat.error("Error while looking up the guid: " 
                     + e.getMessage());
         } finally {
-            // Return database connection to the pool
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            try {
+                if(stmt != null) {
+                    stmt.close();
+                }
+            } catch (Exception e) {
+                logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+            } finally {
+                // Return database connection to the pool
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }
+            
         }
         
         return guid;
@@ -977,6 +989,7 @@ public class IdentifierManager {
             String sql = "select guid from systemMetadata where series_id = ? order by date_uploaded DESC";
             DBConnection dbConn = null;
             int serialNumber = -1;
+            PreparedStatement stmt = null;
             int endsCount = 0;
             boolean hasError = false;
             try {
@@ -984,7 +997,7 @@ public class IdentifierManager {
                 dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getHeadPID");
                 serialNumber = dbConn.getCheckOutSerialNumber();
                 // Execute the insert statement
-                PreparedStatement stmt = dbConn.prepareStatement(sql);
+                stmt = dbConn.prepareStatement(sql);
                 stmt.setString(1, sid.getValue());
                 ResultSet rs = stmt.executeQuery();
                 boolean hasNext = rs.next();
@@ -1062,14 +1075,25 @@ public class IdentifierManager {
                     //it is not a sid or at least we don't have anything to match it.
                     //do nothing, so null will be returned
                 }
+                if(rs != null) {
+                    rs.close();
+                }
                 
             } catch (SQLException e) {
                 logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
                         + e.getMessage());
                 throw e;
             } finally {
-                // Return database connection to the pool
-                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                try {
+                    if(stmt != null) {
+                        stmt.close();
+                    }
+                } catch (Exception e) {
+                    logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+                } finally {
+                    // Return database connection to the pool
+                    DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                }
             }
         }
         return pid;
@@ -1101,26 +1125,37 @@ public class IdentifierManager {
             String sql = "select guid from systemMetadata where series_id = ?";
             DBConnection dbConn = null;
             int serialNumber = -1;
+            PreparedStatement stmt = null;
             try {
                 // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("IdentifierManager.serialIdExists");
                 serialNumber = dbConn.getCheckOutSerialNumber();
                 // Execute the insert statement
-                PreparedStatement stmt = dbConn.prepareStatement(sql);
+                stmt = dbConn.prepareStatement(sql);
                 stmt.setString(1, sid);
                 ResultSet rs = stmt.executeQuery();
                 if (rs.next()) 
                 {
                     exists = true;
                 } 
-                
+                if(rs != null) {
+                    rs.close();
+                }
             } catch (SQLException e) {
                 logMetacat.error("Error while checking if the sid "+sid+" exists on the series_id field of the system metadata table: " 
                         + e.getMessage());
                 throw e;
             } finally {
-                // Return database connection to the pool
-                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                try {
+                    if(stmt != null) {
+                        stmt.close();
+                    }
+                } catch (Exception e) {
+                    logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+                } finally {
+                    // Return database connection to the pool
+                    DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+                }
             }
         }
         return exists;
@@ -1147,6 +1182,7 @@ public class IdentifierManager {
 		String query = "select guid from systemmetadata where guid = ?";
 		DBConnection dbConn = null;
 		int serialNumber = -1;
+		PreparedStatement stmt = null;
 		if(guid != null && !guid.trim().equals("")) {
 		    try {
 	            // Get a database connection from the pool
@@ -1154,11 +1190,14 @@ public class IdentifierManager {
 	            serialNumber = dbConn.getCheckOutSerialNumber();
 
 	            // Execute the insert statement
-	            PreparedStatement stmt = dbConn.prepareStatement(query);
+	            stmt = dbConn.prepareStatement(query);
 	            stmt.setString(1, guid);
 	            ResultSet rs = stmt.executeQuery();
 	            if (rs.next()) {
 	                exists = true;
+	            }
+	            if(rs != null) {
+	                rs.close();
 	            }
 
 	        } catch (SQLException e) {
@@ -1166,8 +1205,16 @@ public class IdentifierManager {
 	                    + e.getMessage());
 	            throw e;
 	        } finally {
-	            // Return database connection to the pool
-	            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+	            try {
+	                if(stmt != null) {
+	                    stmt.close();
+	                }
+	            } catch (Exception e) {
+	                logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+	            } finally {
+	                // Return database connection to the pool
+	                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+	            }
 	        }
 		}
 		return exists;
