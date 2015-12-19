@@ -89,6 +89,8 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testGetHeadPID"));
         suite.addTest(new IdentifierManagerTest("testMediaType"));
         suite.addTest(new IdentifierManagerTest("testQuerySystemMetadata"));
+        suite.addTest(new IdentifierManagerTest("testSystemMetadataPIDExists"));
+        suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         return suite;
     }
     /**
@@ -276,6 +278,55 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
       assertTrue(localid != null);
     }
     
+    
+    /**
+     * Test the method systemMetadataPIDExist
+     */
+    public void testSystemMetadataPIDExists() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        boolean exist = IdentifierManager.getInstance().systemMetadataPIDExists(guid);
+        assertTrue(exist);
+        Thread.sleep(1000);
+        guid.setValue(generateDocumentId());
+        exist = IdentifierManager.getInstance().systemMetadataPIDExists(guid);
+        assertTrue(!exist);
+    }
+    
+    /**
+     * Test the method of systemMetadataSIDExist
+     * @throws exception
+     */
+    public void testSystemMetadataSIDExists() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        String sid1= "sid."+System.nanoTime();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(sid1);
+        System.out.println("the first sid is "+seriesId.getValue());
+        sysmeta.setSeriesId(seriesId);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        boolean exist = IdentifierManager.getInstance().systemMetadataPIDExists(guid);
+        assertTrue(exist);
+        exist = IdentifierManager.getInstance().systemMetadataSIDExists(guid);
+        assertTrue(!exist);
+        exist = IdentifierManager.getInstance().systemMetadataSIDExists(seriesId);
+        assertTrue(exist);
+        exist = IdentifierManager.getInstance().systemMetadataPIDExists(seriesId);
+        assertTrue(!exist);
+        Thread.sleep(1000);
+        sid1= "sid."+System.nanoTime();
+        seriesId.setValue(sid1);
+        exist = IdentifierManager.getInstance().systemMetadataSIDExists(seriesId);
+        assertTrue(!exist);
+    }
     /**
      * Test the method - getHeadPID for a speicified SID
      */
