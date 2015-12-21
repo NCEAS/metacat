@@ -190,7 +190,7 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
       node.setValue("urn:node:CN");
       checker = new D1NodeVersionChecker(node);
       assertTrue(checker.getVersion("MNReplication") == null);
-      assertTrue(checker.getVersion("CNRegister").equals("v1"));
+      assertTrue(checker.getVersion("CNRegister").equals("v2"));
   }
 
   
