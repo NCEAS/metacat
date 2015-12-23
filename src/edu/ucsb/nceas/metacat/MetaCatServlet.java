@@ -52,6 +52,7 @@ import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
+
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -850,26 +851,6 @@ public class MetaCatServlet extends HttpServlet {
 				SessionService.getInstance().validateSession(out, response, idToValidate);
 				out.close();
 
-				// handle shrink DBConnection request
-			} else if (action.equals("shrink")) {
-				PrintWriter out = response.getWriter();
-				boolean success = false;
-				// If all DBConnection in the pool are free and DBConnection
-				// pool
-				// size is greater than initial value, shrink the connection
-				// pool
-				// size to initial value
-				success = DBConnectionPool.shrinkConnectionPoolSize();
-				if (success) {
-					// if successfully shrink the pool size to initial value
-					out.println("DBConnection Pool shrunk successfully.");
-				}// if
-				else {
-					out.println("DBConnection pool not shrunk successfully.");
-				}
-				// close out put
-				out.close();
-
 				// aware of session expiration on every request
 			} else {
 				SessionData sessionData = RequestUtil.getSessionData(request);
@@ -1121,7 +1102,30 @@ public class MetaCatServlet extends HttpServlet {
 							ResponseUtil.DELETE_SCHEDULED_WORKFLOW_ERROR, be);
 					return;
 				}
-
+			} else if (action.equals("shrink")) {
+			     // handle shrink DBConnection request
+                PrintWriter out = response.getWriter();
+                if(!AuthUtil.isAdministrator(userName, groupNames)){
+                    out.println("The user "+userName+ " is not the administrator of the Metacat and doesn't have the permission to call the method.");
+                    out.close();
+                    return;
+                }
+                boolean success = false;
+                // If all DBConnection in the pool are free and DBConnection
+                // pool
+                // size is greater than initial value, shrink the connection
+                // pool
+                // size to initial value
+                success = DBConnectionPool.shrinkConnectionPoolSize();
+                if (success) {
+                    // if successfully shrink the pool size to initial value
+                    out.println("DBConnection Pool shrunk successfully.");
+                }// if
+                else {
+                    out.println("DBConnection pool did not shrink successfully.");
+                }
+                // close out put
+                out.close();
 			} else {
 				//try the plugin handler if it has an entry for handling this action
 				MetacatHandlerPlugin handlerPlugin = MetacatHandlerPluginManager.getInstance().getHandler(action);
