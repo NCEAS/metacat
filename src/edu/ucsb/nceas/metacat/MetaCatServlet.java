@@ -715,6 +715,9 @@ public class MetaCatServlet extends HttpServlet {
 			String ctype = request.getContentType();
 			
 			if (ctype != null && ctype.startsWith("multipart/form-data")) {
+			    if(isReadOnly(response)) {
+			        return;
+			    }
 				handler.handleMultipartForm(request, response);
 				return;
 			} 
@@ -909,6 +912,9 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleReadInlineDataAction(params, request, response, userName, password,
 						groupNames);
 			} else if (action.equals("insert") || action.equals("update")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				PrintWriter out = response.getWriter();
 				if ((userName != null) && !userName.equals("public")) {
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
@@ -923,6 +929,9 @@ public class MetaCatServlet extends HttpServlet {
 				}
 				out.close();
 			} else if (action.equals("delete")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				PrintWriter out = response.getWriter();
 				if ((userName != null) && !userName.equals("public")) {
 					handler.handleDeleteAction(out, params, request, response, userName,
@@ -941,6 +950,9 @@ public class MetaCatServlet extends HttpServlet {
 				handler.handleValidateAction(out, params);
 				out.close();
 			} else if (action.equals("setaccess")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				PrintWriter out = response.getWriter();
 				handler.handleSetAccessAction(out, params, userName, request, response);
 				out.close();
@@ -1011,10 +1023,19 @@ public class MetaCatServlet extends HttpServlet {
 				out.println("\n</user>\n");
 				out.close();
 			} else if (action.equals("buildindex")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				handler.handleBuildIndexAction(params, request, response, userName, groupNames);
 			} else if (action.equals("reindex")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				handler.handleReindexAction(params, request, response, userName, groupNames);
 			} else if (action.equals("reindexall")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
                 handler.handleReindexAllAction(params, request, response, userName, groupNames);
             } else if (action.equals("login") || action.equals("logout")) {
 				/*
@@ -1053,6 +1074,9 @@ public class MetaCatServlet extends HttpServlet {
 				ServiceService.refreshService("XMLSchemaService");
 				return;
 			} else if (action.equals("scheduleWorkflow")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				try {
 					WorkflowSchedulerClient.getInstance().scheduleJob(request, response,
 							params, userName, groupNames);
@@ -1063,6 +1087,9 @@ public class MetaCatServlet extends HttpServlet {
 					return;
 				}
 			} else if (action.equals("unscheduleWorkflow")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				try {
 					WorkflowSchedulerClient.getInstance().unScheduleJob(request,
 							response, params, userName, groupNames);
@@ -1073,6 +1100,9 @@ public class MetaCatServlet extends HttpServlet {
 					return;
 				}
 			} else if (action.equals("rescheduleWorkflow")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				try {
 					WorkflowSchedulerClient.getInstance().reScheduleJob(request,
 							response, params, userName, groupNames);
@@ -1093,6 +1123,9 @@ public class MetaCatServlet extends HttpServlet {
 					return;
 				}
 			} else if (action.equals("deleteScheduledWorkflow")) {
+			    if(isReadOnly(response)) {
+                    return;
+                }
 				try {
 					WorkflowSchedulerClient.getInstance().deleteJob(request, response,
 							params, userName, groupNames);
@@ -1130,6 +1163,9 @@ public class MetaCatServlet extends HttpServlet {
 				//try the plugin handler if it has an entry for handling this action
 				MetacatHandlerPlugin handlerPlugin = MetacatHandlerPluginManager.getInstance().getHandler(action);
 				if (handlerPlugin != null) {
+				    if(isReadOnly(response)) {
+	                    return;
+	                }
 					handlerPlugin.handleAction(action, params, request, response, userName, groupNames, sessionId);
 				} 
 				else {
@@ -1180,5 +1216,21 @@ public class MetaCatServlet extends HttpServlet {
      */
     public static boolean isFullyInitialized() {
     	return _fullyInitialized;
+    }
+    
+    private boolean isReadOnly(HttpServletResponse response) throws IOException {
+        boolean readOnly = false;
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        readOnly = checker.isReadOnly();
+        if(readOnly) {
+            PrintWriter out = response.getWriter();
+            response.setContentType("text/xml");
+            out.println("<?xml version=\"1.0\"?>");
+            out.println("<error>");
+            out.println("The Metacat is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            out.println("</error>");
+            out.close();
+        }
+        return readOnly;
     }
 }
