@@ -1340,6 +1340,7 @@
 		description="deletes build dir and files that can be regenerated form the release">
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
+	    <delete dir="${metacatui.build.dir}" />
 	</target>
 
 	<target name="fullclean" depends="clean"
