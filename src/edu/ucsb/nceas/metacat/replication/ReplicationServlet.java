@@ -47,6 +47,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.dataone.client.auth.CertificateManager;
 
+import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 
@@ -149,20 +150,38 @@ public class ReplicationServlet extends HttpServlet {
 				ReplicationService.handleGetDataFileRequest(outStream, params, response);
 				outStream.close();
 			} else if (action.equals("forcereplicatedatafile")) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				//read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDataFileRequest(params, request);
 			} else if (action.equals("forcereplicate")) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateRequest(params, response, request);
 			} else if (action.equals("forcereplicatesystemmetadata")) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				ReplicationService.handleForceReplicateSystemMetadataRequest(params, response, request);
 			} else if (action.equals(ReplicationService.FORCEREPLICATEDELETE)) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDeleteRequest(params, response, request, false);
 			} else if (action.equals(ReplicationService.FORCEREPLICATEDELETEALL)) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				// read a specific docid from remote host, and store it into local host
 				ReplicationService.handleForceReplicateDeleteRequest(params, response, request, true);
 			} else if (action.equals("update")) {
+			    if(MetaCatServlet.isReadOnly(response)) {
+                    return;
+                }
 				// request an update list from the server
 				ReplicationService.handleUpdateRequest(params, response);
 			} else if (action.equals("read")) {

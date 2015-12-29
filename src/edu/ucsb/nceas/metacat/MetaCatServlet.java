@@ -1218,7 +1218,7 @@ public class MetaCatServlet extends HttpServlet {
     	return _fullyInitialized;
     }
     
-    private boolean isReadOnly(HttpServletResponse response) throws IOException {
+    public static boolean isReadOnly(HttpServletResponse response) throws IOException {
         boolean readOnly = false;
         ReadOnlyChecker checker = new ReadOnlyChecker();
         readOnly = checker.isReadOnly();
