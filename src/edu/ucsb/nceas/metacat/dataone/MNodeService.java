@@ -146,6 +146,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -252,6 +253,9 @@ public class MNodeService extends D1NodeService
     public Identifier delete(Session session, Identifier pid) 
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
+        if(isReadOnlyMode()) {
+            throw new ServiceFailure("2902", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
     	// only admin of  the MN or the CN is allowed a full delete
         boolean allowed = false;
         allowed = isAdminAuthorized(session);
@@ -305,6 +309,10 @@ public class MNodeService extends D1NodeService
         throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, 
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
+        
+        if(isReadOnlyMode()) {
+            throw new InvalidRequest("1202", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
 
         //transform a sid to a pid if it is applicable
         String serviceFailureCode = "1310";
@@ -527,6 +535,9 @@ public class MNodeService extends D1NodeService
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
 
+        if(isReadOnlyMode()) {
+            throw new InvalidRequest("1102", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
         // check for null session
         if (session == null) {
           throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
@@ -634,6 +645,9 @@ public class MNodeService extends D1NodeService
             NodeReference sourceNode) throws NotImplemented, ServiceFailure,
             NotAuthorized, InvalidRequest, InsufficientResources,
             UnsupportedType {
+        if(isReadOnlyMode()) {
+            throw new InvalidRequest("2153", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
 
         if (session != null && sysmeta != null && sourceNode != null) {
             logMetacat.info("MNodeService.replicate() called with parameters: \n" +
@@ -1407,6 +1421,9 @@ public class MNodeService extends D1NodeService
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
         InvalidToken {
         
+        if(isReadOnlyMode()) {
+            throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
         // cannot be called by public
         if (session == null) {
         	throw new InvalidToken("1332", "No session was provided.");
@@ -2461,6 +2478,9 @@ public class MNodeService extends D1NodeService
 	   */
 	  public Identifier archive(Session session, Identifier pid) 
 	      throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
+	      if(isReadOnlyMode()) {
+	            throw new ServiceFailure("2912", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+	        }
 	      boolean allowed = false;
 	      // do we have a valid pid?
 	      if (pid == null || pid.getValue().trim().equals("")) {
@@ -2507,11 +2527,15 @@ public class MNodeService extends D1NodeService
 	public boolean updateSystemMetadata(Session session, Identifier pid,
             SystemMetadata sysmeta) throws NotImplemented, NotAuthorized,
             ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
+	  
+	  if(isReadOnlyMode()) {
+            throw new InvalidRequest("4869", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+      }
 	 if(sysmeta == null) {
-	     throw  new InvalidRequest("4863", "The system metadata object should NOT be null in the updateSystemMetadata request.");
+	     throw  new InvalidRequest("4869", "The system metadata object should NOT be null in the updateSystemMetadata request.");
 	 }
 	 if(pid == null || pid.getValue() == null) {
-         throw new InvalidRequest("4863", "Please specify the id in the updateSystemMetadata request ") ;
+         throw new InvalidRequest("4869", "Please specify the id in the updateSystemMetadata request ") ;
      }
 
      if (session == null) {
@@ -2536,7 +2560,7 @@ public class MNodeService extends D1NodeService
                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
              }
          } catch (NotFound e) {
-             throw new InvalidRequest("4863", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+             throw new InvalidRequest("4869", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
          }
          
      }
@@ -2546,15 +2570,15 @@ public class MNodeService extends D1NodeService
           HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
           SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
           if(currentSysmeta == null) {
-              throw  new InvalidRequest("4863", "We can't find the current system metadata on the member node for the id "+pid.getValue());
+              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
           }
           Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
           Date commingModiDate = sysmeta.getDateSysMetadataModified();
           if(commingModiDate == null) {
-              throw  new InvalidRequest("4863", "The system metadata modification date can't be null.");
+              throw  new InvalidRequest("4869", "The system metadata modification date can't be null.");
           }
           if(currentModiDate != null && commingModiDate.getTime() != currentModiDate.getTime()) {
-              throw new InvalidRequest("4863", "Your system metadata modification date is "+commingModiDate.toString()+
+              throw new InvalidRequest("4869", "Your system metadata modification date is "+commingModiDate.toString()+
                       ". It doesn't match our current system metadata modification date in the member node - "+currentModiDate.toString()+
                       ". Please check if you have got the newest version of the system metadata before the modification.");
           }
@@ -2649,6 +2673,17 @@ public class MNodeService extends D1NodeService
         }
         return allow;
         
+    }
+    
+    /**
+     * Check if the metacat is in the read-only mode.
+     * @return true if it is; otherwise false.
+     */
+    protected boolean isReadOnlyMode() {
+        boolean readOnly = false;
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        readOnly = checker.isReadOnly();
+        return readOnly;
     }
     
 }
