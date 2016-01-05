@@ -674,7 +674,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         ReadOnlyChecker checker = new ReadOnlyChecker();
         boolean isReadOnlyMode = checker.isReadOnly();
         if(isReadOnlyMode) {
-            throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("1333", ReadOnlyChecker.DATAONEERROR);
         }
         
         //final long serialVersion = 0L;
@@ -976,7 +976,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         ReadOnlyChecker checker = new ReadOnlyChecker();
         boolean isReadOnlyMode = checker.isReadOnly();
         if(isReadOnlyMode) {
-            throw new InvalidRequest("2153", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("2151", ReadOnlyChecker.DATAONEERROR);
         }
         
         // somewhat unorthodox, but the call is asynchronous and we'd like to return this info sooner

@@ -254,7 +254,7 @@ public class MNodeService extends D1NodeService
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         if(isReadOnlyMode()) {
-            throw new ServiceFailure("2902", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("2902", ReadOnlyChecker.DATAONEERROR);
         }
     	// only admin of  the MN or the CN is allowed a full delete
         boolean allowed = false;
@@ -311,7 +311,7 @@ public class MNodeService extends D1NodeService
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
         
         if(isReadOnlyMode()) {
-            throw new InvalidRequest("1202", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("1310", ReadOnlyChecker.DATAONEERROR);
         }
 
         //transform a sid to a pid if it is applicable
@@ -536,7 +536,7 @@ public class MNodeService extends D1NodeService
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
 
         if(isReadOnlyMode()) {
-            throw new InvalidRequest("1102", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
         }
         // check for null session
         if (session == null) {
@@ -2479,7 +2479,7 @@ public class MNodeService extends D1NodeService
 	  public Identifier archive(Session session, Identifier pid) 
 	      throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 	      if(isReadOnlyMode()) {
-	            throw new ServiceFailure("2912", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+	            throw new ServiceFailure("2912", ReadOnlyChecker.DATAONEERROR);
 	        }
 	      boolean allowed = false;
 	      // do we have a valid pid?
@@ -2529,7 +2529,7 @@ public class MNodeService extends D1NodeService
             ServiceFailure, InvalidRequest, InvalidSystemMetadata, InvalidToken {
 	  
 	  if(isReadOnlyMode()) {
-            throw new InvalidRequest("4869", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+            throw new ServiceFailure("4868",  ReadOnlyChecker.DATAONEERROR);
       }
 	 if(sysmeta == null) {
 	     throw  new InvalidRequest("4869", "The system metadata object should NOT be null in the updateSystemMetadata request.");

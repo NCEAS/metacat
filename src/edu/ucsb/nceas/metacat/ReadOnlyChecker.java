@@ -32,7 +32,7 @@ import org.dataone.configuration.Settings;
  */
 public class ReadOnlyChecker {
     
-
+    public static final String DATAONEERROR= "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.";
     /**
      * Default constructor
      */
