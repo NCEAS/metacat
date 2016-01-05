@@ -973,6 +973,11 @@ public class MNResourceHandler extends D1ResourceHandler {
         UnsupportedType, InstantiationException, IllegalAccessException, InvalidToken {
 
         logMetacat.debug("in POST replicate()");
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        boolean isReadOnlyMode = checker.isReadOnly();
+        if(isReadOnlyMode) {
+            throw new InvalidRequest("2153", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
         
         // somewhat unorthodox, but the call is asynchronous and we'd like to return this info sooner
         boolean allowed = false;

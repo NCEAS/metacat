@@ -645,9 +645,9 @@ public class MNodeService extends D1NodeService
             NodeReference sourceNode) throws NotImplemented, ServiceFailure,
             NotAuthorized, InvalidRequest, InsufficientResources,
             UnsupportedType {
-        if(isReadOnlyMode()) {
+        /*if(isReadOnlyMode()) {
             throw new InvalidRequest("2153", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
-        }
+        }*/
 
         if (session != null && sysmeta != null && sourceNode != null) {
             logMetacat.info("MNodeService.replicate() called with parameters: \n" +
