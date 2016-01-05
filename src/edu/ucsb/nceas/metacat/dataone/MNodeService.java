@@ -1421,9 +1421,9 @@ public class MNodeService extends D1NodeService
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
         InvalidToken {
         
-        if(isReadOnlyMode()) {
+        /*if(isReadOnlyMode()) {
             throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
-        }
+        }*/
         // cannot be called by public
         if (session == null) {
         	throw new InvalidToken("1332", "No session was provided.");

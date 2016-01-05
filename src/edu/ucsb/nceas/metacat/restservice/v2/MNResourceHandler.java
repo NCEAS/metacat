@@ -87,6 +87,7 @@ import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -669,7 +670,13 @@ public class MNResourceHandler extends D1ResourceHandler {
     private void systemMetadataChanged() 
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, 
         InvalidToken {
-
+        
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        boolean isReadOnlyMode = checker.isReadOnly();
+        if(isReadOnlyMode) {
+            throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
+        
         //final long serialVersion = 0L;
         String serialVersionStr = null;
         String dateSysMetaLastModifiedStr = null;

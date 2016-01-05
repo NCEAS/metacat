@@ -85,6 +85,7 @@ import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 
 
 /**
@@ -642,6 +643,11 @@ public class MNResourceHandler extends D1ResourceHandler {
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, 
         InvalidToken {
 
+        ReadOnlyChecker checker = new ReadOnlyChecker();
+        boolean isReadOnlyMode = checker.isReadOnly();
+        if(isReadOnlyMode) {
+            throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
+        }
         long serialVersion = 0L;
         String serialVersionStr = null;
         Date dateSysMetaLastModified = null;
