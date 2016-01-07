@@ -341,8 +341,9 @@ CREATE TABLE smMediaTypeProperties (
  * ALTER TABLE systemMetadata ADD COLUMN number_replicas INT8;
  */
 
-
+CREATE SEQUENCE policy_id_seq;
 CREATE TABLE smReplicationPolicy (
+  policy_id INT8 default nextval('policy_id_seq'), 
 	guid text,	-- the globally unique string identifier of the object that the system metadata describes
 	member_node VARCHAR(250),	 -- replication member node
 	policy text,	 -- the policy (preferred, blocked, etc...TBD)

@@ -442,13 +442,25 @@ CREATE TABLE smMediaTypeProperties (
      FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
 );
 
+
 CREATE TABLE smReplicationPolicy (
+    policy_id NUMBER(20),
 	guid VARCHAR2(2000),	-- the globally unique string identifier of the object that the system metadata describes
 	member_node VARCHAR(250),	 -- replication member node
 	policy VARCHAR2(2000),	 -- the policy (preferred, blocked, etc...TBD)
 	CONSTRAINT smReplicationPolicy_fk 
 		FOREIGN KEY (guid) REFERENCES systemMetadata DEFERRABLE
 );
+
+CREATE SEQUENCE policy_id_seq;
+CREATE TRIGGER smReplicationPolicy_before_insert
+BEFORE INSERT ON smReplicationPolicy FOR EACH ROW
+BEGIN
+  SELECT policy_id_seq.nextval
+    INTO :new.policy_id
+    FROM dual;
+END;
+/
 
 CREATE TABLE smReplicationStatus (
 	guid VARCHAR2(2000),	-- the globally unique string identifier of the object that the system metadata describes
