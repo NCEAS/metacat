@@ -539,17 +539,7 @@ To run Harvester as a servlet:
      -->
 
 2. Save the edited file. 
-3. Shut down Tomcat. 
-4. Redeploy Metacat by running the following two Ant commands from the 
-   top-level directory of your Metacat installation: 
-
-   ::
-   
-     ant cleanweb
-     ant install
-
-5. Restart Tomcat. Note that you will have to edit the ``metacat.properties`` 
-   file to specify harvester settings.
+3. Restart Tomcat.
 
 About thirty seconds after you restart Tomcat, the Harvester servlet will 
 start executing. The first harvest will occur after the number of hours 
