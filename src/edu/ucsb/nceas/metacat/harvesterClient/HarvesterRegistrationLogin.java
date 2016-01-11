@@ -25,12 +25,16 @@
 package edu.ucsb.nceas.metacat.harvesterClient;
 
 import java.io.PrintWriter;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+
 import edu.ucsb.nceas.metacat.AuthSession;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 
 /**
@@ -117,7 +121,8 @@ public class HarvesterRegistrationLogin extends HttpServlet {
             httpSession = req.getSession(true);
             httpSession.setAttribute("username", user);
             httpSession.setAttribute("password", passwd);
-            res.sendRedirect("/harvesterRegistration");
+            String context = PropertyService.getProperty("application.context");
+            res.sendRedirect("/" + context + "/harvesterRegistration");
           }
           else {
             out.println("Invalid login");
