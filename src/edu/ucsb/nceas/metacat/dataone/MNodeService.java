@@ -551,6 +551,12 @@ public class MNodeService extends D1NodeService
         // set the originating node
         NodeReference originMemberNode = this.getCapabilities().getIdentifier();
         sysmeta.setOriginMemberNode(originMemberNode);
+        
+        // if no authoritative MN, set it to the same
+        if (sysmeta.getAuthoritativeMemberNode() == null) {
+        	sysmeta.setAuthoritativeMemberNode(originMemberNode);
+        }
+        
         sysmeta.setArchived(false);
 
         // set the dates
