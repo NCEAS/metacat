@@ -485,7 +485,7 @@ public class EventLog
         	subQueryFrom.append("?");
     		String eventString = event;
     		if (eventString.equals(Event.CREATE.xmlValue())) {
-    			eventString = "insert";
+    			eventString = "(insert,INSERT,upload,UPLOAD,create)";
     		}
     		paramValues.add(eventString);
     		subQueryFrom.append(") ");
@@ -527,6 +527,9 @@ public class EventLog
         		"principal, " +
         		"case " +
         		"	when event = 'insert' then 'create' " +
+        		" when event = 'INSERT' then 'create' " +
+        		" when event = 'upload' then 'create' " +
+        		" when event = 'UPLOAD' then 'create' " +
         		"	else event " +
         		"end as event, " +
         		"date_logged " +	 
