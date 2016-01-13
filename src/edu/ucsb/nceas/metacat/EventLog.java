@@ -83,6 +83,7 @@ public class EventLog
     private Logger logMetacat = Logger.getLogger(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
 
+
     /**
      * A private constructor that initializes the class when getInstance() is
      * called.
@@ -404,7 +405,7 @@ public class EventLog
     public Log getD1Report(String[] ipAddress, String[] principal, String[] docid,
             String event, Timestamp startDate, Timestamp endDate, boolean anonymous, Integer start, Integer count)
     {
-        
+        boolean isCreateEvent = false;
         Log log = new Log();
     	
     	NodeReference memberNode = new NodeReference();
@@ -475,23 +476,31 @@ public class EventLog
         	subQueryFrom.append(") ");
             clauseAdded = true;
         }
+        
+       //please make sure the handling of event is just before the the startDate clause!!!
         if (event != null) {
-        	if (clauseAdded) {
-        		subQueryFrom.append(" and ");
+            if (clauseAdded) {
+                subQueryFrom.append(" and ");
             } else {
-            	subQueryFrom.append(" where ");
+                subQueryFrom.append(" where ");
             }
-        	subQueryFrom.append("event in (");
-        	subQueryFrom.append("?");
-    		String eventString = event;
-    		if (eventString.equals(Event.CREATE.xmlValue())) {
-    			eventString = "(insert,INSERT,upload,UPLOAD,create)";
-    		}
-    		paramValues.add(eventString);
-    		subQueryFrom.append(") ");
+            subQueryFrom.append("event in (");
+            subQueryFrom.append("?");
+            String eventString = event;
+            if (eventString.equals(Event.CREATE.xmlValue())) {
+                isCreateEvent = true; //since the create event maps create, insert and et al, we handle it in different way
+                subQueryFrom.append(",?");// for INSERT, the insert is handled by line 508
+                subQueryFrom.append(",?");// for upload
+                subQueryFrom.append(",?");// for UPLOAD
+                subQueryFrom.append(",?");// for create
+                //eventString = "insert,INSERT,upload,UPLOAD,create";
+            } else {
+                paramValues.add(eventString);
+            }
+            subQueryFrom.append(") ");
             clauseAdded = true;
         }
-        
+
         if (startDate != null) {
             if (clauseAdded) {
             	subQueryFrom.append(" and ");
@@ -510,6 +519,8 @@ public class EventLog
             subQueryFrom.append("date_logged < ?");
             clauseAdded = true;
         }
+        
+        
 
         // count query
         String countSelect = "select count(*) ";
@@ -568,6 +579,27 @@ public class EventLog
             	fieldsStmt.setString(parameterIndex, val);
             	parameterIndex++;
             }
+            
+            if(isCreateEvent) {
+                //handle the event mapping. If we add another event mapping, we need add a "?" in line 496
+                //those values are not in the paramValues.
+                countStmt.setString(parameterIndex, "insert");
+                fieldsStmt.setString(parameterIndex, "insert");
+                parameterIndex++;
+                countStmt.setString(parameterIndex, "INSERT");
+                fieldsStmt.setString(parameterIndex, "INSERT");
+                parameterIndex++;
+                countStmt.setString(parameterIndex, "upload");
+                fieldsStmt.setString(parameterIndex, "upload");
+                parameterIndex++;
+                countStmt.setString(parameterIndex, "UPLOAD");
+                fieldsStmt.setString(parameterIndex, "UPLOAD");
+                parameterIndex++;
+                countStmt.setString(parameterIndex, "create");
+                fieldsStmt.setString(parameterIndex, "create");
+                parameterIndex++;
+            }
+            
             if (startDate != null) {
             	countStmt.setTimestamp(parameterIndex, startDate); 
                 fieldsStmt.setTimestamp(parameterIndex, startDate); 
@@ -578,6 +610,7 @@ public class EventLog
             	fieldsStmt.setTimestamp(parameterIndex, endDate);
             	parameterIndex++;
             }
+            
 
             // for the return Log list
             List<LogEntry> logs = new Vector<LogEntry>();
