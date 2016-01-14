@@ -78,6 +78,7 @@ public class SystemMetadataMap
 		} catch (McdbDocNotFoundException e) {
 			//throw new RuntimeException(e.getMessage(), e);
 			// not found => null
+			logMetacat.warn("could not load system metadata for: " +  pid.getValue(), e);
 			return null;
 		}
 		catch (Exception e) {
