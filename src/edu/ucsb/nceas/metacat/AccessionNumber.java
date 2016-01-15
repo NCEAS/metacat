@@ -174,9 +174,11 @@ public class AccessionNumber  {
     boolean hasAccNumber = false;
     DBConnection conn = null;
     int serialNumber = -1;
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
 
     try {
-      PreparedStatement pstmt = null;
+      
       //check out DBConnection
       conn=DBConnectionPool.getDBConnection("AccessionNumber.accNumberUsed");
       serialNumber=conn.getCheckOutSerialNumber();
@@ -189,9 +191,9 @@ public class AccessionNumber  {
       pstmt.setString(1,accNumber);
       pstmt.setString(2,accNumber);
       pstmt.execute();
-      ResultSet rs = pstmt.getResultSet();
+      rs = pstmt.getResultSet();
       hasAccNumber = rs.next();
-      pstmt.close();
+      //pstmt.close();
 
     } catch (SQLException e) {
       throw new SQLException
@@ -199,7 +201,17 @@ public class AccessionNumber  {
     }
     finally
     {
-      DBConnectionPool.returnDBConnection(conn, serialNumber);
+       try {
+           if(rs != null) {
+               rs.close();
+           }
+           if(pstmt != null) {
+               pstmt.close();
+           }
+       } finally {
+           DBConnectionPool.returnDBConnection(conn, serialNumber);
+       }
+      
     }
 
     return hasAccNumber;
@@ -213,9 +225,10 @@ public class AccessionNumber  {
     boolean hasCurrentAccNumber = false;
     DBConnection conn = null;
     int serialNumber = -1;
-
+    ResultSet rs = null;
+    PreparedStatement pstmt = null;
     try {
-      PreparedStatement pstmt = null;
+     
       //check out DBConnection
       conn=DBConnectionPool.getDBConnection("AccessionNumber.accNumberIsCurre");
       serialNumber=conn.getCheckOutSerialNumber();
@@ -224,7 +237,7 @@ public class AccessionNumber  {
                 "WHERE docid = ?");
       pstmt.setString(1, accNumber);
       pstmt.execute();
-      ResultSet rs = pstmt.getResultSet();
+      rs = pstmt.getResultSet();
       hasCurrentAccNumber = rs.next();
       if(!hasCurrentAccNumber)
       {
@@ -237,7 +250,7 @@ public class AccessionNumber  {
         rs = pstmt.getResultSet();
         hasCurrentAccNumber = rs.next();
       }
-      pstmt.close();
+      //pstmt.close();
 
     } catch (SQLException e) {
       throw new SQLException(
@@ -246,7 +259,18 @@ public class AccessionNumber  {
     }
     finally
     {
-      DBConnectionPool.returnDBConnection(conn, serialNumber);
+       
+       try {
+           if(rs != null) {
+               rs.close();
+           }
+           if(pstmt != null) {
+               pstmt.close();
+           }
+       } finally {
+           DBConnectionPool.returnDBConnection(conn, serialNumber);
+       }
+      
     }
 
     return hasCurrentAccNumber;
@@ -258,9 +282,10 @@ public class AccessionNumber  {
     String rev = "";
     DBConnection conn = null;
     int serialNumber = -1;
-
+    PreparedStatement pstmt = null;
+    ResultSet rs = null;
     try {
-      PreparedStatement pstmt = null;
+      
       //check out DBConnection
       conn=DBConnectionPool.getDBConnection("AccessionNumber.getLastRevision");
       serialNumber=conn.getCheckOutSerialNumber();
@@ -269,10 +294,10 @@ public class AccessionNumber  {
       pstmt.setString(1, docid);
       pstmt.execute();
 
-      ResultSet rs = pstmt.getResultSet();
+      rs = pstmt.getResultSet();
       boolean hasRow = rs.next();
       rev = rs.getString(1);
-      pstmt.close();
+      //pstmt.close();
 
     } catch (SQLException e) {
       throw new SQLException(
@@ -280,7 +305,17 @@ public class AccessionNumber  {
     }
     finally
     {
-      DBConnectionPool.returnDBConnection(conn,serialNumber);
+        try {
+            if(rs != null) {
+                rs.close();
+            }
+            if(pstmt != null) {
+                pstmt.close();
+            }
+        } finally {
+            DBConnectionPool.returnDBConnection(conn,serialNumber);
+        }
+      
     }
 
     return rev;
@@ -296,9 +331,10 @@ public class AccessionNumber  {
     int rev = 1;
     DBConnection conn =null;
     int serialNumber = -1;
-
+    PreparedStatement pStmt = null;
+    ResultSet rs = null;
     try {
-      PreparedStatement pStmt = null;
+      
       //check out DBConnection
       conn=DBConnectionPool.getDBConnection("AccessionNumber.getLastRevisionN");
       serialNumber=conn.getCheckOutSerialNumber();
@@ -308,13 +344,13 @@ public class AccessionNumber  {
       pStmt.setString(1, docId);
       pStmt.execute();
 
-      ResultSet rs = pStmt.getResultSet();
+      rs = pStmt.getResultSet();
       boolean hasRow = rs.next();
       if(hasRow)
       {
         rev = rs.getInt(1);
       }     
-      pStmt.close();
+      //pStmt.close();
 
     } catch (SQLException e) {
       throw new SQLException(
@@ -322,7 +358,17 @@ public class AccessionNumber  {
     }
     finally
     {
-      DBConnectionPool.returnDBConnection(conn,serialNumber);
+        try {
+            if(rs != null) {
+                rs.close();
+            }
+            if(pStmt != null) {
+                pStmt.close();
+            }
+        } finally {
+            DBConnectionPool.returnDBConnection(conn,serialNumber);
+        }
+      
     }
     return rev;
   }
