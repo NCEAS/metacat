@@ -220,6 +220,7 @@ public class DBEntityResolver implements EntityResolver
     PreparedStatement pstmt = null;
     DBConnection conn = null;
     int serialNumber = -1;
+    ResultSet rs = null;
     try {
       //check out DBConnection
       conn=DBConnectionPool.getDBConnection("DBEntityResolver.getDTDSystemID");
@@ -232,7 +233,7 @@ public class DBEntityResolver implements EntityResolver
       pstmt.setString(1, doctype);
       
       pstmt.execute();
-      ResultSet rs = pstmt.getResultSet();
+      rs = pstmt.getResultSet();
       boolean tableHasRows = rs.next();
       if (tableHasRows) {
         systemid = rs.getString(1);
@@ -241,7 +242,7 @@ public class DBEntityResolver implements EntityResolver
         	systemid = SystemUtil.getContextURL() + systemid;
         }
       }
-      pstmt.close();
+      //pstmt.close();
     } catch (SQLException e) {
       throw new SAXException
       ("DBEntityResolver.getDTDSystemID - SQL error when getting DTD system ID: " + e.getMessage());
@@ -253,7 +254,13 @@ public class DBEntityResolver implements EntityResolver
     {
       try
       {
-        pstmt.close();
+          if(rs != null) {
+              rs.close();
+          }
+          if(pstmt != null) {
+              pstmt.close();
+          }
+        
       }//try
       catch (SQLException sqlE)
       {

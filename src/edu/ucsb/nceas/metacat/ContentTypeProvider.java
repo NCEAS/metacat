@@ -446,7 +446,13 @@ public class ContentTypeProvider
     {
       try
       {
-        pStmt.close();
+        if(rs != null) {
+            rs.close();
+        }
+        if(pStmt != null) {
+            pStmt.close();
+        }
+        
       }
       catch (SQLException ee)
       {
@@ -536,7 +542,13 @@ public class ContentTypeProvider
     {
       try
       {
-        pStmt.close();
+          if(rs != null) {
+              rs.close();
+          }
+          if(pStmt != null) {
+              pStmt.close();
+          }
+        
       }
       catch(SQLException ee)
       {
