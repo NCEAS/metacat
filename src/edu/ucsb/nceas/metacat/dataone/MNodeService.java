@@ -2372,7 +2372,7 @@ public class MNodeService extends D1NodeService
 				// just the lone pid in this package
 				//packagePids.add(pid);
 			    //throw an invalid request exception
-			    throw new InvalidRequest("", "The given pid "+pid.getValue()+" is not a package id (resource map id). Please use a package id instead.");
+			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package id (resource map id). Please use a package id instead.");
 			}
 			
 			//Create a temp file, then delete it and make a directory with that name
