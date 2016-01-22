@@ -144,6 +144,8 @@ public class MetacatAdminServlet extends HttpServlet {
 			    		PropertyService.getProperty("configutil.geoserverConfigured"));
 			    request.setAttribute("dataoneConfigured", 
 			    		PropertyService.getProperty("configutil.dataoneConfigured"));
+			    request.setAttribute("ezidConfigured", 
+                        PropertyService.getProperty("configutil.ezidConfigured"));
 			    request.setAttribute("metcatServletInitialized", MetaCatServlet.isFullyInitialized());
 			    if (PropertyService.arePropertiesConfigured()) {
 					request.setAttribute("databaseVersion", 
@@ -190,6 +192,10 @@ public class MetacatAdminServlet extends HttpServlet {
 				// process replication config
 				ReplicationAdmin.getInstance().handleRequest(request, response);
 				return;
+			} else if (action.equals("ezid")) {
+                // process replication config
+                EZIDAdmin.getInstance().configureEZID(request, response);
+                return; 
 			} else {
 				String errorMessage = "MetacatAdminServlet.handleGetOrPost - Invalid action in configuration request: " + action;
 				logMetacat.error(errorMessage);

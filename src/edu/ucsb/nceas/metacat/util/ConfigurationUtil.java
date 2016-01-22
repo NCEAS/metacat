@@ -63,7 +63,8 @@ public class ConfigurationUtil
 					&& DatabaseUtil.isDatabaseConfigured()
 					&& GeoserverUtil.isGeoserverConfigured()
 					&& isBackupDirConfigured()
-					&& DataONEConfigUtil.isDataOneConfigured();
+					&& DataONEConfigUtil.isDataOneConfigured()
+					&& isEZIDConfigured();
 		} catch (MetacatUtilException ue) {
 			logMetacat.error("Could not determine if metacat is configured due to utility exception: "
 					+ ue.getMessage());
@@ -92,6 +93,18 @@ public class ConfigurationUtil
 		}	
 		return true;
 	}
+	
+	public static boolean isEZIDConfigured() throws MetacatUtilException {
+        String ezidConfiguredString = PropertyService.UNCONFIGURED;
+        try {
+            ezidConfiguredString = PropertyService.getProperty("configutil.ezidConfigured");
+        } catch (PropertyNotFoundException pnfe) {
+            throw new MetacatUtilException("Could not determine if the ezid service are configured: "
+                    + pnfe.getMessage());
+        }
+        // geoserver is configured if not unconfigured
+        return !ezidConfiguredString.equals(PropertyService.UNCONFIGURED);
+    }
 		
 	/**
 	 * Reports whether the metacat configuration utility should be run. Returns
