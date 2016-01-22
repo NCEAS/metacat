@@ -40,6 +40,7 @@
     Boolean replicationConfigured = (Boolean)request.getAttribute("replicationConfigured");
     String dataoneConfigured = (String)request.getAttribute("dataoneConfigured");
     String geoserverConfigured = (String)request.getAttribute("geoserverConfigured");
+    String ezidConfigured = (String)request.getAttribute("ezidConfigured");
     Boolean metacatConfigured = (Boolean)request.getAttribute("metacatConfigured");
     Boolean metacatServletInitialized = (Boolean)request.getAttribute("metcatServletInitialized");
     String contextURL = (String)request.getAttribute("contextURL");
@@ -271,7 +272,58 @@
 	%>     	
 	   	</tr>
 	
-	
+	<!-- ezid -->
+     <%
+    
+        if (ezidConfigured != null && ezidConfigured.equals(PropertyService.CONFIGURED)) {
+    %>
+            <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> configured</td>
+            <td class="property-title"> Dataone Configuration </td> 
+            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=ezid"><i class="icon-cogs"></i>Reconfigure Now</a> </td>         
+            </tr>
+    <%
+        } else if (ezidConfigured != null && ezidConfigured.equals(PropertyService.BYPASSED)){
+    %>          
+            <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
+            <td class="property-title">EZID Configuration for DOIs</td>  
+    <%
+            if (propsConfigured != null && propsConfigured) {
+    %>
+                
+            <td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=ezid"><i class="icon-cogs"></i> Reconfigure Now</a> </td>                   
+    <%
+            } else {
+    %> 
+            <td class="configure-link inactive"> Configure Global Properties First </td>
+    <%
+            }
+                %>      
+            </tr>
+    <%
+        } else {
+    %>          
+            <tr>
+            <td class="unconfigured-tag">unconfigured </td>  
+            <td class="property-title"> EZID for Digital Object Identifiers (DOIs) Configuration </td>   
+    <%
+            if (propsConfigured != null && propsConfigured) {
+    %>
+                
+            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=ezid"> <i class="icon-cogs"></i> Configure Now</a> </td>         
+                
+    <%
+            } else {
+    %> 
+            <td class="configure-link inactive"> Configure Global Properties First </td>
+    <%
+            }
+    %>      
+            </tr>
+    <%
+        }
+    %>
 	
 	<!--  -->
 	</table>
