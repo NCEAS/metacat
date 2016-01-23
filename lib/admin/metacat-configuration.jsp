@@ -279,7 +279,7 @@
     %>
             <tr>
             <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> Dataone Configuration </td> 
+            <td class="property-title"> EZID Configuration for DOIs </td> 
             <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=ezid"><i class="icon-cogs"></i>Reconfigure Now</a> </td>         
             </tr>
     <%
@@ -306,7 +306,7 @@
     %>          
             <tr>
             <td class="unconfigured-tag">unconfigured </td>  
-            <td class="property-title"> EZID for Digital Object Identifiers (DOIs) Configuration </td>   
+            <td class="property-title"> EZID Configuration for DOIs </td>   
     <%
             if (propsConfigured != null && propsConfigured) {
     %>
