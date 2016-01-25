@@ -511,4 +511,41 @@
 		<helpFile> </helpFile>
 	</config>
 	
+	<!-- EZID and DOI configurations -->
+	<config>
+        <key>guid.ezid.enabled</key>
+        <label>Enable EZID Service</label>
+        <group>6</group>
+        <index>15</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>guid.ezid.username</key>
+        <label>User Name</label>
+        <group>6</group>
+        <index>16</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>guid.ezid.baseurl</key>
+        <label>Service Base URL</label>
+        <group>6</group>
+        <index>17</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>guid.ezid.doishoulder.1</key>
+        <label>DOI Shouder</label>
+        <group>6</group>
+        <index>18</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
 </metadataConfig>
