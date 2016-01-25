@@ -86,14 +86,14 @@
                     <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GeoserverUpdatePassword')"></i>-->
         </div>
         <div class="form-row">
-            <div class="textinput-label"><label for="guid.ezid.baseurl" title="EZID Service URL">Service base URL</label></div>
+            <div class="textinput-label"><label for="guid.ezid.baseurl" title="EZID Service URL">Service Base URL</label></div>
             <input class="textinput" id="guid.ezid.baseurl" 
                     name="guid.ezid.baseurl"                                                                                         
                     value="<%= request.getAttribute("guid.ezid.baseurl") %>"/> 
             <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GEOSERVER_DATA_DIR')"></i> -->
         </div>
 		<div class="form-row">
-			<div class="textinput-label"><label for="guid.ezid.doishoulder.1" title="DOI shoulder">DOI shoulder</label></div>
+			<div class="textinput-label"><label for="guid.ezid.doishoulder.1" title="DOI shoulder">DOI Shoulder</label></div>
 			<input class="textinput" id="guid.ezid.doishoulder.1" 
 					name="guid.ezid.doishoulder.1" 	             		    	    	           		    	             			
 					value="<%= request.getAttribute("guid.ezid.doishoulder.1") %>"/> 
