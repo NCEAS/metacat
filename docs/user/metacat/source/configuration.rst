@@ -419,6 +419,17 @@ the replication system and how to configure Metacat to replicate with another no
   will be supported for a while longer, but will likely be deprecated in a future
   release in favor of using the DataONE replication approach. 
 
+EZID Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Metacat can be configured to assign Digital Object Identifiers (DOIs) to metadata/data objects
+through a EZID service. Click a blue question-mark icon beside any setting for detailed instructions.
+More information about each property is also included in the :doc:`metacat-properties`.
+
+.. figure:: images/screenshots/image072.png
+   :align: center
+
+   Configuring EZID service.
+
 Additional Configuration
 ------------------------
 The most dynamic Metacat properties are managed and modified with the 
