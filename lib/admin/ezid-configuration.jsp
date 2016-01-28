@@ -1,4 +1,4 @@
-<%@ page language="java" %>
+-<%@ page language="java" %>
 <%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.PropertiesMetaData" %>
 <%@ page import="edu.ucsb.nceas.utilities.MetaDataGroup,edu.ucsb.nceas.utilities.MetaDataProperty" %>
 <% 
@@ -68,14 +68,14 @@
                     name="guid.ezid.enabled"                                                                                         
                     value="true"/>
             <% } %>
-            <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GEOSERVER_REGENERATE_CACHE')"></i> -->
+            <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-enabled')"></i> 
         </div>
 		<div class="form-row">
                     <div class="textinput-label"><label for="guid.ezid.username" title="EZID user name">User Name</label></div>
                     <input class="textinput" id="guid.ezid.username" 
                            name="guid.ezid.username"                                                                         
                            value="<%= request.getAttribute("guid.ezid.username") %>"/> 
-                    <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GeoserverUpdatePassword')"></i> -->
+                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-username')"></i>
         </div>
         <div class="form-row">
                     <div class="textinput-label"><label for="guid.ezid.password" title="Password">Password</label></div>
@@ -83,21 +83,21 @@
                            name="guid.ezid.password" 
                            type="password"                                                                                      
                            value="<%= request.getAttribute("guid.ezid.password") %>"/> 
-                    <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GeoserverUpdatePassword')"></i>-->
+                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-password')"></i>
         </div>
         <div class="form-row">
             <div class="textinput-label"><label for="guid.ezid.baseurl" title="EZID Service URL">Service Base URL</label></div>
             <input class="textinput" id="guid.ezid.baseurl" 
                     name="guid.ezid.baseurl"                                                                                         
                     value="<%= request.getAttribute("guid.ezid.baseurl") %>"/> 
-            <!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GEOSERVER_DATA_DIR')"></i> -->
+            <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-baseurl')"></i>
         </div>
 		<div class="form-row">
 			<div class="textinput-label"><label for="guid.ezid.doishoulder.1" title="DOI shoulder">DOI Shoulder</label></div>
 			<input class="textinput" id="guid.ezid.doishoulder.1" 
 					name="guid.ezid.doishoulder.1" 	             		    	    	           		    	             			
 					value="<%= request.getAttribute("guid.ezid.doishoulder.1") %>"/> 
-			<!--<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/geoserver.html#GeoserverContext')"></i>-->
+			<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-doishoulder-1')"></i>
 		</div>
 	
 		
