@@ -539,7 +539,7 @@ public class SolrIndex {
         }
         String objectPath = null;
         try {
-            if(!systemMetadata.getArchived()) {
+            if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
                 objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             }
             update(pid, systemMetadata, objectPath);
