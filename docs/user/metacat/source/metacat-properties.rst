@@ -519,7 +519,7 @@ The EZID service assigning Digital Object Identifiers (DOIs) is included in the 
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _guid.ezid.password:           |                                                                               |                                               |
 |                                   |                                                                               |                                               |
-| guid.ezid.password                | The passowrd for the user name                                                |                                               |
+| guid.ezid.password                | The password for the user name                                                |                                               |
 |                                   |                                                                               |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 | .. _guid.ezid.baseurl:            |                                                                               |                                               |
