@@ -1,4 +1,4 @@
--<%@ page language="java" %>
+<%@ page language="java" %>
 <%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.PropertiesMetaData" %>
 <%@ page import="edu.ucsb.nceas.utilities.MetaDataGroup,edu.ucsb.nceas.utilities.MetaDataProperty" %>
 <% 
@@ -105,7 +105,7 @@
 			<input type="hidden" name="configureType" value="ezid"/>
 			<input type="hidden" name="processForm" value="true"/>
 			<input class=button type="submit" value="Update"/>
-			<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=ezid&bypass=true&processForm=true')">
+			<!--<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=ezid&bypass=true&processForm=true')"> -->
 			<input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
 		</div>
 	</form>
