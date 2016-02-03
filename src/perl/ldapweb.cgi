@@ -81,7 +81,16 @@ my $metacatUrl = $contextUrl . "/metacat";
 my $cgiPrefix = "/" . $context . "/cgi-bin";
 my $styleSkinsPath = $contextUrl . "/style/skins";
 my $styleCommonPath = $contextUrl . "/style/common";
-my $ldapServerCACertFile = $workingDirectory. "/../" . $properties->getProperty('ldap.server.ca.certificate');
+my $caCertFileProp = $properties->getProperty('ldap.server.ca.certificate');
+my $ldapServerCACertFile;
+if ($caCertFileProp eq "") {
+   $ldapServerCACertFile = "/etc/ssl/certs/ca-certificates.crt";
+   debug("Metacat doesn't specify the ca file, we use the default one " . $ldapServerCACertFile);
+} else {
+   $ldapServerCACertFile = $workingDirectory. "/../" . $properties->getProperty('ldap.server.ca.certificate');
+   debug("Metacat does specify the ca file, we will use it - " . $ldapServerCACertFile);
+}
+
 
 #recaptcha key information
 my $recaptchaPublicKey=$properties->getProperty('ldap.recaptcha.publickey');
@@ -1350,6 +1359,7 @@ sub createItem {
     print "Content-type: text/html\n\n";
     debug("the dn is " . $dn);
     debug("LDAP connection to $ldapurl...");    
+    debug("the ldap ca certificate is " . $ldapServerCACertFile);
     #if main ldap server is down, a html file containing warning message will be returned
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
