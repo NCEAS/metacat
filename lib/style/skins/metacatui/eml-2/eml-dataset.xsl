@@ -585,7 +585,8 @@
 			</h4>
 		</xsl:if>
 		
-		<xsl:call-template name="xml" />
+		
+		<!--  <xsl:call-template name="xml" /> -->
 			
 		<xsl:choose>
 			<xsl:when test="$displaymodule!='printall'">
