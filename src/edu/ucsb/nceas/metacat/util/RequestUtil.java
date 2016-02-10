@@ -26,10 +26,10 @@
 
 package edu.ucsb.nceas.metacat.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
-import java.io.BufferedReader;
 import java.io.PrintWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 import java.util.Vector;
 
 import javax.servlet.ServletContext;
@@ -58,10 +57,13 @@ import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
 import org.apache.log4j.Logger;
+import org.dataone.portal.PortalCertificateManager;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -289,6 +291,12 @@ public class RequestUtil {
 	public static SessionData getSessionData(HttpServletRequest request) {
 		SessionData sessionData = null;
 		String sessionId = null;
+		
+		// check for auth token first
+		sessionData = getSessionDataFromToken(request);
+		if (sessionData != null) {
+			return sessionData;
+		}
 
 		Hashtable<String, String[]> params = getParameters(request);
 
@@ -326,6 +334,48 @@ public class RequestUtil {
 					+ "registered: " + sessionId);
 			sessionData = SessionService.getInstance().getPublicSession();
 		}
+		
+		return sessionData;
+	}
+	
+	/**
+	 * Get SessionData from the DataONE auth token
+	 * @param request
+	 * @return
+	 */
+	public static SessionData getSessionDataFromToken(HttpServletRequest request) {
+		SessionData sessionData = null;
+		
+    	Session session = PortalCertificateManager.getInstance().getSession(request);
+    	if (session != null) {
+    		SubjectInfo subjectInfo = session.getSubjectInfo();
+			String userName = session.getSubject().getValue();
+			String id = request.getSession().getId();
+			String password = null;
+    		String[] groupNames = null;
+			String name = null;
+			if (subjectInfo != null && subjectInfo.getPersonList() != null && subjectInfo.getPersonList().size() > 0) {
+				name = subjectInfo.getPerson(0).getFamilyName();
+				if (subjectInfo.getPerson(0).getGivenNameList() != null && subjectInfo.getPerson(0).getGivenNameList().size() > 0) {
+					name = subjectInfo.getPerson(0).getGivenName(0) + " " + name;
+				}
+				List<String> groups = new ArrayList<String>();
+				if (subjectInfo.getPerson(0).getIsMemberOfList() != null) {
+					for (Subject group: subjectInfo.getPerson(0).getIsMemberOfList()) {
+						groups.add(group.getValue());
+					}
+					groupNames = groups.toArray(new String[0]);
+				}
+			}
+			
+			// construct the session
+			sessionData = new SessionData(id , userName, groupNames, password, name);
+			
+			//TODO: register this session for later or do this each time?
+			//SessionService.getInstance().registerSession(sessionData);
+			
+    		
+    	}
 		
 		return sessionData;
 	}
