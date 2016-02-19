@@ -35,7 +35,12 @@
     
     <import resource="application-context-dc-base.xml" />
     <import resource="application-context-dcx.xml" />
+    
+    <import resource="application-context-isotc211-base.xml" />
+    <import resource="application-context-isotc211.xml" />
+    
 
+ <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
  <bean id="fgdcDateConverter" class="org.dataone.cn.indexer.convert.FgdcDateConverter"/>
  <bean id="solrLatitudeConverter" class="org.dataone.cn.indexer.convert.SolrLatitudeConverter" />
@@ -105,6 +110,7 @@
        <ref bean="rdfXmlSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
+       <ref bean="isotc211Subprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">
@@ -197,7 +203,37 @@
     <bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="xsi" />
     	<constructor-arg name="namespace" value="http://www.w3.org/2001/XMLSchema-instance" />
-    </bean>     
+    </bean>    
+    
+    <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="gmd" />
+                <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gmd" />
+     </bean> 
+     
+     <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="gco" />
+                <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gco" />
+     </bean>
+            
+     <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="gmx" />
+                <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gmx" />
+     </bean>
+        
+     <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="gml" />
+                <constructor-arg name="namespace" value="http://www.opengis.net/gml/3.2" />
+     </bean> 
+     
+     <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="srv" />
+                <constructor-arg name="namespace" value="http://www.isotc211.org/2005/srv" />
+      </bean> 
+            
+       <bean class="org.dataone.cn.indexer.XMLNamespace">
+                <constructor-arg name="prefix" value="xlink" />
+                <constructor-arg name="namespace" value="http://www.w3.org/1999/xlink" />
+       </bean> 
     
    </list>
   </constructor-arg>
