@@ -1263,10 +1263,10 @@ public abstract class D1NodeService {
       }
       
        
-    } catch (ServiceFailure e) {
+    /*} catch (ServiceFailure e) {
       logMetacat.debug("There was a problem determining if the object identified by" + 
           sysmeta.getIdentifier().getValue() + 
-          " is science metadata: " + e.getMessage());
+          " is science metadata: " + e.getMessage());*/
     
     } catch (NotFound e) {
       logMetacat.debug("There was a problem determining if the object identified by" + 
