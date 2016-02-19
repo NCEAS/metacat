@@ -374,6 +374,17 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="sem_annotates"        type="string" indexed="true" stored="true" multiValued="true" />
         <field name="sem_comment"        type="string" indexed="true" stored="true" multiValued="true" />
         
+        
+        <!-- member node service fields -->
+        <field name="isService"         type="boolean"  indexed="true"  stored="true" multiValued="false" default="false" />
+        <field name="serviceCoupling"   type="string"   indexed="true"  stored="true"   multiValued="false" default="false" />
+        <field name="serviceTitle"      type="text"     indexed="true"  stored="true"   multiValued="false" />
+        <field name="serviceDescription" type="text"        indexed="true"  stored="true" multiValued="false" />
+        <field name="serviceType"       type="string"   indexed="true"  stored="true" multiValued="true" />
+        <field name="serviceEndpoint"   type="string"   indexed="true"  stored="true" multiValued="true" />
+        <field name="serviceInput"      type="string"   indexed="true"  stored="true" multiValued="true" />
+        <field name="serviceOutput"     type="string"   indexed="true"  stored="true" multiValued="true" />
+        
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
 will be used if the name matches any of the patterns.
