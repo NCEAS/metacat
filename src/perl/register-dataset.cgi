@@ -44,6 +44,9 @@ use File::Basename;
 use File::Temp;
 use File::Copy;
 use Fcntl qw(:flock);
+use Crypt::JWT qw(decode_jwt);
+use Crypt::X509;
+use IO::Socket::SSL;
 use strict;
 
 #debug("running register-dataset.cgi");
@@ -66,11 +69,24 @@ unless ( open( METACAT_PROPERTIES, $metacatProps ) ) {
 $properties->load(*METACAT_PROPERTIES);
 
 # local directory configuration
-my $skinsDir     = "${workingDirectory}/../style/skins";
-my $templatesDir = abs_path("${workingDirectory}/../style/common/templates");
-my $tempDir      = $properties->getProperty('application.tempDir');
-my $dataDir      = $properties->getProperty('application.datafilepath');
-my $metacatDir   = "/var/metacat";
+my $skinsDir      = "${workingDirectory}/../style/skins";
+my $templatesDir  = abs_path("${workingDirectory}/../style/common/templates");
+my $tempDir       = $properties->getProperty('application.tempDir');
+my $dataDir       = $properties->getProperty('application.datafilepath');
+my $metacatDir    = "/var/metacat";
+my $cnUrl         = $properties->getProperty('D1Client.CN_URL');
+my $cn            = "server";
+my $pem_file_path = "/tmp/server.pem";
+my $der_file_path = "/tmp/server.der";
+
+# Signing certificate file name is based on the CN environment
+if ( $cnUrl && $tempDir ) { 
+    my @parts = split(/\//, $cnUrl);
+    $cn = $parts[2];
+    $pem_file_path = $tempDir . "/" . $cn . ".pem";
+    $der_file_path = $tempDir . "/" . $cn . ".der"; 
+           
+}
 
 # url configuration
 my $server = $properties->splitToTree( qr/\./, 'server' );
@@ -455,6 +471,7 @@ if(($scope eq "") || (!$scope)){
 
 # Create a metacat object
 my $metacat = Metacat->new($metacatUrl);
+setAuthToken($metacat);
 
 if ( !$error ) {
 
@@ -1460,6 +1477,7 @@ sub deleteFileData {
 	my $input = shift;
 	my ( $docid, $fileHash ) = datafileInfo($input);
 	my $metacat = Metacat->new($metacatUrl);
+    setAuthToken($metacat);
 
 	my ( $username, $password ) = getCredentials();
 	my $response = $metacat->login( $username, $password );
@@ -2438,7 +2456,8 @@ sub readDocumentFromMetacat() {
 
 	# create metacat instance
 	my $metacat = Metacat->new($metacatUrl);
-	my $httpMessage;
+    setAuthToken($metacat);
+    my $httpMessage;
 	my $doc;
 	my $xmldoc;
 	my $findType;
@@ -3496,6 +3515,7 @@ sub deleteData {
 
 	# create metacat instance
 	my $metacat = Metacat->new($metacatUrl);
+    setAuthToken($metacat);
 	my $docid   = $FORM::docid;
 
 	# Login to metacat
@@ -3624,6 +3644,7 @@ sub handleLoginRequest() {
 		my $password = $FORM::password;
 
 		my $metacat = Metacat->new($metacatUrl);
+        setAuthToken($metacat);
 		my $returnVal = $metacat->login( $username, $password );
 		debug(
 "Login was $returnVal for login attempt to $metacatUrl, with $username"
@@ -3758,7 +3779,8 @@ sub getUserGroups {
 	
 	#debug("getting user info for session id: $sessionId");
 	my $metacat = Metacat->new($metacatUrl);
-	
+	setAuthToken($metacat);
+    
 	my ( $username, $password ) = getCredentials();
 	$metacat->login( $username, $password );
 	
@@ -3872,6 +3894,7 @@ sub handleReviewFrame {
 
 sub getReviewHistoryHTML {
 	my $metacat = Metacat->new($metacatUrl);
+	setAuthToken($metacat);
 	my ( $username, $password ) = getCredentials();
 	$metacat->login( $username, $password );
 	my $parser = XML::LibXML->new();
@@ -3917,6 +3940,7 @@ sub handleModAccept() {
 
 	my $errorMessage = '';
 	my $metacat      = Metacat->new($metacatUrl);
+	setAuthToken($metacat);
 
 	print "Content-type: text/html\n\n";
 
@@ -4092,6 +4116,7 @@ sub handleModDecline() {
 	my $errorMessage = '';
 	my $userDN       = '';
 	my $metacat      = Metacat->new($metacatUrl);
+	setAuthToken($metacat);
 	my $docid        = $FORM::docid;
 
 	print "Content-type: text/html\n\n";
@@ -4229,6 +4254,7 @@ sub handleModDecline() {
 sub handleModRevise() {
 	my $errorMessage = '';
 	my $metacat      = Metacat->new($metacatUrl);
+	setAuthToken($metacat);
 	my $docid        = $FORM::docid;
 
 	print "Content-type: text/html\n\n";
@@ -5441,3 +5467,143 @@ sub getTestProjectList {
 	$projects[6] = \@row7;
 	return \@projects;
 }
+
+################################################################################
+#
+# Set the incoming HTTP Authorization header as an instance variable in the 
+# given Metacat object
+#
+################################################################################
+sub setAuthToken() {
+    my $metacat = shift;
+    
+    eval { $metacat->isa('Metacat'); };
+    
+    if ( ! $@ ) {
+        # Set the auth_token_header if available
+        if ( $ENV{'HTTP_AUTHORIZATION'}) {
+            $metacat->set_options( 
+                auth_token_header => $ENV{'HTTP_AUTHORIZATION'});
+        }
+        
+    } else {
+        debug('Not an instance of Metacat.' .
+        'Pass a Metacat object only to setAuthToken()');
+    }
+}
+
+################################################################################
+#
+# Downloads the server certificate used to sign tokens, and converts it from PEM
+# format to DER format. Writes both to the Metacat temp directory if configured.
+#
+################################################################################
+sub getSigningCertificate() {
+        
+    open(my $pem_cert_file, ">", $pem_file_path)
+        or die "\nCould not open PEM certificate file: $!\n";
+
+    # Attempts to use IO::Socket::SSL->peer_certificate()
+    # and Net::SSLeay->get_peer_certificate() 
+    # return an unparseable cert (it seems).  
+    # Settle for the openssl command instead.
+    # my $client = IO::Socket::SSL->new('cn-stage.test.dataone.org:443')
+    #    or die "error=$!, ssl_error=$SSL_ERROR";
+    #$signing_cert = $client->peer_certificate();
+    #print $signing_cert;
+    #$client->close();
+
+    my @lines = `openssl s_client -connect $cn:443 -showcerts 2>/dev/null`;
+
+    my $count = 0;
+    my ($start_line_number, $end_line_number);
+
+    # Find the start line of the first cert
+    for my $line (@lines) {
+        $count = $count + 1;
+        if ( $line =~ /BEGIN/) {
+            $start_line_number = $count;
+            last;
+        
+        }    
+    }
+
+    # Find the end line of the first cert
+    $count = 0;
+    for my $line (@lines) {
+        $count = $count + 1;
+        if ( $line =~ /END/) {
+            $end_line_number = $count;
+            last;
+        
+        }    
+    }
+
+    # print the cert to a PEM file
+    $count = 0;
+    for my $line (@lines) {
+        $count = $count + 1;
+        if ( $count >= $start_line_number && $count <= $end_line_number) {
+            print $pem_cert_file $line;
+        
+        }    
+    }
+
+    close($pem_cert_file);
+
+    # Convert the PEM to DER
+    my @convert_der_args = ("openssl", "x509", 
+        "-in", $pem_file_path, "-inform", "PEM",
+        "-out", $der_file_path, "-outform", "DER");
+    system(@convert_der_args);
+    
+}
+
+################################################################################
+#
+# Returns details about the parsed token
+#
+################################################################################
+sub getTokenInfo() {
+    # Initialize the token info hash
+    my $token_info = {
+            userId      => '',
+            issuedAt    => '',
+            iat         => '',
+            sub         => '',
+            consumerKey => '',
+            exp         => '',
+            ttl         => '',
+            fullName    => '',
+            isValid     => 0
+    };
+
+    my $der_cert_file;
+    my $signing_cert;
+    
+    # If we don't already have the CN signing cert, get it
+    if ( ! -e $der_file_path )   {
+        getSigningCertificate();
+    
+    }
+    
+    # Read the DER-encoded certificate
+    open($der_cert_file, "<", $cn . ".der")
+        or die "\nCould not open DER certificate file: $!\n";
+    binmode($der_cert_file);
+    read($der_cert_file, $signing_cert, 4096)
+        or die "Problem reading the DER-encoded server cert: $!\n" if $!;
+    close($der_cert_file);
+    
+    my $cert = Crypt::X509->new(cert=>$signing_cert);
+    
+    # Decode the token using Crypt::JWT 
+    eval{ $token_info = decode_jwt(token=>$token, key=>$cert); };
+    if ( ! $@ ) { 
+        $$token_info{isValid} = 1;
+    }
+    
+    return $token_info;
+         
+}
+
