@@ -5581,7 +5581,7 @@ sub getTokenInfo() {
     my $token = "";
     
     if ( $ENV{'HTTP_AUTHORIZATION'} ) {
-        @token_parts = split(/ /, $ENV{'HTTP_AUTHORIZATION'});
+        my @token_parts = split(/ /, $ENV{'HTTP_AUTHORIZATION'});
         $token = @token_parts[1];
         
     }
@@ -5628,7 +5628,7 @@ sub validateSession() {
         debug('validateSession() called.');
     }
     
-    my $token_info = getTokenInfo();
+    my %token_info = getTokenInfo();
     my $session = CGI::Session->load();
     my $valid = 0;
    
@@ -5639,7 +5639,7 @@ sub validateSession() {
             
         }
         
-    } else if ( ! $session->is_empty && ! $session->is_expired ) {
+    } elsif ( ! $session->is_empty && ! $session->is_expired ) {
         $valid = 1;
         if ( $debug_enabled ) {
                 debug('The CGI session is valid.');
