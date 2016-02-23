@@ -108,11 +108,23 @@ sub sendData {
       $contentType = $postData{'enctype'};
       delete $postData{'enctype'};
   }
-
-  my $request = POST("$self->{'metacatUrl'}",
-                     Content_Type => $contentType,
-                     Content => \%postData
-                );
+  
+  
+  my $request;
+  if ( $self->{'auth_token_header'} ) {
+      # if available, set the Authorization header from the auth_token_header instance variable
+      $request = POST("$self->{'metacatUrl'}",
+                      Content_Type => $contentType,
+                      Authorization => $self->{'auth_token_header'},
+                      Content => \%postData
+                      );
+      
+  } else {
+      $request = POST("$self->{'metacatUrl'}",
+                      Content_Type => $contentType,
+                      Content => \%postData
+                      );      
+  }
 
   # set cookies on UA object
   my $cookie_jar = $self->{'cookies'};
