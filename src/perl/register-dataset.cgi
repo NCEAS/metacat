@@ -5578,6 +5578,14 @@ sub getTokenInfo() {
             isValid     => 0
     };
 
+    my $token = "";
+    
+    if ( $ENV{'HTTP_AUTHORIZATION'} ) {
+        @token_parts = split(/ /, $ENV{'HTTP_AUTHORIZATION'});
+        $token = @token_parts[1];
+        
+    }
+    
     my $der_cert_file;
     my $signing_cert;
     
@@ -5607,3 +5615,44 @@ sub getTokenInfo() {
          
 }
 
+################################################################################
+#
+# Validate the session, and return true if the session is not expired.  Support
+# both CGI::Session and JWT authentication token sessions, where auth tokens
+# take precendence.
+#
+################################################################################
+sub validateSession() {
+    
+    if ( $debug_enabled ) {
+        debug('validateSession() called.');
+    }
+    
+    my $token_info = getTokenInfo();
+    my $session = CGI::Session->load();
+    my $valid = 0;
+   
+    if ( $token_info{'isValid'} ) {
+        $valid = 1;
+        if ( $debug_enabled ) {
+                debug('The auth token session is valid.');
+            
+        }
+        
+    } else if ( ! $session->is_empty && ! $session->is_expired ) {
+        $valid = 1;
+        if ( $debug_enabled ) {
+                debug('The CGI session is valid.');
+            
+        }
+    }
+    
+    if ( $debug_enabled ) {
+        if ( ! $valid ) {
+            debug('The session is not valid.');
+            
+        }
+    }
+    
+    return $valid;
+}
