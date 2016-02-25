@@ -389,8 +389,7 @@ elsif ( $FORM::stage !~ "confirmed" ) {
 	# None of the stages have been reached and data is not being confirmed.
 
 	# check if the user is logged in...
-	my $session = CGI::Session->load() or die CGI::Session->errstr();
-	if ( $session->is_empty ) {
+	if ( ! validateSession() ) {
 
 		# no session found ... redirect to login page template
 		$$templateVars{'showInstructions'} = 'true';
@@ -475,10 +474,14 @@ setAuthToken($metacat);
 
 if ( !$error ) {
 
-	# Login to metacat
-	my ( $username, $password ) = getCredentials();
-	my $response = $metacat->login( $username, $password );
-	my $errorMessage = "";
+	# Login to metacat if there is no authentication token
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	my ( $username, $password ) = getCredentials();
+    	$response = $metacat->login( $username, $password );
+    	my $errorMessage = "";
+        
+    }
     
 	# Parameters have been validated and Create the XML document
 	my $xmldoc = createXMLDocument();
@@ -518,9 +521,9 @@ if ( !$error ) {
 			}
 		}
 
-		debug("A");
+		debug("Checking for a FORM docid.");
 		if ( $FORM::docid eq "" ) {
-			debug("B1");
+			debug("No FORM docid is present. Generating one from Metacat.");
 
 			# document is being inserted
 			my $docStatus = "INCOMPLETE";
@@ -533,13 +536,9 @@ if ( !$error ) {
                 $xmldocWithDocID =~ s/docid/$docid/;
                 debugDoc($xmldocWithDocID);
                 $docStatus = insertMetadata( $xmldocWithDocID, $docid );
-                               
-                debug("B2");
-                
+                                               
 			}
-                        
-            debug("B3");
-            
+                                    
             if ( $docStatus ne "SUCCESS" ) {
                 debug("NO SUCCESS");
                 debug("Message is: $docStatus");
@@ -552,7 +551,7 @@ if ( !$error ) {
             
 		}
 		else {
-			debug("M1");
+			debug("The form has an existing docid: " . $FORM::docid);
 
 			# document is being modified
 			$docid = incrementRevision($FORM::docid);
@@ -560,6 +559,7 @@ if ( !$error ) {
 			$xmldoc =~ s/docid/$docid/;
 			debugDoc($xmldoc);
 
+            debug('Updating docid: ' . $docid);
 			my $response = $metacat->update( $docid, $xmldoc );
 
 			if ( !$response ) {
@@ -567,7 +567,7 @@ if ( !$error ) {
 				push( @errorMessages, "Failed while updating.\n" );
 			}
 
-			debug("M2, $docid");
+			debug("Updated document with docid: $docid");
 			if ( scalar(@errorMessages) ) {
 				debug("Errors defined in modify.");
 
@@ -682,8 +682,6 @@ if ( !$error ) {
     
 }
 
-debug("C");
-
 if ( scalar(@errorMessages) ) {
 	debug("ErrorMessages defined.");
 	$$templateVars{'docid'} = $FORM::docid;
@@ -725,13 +723,13 @@ sub insertMetadata {
 
 	debug("Trying to insert the following document");
 	my $docStatus = "SUCCESS";
-	debug("Starting insert of $docid (D1)");
+	debug("Starting insert of $docid");
 
 	my $response = $metacat->insert( $docid, $xmldoc );
 	if ( !$response ) {
-		debug("Response gotten (D2)");
+		debug("Response gotten for docid: " . $docid);
 		my $errormsg = $metacat->getMessage();
-		debug( "Error is (D3): " . $errormsg );
+		debug( "Error is: " . $errormsg );
 		if ( $errormsg =~ /is already in use/ ) {
 			$docStatus = "INCOMPLETE";
 		}
@@ -742,7 +740,7 @@ sub insertMetadata {
 			$docStatus = $errormsg;
 		}
 	}
-	debug("Ending insert (D4)");
+	debug("Ending insert of docid: " . $docid);
 
 	return $docStatus;
 }
@@ -1294,8 +1292,7 @@ sub fileMetadata {
 	}
     
 	# Now the file is on disk, send the object to Metacat
-	my $session = CGI::Session->load();
-	if ( $session->is_empty ) {
+	if ( ! validateSession() ) {
 		push( @errorMessages, "Must be logged in to upload files." );
 		debug("Not logged in, cannot upload files.");
 		return 0;
@@ -1476,11 +1473,16 @@ sub deleteFile {
 sub deleteFileData {
 	my $input = shift;
 	my ( $docid, $fileHash ) = datafileInfo($input);
-	my $metacat = Metacat->new($metacatUrl);
+	my ($username, $password);
+    my $metacat = Metacat->new($metacatUrl);
     setAuthToken($metacat);
-
-	my ( $username, $password ) = getCredentials();
-	my $response = $metacat->login( $username, $password );
+    
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	( $username, $password ) = getCredentials();
+    	$response = $metacat->login( $username, $password );
+        
+    }
 	if ( !$response ) {
 		my $msg = $metacat->getMessage();
 		push( @errorMessages,
@@ -1510,6 +1512,7 @@ sub uploadData {
 	my $filename = shift;
 
 	debug("Upload -- Starting upload of $docid");
+    
 	my $response = $metacat->upload( $docid, $data, $filename );
 	if ( !$response ) {
 		
@@ -2470,8 +2473,11 @@ sub readDocumentFromMetacat() {
 	my $element;
 	my $tempfile;
 
-	my ( $username, $password ) = getCredentials();
-	$metacat->login( $username, $password );
+    if ( ! hasValidAuthToken() ) {
+        my ( $username, $password ) = getCredentials();
+	    $metacat->login( $username, $password );
+  
+    }
 
 	$httpMessage = $metacat->read($docid);
 	$doc         = $httpMessage->content();
@@ -3520,8 +3526,13 @@ sub deleteData {
 
 	# Login to metacat
 	my $errorMessage = "";
-	my ( $username, $password ) = getCredentials();
-	my $response = $metacat->login( $username, $password );
+    
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	my ( $username, $password ) = getCredentials();
+    	$response = $metacat->login( $username, $password );
+        
+    }
 
 	if ( !$response ) {
 
@@ -3637,18 +3648,19 @@ sub handleLoginRequest() {
 
 	# Check if a session already exists
 	my $session = CGI::Session->load() or die CGI::Session->errstr();
-	if ( $session->is_empty ) {
+	if ( ! validateSession() ) { # tokens won't be involved in login()
 
 		# no session found ... check if the login is correct
 		my $username = $FORM::username;
 		my $password = $FORM::password;
 
 		my $metacat = Metacat->new($metacatUrl);
-        setAuthToken($metacat);
-		my $returnVal = $metacat->login( $username, $password );
-		debug(
-"Login was $returnVal for login attempt to $metacatUrl, with $username"
-		);
+                
+    	my $returnVal = $metacat->login( $username, $password );
+            
+		debug("Login was $returnVal for login " . 
+              "attempt to $metacatUrl, with $username");
+              
 		if ( $returnVal > 0 ) {
 
 			# valid username and passwd
@@ -3781,8 +3793,11 @@ sub getUserGroups {
 	my $metacat = Metacat->new($metacatUrl);
 	setAuthToken($metacat);
     
-	my ( $username, $password ) = getCredentials();
-	$metacat->login( $username, $password );
+    if ( ! hasValidAuthToken() ) {
+    	my ( $username, $password ) = getCredentials();
+    	$metacat->login( $username, $password );
+        
+    }
 	
 	my $userInfo = $metacat->getUserInfo($sessionId);
 	
@@ -3895,8 +3910,12 @@ sub handleReviewFrame {
 sub getReviewHistoryHTML {
 	my $metacat = Metacat->new($metacatUrl);
 	setAuthToken($metacat);
-	my ( $username, $password ) = getCredentials();
-	$metacat->login( $username, $password );
+    if ( ! hasValidAuthToken() ) {
+    	my ( $username, $password ) = getCredentials();
+    	$metacat->login( $username, $password );
+        
+    }
+    
 	my $parser = XML::LibXML->new();
 	my $docid  = $FORM::docid;
 	my ( $x, $y, $z ) = split( /\./, $docid );
@@ -3959,7 +3978,11 @@ sub handleModAccept() {
 	my $userDN              = '';
 
 	# Log into metacat
-	my $response = $metacat->login( $modUsername, $modPassword );
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	$response = $metacat->login( $modUsername, $modPassword );
+        
+    }
 	my $docid = $FORM::docid;
 
 	if ( !$response ) {
@@ -4133,7 +4156,11 @@ sub handleModDecline() {
 	my $title;
 
 	# Log into metacat
-	my $response = $metacat->login( $modUsername, $modPassword );
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	$response = $metacat->login( $modUsername, $modPassword );
+        
+    }
 
 	if ( !$response ) {
 
@@ -4272,7 +4299,11 @@ sub handleModRevise() {
 	my $userDN = '';
 
 	# Log into metacat
-	my $response = $metacat->login( $modUsername, $modPassword );
+    my $response = hasValidAuthToken();
+    if ( ! $response ) {
+    	$response = $metacat->login( $modUsername, $modPassword );
+        
+    }
 
 	if ( !$response ) {
 
@@ -5477,6 +5508,11 @@ sub getTestProjectList {
 sub setAuthToken() {
     my $metacat = shift;
     
+    if ( $debug_enabled ) {
+        debug('setAuthToken() called.');
+        
+    }
+    
     eval { $metacat->isa('Metacat'); };
     
     if ( ! $@ ) {
@@ -5484,11 +5520,17 @@ sub setAuthToken() {
         if ( $ENV{'HTTP_AUTHORIZATION'}) {
             $metacat->set_options( 
                 auth_token_header => $ENV{'HTTP_AUTHORIZATION'});
+        } else {
+            if ( $debug_enabled ) {
+                debug("There is no HTTP_AUTHORIZATION variable. " .
+                      "Did not set Metacat->{'auth_token_header'}");
+        
+            }
         }
         
     } else {
         debug('Not an instance of Metacat.' .
-        'Pass a Metacat object only to setAuthToken()');
+        'Pass a Metacat object only to setAuthToken().');
     }
 }
 
@@ -5499,7 +5541,12 @@ sub setAuthToken() {
 #
 ################################################################################
 sub getSigningCertificate() {
+    
+    if ( $debug_enabled ) {
+        debug('getSigningCertificate called.');
         
+    }   
+     
     open(my $pem_cert_file, ">", $pem_file_path)
         or die "\nCould not open PEM certificate file: $!\n";
 
@@ -5557,6 +5604,15 @@ sub getSigningCertificate() {
         "-out", $der_file_path, "-outform", "DER");
     system(@convert_der_args);
     
+    # For debugging, display the cert details
+    if ( $debug_enabled ) {
+        my @cert_info = `openssl x509 -noout -issuer -subject -dates -in $pem_file_path`;
+        debug("Signing certificate info: ");
+        for my $info_line (@cert_info) {
+            debug($info_line);
+            
+        }
+    }
 }
 
 ################################################################################
@@ -5566,6 +5622,10 @@ sub getSigningCertificate() {
 ################################################################################
 sub getTokenInfo() {
     # Initialize the token info hash
+    if ( $debug_enabled ) {
+        debug('getTokenInfo() called.');
+    }
+    
     my $token_info = {
             userId      => '',
             issuedAt    => '',
@@ -5583,7 +5643,6 @@ sub getTokenInfo() {
     if ( $ENV{'HTTP_AUTHORIZATION'} ) {
         my @token_parts = split(/ /, $ENV{'HTTP_AUTHORIZATION'});
         $token = @token_parts[1];
-        
     }
     
     my $der_cert_file;
@@ -5596,7 +5655,7 @@ sub getTokenInfo() {
     }
     
     # Read the DER-encoded certificate
-    open($der_cert_file, "<", $cn . ".der")
+    open($der_cert_file, "<", $der_file_path)
         or die "\nCould not open DER certificate file: $!\n";
     binmode($der_cert_file);
     read($der_cert_file, $signing_cert, 4096)
@@ -5604,11 +5663,15 @@ sub getTokenInfo() {
     close($der_cert_file);
     
     my $cert = Crypt::X509->new(cert=>$signing_cert);
-    
+        
     # Decode the token using Crypt::JWT 
-    eval{ $token_info = decode_jwt(token=>$token, key=>$cert); };
+    eval{ $token_info = decode_jwt(token=>$token, key=>$cert) };
     if ( ! $@ ) { 
         $$token_info{isValid} = 1;
+        
+    } else {
+        debug($@);
+        
     }
     
     return $token_info;
@@ -5628,11 +5691,11 @@ sub validateSession() {
         debug('validateSession() called.');
     }
     
-    my %token_info = getTokenInfo();
+    my $token_info = getTokenInfo();
     my $session = CGI::Session->load();
     my $valid = 0;
-   
-    if ( $token_info{'isValid'} ) {
+       
+    if ( $token_info->{"isValid"} ) {
         $valid = 1;
         if ( $debug_enabled ) {
                 debug('The auth token session is valid.');
@@ -5654,5 +5717,32 @@ sub validateSession() {
         }
     }
     
+    if ( $debug_enabled ) {
+        while( my ($k, $v) = each %$token_info ) {
+            debug("$k: $v");
+        }
+    }
+    
+    
     return $valid;
+}
+
+################################################################################
+#
+# Determine if the current authentication token is valid
+#
+################################################################################
+sub hasValidAuthToken() {
+    
+    if ( $debug_enabled ) {
+        debug('hasValidAuthToken() called.');
+    }
+    
+    my $token_info = getTokenInfo();
+
+    if ( $debug_enabled ) {
+        debug("Auth token is valid: $token_info->{'isValid'}");
+    }
+    
+    return $token_info->{'isValid'};
 }
