@@ -186,7 +186,7 @@ public class D1NodeVersionCheckerTest extends MCTestCase {
       Settings.getConfiguration().setProperty("D1Client.CN_URL", "https://cn.dataone.org/cn");
       node.setValue("urn:node:KNB");
       checker = new D1NodeVersionChecker(node);
-      assertTrue(checker.getVersion("MNReplication").equals("v1"));
+      assertTrue(checker.getVersion("MNReplication").equals("v2"));
       node.setValue("urn:node:CN");
       checker = new D1NodeVersionChecker(node);
       assertTrue(checker.getVersion("MNReplication") == null);

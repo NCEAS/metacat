@@ -76,7 +76,7 @@ public class AuthLdapTest extends MCTestCase
     {
     	try
     	{
-    	    String lterUser = PropertyService.getProperty("test.lterUser");
+    	    //String lterUser = PropertyService.getProperty("test.lterUser");
         	//System.out.println("before initilizing authldap object");
         	AuthLdap ldap = new AuthLdap();
         	//System.out.println("after initilizing authldap object");
@@ -87,7 +87,7 @@ public class AuthLdapTest extends MCTestCase
     	    if ( response != null)
     	    {
     	       assertTrue("Couldn't find user "+anotheruser,response.indexOf(anotheruser) != -1);
-    	       assertTrue("Couldn't find user "+lterUser,response.indexOf(lterUser) != -1);
+    	       //assertTrue("Couldn't find user "+lterUser,response.indexOf(lterUser) != -1);
     	    }
     	    else
     	    {

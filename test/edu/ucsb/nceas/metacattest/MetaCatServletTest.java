@@ -110,8 +110,8 @@ public class MetaCatServletTest extends MCTestCase {
 
 		TestSuite suite = new TestSuite();
 		suite.addTest(new MetaCatServletTest("initialize"));
-		suite.addTest(new MetaCatServletTest("testLterReferralLogin"));
-		suite.addTest(new MetaCatServletTest("testLterReferralLoginFail"));
+		//suite.addTest(new MetaCatServletTest("testLterReferralLogin"));
+		//suite.addTest(new MetaCatServletTest("testLterReferralLoginFail"));
 		suite.addTest(new MetaCatServletTest("testOtherReferralLogin"));
 		suite.addTest(new MetaCatServletTest("testOtherReferralLoginFail"));
 		suite.addTest(new MetaCatServletTest("testNCEASLoginFail"));
@@ -194,7 +194,7 @@ public class MetaCatServletTest extends MCTestCase {
 	/**
 	 * Test the login to lter succesfully
 	 */
-	public void testLterReferralLogin() {
+	/*public void testLterReferralLogin() {
 		debug("\nRunning: testLterReferralLogin test");
 		String user = null;
 		String passwd = null;
@@ -210,12 +210,12 @@ public class MetaCatServletTest extends MCTestCase {
         this.testLogOut();
 
 
-	}
+	}*/
 
 	/**
 	 * Test the login to lter failed
 	 */
-	public void testLterReferralLoginFail() {
+	/*public void testLterReferralLoginFail() {
 		debug("\nRunning: testLterReferralLoginFail test");
 		String user = null;
     String passwd = "wrong";
@@ -228,7 +228,7 @@ public class MetaCatServletTest extends MCTestCase {
 		// assertTrue( withProtocol.getProtocol().equals("http"));
         this.testLogOut();
 
-	}
+	}*/
 
 	/**
 	 * Test the login to Other succesfully
