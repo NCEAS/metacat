@@ -300,7 +300,7 @@ sub upload {
   my %postData = ( action => 'upload',
                    docid => $docid,
                    datafile => [$datafile, $filename],
-                   enctype => 'form-data'
+                   enctype => 'multipart/form-data'
                  );
 
   my $response = $self->sendData(%postData);
