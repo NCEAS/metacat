@@ -113,6 +113,7 @@ import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
+import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.LSIDUtil;
@@ -2966,31 +2967,21 @@ public class MetacatHandler {
         }
         
         // Get the session information
-        String username = null;
+        String username = "public";
         String password = null;
         String[] groupnames = null;
         String sess_id = null;
         
         // be aware of session expiration on every request
-        HttpSession sess = request.getSession(true);
-        if (sess.isNew()) {
-            // session expired or has not been stored b/w user requests
-            username = "public";
-            sess.setAttribute("username", username);
-        } else {
-            username = (String) sess.getAttribute("username");
-            password = (String) sess.getAttribute("password");
-            groupnames = (String[]) sess.getAttribute("groupnames");
-            try {
-                sess_id = (String) sess.getId();
-            } catch (IllegalStateException ise) {
-                System.out
-                        .println("error in  handleMultipartForm: this shouldn't "
-                        + "happen: the session should be valid: "
-                        + ise.getMessage());
-            }
-        }
-        
+		SessionData sessionData = RequestUtil.getSessionData(request);
+		
+		if (sessionData != null) {
+			username = sessionData.getUserName();
+			password = sessionData.getPassword();
+			groupnames = sessionData.getGroupNames();
+			sess_id = sessionData.getId();
+		}
+                
         // Get the out stream
         try {
             out = response.getWriter();
