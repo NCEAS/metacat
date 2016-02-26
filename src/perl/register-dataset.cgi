@@ -1537,6 +1537,11 @@ sub uploadData {
 #
 ################################################################################
 sub createXMLDocument {
+    if ( $debug_enabled ) {
+        debug("createXMLDocument() called.");
+        
+    }
+    
 
 	#FIXME placeholder for $FORM element, should be determined by config
 
@@ -1578,7 +1583,13 @@ sub createProjectDocument {
 }
 
 sub createDatasetDocument {
-	my $doc = EMLStart();
+	
+    if ( $debug_enabled ) {
+        debug("createDatasetDocument() called.");
+        
+    }
+    
+    my $doc = EMLStart();
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
@@ -2394,7 +2405,12 @@ sub distributionElement() {
 }
 
 sub accessElement {
-	my $public = shift;
+	
+    if ( $debug_enabled ) {
+        debug('accessElement() called.');
+    }
+    
+    my $public = shift;
 	if ( !$public ) {
 		$public = $config->{'publicReadable'};
 	}
@@ -2435,9 +2451,26 @@ sub allowElement {
 }
 
 sub getUsername() {
+    
+    if ( $debug_enabled ) {
+        debug('getUsername() called.');
+        
+    }
+    
 	my $username = '';
 	my $authBase = $properties->getProperty("auth.base");
 
+    # Support authentication token usernames
+    my $token_info = getTokenInfo();
+    
+    if ( $token_info->{'isValid'} ) {
+        $username = $token_info->{'sub'};
+        debug("Username: $username");
+        return $token_info->{'sub'};
+        
+    }
+    
+    # Support CGI session usernames
 	if ( $FORM::username ne '' ) {
 		$username =
 		  "uid=$FORM::username,o=$FORM::organization,$authBase";
