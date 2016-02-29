@@ -2445,21 +2445,25 @@ public class MNodeService extends D1NodeService
 			
 		} catch (IOException e) {
 			// report as service failure
+		    e.printStackTrace();
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
 		} catch (OREException e) {
 			// report as service failure
+		    e.printStackTrace();
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
 		} catch (URISyntaxException e) {
 			// report as service failure
+		    e.printStackTrace();
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
 		} catch (OREParserException e) {
 			// report as service failure
+		    e.printStackTrace();
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
 			throw sf;
