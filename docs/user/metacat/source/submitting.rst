@@ -133,7 +133,8 @@ To install and run the Registry:
       install MSERGEANT/XML-LibXSLT-1.58.tar.gz
       install Captcha:reCAPTCHA
       install DateTime
-      
+      install Crypt::JWT
+      install Crypt::X509
 
 
 2. Double-check that Metacat's temporary folder, application.tempDir, is 
