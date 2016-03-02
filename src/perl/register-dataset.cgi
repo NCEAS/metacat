@@ -46,7 +46,6 @@ use File::Copy;
 use Fcntl qw(:flock);
 use Crypt::JWT qw(decode_jwt);
 use Crypt::X509;
-use IO::Socket::SSL;
 use strict;
 
 #debug("running register-dataset.cgi");
