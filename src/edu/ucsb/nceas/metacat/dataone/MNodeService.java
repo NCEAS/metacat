@@ -2399,11 +2399,10 @@ public class MNodeService extends D1NodeService
 					//Let's use the file name and extension from the metadata is we have it
 					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
 				}
-				else{
-					//If we couldn't find a given file name, use the system metadata extension
-					String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-					fileName += extension;
-				}
+				
+				// ensure there is a file extension for the object
+				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
+				fileName += extension;
 				
 		        //Create a new file for this item and add to the list
 				File tempFile = new File(tempDir, fileName);
