@@ -2395,7 +2395,7 @@ public class MNodeService extends D1NodeService
 				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
 				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
 
-				if(fileNames.containsKey(entryPid)){
+				if (fileNames.containsKey(entryPid)){
 					//Let's use the file name and extension from the metadata is we have it
 					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
 				}
@@ -2403,6 +2403,11 @@ public class MNodeService extends D1NodeService
 				// ensure there is a file extension for the object
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
 				fileName += extension;
+				
+				// if SM has the file name, ignore everything else and use that
+				if (entrySysMeta.getFileName() != null) {
+					fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+				}
 				
 		        //Create a new file for this item and add to the list
 				File tempFile = new File(tempDir, fileName);
