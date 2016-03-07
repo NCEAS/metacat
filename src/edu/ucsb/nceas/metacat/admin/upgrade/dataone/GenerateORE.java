@@ -224,7 +224,13 @@ public class GenerateORE implements UpgradeUtilityInterface {
 				
 				// get the original ORE map
 				InputStream originalOreStream = mn.get(null, orePid);
-				Map<Identifier, Map<Identifier, List<Identifier>>> originalOre = ResourceMapFactory.getInstance().parseResourceMap(originalOreStream);
+				Map<Identifier, Map<Identifier, List<Identifier>>> originalOre = null;
+				try {
+				     originalOre = ResourceMapFactory.getInstance().parseResourceMap(originalOreStream);
+				} finally {
+				    IOUtils.closeQuietly(originalOreStream);
+				}
+				
 
 				// generate the updated ORE map, in this case we aren't changing any values, just altering the serialization using a newer foresite library
 				Identifier updatedOrePid = new Identifier();

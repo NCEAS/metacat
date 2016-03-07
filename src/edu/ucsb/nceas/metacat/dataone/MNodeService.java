@@ -711,153 +711,157 @@ public class MNodeService extends D1NodeService
 
         }
         
-
         try {
-            // do we already have a replica?
             try {
-                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                // if we have a local id, get the local object
+                // do we already have a replica?
                 try {
-                    object = MetacatHandler.read(localId);
-                } catch (Exception e) {
-                	// NOTE: we may already know about this ID because it could be a data file described by a metadata file
-                	// https://redmine.dataone.org/issues/2572
-                	// TODO: fix this so that we don't prevent ourselves from getting replicas
-                	
-                    // let the CN know that the replication failed
-                	logMetacat.warn("Object content not found on this node despite having localId: " + localId);
-                	String msg = "Can't read the object bytes properly, replica is invalid.";
-                    ServiceFailure serviceFailure = new ServiceFailure("2151", msg);
-                    setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, serviceFailure);
-                    logMetacat.warn(msg);
-                    throw serviceFailure;
+                    localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                    // if we have a local id, get the local object
+                    try {
+                        object = MetacatHandler.read(localId);
+                    } catch (Exception e) {
+                        // NOTE: we may already know about this ID because it could be a data file described by a metadata file
+                        // https://redmine.dataone.org/issues/2572
+                        // TODO: fix this so that we don't prevent ourselves from getting replicas
+                        
+                        // let the CN know that the replication failed
+                        logMetacat.warn("Object content not found on this node despite having localId: " + localId);
+                        String msg = "Can't read the object bytes properly, replica is invalid.";
+                        ServiceFailure serviceFailure = new ServiceFailure("2151", msg);
+                        setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, serviceFailure);
+                        logMetacat.warn(msg);
+                        throw serviceFailure;
+                        
+                    }
+
+                } catch (McdbDocNotFoundException e) {
+                    logMetacat.info("No replica found. Continuing.");
                     
-                }
-
-            } catch (McdbDocNotFoundException e) {
-                logMetacat.info("No replica found. Continuing.");
-                
-            } catch (SQLException ee) {
-                throw new ServiceFailure("2151", "Couldn't identify the local id of the object with the specified identifier "
-                                        +pid.getValue()+" since - "+ee.getMessage());
-            }
-            
-            // no local replica, get a replica
-            if ( object == null ) {
-                /*boolean success = true;
-                try {
-                    //use the v2 ping api to connect the source node
-                    mn.ping();
-                } catch (Exception e) {
-                    success = false;
-                }*/
-                D1NodeVersionChecker checker = new D1NodeVersionChecker(sourceNode);
-                String nodeVersion = checker.getVersion("MNRead");
-                if(nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V1)) {
-                    //The source node is a v1 node, we use the v1 api
-                    org.dataone.client.v1.MNode mNodeV1 =  org.dataone.client.v1.itk.D1Client.getMN(sourceNode);
-                    object = mNodeV1.getReplica(thisNodeSession, pid);
-                } else if (nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V2)){
-                 // session should be null to use the default certificate
-                    // location set in the Certificate manager
-                    MNode mn = D1Client.getMN(sourceNode);
-                    object = mn.getReplica(thisNodeSession, pid);
-                } else {
-                    throw new ServiceFailure("2151", "The version of MNRead service is "+nodeVersion+" in the source node "+sourceNode.getValue()+" and it is supported. Please check the information in the cn");
+                } catch (SQLException ee) {
+                    throw new ServiceFailure("2151", "Couldn't identify the local id of the object with the specified identifier "
+                                            +pid.getValue()+" since - "+ee.getMessage());
                 }
                 
-                logMetacat.info("MNodeService.getReplica() called for identifier "
-                                + pid.getValue());
+                // no local replica, get a replica
+                if ( object == null ) {
+                    /*boolean success = true;
+                    try {
+                        //use the v2 ping api to connect the source node
+                        mn.ping();
+                    } catch (Exception e) {
+                        success = false;
+                    }*/
+                    D1NodeVersionChecker checker = new D1NodeVersionChecker(sourceNode);
+                    String nodeVersion = checker.getVersion("MNRead");
+                    if(nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V1)) {
+                        //The source node is a v1 node, we use the v1 api
+                        org.dataone.client.v1.MNode mNodeV1 =  org.dataone.client.v1.itk.D1Client.getMN(sourceNode);
+                        object = mNodeV1.getReplica(thisNodeSession, pid);
+                    } else if (nodeVersion != null && nodeVersion.equals(D1NodeVersionChecker.V2)){
+                     // session should be null to use the default certificate
+                        // location set in the Certificate manager
+                        MNode mn = D1Client.getMN(sourceNode);
+                        object = mn.getReplica(thisNodeSession, pid);
+                    } else {
+                        throw new ServiceFailure("2151", "The version of MNRead service is "+nodeVersion+" in the source node "+sourceNode.getValue()+" and it is supported. Please check the information in the cn");
+                    }
+                    
+                    logMetacat.info("MNodeService.getReplica() called for identifier "
+                                    + pid.getValue());
 
-            }
+                }
 
-        } catch (InvalidToken e) {            
-            String msg = "Could not retrieve object to replicate (InvalidToken): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-
-        } catch (NotFound e) {
-            String msg = "Could not retrieve object to replicate (NotFound): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-
-        } catch (NotAuthorized e) {
-            String msg = "Could not retrieve object to replicate (NotAuthorized): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-        } catch (NotImplemented e) {
-            String msg = "Could not retrieve object to replicate (mn.getReplica NotImplemented): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-        } catch (ServiceFailure e) {
-            String msg = "Could not retrieve object to replicate (ServiceFailure): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-        } catch (InsufficientResources e) {
-            String msg = "Could not retrieve object to replicate (InsufficientResources): "+ e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-        }
-
-        // verify checksum on the object, if supported
-        if (object.markSupported()) {
-            Checksum givenChecksum = sysmeta.getChecksum();
-            Checksum computedChecksum = null;
-            try {
-                computedChecksum = ChecksumUtil.checksum(object, givenChecksum.getAlgorithm());
-                object.reset();
-
-            } catch (Exception e) {
-                String msg = "Error computing checksum on replica: " + e.getMessage();
-                logMetacat.error(msg);
-                ServiceFailure sf = new ServiceFailure("2151", msg);
-                sf.initCause(e);
-                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, sf);
-                throw sf;
-            }
-            if (!givenChecksum.getValue().equals(computedChecksum.getValue())) {
-                logMetacat.error("Given    checksum for " + pid.getValue() + 
-                    "is " + givenChecksum.getValue());
-                logMetacat.error("Computed checksum for " + pid.getValue() + 
-                    "is " + computedChecksum.getValue());
-                String msg = "Computed checksum does not match declared checksum";
+            } catch (InvalidToken e) {            
+                String msg = "Could not retrieve object to replicate (InvalidToken): "+ e.getMessage();
                 failure = new ServiceFailure("2151", msg);
                 setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+
+            } catch (NotFound e) {
+                String msg = "Could not retrieve object to replicate (NotFound): "+ e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+
+            } catch (NotAuthorized e) {
+                String msg = "Could not retrieve object to replicate (NotAuthorized): "+ e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+            } catch (NotImplemented e) {
+                String msg = "Could not retrieve object to replicate (mn.getReplica NotImplemented): "+ e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+            } catch (ServiceFailure e) {
+                String msg = "Could not retrieve object to replicate (ServiceFailure): "+ e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+            } catch (InsufficientResources e) {
+                String msg = "Could not retrieve object to replicate (InsufficientResources): "+ e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
                 throw new ServiceFailure("2151", msg);
             }
-        }
 
-        // add it to local store
-        Identifier retPid;
-        try {
-            // skip the MN.create -- this mutates the system metadata and we don't want it to
-            if ( localId == null ) {
-                // TODO: this will fail if we already "know" about the identifier
-            	// FIXME: see https://redmine.dataone.org/issues/2572
-                retPid = super.create(session, pid, object, sysmeta);
-                result = (retPid.getValue().equals(pid.getValue()));
+            // verify checksum on the object, if supported
+            if (object.markSupported()) {
+                Checksum givenChecksum = sysmeta.getChecksum();
+                Checksum computedChecksum = null;
+                try {
+                    computedChecksum = ChecksumUtil.checksum(object, givenChecksum.getAlgorithm());
+                    object.reset();
+
+                } catch (Exception e) {
+                    String msg = "Error computing checksum on replica: " + e.getMessage();
+                    logMetacat.error(msg);
+                    ServiceFailure sf = new ServiceFailure("2151", msg);
+                    sf.initCause(e);
+                    setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, sf);
+                    throw sf;
+                }
+                if (!givenChecksum.getValue().equals(computedChecksum.getValue())) {
+                    logMetacat.error("Given    checksum for " + pid.getValue() + 
+                        "is " + givenChecksum.getValue());
+                    logMetacat.error("Computed checksum for " + pid.getValue() + 
+                        "is " + computedChecksum.getValue());
+                    String msg = "Computed checksum does not match declared checksum";
+                    failure = new ServiceFailure("2151", msg);
+                    setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                    throw new ServiceFailure("2151", msg);
+                }
             }
-            
-        } catch (Exception e) {
-            String msg = "Could not save object to local store (" + e.getClass().getName() + "): " + e.getMessage();
-            failure = new ServiceFailure("2151", msg);
-            setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-            logMetacat.error(msg);
-            throw new ServiceFailure("2151", msg);
-            
+
+            // add it to local store
+            Identifier retPid;
+            try {
+                // skip the MN.create -- this mutates the system metadata and we don't want it to
+                if ( localId == null ) {
+                    // TODO: this will fail if we already "know" about the identifier
+                    // FIXME: see https://redmine.dataone.org/issues/2572
+                    retPid = super.create(session, pid, object, sysmeta);
+                    result = (retPid.getValue().equals(pid.getValue()));
+                }
+                
+            } catch (Exception e) {
+                String msg = "Could not save object to local store (" + e.getClass().getName() + "): " + e.getMessage();
+                failure = new ServiceFailure("2151", msg);
+                setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
+                logMetacat.error(msg);
+                throw new ServiceFailure("2151", msg);
+                
+            }
+        } finally {
+            IOUtils.closeQuietly(object);
         }
+        
 
         // finish by setting the replication status
         setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.COMPLETED, null);
