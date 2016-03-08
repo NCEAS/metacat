@@ -3798,17 +3798,26 @@ sub handleLogoutRequest() {
 #
 ################################################################################
 sub getCredentials {
+    
 	my $userDN   = $FORM::username;
 	my $userOrg  = $FORM::organization;
 	my $userPass = $FORM::password;
 	my $authBase = $properties->getProperty("auth.base");
 	my $dname    = "uid=$userDN,o=$userOrg,$authBase";
-
-	my $session = CGI::Session->load();
-	if ( !( $session->is_empty || $session->is_expired ) ) {
-		$dname    = $session->param("username");
-		$userPass = $session->param("password");
-	}
+    my $token_info;
+    
+    if ( hasValidAuthToken() ) {
+        $token_info = getTokenInfo();
+        $dname = $token_info->{'sub'};
+        
+    } else {
+    	my $session = CGI::Session->load();
+    	if ( !( $session->is_empty || $session->is_expired ) ) {
+    		$dname    = $session->param("username");
+    		$userPass = $session->param("password");
+    	}
+        
+    }
 
 	return ( $dname, $userPass );
 }
