@@ -79,12 +79,12 @@ my $pem_file_path = "/tmp/server.pem";
 my $der_file_path = "/tmp/server.der";
 
 # Signing certificate file name is based on the CN environment
-if ( $cnUrl && $tempDir ) { 
+if ( $cnUrl && $tempDir ) {
     my @parts = split(/\//, $cnUrl);
     $cn = $parts[2];
     $pem_file_path = $tempDir . "/" . $cn . ".pem";
-    $der_file_path = $tempDir . "/" . $cn . ".der"; 
-           
+    $der_file_path = $tempDir . "/" . $cn . ".der";
+
 }
 
 # url configuration
@@ -264,6 +264,7 @@ if ( $FORM::stage =~ "loginform" ) {
 	}
 
 	$template->process( $templates->{'login'}, $templateVars );
+
 	exit();
 }
 elsif ( $FORM::stage =~ "logout" ) {
@@ -327,11 +328,10 @@ elsif ( $FORM::stage =~ "modify" ) {
 	#debug("in modify stage");
 	# Modification of a file has been requested.
 	# check if the user is logged in...
-	my $session = CGI::Session->load() or die CGI::Session->errstr();
-	if ( $session->is_empty ) {
+	if ( !validateSession() ) {
 
 		# no session found ... redirect to login page template
-		$$templateVars{'message'} = 'You must login to modify your dataset.';
+		$$templateVars{'message'} = 'Please login to modify your dataset.';
 		$template->process( $templates->{'login'}, $templateVars );
 	}
 	else {
@@ -392,8 +392,9 @@ elsif ( $FORM::stage !~ "confirmed" ) {
 
 		# no session found ... redirect to login page template
 		$$templateVars{'showInstructions'} = 'true';
-		$$templateVars{'message'} = 'You must login to register your dataset.';
+		$$templateVars{'message'} = 'Please login to register your dataset.';
 		$template->process( $templates->{'login'}, $templateVars );
+
 	}
 	else {
 
@@ -479,12 +480,12 @@ if ( !$error ) {
     	my ( $username, $password ) = getCredentials();
     	$response = $metacat->login( $username, $password );
     	my $errorMessage = "";
-        
+
     }
-    
+
 	# Parameters have been validated and Create the XML document
 	my $xmldoc = createXMLDocument();
-    
+
 	my $xmldocWithDocID = $xmldoc;
 	my $errorMessage    = "";
 
@@ -526,28 +527,28 @@ if ( !$error ) {
 
 			# document is being inserted
 			my $docStatus = "INCOMPLETE";
-            
+
 			while ($docStatus eq "INCOMPLETE") {
-                                
+
                 #Create the docid
                 $docid = newDocid($scope, $metacat);
-                                                    
+
                 $xmldocWithDocID =~ s/docid/$docid/;
                 debugDoc($xmldocWithDocID);
                 $docStatus = insertMetadata( $xmldocWithDocID, $docid );
-                                               
+
 			}
-                                    
+
             if ( $docStatus ne "SUCCESS" ) {
                 debug("NO SUCCESS");
                 debug("Message is: $docStatus");
-                
+
                 push( @errorMessages, $docStatus );
             }
             else{
                 deleteRemovedData();
             }
-            
+
 		}
 		else {
 			debug("The form has an existing docid: " . $FORM::docid);
@@ -678,7 +679,7 @@ if ( !$error ) {
 		modSendNotification( $title, $contactEmailAddress, $contactName,
 			"Document $docid review pending" );
 	}
-    
+
 }
 
 if ( scalar(@errorMessages) ) {
@@ -777,37 +778,37 @@ sub newAccessionNumber {
 # checks metacat using newAccessionNumber
 ################################################################################
 sub newDocid {
-    
+
     my $scope   = shift;
     my $metacat = shift;
     my $scopeFound = 0;
-    
+
     #Lock a local file while we are creating a new docid
     my $lockFilePath = "docids.lock";
     open(LOCK, ">$lockFilePath");
     flock(LOCK, LOCK_EX);
-    
+
     my $lastdocid = newAccessionNumber($scope, $metacat);
     #Extract the docid number from the docid
     my @line = split(/\./, $lastdocid);
     my $num = $line[1];
-    
+
     my $docidsFilePath    = $tempDir."/docids.txt";
     my $docidsFilePathNew = $tempDir."/docids.txt.new";
-    
+
     #Open/create a local file while we are creating a new docid
     open my $docidsFile,  '+<',  $docidsFilePath;
     open my $docidsNewFile, '>', $docidsFilePathNew;
-    
+
     #Read each docid scope,num in the file
     while( <$docidsFile> ) {
         my @line = split /,/;
         my $currentScope = $line[0];
-        
+
         if($currentScope eq $scope){
-            
+
             my $docidNum = $line[1] + 1;
-            
+
             if($num > $docidNum){
               $docid = "$scope.$num.1";
               print $docidsNewFile "$scope,$num \n";
@@ -823,19 +824,19 @@ sub newDocid {
             print $docidsNewFile $_;
         }
     }
-    
+
     #If this scope is not in the local docid store then add it
     if(!$scopeFound){
         #Add to the local file
         print $docidsNewFile "$scope,$num \n";
     }
-    
+
     #Close the file and replace the old docids file with this new one
     close $docidsNewFile;
     close $docidsFile;
     move($docidsFilePathNew, $docidsFilePath);
     close LOCK;
-    
+
     return $docid;
 }
 
@@ -870,7 +871,7 @@ sub validateParameters {
 	  unless hasContent($FORM::providerSurName);
 	push( @invalidParams, "Dataset title is missing." )
 	  unless hasContent($FORM::title);
-	if ( $show->{'siteList'} eq 'true' ) { 
+	if ( $show->{'siteList'} eq 'true' ) {
 		push( @invalidParams, ucfirst( $config->{'site'} ) . " name is missing." )
 		  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
 			|| $skinName eq "nceas" );
@@ -1274,22 +1275,22 @@ sub fileMetadata {
 	if ( $fileHash =~ /ondisk/ ) {
 		( $docid, $fileHash ) = datafileInfo($fileHash);
 		$outFile = $dataDir . "/" . $docid;
-        
+
 	}
 	else {
 
 		# normalize input filenames; Windows filenames include full paths
 		$cleanName =~ s/.*[\/\\](.*)/$1/;
-		$outFile = $tempDir . "/" . $cleanName;        
+		$outFile = $tempDir . "/" . $cleanName;
 	}
 	debug("Reading file from disk: $outFile");
-    
+
 	my $fileSize = stat($outFile)->size;
 	if ( $fileSize == 0 ) {
 		push( @errorMessages, "file $fileName is zero bytes!" );
 		debug("File $fileName is zero bytes!");
 	}
-    
+
 	# Now the file is on disk, send the object to Metacat
 	if ( ! validateSession() ) {
 		push( @errorMessages, "Must be logged in to upload files." );
@@ -1300,17 +1301,17 @@ sub fileMetadata {
 	# remove the uniqueness of the filename
 	# 'tempXXXXX'
 	$cleanName = substr($cleanName, 9);
-    	
+
 	if ( !$docid ) {
-                
+
         my $uploadStatus = shift;
-        
+
         while(!$uploadStatus){
-            
+
             $docid = newDocid($scope, $metacat);
-            
+
             $uploadStatus = uploadData( $outFile, $docid, $cleanName );
-                        
+
             if ( !$uploadStatus ) {
                 debug("Uploading the data failed.");
                 push( @errorMessages, "Data file $cleanName failed to upload");
@@ -1325,7 +1326,7 @@ sub fileMetadata {
 	# TODO:  should match the object promotion path, so that an
 	#        Excel upload results in 'dataTable' in this field
 	my $entityType = 'Other';
-	
+
 	my %dataInfo = (
 		'docid'       => $docid,
 		'entityid'    => $entityid,
@@ -1405,19 +1406,19 @@ sub writeFile {
 	my $ctx = Digest::SHA1->new;
 	$ctx->add($fileData);
 	my $digest = $ctx->hexdigest;
-    
+
 	# use tempfile for writing
-	my $tmp = File::Temp->new( 
+	my $tmp = File::Temp->new(
 						TEMPLATE => 'tempXXXXX',
                         DIR => $tempDir,
-                        SUFFIX => $cleanName, 
+                        SUFFIX => $cleanName,
                         UNLINK => 0);
 	my $outputName = $tmp->filename();
 	#open( OUT, ">$outputName" ) or die "Could not open: $!";
 	print $tmp $fileData;
 	close($tmp);
 	debug("Writing output, result is: $outputName");
-    
+
 	return ( $outputName, $digest );
 }
 
@@ -1475,12 +1476,12 @@ sub deleteFileData {
 	my ($username, $password);
     my $metacat = Metacat->new($metacatUrl);
     setAuthToken($metacat);
-    
+
     my $response = hasValidAuthToken();
     if ( ! $response ) {
     	( $username, $password ) = getCredentials();
     	$response = $metacat->login( $username, $password );
-        
+
     }
 	if ( !$response ) {
 		my $msg = $metacat->getMessage();
@@ -1511,21 +1512,21 @@ sub uploadData {
 	my $filename = shift;
 
 	debug("Upload -- Starting upload of $docid");
-    
+
 	my $response = $metacat->upload( $docid, $data, $filename );
 	if ( !$response ) {
-		
+
         my $uploadMsg = $metacat->getMessage();
-		
+
         push( @errorMessages,
         		"Failed to upload file. Error was: $uploadMsg\n" );
-		
+
         debug("Upload -- Error is: $uploadMsg");
 	}
 	else {
 		debug("Upload -- Success! New docid $docid");
 	}
-    
+
     return $response;
 }
 
@@ -1538,9 +1539,9 @@ sub uploadData {
 sub createXMLDocument {
     if ( $debug_enabled ) {
         debug("createXMLDocument() called.");
-        
+
     }
-    
+
 
 	#FIXME placeholder for $FORM element, should be determined by config
 
@@ -1582,12 +1583,12 @@ sub createProjectDocument {
 }
 
 sub createDatasetDocument {
-	
+
     if ( $debug_enabled ) {
         debug("createDatasetDocument() called.");
-        
+
     }
-    
+
     my $doc = EMLStart();
 	$doc .= accessElement();
 	$doc .= datasetStart();
@@ -1676,8 +1677,7 @@ sub personnelList {
 			$elem .= "</individualName>\n";
 
 			if ( ( $role eq 'personnel' ) && ($FORM::origNameOrgContact) ) {
-				$elem .=
-"<organizationName>$FORM::origNameOrgContact</organizationName>\n";
+				$elem .= "<organizationName>$FORM::origNameOrgContact</organizationName>\n";
 			}
 
 			if ( ( $role eq 'personnel' ) || ( $role eq 'associatedParty' ) ) {
@@ -1687,7 +1687,16 @@ sub personnelList {
 				}
 				$elem .= "<role>" . normalize($roleElem) . "</role>\n";
 			}
-			$elemList .= "<$role>$elem</$role>\n";
+                        # Ensure the metadataProvider is added before additionalParty
+                        my $fullElement = "<$role>$elem</$role>\n";
+                        if ( $role eq "metadataProvider" ) {
+				$fullElement .= $elemList;
+				$elemList = $fullElement;
+
+                        } else {
+				$elemList .= $fullElement;
+
+			}
 		}
 	}
 	return $elemList;
@@ -1746,7 +1755,7 @@ sub fileAccessElement() {
 		$accessList = qq|
                 <access authSystem="knb" order="allowFirst">
                     $skinAccess
-                    $userAccess 
+                    $userAccess
                     <$defaultAccess>
                         <principal>public</principal>
                         <permission>read</permission>
@@ -2404,11 +2413,11 @@ sub distributionElement() {
 }
 
 sub accessElement {
-	
+
     if ( $debug_enabled ) {
         debug('accessElement() called.');
     }
-    
+
     my $public = shift;
 	if ( !$public ) {
 		$public = $config->{'publicReadable'};
@@ -2450,25 +2459,25 @@ sub allowElement {
 }
 
 sub getUsername() {
-    
+
     if ( $debug_enabled ) {
         debug('getUsername() called.');
-        
+
     }
-    
+
 	my $username = '';
 	my $authBase = $properties->getProperty("auth.base");
 
     # Support authentication token usernames
     my $token_info = getTokenInfo();
-    
+
     if ( $token_info->{'isValid'} ) {
         $username = $token_info->{'sub'};
         debug("Username: $username");
         return $token_info->{'sub'};
-        
+
     }
-    
+
     # Support CGI session usernames
 	if ( $FORM::username ne '' ) {
 		$username =
@@ -2508,7 +2517,7 @@ sub readDocumentFromMetacat() {
     if ( ! hasValidAuthToken() ) {
         my ( $username, $password ) = getCredentials();
 	    $metacat->login( $username, $password );
-  
+
     }
 
 	$httpMessage = $metacat->read($docid);
@@ -3367,7 +3376,7 @@ sub getFormValuesFromEml2 {
 	push( @admins, $adminUsername );
 
 	#debug("getting user groups for current user");
-	
+
 	my @userGroups = getUserGroups();
 
 	foreach $node ( $results->get_nodelist ) {
@@ -3383,35 +3392,35 @@ sub getFormValuesFromEml2 {
 				$permission = $child->textContent();
 			}
 		}
-		
+
 		if (($principal eq 'public') && ($permission ne 'read')) {
 			# If the principal is 'public' and the permission is not 'read' then this document
-	    	# could not have been created in the registry. 
+	    	# could not have been created in the registry.
 			$errorMessage = "The ACL for this document has been changed outside the registry. Please use Morpho to edit this document (Access Error: public principal cannot have $permission permission).\n";
 			$accessError = 1;
 			debug($errorMessage);
-		} 
+		}
 		if (($principal eq $adminUsername) && ($permission ne 'all')) {
 			# If the principal is the admin and permission is not 'all' then this document
-	    	# could not have been created in the registry. 
+	    	# could not have been created in the registry.
 			$errorMessage = "The ACL for this document has been changed outside the registry. Please use Morpho to edit this document (Access Error: admin principal cannot have $permission permission).\n";
 			$accessError = 1;
 			debug($errorMessage);
-		} 
+		}
 
-		# no access error in doc, if principal is not equal to public and permission is 
+		# no access error in doc, if principal is not equal to public and permission is
 		# 'all' (requirements in registry) then try and determine if user has access
 		if (!$accessError && ($principal ne 'public') && ($permission eq 'all' || $permission eq 'write')) {
 			my ($username, $password) = getCredentials();
-						
+
 			# 1) check if user matches principal
 			#debug("does user $username match principal $principal?");
 			if ($principal eq $username) {
-				$accessGranted = 1;	
+				$accessGranted = 1;
 				#debug("Access granted: user $username matches principal");
 			}
-						
-			# 2) if access not granted, check if user group matches principal			
+
+			# 2) if access not granted, check if user group matches principal
 			if (!$accessGranted) {
 				#debug("is one of the user groups @userGroups the principal $principal?");
 				for my $userGroup (@userGroups) {
@@ -3421,9 +3430,9 @@ sub getFormValuesFromEml2 {
            				last;
        				}
 				}
-			}	
-		}		
-				
+			}
+		}
+
 		# if there was an access error, we know this is not a valid registry doc.  No need to
 		# continue looking at access sections in doc.  Same it true if we were granted access
 		# already.
@@ -3431,10 +3440,10 @@ sub getFormValuesFromEml2 {
 			last;
 		}
 	}
-	
-	if (!$accessError) {	
+
+	if (!$accessError) {
 		my ($username, $password) = getCredentials();
-		
+
 		# 3) if access not granted, check if the user is a moderator or admin
 		if (!$accessGranted) {
 			#debug("is user $username in admins @admins?");
@@ -3443,7 +3452,7 @@ sub getFormValuesFromEml2 {
 				#debug("Access granted: user $username is an admin or moderator");
 			}
 		}
-		
+
 		# 4) if access not granted, check if user group in moderator/admin list
 		if (!$accessGranted) {
 			#debug("is one of the user groups @userGroups in admins @admins?");
@@ -3454,9 +3463,9 @@ sub getFormValuesFromEml2 {
 					last;
 				}
 			}
-		}	
-	
-		# 5) if access not granted, and there was no other error, the user is not authorized. 
+		}
+
+		# 5) if access not granted, and there was no other error, the user is not authorized.
 		# Set accessError to true and set the error string
 		if (!$accessError && !$accessGranted) {
 			$errorMessage = "User $username is not authorized to access document\n";
@@ -3558,12 +3567,12 @@ sub deleteData {
 
 	# Login to metacat
 	my $errorMessage = "";
-    
+
     my $response = hasValidAuthToken();
     if ( ! $response ) {
     	my ( $username, $password ) = getCredentials();
     	$response = $metacat->login( $username, $password );
-        
+
     }
 
 	if ( !$response ) {
@@ -3687,12 +3696,12 @@ sub handleLoginRequest() {
 		my $password = $FORM::password;
 
 		my $metacat = Metacat->new($metacatUrl);
-                
+
     	my $returnVal = $metacat->login( $username, $password );
-            
-		debug("Login was $returnVal for login " . 
+
+		debug("Login was $returnVal for login " .
               "attempt to $metacatUrl, with $username");
-              
+
 		if ( $returnVal > 0 ) {
 
 			# valid username and passwd
@@ -3777,14 +3786,14 @@ sub handleLogoutRequest() {
 		$uname = $session->param("username");
 		$session->delete();
 	}
-	
+
 	# send redirect form to metacat and action = logout
 	my $html = "<html><head>";
 	$html .= "</head><body onload=\"document.loginForm.submit()\">";
 	$html .= "<form name=\"loginForm\" method=\"post\" action=\""
 	  . $metacatUrl . "\">";
 	$html .= "<input type=\"hidden\" name=\"action\" value=\"logout\" />";
-	$html .= "<input type=\"hidden\" name=\"username\" value=\"" 
+	$html .= "<input type=\"hidden\" name=\"username\" value=\""
 	  . $uname . "\" />";
 	$html .= "<input type=\"hidden\" name=\"qformat\" value=\""
 	  . $skinName . "\" />";
@@ -3798,25 +3807,26 @@ sub handleLogoutRequest() {
 #
 ################################################################################
 sub getCredentials {
-    
+
 	my $userDN   = $FORM::username;
 	my $userOrg  = $FORM::organization;
 	my $userPass = $FORM::password;
 	my $authBase = $properties->getProperty("auth.base");
 	my $dname    = "uid=$userDN,o=$userOrg,$authBase";
     my $token_info;
-    
+
     if ( hasValidAuthToken() ) {
         $token_info = getTokenInfo();
         $dname = $token_info->{'sub'};
-        
+
     } else {
     	my $session = CGI::Session->load();
     	if ( !( $session->is_empty || $session->is_expired ) ) {
     		$dname    = $session->param("username");
     		$userPass = $session->param("password");
     	}
-        
+
+
     }
 
 	return ( $dname, $userPass );
@@ -3829,26 +3839,26 @@ sub getCredentials {
 ################################################################################
 sub getUserGroups {
 	my $sessionId = shift;
-	
+
 	#debug("getting user info for session id: $sessionId");
 	my $metacat = Metacat->new($metacatUrl);
 	setAuthToken($metacat);
-    
+
     if ( ! hasValidAuthToken() ) {
     	my ( $username, $password ) = getCredentials();
     	$metacat->login( $username, $password );
-        
+
     }
-	
+
 	my $userInfo = $metacat->getUserInfo($sessionId);
-	
+
 	debug("user info xml: $userInfo");
-	
+
 	my $parser = XML::LibXML->new();
 	my $parsedDoc = $parser->parse_string($userInfo);
-	
+
 	my $groupString = $parsedDoc->findvalue('//user/groupNames');
-	
+
 	my @groupArray;
 	foreach (split(":", $groupString)) {
 		$_ =~ s/^\s+//;
@@ -3954,9 +3964,9 @@ sub getReviewHistoryHTML {
     if ( ! hasValidAuthToken() ) {
     	my ( $username, $password ) = getCredentials();
     	$metacat->login( $username, $password );
-        
+
     }
-    
+
 	my $parser = XML::LibXML->new();
 	my $docid  = $FORM::docid;
 	my ( $x, $y, $z ) = split( /\./, $docid );
@@ -4022,7 +4032,7 @@ sub handleModAccept() {
     my $response = hasValidAuthToken();
     if ( ! $response ) {
     	$response = $metacat->login( $modUsername, $modPassword );
-        
+
     }
 	my $docid = $FORM::docid;
 
@@ -4200,7 +4210,7 @@ sub handleModDecline() {
     my $response = hasValidAuthToken();
     if ( ! $response ) {
     	$response = $metacat->login( $modUsername, $modPassword );
-        
+
     }
 
 	if ( !$response ) {
@@ -4343,7 +4353,7 @@ sub handleModRevise() {
     my $response = hasValidAuthToken();
     if ( ! $response ) {
     	$response = $metacat->login( $modUsername, $modPassword );
-        
+
     }
 
 	if ( !$response ) {
@@ -5048,10 +5058,10 @@ sub toConfirmData {
 	if ( !$error ) {
         # If no errors, then print out data in confirm Data template
 		$$templateVars{'section'} = "Confirm Data";
-        
+
         #Just return the data file upload details, if specified
         if(param("justGetUploadDetails")){
-            $template->process( $templates->{'dataUploadDetails'}, $templateVars );   
+            $template->process( $templates->{'dataUploadDetails'}, $templateVars );
         }
         else{
             $template->process( $templates->{'confirmData'}, $templateVars );
@@ -5542,33 +5552,33 @@ sub getTestProjectList {
 
 ################################################################################
 #
-# Set the incoming HTTP Authorization header as an instance variable in the 
+# Set the incoming HTTP Authorization header as an instance variable in the
 # given Metacat object
 #
 ################################################################################
 sub setAuthToken() {
     my $metacat = shift;
-    
+
     if ( $debug_enabled ) {
         debug('setAuthToken() called.');
-        
+
     }
-    
+
     eval { $metacat->isa('Metacat'); };
-    
+
     if ( ! $@ ) {
         # Set the auth_token_header if available
         if ( $ENV{'HTTP_AUTHORIZATION'}) {
-            $metacat->set_options( 
+            $metacat->set_options(
                 auth_token_header => $ENV{'HTTP_AUTHORIZATION'});
         } else {
             if ( $debug_enabled ) {
                 debug("There is no HTTP_AUTHORIZATION variable. " .
                       "Did not set Metacat->{'auth_token_header'}");
-        
+
             }
         }
-        
+
     } else {
         debug('Not an instance of Metacat.' .
         'Pass a Metacat object only to setAuthToken().');
@@ -5582,18 +5592,18 @@ sub setAuthToken() {
 #
 ################################################################################
 sub getSigningCertificate() {
-    
+
     if ( $debug_enabled ) {
         debug('getSigningCertificate called.');
-        
-    }   
-     
+
+    }
+
     open(my $pem_cert_file, ">", $pem_file_path)
         or die "\nCould not open PEM certificate file: $!\n";
 
     # Attempts to use IO::Socket::SSL->peer_certificate()
-    # and Net::SSLeay->get_peer_certificate() 
-    # return an unparseable cert (it seems).  
+    # and Net::SSLeay->get_peer_certificate()
+    # return an unparseable cert (it seems).
     # Settle for the openssl command instead.
     # my $client = IO::Socket::SSL->new('cn-stage.test.dataone.org:443')
     #    or die "error=$!, ssl_error=$SSL_ERROR";
@@ -5612,8 +5622,8 @@ sub getSigningCertificate() {
         if ( $line =~ /BEGIN/) {
             $start_line_number = $count;
             last;
-        
-        }    
+
+        }
     }
 
     # Find the end line of the first cert
@@ -5623,8 +5633,8 @@ sub getSigningCertificate() {
         if ( $line =~ /END/) {
             $end_line_number = $count;
             last;
-        
-        }    
+
+        }
     }
 
     # print the cert to a PEM file
@@ -5633,25 +5643,25 @@ sub getSigningCertificate() {
         $count = $count + 1;
         if ( $count >= $start_line_number && $count <= $end_line_number) {
             print $pem_cert_file $line;
-        
-        }    
+
+        }
     }
 
     close($pem_cert_file);
 
     # Convert the PEM to DER
-    my @convert_der_args = ("openssl", "x509", 
+    my @convert_der_args = ("openssl", "x509",
         "-in", $pem_file_path, "-inform", "PEM",
         "-out", $der_file_path, "-outform", "DER");
     system(@convert_der_args);
-    
+
     # For debugging, display the cert details
     if ( $debug_enabled ) {
         my @cert_info = `openssl x509 -noout -issuer -subject -dates -in $pem_file_path`;
         debug("Signing certificate info: ");
         for my $info_line (@cert_info) {
             debug($info_line);
-            
+
         }
     }
 }
@@ -5666,7 +5676,7 @@ sub getTokenInfo() {
     if ( $debug_enabled ) {
         debug('getTokenInfo() called.');
     }
-    
+
     my $token_info = {
             userId      => '',
             issuedAt    => '',
@@ -5679,22 +5689,22 @@ sub getTokenInfo() {
             isValid     => 0
     };
 
-    my $token = "";
-    
+    my $token = "NO TOKEN YET";
+
     if ( $ENV{'HTTP_AUTHORIZATION'} ) {
         my @token_parts = split(/ /, $ENV{'HTTP_AUTHORIZATION'});
         $token = @token_parts[1];
     }
-    
+
     my $der_cert_file;
     my $signing_cert;
-    
+
     # If we don't already have the CN signing cert, get it
     if ( ! -e $der_file_path )   {
         getSigningCertificate();
-    
+
     }
-    
+
     # Read the DER-encoded certificate
     open($der_cert_file, "<", $der_file_path)
         or die "\nCould not open DER certificate file: $!\n";
@@ -5702,21 +5712,22 @@ sub getTokenInfo() {
     read($der_cert_file, $signing_cert, 4096)
         or die "Problem reading the DER-encoded server cert: $!\n" if $!;
     close($der_cert_file);
-    
+
     my $cert = Crypt::X509->new(cert=>$signing_cert);
-        
-    # Decode the token using Crypt::JWT 
+
+    # Decode the token using Crypt::JWT
     eval{ $token_info = decode_jwt(token=>$token, key=>$cert) };
-    if ( ! $@ ) { 
+    if ( ! $@ ) {
         $$token_info{isValid} = 1;
-        
+
     } else {
+        debug("There was a problem parsing the token: $token");
         debug($@);
-        
+
     }
-    
+
     return $token_info;
-         
+
 }
 
 ################################################################################
@@ -5727,44 +5738,45 @@ sub getTokenInfo() {
 #
 ################################################################################
 sub validateSession() {
-    
+
     if ( $debug_enabled ) {
         debug('validateSession() called.');
     }
-    
+
     my $token_info = getTokenInfo();
     my $session = CGI::Session->load();
+
     my $valid = 0;
-       
+
     if ( $token_info->{"isValid"} ) {
         $valid = 1;
         if ( $debug_enabled ) {
                 debug('The auth token session is valid.');
-            
+
         }
-        
-    } elsif ( ! $session->is_empty && ! $session->is_expired ) {
+
+    } elsif ( $session->is_empty && ! $session->is_expired ) {
         $valid = 1;
         if ( $debug_enabled ) {
                 debug('The CGI session is valid.');
-            
+
         }
     }
-    
+
     if ( $debug_enabled ) {
         if ( ! $valid ) {
             debug('The session is not valid.');
-            
+
         }
     }
-    
+
     if ( $debug_enabled ) {
         while( my ($k, $v) = each %$token_info ) {
             debug("$k: $v");
         }
     }
-    
-    
+
+
     return $valid;
 }
 
@@ -5774,16 +5786,17 @@ sub validateSession() {
 #
 ################################################################################
 sub hasValidAuthToken() {
-    
+
     if ( $debug_enabled ) {
         debug('hasValidAuthToken() called.');
     }
-    
+
     my $token_info = getTokenInfo();
 
     if ( $debug_enabled ) {
         debug("Auth token is valid: $token_info->{'isValid'}");
     }
-    
+
     return $token_info->{'isValid'};
 }
+
