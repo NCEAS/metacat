@@ -5755,7 +5755,7 @@ sub validateSession() {
 
         }
 
-    } elsif ( $session->is_empty && ! $session->is_expired ) {
+    } elsif ( ! $session->is_empty && ! $session->is_expired ) {
         $valid = 1;
         if ( $debug_enabled ) {
                 debug('The CGI session is valid.');
