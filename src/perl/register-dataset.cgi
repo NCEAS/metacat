@@ -1607,6 +1607,7 @@ sub createDatasetDocument {
 	$doc .= coverageElement();
 	$doc .= contactElement();
 	$doc .= methodsElement();
+	$doc .= fundingElement();
 	my %fileData = allFileData();
 	$doc .= entityElement( \%fileData );
 	$doc .= datasetEnd();
@@ -1968,6 +1969,41 @@ sub methodsElement() {
 		$methods .= "</methods>\n";
 	}
 	return $methods;
+}
+
+sub fundingElement() {
+    my $project = "";
+
+    if ( hasContent($FORM::funding) ) {
+
+        # Add a project title based on the dataset title
+        $project .= "<project>\n";
+        $project .= "<title>" .
+                    normalize($FORM::title) .
+                    "</title>\n";
+
+        # Add a project personnel based on the dataset owner
+        $project .= "<personnel>\n" .
+                    "<individualName>\n" .
+                    "<givenName>" .
+                    normalize($FORM::origNamefirst0) .
+                    "</givenName>\n" .
+                    "<surName>" .
+                    normalize($FORM::origNamelast0) .
+                    "</surName>\n" .
+                    "</individualName>\n";
+        # Add a default role
+        $project .= "<role>originator</role>\n" .
+                    "</personnel>\n";
+
+        # Add the funding info (grant number)
+        $project .= "<funding>" .
+                    normalize($FORM::funding) .
+                    "</funding>\n";
+        $project .= "</project>\n";
+    }
+
+    return $project;
 }
 
 sub creatorContactElement() {
@@ -4804,6 +4840,8 @@ sub toConfirmData {
 	if ( $skinName eq "nceas" ) {
 		$$templateVars{'wg'} = \@FORM::wg;
 	}
+
+	$$templateVars{'funding'}        = normalizeCD($FORM::funding);
 	$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
 	$$templateVars{'title'}          = normalizeCD($FORM::title);
 	$$templateVars{'origNamefirst0'} = normalizeCD($FORM::origNamefirst0);
@@ -5111,6 +5149,7 @@ sub copyFormToTemplateVars {
 		$$templateVars{'projects'} = $projects;
 		$$templateVars{'wg'}       = \@FORM::wg;
 	}
+	$$templateVars{'funding'}        = $FORM::funding;
 	$$templateVars{'identifier'}     = $FORM::identifier;
 	$$templateVars{'title'}          = $FORM::title;
 	$$templateVars{'origNamefirst0'} = $FORM::origNamefirst0;
@@ -5799,4 +5838,3 @@ sub hasValidAuthToken() {
 
     return $token_info->{'isValid'};
 }
-
