@@ -373,8 +373,18 @@
            </xsl:if>
        </div>
 
+     <!-- add in the project  info -->
+
+     <div id="dataset-project" class="row-fluid">
+         <xsl:if test="./project">
+           <xsl:call-template name="datasetproject">
+             <xsl:with-param name="firstColStyle" select="$firstColStyle"/>
+             <xsl:with-param name="secondColStyle" select="$secondColStyle"/>
+           </xsl:call-template>
+         </xsl:if>
+     </div>
+       
      <!-- add in the method info -->
-     <h4>Sampling, Processing and Quality Control Methods</h4>
 
      <div class="row-fluid">
          <xsl:if test="./methods">
@@ -557,7 +567,7 @@
   </xsl:template>
 
   <xsl:template name="datasetproject">
-    <h4><xsl:text>Parent Project Information</xsl:text></h4>
+    <h4><xsl:text>Project Information</xsl:text></h4>
     <xsl:for-each select="project">
      <div class="row-fluid">
        <xsl:call-template name="project">
