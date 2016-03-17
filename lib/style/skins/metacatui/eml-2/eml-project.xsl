@@ -38,152 +38,102 @@
 
 
    <xsl:template name="project">
-      <xsl:param name="projectfirstColStyle"/>
-      <table class="{$tabledefaultStyle}">
         <xsl:choose>
          <xsl:when test="references!=''">
           <xsl:variable name="ref_id" select="references"/>
           <xsl:variable name="references" select="$ids[@id=$ref_id]" />
           <xsl:for-each select="$references">
-            <xsl:call-template name="projectcommon">
-             <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-            </xsl:call-template>
+            <div class="row-fluid project" data-content="project">
+              <xsl:call-template name="projectcommon" />
+            </div>
           </xsl:for-each>
         </xsl:when>
         <xsl:otherwise>
-          <xsl:call-template name="projectcommon">
-             <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-           </xsl:call-template>
+          <div class="row-fluid project" data-content="project" id="project">
+            <xsl:call-template name="projectcommon" />
+          </div>
         </xsl:otherwise>
       </xsl:choose>
-      </table>
   </xsl:template>
 
 
 
   <xsl:template name="projectcommon">
-    <xsl:param name="projectfirstColStyle"/>
-    <xsl:call-template name="projecttitle">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-    <xsl:call-template name="projectpersonnel">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-    <xsl:call-template name="projectabstract">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-    <xsl:call-template name="projectfunding">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-   <xsl:call-template name="projectstudyareadescription">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-    <xsl:call-template name="projectdesigndescription">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
-    <xsl:call-template name="projectrelatedproject">
-      <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-    </xsl:call-template>
+    <xsl:call-template name="projecttitle" />
+    <xsl:call-template name="projectpersonnel" />
+    <xsl:call-template name="projectabstract" />
+    <xsl:call-template name="projectfunding" />
+    <xsl:call-template name="projectstudyareadescription" />
+    <xsl:call-template name="projectdesigndescription" />
+    <xsl:call-template name="projectrelatedproject" />
   </xsl:template>
 
 
 
    <xsl:template name="projecttitle">
-     <xsl:param name="projectfirstColStyle"/>
      <xsl:for-each select="title">
-        <tr><td class="{$projectfirstColStyle}">
-             Title:
-             </td>
-             <td class="{$secondColStyle}" >
-              <xsl:value-of select="../title"/>
-             </td>
-       </tr>
+	   <div class="control-group">
+	     <label class="control-label projectTitle">Title:</label>
+	   	 <div class="controls controls-well">
+		   <xsl:value-of select="../title" />
+	   	 </div>
+	   </div>
      </xsl:for-each>
   </xsl:template>
 
 
 
   <xsl:template name="projectpersonnel">
-     <xsl:param name="projectfirstColStyle"/>
-     <tr><td class="{$projectfirstColStyle}">
-          Personnel:
-          </td>
-          <td>
-             <table>
-                 <xsl:for-each select="personnel">
-                       <tr><td colspan="2">
-                              <xsl:call-template name="party">
-                                 <xsl:with-param name="partyfirstColStyle" select="$projectfirstColStyle"/>
-                              </xsl:call-template>
-                       </td></tr>
-                       <xsl:for-each select="role">
-                          <tr><td class="{$projectfirstColStyle}">
-                                 Role:
-                               </td>
-                               <td>
-                                 <table class="{$tablepartyStyle}">
-                                     <tr>
-                                         <td class="{$secondColStyle}">
-                                            <xsl:value-of select="."/>
-                                          </td>
-                                      </tr>
-                                  </table>
-                               </td>
-                          </tr>
-                      </xsl:for-each>
-                </xsl:for-each>
-             </table>
-         </td>
-     </tr>
+	<div class="control-group">
+		<label class="control-label projectPersonnel">Personnel:</label>
+		<div class="controls control-well">
+			<xsl:for-each select="personnel">
+
+				<xsl:call-template name="party" />
+
+				<xsl:for-each select="role">
+					<label class="control-label projectRole">Role:</label>
+					<div class="controls controls-well">
+						<xsl:value-of select="." />
+					</div>
+				</xsl:for-each>
+
+			</xsl:for-each>
+		</div>
+	</div>
   </xsl:template>
 
 
    <xsl:template name="projectabstract">
-     <xsl:param name="projectfirstColStyle"/>
      <xsl:for-each select="abstract">
-       <tr><td class="{$projectfirstColStyle}">
-          Abstract:
-          </td>
-          <td>
-             <xsl:call-template name="text">
-                <xsl:with-param name="textfirstColStyle" select="$projectfirstColStyle"/>
-             </xsl:call-template>
-         </td>
-       </tr>
+       <div class="control-group">
+         <label class="control-label projectAbstract">Abstract:</label>
+         <xsl:call-template name="text" />
+       </div>
      </xsl:for-each>
   </xsl:template>
 
   <xsl:template name="projectfunding">
-     <xsl:param name="projectfirstColStyle"/>
      <xsl:for-each select="funding">
-       <tr><td class="{$projectfirstColStyle}">
-          Funding:
-          </td>
-          <td>
-              <xsl:call-template name="text">
-                 <xsl:with-param name="textfirstColStyle" select="$projectfirstColStyle"/>
-              </xsl:call-template>
-         </td>
-       </tr>
+	   <div class="control-group">
+	     <label class="control-label projectFunding">Funding:</label>
+	     <div class="controls controls-well projectFundingValue" >
+	       <xsl:call-template name="text" />
+	     </div>
+	   </div>
     </xsl:for-each>
   </xsl:template>
 
 
 
    <xsl:template name="projectstudyareadescription">
-     <xsl:param name="projectfirstColStyle"/>
      <xsl:for-each select="studyAreaDescription">
-       <tr><td class="{$projectfirstColStyle}">
-           <xsl:text>Study Area:</xsl:text>
-          </td>
-          <td>
-              <table class="{$tabledefaultStyle}">
+       <label class="control-label projectStudyAreaDescription"><xsl:text>Study Area:</xsl:text></label>
+              <div class="control-group">
                   <xsl:for-each select="descriptor">
                       <xsl:for-each select="descriptorValue">
-                      <tr><td class="{$projectfirstColStyle}">
-                            <xsl:value-of select="../@name"/>
-                          </td>
-                          <td class="{$secondColStyle}">
+                      <label class="control-label"><xsl:value-of select="../@name"/></label>
+                          <div class="controls controls-well">
                              <xsl:choose>
                                 <xsl:when test="./@citableClassificationSystem">
                                   <xsl:value-of select="."/>&#160;<xsl:value-of select="./@name_or_id"/>
@@ -192,45 +142,36 @@
                                   <xsl:value-of select="."/>&#160;<xsl:value-of select="./@name_or_id"/>&#160;(No Citable Classification System)
                                 </xsl:otherwise>
                               </xsl:choose>
-                          </td>
-                      </tr>
+                          </div>
                       </xsl:for-each>
+                      
                       <xsl:for-each select="citation">
-                        <tr><td class="{$projectfirstColStyle}">
-                              Citation:
-                            </td>
-                            <td>
-                             <xsl:call-template name="citation">
-                                  <xsl:with-param name="citationfirstColStyle" select="projectfirstColStyle"/>
-                             </xsl:call-template>
-                           </td>
-                       </tr>
+                        <label class="control-label projectCitation">Citation:</label>
+                        <div class="controls controls-well">
+                          <xsl:call-template name="citation" />
+                        </div>
                     </xsl:for-each>
+                    
                </xsl:for-each>
-            </table>
-         </td>
-       </tr>
+            </div>
 
        <xsl:for-each select="citation">
-         <tr><td class="{$projectfirstColStyle}">
-          Study Area Citation:
-          </td>
-          <td>
-              <xsl:call-template name="citation">
-                   <xsl:with-param name="citationfirstColStyle" select="projectfirstColStyle"/>
-               </xsl:call-template>
-          </td>
-        </tr>
+          <div class="control-group">
+			<label class="control-label projectCitation">Study Area Citation:</label>
+            <div class="controls controls-well">
+              <xsl:call-template name="citation" />
+            </div>
+          </div>
+          
       </xsl:for-each>
 
        <xsl:for-each select="coverage">
-        <tr><td class="{$projectfirstColStyle}">
-          Study Area Coverage:
-          </td>
-          <td>
-             <xsl:call-template name="coverage"/>
-          </td>
-        </tr>
+         <div class="control-group">
+           <label class="control-label">Study Area Coverage:</label>
+           <div class="controls controls-well">
+             <xsl:call-template name="coverage" />
+           </div>
+         </div>
       </xsl:for-each>
     </xsl:for-each>
    </xsl:template>
@@ -238,25 +179,22 @@
 
 
   <xsl:template name="projectdesigndescription">
-    <xsl:param name="projectfirstColStyle"/>
     <xsl:for-each select="designDescription">
        <xsl:for-each select="description">
-        <tr><td class="{$projectfirstColStyle}">
-          Design Description:
-          </td>
-          <td>
+         <div class="control-group">
+           <label class="control-label">Design Description:</label>
+           <div class="controls controls-well">
              <xsl:call-template name="text"/>
-         </td>
-       </tr>
+           </div>
+         </div>
       </xsl:for-each>
       <xsl:for-each select="citation">
-        <tr><td class="{$projectfirstColStyle}">
-          Design Citation:
-          </td>
-          <td >
+        <div class="control-group">
+          <label class="control-label">Design Citation:</label>
+          <div class="controls controls-well">
              <xsl:call-template name="citation"/>
-         </td>
-       </tr>
+          </div>
+       </div>
       </xsl:for-each>
     </xsl:for-each>
   </xsl:template>
@@ -264,17 +202,13 @@
 
 
   <xsl:template name="projectrelatedproject">
-    <xsl:param name="projectfirstColStyle"/>
     <xsl:for-each select="relatedProject">
-       <tr><td class="{$projectfirstColStyle}">
-          Related Project:
-          </td>
-          <td>
-            <xsl:call-template name="project">
-              <xsl:with-param name="projectfirstColStyle" select="$projectfirstColStyle"/>
-            </xsl:call-template>
-         </td>
-       </tr>
+       <div class="control-group">
+       <label class="control-label">Related Project:</label>
+          <div>
+            <xsl:call-template name="project" />
+         </div>
+       </div>
     </xsl:for-each>
   </xsl:template>
 
