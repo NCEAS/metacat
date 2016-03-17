@@ -127,53 +127,72 @@
 
 
    <xsl:template name="projectstudyareadescription">
-     <xsl:for-each select="studyAreaDescription">
-       <label class="control-label projectStudyAreaDescription"><xsl:text>Study Area:</xsl:text></label>
+       <xsl:for-each select="studyAreaDescription">
+            <div class="control-group">
+                <label class="control-label projectStudyAreaDescription"><xsl:text>Study Area Descriptors:</xsl:text></label>
+                <div class="controls controls-well">
+                    <table class="table table-striped">
+                        <thead>
+                            <th>Name</th>
+                            <th>Code</th>
+                            <th>Value</th>
+                            <th>Classification System</th>
+                        </thead>
+                        <tbody>
+                            <xsl:for-each select="descriptor">
+                                <tr>
+                                    <xsl:for-each select="descriptorValue">
+                                        <td>
+                                            <xsl:value-of select="../@name" />
+                                        </td>
+                                        <td>
+                                            <xsl:value-of select="./@name_or_id" />
+                                        </td>
+                                        <td>
+                                            <xsl:value-of select="." />
+                                        </td>
+                                        <td>
+                                            <xsl:choose>
+                                                <xsl:when test="citation != ''">
+                                                    <xsl:for-each select="citation">
+                                                        <label class="control-label projectCitation">Citation:</label>
+                                                        <div class="controls controls-well">
+                                                            <xsl:call-template name="citation" />
+                                                        </div>
+                                                    </xsl:for-each>
+                                                </xsl:when>
+                                                <xsl:otherwise>
+                                                    <xsl:text>&#160;</xsl:text>
+                                                </xsl:otherwise>
+                                            </xsl:choose>
+                                        </td>
+                                    </xsl:for-each>
+                                </tr>
+                            </xsl:for-each>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <xsl:for-each select="citation">
+               <div class="control-group">
+ 	   	           <label class="control-label projectCitation">Study Area Citation:</label>
+                   <div class="controls controls-well">
+                       <xsl:call-template name="citation" />
+                   </div>
+               </div>
+               
+            </xsl:for-each>
+            
+            <xsl:for-each select="coverage">
               <div class="control-group">
-                  <xsl:for-each select="descriptor">
-                      <xsl:for-each select="descriptorValue">
-                      <label class="control-label"><xsl:value-of select="../@name"/></label>
-                          <div class="controls controls-well">
-                             <xsl:choose>
-                                <xsl:when test="./@citableClassificationSystem">
-                                  <xsl:value-of select="."/>&#160;<xsl:value-of select="./@name_or_id"/>
-                                </xsl:when>
-                                <xsl:otherwise>
-                                  <xsl:value-of select="."/>&#160;<xsl:value-of select="./@name_or_id"/>&#160;(No Citable Classification System)
-                                </xsl:otherwise>
-                              </xsl:choose>
-                          </div>
-                      </xsl:for-each>
-                      
-                      <xsl:for-each select="citation">
-                        <label class="control-label projectCitation">Citation:</label>
-                        <div class="controls controls-well">
-                          <xsl:call-template name="citation" />
-                        </div>
-                    </xsl:for-each>
-                    
-               </xsl:for-each>
-            </div>
-
-       <xsl:for-each select="citation">
-          <div class="control-group">
-			<label class="control-label projectCitation">Study Area Citation:</label>
-            <div class="controls controls-well">
-              <xsl:call-template name="citation" />
-            </div>
-          </div>
-          
-      </xsl:for-each>
-
-       <xsl:for-each select="coverage">
-         <div class="control-group">
-           <label class="control-label">Study Area Coverage:</label>
-           <div class="controls controls-well">
-             <xsl:call-template name="coverage" />
-           </div>
-         </div>
-      </xsl:for-each>
-    </xsl:for-each>
+                <label class="control-label">Study Area Coverage:</label>
+                <div class="controls controls-well">
+                  <xsl:call-template name="coverage" />
+                </div>
+              </div>
+            </xsl:for-each>
+       </xsl:for-each>
    </xsl:template>
 
 
