@@ -1281,14 +1281,14 @@
                       <!-- Add CC-0 option -->
                       [% IF form == 're_entry' && useConstraints == 'CC-0' %]
                         <label class="radio">
-                          <input type="radio" name="useConstraints" value="CC-0" CHECKED />
+                          <input type="radio" name="useConstraints" value="Public Domain (CC-0)" CHECKED />
                           Public Domain
                           (<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC-0</a>)
                         </label>
                         
                       [% ELSE %]
                         <label class="radio">
-                          <input type="radio" name="useConstraints" value="CC-0" />
+                          <input type="radio" name="useConstraints" value="Public Domain (CC-0)" />
                           Public Domain
                           (<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC-0</a>)
                         </label>
@@ -1298,14 +1298,14 @@
                       <!-- Add CC-BY option -->
                       [% IF form == 're_entry' && useConstraints == 'CC-BY' %]
                         <label class="radio">
-                          <input type="radio" name="useConstraints" value="CC-BY" CHECKED />
+                          <input type="radio" name="useConstraints" value="Attribution required (CC-BY)" CHECKED />
                           Attribution required
                           (<a href="https://creativecommons.org/licenses/by/4.0/">CC-BY</a>)
                         </label>
                         
                       [% ELSE %]
                         <label class="radio">
-                          <input type="radio" name="useConstraints" value="CC-BY" />
+                          <input type="radio" name="useConstraints" value="Attribution required (CC-BY)" />
                           Attribution required 
                           (<a href="https://creativecommons.org/licenses/by/4.0/">CC-BY</a>)
                         </label>
