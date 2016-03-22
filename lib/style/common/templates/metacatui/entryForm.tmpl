@@ -1237,34 +1237,34 @@
 									<label class="control-label" for="dataMedium">*Data Medium</label>
 									<div class="controls">
 										[% IF form == 're_entry' && (dataMedium == "digital " || dataMedium == "digital")  %]  
-											<label class"radio inline">
+											<label class="radio">
 									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital" CHECKED>
 									            Digital
 									        </label>
 								        [%ELSE%]
-								        	<label class"radio inline">
+								        	<label class="radio">
 									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital">
 									            Digital
 									        </label> 
 								        [% END %]
 								        [% IF form == 're_entry' && (dataMedium == "hardcopy " || dataMedium == "hardcopy") %]  
-								        	<label class"radio inline">
+								        	<label class="radio">
 								           		<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy" CHECKED>
 								           		Hardcopy
 								           	</label>
 								        [%ELSE%]
-								        	<label class"radio inline">
+								        	<label class="radio">
 												<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy">
 								           		Hardcopy
 								           	</label>
 								        [% END %]
 								        [% IF form == 're_entry' && dataMedium == "other" %]
-								        	<label class"radio inline">
+								        	<label class="radio ">
 									           <input type="radio" name="dataMedium" value="other" onClick="handleOther(1, 'otherDM')" CHECKED>
 									           Other
 									        </label>    
 								        [%ELSE%]
-								        	<label class"radio inline">
+								        	<label class="radio">
 								           		<input type="radio"  name="dataMedium" onClick="handleOther(1, 'otherDM')" value="other">
 								           		Other
 								           	</label>									           		
@@ -1276,42 +1276,82 @@
 								<div class="control-group">
 									<label class="control-label" for="useConstraints">*Usage Rights</label>
 									<div class="controls">
-										[% IF form == 're_entry' && useConstraints == "no restrictions" %]
-											<label class"radio inline">      
-												<input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions" CHECKED>
-												No restrictions
-											</label>	
-										[%ELSE%]
-											<label class"radio inline">
-									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions">
-									            No restrictions
-									        </label>
-										[%END%]
-										[% IF form == 're_entry' && useConstraints == "Obtain permission from data set owner(s)" %]   
-											<label class"radio inline">   
-										        <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" CHECKED>
-										        Obtain permission from data set owner(s)
-										    </label> 
-										[%ELSE%]
-											<label class"radio inline">
-									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)">
-									            Obtain permission from data set owner(s)
-									        </label>
-										[%END%]
-										
-										[% IF form == 're_entry' && useConstraints == "other" %] 
-											<label class"radio inline">     
-												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" CHECKED>
-											    Other
-											</label>    
-									    [%ELSE%]
-									    	<label class"radio inline">
-												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other">
-												Other
-											</label>	
-									    [%END%]
-										<input type="text" name="useConstraintsOther" id="otherUC" value="[%useConstraintsOther%]" size="49">
-									</div>
+                    <!-- Use Creative Commons license options -->
+                    [% IF show.cclicenses == 'true' %]
+                      <!-- Add CC-0 option -->
+                      [% IF form == 're_entry' && useConstraints == 'CC-0' %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="CC-0" CHECKED />
+                          Public Domain
+                          (<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC-0</a>)
+                        </label>
+                        
+                      [% ELSE %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="CC-0" />
+                          Public Domain
+                          (<a href="https://creativecommons.org/publicdomain/zero/1.0/">CC-0</a>)
+                        </label>
+                                              
+                      [% END %]
+                      
+                      <!-- Add CC-BY option -->
+                      [% IF form == 're_entry' && useConstraints == 'CC-BY' %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="CC-BY" CHECKED />
+                          Attribution required
+                          (<a href="https://creativecommons.org/licenses/by/4.0/">CC-BY</a>)
+                        </label>
+                        
+                      [% ELSE %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="CC-BY" />
+                          Attribution required 
+                          (<a href="https://creativecommons.org/licenses/by/4.0/">CC-BY</a>)
+                        </label>
+                                              
+                      [% END %]
+                      
+                    <!-- Or use custom license options -->
+                    [% ELSE %]
+                      [% IF form == 're_entry' && useConstraints == "no restrictions" %]
+                      	<label class="radio">      
+                      		<input type="radio" name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions" CHECKED />
+                      		No restrictions
+                      	</label>	
+                      [%ELSE%]
+                      	<label class="radio">
+                                <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions">
+                                No restrictions
+                            </label>
+                      [%END%]
+                      
+                      [% IF form == 're_entry' && useConstraints == "Obtain permission from data set owner(s)" %]   
+                      	<label class="radio">   
+                              <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" CHECKED />
+                              Obtain permission from data set owner(s)
+                          </label> 
+                      [%ELSE%]
+                      	<label class="radio">
+                                <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" />
+                                Obtain permission from data set owner(s)
+                            </label>
+                      [%END%]
+                      
+                      [% IF form == 're_entry' && useConstraints == "other" %] 
+                      	<label class="radio">     
+                      		<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" CHECKED />
+                      	    Other
+                      	</label>    
+                        [%ELSE%]
+                        	<label class="radio">
+                      		<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" />
+                      		Other
+                      	</label>	
+                        [%END%]
+                      <input type="text" name="useConstraintsOther" id="otherUC" value="[%useConstraintsOther%]" size="49" />
+                    [% END %]
+                  </div>
 								</div>
 								
 								<div class="control-group">
