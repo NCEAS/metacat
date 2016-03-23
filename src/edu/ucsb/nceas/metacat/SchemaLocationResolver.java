@@ -339,7 +339,7 @@ public class SchemaLocationResolver
     } 
   }
   
-  public static void main(String[] argus)
+  /*public static void main(String[] argus)
   {
      try
      {
@@ -368,7 +368,7 @@ public class SchemaLocationResolver
        logMetacat.error("erorr in Schemalocation.main: " + 
                                 e.getMessage());
      }
-  }
+  }*/
   
   /**
    * Gets the downloadNewSchema's value.

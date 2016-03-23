@@ -687,6 +687,7 @@ public class MetaCatServlet extends HttpServlet {
 		// if we get here, metacat is configured.  If we have not completed the 
 		// second half of the initialization, do so now.  This allows us to initially
 		// configure metacat without a restart.
+		logMetacat.info("MetacatServlet.handleGetOrPost - the _fullyInitailzied value is "+_fullyInitialized);
 		if (!_fullyInitialized) {
 			initSecondHalf(request.getSession().getServletContext());
 		}
@@ -917,8 +918,10 @@ public class MetaCatServlet extends HttpServlet {
                 }
 				PrintWriter out = response.getWriter();
 				if ((userName != null) && !userName.equals("public")) {
+				    //formatid will be set null here since this is metacat api
+				    String formatId = null;
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null);
+							groupNames, true, true, null, formatId);
 				} else {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");

@@ -447,7 +447,11 @@ public abstract class D1NodeService {
       	//String objectAsXML = "";
         try {
 	        //objectAsXML = IOUtils.toString(object, "UTF-8");
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert");
+            String formatId = null;
+            if(sysmeta.getFormatId() != null)  {
+                formatId = sysmeta.getFormatId().getValue();
+            }
+	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId);
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
@@ -1269,7 +1273,7 @@ public abstract class D1NodeService {
           " is science metadata: " + e.getMessage());*/
     
     } catch (NotFound e) {
-      logMetacat.debug("There was a problem determining if the object identified by" + 
+      logMetacat.warn("There was a problem determining if the object identified by" + 
           sysmeta.getIdentifier().getValue() + 
           " is science metadata: " + e.getMessage());
     
@@ -1303,7 +1307,7 @@ public abstract class D1NodeService {
    * 
    */
   public String insertOrUpdateDocument(InputStream xml, String encoding,  Identifier pid, 
-    Session session, String insertOrUpdate) 
+    Session session, String insertOrUpdate, String formatId) 
     throws ServiceFailure, IOException {
     
   	logMetacat.debug("Starting to insert xml document...");
@@ -1376,7 +1380,7 @@ public abstract class D1NodeService {
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
     String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
-                        null, params, username, groupnames, false, false, xmlBytes);
+                        null, params, username, groupnames, false, false, xmlBytes, formatId);
     
     if(result.indexOf("<error>") != -1) {
     	String detailCode = "";

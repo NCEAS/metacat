@@ -731,7 +731,14 @@ public class ReplicationService extends BaseService {
 				parserBase = DocumentImpl.EML210;
 			}
 			logReplication.warn("ReplicationService.handleForceReplicateRequest - The parserBase is: " + parserBase);
-
+			
+			String formatId = null;
+		    //get the format id from the system metadata 
+		    if(sysMeta != null && sysMeta.getFormatId() != null) {
+		          logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+docid);
+		          formatId = sysMeta.getFormatId().getValue();
+		    }
+		      
 			// Get DBConnection from pool
 			dbConn = DBConnectionPool
 					.getDBConnection("MetacatReplication.handleForceReplicateRequest");
@@ -742,7 +749,7 @@ public class ReplicationService extends BaseService {
 			try {
 				wrapper.writeReplication(dbConn, xmldoc, xmlBytes, null, null,
 						dbaction, docid, null, null, homeServer, server, createdDate,
-						updatedDate);
+						updatedDate, formatId);
 			} finally {
 				if(sysMeta != null) {
 					// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure

@@ -37,6 +37,7 @@ import java.net.URL;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Hashtable;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,9 +78,14 @@ public class XMLSchemaService extends BaseService {
     private static Vector<String> nameSpaceList = new Vector<String>();
     
     // a convenience string that holds all name spaces and locations in a space
-    // delimited format
-    private static String nameSpaceAndLocationString = ""; 
+    // delimited format. Those items don't have a format id. This is the old way we handle the schema location
+    private static String nameSpaceAndLocationStringWithoutFormatId = ""; 
 	
+    //this hash table is design for schema variants. Two schemas have the same name space,
+    //but they have different content (location). So we different format id to
+    //distinguish them. The key of the hash table is the format id, the values is all the namespace schema location
+    //delimited string for this format id.
+    private static Hashtable<String, String> formatId_NamespaceLocationHash = new Hashtable<String, String>();
 	/**
 	 * private constructor since this is a singleton
 	 */
@@ -142,13 +148,30 @@ public class XMLSchemaService extends BaseService {
 	/**
 	 * Gets the name space and location string. This is a convenience method.
 	 * The string will have space delimited namespaces and locations that are
-	 * held in the registered schema list.
+	 * held in the registered schema list. This is the old way Metacat worked.
+	 * Usually, we will call the method getNameSapceAndLocation(String formatId) first.
+	 * If the method return null, we will call this method.
 	 * 
 	 * @return a string that holds space delimited registered namespaces and
 	 *         locations.
 	 */
-	public String getNameSpaceAndLocationString() {
-		return nameSpaceAndLocationString;
+	public String getNameSpaceAndLocationStringWithoutFormatId() {
+		return nameSpaceAndLocationStringWithoutFormatId;
+	}
+	
+	
+	/**
+	 * Get the all schema-location pairs registered for the formatId.
+	 * The null will be returned, if we can find it.
+	 * @param formatId
+	 * @return
+	 */
+	public String getNameSpaceAndLocation(String formatId) {
+	    if(formatId == null) {
+	        return null;
+	    } else {
+	        return formatId_NamespaceLocationHash.get(formatId);
+	    }
 	}
 	
 	/**
@@ -196,7 +219,7 @@ public class XMLSchemaService extends BaseService {
 		registeredSchemaList = new Vector<XMLSchema>();
 
 		// get the system id from the xml_catalog table for all schemas.
-		String sql = "SELECT public_id, system_id FROM xml_catalog where "
+		String sql = "SELECT public_id, system_id, format_id FROM xml_catalog where "
 				+ "entry_type ='" + DocumentImpl.SCHEMA + "'";
 		try {
 			// check out DBConnection
@@ -213,8 +236,9 @@ public class XMLSchemaService extends BaseService {
 			while (resultSet.next()) {
 				String fileNamespace = resultSet.getString(1);
 				String fileLocation = resultSet.getString(2);
-				logMetacat.debug("XMLService.populateRegisteredSchemaList - Registering schema: " + fileNamespace + " " + fileLocation);
-				XMLSchema xmlSchema = new XMLSchema(fileNamespace);
+				String formatId = resultSet.getString(3);
+				logMetacat.debug("XMLService.populateRegisteredSchemaList - Registering schema: " + fileNamespace + " " + fileLocation+ " and format id "+formatId);
+				XMLSchema xmlSchema = new XMLSchema(fileNamespace, fileLocation, formatId);
 				if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://"))
 				{
 				    //System.out.println("processing an http schemal location");
@@ -310,16 +334,35 @@ public class XMLSchemaService extends BaseService {
 	 * in the registered schema list.
 	 */
 	private static void createRegisteredNameSpaceAndLocationString() {
-		boolean firstRow = true;
-		nameSpaceAndLocationString = "";
+		boolean firstRowWithoutFormatid = true;
+		boolean firstRowWithFormatid = true;
+		nameSpaceAndLocationStringWithoutFormatId = "";
 		
 		for (XMLSchema xmlSchema : registeredSchemaList) {
-			if (!firstRow) {
-				nameSpaceAndLocationString += " ";
-			}
-			nameSpaceAndLocationString += xmlSchema.getFileNamespace() + " "
-					+ xmlSchema.getLocalFileUri();
-			firstRow = false;
+		    String formatId = xmlSchema.getFormatId();
+		    if( formatId == null ||formatId.trim().equals("")) {
+		        //this is to handle the old way - no schema variants 
+		        if (!firstRowWithoutFormatid) {
+	                nameSpaceAndLocationStringWithoutFormatId += " ";
+	            }
+	            nameSpaceAndLocationStringWithoutFormatId += xmlSchema.getFileNamespace() + " "
+	                    + xmlSchema.getLocalFileUri();
+	            firstRowWithoutFormatid = false;
+		    } else {
+		        //it has a format id on the xml_catalog table. It is a variant.
+		        if(!formatId_NamespaceLocationHash.containsKey(xmlSchema.getFormatId())) {
+		            //the hash table hasn't stored the value. So put it on the hash.
+		            formatId_NamespaceLocationHash.put(formatId, xmlSchema.getFileNamespace() + " "
+	                        + xmlSchema.getLocalFileUri());
+		        } else {
+		          //the hash table already has it. We will attache the new pair to the exist value
+		            String value = formatId_NamespaceLocationHash.get(formatId);
+		            value += " "+ xmlSchema.getFileNamespace() + " "
+	                        + xmlSchema.getLocalFileUri();
+		            formatId_NamespaceLocationHash.put(formatId, value);
+		        }
+		    }
+			
 		}
 	}
 
@@ -419,8 +462,9 @@ public class XMLSchemaService extends BaseService {
 										+ targetLine
 										+ ". There should be an even number of uri/files in location.");
 					}
+					String formatId = null;
 					XMLSchema xmlSchema = new XMLSchema(parsedUri.get(j), parsedUri
-							.get(j + 1));
+							.get(j + 1), formatId);
 					schemaList.add(xmlSchema);
 				}
 				i = matcher.end();

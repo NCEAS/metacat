@@ -159,13 +159,14 @@ public class EMLVersionsTransformer {
              DBConnection dbconn = null;
              StringReader dtd = null;
              int serialNumber = -1;
+             String formatId = null;
              try
              {
             	 dbconn = DBConnectionPool
                  .getDBConnection("EMLVersionsTransformer.handleSingleEML200Document");
                   serialNumber = dbconn.getCheckOutSerialNumber();
                   documentWrapper.write(dbconn, eml210Content, pub, dtd,
-                          doAction, newId, owner, groups, null);
+                          doAction, newId, owner, groups, null, formatId);
                   logMetacat.warn("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
                   transformLog("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
              }

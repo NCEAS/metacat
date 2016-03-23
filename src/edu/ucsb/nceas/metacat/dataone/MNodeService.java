@@ -474,8 +474,11 @@ public class MNodeService extends D1NodeService
                 //String objectAsXML = "";
                 try {
                     //objectAsXML = IOUtils.toString(object, "UTF-8");
-                	
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update");
+                	String formatId = null;
+                	if(sysmeta.getFormatId() != null) {
+                	    formatId = sysmeta.getFormatId().getValue();
+                	}
+                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId);
                     
                     // register the newPid and the generated localId
                     if (newPid != null) {

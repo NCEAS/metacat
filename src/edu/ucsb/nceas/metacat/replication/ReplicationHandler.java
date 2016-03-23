@@ -456,6 +456,13 @@ public class ReplicationHandler extends TimerTask
       {
         parserBase = DocumentImpl.EML210;
       }
+      
+      String formatId = null;
+      //get the format id from the system metadata 
+      if(sysMeta != null && sysMeta.getFormatId() != null) {
+          logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+accNumber);
+          formatId = sysMeta.getFormatId().getValue();
+      }
       // Write the document into local host
       DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
       String newDocid = wrapper.writeReplication(dbConn,
@@ -469,7 +476,7 @@ public class ReplicationHandler extends TimerTask
                               docHomeServer,
                               remoteserver, tableName, true,// true is for time replication 
                               createdDate,
-                              updatedDate);
+                              updatedDate, formatId);
       
       if(sysMeta != null) {
 			// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure

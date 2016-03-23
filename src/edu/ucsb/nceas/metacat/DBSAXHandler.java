@@ -446,8 +446,10 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
         				throw new SAXException("Odd number of elements found when parsing schema location: " + 	
         						attributeValue + ". There should be an even number of uri/files in location.");
         			}
+        			//since we don't have format id information here, we set it null
+        			String formatId = null;
         			XMLSchema xmlSchema = 
-        				new XMLSchema(parsedUri.get(j), parsedUri.get(j + 1));
+        				new XMLSchema(parsedUri.get(j), parsedUri.get(j + 1), formatId);
         			schemaList.add(xmlSchema);
         		}
             }

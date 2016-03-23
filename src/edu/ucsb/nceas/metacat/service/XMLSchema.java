@@ -39,8 +39,10 @@ public class XMLSchema {
 	private String fileName = null;
 	private String localFileUri = null;
 	private String localFileDir = null;
+	private String formatId = null;
 	
-	private Logger logMetacat = Logger.getLogger(XMLSchema.class);
+
+    private Logger logMetacat = Logger.getLogger(XMLSchema.class);
 
 	/**
 	 * Constructor - the schema file name will be extracted from the external
@@ -52,9 +54,10 @@ public class XMLSchema {
 	 * @param externalFileUri
 	 *            the external uri where the schema is located
 	 */
-	public XMLSchema(String fileNamespace, String externalFileUri) {
+	public XMLSchema(String fileNamespace, String externalFileUri, String formatId) {
 		setFileNamespace(fileNamespace);
 		setExternalFileUri(externalFileUri);
+		setFormatId(formatId);
 	}
 	
 	/**
@@ -64,9 +67,9 @@ public class XMLSchema {
 	 * @param namespace
 	 *            the file's name space
 	 */
-	public XMLSchema(String fileNamespace) {
+	/*public XMLSchema(String fileNamespace) {
 		setFileNamespace(fileNamespace);
-	}
+	}*/
 	
 	/**
 	 * Set the file name. The local file uri and local file dir will also get
@@ -202,4 +205,21 @@ public class XMLSchema {
 	public String getLocalFileDir() {
 		return localFileDir;
 	}
+	
+	
+	/**
+	 * Get the format id
+	 * @return the format id
+	 */
+	public String getFormatId() {
+        return formatId;
+    }
+
+	/**
+	 * Set the format id. 
+	 * @param formatId. 
+	 */
+    public void setFormatId(String formatId) {
+            this.formatId = formatId;
+    }
 }

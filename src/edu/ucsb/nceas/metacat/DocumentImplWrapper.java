@@ -59,14 +59,14 @@ public class DocumentImplWrapper {
 	}//Constructor
 
 	public String write(DBConnection conn, String xml, String pub, Reader dtd,
-			String action, String docid, String user, String[] groups, byte[]xmlBytes) throws Exception {
+			String action, String docid, String user, String[] groups, byte[]xmlBytes, String formatId) throws Exception {
 		return DocumentImpl.write(conn, xml, pub, dtd, action, docid, user, groups,
-				ruleBase, needValidation, writeAccessRules, xmlBytes);
+				ruleBase, needValidation, writeAccessRules, xmlBytes, formatId);
 	}
 
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
-			String homeServer, String notifyServer, Date createDate, Date updateDate)
+			String homeServer, String notifyServer, Date createDate, Date updateDate, String formatId)
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false (first false)
@@ -74,7 +74,7 @@ public class DocumentImplWrapper {
 		// and timed replication is false (last false)
 		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
 				groups, homeServer, notifyServer, ruleBase, false,
-				DocumentImpl.DOCUMENTTABLE, false, createDate, updateDate);
+				DocumentImpl.DOCUMENTTABLE, false, createDate, updateDate, formatId);
 		// last false means is not timed replication
 
 	}
@@ -99,13 +99,13 @@ public class DocumentImplWrapper {
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
 			String homeServer, String notifyServer, String tableName,
-			boolean timedReplication, Date createDate, Date updateDate)
+			boolean timedReplication, Date createDate, Date updateDate, String formatId)
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false
 		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
 				groups, homeServer, notifyServer, ruleBase, false, tableName,
-				timedReplication, createDate, updateDate);
+				timedReplication, createDate, updateDate, formatId);
 	}
 
 }
