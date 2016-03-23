@@ -253,6 +253,7 @@ public class ApplicationController implements Runnable {
             startSysmetaListener();
             startIndexGenerator();//it will create another thread.
         } catch (Exception e) {
+            e.printStackTrace();
             log.error("Application.run "+e.getMessage());
         }
         
