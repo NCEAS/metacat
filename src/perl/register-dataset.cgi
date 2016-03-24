@@ -2418,14 +2418,36 @@ sub distributionElement() {
 		|| hasContent($FORM::useConstraintsOther) )
 	{
 		$dist .= "<intellectualRights>\n";
-		if ( hasContent($FORM::useConstraints) ) {
-			$dist .= "<para>" . normalize($FORM::useConstraints) . "</para>\n";
-		}
-		if ( hasContent($FORM::useConstraintsOther) ) {
-			$dist .=
-			  "<para>" . normalize($FORM::useConstraintsOther) . "</para>\n";
-		}
-		$dist .= "</intellectualRights>\n";
+        
+        if ( $show->{cclicenses} eq 'true' ) {
+            # Creative Commons license statements
+            if ( $FORM::useConstraints =~ /CC-0/ ) {
+                
+                $dist .= "<para>\n";
+                $dist .= "This work is dedicated to the public domain under the Creative Commons Universal 1.0 Public Domain Dedication.\n";
+                $dist .= "To view a copy of this dedication, visit https://creativecommons.org/publicdomain/zero/1.0/.\n";
+                $dist .= "</para>\n";
+                                
+            } else {
+                $dist .= "<para>\n";
+                $dist .= "This work is licensed under the Creative Commons Attribution 4.0 International License.\n";
+                $dist .= "To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/.\n";
+                $dist .= "</para>\n";
+                
+            }
+            
+        } else {
+            # Custom license statements
+            if ( hasContent($FORM::useConstraints) ) {
+            	$dist .= "<para>" . normalize($FORM::useConstraints) . "</para>\n";
+            }
+            if ( hasContent($FORM::useConstraintsOther) ) {
+            	$dist .=
+            	  "<para>" . normalize($FORM::useConstraintsOther) . "</para>\n";
+            }            
+        }
+        
+        $dist .= "</intellectualRights>\n";
 	}
 
 	if ( hasContent($FORM::url) ) {
@@ -5080,8 +5102,7 @@ sub toConfirmData {
 	$$templateVars{'docid'}            = $FORM::docid;
 
 	# Check if the session exists
-	my $session = CGI::Session->load();
-	if ( !( $session->is_empty || $session->is_expired ) ) {
+	if ( validateSession() ) {
 		$$templateVars{'userLoggedIn'} = 'true';
 	}
 
