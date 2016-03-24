@@ -4,6 +4,10 @@
 	</script>
   <script language="JavaScript" type="text/javascript" src="[% styleCommonPath %]/templates/metacatui/entryForm.js">
   </script>
+  <script language="JavaScript" type="text/javascript">
+    // enable Bootstrap tooltip popovers for licensing choices
+    $('.popover-target').popover();
+  </script>
 
 	<!-- CONTENT SECTION
     ======================================================================= -->
@@ -1237,35 +1241,35 @@
 									<label class="control-label" for="dataMedium">*Data Medium</label>
 									<div class="controls">
 										[% IF form == 're_entry' && (dataMedium == "digital " || dataMedium == "digital")  %]  
-											<label class"radio inline">
-									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital" CHECKED>
+											<label class="radio">
+									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital" CHECKED />
 									            Digital
 									        </label>
 								        [%ELSE%]
-								        	<label class"radio inline">
-									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital">
+								        	<label class="radio">
+									            <input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="digital" />
 									            Digital
 									        </label> 
 								        [% END %]
 								        [% IF form == 're_entry' && (dataMedium == "hardcopy " || dataMedium == "hardcopy") %]  
-								        	<label class"radio inline">
-								           		<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy" CHECKED>
+								        	<label class="radio">
+								           		<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy" CHECKED />
 								           		Hardcopy
 								           	</label>
 								        [%ELSE%]
-								        	<label class"radio inline">
-												<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy">
+								        	<label class="radio">
+												<input type="radio"  name="dataMedium" onClick="handleOther(0, 'otherDM')" value="hardcopy" />
 								           		Hardcopy
 								           	</label>
 								        [% END %]
 								        [% IF form == 're_entry' && dataMedium == "other" %]
-								        	<label class"radio inline">
-									           <input type="radio" name="dataMedium" value="other" onClick="handleOther(1, 'otherDM')" CHECKED>
+								        	<label class="radio">
+									           <input type="radio" name="dataMedium" value="other" onClick="handleOther(1, 'otherDM')" CHECKED />
 									           Other
 									        </label>    
 								        [%ELSE%]
-								        	<label class"radio inline">
-								           		<input type="radio"  name="dataMedium" onClick="handleOther(1, 'otherDM')" value="other">
+								        	<label class="radio">
+								           		<input type="radio"  name="dataMedium" onClick="handleOther(1, 'otherDM')" value="other" />
 								           		Other
 								           	</label>									           		
 								        [% END %]
@@ -1276,42 +1280,110 @@
 								<div class="control-group">
 									<label class="control-label" for="useConstraints">*Usage Rights</label>
 									<div class="controls">
-										[% IF form == 're_entry' && useConstraints == "no restrictions" %]
-											<label class"radio inline">      
-												<input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions" CHECKED>
-												No restrictions
-											</label>	
-										[%ELSE%]
-											<label class"radio inline">
-									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions">
-									            No restrictions
-									        </label>
-										[%END%]
-										[% IF form == 're_entry' && useConstraints == "Obtain permission from data set owner(s)" %]   
-											<label class"radio inline">   
-										        <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" CHECKED>
-										        Obtain permission from data set owner(s)
-										    </label> 
-										[%ELSE%]
-											<label class"radio inline">
-									            <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)">
-									            Obtain permission from data set owner(s)
-									        </label>
-										[%END%]
-										
-										[% IF form == 're_entry' && useConstraints == "other" %] 
-											<label class"radio inline">     
-												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" CHECKED>
-											    Other
-											</label>    
-									    [%ELSE%]
-									    	<label class"radio inline">
-												<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other">
-												Other
-											</label>	
-									    [%END%]
-										<input type="text" name="useConstraintsOther" id="otherUC" value="[%useConstraintsOther%]" size="49">
-									</div>
+                    <!-- Use Creative Commons license options -->
+                    [% IF show.cclicenses == 'true' %]
+                      <!-- Add CC-0 option -->
+                      [% IF form == 're_entry' && useConstraints == 'Public Domain (CC-0)' %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="Public Domain (CC-0)" CHECKED />
+                          Creative Commons Public Domain
+                          <div class="btn btn-mini popover-target"
+                              data-original-title="Public Domain (CC-0)"
+                              data-toggle="popover"
+                              data-trigger="click"
+                              data-placement="top"
+                              data-html="true"
+                              data-content="By dedicating this work to the public domain, you waive your interest in your work and place the work as completely as possible in the public domain so others may freely use the work without restriction under copyright or database law. Attribution for your work is still expected according to norms in your research field. For details, see the <a href='https://creativecommons.org/publicdomain/zero/1.0/'>Creative Commons Public Domain Dedication</a>."
+                              title="">CC-0 1.0</div>
+                        </label>
+                        
+                      [% ELSE %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="Public Domain (CC-0)" />
+                          Creative Commons Public Domain
+                          <div class="btn btn-mini popover-target"
+                              data-original-title="Public Domain (CC-0)"
+                              data-toggle="popover"
+                              data-trigger="click"
+                              data-placement="top"
+                              data-html="true"
+                              data-content="By dedicating this work to the public domain, you waive your interest in your work and place the work as completely as possible in the public domain so others may freely use the work without restriction under copyright or database law. Attribution for your work is still expected according to norms in your research field. For details, see the <a href='https://creativecommons.org/publicdomain/zero/1.0/'>Creative Commons Public Domain Dedication</a>."
+                              title="">CC-0 1.0</div>
+                        </label>
+                        
+                      [% END %]
+                      
+                      <!-- Add CC-BY option -->
+                      [% IF form == 're_entry' && useConstraints == 'Attribution (CC-BY)' %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="Attribution (CC-BY)" CHECKED />
+                          Creative Commons Attribution
+                          <div class="btn btn-mini popover-target"
+                              data-original-title="Attribution (CC-BY)"
+                              data-toggle="popover"
+                              data-trigger="click"
+                              data-placement="top"
+                              data-html="true"
+                              data-content="By licensing this work, you let others copy, distribute, display, and perform your copyrighted work, and derivative works based upon it, but only if they give you appropriate credit. For details, see the <a href='https://creativecommons.org/publicdomain/zero/1.0/'>Creative Commons Attribution 4.0 License</a>."
+                              title="">CC-BY 4.0</div>
+                        </label>
+                        
+                      [% ELSE %]
+                        <label class="radio">
+                          <input type="radio" name="useConstraints" value="Attribution (CC-BY)" />
+                          Creative Commons Attribution
+                          <div class="btn btn-mini popover-target"
+                              data-original-title="Attribution (CC-BY)"
+                              data-toggle="popover"
+                              data-trigger="click"
+                              data-placement="top"
+                              data-html="true"
+                              data-content="By licensing this work, you let others copy, distribute, display, and perform your copyrighted work, and derivative works based upon it, but only if they give you appropriate credit. For details, see the <a href='https://creativecommons.org/publicdomain/zero/1.0/'>Creative Commons Attribution 4.0 License</a>."
+                              title="">CC-BY 4.0</div>
+                        </label>
+                                              
+                      [% END %]
+                      
+                    <!-- Or use custom license options -->
+                    [% ELSE %]
+                      [% IF form == 're_entry' && useConstraints == "no restrictions" %]
+                      	<label class="radio">      
+                      		<input type="radio" name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions" CHECKED />
+                      		No restrictions
+                      	</label>	
+                      [%ELSE%]
+                      	<label class="radio">
+                                <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="no restrictions">
+                                No restrictions
+                            </label>
+                      [%END%]
+                      
+                      [% IF form == 're_entry' && useConstraints == "Obtain permission from data set owner(s)" %]   
+                      	<label class="radio">   
+                              <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" CHECKED />
+                              Obtain permission from data set owner(s)
+                          </label> 
+                      [%ELSE%]
+                      	<label class="radio">
+                                <input type="radio"  name="useConstraints" onClick="handleOther(0, 'otherUC')" value="Obtain permission from data set owner(s)" />
+                                Obtain permission from data set owner(s)
+                            </label>
+                      [%END%]
+                      
+                      [% IF form == 're_entry' && useConstraints == "other" %] 
+                      	<label class="radio">     
+                      		<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" CHECKED />
+                      	    Other
+                      	</label>    
+                        [%ELSE%]
+                        	<label class="radio">
+                      		<input type="radio"  name="useConstraints" onClick="handleOther(1, 'otherUC')" value="other" />
+                      		Other
+                      	</label>	
+                        [%END%]
+                      <input type="text" name="useConstraintsOther" id="otherUC" value="[%useConstraintsOther%]" size="49" />
+                    [% END %]
+                  </div>
 								</div>
 								
 								<div class="control-group">
@@ -1348,7 +1420,7 @@
 									<tr class="sectbody">
 									    <td class="rightCol"><span class="text-info">Upload Data File</span></td>
 									    <td colspan="5">
-								        	<input type="file" id="file_element" name="file_1" class="longwidth">
+								        	<input class="btn" type="file" id="file_element" name="file_1" class="longwidth">
 								
 									        [% IF form == 're_entry' && upCount %]
 									           [% cnt = 0 %]
