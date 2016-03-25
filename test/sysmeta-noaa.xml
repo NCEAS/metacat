@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<d1_v2.0:systemMetadata xmlns:d1_v2.0="http://ns.dataone.org/service/types/v2.0" xmlns:d1="http://ns.dataone.org/service/types/v1">
+  <serialVersion>0</serialVersion>
+  <identifier>tao.4.1</identifier>
+  <formatId>http://www.isotc211.org/2005/gmd-noaa</formatId>
+  <size>80768</size>
+  <checksum algorithm="md5">8cd61d7798eeef7b797274f613695011</checksum>
+  <submitter>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</submitter>
+  <rightsHolder>CN=arctica,UID=arctica,DC=arctica,DC=org</rightsHolder>
+  <accessPolicy>
+    <allow>
+      <subject>public</subject>
+      <permission>read</permission>
+    </allow>
+    <allow>
+      <subject>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</subject>
+      <permission>write</permission>
+    </allow>
+    <allow>
+      <subject>CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org</subject>
+      <permission>changePermission</permission>
+    </allow>
+  </accessPolicy>
+  <replicationPolicy replicationAllowed="true" numberReplicas="3"/>
+  <archived>false</archived>
+  <dateUploaded>2016-02-29T21:15:06.030+00:00</dateUploaded>
+  <dateSysMetadataModified>2016-02-29T21:15:06.030+00:00</dateSysMetadataModified>
+  <originMemberNode>urn:node:mnTestKNB</originMemberNode>
+  <authoritativeMemberNode>urn:node:mnTestKNB</authoritativeMemberNode>
+  <fileName>noaa.xml</fileName>
+</d1_v2.0:systemMetadata>
