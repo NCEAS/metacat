@@ -41,6 +41,7 @@ import gov.loc.repository.bagit.Manifest;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -178,6 +179,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testReadDeletedObject"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     suite.addTest(new MNodeServiceTest("testListViews"));
+    suite.addTest(new MNodeServiceTest("testCreateNOAAObject"));
    
     
     
@@ -2462,6 +2464,22 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(metadata.getObsoletes().equals(guid1));
         assertTrue(metadata.getObsoletedBy().equals(guid5));
         assertTrue(metadata.getChecksum().getValue().equals(sysmeta2.getChecksum().getValue()));
+    }
+    
+    /**
+     * Test to create a metacat object which uses the isotc211 noaa variant.
+     * @throws Exception
+     */
+    public void testCreateNOAAObject() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testNoaa." + System.currentTimeMillis());
+        InputStream object = new FileInputStream("test/sciencemetadata-noaa.xml");
+        InputStream sysmetaInput = new FileInputStream("test/sysmeta-noaa.xml");
+        SystemMetadata sysmeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmetaInput);
+        sysmeta.setIdentifier(guid);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue(pid.getValue().equals(guid.getValue()));
     }
     
 }
