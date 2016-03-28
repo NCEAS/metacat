@@ -2392,7 +2392,8 @@ public class ReplicationService extends BaseService {
 	                    .setConnectionRequestTimeout(CLIENTTIMEOUT)
 	                    .setConnectTimeout(CLIENTTIMEOUT)
 	                    .setSocketTimeout(CLIENTTIMEOUT).build();
-	            HttpClient hc = HttpUtils.getHttpClientBuilder(HttpUtils.selectSession(subject))
+	            Boolean monitorStaleConnections = false;
+	            HttpClient hc = HttpUtils.getHttpClientBuilder(HttpUtils.selectSession(subject), monitorStaleConnections)
 	                    .setDefaultRequestConfig(rc)
 	                    .build();
 	            
