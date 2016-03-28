@@ -73,6 +73,7 @@ import org.apache.http.client.config.RequestConfig;
 import org.apache.log4j.Logger;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.rest.RestClient;
+import org.dataone.client.types.AutoCloseHttpClientInputStream;
 import org.dataone.client.utils.HttpUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -2332,7 +2333,7 @@ public class ReplicationService extends BaseService {
 	        if (entity == null) {
 	            throw new ClientProtocolException("ReplicationService.getURLStream - Response contains no content");
 	        }
-	        input = entity.getContent();
+	        input = new AutoCloseHttpClientInputStream(entity.getContent(), client.getHttpClient());
 	    } 
 	    catch (Throwable t) {
 	        logReplication.error("Unexpected Throwable encountered.  Logging and moving on: " +
