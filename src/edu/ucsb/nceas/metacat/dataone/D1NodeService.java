@@ -1306,7 +1306,7 @@ public abstract class D1NodeService {
    * @return localId - the resulting docid of the document created or updated
    * 
    */
-  public String insertOrUpdateDocument(InputStream xml, String encoding,  Identifier pid, 
+  public String insertOrUpdateDocument(InputStream xmlStream, String encoding,  Identifier pid, 
     Session session, String insertOrUpdate, String formatId) 
     throws ServiceFailure, IOException {
     
@@ -1315,7 +1315,8 @@ public abstract class D1NodeService {
 
     // generate pid/localId pair for sysmeta
     String localId = null;
-    byte[] xmlBytes  = IOUtils.toByteArray(xml);
+    byte[] xmlBytes  = IOUtils.toByteArray(xmlStream);
+    IOUtils.closeQuietly(xmlStream);
     String xmlStr = new String(xmlBytes, encoding);
     if(insertOrUpdate.equals("insert")) {
       localId = im.generateLocalId(pid.getValue(), 1);
@@ -1810,7 +1811,7 @@ public abstract class D1NodeService {
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream data) 
+  private File writeStreamToFile(File dir, String fileName, InputStream dataStream) 
     throws ServiceFailure {
     
     File newFile = new File(dir, fileName);
@@ -1820,7 +1821,7 @@ public abstract class D1NodeService {
         if (newFile.createNewFile()) {
           // write data stream to desired file
           OutputStream os = new FileOutputStream(newFile);
-          long length = IOUtils.copyLarge(data, os);
+          long length = IOUtils.copyLarge(dataStream, os);
           os.flush();
           os.close();
         } else {
@@ -1835,6 +1836,8 @@ public abstract class D1NodeService {
       logMetacat.debug("IOE: " + e.getMessage());
       throw new ServiceFailure("1190", "File was not written: " + fileName 
                 + " " + e.getMessage());
+    } finally {
+        IOUtils.closeQuietly(dataStream);
     }
 
     return newFile;
