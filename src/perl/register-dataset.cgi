@@ -3043,8 +3043,15 @@ sub getFormValuesFromEml2 {
 					  #print $tempNode->nodeName().":".$tempNode->textContent();
 					  #print "\n";
 						if ( $$templateVars{'useConstraints'} eq "" ) {
-							$$templateVars{'useConstraints'} =
-							  $tempNode->textContent();
+                            if ($tempNode->textContent() =~ 'Creative Commons Universal 1.0 Public Domain Dedication') {
+    							$$templateVars{'useConstraints'} = "Public Domain (CC-0)";                                
+                                
+                            } elsif ($tempNode->textContent() =~ 'Creative Commons Attribution 4.0 International License') {
+    							$$templateVars{'useConstraints'} = "Attribution (CC-BY)";                                
+                                
+                            } else {
+    							$$templateVars{'useConstraints'} = $tempNode->textContent();                                
+                            }
 						}
 						else {
 							$$templateVars{'useConstraintsOther'} =
