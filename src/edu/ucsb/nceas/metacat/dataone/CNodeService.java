@@ -39,6 +39,7 @@ import java.util.concurrent.locks.Lock;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.MNode;
@@ -1804,8 +1805,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, 
     NotImplemented, InvalidRequest {
-       
-   // verify the pid is valid format
+    
+    try {
+      // verify the pid is valid format
       if (!isValidIdentifier(pid)) {
           throw new InvalidRequest("4891", "The provided identifier is invalid.");
       }
@@ -1877,8 +1879,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	          logMetacat.debug("Unlocked identifier " + pid.getValue());
     	  }
       }
-      
-      return pid;
+    } finally {
+        IOUtils.closeQuietly(object);
+    }
+    return pid;
 
   }
 

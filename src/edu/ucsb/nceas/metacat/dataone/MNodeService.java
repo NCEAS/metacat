@@ -309,7 +309,7 @@ public class MNodeService extends D1NodeService
         throws InvalidToken, ServiceFailure, NotAuthorized, IdentifierNotUnique, 
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
-        
+        try {
         if(isReadOnlyMode()) {
             throw new ServiceFailure("1310", ReadOnlyChecker.DATAONEERROR);
         }
@@ -531,13 +531,16 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("1200", "The provided identity does not have " + "permission to UPDATE the object identified by " + pid.getValue()
                     + " on the Member Node.");
         }
-
+        } finally {
+            IOUtils.closeQuietly(object);
+        }
         return newPid;
     }
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
-
+        Identifier resultPid = null;
+        try {
         if(isReadOnlyMode()) {
             throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
         }
@@ -613,7 +616,7 @@ public class MNodeService extends D1NodeService
         }
 
         // call the shared impl
-        Identifier resultPid = super.create(session, pid, object, sysmeta);
+        resultPid = super.create(session, pid, object, sysmeta);
         
         // attempt to register the identifier - it checks if it is a doi
         try {
@@ -623,7 +626,9 @@ public class MNodeService extends D1NodeService
 			sf.initCause(e);
             throw sf;
 		}
-        
+        } finally {
+            IOUtils.closeQuietly(object);
+        }
         // return 
 		return resultPid ;
     }

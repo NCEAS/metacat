@@ -31,6 +31,7 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.cn.v1.CNAuthorization;
 import org.dataone.service.cn.v1.CNCore;
@@ -435,6 +436,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		try {
 			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
+		    IOUtils.closeQuietly(object);
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);

@@ -30,6 +30,7 @@ import java.util.Date;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -172,6 +173,7 @@ public class MNodeService
 		try {
 			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
+		    IOUtils.closeQuietly(object);
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1190", e.getMessage());
 			sf.initCause(e);
@@ -237,13 +239,19 @@ public class MNodeService
 	    //check if the pid exists and not a sid
 	    String serviceFailure = "1310";
         String notFound = "1280";
-        impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
+        try {
+            impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "The object specified by "+pid.getValue()+" does not exist at this node.");
+        } catch (Exception e) {
+            IOUtils.closeQuietly(object);
+            throw e;
+        }
 		//convert sysmeta to newer version
 		org.dataone.service.types.v2.SystemMetadata v2Sysmeta = null;
 		try {
 			v2Sysmeta = TypeFactory.convertTypeFromType(sysmeta, org.dataone.service.types.v2.SystemMetadata.class);
 		} catch (Exception e) {
+		    IOUtils.closeQuietly(object);
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
