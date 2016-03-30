@@ -310,127 +310,141 @@ public class MNodeService extends D1NodeService
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
         try {
-        if(isReadOnlyMode()) {
-            throw new ServiceFailure("1310", ReadOnlyChecker.DATAONEERROR);
-        }
-
-        //transform a sid to a pid if it is applicable
-        String serviceFailureCode = "1310";
-        Identifier sid = getPIDForSID(pid, serviceFailureCode);
-        if(sid != null) {
-            pid = sid;
-        }
-        
-        String localId = null;
-        boolean allowed = false;
-        boolean isScienceMetadata = false;
-        
-        if (session == null) {
-        	throw new InvalidToken("1210", "No session has been provided");
-        }
-        Subject subject = session.getSubject();
-
-        // verify the pid is valid format
-        if (!isValidIdentifier(pid)) {
-        	throw new InvalidRequest("1202", "The provided identifier is invalid.");
-        }
-        
-        // verify the new pid is valid format
-        if (!isValidIdentifier(newPid)) {
-            throw new InvalidRequest("1202", "The provided identifier is invalid.");
-        }
-        
-        // make sure that the newPid doesn't exists
-        boolean idExists = true;
-        try {
-            idExists = IdentifierManager.getInstance().identifierExists(newPid.getValue());
-        } catch (SQLException e) {
-            throw new ServiceFailure("1310", 
-                                    "The requested identifier " + newPid.getValue() +
-                                    " couldn't be determined if it is unique since : "+e.getMessage());
-        }
-        if (idExists) {
-                throw new IdentifierNotUnique("1220", 
-                          "The requested identifier " + newPid.getValue() +
-                          " is already used by another object and" +
-                          "therefore can not be used for this object. Clients should choose" +
-                          "a new identifier that is unique and retry the operation or " +
-                          "use CN.reserveIdentifier() to reserve one.");
-            
-        }
-        
-       
-
-        // check for the existing identifier
-        try {
-            localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            
-        } catch (McdbDocNotFoundException e) {
-            throw new InvalidRequest("1202", "The object with the provided " + 
-                "identifier was not found.");
-            
-        } catch (SQLException ee) {
-            throw new ServiceFailure("1310", "The object with the provided " + 
-                    "identifier "+pid.getValue()+" can't be identified since - "+ee.getMessage());
-        }
-        
-        // set the originating node
-        NodeReference originMemberNode = this.getCapabilities().getIdentifier();
-        sysmeta.setOriginMemberNode(originMemberNode);
-        
-        // set the submitter to match the certificate
-        sysmeta.setSubmitter(subject);
-        // set the dates
-        Date now = Calendar.getInstance().getTime();
-        sysmeta.setDateSysMetadataModified(now);
-        sysmeta.setDateUploaded(now);
-        
-        // make sure serial version is set to something
-        BigInteger serialVersion = sysmeta.getSerialVersion();
-        if (serialVersion == null) {
-        	sysmeta.setSerialVersion(BigInteger.ZERO);
-        }
-
-        // does the subject have WRITE ( == update) priveleges on the pid?
-        //allowed = isAuthorized(session, pid, Permission.WRITE);
-        //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
-        allowed = allowUpdating(session, pid, Permission.WRITE);
-        if (allowed) {
-        	
-        	// check quality of SM
-        	if (sysmeta.getObsoletedBy() != null) {
-        		throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
-        	}
-        	if (sysmeta.getObsoletes() != null && !sysmeta.getObsoletes().getValue().equals(pid.getValue())) {
-        		throw new InvalidSystemMetadata("1300", "The identifier provided in obsoletes does not match old Identifier");
-        	}
-
-            // get the existing system metadata for the object
-            SystemMetadata existingSysMeta = getSystemMetadata(session, pid);
-            //System.out.println("the archive is "+existingSysMeta.getArchived());
-            //Base on documentation, we can't update an archived object:
-            //The update operation MUST fail with Exceptions.InvalidRequest on objects that have the Types.SystemMetadata.archived property set to true.
-            if(existingSysMeta.getArchived() != null && existingSysMeta.getArchived()) {
-                throw new InvalidRequest("1202","An archived object"+pid.getValue()+" can't be updated");
+            if(isReadOnlyMode()) {
+                throw new ServiceFailure("1310", ReadOnlyChecker.DATAONEERROR);
             }
-
-            // check for previous update
-            // see: https://redmine.dataone.org/issues/3336
-            Identifier existingObsoletedBy = existingSysMeta.getObsoletedBy();
-            if (existingObsoletedBy != null) {
-            	throw new InvalidRequest("1202", 
-            			"The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
+    
+            //transform a sid to a pid if it is applicable
+            String serviceFailureCode = "1310";
+            Identifier sid = getPIDForSID(pid, serviceFailureCode);
+            if(sid != null) {
+                pid = sid;
             }
-            //check the sid in the system metadata. If it exists, it should be non-exist or match the old sid in the previous system metadata.
-            Identifier sidInSys = sysmeta.getSeriesId();
-            if(sidInSys != null) {
-                if (!isValidIdentifier(sidInSys)) {
-                    throw new InvalidSystemMetadata("1300", "The provided series id in the system metadata is invalid.");
+            
+            String localId = null;
+            boolean allowed = false;
+            boolean isScienceMetadata = false;
+            
+            if (session == null) {
+            	throw new InvalidToken("1210", "No session has been provided");
+            }
+            Subject subject = session.getSubject();
+    
+            // verify the pid is valid format
+            if (!isValidIdentifier(pid)) {
+            	throw new InvalidRequest("1202", "The provided identifier is invalid.");
+            }
+            
+            // verify the new pid is valid format
+            if (!isValidIdentifier(newPid)) {
+                throw new InvalidRequest("1202", "The provided identifier is invalid.");
+            }
+            
+            // make sure that the newPid doesn't exists
+            boolean idExists = true;
+            try {
+                idExists = IdentifierManager.getInstance().identifierExists(newPid.getValue());
+            } catch (SQLException e) {
+                throw new ServiceFailure("1310", 
+                                        "The requested identifier " + newPid.getValue() +
+                                        " couldn't be determined if it is unique since : "+e.getMessage());
+            }
+            if (idExists) {
+                    throw new IdentifierNotUnique("1220", 
+                              "The requested identifier " + newPid.getValue() +
+                              " is already used by another object and" +
+                              "therefore can not be used for this object. Clients should choose" +
+                              "a new identifier that is unique and retry the operation or " +
+                              "use CN.reserveIdentifier() to reserve one.");
+                
+            }
+            
+           
+    
+            // check for the existing identifier
+            try {
+                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                
+            } catch (McdbDocNotFoundException e) {
+                throw new InvalidRequest("1202", "The object with the provided " + 
+                    "identifier was not found.");
+                
+            } catch (SQLException ee) {
+                throw new ServiceFailure("1310", "The object with the provided " + 
+                        "identifier "+pid.getValue()+" can't be identified since - "+ee.getMessage());
+            }
+            
+            // set the originating node
+            NodeReference originMemberNode = this.getCapabilities().getIdentifier();
+            sysmeta.setOriginMemberNode(originMemberNode);
+            
+            // set the submitter to match the certificate
+            sysmeta.setSubmitter(subject);
+            // set the dates
+            Date now = Calendar.getInstance().getTime();
+            sysmeta.setDateSysMetadataModified(now);
+            sysmeta.setDateUploaded(now);
+            
+            // make sure serial version is set to something
+            BigInteger serialVersion = sysmeta.getSerialVersion();
+            if (serialVersion == null) {
+            	sysmeta.setSerialVersion(BigInteger.ZERO);
+            }
+    
+            // does the subject have WRITE ( == update) priveleges on the pid?
+            //allowed = isAuthorized(session, pid, Permission.WRITE);
+            //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
+            allowed = allowUpdating(session, pid, Permission.WRITE);
+            if (allowed) {
+            	
+            	// check quality of SM
+            	if (sysmeta.getObsoletedBy() != null) {
+            		throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
+            	}
+            	if (sysmeta.getObsoletes() != null && !sysmeta.getObsoletes().getValue().equals(pid.getValue())) {
+            		throw new InvalidSystemMetadata("1300", "The identifier provided in obsoletes does not match old Identifier");
+            	}
+    
+                // get the existing system metadata for the object
+                SystemMetadata existingSysMeta = getSystemMetadata(session, pid);
+                //System.out.println("the archive is "+existingSysMeta.getArchived());
+                //Base on documentation, we can't update an archived object:
+                //The update operation MUST fail with Exceptions.InvalidRequest on objects that have the Types.SystemMetadata.archived property set to true.
+                if(existingSysMeta.getArchived() != null && existingSysMeta.getArchived()) {
+                    throw new InvalidRequest("1202","An archived object"+pid.getValue()+" can't be updated");
                 }
-                Identifier previousSid = existingSysMeta.getSeriesId();
-                if(previousSid != null) {
-                    // there is a previous sid, if the new sid doesn't match it, the new sid should be non-existing.
-                    if(!sidInSys.getValue().equals(previousSid.getValue())) {
+    
+                // check for previous update
+                // see: https://redmine.dataone.org/issues/3336
+                Identifier existingObsoletedBy = existingSysMeta.getObsoletedBy();
+                if (existingObsoletedBy != null) {
+                	throw new InvalidRequest("1202", 
+                			"The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
+                }
+                //check the sid in the system metadata. If it exists, it should be non-exist or match the old sid in the previous system metadata.
+                Identifier sidInSys = sysmeta.getSeriesId();
+                if(sidInSys != null) {
+                    if (!isValidIdentifier(sidInSys)) {
+                        throw new InvalidSystemMetadata("1300", "The provided series id in the system metadata is invalid.");
+                    }
+                    Identifier previousSid = existingSysMeta.getSeriesId();
+                    if(previousSid != null) {
+                        // there is a previous sid, if the new sid doesn't match it, the new sid should be non-existing.
+                        if(!sidInSys.getValue().equals(previousSid.getValue())) {
+                            try {
+                                idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
+                            } catch (SQLException e) {
+                                throw new ServiceFailure("1310", 
+                                                        "The requested identifier " + sidInSys.getValue() +
+                                                        " couldn't be determined if it is unique since : "+e.getMessage());
+                            }
+                            if(idExists) {
+                                throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata doesn't match the previous series id "
+                                                                +previousSid.getValue()+", so it should NOT exist. However, it was used by another object.");
+                            }
+                        }
+                    } else {
+                        // there is no previous sid, the new sid should be non-existing.
                         try {
                             idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
                         } catch (SQLException e) {
@@ -439,98 +453,84 @@ public class MNodeService extends D1NodeService
                                                     " couldn't be determined if it is unique since : "+e.getMessage());
                         }
                         if(idExists) {
-                            throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata doesn't match the previous series id "
-                                                            +previousSid.getValue()+", so it should NOT exist. However, it was used by another object.");
+                            throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata should NOT exist since the previous series id is null."
+                                                            +"However, it was used by another object.");
                         }
                     }
-                } else {
-                    // there is no previous sid, the new sid should be non-existing.
+                    //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario)
+                    if(sidInSys.getValue().equals(newPid.getValue())) {
+                        throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+                    }
+                }
+    
+                isScienceMetadata = isScienceMetadata(sysmeta);
+    
+                // do we have XML metadata or a data object?
+                if (isScienceMetadata) {
+    
+                    // update the science metadata XML document
+                    // TODO: handle non-XML metadata/data documents (like netCDF)
+                    // TODO: don't put objects into memory using stream to string
+                    //String objectAsXML = "";
                     try {
-                        idExists = IdentifierManager.getInstance().identifierExists(sidInSys.getValue());
-                    } catch (SQLException e) {
-                        throw new ServiceFailure("1310", 
-                                                "The requested identifier " + sidInSys.getValue() +
-                                                " couldn't be determined if it is unique since : "+e.getMessage());
+                        //objectAsXML = IOUtils.toString(object, "UTF-8");
+                    	String formatId = null;
+                    	if(sysmeta.getFormatId() != null) {
+                    	    formatId = sysmeta.getFormatId().getValue();
+                    	}
+                        localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId);
+                        
+                        // register the newPid and the generated localId
+                        if (newPid != null) {
+                            IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
+                        }
+    
+                    } catch (IOException e) {
+                        String msg = "The Node is unable to create the object. " + "There was a problem converting the object to XML";
+                        logMetacat.info(msg);
+                        throw new ServiceFailure("1310", msg + ": " + e.getMessage());
+    
                     }
-                    if(idExists) {
-                        throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata should NOT exist since the previous series id is null."
-                                                        +"However, it was used by another object.");
-                    }
+    
+                } else {
+    
+                    // update the data object
+                    localId = insertDataObject(object, newPid, session);
+    
                 }
-                //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario)
-                if(sidInSys.getValue().equals(newPid.getValue())) {
-                    throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata shouldn't have the same value of the pid.");
-                }
-            }
-
-            isScienceMetadata = isScienceMetadata(sysmeta);
-
-            // do we have XML metadata or a data object?
-            if (isScienceMetadata) {
-
-                // update the science metadata XML document
-                // TODO: handle non-XML metadata/data documents (like netCDF)
-                // TODO: don't put objects into memory using stream to string
-                //String objectAsXML = "";
+                
+                // add the newPid to the obsoletedBy list for the existing sysmeta
+                existingSysMeta.setObsoletedBy(newPid);
+                //increase version
+                BigInteger current = existingSysMeta.getSerialVersion();
+                //System.out.println("the current version is "+current);
+                current = current.add(BigInteger.ONE);
+                //System.out.println("the new current version is "+current);
+                existingSysMeta.setSerialVersion(current);
+                // then update the existing system metadata
+                updateSystemMetadata(existingSysMeta);
+    
+                // prep the new system metadata, add pid to the affected lists
+                sysmeta.setObsoletes(pid);
+                //sysmeta.addDerivedFrom(pid);
+    
+                // and insert the new system metadata
+                insertSystemMetadata(sysmeta);
+    
+                // log the update event
+                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
+                
+                // attempt to register the identifier - it checks if it is a doi
                 try {
-                    //objectAsXML = IOUtils.toString(object, "UTF-8");
-                	String formatId = null;
-                	if(sysmeta.getFormatId() != null) {
-                	    formatId = sysmeta.getFormatId().getValue();
-                	}
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId);
-                    
-                    // register the newPid and the generated localId
-                    if (newPid != null) {
-                        IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
-                    }
-
-                } catch (IOException e) {
-                    String msg = "The Node is unable to create the object. " + "There was a problem converting the object to XML";
-                    logMetacat.info(msg);
-                    throw new ServiceFailure("1310", msg + ": " + e.getMessage());
-
-                }
-
+        			DOIService.getInstance().registerDOI(sysmeta);
+        		} catch (Exception e) {
+                    throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
+        		}
+    
             } else {
-
-                // update the data object
-                localId = insertDataObject(object, newPid, session);
-
+                throw new NotAuthorized("1200", "The provided identity does not have " + "permission to UPDATE the object identified by " + pid.getValue()
+                        + " on the Member Node.");
             }
-            
-            // add the newPid to the obsoletedBy list for the existing sysmeta
-            existingSysMeta.setObsoletedBy(newPid);
-            //increase version
-            BigInteger current = existingSysMeta.getSerialVersion();
-            //System.out.println("the current version is "+current);
-            current = current.add(BigInteger.ONE);
-            //System.out.println("the new current version is "+current);
-            existingSysMeta.setSerialVersion(current);
-            // then update the existing system metadata
-            updateSystemMetadata(existingSysMeta);
-
-            // prep the new system metadata, add pid to the affected lists
-            sysmeta.setObsoletes(pid);
-            //sysmeta.addDerivedFrom(pid);
-
-            // and insert the new system metadata
-            insertSystemMetadata(sysmeta);
-
-            // log the update event
-            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
-            
-            // attempt to register the identifier - it checks if it is a doi
-            try {
-    			DOIService.getInstance().registerDOI(sysmeta);
-    		} catch (Exception e) {
-                throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
-    		}
-
-        } else {
-            throw new NotAuthorized("1200", "The provided identity does not have " + "permission to UPDATE the object identified by " + pid.getValue()
-                    + " on the Member Node.");
-        }
         } finally {
             IOUtils.closeQuietly(object);
         }
@@ -541,91 +541,91 @@ public class MNodeService extends D1NodeService
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
         Identifier resultPid = null;
         try {
-        if(isReadOnlyMode()) {
-            throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
-        }
-        // check for null session
-        if (session == null) {
-          throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
-        }
-        // verify the pid is valid format
-        if (!isValidIdentifier(pid)) {
-            throw new InvalidRequest("1102", "The provided identifier is invalid.");
-        }
-        // set the submitter to match the certificate
-        sysmeta.setSubmitter(session.getSubject());
-        // set the originating node
-        NodeReference originMemberNode = this.getCapabilities().getIdentifier();
-        sysmeta.setOriginMemberNode(originMemberNode);
-        
-        // if no authoritative MN, set it to the same
-        if (sysmeta.getAuthoritativeMemberNode() == null) {
-        	sysmeta.setAuthoritativeMemberNode(originMemberNode);
-        }
-        
-        sysmeta.setArchived(false);
-
-        // set the dates
-        Date now = Calendar.getInstance().getTime();
-        sysmeta.setDateSysMetadataModified(now);
-        sysmeta.setDateUploaded(now);
-        
-        // set the serial version
-        sysmeta.setSerialVersion(BigInteger.ZERO);
-
-        // check that we are not attempting to subvert versioning
-        if (sysmeta.getObsoletes() != null && sysmeta.getObsoletes().getValue() != null) {
-            throw new InvalidSystemMetadata("1180", 
-              "The supplied system metadata is invalid. " +
-              "The obsoletes field cannot have a value when creating entries.");
-        }
-        
-        if (sysmeta.getObsoletedBy() != null && sysmeta.getObsoletedBy().getValue() != null) {
-            throw new InvalidSystemMetadata("1180", 
-              "The supplied system metadata is invalid. " +
-              "The obsoletedBy field cannot have a value when creating entries.");
-        }
-        
-        // verify the sid in the system metadata
-        Identifier sid = sysmeta.getSeriesId();
-        boolean idExists = false;
-        if(sid != null) {
-            if (!isValidIdentifier(sid)) {
-                throw new InvalidSystemMetadata("1180", "The provided series id is invalid.");
+            if(isReadOnlyMode()) {
+                throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
             }
+            // check for null session
+            if (session == null) {
+              throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
+            }
+            // verify the pid is valid format
+            if (!isValidIdentifier(pid)) {
+                throw new InvalidRequest("1102", "The provided identifier is invalid.");
+            }
+            // set the submitter to match the certificate
+            sysmeta.setSubmitter(session.getSubject());
+            // set the originating node
+            NodeReference originMemberNode = this.getCapabilities().getIdentifier();
+            sysmeta.setOriginMemberNode(originMemberNode);
+            
+            // if no authoritative MN, set it to the same
+            if (sysmeta.getAuthoritativeMemberNode() == null) {
+            	sysmeta.setAuthoritativeMemberNode(originMemberNode);
+            }
+            
+            sysmeta.setArchived(false);
+    
+            // set the dates
+            Date now = Calendar.getInstance().getTime();
+            sysmeta.setDateSysMetadataModified(now);
+            sysmeta.setDateUploaded(now);
+            
+            // set the serial version
+            sysmeta.setSerialVersion(BigInteger.ZERO);
+    
+            // check that we are not attempting to subvert versioning
+            if (sysmeta.getObsoletes() != null && sysmeta.getObsoletes().getValue() != null) {
+                throw new InvalidSystemMetadata("1180", 
+                  "The supplied system metadata is invalid. " +
+                  "The obsoletes field cannot have a value when creating entries.");
+            }
+            
+            if (sysmeta.getObsoletedBy() != null && sysmeta.getObsoletedBy().getValue() != null) {
+                throw new InvalidSystemMetadata("1180", 
+                  "The supplied system metadata is invalid. " +
+                  "The obsoletedBy field cannot have a value when creating entries.");
+            }
+            
+            // verify the sid in the system metadata
+            Identifier sid = sysmeta.getSeriesId();
+            boolean idExists = false;
+            if(sid != null) {
+                if (!isValidIdentifier(sid)) {
+                    throw new InvalidSystemMetadata("1180", "The provided series id is invalid.");
+                }
+                try {
+                    idExists = IdentifierManager.getInstance().identifierExists(sid.getValue());
+                } catch (SQLException e) {
+                    throw new ServiceFailure("1190", 
+                                            "The series identifier " + sid.getValue() +
+                                            " in the system metadata couldn't be determined if it is unique since : "+e.getMessage());
+                }
+                if (idExists) {
+                        throw new InvalidSystemMetadata("1180", 
+                                  "The series identifier " + sid.getValue() +
+                                  " is already used by another object and" +
+                                  "therefore can not be used for this object. Clients should choose" +
+                                  "a new identifier that is unique and retry the operation or " +
+                                  "use CN.reserveIdentifier() to reserve one.");
+                    
+                }
+                //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
+                if(sid.getValue().equals(pid.getValue())) {
+                    throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
+                }
+            }
+    
+            // call the shared impl
+            resultPid = super.create(session, pid, object, sysmeta);
+            
+            // attempt to register the identifier - it checks if it is a doi
             try {
-                idExists = IdentifierManager.getInstance().identifierExists(sid.getValue());
-            } catch (SQLException e) {
-                throw new ServiceFailure("1190", 
-                                        "The series identifier " + sid.getValue() +
-                                        " in the system metadata couldn't be determined if it is unique since : "+e.getMessage());
-            }
-            if (idExists) {
-                    throw new InvalidSystemMetadata("1180", 
-                              "The series identifier " + sid.getValue() +
-                              " is already used by another object and" +
-                              "therefore can not be used for this object. Clients should choose" +
-                              "a new identifier that is unique and retry the operation or " +
-                              "use CN.reserveIdentifier() to reserve one.");
-                
-            }
-            //the series id equals the pid (new pid hasn't been registered in the system, so IdentifierManager.getInstance().identifierExists method can't exclude this scenario )
-            if(sid.getValue().equals(pid.getValue())) {
-                throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
-            }
-        }
-
-        // call the shared impl
-        resultPid = super.create(session, pid, object, sysmeta);
-        
-        // attempt to register the identifier - it checks if it is a doi
-        try {
-			DOIService.getInstance().registerDOI(sysmeta);
-		} catch (Exception e) {
-			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
-			sf.initCause(e);
-            throw sf;
-		}
+    			DOIService.getInstance().registerDOI(sysmeta);
+    		} catch (Exception e) {
+    			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
+    			sf.initCause(e);
+                throw sf;
+    		}
         } finally {
             IOUtils.closeQuietly(object);
         }
