@@ -1854,10 +1854,7 @@ sub datasetStart() {
 			$dataset .= normalize($identifierArray->[$i]) . "</alternateIdentifier>\n";
 		}
 	}
-	#if ( hasContent($FORM::identifier) ) {
-	#	$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
-	#	$dataset .= normalize($FORM::identifier) . "</alternateIdentifier>\n";
-	#}
+	
 	
 	return $dataset;
 }
@@ -2729,9 +2726,7 @@ sub getFormValuesFromEml2 {
 
 	# find out the tag <alternateIdentifier>.
 	$results = $doc->findnodes('//dataset/alternateIdentifier');
-	if ( $results->size() > 0 ) {
-		#errMoreThanOne("alternateIdentifier");
-		
+	if ( $results->size() > 0 ) {		
 		# handle multiple alternate identifiers
 		$results = $doc->findnodes('//dataset/alternateIdentifier');
 		my $identifierIndex = 0;
