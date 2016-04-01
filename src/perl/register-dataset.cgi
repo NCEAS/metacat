@@ -4902,7 +4902,7 @@ sub toConfirmData {
 	#$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
 	my $identifierArray = \@FORM::identifer;
 	debug(  "Processing identifier array = " . $identifierArray );
-	debug(  "Processing identifier array size = " . $identifierArray->size() );
+	debug(  "Processing identifier array size = " . $#identifierArray );
 	my $identifierCount     = 1;
 	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
 		if (   hasContent( $identifierArray->[$i] ) )
