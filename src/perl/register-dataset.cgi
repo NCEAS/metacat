@@ -1843,7 +1843,7 @@ sub datasetStart() {
 
 	## handle multiple alternate identifiers
 	my $identifierArray = \@FORM::identifier;
-	my $identifierCount     = 1;
+	debug(  "datasetStart identifier array size = " . $#$identifierArray );
 	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
 		if (   hasContent( $identifierArray->[$i] ) )
 		{
@@ -1851,7 +1851,6 @@ sub datasetStart() {
 				  . $identifierArray->[$i] );
 			$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
 			$dataset .= normalize($identifierArray->[$i]) . "</alternateIdentifier>\n";
-			$identifierCount++;
 		}
 	}
 	#if ( hasContent($FORM::identifier) ) {
