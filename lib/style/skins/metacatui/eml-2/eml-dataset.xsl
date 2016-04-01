@@ -255,7 +255,7 @@
 			         	</xsl:for-each>
 			         </xsl:variable>	
 					<xsl:variable name="index" select="position()" />
-		         	<div>
+		         	<div class="party">
 		         		<!--
 		         		<div class="annotation-target">
 			         		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$index"/>])</xsl:attribute>

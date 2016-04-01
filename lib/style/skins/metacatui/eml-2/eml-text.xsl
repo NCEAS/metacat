@@ -116,5 +116,29 @@
 		</xsl:if>
       </span>
   </xsl:template>
+  
+     <!-- -Templates for capitalizing the first letter or all letters of a given word -->
+  <xsl:variable name="upper" select="'ABCDEFGHIJKLMNOPQRSTUVWXYZ'"/>
+  <xsl:variable name="lower" select="'abcdefghijklmnopqrstuvwxyz'"/>
+  <xsl:variable name="digit" select="'0123456789'"/>
+  <xsl:variable name="alnum" select="concat(concat($upper, $lower), $digit)"/>
+  
+   <xsl:template name="capitalize">
+      <!-- Capitalize all the letters in a string -->
+      <xsl:param name="s"/>
+      <xsl:value-of select="translate($s, $lower, $upper)"/>
+  </xsl:template>
+  
+  <xsl:template name="cap-first">
+      <!-- Capitalize the first letter in a string -->
+      <xsl:param name="s"/>
+      <!-- Use the FP convention of x:xs for recurring on a list -->
+      <xsl:variable name="x" select="substring($s, 1, 1)"/>
+      <xsl:variable name="xs" select="substring($s, 2)"/>
+      <xsl:call-template name="capitalize">
+          <xsl:with-param name="s" select="$x"/>
+      </xsl:call-template>
+      <xsl:value-of select="$xs"/>
+  </xsl:template>
 
 </xsl:stylesheet>
