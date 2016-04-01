@@ -474,6 +474,7 @@
   [% cnt = 1 %]
   [% WHILE cnt <= numIdentifier %]
       [% SET id = "identifierValue${cnt}" %]
+      <input type="hidden" name="[% id %]" value="[% $id %]" />
       <input type="hidden" name="identifier" value="[% $id %]" />
       [% cnt = cnt + 1 %]
   [% END %]  
