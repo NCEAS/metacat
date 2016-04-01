@@ -5225,7 +5225,7 @@ sub copyFormToTemplateVars {
 	# handle multiple identifier values
 	#$$templateVars{'identifier'}     = $FORM::identifier;
 	$$templateVars{'identifierCount'}    = $FORM::identifierCount;
-	debug(  "Identifier template count: $id = " . $FORM::identifierCount );
+	debug(  "Identifier template count: " . $FORM::identifierCount );
 
 	foreach my $id ( param() ) {
 		if ( $id =~ /identifier/ ) {
