@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
@@ -992,6 +993,7 @@ public class IdentifierManager {
             PreparedStatement stmt = null;
             int endsCount = 0;
             boolean hasError = false;
+            HashMap<String, String> obsoletesIdGuidMap = new HashMap<String, String>();//the key is an obsoletes id, the value is an guid
             try {
                 // Get a database connection from the pool
                 dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getHeadPID");
@@ -1008,9 +1010,17 @@ public class IdentifierManager {
                     while(hasNext) {
                         String guidStr = rs.getString(1);
                         String obsoletedByStr = rs.getString(2);
-                        String obsoetesStr = rs.getString(3);
+                        String obsoletesStr = rs.getString(3);
                         Identifier guid = new Identifier();
                         guid.setValue(guidStr);
+                        if(obsoletesStr != null && !obsoletesStr.trim().equals("")) {
+                            if(obsoletesIdGuidMap.containsKey(obsoletesStr) && !guidStr.equals(obsoletesIdGuidMap.get(obsoletesStr))) {
+                                logMetacat.error("Both id "+guidStr+" and id "+obsoletesIdGuidMap.get(obsoletesStr)+" obsoletes the id"+obsoletesStr+
+                                        ". It is illegal. So the head pid maybe is wrong.");
+                                hasError = true;
+                            } 
+                            obsoletesIdGuidMap.put(obsoletesStr, guidStr);
+                        }
                         if(first) {
                             firstOne = guid;
                             first =false;
@@ -1036,10 +1046,11 @@ public class IdentifierManager {
                                     endsCount++;
                                 }
                             } else {
+                                logMetacat.debug("The object "+obsoletedBy+" which obsoletes "+guidStr+" is missing.");
                                 //obsoletedBySysmeta doesn't exist; it means the object is missing
                                 //generally, we consider it we generally consider it a type 2 end except:
                                  //there is another object in the chain (has the same series id) that obsoletes the missing object. 
-                                String sql2 = "select guid from systemMetadata where  obsoletes = ? and series_id = ?";
+                                /*String sql2 = "select guid from systemMetadata where  obsoletes = ? and series_id = ?";
                                 PreparedStatement stmt2 = dbConn.prepareStatement(sql2);
                                 stmt2.setString(1, obsoletedBy.getValue());
                                 stmt2.setString(2, sid.getValue());
@@ -1062,6 +1073,19 @@ public class IdentifierManager {
                                     // something is wrong - there are more than one objects obsolete the missing object!
                                     hasError = true;
                                     break;
+                                }*/
+                                if(obsoletesIdGuidMap != null && obsoletesIdGuidMap.containsKey(obsoletedByStr)) {
+                                   //This is the exception - another object in the chain (has the same series id) that obsoletes the missing object
+                                    //The obsoletesIdGuidMap maintains the relationship (with the same  series id)
+                                    logMetacat.debug("Though the object "+obsoletedBy+" which obsoletes "+guidStr+" is missing."+
+                                            " However, there is another object "+obsoletesIdGuidMap.get(obsoletedByStr)+" in the chain obsoleting it. So it is not an end.");
+                                  
+                                } else {
+                                    //the exception (another object in the chain (has the same series id) that obsoletes the missing object) doesn't exist
+                                    // it is a type 2 end
+                                    logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue());
+                                    pid = guid;
+                                    endsCount++;
                                 }
                             }
                         }
