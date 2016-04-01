@@ -4909,8 +4909,8 @@ sub toConfirmData {
 				  . $identifierArray->[$i] );
 			$$templateVars{ "identifierValue" . $identifierCount } =
 			  normalizeCD( $identifierArray->[$i] );
+			$identifierCount++;
 		}
-		$identifierCount++;
 	}
 	$$templateVars{'identifierCount'} = $identifierCount - 1;
 	
