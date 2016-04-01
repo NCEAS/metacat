@@ -5232,12 +5232,12 @@ sub copyFormToTemplateVars {
 			my $identifierIndex = $id;
 			$identifierIndex =~
 			  s/identifier//;    # get the index of the parameter 0, ..., 10
-			my $idParam = "identifierValue" . $identifierIndex;
+			my $idParamName = "identifierValue" . $identifierIndex;
 			if ( $identifierIndex =~ /[0-9]+/ ) {
-				if ( hasContent( param($idParam) ) ) {
+				if ( hasContent( param($idParamName) ) ) {
 					debug(  "Processing identifier: $id = "
-						  . param($id) );
-					$$templateVars{$idParam} = param($id);
+						  . param($idParamName) );
+					$$templateVars{$idParamName} = param($idParamName);
 				}
 			}
 		}
