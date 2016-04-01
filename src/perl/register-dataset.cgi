@@ -1842,7 +1842,7 @@ sub datasetStart() {
 	my $dataset = "<dataset>\n";
 
 	## handle multiple alternate identifiers
-	my $identifierArray = \@FORM::identifer;
+	my $identifierArray = \@FORM::identifier;
 	my $identifierCount     = 1;
 	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
 		if (   hasContent( $identifierArray->[$i] ) )
@@ -4900,7 +4900,7 @@ sub toConfirmData {
 	
 	# handle multiple identifiers
 	#$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
-	my $identifierArray = \@FORM::identifer;
+	my $identifierArray = \@FORM::identifier;
 	debug(  "Processing identifier array = " . $identifierArray );
 	debug(  "Processing identifier array size = " . $#$identifierArray );
 	my $identifierCount     = 1;
