@@ -991,6 +991,9 @@ public class IdentifierManager {
             DBConnection dbConn = null;
             int serialNumber = -1;
             PreparedStatement stmt = null;
+            PreparedStatement stmt2 = null;
+            ResultSet rs = null;
+            ResultSet result = null;
             int endsCount = 0;
             boolean hasError = false;
             HashMap<String, String> obsoletesIdGuidMap = new HashMap<String, String>();//the key is an obsoletes id, the value is an guid
@@ -1001,7 +1004,7 @@ public class IdentifierManager {
                 // Execute the insert statement
                 stmt = dbConn.prepareStatement(sql);
                 stmt.setString(1, sid.getValue());
-                ResultSet rs = stmt.executeQuery();
+                rs = stmt.executeQuery();
                 boolean hasNext = rs.next();
                 boolean first = true;
                 Identifier firstOne = new Identifier();//since the sql using the desc order, the first one has the latest upload date.
@@ -1036,17 +1039,26 @@ public class IdentifierManager {
                             //Identifier obsoletedBy = sysmeta.getObsoletedBy();
                             Identifier obsoletedBy = new Identifier();
                             obsoletedBy.setValue(obsoletedByStr);
-                            SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBy);
-                            if(obsoletedBySysmeta != null) {
-                                Identifier sidInObsoletedBy = obsoletedBySysmeta.getSeriesId();
-                                if(sidInObsoletedBy == null|| !sidInObsoletedBy.equals(sid)) {
+                            //SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBy);
+                            String sql2 = "select series_id, guid from systemMetadata where guid = ? ";
+                            stmt2 = dbConn.prepareStatement(sql2);
+                            stmt2.setString(1, obsoletedByStr);
+                            result = stmt2.executeQuery();
+                            boolean next = result.next();
+                            //if(obsoletedBySysmeta != null) {
+                            if(next) {
+                                logMetacat.debug("The object "+obsoletedBy+" which obsoletes "+guidStr+" does have a system metadata on the table.");
+                                //Identifier sidInObsoletedBy = obsoletedBySysmeta.getSeriesId();
+                                String sidInObsoletedBy = result.getString(1);
+                                if(sidInObsoletedBy == null|| !sidInObsoletedBy.equals(sid.getValue())) {
                                     // type 2 end
-                                    logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue());
+                                    logMetacat.debug(""+guidStr+" is a type 2 end for sid "+sid.getValue()+ "since it is obsoleted by the object "+sidInObsoletedBy+
+                                            " which has a different sid or no sids");
                                     pid = guid;
                                     endsCount++;
                                 }
                             } else {
-                                logMetacat.debug("The object "+obsoletedBy+" which obsoletes "+guidStr+" is missing.");
+                                logMetacat.debug("The object "+obsoletedBy+" which obsoletes "+guidStr+" is missing on the host.");
                                 //obsoletedBySysmeta doesn't exist; it means the object is missing
                                 //generally, we consider it we generally consider it a type 2 end except:
                                  //there is another object in the chain (has the same series id) that obsoletes the missing object. 
@@ -1104,9 +1116,7 @@ public class IdentifierManager {
                     //it is not a sid or at least we don't have anything to match it.
                     //do nothing, so null will be returned
                 }
-                if(rs != null) {
-                    rs.close();
-                }
+                
                 
             } catch (SQLException e) {
                 logMetacat.error("Error while get the head pid for the sid "+sid.getValue()+" : " 
@@ -1114,8 +1124,17 @@ public class IdentifierManager {
                 throw e;
             } finally {
                 try {
+                    if(rs != null) {
+                        rs.close();
+                    }
+                    if(result != null) {
+                        result.close();
+                    }
                     if(stmt != null) {
                         stmt.close();
+                    }
+                    if(stmt2 != null) {
+                        stmt2.close();
                     }
                 } catch (Exception e) {
                     logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
