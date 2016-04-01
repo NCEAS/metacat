@@ -2733,7 +2733,7 @@ sub getFormValuesFromEml2 {
 		foreach $node ( $results->get_nodelist ) {
 			$identifierIndex++;
 			$$templateVars{ "identifierValue" . $identifierIndex } =
-			  findValue( $node, '../alternateIdentifier[$identifierIndex]' );
+			  findValue( $node, '../alternateIdentifier[' . $identifierIndex . ']' );
 		}
 		$$templateVars{'identifierCount'} = $identifierIndex;
 		
