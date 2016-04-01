@@ -1849,7 +1849,8 @@ sub datasetStart() {
 		{
 			debug(  "Processing identifier: id = "
 				  . $identifierArray->[$i] );
-			$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
+			#$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
+			$dataset .= "<alternateIdentifier>";
 			$dataset .= normalize($identifierArray->[$i]) . "</alternateIdentifier>\n";
 		}
 	}
