@@ -2733,18 +2733,12 @@ sub getFormValuesFromEml2 {
 		foreach $node ( $results->get_nodelist ) {
 			$identifierIndex++;
 			$$templateVars{ "identifierValue" . $identifierIndex } =
-			  findValue( $node, '../alternateIdentifier' );
+			  findValue( $node, '../alternateIdentifier[$identifierIndex]' );
 		}
 		$$templateVars{'identifierCount'} = $identifierIndex;
 		
 	}
-	else {
-		# will not be called now
-		foreach $node ( $results->get_nodelist ) {
-			$$templateVars{'identifier'} =
-			  findValue( $node, '../alternateIdentifier' );
-		}
-	}
+	
 
 	# find out the tag <title>.
 	$results = $doc->findnodes('//dataset/title');
