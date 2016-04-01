@@ -986,7 +986,7 @@ public class IdentifierManager {
         Identifier pid = null;
         if(sid != null && sid.getValue() != null && !sid.getValue().trim().equals("")) {
             logMetacat.debug("getting pid of the head version for matching the sid: " + sid.getValue());
-            String sql = "select guid from systemMetadata where series_id = ? order by date_uploaded DESC";
+            String sql = "select guid, obsoleted_by, obsoletes from systemMetadata where series_id = ? order by date_uploaded DESC";
             DBConnection dbConn = null;
             int serialNumber = -1;
             PreparedStatement stmt = null;
@@ -1007,20 +1007,25 @@ public class IdentifierManager {
                 {
                     while(hasNext) {
                         String guidStr = rs.getString(1);
+                        String obsoletedByStr = rs.getString(2);
+                        String obsoetesStr = rs.getString(3);
                         Identifier guid = new Identifier();
                         guid.setValue(guidStr);
                         if(first) {
                             firstOne = guid;
                             first =false;
                         }
-                        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
-                        if(sysmeta.getObsoletedBy() == null) {
+                        //SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+                        //if(sysmeta.getObsoletedBy() == null) {
+                        if(obsoletedByStr == null || obsoletedByStr.trim().equals("")) {
                             //type 1 end
                             logMetacat.debug(""+guidStr+" is a type 1 end for sid "+sid.getValue());
                             pid = guid;
                             endsCount++;
                         } else {
-                            Identifier obsoletedBy = sysmeta.getObsoletedBy();
+                            //Identifier obsoletedBy = sysmeta.getObsoletedBy();
+                            Identifier obsoletedBy = new Identifier();
+                            obsoletedBy.setValue(obsoletedByStr);
                             SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBy);
                             if(obsoletedBySysmeta != null) {
                                 Identifier sidInObsoletedBy = obsoletedBySysmeta.getSeriesId();
