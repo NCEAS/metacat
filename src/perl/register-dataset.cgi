@@ -4901,13 +4901,12 @@ sub toConfirmData {
 	# handle multiple identifiers
 	#$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
 	my $identifierArray = \@FORM::identifier;
-	debug(  "Processing identifier array = " . $identifierArray );
 	debug(  "Processing identifier array size = " . $#$identifierArray );
 	my $identifierCount     = 1;
 	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
 		if (   hasContent( $identifierArray->[$i] ) )
 		{
-			debug(  "Processing identifier: id = "
+			debug(  "Processing confirm identifier: id = "
 				  . $identifierArray->[$i] );
 			$$templateVars{ "identifierValue" . $identifierCount } =
 			  normalizeCD( $identifierArray->[$i] );
@@ -5226,6 +5225,7 @@ sub copyFormToTemplateVars {
 	# handle multiple identifier values
 	#$$templateVars{'identifier'}     = $FORM::identifier;
 	$$templateVars{'identifierCount'}    = $FORM::identifierCount;
+	debug(  "Identifier template count: $id = " . $FORM::identifierCount );
 
 	foreach my $id ( param() ) {
 		if ( $id =~ /identifier/ ) {
@@ -5239,7 +5239,7 @@ sub copyFormToTemplateVars {
 			debug(  "id: " . $id );
 			if ( $identifierIndex =~ /[0-9]+/ ) {
 				if ( hasContent( param($idParamName) ) ) {
-					debug(  "Processing identifier: $id = "
+					debug(  "Processing template identifier: $id = "
 						  . param($idParamName) );
 					$$templateVars{$idParamName} = param($idParamName);
 				}
