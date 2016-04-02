@@ -69,7 +69,9 @@
         	<label class="control-label">Individual</label>
         	<div class="controls" >
 	           <b><xsl:value-of select="./salutation"/><xsl:text> </xsl:text>
-	           <xsl:value-of select="./givenName"/><xsl:text> </xsl:text>
+	           <xsl:for-each select="./givenName">
+			    	<xsl:value-of select="."/><xsl:text> </xsl:text>
+			    </xsl:for-each>
 	           <xsl:value-of select="./surName"/></b>
         	</div>
         </div>	
