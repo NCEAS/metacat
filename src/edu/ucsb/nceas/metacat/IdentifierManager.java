@@ -1024,6 +1024,7 @@ public class IdentifierManager {
                                         ". It is illegal. So the head pid maybe is wrong.");
                                 hasError = true;
                             } 
+                            logMetacat.debug("Put "+guidStr+"(a value) Obsoletes "+obsoletesStr+" (a key) into the vector.");
                             obsoletesIdGuidMap.put(obsoletesStr, guidStr);
                         }
                         if(first) {
@@ -1175,10 +1176,10 @@ public class IdentifierManager {
      */
     private Identifier checkObsoletesChain(Identifier latestDateUpload, HashMap<String, String>obsoletesIdGuidMap) {
         Identifier pid = latestDateUpload;
-        if(obsoletesIdGuidMap != null && latestDateUpload != null && obsoletesIdGuidMap.containsKey(latestDateUpload)) {
+        if(obsoletesIdGuidMap != null && latestDateUpload != null && obsoletesIdGuidMap.containsKey(latestDateUpload.getValue())) {
             logMetacat.debug("Another object obsoletes the lasted uploaded object "+latestDateUpload.getValue());
             //another object obsoletes the lastedDateUpload object
-            String pidStr = obsoletesIdGuidMap.get(latestDateUpload);
+            String pidStr = obsoletesIdGuidMap.get(latestDateUpload.getValue());
             while (obsoletesIdGuidMap.containsKey(pidStr)) {
                 pidStr = obsoletesIdGuidMap.get(pidStr);
                 logMetacat.debug("Another object "+pidStr+" obsoletes the object ");
