@@ -1472,6 +1472,56 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             head = IdentifierManager.getInstance().getHeadPID(sid_case18);
             assertTrue(head.equals(pid5_case18));
 
+          //case-19 This is about the time stamps messing up.
+          //P1(S1,t1) <-P2(S1,t2) <-P3(S1, t3) S1 = P3 (t1, t2 and t3 are the time stamp while t1 >t2 > t3. P1, P2 and P3 are a type 1 end, not an ideal chain. 
+                                                       //So we will pick up P1 as the head since t1 is the lastest one. However, if we also consider the obsoletes chain, we will pick up P3)
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            Identifier pid3_case19 = new Identifier();
+            pid3_case19.setValue(generateDocumentId());
+            System.out.println("pid3 is "+pid3_case19.getValue());
+            Thread.sleep(1000);
+            Identifier pid2_case19 = new Identifier();
+            pid2_case19.setValue(generateDocumentId());
+            System.out.println("pid2 is "+pid2_case19.getValue());
+            Thread.sleep(1000);
+            Identifier pid1_case19 = new Identifier();
+            pid1_case19.setValue(generateDocumentId());
+            System.out.println("pid1 is "+pid1_case19.getValue());
+            
+            Identifier sid_case19 = new Identifier();
+            sid_case19.setValue("sid."+System.nanoTime());
+            SystemMetadata sysmeta3_case19 = createSystemMetadata(pid3_case19, session.getSubject(), object);
+            sysmeta3_case19.setSeriesId(sid_case19);
+            sysmeta3_case19.setObsoletes(pid2_case19);
+            CNodeService.getInstance(request).create(session, pid3_case19, object, sysmeta3_case19);
+            SystemMetadata sys3 = CNodeService.getInstance(request).getSystemMetadata(session, pid3_case19);
+            Date time3 = sys3.getDateUploaded();
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta2_case19 = createSystemMetadata(pid2_case19, session.getSubject(), object);
+            sysmeta2_case19.setSeriesId(sid_case19);
+            sysmeta2_case19.setObsoletes(pid1_case19);
+            CNodeService.getInstance(request).create(session, pid2_case19, object, sysmeta2_case19);
+            SystemMetadata sys2 = CNodeService.getInstance(request).getSystemMetadata(session, pid2_case19);
+            Date time2 = sys2.getDateUploaded();
+            
+            Thread.sleep(1000);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta1_case19 = createSystemMetadata(pid1_case19, session.getSubject(), object);
+            sysmeta1_case19.setSeriesId(sid_case19);
+            CNodeService.getInstance(request).create(session, pid1_case19, object, sysmeta1_case19);
+            SystemMetadata sys1 = CNodeService.getInstance(request).getSystemMetadata(session, pid1_case19);
+            Date time1 = sys1.getDateUploaded();
+            
+            //time1 > time2 > time3
+            assertTrue(time1.getTime()>time2.getTime());
+            assertTrue(time2.getTime()>time3.getTime());
+            
+            System.out.println("case 19: =======");
+            Identifier head2 = IdentifierManager.getInstance().getHeadPID(sid_case19);
+            assertTrue(head2.equals(pid3_case19));
+            
          
         } catch (Exception e) {
             e.printStackTrace();
