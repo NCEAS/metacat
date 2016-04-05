@@ -549,8 +549,7 @@ if ( !$error ) {
                 deleteRemovedData();
             }
 
-		}
-		else {
+		} else {
 			debug("The form has an existing docid: " . $FORM::docid);
 
 			# document is being modified
@@ -558,7 +557,9 @@ if ( !$error ) {
 
 			$xmldoc =~ s/docid/$docid/;
 			debugDoc($xmldoc);
-
+			
+			debug($xmldoc);
+			
             debug('Updating docid: ' . $docid);
 			my $response = $metacat->update( $docid, $xmldoc );
 
@@ -1236,21 +1237,23 @@ sub normalizeCD {
 #
 ################################################################################
 sub allFileData {
+	if ( $debug_enabled ) {
+	    debug("allFileData() called. ");
+		
+	}
+
 	my %uploadedFiles = ();
 	my $fileInfo;
 	my $docid;
-
 	for ( my $fileNum = 0 ; $fileNum <= $FORM::upCount ; $fileNum++ ) {
 		my $fn = 'upload_' . $fileNum;
 		if ( hasContent( param($fn) ) ) {
 
 			# ignore data which is scheduled for deletion
 			if ( grep { $_ eq ("uploadname_$fileNum") } @FORM::deletefile ) {
-				debug(
-"Not generating metadata for file scheduled for deletion: $fn"
-				);
-			}
-			else {
+				debug("Not generating metadata for file scheduled for deletion: $fn");
+			
+			} else {
 				debug("Retrieving metadata for file: $fn");
 				( $docid, $fileInfo ) = fileMetadata($fileNum);
 				$uploadedFiles{$docid} = $fileInfo;
@@ -1261,7 +1264,13 @@ sub allFileData {
 	return %uploadedFiles;
 }
 
+# Returns minimal metadata about an uploaded file: hash, name, content-type, permissions
 sub fileMetadata {
+	if ( $debug_enabled ) {
+		debug("fileMetadata() called.");
+		
+	}
+	
 	my $fileNum     = shift;
 	my $fileHash    = param("upload_$fileNum");
 	my $fileName    = param("uploadname_$fileNum");
@@ -1276,8 +1285,7 @@ sub fileMetadata {
 		( $docid, $fileHash ) = datafileInfo($fileHash);
 		$outFile = $dataDir . "/" . $docid;
 
-	}
-	else {
+	} else {
 
 		# normalize input filenames; Windows filenames include full paths
 		$cleanName =~ s/.*[\/\\](.*)/$1/;
@@ -1299,8 +1307,12 @@ sub fileMetadata {
 	}
 
 	# remove the uniqueness of the filename
-	# 'tempXXXXX'
-	$cleanName = substr($cleanName, 9);
+	# 'tempXXXXX' if it exists
+	if ( $cleanName =~ /^temp[A-Za-z]{5}/ && length($cleanName) > 9 ) {
+		$cleanName = substr($cleanName, 9);
+		
+	}
+	
 
 	if ( !$docid ) {
 
@@ -1340,9 +1352,13 @@ sub fileMetadata {
 		'entityType'  => $entityType,
 	);
 
+	use Data::Dumper;
+	debug(Dumper(%dataInfo));
+	
 	return ( $docid, \%dataInfo );
 }
 
+# Returns the docid and SHA1 hash from the colon-delimited string
 sub datafileInfo {
 	my $finfo = shift;
 	$finfo =~ s/ondisk://g;
