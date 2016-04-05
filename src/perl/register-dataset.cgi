@@ -1308,7 +1308,7 @@ sub fileMetadata {
 
 	# remove the uniqueness of the filename
 	# 'tempXXXXX' if it exists
-	if ( $cleanName =~ /^temp[A-Za-z]{5}/ && length($cleanName) > 9 ) {
+	if ( $cleanName =~ /^temp[A-Za-z0-9_]{5}/ && length($cleanName) > 9 ) {
 		$cleanName = substr($cleanName, 9);
 		
 	}
