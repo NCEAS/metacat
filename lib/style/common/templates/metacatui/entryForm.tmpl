@@ -190,71 +190,84 @@
 						    </div>
 						</div>
 						
-						<!-- PRINCIPAL DATA SET OWNER -->
+						<!-- ASSOCIATED PARTIES -->
 						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseOwner" >
-								Data Set Owner  
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
+								People and Organizations  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
 						</div>
-						<div id="collapseOwner" class="accordion-body collapse in">
+						<div id="collapseParties" class="accordion-body collapse in">
 							<div class="accordion-inner">
-								<!--  the INPUT -->
 								<div class="control-group">
-									<label class="control-label" for="origNamefirst0">*First Name</label>
+									<label class="control-label" for="partyFirstName">First Name</label>
 									<div class="controls">
-										<input type="text" name="origNamefirst0" id="origNameFirst" value="[%origNamefirst0%]">
+										<input type="text" name="partyFirstName" id="partyFirstName"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNamelast0">*Last Name</label>
+									<label class="control-label" for="partyLastName">Last Name</label>
 									<div class="controls">
-										<input type="text" name="origNamelast0" id="origNameLast" value="[%origNamelast0%]">
+										<input type="text" name="partyLastName" id="partyLastName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNameOrg">Organization Name</label>
+									<label class="control-label" for="partyRole">Role</label>
 									<div class="controls">
-										<input type="text" name="origNameOrg" id="origNameOrg" value="[%origNameOrg%]">
+										<select name="partyRole" id="partyRole">
+											<option value="creator">Creator (Author/Owner/Originator)</option>
+											<option value="principalInvestigator">Principal Investigator</option>
+											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
+											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
+											<option value="metadataProvider">Metadata Provider</option>
+											<option value="custodianSteward">Custodian/Steward</option>
+											<option value="publisher">Publisher</option>
+											<option value="user">User</option>
+										</select>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origEmail">Email</label>
+									<label class="control-label" for="partyOrgName">Organization Name</label>
 									<div class="controls">
-										<input type="text" name="origEmail" id="origEmail" value="[%origEmail%]">
+										<input type="text" name="partyOrgName" id="partyOrgName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origPhone">Phone</label>
+									<label class="control-label" for="partyEmail">Email</label>
 									<div class="controls">
-										<input type="text" name="origPhone" id="origPhone" value="[%origPhone%]">
+										<input type="text" name="partyEmail" id="partyEmail" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origFAX">Fax</label>
+									<label class="control-label" for="partyPhone">Phone</label>
 									<div class="controls">
-										<input type="text" name="origFAX" id="origFAX" value="[%origFAX%]">
+										<input type="text" name="partyPhone" id="partyPhone"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origDelivery">Street Address</label>
+									<label class="control-label" for="partyFAX">Fax</label>
 									<div class="controls">
-										<textarea class="span8" id="origDelivery" name="origDelivery">[%origDelivery%]</textarea>
-										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
+										<input type="text" name="partyFAX" id="partyFAX" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origCity">City</label>
+									<label class="control-label" for="partyDelivery">Street Address</label>
 									<div class="controls">
-										<input type="text" name="origCity" id="origCity" value="[%origCity%]">
+										<textarea class="span8" name="partyDelivery" id="partyDelivery" placeholder="(number, street, unit, etc.; comma-separated)"></textarea>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origState">U.S. State or Territory</label>
+									<label class="control-label" for="partyCity">City</label>
 									<div class="controls">
-										<select name="origState" id="origState">
+										<input type="text" name="partyCity" id="partyCity" />
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="partyState">U.S. State or Territory</label>
+									<div class="controls">
+										<select name="partyState" id="partyState">
 											[% IF form == 're_entry' %]
-												<option selected>[%origState%]</option>
+												<option selected>[%partyState%]</option>
 											[% ELSE %]
 												<option>Select state or territory here.</option>
 											[% END %]
@@ -318,123 +331,78 @@
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origStateOther">Other State/Province</label>
+									<label class="control-label" for="partyStateOther">Other State/Province</label>
 									<div class="controls">
-										<input type="text" name="origStateOther" id="origStateOther" value="[%origStateOther%]">
+										<input type="text" name="partyStateOther" id="partyStateOther" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origZip">Postal Code</label>
+									<label class="control-label" for="partyZip">Postal Code</label>
 									<div class="controls">
-										<input type="text" name="origZIP" id="origZip" value="[%origZIP%]">
+										<input type="text" name="partyZip" id="partyZip" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origCountry">Country</label>
+									<label class="control-label" for="partyCountry">Country</label>
 									<div class="controls">
-										<input type="text" name="origCountry" id="origCountry" value="[%origCountry%]">
+										<input type="text" name="partyCountry" id="partyCountry" />
+									</div>
+								</div>
+								<div class="control-group">
+									<div class="controls">
+										<button type="button" class="btn" id="addPartyButton" onClick="addAssociatedParty()">Add Person or Organization</button>
+										<button type="button" class="btn" style="visibility: hidden" id="updatePartyButton" onClick="updateAssociatedParty()">Update Person or Organization</button>
 									</div>
 								</div>
 								
-						    </div>
-						</div>
-						
-						<!-- ASSOCIATED PARTIES -->
-						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
-								Associated Parties  
-							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
-						</div>
-						<div id="collapseParties" class="accordion-body collapse in">
-							<div class="accordion-inner">
-							
-								<div class="control-group">
-									<label class="control-label" for="aoFirstName">First Name</label>
-									<div class="controls">
-										<input type="text" name="aoFirstName" id="AONameFirst"">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="aoLastName">Last Name</label>
-									<div class="controls">
-										<input type="text" name="aoLastName" id="AONameLast"">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="aoRole">Role</label>
-									<div class="controls">
-										<select id="AORole" name="aoRole">
-								            <option>Co-owner</option>
-								            <option>Custodian/Steward</option>
-								            <option>Metadata Provider</option>
-								      		<option>User</option>
-								        </select>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="addaobutton1"></label>
-									<div class="controls">
-										<input type="button" class="btn" value="Add Associated Party" id="addaobutton1" onClick="addAssociatedParty()">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="associatePartyTable"></label>
-									<div class="controls">
-										<table id="associatePartyTable">   
-											<tr id="addAssociatedParty"> 
-								            	<td colspan=6 />
-								            </tr>    
-										    [% numAO = 0 %]
-										    [% IF aoCount %]
-										        [% numAO = aoCount %]
-										        <tr class="sectbody" id="aoHRRow">
-										            <td colSpan="6">
-										                <hr width = "85%"/>
-										            </td>
-										        </tr>
-										    [% END %]
-										    [% cnt = 1 %]
-										    [% WHILE cnt < numAO%]
-										            
-										        <tr class="sectbody">
-										            [% SET aofn = "origNamefirst${cnt}" %]
-										            [% SET aoln = "origNamelast${cnt}" %]
-										            [% SET aorole = "origRole${cnt}" %]
-										     
-										            <td class="rightCol">
-										                <a style="cursor:pointer">
-										                	<i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveUpRow(event)"
-										                    class="icon-arrow-up"
-										                    alt="Move Up"></i>
-										                </a>
-										                <a style="cursor:pointer">
-										                    <i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveDownRow(event, 'addaorow')"
-										                    class="icon-arrow-down"
-										                    alt="Move Down"></i>
-										                </a>
-										                <a style="cursor:pointer">
-										                    <i class="icon-remove-sign"
-										                    onClick="delRow(event)" alt="Delete"></i>
-										                </a>
-										            </td>
-										            <td colspan="5" align ="left" style="cursor:pointer"
-										                onClick="aoEditRow(event, 0, '[%$aofn%]', '[%$aoln%]' , '[%$aorole%]')">
-										                [%$aofn%] [%$aoln%] (Role: [%$aorole%])
-										                <input name="aoFirstName" type="hidden" value="[%$aofn%]"/>
-										                <input name="aoLastName" type="hidden" value="[%$aoln%]"/>
-										                <input name="aoRole" type="hidden" value="[%$aorole%]"/>
-										            </td>
-										        </tr>
-										        [% cnt = cnt + 1 %]
-										    [% END %]
-										    <input type="hidden" name="aoCount" value="[%numAO%]" id="aoCount">
-										    <tr class="sectbody" id="addaorow"><td colspan=6 /></tr>
-										</table>
-									</div>
-								</div>
-								    								
-						    </div>
+								<table class="table table-striped table-bordered table-hover" id="partyTable">   
+									[% cnt = 1 %]
+									<tbody>
+									  [% WHILE cnt < partyCount %]
+											<tr>
+												<td>
+													<a style="cursor:pointer">
+														<i onClick="cleanTextNodes('aoHRRow', 'partyRowMarker');moveUpRow(event)"
+																class="icon-arrow-up" alt="Move Up"></i>
+													</a>
+												</td>
+												<td>
+													<a style="cursor:pointer">
+														<i onClick="cleanTextNodes('aoHRRow', 'partyRowMarker');moveDownRow(event, 'partyRowMarker')"
+																class="icon-arrow-down" alt="Move Down"></i>
+													</a>
+												</td>
+												<td>
+													<a style="cursor:pointer">
+														<i class="icon-remove-sign" onClick="delRow(event)" alt="Delete"></i>
+													</a>
+												</td>
+												<td style="cursor:pointer" onClick="alert('Load into editing fields.')">
+													[% partyFirstName %]
+													<input type="hidden" name="partyFirstName"  value="[% partyFirstName %] " />
+													<input type="hidden" name="partyLastName"   value="[% partyLastName %]  " />
+													<input type="hidden" name="partyOrgName"    value="[% partyOrgName %]   " />
+													<input type="hidden" name="partyEmail" 			value="[% partyEmail %]     " />
+													<input type="hidden" name="partyPhone"      value="[% partyPhone %]     " />
+													<input type="hidden" name="partyFAX" 				value="[% partyFAX %]       " />
+													<input type="hidden" name="partyCity"       value="[% partyCity %]      " />
+													<input type="hidden" name="partyStateOther" value="[% partyStateOther %]" />
+													<input type="hidden" name="partyZip"        value="[% partyZip %]       " />
+													<input type="hidden" name="partyCountry"    value="[% partyCountry %]   " />
+												</td>
+												<td>[% partyLastName %]</td>
+												<td>[% partyRole %]</td>
+											</tr>
+											[% cnt = cnt + 1 %]
+									  [% END %]
+										<tr id="partyRowMarker">
+											<td colspan="7">
+												<input type="hidden" name="partyCount" value="[% partyCount %]" id="partyCount" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 						
 						<!-- ABSTRACT -->
@@ -518,7 +486,7 @@
 										 [% numKey = 0 %]
 										 [% IF keyCount %]
 										   [% numKey = keyCount %]
-										        [% numAO = aoCount %]
+										        [% numAO = partyCount %]
 										        <tr class="sectbody" id="keywordHRRow">
 										            <td colSpan="6">
 										                <hr width = "85%"/>
@@ -1074,21 +1042,21 @@
 								</label>
 									
 								<div class="control-group">
-									<label class="control-label" for="origNamefirstContact">*First Name</label>
+									<label class="control-label" for="partyFirstNameContact">*First Name</label>
 									<div class="controls">
-										<input type="text" name="origNamefirstContact" id="contactNameFirst" value="[%origNamefirstContact%]">
+										<input type="text" name="partyFirstNameContact" id="contactNameFirst" value="[%partyFirstNameContact%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNamelastContact">*Last Name</label>
+									<label class="control-label" for="partyLastNameContact">*Last Name</label>
 									<div class="controls">
-										<input type="text" name="origNamelastContact" id="contactNameLast" value="[%origNamelastContact%]">
+										<input type="text" name="partyLastNameContact" id="contactNameLast" value="[%partyLastNameContact%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNameOrgContact">Organization Name</label>
+									<label class="control-label" for="partyOrgNameContact">Organization Name</label>
 									<div class="controls">
-										<input type="text" name="origNameOrgContact" id="contactNameOrg" value="[%origNameOrgContact%]">
+										<input type="text" name="partyOrgNameContact" id="contactNameOrg" value="[%partyOrgNameContact%]">
 									</div>
 								</div>
 								<div class="control-group">
