@@ -180,14 +180,14 @@
 
 								[% IF show.funding == 'true' %]
 									<div id="funding-group" class="control-group">
-										<label class="control-label" for="site">Grant Number</label>
+										<label class="control-label" for="site">*Grant Number</label>
 										<div class="controls">
 											<input type="text" id="funding" name="funding" value="[%funding%]">
 										</div>
 									</div>
 								[% END %]
 								
-						    </div>
+							</div>
 						</div>
 						
 						<!-- ASSOCIATED PARTIES -->
@@ -219,6 +219,7 @@
 											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
 											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
 											<option value="creator">Creator (Author/Owner/Originator)</option>
+											<option value="contact">Contact</option>
 											<option value="metadataProvider">Metadata Provider</option>
 											<option value="custodianSteward">Custodian/Steward</option>
 											<option value="publisher">Publisher</option>
@@ -1024,166 +1025,7 @@
 						</div>
 						
 					[% END %]
-					
-						
-						<!-- DATA SET CONTACT -->
-						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseContact">
-								Data Set Contact  
-							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-question-sign"></i></a>
-						</div>
-						<div id="collapseContact" class="accordion-body collapse in">
-							<div class="accordion-inner">
-								<!--  the INPUT -->
-								<label class="checkbox inline" for="useOrigAddress">
-									<input type="CHECKBOX" name="useOrigAddress" onClick="copyContact()" id="copyCheckBox" [%useOrigAddress%]>
-        							Use the same name and address as the <em>PRINCIPAL DATA SET OWNER</em> above.
-								</label>
-									
-								<div class="control-group">
-									<label class="control-label" for="partyFirstNameContact">*First Name</label>
-									<div class="controls">
-										<input type="text" name="partyFirstNameContact" id="contactNameFirst" value="[%partyFirstNameContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="partyLastNameContact">*Last Name</label>
-									<div class="controls">
-										<input type="text" name="partyLastNameContact" id="contactNameLast" value="[%partyLastNameContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="partyOrgNameContact">Organization Name</label>
-									<div class="controls">
-										<input type="text" name="partyOrgNameContact" id="contactNameOrg" value="[%partyOrgNameContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									[% IF required.contactEmailAddress == 'true' %]
-										<label class="control-label" for="origEmailContact">*Email</label>
-									[% ELSE %]
-										<label class="control-label" for="origEmailContact">Email</label>
-									[% END %]
-									<div class="controls">
-										<input type="text" name="origEmailContact" id="contactEmail" value="[%origEmailContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origPhoneContact">Phone</label>
-									<div class="controls">
-										<input type="text" name="origPhoneContact" id="contactPhone" value="[%origPhoneContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origFAXContact">Fax</label>
-									<div class="controls">
-										<input type="text" name="origFAXContact" id="contactFAX" value="[%origFAXContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origDeliveryContact">Street Address</label>
-									<div class="controls">
-										<textarea class="span8" id="contactDelivery" name="origDeliveryContact">[%origDeliveryContact%]</textarea>
-										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origCityContact">City</label>
-									<div class="controls">
-										<input type="text" name="origCityContact" id="contactCity" value="[%origCityContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origStateContact">U.S. State or Territory</label>
-									<div class="controls">
-										<select name="origStateContact" id="contactState">
-											[% IF form == 're_entry' %]
-												<option selected>[%origStateContact%]</option>
-											[% ELSE %]
-												<option>Select state or territory here.</option>
-											[% END %]
-											<option>Alabama</option>
-											<option>Alaska</option>
-											<option>American Samoa</option>
-											<option>Arizona</option>
-											<option>Arkansas</option>
-											<option>California</option>
-											<option>Colorado</option>
-											<option>Connecticut</option>
-											<option>Delaware</option>
-											<option>District of Columbia</option>
-											<option>Florida</option>
-											<option>Georgia</option>
-											<option>Guam</option>
-											<option>Hawaii</option>
-											<option>Idaho</option>
-											<option>Illinois</option>
-											<option>Indiana</option>
-											<option>Iowa</option>
-											<option>Kansas</option>
-											<option>Kentucky</option>
-											<option>Louisiana</option>
-											<option>Maine</option>
-											<option>Maryland</option>
-											<option>Massachusetts</option>
-											<option>Michigan</option>
-											<option>Minnesota</option>
-											<option>Mississippi</option>
-											<option>Missouri</option>
-											<option>Montana</option>
-											<option>Nebraska</option>
-											<option>Nevada</option>
-											<option>New Hampshire</option>
-											<option>New Jersey</option>
-											<option>New Mexico</option>
-											<option>New York</option>
-											<option>North Carolina</option>
-											<option>North Dakota</option>
-											<option>Northern Mariana Islands</option>
-											<option>Ohio</option>
-											<option>Oklahoma</option>
-											<option>Oregon</option>
-											<option>Pennsylvania</option>
-											<option>Puerto Rico</option>
-											<option>Rhode Island</option>
-											<option>South Carolina</option>
-											<option>South Dakota</option>
-											<option>Tennessee</option>
-											<option>Texas</option>
-											<option>Utah</option>
-											<option>Vermont</option>
-											<option>Virgin Islands</option>
-											<option>Virginia</option>
-											<option>Washington</option>
-											<option>West Virginia</option>
-											<option>Wisconsin</option>
-											<option>Wyoming</option>
-										</select>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origStateOtherContact">Other State/Province</label>
-									<div class="controls">
-										<input type="text" name="origStateOtherContact" id="contactStateOther" value="[%origStateOtherContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origZIPContact">Postal Code</label>
-									<div class="controls">
-										<input type="text" name="origZIPContact" id="contactZip" value="[%origZIPContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origCountryContact">Country</label>
-									<div class="controls">
-										<input type="text" name="origCountryContact" id="contactCountry" value="[%origCountryContact%]">
-									</div>
-								</div>
-								
-						    </div>
-						</div>
-						
+											
 						<!-- DISTRIBUTION INFO -->
 						<div class="accordion-heading">
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseDistribution">
@@ -1282,7 +1124,7 @@
 									</div>
 								</div>
 								
-								<!-- END BRL ALTERNATE IDENTIFIERS --->
+								<!-- END BRL ALTERNATE IDENTIFIERS -->
 								
 								
 								<div class="control-group">
@@ -1434,12 +1276,6 @@
                   </div>
 								</div>
 								
-								<div class="control-group">
-									<label class="control-label" for="url">URL</label>
-									<div class="controls">
-										<input type="text" name="url" value="[%url%]">
-									</div>
-								</div>
 								<div class="control-group">
 									<label class="control-label" for="addComments">Additional Information</label>
 									<div class="controls">
