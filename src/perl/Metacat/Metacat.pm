@@ -209,13 +209,26 @@ sub logout {
 }
 
 #############################################################
-# subroutine to log into Metacat and get usr info xml for
+# subroutine to log into Metacat and get user info xml for
 # a logged in user
 #############################################################
 sub getUserInfo {
 	my $self = shift;
 
 	my %postData = (action => 'getloggedinuserinfo');
+  
+	my $response = $self->sendData(%postData);
+
+	return $response->content;
+}
+
+#############################################################
+# subroutine to log into Metacat and validate the session
+#############################################################
+sub validateSession {
+	my $self = shift;
+
+	my %postData = (action => 'validatesession');
   
 	my $response = $self->sendData(%postData);
 
