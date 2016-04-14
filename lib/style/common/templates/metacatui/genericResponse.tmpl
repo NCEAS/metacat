@@ -77,9 +77,9 @@
 						<input type="hidden" name="identifierCount" value="[% identifierCount %]" />
                         
                         <input type="hidden" name="title" value="[%title%]">
-                        <input type="hidden" name="partyFirstName0" value="[%partyFirstName0%]">
-                        <input type="hidden" name="partyLastName0" value="[%partyLastName0%]">
-                        <input type="hidden" name="partyOrgName" value="[%partyOrgName%]">
+                        <input type="hidden" name="assocPartyFirstName0" value="[%assocPartyFirstName0%]">
+                        <input type="hidden" name="assocPartyLastName0" value="[%assocPartyLastName0%]">
+                        <input type="hidden" name="assocPartyOrgName" value="[%assocPartyOrgName%]">
                         <input type="hidden" name="origRole0" value="[%origRole0%]">
                         <input type="hidden" name="origDelivery" value="[%origDelivery%]">
                         <input type="hidden" name="origCity" value="[%origCity%]"> 
@@ -91,9 +91,9 @@
                         <input type="hidden" name="origFAX" value="[%origFAX%]">
                         <input type="hidden" name="origEmail" value="[%origEmail%]">
                         <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]">
-                        <input type="hidden" name="partyFirstNameContact" value="[%partyFirstNameContact%]">
-                        <input type="hidden" name="partyLastNameContact" value="[%partyLastNameContact%]">
-                        <input type="hidden" name="partyOrgNameContact" value="[%partyOrgNameContact%]">
+                        <input type="hidden" name="assocPartyFirstNameContact" value="[%assocPartyFirstNameContact%]">
+                        <input type="hidden" name="assocPartyLastNameContact" value="[%assocPartyLastNameContact%]">
+                        <input type="hidden" name="assocPartyOrgNameContact" value="[%assocPartyOrgNameContact%]">
                         <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]">
                         <input type="hidden" name="origCityContact" value="[%origCityContact%]"> 
                         <input type="hidden" name="origStateContact" value="[%origStateContact%]">
@@ -103,19 +103,19 @@
                         <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]">
                         <input type="hidden" name="origFAXContact" value="[%origFAXContact%]">
                         <input type="hidden" name="origEmailContact" value="[%origEmailContact%]">
-                        <input type="hidden" name="partyCount" value="[%partyCount%]">
+                        <input type="hidden" name="assocPartyCount" value="[%assocPartyCount%]">
   
                         [% numAO = 0 %]
-                        [% IF partyCount > 0 %]
-                            [% numAO = partyCount %]
+                        [% IF assocPartyCount > 0 %]
+                            [% numAO = assocPartyCount %]
                         [% END %]
                         [% cnt = 1 %]
                         [% WHILE cnt <= numAO %]
-                            [% SET partyFirstName = "partyFirstName${cnt}" %]
-                            [% SET partyLastName = "partyLastName${cnt}" %]
+                            [% SET assocPartyFirstName = "assocPartyFirstName${cnt}" %]
+                            [% SET assocPartyLastName = "assocPartyLastName${cnt}" %]
                             [% SET origRole = "origRole${cnt}" %]
-                            <input type="hidden" name="[% partyFirstName %]" value="[% $partyFirstName%]">
-                            <input type="hidden" name="[% partyLastName %]" value="[% $partyLastName%]">
+                            <input type="hidden" name="[% assocPartyFirstName %]" value="[% $assocPartyFirstName%]">
+                            <input type="hidden" name="[% assocPartyLastName %]" value="[% $assocPartyLastName%]">
                             <input type="hidden" name="[% origRole %]" value="[% $origRole%]">
                             [% cnt = cnt + 1 %]
                         [% END %]

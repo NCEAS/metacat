@@ -200,21 +200,21 @@
 						<div id="collapseParties" class="accordion-body collapse in">
 							<div class="accordion-inner">
 								<div class="control-group">
-									<label class="control-label" for="partyFirstName">First Name</label>
+									<label class="control-label" for="assocPartyFirstName">First Name</label>
 									<div class="controls">
-										<input type="text" name="partyFirstName" id="partyFirstName"/>
+										<input type="text" name="assocPartyFirstName" id="assocPartyFirstName"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyLastName">Last Name</label>
+									<label class="control-label" for="assocPartyLastName">Last Name</label>
 									<div class="controls">
-										<input type="text" name="partyLastName" id="partyLastName" />
+										<input type="text" name="assocPartyLastName" id="assocPartyLastName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyRole">Role</label>
+									<label class="control-label" for="assocPartyRole">Role</label>
 									<div class="controls">
-										<select name="partyRole" id="partyRole">
+										<select name="assocPartyRole" id="assocPartyRole">
 											<option value="principalInvestigator">Principal Investigator</option>
 											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
 											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
@@ -228,47 +228,47 @@
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyOrgName">Organization Name</label>
+									<label class="control-label" for="assocPartyOrgName">Organization Name</label>
 									<div class="controls">
-										<input type="text" name="partyOrgName" id="partyOrgName" />
+										<input type="text" name="assocPartyOrgName" id="assocPartyOrgName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyEmail">Email</label>
+									<label class="control-label" for="assocPartyEmail">Email</label>
 									<div class="controls">
-										<input type="text" name="partyEmail" id="partyEmail" />
+										<input type="text" name="assocPartyEmail" id="assocPartyEmail" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyPhone">Phone</label>
+									<label class="control-label" for="assocPartyPhone">Phone</label>
 									<div class="controls">
-										<input type="text" name="partyPhone" id="partyPhone"/>
+										<input type="text" name="assocPartyPhone" id="assocPartyPhone"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyFAX">Fax</label>
+									<label class="control-label" for="assocPartyFAX">Fax</label>
 									<div class="controls">
-										<input type="text" name="partyFAX" id="partyFAX" />
+										<input type="text" name="assocPartyFAX" id="assocPartyFAX" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyDelivery">Street Address</label>
+									<label class="control-label" for="assocPartyDelivery">Street Address</label>
 									<div class="controls">
-										<textarea class="span8" name="partyDelivery" id="partyDelivery" placeholder="(number, street, unit, etc.; comma-separated)"></textarea>
+										<textarea class="span8" name="assocPartyDelivery" id="assocPartyDelivery" placeholder="(number, street, unit, etc.; comma-separated)"></textarea>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyCity">City</label>
+									<label class="control-label" for="assocPartyCity">City</label>
 									<div class="controls">
-										<input type="text" name="partyCity" id="partyCity" />
+										<input type="text" name="assocPartyCity" id="assocPartyCity" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyState">U.S. State or Territory</label>
+									<label class="control-label" for="assocPartyState">U.S. State or Territory</label>
 									<div class="controls">
-										<select name="partyState" id="partyState">
+										<select name="assocPartyState" id="assocPartyState">
 											[% IF form == 're_entry' %]
-												<option selected>[%partyState%]</option>
+												<option selected>[%assocPartyState%]</option>
 											[% ELSE %]
 												<option>Select state or territory here.</option>
 											[% END %]
@@ -332,21 +332,21 @@
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyStateOther">Other State/Province</label>
+									<label class="control-label" for="assocPartyStateOther">Other State/Province</label>
 									<div class="controls">
-										<input type="text" name="partyStateOther" id="partyStateOther" />
+										<input type="text" name="assocPartyStateOther" id="assocPartyStateOther" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyZip">Postal Code</label>
+									<label class="control-label" for="assocPartyZip">Postal Code</label>
 									<div class="controls">
-										<input type="text" name="partyZip" id="partyZip" />
+										<input type="text" name="assocPartyZip" id="assocPartyZip" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="partyCountry">Country</label>
+									<label class="control-label" for="assocPartyCountry">Country</label>
 									<div class="controls">
-										<input type="text" name="partyCountry" id="partyCountry" />
+										<input type="text" name="assocPartyCountry" id="assocPartyCountry" />
 									</div>
 								</div>
 								<div class="control-group">
@@ -356,20 +356,20 @@
 									</div>
 								</div>
 								
-								<table class="table table-striped table-bordered table-hover" id="partyTable">   
+								<table class="table table-striped table-bordered table-hover" id="assocPartyTable">   
 									[% cnt = 1 %]
 									<tbody>
-									  [% WHILE cnt < partyCount %]
+									  [% WHILE cnt < assocPartyCount %]
 											<tr>
 												<td>
 													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'partyRowMarker');moveUpRow(event)"
+														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveUpRow(event)"
 																class="icon-arrow-up" alt="Move Up"></i>
 													</a>
 												</td>
 												<td>
 													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'partyRowMarker');moveDownRow(event, 'partyRowMarker')"
+														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveDownRow(event, 'assocPartyRowMarker')"
 																class="icon-arrow-down" alt="Move Down"></i>
 													</a>
 												</td>
@@ -379,26 +379,26 @@
 													</a>
 												</td>
 												<td style="cursor:pointer" onClick="alert('Load into editing fields.')">
-													[% partyFirstName %]
-													<input type="hidden" name="partyFirstName"  value="[% partyFirstName %] " />
-													<input type="hidden" name="partyLastName"   value="[% partyLastName %]  " />
-													<input type="hidden" name="partyOrgName"    value="[% partyOrgName %]   " />
-													<input type="hidden" name="partyEmail" 			value="[% partyEmail %]     " />
-													<input type="hidden" name="partyPhone"      value="[% partyPhone %]     " />
-													<input type="hidden" name="partyFAX" 				value="[% partyFAX %]       " />
-													<input type="hidden" name="partyCity"       value="[% partyCity %]      " />
-													<input type="hidden" name="partyStateOther" value="[% partyStateOther %]" />
-													<input type="hidden" name="partyZip"        value="[% partyZip %]       " />
-													<input type="hidden" name="partyCountry"    value="[% partyCountry %]   " />
+													[% assocPartyFirstName %]
+													<input type="hidden" name="assocPartyFirstName"  value="[% assocPartyFirstName %] " />
+													<input type="hidden" name="assocPartyLastName"   value="[% assocPartyLastName %]  " />
+													<input type="hidden" name="assocPartyOrgName"    value="[% assocPartyOrgName %]   " />
+													<input type="hidden" name="assocPartyEmail" 			value="[% assocPartyEmail %]     " />
+													<input type="hidden" name="assocPartyPhone"      value="[% assocPartyPhone %]     " />
+													<input type="hidden" name="assocPartyFAX" 				value="[% assocPartyFAX %]       " />
+													<input type="hidden" name="assocPartyCity"       value="[% assocPartyCity %]      " />
+													<input type="hidden" name="assocPartyStateOther" value="[% assocPartyStateOther %]" />
+													<input type="hidden" name="assocPartyZip"        value="[% assocPartyZip %]       " />
+													<input type="hidden" name="assocPartyCountry"    value="[% assocPartyCountry %]   " />
 												</td>
-												<td>[% partyLastName %]</td>
-												<td>[% partyRole %]</td>
+												<td>[% assocPartyLastName %]</td>
+												<td>[% assocPartyRole %]</td>
 											</tr>
 											[% cnt = cnt + 1 %]
 									  [% END %]
-										<tr id="partyRowMarker">
+										<tr id="assocPartyRowMarker">
 											<td colspan="7">
-												<input type="hidden" name="partyCount" value="[% partyCount %]" id="partyCount" />
+												<input type="hidden" name="assocPartyCount" value="[% assocPartyCount %]" id="assocPartyCount" />
 											</td>
 										</tr>
 									</tbody>
@@ -487,7 +487,7 @@
 										 [% numKey = 0 %]
 										 [% IF keyCount %]
 										   [% numKey = keyCount %]
-										        [% numAO = partyCount %]
+										        [% numAO = assocPartyCount %]
 										        <tr class="sectbody" id="keywordHRRow">
 										            <td colSpan="6">
 										                <hr width = "85%"/>
