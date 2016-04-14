@@ -180,95 +180,81 @@
 
 								[% IF show.funding == 'true' %]
 									<div id="funding-group" class="control-group">
-										<label class="control-label" for="site">*Grant Number</label>
+										<label class="control-label" for="site">Grant Number</label>
 										<div class="controls">
 											<input type="text" id="funding" name="funding" value="[%funding%]">
 										</div>
 									</div>
 								[% END %]
 								
-							</div>
+						    </div>
 						</div>
 						
-						<!-- ASSOCIATED PARTIES -->
+						<!-- PRINCIPAL DATA SET OWNER -->
 						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
-								People and Organizations  
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseOwner" >
+								Data Set Owner  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-question-sign"></i></a>
 						</div>
-						<div id="collapseParties" class="accordion-body collapse in">
+						<div id="collapseOwner" class="accordion-body collapse in">
 							<div class="accordion-inner">
+								<!--  the INPUT -->
 								<div class="control-group">
-									<label class="control-label" for="assocPartyFirstName">First Name</label>
+									<label class="control-label" for="origNamefirst0">*First Name</label>
 									<div class="controls">
-										<input type="text" name="assocPartyFirstName" id="assocPartyFirstName"/>
+										<input type="text" name="origNamefirst0" id="origNameFirst" value="[%origNamefirst0%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyLastName">Last Name</label>
+									<label class="control-label" for="origNamelast0">*Last Name</label>
 									<div class="controls">
-										<input type="text" name="assocPartyLastName" id="assocPartyLastName" />
+										<input type="text" name="origNamelast0" id="origNameLast" value="[%origNamelast0%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyRole">Role</label>
+									<label class="control-label" for="origNameOrg">Organization Name</label>
 									<div class="controls">
-										<select name="assocPartyRole" id="assocPartyRole">
-											<option value="principalInvestigator">Principal Investigator</option>
-											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
-											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
-											<option value="creator">Creator (Author/Owner/Originator)</option>
-											<option value="contact">Contact</option>
-											<option value="metadataProvider">Metadata Provider</option>
-											<option value="custodianSteward">Custodian/Steward</option>
-											<option value="publisher">Publisher</option>
-											<option value="user">User</option>
-										</select>
+										<input type="text" name="origNameOrg" id="origNameOrg" value="[%origNameOrg%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyOrgName">Organization Name</label>
+									<label class="control-label" for="origEmail">Email</label>
 									<div class="controls">
-										<input type="text" name="assocPartyOrgName" id="assocPartyOrgName" />
+										<input type="text" name="origEmail" id="origEmail" value="[%origEmail%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyEmail">Email</label>
+									<label class="control-label" for="origPhone">Phone</label>
 									<div class="controls">
-										<input type="text" name="assocPartyEmail" id="assocPartyEmail" />
+										<input type="text" name="origPhone" id="origPhone" value="[%origPhone%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyPhone">Phone</label>
+									<label class="control-label" for="origFAX">Fax</label>
 									<div class="controls">
-										<input type="text" name="assocPartyPhone" id="assocPartyPhone"/>
+										<input type="text" name="origFAX" id="origFAX" value="[%origFAX%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyFAX">Fax</label>
+									<label class="control-label" for="origDelivery">Street Address</label>
 									<div class="controls">
-										<input type="text" name="assocPartyFAX" id="assocPartyFAX" />
+										<textarea class="span8" id="origDelivery" name="origDelivery">[%origDelivery%]</textarea>
+										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyDelivery">Street Address</label>
+									<label class="control-label" for="origCity">City</label>
 									<div class="controls">
-										<textarea class="span8" name="assocPartyDelivery" id="assocPartyDelivery" placeholder="(number, street, unit, etc.; comma-separated)"></textarea>
+										<input type="text" name="origCity" id="origCity" value="[%origCity%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyCity">City</label>
+									<label class="control-label" for="origState">U.S. State or Territory</label>
 									<div class="controls">
-										<input type="text" name="assocPartyCity" id="assocPartyCity" />
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="assocPartyState">U.S. State or Territory</label>
-									<div class="controls">
-										<select name="assocPartyState" id="assocPartyState">
+										<select name="origState" id="origState">
 											[% IF form == 're_entry' %]
-												<option selected>[%assocPartyState%]</option>
+												<option selected>[%origState%]</option>
 											[% ELSE %]
 												<option>Select state or territory here.</option>
 											[% END %]
@@ -332,78 +318,123 @@
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyStateOther">Other State/Province</label>
+									<label class="control-label" for="origStateOther">Other State/Province</label>
 									<div class="controls">
-										<input type="text" name="assocPartyStateOther" id="assocPartyStateOther" />
+										<input type="text" name="origStateOther" id="origStateOther" value="[%origStateOther%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyZip">Postal Code</label>
+									<label class="control-label" for="origZip">Postal Code</label>
 									<div class="controls">
-										<input type="text" name="assocPartyZip" id="assocPartyZip" />
+										<input type="text" name="origZIP" id="origZip" value="[%origZIP%]">
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="assocPartyCountry">Country</label>
+									<label class="control-label" for="origCountry">Country</label>
 									<div class="controls">
-										<input type="text" name="assocPartyCountry" id="assocPartyCountry" />
-									</div>
-								</div>
-								<div class="control-group">
-									<div class="controls">
-										<button type="button" class="btn" id="addPartyButton" onClick="addAssociatedParty()">Add Person or Organization</button>
-										<button type="button" class="btn" style="visibility: hidden" id="updatePartyButton" onClick="updateAssociatedParty()">Update Person or Organization</button>
+										<input type="text" name="origCountry" id="origCountry" value="[%origCountry%]">
 									</div>
 								</div>
 								
-								<table class="table table-striped table-bordered table-hover" id="assocPartyTable">   
-									[% cnt = 1 %]
-									<tbody>
-									  [% WHILE cnt < assocPartyCount %]
-											<tr>
-												<td>
-													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveUpRow(event)"
-																class="icon-arrow-up" alt="Move Up"></i>
-													</a>
-												</td>
-												<td>
-													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveDownRow(event, 'assocPartyRowMarker')"
-																class="icon-arrow-down" alt="Move Down"></i>
-													</a>
-												</td>
-												<td>
-													<a style="cursor:pointer">
-														<i class="icon-remove-sign" onClick="delRow(event)" alt="Delete"></i>
-													</a>
-												</td>
-												<td style="cursor:pointer" onClick="alert('Load into editing fields.')">
-													[% assocPartyFirstName %]
-													<input type="hidden" name="assocPartyFirstName"  value="[% assocPartyFirstName %] " />
-													<input type="hidden" name="assocPartyLastName"   value="[% assocPartyLastName %]  " />
-													<input type="hidden" name="assocPartyOrgName"    value="[% assocPartyOrgName %]   " />
-													<input type="hidden" name="assocPartyEmail" 			value="[% assocPartyEmail %]     " />
-													<input type="hidden" name="assocPartyPhone"      value="[% assocPartyPhone %]     " />
-													<input type="hidden" name="assocPartyFAX" 				value="[% assocPartyFAX %]       " />
-													<input type="hidden" name="assocPartyCity"       value="[% assocPartyCity %]      " />
-													<input type="hidden" name="assocPartyStateOther" value="[% assocPartyStateOther %]" />
-													<input type="hidden" name="assocPartyZip"        value="[% assocPartyZip %]       " />
-													<input type="hidden" name="assocPartyCountry"    value="[% assocPartyCountry %]   " />
-												</td>
-												<td>[% assocPartyLastName %]</td>
-												<td>[% assocPartyRole %]</td>
-											</tr>
-											[% cnt = cnt + 1 %]
-									  [% END %]
-										<tr id="assocPartyRowMarker">
-											<td colspan="7">
-												<input type="hidden" name="assocPartyCount" value="[% assocPartyCount %]" id="assocPartyCount" />
-											</td>
-										</tr>
-									</tbody>
-								</table>
-							</div>
+						    </div>
+						</div>
+						
+						<!-- ASSOCIATED PARTIES -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
+								Associated Parties  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseParties" class="accordion-body collapse in">
+							<div class="accordion-inner">
+							
+								<div class="control-group">
+									<label class="control-label" for="aoFirstName">First Name</label>
+									<div class="controls">
+										<input type="text" name="aoFirstName" id="AONameFirst"">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="aoLastName">Last Name</label>
+									<div class="controls">
+										<input type="text" name="aoLastName" id="AONameLast"">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="aoRole">Role</label>
+									<div class="controls">
+										<select id="AORole" name="aoRole">
+								            <option>Co-owner</option>
+								            <option>Custodian/Steward</option>
+								            <option>Metadata Provider</option>
+								      		<option>User</option>
+								        </select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="addaobutton1"></label>
+									<div class="controls">
+										<input type="button" class="btn" value="Add Associated Party" id="addaobutton1" onClick="addAssociatedParty()">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="associatePartyTable"></label>
+									<div class="controls">
+										<table id="associatePartyTable">   
+											<tr id="addAssociatedParty"> 
+								            	<td colspan=6 />
+								            </tr>    
+										    [% numAO = 0 %]
+										    [% IF aoCount %]
+										        [% numAO = aoCount %]
+										        <tr class="sectbody" id="aoHRRow">
+										            <td colSpan="6">
+										                <hr width = "85%"/>
+										            </td>
+										        </tr>
+										    [% END %]
+										    [% cnt = 1 %]
+										    [% WHILE cnt < numAO%]
+										            
+										        <tr class="sectbody">
+										            [% SET aofn = "origNamefirst${cnt}" %]
+										            [% SET aoln = "origNamelast${cnt}" %]
+										            [% SET aorole = "origRole${cnt}" %]
+										     
+										            <td class="rightCol">
+										                <a style="cursor:pointer">
+										                	<i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveUpRow(event)"
+										                    class="icon-arrow-up"
+										                    alt="Move Up"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveDownRow(event, 'addaorow')"
+										                    class="icon-arrow-down"
+										                    alt="Move Down"></i>
+										                </a>
+										                <a style="cursor:pointer">
+										                    <i class="icon-remove-sign"
+										                    onClick="delRow(event)" alt="Delete"></i>
+										                </a>
+										            </td>
+										            <td colspan="5" align ="left" style="cursor:pointer"
+										                onClick="aoEditRow(event, 0, '[%$aofn%]', '[%$aoln%]' , '[%$aorole%]')">
+										                [%$aofn%] [%$aoln%] (Role: [%$aorole%])
+										                <input name="aoFirstName" type="hidden" value="[%$aofn%]"/>
+										                <input name="aoLastName" type="hidden" value="[%$aoln%]"/>
+										                <input name="aoRole" type="hidden" value="[%$aorole%]"/>
+										            </td>
+										        </tr>
+										        [% cnt = cnt + 1 %]
+										    [% END %]
+										    <input type="hidden" name="aoCount" value="[%numAO%]" id="aoCount">
+										    <tr class="sectbody" id="addaorow"><td colspan=6 /></tr>
+										</table>
+									</div>
+								</div>
+								    								
+						    </div>
 						</div>
 						
 						<!-- ABSTRACT -->
@@ -487,7 +518,7 @@
 										 [% numKey = 0 %]
 										 [% IF keyCount %]
 										   [% numKey = keyCount %]
-										        [% numAO = assocPartyCount %]
+										        [% numAO = aoCount %]
 										        <tr class="sectbody" id="keywordHRRow">
 										            <td colSpan="6">
 										                <hr width = "85%"/>
@@ -1025,7 +1056,166 @@
 						</div>
 						
 					[% END %]
-											
+					
+						
+						<!-- DATA SET CONTACT -->
+						<div class="accordion-heading">
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseContact">
+								Data Set Contact  
+							</a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-question-sign"></i></a>
+						</div>
+						<div id="collapseContact" class="accordion-body collapse in">
+							<div class="accordion-inner">
+								<!--  the INPUT -->
+								<label class="checkbox inline" for="useOrigAddress">
+									<input type="CHECKBOX" name="useOrigAddress" onClick="copyContact()" id="copyCheckBox" [%useOrigAddress%]>
+        							Use the same name and address as the <em>PRINCIPAL DATA SET OWNER</em> above.
+								</label>
+									
+								<div class="control-group">
+									<label class="control-label" for="origNamefirstContact">*First Name</label>
+									<div class="controls">
+										<input type="text" name="origNamefirstContact" id="contactNameFirst" value="[%origNamefirstContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNamelastContact">*Last Name</label>
+									<div class="controls">
+										<input type="text" name="origNamelastContact" id="contactNameLast" value="[%origNamelastContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origNameOrgContact">Organization Name</label>
+									<div class="controls">
+										<input type="text" name="origNameOrgContact" id="contactNameOrg" value="[%origNameOrgContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									[% IF required.contactEmailAddress == 'true' %]
+										<label class="control-label" for="origEmailContact">*Email</label>
+									[% ELSE %]
+										<label class="control-label" for="origEmailContact">Email</label>
+									[% END %]
+									<div class="controls">
+										<input type="text" name="origEmailContact" id="contactEmail" value="[%origEmailContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origPhoneContact">Phone</label>
+									<div class="controls">
+										<input type="text" name="origPhoneContact" id="contactPhone" value="[%origPhoneContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origFAXContact">Fax</label>
+									<div class="controls">
+										<input type="text" name="origFAXContact" id="contactFAX" value="[%origFAXContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origDeliveryContact">Street Address</label>
+									<div class="controls">
+										<textarea class="span8" id="contactDelivery" name="origDeliveryContact">[%origDeliveryContact%]</textarea>
+										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCityContact">City</label>
+									<div class="controls">
+										<input type="text" name="origCityContact" id="contactCity" value="[%origCityContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origStateContact">U.S. State or Territory</label>
+									<div class="controls">
+										<select name="origStateContact" id="contactState">
+											[% IF form == 're_entry' %]
+												<option selected>[%origStateContact%]</option>
+											[% ELSE %]
+												<option>Select state or territory here.</option>
+											[% END %]
+											<option>Alabama</option>
+											<option>Alaska</option>
+											<option>American Samoa</option>
+											<option>Arizona</option>
+											<option>Arkansas</option>
+											<option>California</option>
+											<option>Colorado</option>
+											<option>Connecticut</option>
+											<option>Delaware</option>
+											<option>District of Columbia</option>
+											<option>Florida</option>
+											<option>Georgia</option>
+											<option>Guam</option>
+											<option>Hawaii</option>
+											<option>Idaho</option>
+											<option>Illinois</option>
+											<option>Indiana</option>
+											<option>Iowa</option>
+											<option>Kansas</option>
+											<option>Kentucky</option>
+											<option>Louisiana</option>
+											<option>Maine</option>
+											<option>Maryland</option>
+											<option>Massachusetts</option>
+											<option>Michigan</option>
+											<option>Minnesota</option>
+											<option>Mississippi</option>
+											<option>Missouri</option>
+											<option>Montana</option>
+											<option>Nebraska</option>
+											<option>Nevada</option>
+											<option>New Hampshire</option>
+											<option>New Jersey</option>
+											<option>New Mexico</option>
+											<option>New York</option>
+											<option>North Carolina</option>
+											<option>North Dakota</option>
+											<option>Northern Mariana Islands</option>
+											<option>Ohio</option>
+											<option>Oklahoma</option>
+											<option>Oregon</option>
+											<option>Pennsylvania</option>
+											<option>Puerto Rico</option>
+											<option>Rhode Island</option>
+											<option>South Carolina</option>
+											<option>South Dakota</option>
+											<option>Tennessee</option>
+											<option>Texas</option>
+											<option>Utah</option>
+											<option>Vermont</option>
+											<option>Virgin Islands</option>
+											<option>Virginia</option>
+											<option>Washington</option>
+											<option>West Virginia</option>
+											<option>Wisconsin</option>
+											<option>Wyoming</option>
+										</select>
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origStateOtherContact">Other State/Province</label>
+									<div class="controls">
+										<input type="text" name="origStateOtherContact" id="contactStateOther" value="[%origStateOtherContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origZIPContact">Postal Code</label>
+									<div class="controls">
+										<input type="text" name="origZIPContact" id="contactZip" value="[%origZIPContact%]">
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="origCountryContact">Country</label>
+									<div class="controls">
+										<input type="text" name="origCountryContact" id="contactCountry" value="[%origCountryContact%]">
+									</div>
+								</div>
+								
+						    </div>
+						</div>
+						
 						<!-- DISTRIBUTION INFO -->
 						<div class="accordion-heading">
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseDistribution">
@@ -1036,7 +1226,6 @@
 						<div id="collapseDistribution" class="accordion-body collapse in">
 							<div class="accordion-inner">
 								<!--  the INPUT -->
-								<!--
 								<div class="control-group">
 									<label class="control-label" for="identifier">Data Set Identifier</label>
 									<div class="controls">
@@ -1048,85 +1237,6 @@
 									     data management system.</span>
 									</div>
 								</div>
-								-->
-								
-								<!-- BEGIN BRL MULTIPLE ALTERNATE IDENTIFIERS -->							
-								<div class="control-group">
-									<label class="control-label" for="identifier">Alternate Identifier</label>
-									<div class="controls">
-										<input name="identifier" id="identifier">
-										<span class="help-block">
-									     If available, please enter a name or number that uniquely identifies and
-									     describes concisely the data set. Alternatively, provide other pertinent
-									     information that can identify and locate the data set within your site's
-									     data management system.</span>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="addIdentifierButton"></label>
-									<div class="controls">
-										<input type="button" class="btn" value="Add Identifier" onClick="addIdentifier()">
-									</div>
-								</div>
-								
-								<div class="control-group">
-									<label class="control-label" for="identifierTable"></label>
-									<div class="controls">
-										<table>
-											<tr id="addIdentifier">
-												<td colspan="6">
-											</tr>	
-											[% numIdentifier = 0 %]
-									        [% IF identifierCount %]
-									            [% numIdentifier = identifierCount %]
-									            <tr class="sectbody" id="identifierHRRow">
-									                <td colSpan="6">
-									                    <hr width = "85%"/>
-									                </td>
-									            </tr>
-									        [% END %]
-									        <input type="hidden" name="identifierCount" value="[%numIdentifier%]" id="identifierCount">
-									    
-									        [% cnt = 1 %]
-									        [% WHILE cnt <= numIdentifier%]        
-									            <tr class="sectbody">
-									                <td class="rightCol">
-									                    <a style="cursor:pointer">
-									                        <i onClick="cleanTextNodes('identifierHRRow', 'addidentifierrow');moveUpRow(event)"
-									                        class="icon-arrow-up"
-									                        alt="Move Up"></i>
-									                    </a>
-									                    <a style="cursor:pointer">
-									                        <i onClick="cleanTextNodes('identifierHRRow', 'addidentifierrow');moveDownRow(event, 'addidentifierrow')"
-									                        class="icon-arrow-down"
-									                        alt="Move Down"></i>
-									                    </a>
-									                    <a style="cursor:pointer">
-									                        <i class="icon-remove-sign"
-									                        onClick="delRow(event)" alt="Delete"></i>
-									                    </a>
-									                </td>
-									                [% SET id = "identifierValue${cnt}" %]
-									                <td colspan="5" align ="left" style="cursor:pointer"
-									                    onClick="identifierEditRow(event, 0, '[%$id%]')">
-									                    Identifier: [%$id%]
-									                    <input name="identifier" type="hidden" value="[%$id%]"/>
-									            </tr>
-									            [% cnt = cnt + 1 %]
-									        [% END %]
-									
-									     <tr class="sectbody" id="addidentifierrow"> 
-									        <td class="bordertop" valign="top" align="right"></td>
-									        <td class="bordertop" align="left" colspan="5"></td>
-									     </tr>
-									     
-									   </table>
-									</div>
-								</div>
-								
-								<!-- END BRL ALTERNATE IDENTIFIERS -->
-								
-								
 								<div class="control-group">
 									<label class="control-label" for="dataMedium">*Data Medium</label>
 									<div class="controls">
@@ -1277,6 +1387,12 @@
 								</div>
 								
 								<div class="control-group">
+									<label class="control-label" for="url">URL</label>
+									<div class="controls">
+										<input type="text" name="url" value="[%url%]">
+									</div>
+								</div>
+								<div class="control-group">
 									<label class="control-label" for="addComments">Additional Information</label>
 									<div class="controls">
 										<textarea class="span8" rows="6" cols="60" name="addComments">[%addComments%]</textarea>
@@ -1300,64 +1416,75 @@
 							<div class="accordion-inner">
 								
 								<!--  the INPUT -->
-								<div class="control-group">
-									<label class="control-label">Upload Data File</label>
-									<div class="controls">
-										<input class="btn" type="file" id="file_element" name="file_1" />
-										[% IF form == 're_entry' && upCount %]
-											[% cnt = 0 %]
-											[% WHILE cnt < upCount %]
-												[% SET fileSum = "upload_${cnt}" %]
-												[% SET fileName = "uploadname_${cnt}" %]
-												[% SET fileType = "uploadtype_${cnt}" %] 
-												[% SET filePerm = "uploadperm_${cnt}" %]
-												[% IF fileSum %]
-													<input type="hidden" name="[%fileSum%]" value="[% $fileSum %]" /> 
-													<input type="hidden" name="[%fileName%]" value="[% $fileName %]" /> 
-													<input type="hidden" name="[%fileType%]" value="[% $fileType %]" /> 
-												[% END %]
-												[% cnt = cnt + 1 %]
-											[% END %]
-										<input type="hidden" id="upCount" name="upCount" value="[%upCount%]" />
-										[% END %]
-						
-										<input type="hidden" id="fileCount" name="fileCount" value="[%fileCount%]" />
-									</div>
-								</div>
-								<table class="table table-striped table-bordered" id="files_list">
-									[% IF form == 're_entry' && upCount %]
-										[% cnt = 0 %]
+								<table class="tables" cellpadding="5" cellspacing="0" id="uploadTable">
+									<tr class="sectbody">
+									    <td class="rightCol"><span class="text-info">Upload Data File</span></td>
+									    <td colspan="5">
+								        	<input class="btn" type="file" id="file_element" name="file_1" class="longwidth">
+								
+									        [% IF form == 're_entry' && upCount %]
+									           [% cnt = 0 %]
+									           [% WHILE cnt < upCount %]
+									                [% SET fileSum = "upload_${cnt}" %]
+									                [% SET fileName = "uploadname_${cnt}" %]
+									                [% SET fileType = "uploadtype_${cnt}" %] 
+									                [% SET filePerm = "uploadperm_${cnt}" %]
+									                [% IF fileSum %]
+									                    <input type="hidden" name="[%fileSum%]" value="[% $fileSum %]"> 
+									                    <input type="hidden" name="[%fileName%]" value="[% $fileName %]"> 
+									                    <input type="hidden" name="[%fileType%]" value="[% $fileType %]"> 
+									                [% END %]
+									                [% cnt = cnt + 1 %]
+									            [% END %]
+									        <input type="hidden" id="upCount" name="upCount" value="[%upCount%]">
+									        [% END %]
 									
-										[% WHILE cnt < upCount %]
-											[% SET fileName = "uploadname_${cnt}" %]
-											[% SET filePerm = "uploadperm_${cnt}" %]
-											[% IF $filePerm == 'public' %]
-												[% SET perm_a = "checked" %]
-												[% SET perm_b = "" %]
-											[% ELSE %]
-												[% SET perm_a = "" %]
-												[% SET perm_b = "checked" %]
-											[% END %]
-											[% IF fileName %]
-													<tr>
-														<td>[% $fileName %]</td>
-														<td>
-															<input type="radio" name="[% filePerm %]" value="public" checked="[% perm_a %]" />&nbsp;Public
-														</td>
-														<td>	
-															<input type="radio" name="[% filePerm %]" value="private" checked="[% perm_b %]" />&nbsp;Private
-														</td>
-														<td>	
-															<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [% fileName %]);"/>
-														</td>
-													</tr>
-										[% END %]
-									
-											[% cnt = cnt + 1 %]
-									  [% END %]
-									[% END %]
+									        <input type="hidden" id="fileCount" name="fileCount" value="[%fileCount%]">
+										</td>
+									</tr>
+									<tr class="sectbody">
+										<td class="rightCol" valign="top"><span class="text-info">Attached Files</span></td>
+										<td colspan="5" class="regtext">
+										    [% IF !upCount %]
+										        <div id="file_comment">
+										            (<i>None currently attached</i>)
+										        </div>
+										    [% END %]
+										    <div id="files_list">
+											    [% IF form == 're_entry' && upCount %]
+											    	[% cnt = 0 %]
+											
+												    [% WHILE cnt < upCount %]
+												        [% SET fileName = "uploadname_${cnt}" %]
+												        [% SET filePerm = "uploadperm_${cnt}" %]
+												        [% IF $filePerm == 'public' %]
+												          [% SET perm_a = "checked" %]
+												          [% SET perm_b = "" %]
+												        [% ELSE %]
+												          [% SET perm_a = "" %]
+												          [% SET perm_b = "checked" %]
+												        [% END %]
+												        [% IF fileName %]
+													        <div>
+													          [% $fileName %]
+													          <label class="radio inline">
+																<input type="radio" name="[% filePerm %]" value="public" [% perm_a %]> Public
+													          </label>
+													          <label class="radio inline">	
+													          	<input type="radio" name="[% filePerm %]" value="private" [% perm_b %]> Private
+													          </label>
+													          <label class="text inline">	
+																<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [%fileName%]);"/>
+															</div>
+														[% END %]
+												
+												        [% cnt = cnt + 1 %]
+												    [% END %]
+										    	[% END %]
+										    </div>
+										</td>
+									</tr>
 								</table>
-
 								  
 								<script language="JavaScript" type="text/JavaScript">
 									var multi_selector = new MultiSelector( document.getElementById( 'files_list' ), 10);

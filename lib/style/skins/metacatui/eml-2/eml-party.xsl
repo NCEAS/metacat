@@ -61,7 +61,8 @@
   </xsl:template>
 
   <!-- *********************************************************************** -->
-  
+
+
   <xsl:template match="individualName" mode="party">
       <xsl:param name="partyfirstColStyle"/>
       <xsl:if test="normalize-space(.)!=''">
@@ -69,9 +70,7 @@
         	<label class="control-label">Individual</label>
         	<div class="controls" >
 	           <b><xsl:value-of select="./salutation"/><xsl:text> </xsl:text>
-	           <xsl:for-each select="./givenName">
-			    	<xsl:value-of select="."/><xsl:text> </xsl:text>
-			    </xsl:for-each>
+	           <xsl:value-of select="./givenName"/><xsl:text> </xsl:text>
 	           <xsl:value-of select="./surName"/></b>
         	</div>
         </div>	
@@ -90,6 +89,7 @@
         </div>
       </xsl:if>
   </xsl:template>
+
 
   <xsl:template match="positionName" mode="party">
       <xsl:param name="partyfirstColStyle"/>
@@ -203,45 +203,6 @@
        	</div>
       </div>
     </xsl:if>
-  </xsl:template>
-
-  
-    <xsl:template match="role" mode="party">
-      <xsl:param name="partyfirstColStyle"/>
-      <xsl:if test="normalize-space(.)!=''">
-        <div class="control-group">
-        	<label class="control-label">Role</label>
-        	<div class="controls">
-        		<xsl:choose>
-        			<xsl:when test=".='principalInvestigator'">
-        				<b>Principal Investigator</b>
-        			</xsl:when> 
-        			<xsl:when test=".='creator'">
-        				<b>Creator (Author/Owner/Originator)</b>
-        			</xsl:when>
-        			<xsl:when test=".='coPrincipalInvestigator'">
-        				<b>Co-Principal Investigator</b>
-        			</xsl:when>
-        			<xsl:when test=".='collaboratingPrincipalInvestigator'">
-        				<b>Collaborating-Principal Investigator</b>
-        			</xsl:when>
-        			<xsl:when test=".='metadataProvider'">
-        				<b>Metadata Provider</b>
-        			</xsl:when>
-        			<xsl:when test=".='custodianSteward'">
-        				<b>Custodian/Steward</b>
-        			</xsl:when> 
-        			<xsl:otherwise>
-        				<b>
-						<xsl:call-template name="cap-first">
-							<xsl:with-param name="s" select="."/>
-						</xsl:call-template>
-						</b>
-        			</xsl:otherwise>
-        		</xsl:choose>
-        	</div>
-        </div>
-      </xsl:if>
   </xsl:template>
 
 
