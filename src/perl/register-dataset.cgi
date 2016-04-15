@@ -3915,14 +3915,14 @@ sub getUserGroups {
 
     }
 
-	my $userInfo = $metacat->getUserInfo($sessionId);
+	my $userInfo = $metacat->getUserInfo();
 
 	debug("user info xml: $userInfo");
 
 	my $parser = XML::LibXML->new();
 	my $parsedDoc = $parser->parse_string($userInfo);
 
-	my $groupString = $parsedDoc->findvalue('//user/groupNames');
+	my $groupString = $parsedDoc->findvalue('//userInformation/group');
 
 	my @groupArray;
 	foreach (split(":", $groupString)) {
