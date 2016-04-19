@@ -1262,6 +1262,11 @@ sub allFileData {
 }
 
 sub fileMetadata {
+	if ( $debug_enabled ) {
+		debug("fileMetadata() called.");
+		
+	}
+	
 	my $fileNum     = shift;
 	my $fileHash    = param("upload_$fileNum");
 	my $fileName    = param("uploadname_$fileNum");
@@ -1300,7 +1305,10 @@ sub fileMetadata {
 
 	# remove the uniqueness of the filename
 	# 'tempXXXXX'
-	$cleanName = substr($cleanName, 9);
+	if ( $cleanName =~ /^temp[A-Za-z0-9_]{5}/ && length($cleanName) > 9 ) {
+		$cleanName = substr($cleanName, 9);
+		
+	}
 
 	if ( !$docid ) {
 
