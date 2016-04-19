@@ -3489,11 +3489,13 @@ sub getFormValuesFromEml2 {
 			if (!$accessGranted) {
 				#debug("is one of the user groups @userGroups the principal $principal?");
 				for my $userGroup (@userGroups) {
-      				if ($userGroup == $principal) {
-           				$accessGranted = 1;
-           				#debug("Access granted: user group $userGroup matches principal");
-           				last;
-       				}
+					my $lowercaseUserGroup = lc $userGroup;
+					my $lowercasePrincipal = lc $principal;
+					if ($lowercaseUserGroup eq $lowercasePrincipal) {
+							$accessGranted = 1;
+							#debug("Access granted: user group $userGroup matches principal");
+							last;
+					}
 				}
 			}
 		}
