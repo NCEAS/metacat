@@ -1457,10 +1457,10 @@
 													<tr>
 														<td>[% $fileName %]</td>
 														<td>
-															<input type="radio" name="[% filePerm %]" value="public" checked="[% perm_a %]" />&nbsp;Public
+															<input type="radio" name="[% filePerm %]" value="public" [% perm_a %] />&nbsp;Public
 														</td>
 														<td>	
-															<input type="radio" name="[% filePerm %]" value="private" checked="[% perm_b %]" />&nbsp;Private
+															<input type="radio" name="[% filePerm %]" value="private" [% perm_b %] />&nbsp;Private
 														</td>
 														<td>	
 															<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [% fileName %]);"/>
