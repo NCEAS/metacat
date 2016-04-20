@@ -104,7 +104,8 @@ sub sendData {
 
   # determine encoding type
   my $contentType = 'application/x-www-form-urlencoded';
-  if ($postData{'enctype'}) {
+  my $expect = "100-continue";
+	if ($postData{'enctype'}) {
       $contentType = $postData{'enctype'};
       delete $postData{'enctype'};
   }
@@ -115,6 +116,7 @@ sub sendData {
       # if available, set the Authorization header from the auth_token_header instance variable
       $request = POST("$self->{'metacatUrl'}",
                       Content_Type => $contentType,
+                      Expect => $expect,
                       Authorization => $self->{'auth_token_header'},
                       Content => \%postData
                       );
@@ -122,6 +124,7 @@ sub sendData {
   } else {
       $request = POST("$self->{'metacatUrl'}",
                       Content_Type => $contentType,
+                      Expect => $expect,
                       Content => \%postData
                       );      
   }
