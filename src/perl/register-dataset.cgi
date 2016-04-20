@@ -3568,23 +3568,25 @@ sub getFormValuesFromEml2 {
 
 			# have a file with a ecogrid distUrl, use this to set up the file parameters
 			$distUrl =~ s/ecogrid:\/\/knb\///g;
-			my $accessResults = $doc->findnodes('distribution/access/allow');
+			my $accessNodes = $node->findnodes('distribution/access/allow');
 			my $accessRule    = 'private';
-
-			foreach $node ( $accessResults->get_nodelist ) {
-				my @children   = $node->childNodes;
+			
+			foreach my $accessNode ( $accessNodes->get_nodelist() ) {
+								
+				my @children   = $accessNode->childNodes();	
 				my $permission = "";
 				my $principal  = "";
+								
 				for ( my $i = 0 ; $i < scalar(@children) ; $i++ ) {
 					my $child = $children[$i];
-					if ( $child->nodeName eq 'principal' ) {
+					if ( $child->nodeName() eq 'principal' ) {
 						$principal = $child->textContent();
 					}
-					elsif ( $child->nodeName eq 'permission' ) {
+					elsif ( $child->nodeName() eq 'permission' ) {
 						$permission = $child->textContent();
 					}
 				}
-
+								
 				if ( $principal eq 'public' && $permission eq 'read' ) {
 					$accessRule = 'public';
 				}
