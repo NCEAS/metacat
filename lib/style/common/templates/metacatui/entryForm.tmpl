@@ -9,8 +9,7 @@
     $('.popover-target').popover();
   </script>
 
-	<!-- CONTENT SECTION
-    ======================================================================= -->
+	<!-- CONTENT SECTION ======================================================================= -->
 	<article id="RegistryEntryForm">
 	
 		<!-- Modal area for the guide-->
@@ -1416,74 +1415,62 @@
 							<div class="accordion-inner">
 								
 								<!--  the INPUT -->
-								<table class="tables" cellpadding="5" cellspacing="0" id="uploadTable">
-									<tr class="sectbody">
-									    <td class="rightCol"><span class="text-info">Upload Data File</span></td>
-									    <td colspan="5">
-								        	<input class="btn" type="file" id="file_element" name="file_1" class="longwidth">
-								
-									        [% IF form == 're_entry' && upCount %]
-									           [% cnt = 0 %]
-									           [% WHILE cnt < upCount %]
-									                [% SET fileSum = "upload_${cnt}" %]
-									                [% SET fileName = "uploadname_${cnt}" %]
-									                [% SET fileType = "uploadtype_${cnt}" %] 
-									                [% SET filePerm = "uploadperm_${cnt}" %]
-									                [% IF fileSum %]
-									                    <input type="hidden" name="[%fileSum%]" value="[% $fileSum %]"> 
-									                    <input type="hidden" name="[%fileName%]" value="[% $fileName %]"> 
-									                    <input type="hidden" name="[%fileType%]" value="[% $fileType %]"> 
-									                [% END %]
-									                [% cnt = cnt + 1 %]
-									            [% END %]
-									        <input type="hidden" id="upCount" name="upCount" value="[%upCount%]">
-									        [% END %]
+								<div class="control-group">
+									<label class="control-label">Upload Data File</label>
+									<div class="controls">
+										<input class="btn" type="file" id="file_element" name="file_1" />
+										[% IF form == 're_entry' && upCount %]
+											[% cnt = 0 %]
+											[% WHILE cnt < upCount %]
+												[% SET fileSum = "upload_${cnt}" %]
+												[% SET fileName = "uploadname_${cnt}" %]
+												[% SET fileType = "uploadtype_${cnt}" %] 
+												[% SET filePerm = "uploadperm_${cnt}" %]
+												[% IF fileSum %]
+													<input type="hidden" name="[%fileSum%]" value="[% $fileSum %]" /> 
+													<input type="hidden" name="[%fileName%]" value="[% $fileName %]" /> 
+													<input type="hidden" name="[%fileType%]" value="[% $fileType %]" /> 
+												[% END %]
+												[% cnt = cnt + 1 %]
+											[% END %]
+										<input type="hidden" id="upCount" name="upCount" value="[%upCount%]" />
+										[% END %]
+						
+										<input type="hidden" id="fileCount" name="fileCount" value="[%fileCount%]" />
+									</div>
+								</div>
+								<table class="table table-striped table-bordered" id="files_list">
+									[% IF form == 're_entry' && upCount %]
+										[% cnt = 0 %]
 									
-									        <input type="hidden" id="fileCount" name="fileCount" value="[%fileCount%]">
-										</td>
-									</tr>
-									<tr class="sectbody">
-										<td class="rightCol" valign="top"><span class="text-info">Attached Files</span></td>
-										<td colspan="5" class="regtext">
-										    [% IF !upCount %]
-										        <div id="file_comment">
-										            (<i>None currently attached</i>)
-										        </div>
-										    [% END %]
-										    <div id="files_list">
-											    [% IF form == 're_entry' && upCount %]
-											    	[% cnt = 0 %]
-											
-												    [% WHILE cnt < upCount %]
-												        [% SET fileName = "uploadname_${cnt}" %]
-												        [% SET filePerm = "uploadperm_${cnt}" %]
-												        [% IF $filePerm == 'public' %]
-												          [% SET perm_a = "checked" %]
-												          [% SET perm_b = "" %]
-												        [% ELSE %]
-												          [% SET perm_a = "" %]
-												          [% SET perm_b = "checked" %]
-												        [% END %]
-												        [% IF fileName %]
-													        <div>
-													          [% $fileName %]
-													          <label class="radio inline">
-																<input type="radio" name="[% filePerm %]" value="public" [% perm_a %]> Public
-													          </label>
-													          <label class="radio inline">	
-													          	<input type="radio" name="[% filePerm %]" value="private" [% perm_b %]> Private
-													          </label>
-													          <label class="text inline">	
-																<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [%fileName%]);"/>
-															</div>
-														[% END %]
-												
-												        [% cnt = cnt + 1 %]
-												    [% END %]
-										    	[% END %]
-										    </div>
-										</td>
-									</tr>
+										[% WHILE cnt < upCount %]
+											[% SET fileName = "uploadname_${cnt}" %]
+											[% SET filePerm = "uploadperm_${cnt}" %]
+											[% IF $filePerm == 'public' %]
+												[% SET perm_a = "checked" %]
+												[% SET perm_b = "" %]
+											[% ELSE %]
+												[% SET perm_a = "" %]
+												[% SET perm_b = "checked" %]
+											[% END %]
+											[% IF fileName %]
+													<tr>
+														<td>[% $fileName %]</td>
+														<td>
+															<input type="radio" name="[% filePerm %]" value="public" checked="[% perm_a %]" />&nbsp;Public
+														</td>
+														<td>	
+															<input type="radio" name="[% filePerm %]" value="private" checked="[% perm_b %]" />&nbsp;Private
+														</td>
+														<td>	
+															<input type="button" class="btn" value="Delete" onclick="deleteFile(event, [% fileName %]);"/>
+														</td>
+													</tr>
+										[% END %]
+									
+											[% cnt = cnt + 1 %]
+									  [% END %]
+									[% END %]
 								</table>
 								  
 								<script language="JavaScript" type="text/JavaScript">
