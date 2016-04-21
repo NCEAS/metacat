@@ -1274,7 +1274,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	            }
 	            filename = id.getValue();
 	            if (extension != null) {
-	            	filename = id.getValue() + extension;
+	            	filename = id.getValue() + "." + extension;
 	            }
             }
             response.setContentType(mimeType);
