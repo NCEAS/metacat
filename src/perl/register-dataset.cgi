@@ -1980,7 +1980,11 @@ sub methodsElement() {
 }
 
 sub fundingElement() {
-    my $project = "";
+	if ( $debug_enabled ) {
+		debug("fundingElement() called.");
+	}
+		
+		my $project = "";
 
     if ( hasContent($FORM::funding) ) {
 
@@ -2005,9 +2009,9 @@ sub fundingElement() {
                     "</personnel>\n";
 
         # Add the funding info (grant number)
-        $project .= "<funding>" .
+        $project .= "<funding><para>" .
                     normalize($FORM::funding) .
-                    "</funding>\n";
+                    "</para></funding>\n";
         $project .= "</project>\n";
     }
 
@@ -3557,7 +3561,7 @@ sub getFormValuesFromEml2 {
 	# handle otherEntity objects, by populating the relevant file form elements
 	$results = $doc->findnodes('//otherEntity/physical');
 	my $upCount = 0;
-	foreach $node ( $results->get_nodelist ) {
+	foreach $node ( $results->get_nodelist() ) {
 		my $distUrl = findValue( $node, 'distribution/online/url' );
 		debug("Found distUrl of value $distUrl.");
 		if ( $distUrl !~ /^ecogrid/ ) {
@@ -3626,6 +3630,28 @@ sub getFormValuesFromEml2 {
 	  $doc->findnodes('//additionalMetadata/metadata/moderatorComment');
 	if ( $results->size == 0 ) {
 		dontOccur( $doc, "//additionalMetadata", "additionalMetadata" );
+	}
+	
+	# find the last funding element
+	my $fundingNodes = $doc->findnodes('//dataset/project/funding');
+	
+	foreach my $fundingNode ($fundingNodes->get_nodelist()) {
+		foreach my $fundingParagraph ($fundingNode->findnodes('./para')) {
+			if( $fundingParagraph->textContent() ) {
+				my $fundingPara = $fundingParagraph->textContent();
+				if ($debug_enabled ) {
+					debug("Found a funding paragraph: $fundingPara");
+				
+				}
+				$$templateVars{'funding'} = $fundingPara;
+			
+			} else {
+				if ( $debug_enabled ) {
+					debug("No funding paragraph found.");
+				
+				}
+			}
+		}
 	}
 }
 
