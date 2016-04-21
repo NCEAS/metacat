@@ -40,7 +40,7 @@
       <p><span class="text-info">[% config.site | ucfirst %] Name:</span>  [%site%]</p>
     [% END %]
 [% END %]
-<p><span class="text-info">Grant Number:</span>  [%funding%]</p>
+<p><span class="text-info">Award Number:</span>  [%funding%]</p>
 
 <hr class="rule" />
 <a name="DataSetOriginator"></a>
@@ -459,6 +459,7 @@
       [% END %]
   [% END %]
   <input type="hidden" name="identifier" value="[%identifier%]" /> 
+  <input type="hidden" name="funding" value="[%funding%]" /> 
   <input type="hidden" name="title" value="[%title%]" />
   <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]" />
   <input type="hidden" name="origNamelast0" value="[%origNamelast0%]" />
