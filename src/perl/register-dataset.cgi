@@ -876,6 +876,8 @@ sub validateParameters {
 		  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
 			|| $skinName eq "nceas" );
 	}
+	push( @invalidParams, "Award number is missing." )
+	  unless hasContent($FORM::funding) && $required->{'funding'} eq 'true';
 	push( @invalidParams, "First name of principal data set owner is missing." )
 	  unless hasContent($FORM::origNamefirst0);
 	push( @invalidParams, "Last name of principal data set owner is missing." )
@@ -1592,12 +1594,13 @@ sub createProjectDocument {
 
 sub createDatasetDocument {
 
-    if ( $debug_enabled ) {
-        debug("createDatasetDocument() called.");
+	if ( $debug_enabled ) {
+		debug("createDatasetDocument() called.");
+	
+	}
 
-    }
-
-    my $doc = EMLStart();
+	my $doc = EMLStart();
+		
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
