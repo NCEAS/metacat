@@ -49,26 +49,29 @@
 						Use this form to edit a data package submitted earlier.
 					</p>
 					
-					[%IF docid !=''%]
+					[%IF docid !=''  && cfg != 'metacatui' %]
 						<p>
 							The ID of this data set is: <a href="[% metacatUrl %]?action=read&qformat=[% cfg %]&docid=[% docid %]">[% docid %]</a>
 						</p>	
 					[%END%]
 				
 				[% END %]
-				
-				<p>
-					Please have a look at the 
-					<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide" target="guide">
-					Guide for Completing the Data Repository Form</a> 
-	        		before you start filling in this form.
-				</p>
-				<p>
-					If you have any questions, comments or problems 
-					regarding this form, please contact the repository administrator at 
-					<a href="mailto:[% email.recipient %]">[% email.recipient %]</a>
-				</p>
-				<p class="text-info">*Denotes a required field.</p>
+					<p>
+						<a data-toggle="modal" data-target="#myModal" class="btn" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide" target="guide">
+							<i class="icon-info-sign"></i>
+							Show Help Guide
+				  	</a>
+				  </p> 
+					
+					[%IF cfg != 'metacatui' %]
+						<p>
+							If you have any questions, comments or problems 
+							regarding this form, please contact the repository administrator at 
+							<a href="mailto:[% email.recipient %]">[% email.recipient %]</a>
+						</p>
+					[% END %]
+					
+				<p class="text-info">* Denotes a required field.</p>
 			</div>
 
 			<!--  the main form -->
@@ -87,7 +90,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseSubmitter">
 								Submitter  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Submitter" ><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Submitter" ><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseSubmitter" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -113,7 +116,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseBasic" >
 								Basic Information  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#BasicInformation"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#BasicInformation"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseBasic" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -194,7 +197,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseOwner" >
 								Data Set Owner  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseOwner" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -343,7 +346,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
 								Associated Parties  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseParties" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -441,7 +444,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseAbstract" >
 								Abstract  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetAbstract"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetAbstract"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseAbstract" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -463,7 +466,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseKeywords">
 								Keywords  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#KeywordInformation"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#KeywordInformation"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseKeywords" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -575,7 +578,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseTemporal">
 								Temporal Coverage  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TemporalCoverageOfData"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TemporalCoverageOfData"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseTemporal" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -688,7 +691,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseSpatial">
 								Spatial Coverage  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#SpatialCoverageOfData"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#SpatialCoverageOfData"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseSpatial" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -894,7 +897,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseTaxonomic">
 								Taxonomic Coverage  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TaxonomicCoverage"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#TaxonomicCoverage"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseTaxonomic" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -997,7 +1000,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseMethods">
 								Data Collection Methods  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Methods"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#Methods"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseMethods" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -1062,7 +1065,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseContact">
 								Data Set Contact  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseContact" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -1220,7 +1223,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseDistribution">
 								Distribution Information  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DistributionIinformation"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DistributionIinformation"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseDistribution" class="accordion-body collapse in">
 							<div class="accordion-inner">
@@ -1409,7 +1412,7 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseUploadData">
 								Upload Data  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#UploadData"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#UploadData"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseUploadData" class="accordion-body collapse in">
 							<div class="accordion-inner">
