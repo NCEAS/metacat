@@ -1604,7 +1604,7 @@ sub createDatasetDocument {
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
-	$doc .= creatorElement();
+	# $doc .= creatorElement();
 	$doc .= creatorContactElement();
 	my %originators = personnelCreate('associatedParty');
 	$doc .= personnelList( \%originators );
