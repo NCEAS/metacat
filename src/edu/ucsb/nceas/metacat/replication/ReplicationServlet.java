@@ -117,7 +117,7 @@ public class ReplicationServlet extends HttpServlet {
 
 			// verify the client certificate on the request
 			boolean isValid = false;
-			String msg = "Client certificate is invalid";
+			String msg = "Metacat received the replication request. So the client certificate is trusted by the server's Apache/Tomcat. However, Metacat can't find the enity of the client certificate or the server parameter on the request url is registered in the xml_replication table. ";
 			try {
 				isValid = hasValidCertificate(request, server);
 			} catch (Exception e) {
