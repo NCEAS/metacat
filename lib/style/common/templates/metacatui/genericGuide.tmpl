@@ -1,6 +1,4 @@
 
-	<!-- CONTENT SECTION
-    ======================================================================= -->
 	<article id="RegistryGuide">
 		<div class="container">
 		
@@ -380,8 +378,36 @@ for locating the data set at a [% config.site %].
 					digital (e.g., computer file) or hardcopy (e.g., paper), or specify any other type of data medium the data are recorded on (e.g., video tape).
 				</p>
 				<p>
-					<span class="text-info">*Usage Rights:</span> Specify the usage rights that apply
-					to the data set (e.g., no restrictions, obtain permission from data set owner(s), cite the data set in publications, etc.). 
+						<span class="text-info">*Usage Rights:</span> 
+					[% IF cfg == 'metacatui' &&  config.abbrev == 'ARCTIC' %]
+						Choose either the:
+						<ul>
+							<li>
+								<a href="https://creativecommons.org/publicdomain/zero/1.0/">
+									Creative Commons Public Domain Dedication (CC-0)
+								</a>
+							</li>
+							<li>
+								<a href="https://creativecommons.org/licenses/by/4.0/">
+									Creative Commons Attribution License(CC-BY)
+								</a>	
+							</li>
+						</ul>
+						Chossing CC-0, you waive your interest in your work and place the
+						work as completely as possible in the public domain so others may freely
+						use the work without restriction under copyright or database law.
+						Attribution for your work is still expected according to norms in your
+						research field. Choosing CC-BY licenses your work, and you let others
+						copy, distribute, display, and perform your copyrighted work, and
+						derivative works based upon it, but only if they give you appropriate
+						credit. For more information on choosing, see the
+						<a href="https://blog.datadryad.org/2011/10/05/why-does-dryad-use-cc0/">Dryad discussion</a> 
+						and the 
+						<a href="http://www.bitlaw.com/copyright/unprotected.html">Bitlaw commentary</a>.
+					[% ELSE %]
+						Specify the usage rights that apply to the data set (e.g., no restrictions, 
+						obtain permission from data set owner(s), cite the data set in publications, etc.). 
+					[% END %]
 				</p>
 				<p>
 					<span class="text-info">URL:</span> If available, provide a link for the
