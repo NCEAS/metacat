@@ -746,23 +746,23 @@
 									      
 									      <td Align="left" colspan="2"> 
 									      [% IF form == 're_entry' && hemisphLat1 == "N"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat1" value="N" CHECKED>
 									        	North
 									        </label>	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat1" value="N">
 									        	North
 									        </label>	
 									      [%END%]
 									      [% IF form == 're_entry' && hemisphLat1 == "S"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat1" value="S" CHECKED>
 									        	South
 									        </label>	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat1" value="S">
 									        	South
 									        </label>	
@@ -785,23 +785,23 @@
 									      
 									      <td align="left" colspan="2"> 
 									    [% IF form == 're_entry' && hemisphLong1 == "W"%]
-									    	<label class="radio inline">        
+									    	<label class="radio">        
 									      		<input type="radio"  name="hemisphLong1" value="W" CHECKED>
 									      		West
 									      	</label>	
 									    [%ELSE%]
-									    	<label class="radio inline">
+									    	<label class="radio">
 									      		<input type="radio"  name="hemisphLong1" value="W">
 									      		West
 									      	</label>	
 									    [%END%]
 									    [% IF form == 're_entry' && hemisphLong1 == "E"%]
-									    	<label class="radio inline">
+									    	<label class="radio">
 									      		<input type="radio"  name="hemisphLong1" value="E" CHECKED>
 									      		East
 									      	</label>	
 									    [%ELSE%]
-									    	<label class="radio inline">
+									    	<label class="radio">
 									      		<input type="radio"  name="hemisphLong1" value="E">
 									      		East
 									      	</label>	
@@ -821,23 +821,23 @@
 									        
 									      <td align="left" colspan="2"> 
 									      [% IF form == 're_entry' && hemisphLat2 == "N"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat2" value="N" CHECKED>
 									        	North
 									        </label>	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat2" value="N">
 									        	North
 									        </label>	
 									      [%END%]
 									      [% IF form == 're_entry' && hemisphLat2 == "S"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat2" value="S" CHECKED>
 									        	South
 									        </label>	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLat2" value="S">
 												South
 									        </label>
@@ -852,23 +852,23 @@
 									       <td align="left" colspan="2">
 									       
 									      [% IF form == 're_entry' && hemisphLong2 == "W"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLong2" value="W" CHECKED>
 									        	West
 									        </label	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLong2" value="W">
 									        	West
 									        </label>	
 									      [%END%]
 									      [% IF form == 're_entry' && hemisphLong2 == "E"%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLong2" value="E" CHECKED>
 									        	East
 									        </label>	
 									      [%ELSE%]
-									      	<label class="radio inline">
+									      	<label class="radio">
 									        	<input type="radio"  name="hemisphLong2" value="E">
 									        	East
 									        </label>	
@@ -1070,7 +1070,7 @@
 						<div id="collapseContact" class="accordion-body collapse in">
 							<div class="accordion-inner">
 								<!--  the INPUT -->
-								<label class="checkbox inline" for="useOrigAddress">
+								<label class="checkbox" for="useOrigAddress">
 									<input type="CHECKBOX" name="useOrigAddress" onClick="copyContact()" id="copyCheckBox" [%useOrigAddress%]>
         							Use the same name and address as the <em>PRINCIPAL DATA SET OWNER</em> above.
 								</label>
