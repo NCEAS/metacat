@@ -13,7 +13,7 @@
 	<article id="RegistryEntryForm">
 	
 		<!-- Modal area for the guide-->
-		<div id="myModal" class="modal hide fade large" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-remote="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide">
+		<div id="myModal" class="modal hide fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true" data-remote="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide">
 		  <div class="modal-header">
 		    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">x</button>
 		    <h3 id="myModalLabel">Registry Guide</h3>
@@ -1421,7 +1421,7 @@
 								<div class="control-group">
 									<label class="control-label">Upload Data File</label>
 									<div class="controls">
-										<input class="btn" type="file" id="file_element" name="file_1" />
+										<input type="file" id="file_element" name="file_1" />
 										[% IF form == 're_entry' && upCount %]
 											[% cnt = 0 %]
 											[% WHILE cnt < upCount %]
