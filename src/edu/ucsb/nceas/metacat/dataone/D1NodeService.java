@@ -1372,7 +1372,7 @@ public abstract class D1NodeService {
     		if (groupList != null) {
     			groupnames = new String[groupList.size()];
     			for (int i = 0; i < groupList.size(); i++ ) {
-    				groupnames[i] = groupList.get(i).getGroupName();
+    				groupnames[i] = groupList.get(i).getSubject().getValue();
     			}
     		}
     	}
@@ -1414,7 +1414,7 @@ public abstract class D1NodeService {
     		if (groupList != null) {
     			groupnames = new String[groupList.size()];
     			for (int i = 0; i < groupList.size(); i++ ) {
-    				groupnames[i] = groupList.get(i).getGroupName();
+    				groupnames[i] = groupList.get(i).getSubject().getValue();
     			}
     		}
     	}
