@@ -1852,10 +1852,21 @@ sub EMLEnd() {
 sub datasetStart() {
 	my $dataset = "<dataset>\n";
 
-	if ( hasContent($FORM::identifier) ) {
-		$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
-		$dataset .= normalize($FORM::identifier) . "</alternateIdentifier>\n";
+	## handle multiple alternate identifiers
+	my $identifierArray = \@FORM::identifier;
+	debug(  "datasetStart identifier array size = " . $#$identifierArray );
+	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
+		if (   hasContent( $identifierArray->[$i] ) )
+		{
+			debug(  "Processing identifier: id = "
+				  . $identifierArray->[$i] );
+			#$dataset .= "<alternateIdentifier system=\"$FORM::site\">";
+			$dataset .= "<alternateIdentifier>";
+			$dataset .= normalize($identifierArray->[$i]) . "</alternateIdentifier>\n";
+		}
 	}
+	
+	
 	return $dataset;
 }
 
@@ -2730,15 +2741,19 @@ sub getFormValuesFromEml2 {
 
 	# find out the tag <alternateIdentifier>.
 	$results = $doc->findnodes('//dataset/alternateIdentifier');
-	if ( $results->size() > 1 ) {
-		errMoreThanOne("alternateIdentifier");
-	}
-	else {
+	if ( $results->size() > 0 ) {		
+		# handle multiple alternate identifiers
+		$results = $doc->findnodes('//dataset/alternateIdentifier');
+		my $identifierIndex = 0;
 		foreach $node ( $results->get_nodelist ) {
-			$$templateVars{'identifier'} =
-			  findValue( $node, '../alternateIdentifier' );
+			$identifierIndex++;
+			$$templateVars{ "identifierValue" . $identifierIndex } =
+			  findValue( $node, '../alternateIdentifier[' . $identifierIndex . ']' );
 		}
+		$$templateVars{'identifierCount'} = $identifierIndex;
+		
 	}
+	
 
 	# find out the tag <title>.
 	$results = $doc->findnodes('//dataset/title');
@@ -4912,7 +4927,24 @@ sub toConfirmData {
 	}
 
 	$$templateVars{'funding'}        = normalizeCD($FORM::funding);
-	$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
+	
+	# handle multiple identifiers
+	#$$templateVars{'identifier'}     = normalizeCD($FORM::identifier);
+	my $identifierArray = \@FORM::identifier;
+	debug(  "Processing identifier array size = " . $#$identifierArray );
+	my $identifierCount     = 1;
+	for ( my $i = 0 ; $i <= $#$identifierArray ; $i++ ) {
+		if (   hasContent( $identifierArray->[$i] ) )
+		{
+			debug(  "Processing confirm identifier: id = "
+				  . $identifierArray->[$i] );
+			$$templateVars{ "identifierValue" . $identifierCount } =
+			  normalizeCD( $identifierArray->[$i] );
+			$identifierCount++;
+		}
+	}
+	$$templateVars{'identifierCount'} = $identifierCount - 1;
+	
 	$$templateVars{'title'}          = normalizeCD($FORM::title);
 	$$templateVars{'origNamefirst0'} = normalizeCD($FORM::origNamefirst0);
 	$$templateVars{'origNamelast0'}  = normalizeCD($FORM::origNamelast0);
@@ -5219,7 +5251,33 @@ sub copyFormToTemplateVars {
 		$$templateVars{'wg'}       = \@FORM::wg;
 	}
 	$$templateVars{'funding'}        = $FORM::funding;
-	$$templateVars{'identifier'}     = $FORM::identifier;
+	
+	# handle multiple identifier values
+	#$$templateVars{'identifier'}     = $FORM::identifier;
+	$$templateVars{'identifierCount'}    = $FORM::identifierCount;
+	debug(  "Identifier template count: " . $FORM::identifierCount );
+
+	foreach my $id ( param() ) {
+		if ( $id =~ /identifier/ ) {
+			debug(  "Processing identifier param: $id = " . param($id) );
+			
+			my $identifierIndex = $id;
+			$identifierIndex =~ s/identifierValue//;    # get the index of the parameter 0, ..., 10
+			my $idParamName = "identifierValue" . $identifierIndex;
+			debug(  "identifierIndex:" . $identifierIndex );
+			debug(  "idParamName: " . $idParamName );
+			debug(  "id: " . $id );
+			if ( $identifierIndex =~ /[0-9]+/ ) {
+				if ( hasContent( param($idParamName) ) ) {
+					debug(  "Processing template identifier: $id = "
+						  . param($idParamName) );
+					$$templateVars{$idParamName} = param($idParamName);
+				}
+			}
+		}
+	}
+	
+	
 	$$templateVars{'title'}          = $FORM::title;
 	$$templateVars{'origNamefirst0'} = $FORM::origNamefirst0;
 	$$templateVars{'origNamelast0'}  = $FORM::origNamelast0;

@@ -369,6 +369,27 @@ sub setaccess {
   return $returnval;
 }
 
+#############################################################
+# subroutine to get access info from Metacat
+# returns access XML block from Metacat
+#############################################################
+sub getaccess {
+    my $self = shift;
+    my $docid = shift;
+    
+    my %postData = ( action => 'getaccess',
+    docid => $docid
+    );
+    
+    my $response = $self->sendData(%postData);
+    
+    my $returnval = 0;
+    if ($response) {
+        $returnval = $response;
+    }
+    
+    return $returnval;
+}
 
 #############################################################
 # subroutine to read an XML document from Metacat

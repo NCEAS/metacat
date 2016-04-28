@@ -399,7 +399,19 @@
 <h4>Distribution Information</h4> 
 
 <a name="Site-specificCode"></a>
-<p><span class="text-info">Data Set Identifier:</span> [%identifier%]
+<p><span class="text-info">Data Set Identifiers:</span> 
+
+[% numIdentifier = 0 %]
+[% IF identifierCount > 0 %]
+    [% numIdentifier = identifierCount %]
+[% END %]
+[% cnt = 1 %]
+[% WHILE cnt <= numIdentifier %]
+    [% SET id = "identifierValue${cnt}" %]
+    <p><span class="text-info">Identifier:</span> [% $id %]</p>
+    [% cnt = cnt + 1 %]
+ [% END %]
+
 </p>
 
 <p><span class="text-info">Data Medium:</span>       [%dataMedium%]    <span class="text-info">Other Data Medium</span>: [%dataMediumOther%]
@@ -458,7 +470,16 @@
           <input type="hidden" name="wg" value="[%group%]" />
       [% END %]
   [% END %]
-  <input type="hidden" name="identifier" value="[%identifier%]" /> 
+
+  [% cnt = 1 %]
+  [% WHILE cnt <= numIdentifier %]
+      [% SET id = "identifierValue${cnt}" %]
+      <input type="hidden" name="[% id %]" value="[% $id %]" />
+      <input type="hidden" name="identifier" value="[% $id %]" />
+      [% cnt = cnt + 1 %]
+  [% END %]  
+  <input type="hidden" name="identifierCount" value="[% identifierCount %]" />
+
   <input type="hidden" name="funding" value="[%funding%]" /> 
   <input type="hidden" name="title" value="[%title%]" />
   <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]" />
