@@ -38,6 +38,7 @@
     
     <import resource="application-context-isotc211-base.xml" />
     <import resource="application-context-isotc211.xml" />
+    <import resource="application-context-isotc211-noaa.xml" />
     
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
@@ -111,6 +112,7 @@
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
+       <ref bean="isotc211NoaaSubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">

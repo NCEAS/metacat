@@ -82,7 +82,7 @@
 	<bean id="isotc.title" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="title" />
 		<constructor-arg name="xpath" 
-			value="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString/text()" />
+			value="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gco:CharacterString/text() | //gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:title/gmx:Anchor/text()" />
 	</bean>		
 	
 	<bean id="isotc.keywords" class="org.dataone.cn.indexer.parser.SolrField">
