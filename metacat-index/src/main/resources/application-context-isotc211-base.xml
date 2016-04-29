@@ -46,10 +46,14 @@
 			value="(//gmd:CI_ResponsibleParty/gmd:organisationName/gco:CharacterString/text())[1]" />
 	</bean>
 	
+	<!-- index only the individualName (not organisationName) if there is a valid role -->
+	<!-- valid roles: "owner", "originator", "principalInvestigator", "author" -->
+	<!-- or -->
+	<!-- index the organisationName the role is valid but no individualName is specified -->
 	<bean id="isotc.origin" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="origin" />
 		<constructor-arg name="xpath" 
-			value='//gmd:CI_ResponsibleParty/gmd:individualName/gco:CharacterString/text() | //gmd:CI_ResponsibleParty/gmd:individualName/gmx:Anchor/text() | //gmd:CI_ResponsibleParty/gmd:organisationName/gco:CharacterString/text()' />
+			value='//gmd:CI_ResponsibleParty[gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() = "principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author"]/gmd:individualName/gco:CharacterString/text() | //gmd:CI_ResponsibleParty[(gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() = "principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author") and (not(gmd:individualName) or gmd:individualName[@gco:nilReason = "missing"])]/gmd:organisationName/gco:CharacterString/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
