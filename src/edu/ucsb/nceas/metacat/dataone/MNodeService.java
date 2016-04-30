@@ -2675,20 +2675,37 @@ public class MNodeService extends D1NodeService
      * Rules are:
      * 1. If the session has an cn object, it is allowed.
      * 2. If it is not a cn object, the client should have approperate permission and it should also happen on the authorative node.
+     * 3. If it's the authoritative node, the MN Admin Subject is allowed.
      */
     private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest {
         boolean allow = false;
-        if(isCNAdmin (session)) {
+        if( isCNAdmin (session) ) {
             allow = true;
+            
         } else {
-            if(isAuthoritativeNode(pid)) {
-                if(userHasPermission(session, pid, permission)) {
+            if( isAuthoritativeNode(pid) ) {
+            	
+            	try {
+					return isNodeAdmin(session);
+					
+				} catch (NotImplemented e) {
+					logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
+
+				} catch (ServiceFailure e) {
+					logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
+					
+				}
+            	
+            	if ( userHasPermission(session, pid, permission) ) {
                     allow = true;
+                    
                 } else {
                     allow = false;
+                    
                 }
             } else {
                 throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node.");
+                
             }
         }
         return allow;
