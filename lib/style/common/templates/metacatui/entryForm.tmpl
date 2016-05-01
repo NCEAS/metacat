@@ -192,71 +192,85 @@
 						    </div>
 						</div>
 						
-						<!-- PRINCIPAL DATA SET OWNER -->
+						<!-- ASSOCIATED PARTIES -->
 						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseOwner" >
-								Data Set Owner  
+							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
+								People and Organizations  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetOriginator"><i class="icon-info-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
 						</div>
-						<div id="collapseOwner" class="accordion-body collapse in">
+						<div id="collapseParties" class="accordion-body collapse in">
 							<div class="accordion-inner">
-								<!--  the INPUT -->
 								<div class="control-group">
-									<label class="control-label" for="origNamefirst0">*First Name</label>
+									<label class="control-label" for="assocPartyFirstName">First Name</label>
 									<div class="controls">
-										<input type="text" name="origNamefirst0" id="origNameFirst" value="[%origNamefirst0%]">
+										<input type="text" name="assocPartyFirstName" id="assocPartyFirstName"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNamelast0">*Last Name</label>
+									<label class="control-label" for="assocPartyLastName">Last Name</label>
 									<div class="controls">
-										<input type="text" name="origNamelast0" id="origNameLast" value="[%origNamelast0%]">
+										<input type="text" name="assocPartyLastName" id="assocPartyLastName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origNameOrg">Organization Name</label>
+									<label class="control-label" for="assocPartyRole">Role</label>
 									<div class="controls">
-										<input type="text" name="origNameOrg" id="origNameOrg" value="[%origNameOrg%]">
+										<select name="assocPartyRole" id="assocPartyRole">
+											<option value="principalInvestigator">Principal Investigator</option>
+											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
+											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
+											<option value="creator">Creator (Author/Owner/Originator)</option>
+											<option value="contact">Contact</option>
+											<option value="metadataProvider">Metadata Provider</option>
+											<option value="custodianSteward">Custodian/Steward</option>
+											<option value="publisher">Publisher</option>
+											<option value="user">User</option>
+										</select>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origEmail">Email</label>
+									<label class="control-label" for="assocPartyOrgName">Organization Name</label>
 									<div class="controls">
-										<input type="text" name="origEmail" id="origEmail" value="[%origEmail%]">
+										<input type="text" name="assocPartyOrgName" id="assocPartyOrgName" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origPhone">Phone</label>
+									<label class="control-label" for="assocPartyEmail">Email</label>
 									<div class="controls">
-										<input type="text" name="origPhone" id="origPhone" value="[%origPhone%]">
+										<input type="text" name="assocPartyEmail" id="assocPartyEmail" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origFAX">Fax</label>
+									<label class="control-label" for="assocPartyPhone">Phone</label>
 									<div class="controls">
-										<input type="text" name="origFAX" id="origFAX" value="[%origFAX%]">
+										<input type="text" name="assocPartyPhone" id="assocPartyPhone"/>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origDelivery">Street Address</label>
+									<label class="control-label" for="assocPartyFAX">Fax</label>
 									<div class="controls">
-										<textarea class="span8" id="origDelivery" name="origDelivery">[%origDelivery%]</textarea>
-										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
+										<input type="text" name="assocPartyFAX" id="assocPartyFAX" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origCity">City</label>
+									<label class="control-label" for="assocPartyDelivery">Street Address</label>
 									<div class="controls">
-										<input type="text" name="origCity" id="origCity" value="[%origCity%]">
+										<textarea class="span8" name="assocPartyDelivery" id="assocPartyDelivery" placeholder="(number, street, unit, etc.; comma-separated)"></textarea>
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origState">U.S. State or Territory</label>
+									<label class="control-label" for="assocPartyCity">City</label>
 									<div class="controls">
-										<select name="origState" id="origState">
+										<input type="text" name="assocPartyCity" id="assocPartyCity" />
+									</div>
+								</div>
+								<div class="control-group">
+									<label class="control-label" for="assocPartyState">U.S. State or Territory</label>
+									<div class="controls">
+										<select name="assocPartyState" id="assocPartyState">
 											[% IF form == 're_entry' %]
-												<option selected>[%origState%]</option>
+												<option selected>[%assocPartyState%]</option>
 											[% ELSE %]
 												<option>Select state or territory here.</option>
 											[% END %]
@@ -320,123 +334,78 @@
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origStateOther">Other State/Province</label>
+									<label class="control-label" for="assocPartyStateOther">Other State/Province</label>
 									<div class="controls">
-										<input type="text" name="origStateOther" id="origStateOther" value="[%origStateOther%]">
+										<input type="text" name="assocPartyStateOther" id="assocPartyStateOther" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origZip">Postal Code</label>
+									<label class="control-label" for="assocPartyZip">Postal Code</label>
 									<div class="controls">
-										<input type="text" name="origZIP" id="origZip" value="[%origZIP%]">
+										<input type="text" name="assocPartyZip" id="assocPartyZip" />
 									</div>
 								</div>
 								<div class="control-group">
-									<label class="control-label" for="origCountry">Country</label>
+									<label class="control-label" for="assocPartyCountry">Country</label>
 									<div class="controls">
-										<input type="text" name="origCountry" id="origCountry" value="[%origCountry%]">
+										<input type="text" name="assocPartyCountry" id="assocPartyCountry" />
+									</div>
+								</div>
+								<div class="control-group">
+									<div class="controls">
+										<button type="button" class="btn" id="addPartyButton" onClick="addAssociatedParty()">Add Person or Organization</button>
+										<button type="button" class="btn" style="visibility: hidden" id="updatePartyButton" onClick="updateAssociatedParty()">Update Person or Organization</button>
 									</div>
 								</div>
 								
-						    </div>
-						</div>
-						
-						<!-- ASSOCIATED PARTIES -->
-						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
-								Associated Parties  
-							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-info-sign"></i></a>
-						</div>
-						<div id="collapseParties" class="accordion-body collapse in">
-							<div class="accordion-inner">
-							
-								<div class="control-group">
-									<label class="control-label" for="aoFirstName">First Name</label>
-									<div class="controls">
-										<input type="text" name="aoFirstName" id="AONameFirst"">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="aoLastName">Last Name</label>
-									<div class="controls">
-										<input type="text" name="aoLastName" id="AONameLast"">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="aoRole">Role</label>
-									<div class="controls">
-										<select id="AORole" name="aoRole">
-								            <option>Co-owner</option>
-								            <option>Custodian/Steward</option>
-								            <option>Metadata Provider</option>
-								      		<option>User</option>
-								        </select>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="addaobutton1"></label>
-									<div class="controls">
-										<input type="button" class="btn" value="Add Associated Party" id="addaobutton1" onClick="addAssociatedParty()">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="associatePartyTable"></label>
-									<div class="controls">
-										<table id="associatePartyTable">   
-											<tr id="addAssociatedParty"> 
-								            	<td colspan=6 />
-								            </tr>    
-										    [% numAO = 0 %]
-										    [% IF aoCount %]
-										        [% numAO = aoCount %]
-										        <tr class="sectbody" id="aoHRRow">
-										            <td colSpan="6">
-										                <hr width = "85%"/>
-										            </td>
-										        </tr>
-										    [% END %]
-										    [% cnt = 1 %]
-										    [% WHILE cnt < numAO%]
-										            
-										        <tr class="sectbody">
-										            [% SET aofn = "origNamefirst${cnt}" %]
-										            [% SET aoln = "origNamelast${cnt}" %]
-										            [% SET aorole = "origRole${cnt}" %]
-										     
-										            <td class="rightCol">
-										                <a style="cursor:pointer">
-										                	<i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveUpRow(event)"
-										                    class="icon-arrow-up"
-										                    alt="Move Up"></i>
-										                </a>
-										                <a style="cursor:pointer">
-										                    <i onClick="cleanTextNodes('aoHRRow', 'addaorow');moveDownRow(event, 'addaorow')"
-										                    class="icon-arrow-down"
-										                    alt="Move Down"></i>
-										                </a>
-										                <a style="cursor:pointer">
-										                    <i class="icon-remove-sign"
-										                    onClick="delRow(event)" alt="Delete"></i>
-										                </a>
-										            </td>
-										            <td colspan="5" align ="left" style="cursor:pointer"
-										                onClick="aoEditRow(event, 0, '[%$aofn%]', '[%$aoln%]' , '[%$aorole%]')">
-										                [%$aofn%] [%$aoln%] (Role: [%$aorole%])
-										                <input name="aoFirstName" type="hidden" value="[%$aofn%]"/>
-										                <input name="aoLastName" type="hidden" value="[%$aoln%]"/>
-										                <input name="aoRole" type="hidden" value="[%$aorole%]"/>
-										            </td>
-										        </tr>
-										        [% cnt = cnt + 1 %]
-										    [% END %]
-										    <input type="hidden" name="aoCount" value="[%numAO%]" id="aoCount">
-										    <tr class="sectbody" id="addaorow"><td colspan=6 /></tr>
-										</table>
-									</div>
-								</div>
-								    								
-						    </div>
+								<table class="table table-striped table-bordered table-hover" id="assocPartyTable">   
+									[% cnt = 1 %]
+									<tbody>
+									  [% WHILE cnt < assocPartyCount %]
+											<tr>
+												<td>
+													<a style="cursor:pointer">
+														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveUpRow(event)"
+																class="icon-arrow-up" alt="Move Up"></i>
+													</a>
+												</td>
+												<td>
+													<a style="cursor:pointer">
+														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveDownRow(event, 'assocPartyRowMarker')"
+																class="icon-arrow-down" alt="Move Down"></i>
+													</a>
+												</td>
+												<td>
+													<a style="cursor:pointer">
+														<i class="icon-remove-sign" onClick="delRow(event)" alt="Delete"></i>
+													</a>
+												</td>
+												<td style="cursor:pointer" onClick="alert('Load into editing fields.')">
+													[% assocPartyFirstName %]
+													<input type="hidden" name="assocPartyFirstName"  value="[% assocPartyFirstName %] " />
+													<input type="hidden" name="assocPartyLastName"   value="[% assocPartyLastName %]  " />
+													<input type="hidden" name="assocPartyOrgName"    value="[% assocPartyOrgName %]   " />
+													<input type="hidden" name="assocPartyEmail" 			value="[% assocPartyEmail %]     " />
+													<input type="hidden" name="assocPartyPhone"      value="[% assocPartyPhone %]     " />
+													<input type="hidden" name="assocPartyFAX" 				value="[% assocPartyFAX %]       " />
+													<input type="hidden" name="assocPartyCity"       value="[% assocPartyCity %]      " />
+													<input type="hidden" name="assocPartyStateOther" value="[% assocPartyStateOther %]" />
+													<input type="hidden" name="assocPartyZip"        value="[% assocPartyZip %]       " />
+													<input type="hidden" name="assocPartyCountry"    value="[% assocPartyCountry %]   " />
+												</td>
+												<td>[% assocPartyLastName %]</td>
+												<td>[% assocPartyRole %]</td>
+											</tr>
+											[% cnt = cnt + 1 %]
+									  [% END %]
+										<tr id="assocPartyRowMarker">
+											<td colspan="7">
+												<input type="hidden" name="assocPartyCount" value="[% assocPartyCount %]" id="assocPartyCount" />
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
 						</div>
 						
 						<!-- ABSTRACT -->
@@ -520,7 +489,7 @@
 										 [% numKey = 0 %]
 										 [% IF keyCount %]
 										   [% numKey = keyCount %]
-										        [% numAO = aoCount %]
+										        [% numAO = assocPartyCount %]
 										        <tr class="sectbody" id="keywordHRRow">
 										            <td colSpan="6">
 										                <hr width = "85%"/>
@@ -1058,166 +1027,7 @@
 						</div>
 						
 					[% END %]
-					
-						
-						<!-- DATA SET CONTACT -->
-						<div class="accordion-heading">
-							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseContact">
-								Data Set Contact  
-							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#DataSetContactAddress"><i class="icon-info-sign"></i></a>
-						</div>
-						<div id="collapseContact" class="accordion-body collapse in">
-							<div class="accordion-inner">
-								<!--  the INPUT -->
-								<label class="checkbox" for="useOrigAddress">
-									<input type="CHECKBOX" name="useOrigAddress" onClick="copyContact()" id="copyCheckBox" [%useOrigAddress%]>
-        							Use the same name and address as the <em>PRINCIPAL DATA SET OWNER</em> above.
-								</label>
-									
-								<div class="control-group">
-									<label class="control-label" for="origNamefirstContact">*First Name</label>
-									<div class="controls">
-										<input type="text" name="origNamefirstContact" id="contactNameFirst" value="[%origNamefirstContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origNamelastContact">*Last Name</label>
-									<div class="controls">
-										<input type="text" name="origNamelastContact" id="contactNameLast" value="[%origNamelastContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origNameOrgContact">Organization Name</label>
-									<div class="controls">
-										<input type="text" name="origNameOrgContact" id="contactNameOrg" value="[%origNameOrgContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									[% IF required.contactEmailAddress == 'true' %]
-										<label class="control-label" for="origEmailContact">*Email</label>
-									[% ELSE %]
-										<label class="control-label" for="origEmailContact">Email</label>
-									[% END %]
-									<div class="controls">
-										<input type="text" name="origEmailContact" id="contactEmail" value="[%origEmailContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origPhoneContact">Phone</label>
-									<div class="controls">
-										<input type="text" name="origPhoneContact" id="contactPhone" value="[%origPhoneContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origFAXContact">Fax</label>
-									<div class="controls">
-										<input type="text" name="origFAXContact" id="contactFAX" value="[%origFAXContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origDeliveryContact">Street Address</label>
-									<div class="controls">
-										<textarea class="span8" id="contactDelivery" name="origDeliveryContact">[%origDeliveryContact%]</textarea>
-										<span class="help-block">(number, street, unit, etc.; comma-separated)</span>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origCityContact">City</label>
-									<div class="controls">
-										<input type="text" name="origCityContact" id="contactCity" value="[%origCityContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origStateContact">U.S. State or Territory</label>
-									<div class="controls">
-										<select name="origStateContact" id="contactState">
-											[% IF form == 're_entry' %]
-												<option selected>[%origStateContact%]</option>
-											[% ELSE %]
-												<option>Select state or territory here.</option>
-											[% END %]
-											<option>Alabama</option>
-											<option>Alaska</option>
-											<option>American Samoa</option>
-											<option>Arizona</option>
-											<option>Arkansas</option>
-											<option>California</option>
-											<option>Colorado</option>
-											<option>Connecticut</option>
-											<option>Delaware</option>
-											<option>District of Columbia</option>
-											<option>Florida</option>
-											<option>Georgia</option>
-											<option>Guam</option>
-											<option>Hawaii</option>
-											<option>Idaho</option>
-											<option>Illinois</option>
-											<option>Indiana</option>
-											<option>Iowa</option>
-											<option>Kansas</option>
-											<option>Kentucky</option>
-											<option>Louisiana</option>
-											<option>Maine</option>
-											<option>Maryland</option>
-											<option>Massachusetts</option>
-											<option>Michigan</option>
-											<option>Minnesota</option>
-											<option>Mississippi</option>
-											<option>Missouri</option>
-											<option>Montana</option>
-											<option>Nebraska</option>
-											<option>Nevada</option>
-											<option>New Hampshire</option>
-											<option>New Jersey</option>
-											<option>New Mexico</option>
-											<option>New York</option>
-											<option>North Carolina</option>
-											<option>North Dakota</option>
-											<option>Northern Mariana Islands</option>
-											<option>Ohio</option>
-											<option>Oklahoma</option>
-											<option>Oregon</option>
-											<option>Pennsylvania</option>
-											<option>Puerto Rico</option>
-											<option>Rhode Island</option>
-											<option>South Carolina</option>
-											<option>South Dakota</option>
-											<option>Tennessee</option>
-											<option>Texas</option>
-											<option>Utah</option>
-											<option>Vermont</option>
-											<option>Virgin Islands</option>
-											<option>Virginia</option>
-											<option>Washington</option>
-											<option>West Virginia</option>
-											<option>Wisconsin</option>
-											<option>Wyoming</option>
-										</select>
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origStateOtherContact">Other State/Province</label>
-									<div class="controls">
-										<input type="text" name="origStateOtherContact" id="contactStateOther" value="[%origStateOtherContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origZIPContact">Postal Code</label>
-									<div class="controls">
-										<input type="text" name="origZIPContact" id="contactZip" value="[%origZIPContact%]">
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="origCountryContact">Country</label>
-									<div class="controls">
-										<input type="text" name="origCountryContact" id="contactCountry" value="[%origCountryContact%]">
-									</div>
-								</div>
-								
-						    </div>
-						</div>
-						
+											
 						<!-- DISTRIBUTION INFO -->
 						<div class="accordion-heading">
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseDistribution">
@@ -1316,7 +1126,7 @@
 									</div>
 								</div>
 								
-								<!-- END BRL ALTERNATE IDENTIFIERS --->
+								<!-- END BRL ALTERNATE IDENTIFIERS -->
 								
 								
 								<div class="control-group">
@@ -1468,12 +1278,6 @@
                   </div>
 								</div>
 								
-								<div class="control-group">
-									<label class="control-label" for="url">URL</label>
-									<div class="controls">
-										<input type="text" name="url" value="[%url%]">
-									</div>
-								</div>
 								<div class="control-group">
 									<label class="control-label" for="addComments">Additional Information</label>
 									<div class="controls">
