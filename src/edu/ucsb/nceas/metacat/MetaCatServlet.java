@@ -840,20 +840,67 @@ public class MetaCatServlet extends HttpServlet {
 
 				// handle session validate request
 			} else if (action.equals("validatesession")) {
-				Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
-				String idToValidate = null;
-				String idsToValidate[] = params.get("sessionid");
-				if (idsToValidate != null) {
-					idToValidate = idsToValidate[0];
-				} else {
-					// use the sessionid from the cookie
+				String token = request.getHeader("Authorization");
+				
+				// First check for a valid authentication token
+				if ( token != null && ! token.equals("") ) {
+					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
 					SessionData sessionData = RequestUtil.getSessionData(request);
-					if (sessionData != null) {
-						idToValidate = sessionData.getId();
+					
+					response.setContentType("text/xml");
+					out.write("<?xml version=\"1.0\"?>");
+					out.write("<validateSession><status>");
+					
+					if ( sessionData != null ) {
+						out.write("valid");
+						
+					} else {
+						out.write("invalid");
+						
 					}
+					out.write("</status>");
+				    
+					if (sessionData != null) {
+						out.write("<userInformation>");
+						out.write("<name>");
+						out.write(sessionData.getUserName());
+						out.write("</name>");
+						out.write("<fullName>");
+						out.write(sessionData.getName());
+						out.write("</fullName>");
+						String[] groups = sessionData.getGroupNames();
+						if ( groups != null ) {
+							for(String groupName : groups) {
+							  out.write("<group>");
+							  out.write(groupName);
+							  out.write("</group>");
+							}
+						}
+						out.write("</userInformation>");
+					}
+
+					out.write("<sessionId>" + sessionId + "</sessionId></validateSession>");				
+					out.close();
+					
+				} else {
+					// With no token, validate the sessionid
+					Writer out = new OutputStreamWriter(response.getOutputStream(), DEFAULT_ENCODING);
+					String idToValidate = null;
+					String idsToValidate[] = params.get("sessionid");
+					if (idsToValidate != null) {
+						idToValidate = idsToValidate[0];
+						
+					} else {
+						// use the sessionid from the cookie
+						SessionData sessionData = RequestUtil.getSessionData(request);
+						if (sessionData != null) {
+							idToValidate = sessionData.getId();
+							
+						}
+					}
+					SessionService.getInstance().validateSession(out, response, idToValidate);
+					out.close();
 				}
-				SessionService.getInstance().validateSession(out, response, idToValidate);
-				out.close();
 
 				// aware of session expiration on every request
 			} else {
@@ -868,6 +915,7 @@ public class MetaCatServlet extends HttpServlet {
 
 				logMetacat.info("MetaCatServlet.handleGetOrPost - The user is : " + userName);
 			}
+			
 			// Now that we know the session is valid, we can delegate the
 			// request to a particular action handler
 			if (action.equals("query")) {
