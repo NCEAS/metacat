@@ -865,13 +865,10 @@ sub validateParameters {
 	push( @invalidParams, "Name of the Project is not selected in the form." )
 	  if ( scalar(@FORM::wg) == 0 && $required->{'wgList'} eq 'true' );
 	
-	push( @invalidParams, "First name of person entering the form is missing." )
-	  unless hasContent($FORM::providerGivenName);
+	push( @invalidParams, "Please provide the first and last name of person entering the form." )
+	  unless (hasContent($FORM::providerGivenName) && hasContent($FORM::providerSurName));
 	
-	push( @invalidParams, "Last name of person entering the form is missing." )
-	  unless hasContent($FORM::providerSurName);
-	
-	push( @invalidParams, "Dataset title is missing." )
+	push( @invalidParams, "Please provide a dataset title." )
 	  unless hasContent($FORM::title);
 	
 	if ( $show->{'siteList'} eq 'true' ) {
@@ -879,19 +876,22 @@ sub validateParameters {
 		  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
 			|| $skinName eq "nceas" );
 	}
-	push( @invalidParams, "Award number is missing." )
+	push( @invalidParams, "Please provide an award number." )
 	  unless hasContent($FORM::funding) && $required->{'funding'} eq 'true';
-	push( @invalidParams, "First name of principal data set owner is missing." )
-	  unless hasContent($FORM::partyFirstName);
+
+	push( @invalidParams, "Please provide a person's first name, last name, and role, or an organization name and it's role.")
+	  unless ((hasContent($FORM::partyFirstName) && 
+		         hasContent($FORM::partyLastName) &&
+						 hasContent($FORM::partyRole)) 
+						 ||
+		         (hasContent($FORM::partyOrgName) && 
+						  hasContent($FORM::partyRole)));
 	
-	push( @invalidParams, "Last name of principal data set owner is missing." )
-	  unless hasContent($FORM::partyLastName);
-	
-	push( @invalidParams, "Dataset abstract is missing." )
+	push( @invalidParams, "Please provide a dataset abstract." )
 	  unless hasContent($FORM::abstract);
 
 	if ( $modules->{'temporal'} eq 'true' ) {
-		push( @invalidParams, "Year of start date is missing." )
+		push( @invalidParams, "Please provide a start date year." )
 		  unless ( hasContent($FORM::beginningYear)
 			|| $required->{'temporal'} ne 'true' );
 		
@@ -901,7 +901,7 @@ sub validateParameters {
 			&& hasContent($FORM::endingYear) );
 	}
 	
-	push( @invalidParams, "Geographic description is missing." )
+	push( @invalidParams, "Please provide a geographic description." )
 	  unless ( hasContent($FORM::geogdesc) || $required->{'spatial'} ne 'true' );
 
 	if ( $FORM::beginningMonth eq "MM" ) {
@@ -919,11 +919,11 @@ sub validateParameters {
 
 	if ( hasContent($FORM::beginningYear)
 		&& !( $FORM::beginningYear =~ /[0-9]{4}/ ) ) {
-		push( @invalidParams, "Invalid year of start date specified." );
+		push( @invalidParams, "Please provide a four digit start date." );
 	}
 
 	if ( hasContent($FORM::endingYear) && !( $FORM::endingYear =~ /[0-9]{4}/ ) ) {
-		push( @invalidParams, "Invalid year of stop date specified." );
+		push( @invalidParams, "Please provide a four digit stop date." );
 	}
 
 	# If the "use site" coord. box is checked and if the site is in
@@ -1078,7 +1078,7 @@ sub validateParameters {
 	push ( @invalidParams, "Please provide the required award number.")
 	unless ( hasContent($FORM::funding) && $show->{'funding'});
 	
-	push( @invalidParams, "Usage rights are required." )
+	push( @invalidParams, "Please provide usage rights." )
 	  unless ( hasContent($FORM::useConstraints) );
 	if ( $FORM::useConstraints eq 'other' ) {
 		push( @invalidParams,
