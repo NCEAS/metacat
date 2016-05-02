@@ -1074,33 +1074,6 @@ sub validateParameters {
 			}
 		}
 	}
-
-	push( @invalidParams, "First name of data set contact is missing." )
-	  unless ( hasContent($FORM::assocPartyFirstNameContact)
-		|| $FORM::useOrigAddress );
-	# push( @invalidParams, "Last name of data set contact is missing." )
-	#   unless ( hasContent($FORM::assocPartyLastNameContact)
-	# 	|| $FORM::useOrigAddress );
-	# if ( $required->{'contactEmailAddress'} eq 'true' ) {
-	# 	if ($FORM::useOrigAddress) {
-	# 		push( @invalidParams, "Email address of data set owner is missing. This is required as it will be used as contact email address as specified by you."
-	# 		) unless ( hasContent($FORM::partyEmail) );
-	# 	}
-	# 	else {
-	# 		push( @invalidParams,
-	# 			"Email address of data set contact is missing." )
-	# 		  unless ( hasContent($FORM::origEmailContact) );
-	# 	}
-	# }
-
-	# check required distribution elements
-	# push( @invalidParams, "Data medium is required." )
-	#   unless ( hasContent($FORM::dataMedium) );
-	# if ( $FORM::dataMedium eq 'other' ) {
-	# 	push( @invalidParams,
-	# 		"Must enter custom data medium when 'other' is selected." )
-	# 	  unless ( hasContent($FORM::dataMediumOther) );
-	# }
 	
 	push ( @invalidParams, "Please provide the required award number.")
 	unless ( hasContent($FORM::funding) && $show->{'funding'});
@@ -1693,8 +1666,8 @@ sub personnelList {
 			$elem .= "<surName>" . normalize($last) . "</surName>\n";
 			$elem .= "</individualName>\n";
 
-			if ( ( $role eq 'personnel' ) && ($FORM::assocPartyOrgNameContact) ) {
-				$elem .= "<organizationName>$FORM::assocPartyOrgNameContact</organizationName>\n";
+			if ( ( $role eq 'personnel' ) && ($FORM::partyOrgNameContact) ) {
+				$elem .= "<organizationName>$FORM::partyOrgNameContact</organizationName>\n";
 			}
 
 			if ( ( $role eq 'personnel' ) || ( $role eq 'associatedParty' ) ) {
@@ -2122,15 +2095,15 @@ sub contactElement() {
 
 	$cont .= "<individualName>\n";
 	$cont .=
-	  "<givenName>" . normalize($FORM::assocPartyFirstNameContact) . "</givenName>\n";
+	  "<givenName>" . normalize($FORM::partyFirstNameContact) . "</givenName>\n";
 	$cont .=
-	  "<surName>" . normalize($FORM::assocPartyLastNameContact) . "</surName>\n";
+	  "<surName>" . normalize($FORM::partyLastNameContact) . "</surName>\n";
 	$cont .= "</individualName>\n";
 
-	if ( hasContent($FORM::assocPartyOrgNameContact) ) {
+	if ( hasContent($FORM::partyOrgNameContact) ) {
 		$cont .=
 		    "<organizationName>"
-		  . normalize($FORM::assocPartyOrgNameContact)
+		  . normalize($FORM::partyOrgNameContact)
 		  . "</organizationName>\n";
 	}
 
@@ -2732,7 +2705,7 @@ sub getFormValuesFromEml2 {
 	my $node;
 	my $tempResult;
 	my $tempNode;
-	my $assocPartyCount = 0;
+	my $partyCount = 0;
 	my $foundDSO;
 
 	# set variable values
@@ -2795,9 +2768,9 @@ sub getFormValuesFromEml2 {
 				$foundDSO = 1;
 
 				debug("Recording a creator in loop 1...");
-				$$templateVars{'assocPartyFirstName0'} =
+				$$templateVars{'partyFirstName0'} =
 				  findValue( $node, 'givenName' );
-				$$templateVars{'assocPartyLastName0'} = findValue( $node, 'surName' );
+				$$templateVars{'partyLastName0'} = findValue( $node, 'surName' );
 
 				my $tempResult2 = $node->findnodes('../address');
 				if ( $tempResult2->size > 1 ) {
@@ -2843,7 +2816,7 @@ sub getFormValuesFromEml2 {
 				}
 				$$templateVars{'origEmail'} =
 				  findValue( $node, '../electronicMailAddress' );
-				$$templateVars{'assocPartyOrgName'} =
+				$$templateVars{'partyOrgName'} =
 				  findValue( $node, '../organizationName' );
 			}
 			else {
@@ -2859,20 +2832,20 @@ sub getFormValuesFromEml2 {
 			if ( $foundDSO == 0 ) {
 				debug("Recording a creator in loop 2 block A...");
 				$foundDSO = 1;
-				$$templateVars{'assocPartyFirstName0'} =
+				$$templateVars{'partyFirstName0'} =
 				  findValue( $node, 'givenName' );
-				$$templateVars{'assocPartyLastName0'} = findValue( $node, 'surName' );
-				$$templateVars{'assocPartyOrgName'} =
+				$$templateVars{'partyLastName0'} = findValue( $node, 'surName' );
+				$$templateVars{'partyOrgName'} =
 				  findValue( $node, '../organizationName' );
 			}
 			else {
 				debug("Recording a creator in loop 2 block B...");
-				$$templateVars{"assocPartyFirstName$assocPartyCount"} =
+				$$templateVars{"partyFirstName$partyCount"} =
 				  findValue( $node, './givenName' );
-				$$templateVars{"assocPartyLastName$assocPartyCount"} =
+				$$templateVars{"partyLastName$partyCount"} =
 				  findValue( $node, './surName' );
-				$$templateVars{"origRole$assocPartyCount"} = "Originator";
-				$assocPartyCount++;
+				$$templateVars{"origRole$partyCount"} = "Originator";
+				$partyCount++;
 			}
 		}
 	}
@@ -2922,12 +2895,12 @@ sub getFormValuesFromEml2 {
 		else {
 			foreach $tempNode ( $tempResult->get_nodelist ) {
 				if ( $$templateVars{'providerGivenName'} ne "" ) {
-					$$templateVars{"assocPartyFirstName$assocPartyCount"} =
+					$$templateVars{"partyFirstName$partyCount"} =
 					  findValue( $tempNode, './givenName' );
-					$$templateVars{"assocPartyLastName$assocPartyCount"} =
+					$$templateVars{"partyLastName$partyCount"} =
 					  findValue( $tempNode, './surName' );
-					$$templateVars{"origRole$assocPartyCount"} = "Metadata Provider";
-					$assocPartyCount++;
+					$$templateVars{"origRole$partyCount"} = "Metadata Provider";
+					$partyCount++;
 				}
 				else {
 					$$templateVars{'providerGivenName'} =
@@ -2953,13 +2926,13 @@ sub getFormValuesFromEml2 {
 		}
 		else {
 			foreach $tempNode ( $tempResult->get_nodelist ) {
-				$$templateVars{"assocPartyFirstName$assocPartyCount"} =
+				$$templateVars{"partyFirstName$partyCount"} =
 				  findValue( $tempNode, './givenName' );
-				$$templateVars{"assocPartyLastName$assocPartyCount"} =
+				$$templateVars{"partyLastName$partyCount"} =
 				  findValue( $tempNode, './surName' );
-				$$templateVars{"origRole$assocPartyCount"} =
+				$$templateVars{"origRole$partyCount"} =
 				  findValue( $tempNode, '../role' );
-				$assocPartyCount++;
+				$partyCount++;
 			}
 		}
 	}
@@ -2982,23 +2955,23 @@ sub getFormValuesFromEml2 {
 		}
 		else {
 			foreach $tempNode ( $tempResult->get_nodelist ) {
-				$$templateVars{"assocPartyFirstName$assocPartyCount"} =
+				$$templateVars{"partyFirstName$partyCount"} =
 				  findValue( $tempNode, './givenName' );
-				$$templateVars{"assocPartyLastName$assocPartyCount"} =
+				$$templateVars{"partyLastName$partyCount"} =
 				  findValue( $tempNode, './surName' );
-				$$templateVars{"origRole$assocPartyCount"} = "Publisher";
-				$assocPartyCount++;
+				$$templateVars{"origRole$partyCount"} = "Publisher";
+				$partyCount++;
 			}
 		}
 	}
 
 	#  }
 
-	#  if ($assocPartyCount > 11) {
+	#  if ($partyCount > 11) {
 	#      errMoreThanN("Additional Originators");
 	#   }
 
-	$$templateVars{'assocPartyCount'} = $assocPartyCount;
+	$$templateVars{'partyCount'} = $partyCount;
 
 	dontOccur( $doc, "./pubDate",  "pubDate" );
 	dontOccur( $doc, "./language", "language" );
@@ -3319,9 +3292,9 @@ sub getFormValuesFromEml2 {
 '../address|../phone|../electronicmailAddress|../organizationName'
 			);
 			if ( $tempResult->size > 0 ) {
-				$$templateVars{'assocPartyFirstNameContact'} =
+				$$templateVars{'partyFirstNameContact'} =
 				  findValue( $node, 'givenName' );
-				$$templateVars{'assocPartyLastNameContact'} =
+				$$templateVars{'partyLastNameContact'} =
 				  findValue( $node, 'surName' );
 
 				my $tempResult2 = $node->findnodes('../address');
@@ -3368,15 +3341,15 @@ sub getFormValuesFromEml2 {
 				}
 				$$templateVars{'origEmailContact'} =
 				  findValue( $node, '../electronicMailAddress' );
-				$$templateVars{'assocPartyOrgNameContact'} =
+				$$templateVars{'partyOrgNameContact'} =
 				  findValue( $node, '../organizationName' );
 			}
 			else {
-				$$templateVars{'assocPartyFirstNameContact'} =
+				$$templateVars{'partyFirstNameContact'} =
 				  findValue( $node, 'givenName' );
-				$$templateVars{'assocPartyLastNameContact'} =
+				$$templateVars{'partyLastNameContact'} =
 				  findValue( $node, 'surName' );
-				$$templateVars{'assocPartyOrgNameContact'} =
+				$$templateVars{'partyOrgNameContact'} =
 				  findValue( $node, '../organizationName' );
 			}
 		}
@@ -4951,9 +4924,9 @@ sub toConfirmData {
 	$$templateVars{'identifierCount'} = $identifierCount - 1;
 	
 	$$templateVars{'title'}          = normalizeCD($FORM::title);
-	$$templateVars{'assocPartyFirstName0'} = normalizeCD($FORM::assocPartyFirstName0);
-	$$templateVars{'assocPartyLastName0'}  = normalizeCD($FORM::assocPartyLastName0);
-	$$templateVars{'assocPartyOrgName'}    = normalizeCD($FORM::assocPartyOrgName);
+	$$templateVars{'partyFirstName0'} = normalizeCD($FORM::partyFirstName0);
+	$$templateVars{'partyLastName0'}  = normalizeCD($FORM::partyLastName0);
+	$$templateVars{'partyOrgName'}    = normalizeCD($FORM::partyOrgName);
 	$$templateVars{'origDelivery'}   = normalizeCD($FORM::origDelivery);
 	$$templateVars{'origCity'}       = normalizeCD($FORM::origCity);
 
@@ -4971,11 +4944,11 @@ sub toConfirmData {
 	$$templateVars{'origEmail'}      = normalizeCD($FORM::origEmail);
 	$$templateVars{'useOrigAddress'} = normalizeCD($FORM::useOrigAddress);
 	if ( $FORM::useOrigAddress eq "on" ) {
-		$$templateVars{'assocPartyFirstNameContact'} =
-		  normalizeCD($FORM::assocPartyFirstName0);
-		$$templateVars{'assocPartyLastNameContact'} =
-		  normalizeCD($FORM::assocPartyLastName0);
-		$$templateVars{'assocPartyOrgNameContact'} = normalizeCD($FORM::assocPartyOrgName);
+		$$templateVars{'partyFirstNameContact'} =
+		  normalizeCD($FORM::partyFirstName0);
+		$$templateVars{'partyLastNameContact'} =
+		  normalizeCD($FORM::partyLastName0);
+		$$templateVars{'partyOrgNameContact'} = normalizeCD($FORM::partyOrgName);
 		$$templateVars{'origDeliveryContact'} =
 		  normalizeCD($FORM::origDelivery);
 		$$templateVars{'origCityContact'} = normalizeCD($FORM::origCity);
@@ -4994,12 +4967,12 @@ sub toConfirmData {
 		$$templateVars{'origEmailContact'}   = normalizeCD($FORM::origEmail);
 	}
 	else {
-		$$templateVars{'assocPartyFirstNameContact'} =
-		  normalizeCD($FORM::assocPartyFirstNameContact);
-		$$templateVars{'assocPartyLastNameContact'} =
-		  normalizeCD($FORM::assocPartyLastNameContact);
-		$$templateVars{'assocPartyOrgNameContact'} =
-		  normalizeCD($FORM::assocPartyOrgNameContact);
+		$$templateVars{'partyFirstNameContact'} =
+		  normalizeCD($FORM::partyFirstNameContact);
+		$$templateVars{'partyLastNameContact'} =
+		  normalizeCD($FORM::partyLastNameContact);
+		$$templateVars{'partyOrgNameContact'} =
+		  normalizeCD($FORM::partyOrgNameContact);
 		$$templateVars{'origDeliveryContact'} =
 		  normalizeCD($FORM::origDeliveryContact);
 		$$templateVars{'origCityContact'} = normalizeCD($FORM::origCityContact);
@@ -5023,29 +4996,29 @@ sub toConfirmData {
 
 	my $aoFNArray   = \@FORM::aoFirstName;
 	my $aoLNArray   = \@FORM::aoLastName;
-	my $assocPartyRoleArray = \@FORM::assocPartyRole;
-	my $assocPartyCount     = 1;
+	my $partyRoleArray = \@FORM::partyRole;
+	my $partyCount     = 1;
 
-	for ( my $i = 0 ; $i <= $#$assocPartyRoleArray ; $i++ ) {
+	for ( my $i = 0 ; $i <= $#$partyRoleArray ; $i++ ) {
 		if ( hasContent( $aoFNArray->[$i] ) && hasContent( $aoLNArray->[$i] ) )
 		{
 			debug(  "Processing Associated Party: origName = "
 				  . $aoFNArray->[$i]
-				  . " assocPartyLastName = "
+				  . " partyLastName = "
 				  . $aoLNArray->[$i]
 				  . " origRole = "
-				  . $assocPartyRoleArray->[$i] );
-			$$templateVars{ "assocPartyFirstName" . $assocPartyCount } =
+				  . $partyRoleArray->[$i] );
+			$$templateVars{ "partyFirstName" . $partyCount } =
 			  normalizeCD( $aoFNArray->[$i] );
-			$$templateVars{ "assocPartyLastName" . $assocPartyCount } =
+			$$templateVars{ "partyLastName" . $partyCount } =
 			  normalizeCD( $aoLNArray->[$i] );
-			$$templateVars{ "origRole" . $assocPartyCount } =
-			  normalizeCD( $assocPartyRoleArray->[$i] );
-			$assocPartyCount++;
+			$$templateVars{ "origRole" . $partyCount } =
+			  normalizeCD( $partyRoleArray->[$i] );
+			$partyCount++;
 		}
 	}
 
-	$$templateVars{'assocPartyCount'}  = $assocPartyCount;
+	$$templateVars{'partyCount'}  = $partyCount;
 	$$templateVars{'abstract'} = normalizeCD($FORM::abstract);
 
 	my $keywordArray     = \@FORM::keyword;
@@ -5284,9 +5257,9 @@ sub copyFormToTemplateVars {
 	
 	
 	$$templateVars{'title'}          = $FORM::title;
-	$$templateVars{'assocPartyFirstName0'} = $FORM::assocPartyFirstName0;
-	$$templateVars{'assocPartyLastName0'}  = $FORM::assocPartyLastName0;
-	$$templateVars{'assocPartyOrgName'}    = $FORM::assocPartyOrgName;
+	$$templateVars{'partyFirstName0'} = $FORM::partyFirstName0;
+	$$templateVars{'partyLastName0'}  = $FORM::partyLastName0;
+	$$templateVars{'partyOrgName'}    = $FORM::partyOrgName;
 	$$templateVars{'origDelivery'}   = $FORM::origDelivery;
 	$$templateVars{'origCity'}       = $FORM::origCity;
 	$$templateVars{'origState'}      = $FORM::origState;
@@ -5303,9 +5276,9 @@ sub copyFormToTemplateVars {
 	else {
 		$$templateVars{'useOrigAddress'} = $FORM::useOrigAddress;
 	}
-	$$templateVars{'assocPartyFirstNameContact'}  = $FORM::assocPartyFirstNameContact;
-	$$templateVars{'assocPartyLastNameContact'}   = $FORM::assocPartyLastNameContact;
-	$$templateVars{'assocPartyOrgNameContact'}    = $FORM::assocPartyOrgNameContact;
+	$$templateVars{'partyFirstNameContact'}  = $FORM::partyFirstNameContact;
+	$$templateVars{'partyLastNameContact'}   = $FORM::partyLastNameContact;
+	$$templateVars{'partyOrgNameContact'}    = $FORM::partyOrgNameContact;
 	$$templateVars{'origDeliveryContact'}   = $FORM::origDeliveryContact;
 	$$templateVars{'origCityContact'}       = $FORM::origCityContact;
 	$$templateVars{'origStateContact'}      = $FORM::origStateContact;
@@ -5316,28 +5289,28 @@ sub copyFormToTemplateVars {
 	$$templateVars{'origFAXContact'}        = $FORM::origFAXContact;
 	$$templateVars{'origEmailContact'}      = $FORM::origEmailContact;
 
-	$$templateVars{'assocPartyCount'} = $FORM::assocPartyCount;
+	$$templateVars{'partyCount'} = $FORM::partyCount;
 	foreach my $origName ( param() ) {
-		if ( $origName =~ /assocPartyFirstName/ ) {
+		if ( $origName =~ /partyFirstName/ ) {
 			my $origNameIndex = $origName;
 			$origNameIndex =~
-			  s/assocPartyFirstName//;    # get the index of the parameter 0, ..., 10
-			my $assocPartyLastName = "assocPartyLastName" . $origNameIndex;
+			  s/partyFirstName//;    # get the index of the parameter 0, ..., 10
+			my $partyLastName = "partyLastName" . $origNameIndex;
 			my $origRole     = "origRole" . $origNameIndex;
 			if ( $origNameIndex =~ /[0-9]+/ && $origNameIndex > 0 ) {
 				if (   hasContent( param($origName) )
-					&& hasContent( param($assocPartyLastName) )
+					&& hasContent( param($partyLastName) )
 					&& hasContent( param($origRole) ) )
 				{
 					debug(  "Processing keyword: $origName = "
 						  . param($origName)
-						  . " $assocPartyLastName = "
-						  . param($assocPartyLastName)
+						  . " $partyLastName = "
+						  . param($partyLastName)
 						  . " $origRole = "
 						  . param($origRole) );
 					$$templateVars{$origName} = normalizeCD( param($origName) );
-					$$templateVars{$assocPartyLastName} =
-					  normalizeCD( param($assocPartyLastName) );
+					$$templateVars{$partyLastName} =
+					  normalizeCD( param($partyLastName) );
 					$$templateVars{$origRole} = normalizeCD( param($origRole) );
 				}
 			}
