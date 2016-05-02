@@ -2679,14 +2679,16 @@ public class MNodeService extends D1NodeService
      */
     private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest {
         boolean allow = false;
+        
         if( isCNAdmin (session) ) {
             allow = true;
             
         } else {
             if( isAuthoritativeNode(pid) ) {
             	
+            	// Check for admin authorization
             	try {
-					return isNodeAdmin(session);
+					allow = isNodeAdmin(session);
 					
 				} catch (NotImplemented e) {
 					logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
@@ -2696,13 +2698,12 @@ public class MNodeService extends D1NodeService
 					
 				}
             	
-            	if ( userHasPermission(session, pid, permission) ) {
-                    allow = true;
+            	// Check for user authorization
+            	if ( !allow ) {
+                    allow = userHasPermission(session, pid, permission);
                     
-                } else {
-                    allow = false;
+            	}
                     
-                }
             } else {
                 throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node.");
                 
