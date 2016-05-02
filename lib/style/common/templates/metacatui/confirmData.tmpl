@@ -46,13 +46,13 @@
 <a name="DataSetOriginator"></a>
 <h4>Principal Data Set Owner</h4>
 
-<p><span class="text-info">First Name:</span>        [%origNamefirst0%]
+<p><span class="text-info">First Name:</span>        [%assocPartyFirstName0%]
 </p>
 
-<p><span class="text-info">Last Name:</span>         [%origNamelast0%]
+<p><span class="text-info">Last Name:</span>         [%assocPartyLastName0%]
 </p>
 
-<p><span class="text-info">Organization Name:</span> [%origNameOrg%]
+<p><span class="text-info">Organization Name:</span> [%assocPartyOrgName%]
 </p>
 
 <p><span class="text-info">E-Mail:</span>            [%origEmail%]
@@ -88,8 +88,8 @@
 <h4>Associated Parties</h4> 
 
     [% numAO = 0 %]
-    [% IF aoCount > 0 %]
-        [% numAO = aoCount %]
+    [% IF assocPartyCount > 0 %]
+        [% numAO = assocPartyCount %]
     [% END %]
 
 </td>
@@ -110,15 +110,15 @@
     </tr>
     [% cnt = 1 %]
     [% WHILE cnt <= numAO %]
-     [% SET origNamefirst = "origNamefirst${cnt}" %]
-     [% SET origNamelast = "origNamelast${cnt}" %]
+     [% SET assocPartyFirstName = "assocPartyFirstName${cnt}" %]
+     [% SET assocPartyLastName = "assocPartyLastName${cnt}" %]
      [% SET origRole = "origRole${cnt}" %]
      <tr> 
       <td width="21%" valign="TOP"> 
-        [% $origNamefirst %]
+        [% $assocPartyFirstName %]
       </td>
       <td width="21%" valign="TOP"> 
-        [% $origNamelast %]
+        [% $assocPartyLastName %]
       </td>
       <td width="58%" valign="TOP"> 
 	[% $origRole %]
@@ -356,13 +356,13 @@
 <a name="DataSetContactAddress"></a>
 <h4>Data Set Contact</h4> 
 
-<p><span class="text-info">First Name:</span>        [%origNamefirstContact%]
+<p><span class="text-info">First Name:</span>        [%assocPartyFirstNameContact%]
 </p>
 
-<p><span class="text-info">Last Name:</span>         [%origNamelastContact%]
+<p><span class="text-info">Last Name:</span>         [%assocPartyLastNameContact%]
 </p>
 
-<p><span class="text-info">Organization Name:</span> [%origNameOrgContact%]
+<p><span class="text-info">Organization Name:</span> [%assocPartyOrgNameContact%]
 </p>
 
 <p><span class="text-info">E-Mail:</span>            [%origEmailContact%]
@@ -482,9 +482,9 @@
 
   <input type="hidden" name="funding" value="[%funding%]" /> 
   <input type="hidden" name="title" value="[%title%]" />
-  <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]" />
-  <input type="hidden" name="origNamelast0" value="[%origNamelast0%]" />
-  <input type="hidden" name="origNameOrg" value="[%origNameOrg%]" />
+  <input type="hidden" name="assocPartyFirstName0" value="[%assocPartyFirstName0%]" />
+  <input type="hidden" name="assocPartyLastName0" value="[%assocPartyLastName0%]" />
+  <input type="hidden" name="assocPartyOrgName" value="[%assocPartyOrgName%]" />
   <input type="hidden" name="origRole0" value="[%origRole0%]" />
   <input type="hidden" name="origDelivery" value="[%origDelivery%]" />
   <input type="hidden" name="origCity" value="[%origCity%]" /> 
@@ -496,9 +496,9 @@
   <input type="hidden" name="origFAX" value="[%origFAX%]"/>
   <input type="hidden" name="origEmail" value="[%origEmail%]" />
   <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]" />
-  <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]" />
-  <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]" />
-  <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]" />
+  <input type="hidden" name="assocPartyFirstNameContact" value="[%assocPartyFirstNameContact%]" />
+  <input type="hidden" name="assocPartyLastNameContact" value="[%assocPartyLastNameContact%]" />
+  <input type="hidden" name="assocPartyOrgNameContact" value="[%assocPartyOrgNameContact%]" />
   <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]" />
   <input type="hidden" name="origCityContact" value="[%origCityContact%]" /> 
   <input type="hidden" name="origStateContact" value="[%origStateContact%]" />
@@ -511,11 +511,11 @@
   <input type="hidden" name="aoCount" value="[%aoCount%]" />
   [% cnt = 1 %]
   [% WHILE cnt <= numAO %]
-      [% SET origNamefirst = "origNamefirst${cnt}" %]
-      [% SET origNamelast = "origNamelast${cnt}" %]
+      [% SET assocPartyFirstName = "assocPartyFirstName${cnt}" %]
+      [% SET assocPartyLastName = "assocPartyLastName${cnt}" %]
       [% SET origRole = "origRole${cnt}" %]
-      <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst %]" />
-      <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast %]" />
+      <input type="hidden" name="[% assocPartyFirstName %]" value="[% $assocPartyFirstName %]" />
+      <input type="hidden" name="[% assocPartyLastName %]" value="[% $assocPartyLastName %]" />
       <input type="hidden" name="[% origRole %]" value="[% $origRole %]" />
       [% cnt = cnt + 1 %]
   [% END %]
