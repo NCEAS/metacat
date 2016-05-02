@@ -1368,14 +1368,15 @@ public abstract class D1NodeService {
     String[] groupnames = null;
     if (session != null ) {
     	username = session.getSubject().getValue();
-    	if (session.getSubjectInfo() != null) {
-    		List<Group> groupList = session.getSubjectInfo().getGroupList();
-    		if (groupList != null) {
-    			groupnames = new String[groupList.size()];
-    			for (int i = 0; i < groupList.size(); i++ ) {
-    				groupnames[i] = groupList.get(i).getSubject().getValue();
-    			}
-    		}
+    	Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
+    	if (otherSubjects != null) {    		
+			groupnames = new String[otherSubjects.size()];
+			int i = 0;
+			Iterator<Subject> iter = otherSubjects.iterator();
+			while (iter.hasNext()) {
+				groupnames[i] = iter.next().getValue();
+				i++;
+			}
     	}
     }
     
