@@ -30,6 +30,7 @@ package edu.ucsb.nceas.metacat;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
@@ -162,6 +163,8 @@ public class PermissionController
     	return true;
     }
 
+    logMetacat.debug("Checking permission on " + this.guid + " for user: " + user + " and groups: " + Arrays.toString(groups));
+    
     //create a userpackage including user, public and group member
     userPackage=createUsersPackage(user, groups);
 
@@ -795,6 +798,9 @@ public class PermissionController
     //bind every elenment in user name array
     for (int i=0;i<lengthOfArray; i++)
     {
+        logMetacat.debug("Checking permission for principal: " + principals[i] );
+        logMetacat.debug("SQL: " + pStmt.toString());
+        
       pStmt.setString(2, principals[i]);
       pStmt.execute();
       rs=pStmt.getResultSet();
