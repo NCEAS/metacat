@@ -74,49 +74,58 @@
 						<input type="hidden" name="identifierCount" value="[% identifierCount %]" />
                         
                         <input type="hidden" name="title" value="[%title%]">
-                        <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]">
-                        <input type="hidden" name="origNamelast0" value="[%origNamelast0%]">
-                        <input type="hidden" name="origNameOrg" value="[%origNameOrg%]">
-                        <input type="hidden" name="origRole0" value="[%origRole0%]">
-                        <input type="hidden" name="origDelivery" value="[%origDelivery%]">
-                        <input type="hidden" name="origCity" value="[%origCity%]"> 
-                        <input type="hidden" name="origState" value="[%origState%]">
-                        <input type="hidden" name="origStateOther" value="[%origStateOther%]">
-                        <input type="hidden" name="origZIP" value="[%origZIP%]">
-                        <input type="hidden" name="origCountry" value="[%origCountry%]">
-                        <input type="hidden" name="origPhone" value="[%origPhone%]">
-                        <input type="hidden" name="origFAX" value="[%origFAX%]">
-                        <input type="hidden" name="origEmail" value="[%origEmail%]">
                         <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]">
-                        <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]">
-                        <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]">
-                        <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]">
-                        <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]">
-                        <input type="hidden" name="origCityContact" value="[%origCityContact%]"> 
-                        <input type="hidden" name="origStateContact" value="[%origStateContact%]">
-                        <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]">
-                        <input type="hidden" name="origZIPContact" value="[%origZIPContact%]">
-                        <input type="hidden" name="origCountryContact" value="[%origCountryContact%]">
-                        <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]">
-                        <input type="hidden" name="origFAXContact" value="[%origFAXContact%]">
-                        <input type="hidden" name="origEmailContact" value="[%origEmailContact%]">
-                        <input type="hidden" name="aoCount" value="[%aoCount%]">
-  
-                        [% numAO = 0 %]
-                        [% IF aoCount > 0 %]
-                            [% numAO = aoCount %]
-                        [% END %]
-                        [% cnt = 1 %]
-                        [% WHILE cnt <= numAO %]
-                            [% SET origNamefirst = "origNamefirst${cnt}" %]
-                            [% SET origNamelast = "origNamelast${cnt}" %]
-                            [% SET origRole = "origRole${cnt}" %]
-                            <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst%]">
-                            <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast%]">
-                            <input type="hidden" name="[% origRole %]" value="[% $origRole%]">
-                            [% cnt = cnt + 1 %]
-                        [% END %]
-                      
+						
+						<input type="hidden" name="partyCount" value="[% partyCount %]" />
+						[% cnt = 0 %]
+						[% WHILE cnt <= partyCount %]
+							[% SET partyId         = "partyId${cnt}" %]
+							[% SET partyFirstName  = "partyFirstName${cnt}" %]
+							[% SET partyLastName   = "partyLastName${cnt}" %]
+							[% SET partyRole       = "partyRole${cnt}" %]
+							[% SET partyOrgName    = "partyOrgName${cnt}" %]
+							[% SET partyEmail      = "partyEmail${cnt}" %]
+							[% SET partyPhone      = "partyPhone${cnt}" %]
+							[% SET partyFAX        = "partyFAX${cnt}" %]
+							[% SET partyDelivery   = "partyDelivery${cnt}" %]
+							[% SET partyCity       = "partyCity${cnt}" %]
+							[% SET partyState      = "partyState${cnt}" %]
+							[% SET partyStateOther = "partyStateOther${cnt}" %] 
+							[% SET partyZIP        = "partyZIP${cnt}" %]
+							[% SET partyCountry    = "partyCountry${cnt}" %]
+							
+							<input type="hidden" name="[% partyId         %]" value="[% $partyId         %]" /> 	
+							<input type="hidden" name="[% partyFirstName  %]" value="[% $partyFirstName  %]" /> 	
+							<input type="hidden" name="[% partyLastName  	%]" value="[% $partyLastName   %]" />	
+							<input type="hidden" name="[% partyRole     	%]" value="[% $partyRole       %]" />	
+							<input type="hidden" name="[% partyOrgName   	%]" value="[% $partyOrgName    %]" />	
+							<input type="hidden" name="[% partyEmail     	%]" value="[% $partyEmail      %]" />	
+							<input type="hidden" name="[% partyPhone     	%]" value="[% $partyPhone      %]" />	
+							<input type="hidden" name="[% partyFAX       	%]" value="[% $partyFAX        %]" />	
+							<input type="hidden" name="[% partyDelivery  	%]" value="[% $partyDelivery   %]" />	
+							<input type="hidden" name="[% partyCity      	%]" value="[% $partyCity       %]" />	
+							<input type="hidden" name="[% partyState     	%]" value="[% $partyState      %]" />	
+							<input type="hidden" name="[% partyStateOther	%]" value="[% $partyStateOther %]" />	
+							<input type="hidden" name="[% partyZIP       	%]" value="[% $partyZIP        %]" />	
+							<input type="hidden" name="[% partyCountry   	%]" value="[% $partyCountry    %]" />			
+						
+							<input type="hidden" name="partyFirstName" value="[% $partyFirstName %]" /> 	
+							<input type="hidden" name="partyLastName" value="[% $partyLastName %]" />	
+							<input type="hidden" name="partyRole" value="[% $partyRole %]" />	
+							<input type="hidden" name="partyOrgName" value="[% $partyOrgName %]" />	
+							<input type="hidden" name="partyEmail" value="[% $partyEmail %]" />	
+							<input type="hidden" name="partyPhone" value="[% $partyPhone %]" />	
+							<input type="hidden" name="partyFAX" value="[% $partyFAX %]" />	
+							<input type="hidden" name="partyDelivery" value="[% $partyDelivery %]" />	
+							<input type="hidden" name="partyCity" value="[% $partyCity %]" />	
+							<input type="hidden" name="partyState" value="[% $partyState %]" />	
+							<input type="hidden" name="partyStateOther" value="[% $partyStateOther %]" />	
+							<input type="hidden" name="partyZIP" value="[% $partyZIP %]" />	
+							<input type="hidden" name="partyCountry" value="[% $partyCountry %]" />			
+						
+							[% cnt = cnt + 1 %]
+						[% END %]
+                        
                         <input type="hidden" name="abstract" value="[%abstract%]">
                         <input type="hidden" name="keyCount" value="[%keyCount%]">
                         [% numKey = 0 %]
