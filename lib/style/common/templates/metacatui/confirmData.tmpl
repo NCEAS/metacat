@@ -15,127 +15,125 @@
 			
 			<div class="row-fluid">
 
-<table class="intro">
-<tr><td align="left">
-<a name="BasicInformation"></a>
-<h4>Basic Information</h4>
-<p><span class="text-info">First Name:</span>        [%providerGivenName%]
-</p>
-<p><span class="text-info">Last Name:</span>         [%providerSurName%]
-</p>
-<p><span class="text-info">Data Set Title:</span>     [%title%]
-</p>
+				<a name="BasicInformation"></a>
+				<h4>Basic Information</h4>
+				<table class="table table-bordered table-striped table-condensed">
+					<tr><td>First Name</td><td>[%providerGivenName%]</td></tr>
+					<tr><td>Last Name</td><td>[%providerSurName%]</td></tr>
+					<tr><td>Title</td><td>[%title%]</td></tr>
 
+					[% IF cfg == 'nceas' %]
+						[% FOREACH group = wg %]
+							<tr><td>NCEAS Project</td><td>[%group%]</td></tr>
+						[% END %]
 
+					[% ELSE %]
+						[% IF cfg == 'esa' %]
+							<tr><td>Organization Name</td><td>[%site%]</td></tr>
+							
+						[% ELSE %]
+							<tr><td>[% config.site | ucfirst %] Name</td><td>[%site%]</td></tr>
+							
+						[% END %]
+					[% END %]
+					<tr><td>Award Number</td><td>[%funding%]</td></tr>
+				</table>
+				
+				<a name="DataSetOriginator"></a>
+				<h4>People and Organizations</h4>
+				<h5>Count: [% partyCount %]</h5>
+				[% cnt = 0 %]
+				[% WHILE cnt <= partyCount %]
+					[% SET partyId         = "partyId${cnt}" %]
+					[% SET partyFirstName  = "partyFirstName${cnt}" %]
+					[% SET partyLastName   = "partyLastName${cnt}" %]
+					[% SET partyRole       = "partyRole${cnt}" %]
+					[% SET partyOrgName    = "partyOrgName${cnt}" %]
+					[% SET partyEmail      = "partyEmail${cnt}" %]
+					[% SET partyPhone      = "partyPhone${cnt}" %]
+					[% SET partyFAX        = "partyFAX${cnt}" %]
+					[% SET partyDelivery   = "partyDelivery${cnt}" %]
+					[% SET partyCity       = "partyCity${cnt}" %]
+					[% SET partyState      = "partyState${cnt}" %]
+					[% SET partyStateOther = "partyStateOthe${cnt}" %] 
+					[% SET partyZIP        = "partyZIP${cnt}" %]
+					[% SET partyCountry    = "partyCountry${cnt}" %]
+					[% SET roles = {
+						principalInvestigator              => 'Principal Investigator',
+						coPrincipalInvestigator            => 'Co-Principal Investigator',
+						collaboratingPrincipalInvestigator => 'Collaborating-Principal Investigator',
+						creator                            => 'Creator (Author/Owner/Originator)',
+						contact                            => 'Contact',
+						metadataProvider                   => 'Metadata Provider',
+						custodianSteward                   => 'Custodian/Steward',
+						publisher                          => 'Publisher',
+						user                               => 'User'} %]
+	
+					[% IF $partyRole != '' %]
+						<table class="table table-bordered table-striped table-condensed">
+						
+							[% IF $partyFirstName != '' %]
+							<tr><td>First Name</td><td>[% $partyFirstName %]</td></tr>
+							[% END %]
+							
+							[% IF $partyLastName != '' %]
+							<tr><td>Last Name</td><td>[% $partyLastName %]</td></tr>
+							[% END %]
+							
+							[% IF $partyRole != '' %]
+							<tr><td>Role</td><td>[% $partyRole %]</td></tr>
+							[% END %]
+							
+							[% IF $partyOrgName != '' %]
+							<tr><td>Organization Name</td><td>[% $partyOrgName %]</td></tr>
+							[% END %]
+							
+							[% IF $partyEmail != '' %]
+							<tr><td>Email</td><td>[% $partyEmail %]</td></tr>
+							[% END %]
+							
+							[% IF $partyPhone != '' %]
+							<tr><td>Phone</td><td>[% $partyPhone %]</td></tr>
+							[% END %]
+							
+							[% IF $partyFAX != '' %]
+							<tr><td>FAX</td><td>[% $partyFAX %]</td></tr>
+							[% END %]
+							
+							[% IF $partyDelivery != '' %]
+							<tr><td>Address</td><td>[% $partyDelivery %]</td></tr>
+							[% END %]
+							
+							[% IF $partyCity != '' %]
+							<tr><td>City</td><td>[% $partyCity %]</td></tr>
+							[% END %]
+							
+							[% IF $partyState != '' %]
+							<tr><td>State</td><td>[% $partyState %]</td></tr>
+							[% END %]
+							
+							[% IF $partyStateOther != '' %]
+							<tr><td>Other Province</td><td>[% $partyStateOther %]</td></tr>
+							[% END %]
+							
+							[% IF $partyZIP != '' %]
+							<tr><td>Postal Code</td><td>[% $partyZIP %]</td></tr>
+							[% END %]
+							
+							[% IF $partyCountry != '' %]
+							<tr><td>Country</td><td>[% $partyCountry %]</td></tr>
+							[% END %]
+						</table>
+			    [% END %]
+					[% cnt = cnt + 1 %]
+				[% END %]
 
-[% IF cfg == 'nceas' %]
-    [% FOREACH group = wg %]
-      <p><span class="text-info">NCEAS Project:</span>  [%group%] </p>
-    [% END %]
-    
-[% ELSE %]
-    [% IF cfg == 'esa' %]
-      <p><span class="text-info">Organization Name:</span>  [%site%]</p>
-    [% ELSE %]
-      <p><span class="text-info">[% config.site | ucfirst %] Name:</span>  [%site%]</p>
-    [% END %]
-[% END %]
-<p><span class="text-info">Award Number:</span>  [%funding%]</p>
-
-<hr class="rule" />
-<a name="DataSetOriginator"></a>
-<h4>Principal Data Set Owner</h4>
-
-<p><span class="text-info">First Name:</span>        [%assocPartyFirstName0%]
-</p>
-
-<p><span class="text-info">Last Name:</span>         [%assocPartyLastName0%]
-</p>
-
-<p><span class="text-info">Organization Name:</span> [%assocPartyOrgName%]
-</p>
-
-<p><span class="text-info">E-Mail:</span>            [%origEmail%]
-</p>
-
-<p><span class="text-info">Phone:</span>             [%origPhone%]
-</p>
-
-<p><span class="text-info">FAX:</span>               [%origFAX%]
-</p>
-
-<p><span class="text-info">Street Information:</span> 
-                                                    [%origDelivery%]
-</p>
-
-<p><span class="text-info">City:</span>              [%origCity%]
-</p>
-
-<p><span class="text-info">State:</span>             [%origState%]
-</p>
-
-<p><span class="text-info">Other State/Province:</span>       [%origStateOther%]
-</p>
-
-<p><span class="text-info">Postal Code:</span>               [%origZIP%]
-</p>
-
-<p><span class="text-info">Country:</span>               [%origCountry%]
-</p>
-
-<hr class="rule" />
-<a name="AdditionalOriginators"></a>
-<h4>Associated Parties</h4> 
-
-    [% numAO = 0 %]
-    [% IF assocPartyCount > 0 %]
-        [% numAO = assocPartyCount %]
-    [% END %]
-
-</td>
-</tr>
-</table>
-
-<table cellspacing="0" border="0" width="760">
-    <tr> 
-      <td width="21%" valign="TOP"> 
-        <span class="text-info">First Name</span>
-      </td>
-      <td width="21%" valign="TOP"> 
-        <span class="text-info">Last Name</span>
-      </td>
-      <td width="58%" valign="TOP"> 
-        <span class="text-info">Role</span>
-      </td>
-    </tr>
-    [% cnt = 1 %]
-    [% WHILE cnt <= numAO %]
-     [% SET assocPartyFirstName = "assocPartyFirstName${cnt}" %]
-     [% SET assocPartyLastName = "assocPartyLastName${cnt}" %]
-     [% SET origRole = "origRole${cnt}" %]
-     <tr> 
-      <td width="21%" valign="TOP"> 
-        [% $assocPartyFirstName %]
-      </td>
-      <td width="21%" valign="TOP"> 
-        [% $assocPartyLastName %]
-      </td>
-      <td width="58%" valign="TOP"> 
-	[% $origRole %]
-      </td>
-     </tr>
-     [% cnt = cnt + 1 %]
-     [% END %]    
-</table>
-
-<hr class="rule" />
 <a name="DataSetAbstract"></a>
 <h4>Data Set Abstract</h4>
 <p>
 [%abstract%]
 </p>
  [% IF modules.keyword == 'true' %]
-<hr class="rule" />
 <a name="KeywordInformation"></a>
 <h4>Keyword Information</h4> 
 
@@ -178,7 +176,6 @@
 [% END %]
   
 [% IF modules.temporal == 'true' %]
-<hr class="rule" />
 <a name="TemporalCoverageOfData"></a>
 <h4>Temporal Coverage of Data</h4> 
 
@@ -190,7 +187,6 @@
 [% END %]
 
 [% IF modules.spatial == 'true' %]
-<hr class="rule" />
 <a name="SpatialCoverageOfData"></a>
 <h4>Spatial Coverage of Data</h4> 
 
@@ -299,7 +295,6 @@
     [% IF taxaCount > 0 %]
         [% numTaxa = taxaCount %]
     [% END %]
-    <hr class="rule" />
     <a name="Taxonomic Coverage"></a>
     <h4>Taxonomic Coverage of Data</h4>
     [% cnt = 1 %]
@@ -313,7 +308,6 @@
 [% END %]
 
 [% IF modules.method == 'true' %]
-    <hr class="rule" />
     <a name="Methods"></a>
     <h4>Data Collection Methods</h4>
     <p><span class="text-info">Method Title:</span> [%methodTitle%]</p>
@@ -325,7 +319,6 @@
 [% END %]
 
 [% IF modules.upload == 'true' && upCount %]
-   <hr class="rule" />
 	 <a name="Upload Data"></a>
 	  <h4>Upload Data</h4>
     
@@ -352,49 +345,7 @@
 				</p>
     [% END %]
 [% END %]
-<hr class="rule" />
-<a name="DataSetContactAddress"></a>
-<h4>Data Set Contact</h4> 
 
-<p><span class="text-info">First Name:</span>        [%assocPartyFirstNameContact%]
-</p>
-
-<p><span class="text-info">Last Name:</span>         [%assocPartyLastNameContact%]
-</p>
-
-<p><span class="text-info">Organization Name:</span> [%assocPartyOrgNameContact%]
-</p>
-
-<p><span class="text-info">E-Mail:</span>            [%origEmailContact%]
-</p>
-
-<p><span class="text-info">Phone:</span>             [%origPhoneContact%]
-</p>
-
-<p><span class="text-info">FAX:</span>               [%origFAXContact%]
-</p>
-
-<p><span class="text-info">Street Information:</span> 
-                                                    [%origDeliveryContact%]
-</p>
-
-<p><span class="text-info">City:</span>              [%origCityContact%]
-</p>
-
-<p><span class="text-info">State:</span>             [%origStateContact%]
-</p>
-
-<p><span class="text-info">Other State/Province:</span>       [%origStateOtherContact%]
-</p>
-
-<p><span class="text-info">Postal Code:</span>               [%origZIPContact%]
-</p>
-
-<p><span class="text-info">Country:</span>           [%origCountryContact%]
-</p>
-
-
-<hr class="rule" />
 <a name="DistributionIinformation"></a>
 <h4>Distribution Information</h4> 
 
@@ -482,43 +433,59 @@
 
   <input type="hidden" name="funding" value="[%funding%]" /> 
   <input type="hidden" name="title" value="[%title%]" />
-  <input type="hidden" name="assocPartyFirstName0" value="[%assocPartyFirstName0%]" />
-  <input type="hidden" name="assocPartyLastName0" value="[%assocPartyLastName0%]" />
-  <input type="hidden" name="assocPartyOrgName" value="[%assocPartyOrgName%]" />
-  <input type="hidden" name="origRole0" value="[%origRole0%]" />
-  <input type="hidden" name="origDelivery" value="[%origDelivery%]" />
-  <input type="hidden" name="origCity" value="[%origCity%]" /> 
-  <input type="hidden" name="origState" value="[%origState%]" />
-  <input type="hidden" name="origStateOther" value="[%origStateOther%]" />
-  <input type="hidden" name="origZIP" value="[%origZIP%]" />
-  <input type="hidden" name="origCountry" value="[%origCountry%]" />
-  <input type="hidden" name="origPhone" value="[%origPhone%]" />
-  <input type="hidden" name="origFAX" value="[%origFAX%]"/>
-  <input type="hidden" name="origEmail" value="[%origEmail%]" />
   <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]" />
-  <input type="hidden" name="assocPartyFirstNameContact" value="[%assocPartyFirstNameContact%]" />
-  <input type="hidden" name="assocPartyLastNameContact" value="[%assocPartyLastNameContact%]" />
-  <input type="hidden" name="assocPartyOrgNameContact" value="[%assocPartyOrgNameContact%]" />
-  <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]" />
-  <input type="hidden" name="origCityContact" value="[%origCityContact%]" /> 
-  <input type="hidden" name="origStateContact" value="[%origStateContact%]" />
-  <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]" />
-  <input type="hidden" name="origZIPContact" value="[%origZIPContact%]"/>
-  <input type="hidden" name="origCountryContact" value="[%origCountryContact%]" />
-  <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]" />
-  <input type="hidden" name="origFAXContact" value="[%origFAXContact%]" />
-  <input type="hidden" name="origEmailContact" value="[%origEmailContact%]" />
-  <input type="hidden" name="aoCount" value="[%aoCount%]" />
-  [% cnt = 1 %]
-  [% WHILE cnt <= numAO %]
-      [% SET assocPartyFirstName = "assocPartyFirstName${cnt}" %]
-      [% SET assocPartyLastName = "assocPartyLastName${cnt}" %]
-      [% SET origRole = "origRole${cnt}" %]
-      <input type="hidden" name="[% assocPartyFirstName %]" value="[% $assocPartyFirstName %]" />
-      <input type="hidden" name="[% assocPartyLastName %]" value="[% $assocPartyLastName %]" />
-      <input type="hidden" name="[% origRole %]" value="[% $origRole %]" />
-      [% cnt = cnt + 1 %]
+  <input type="hidden" name="partyCount" value="[% partyCount %]" />
+
+
+  [% cnt = 0 %]
+  [% WHILE cnt <= partyCount %]
+		[% SET partyId         = "partyId${cnt}" %]
+		[% SET partyFirstName  = "partyFirstName${cnt}" %]
+		[% SET partyLastName   = "partyLastName${cnt}" %]
+		[% SET partyRole       = "partyRole${cnt}" %]
+		[% SET partyOrgName    = "partyOrgName${cnt}" %]
+		[% SET partyEmail      = "partyEmail${cnt}" %]
+		[% SET partyPhone      = "partyPhone${cnt}" %]
+		[% SET partyFAX        = "partyFAX${cnt}" %]
+		[% SET partyDelivery   = "partyDelivery${cnt}" %]
+		[% SET partyCity       = "partyCity${cnt}" %]
+		[% SET partyState      = "partyState${cnt}" %]
+		[% SET partyStateOther = "partyStateOther${cnt}" %] 
+		[% SET partyZIP        = "partyZIP${cnt}" %]
+		[% SET partyCountry    = "partyCountry${cnt}" %]
+		
+		<input type="hidden" name="[% partyId         %]" value="[% $partyId         %]" /> 	
+		<input type="hidden" name="[% partyFirstName  %]" value="[% $partyFirstName  %]" /> 	
+		<input type="hidden" name="[% partyLastName  	%]" value="[% $partyLastName   %]" />	
+		<input type="hidden" name="[% partyRole     	%]" value="[% $partyRole       %]" />	
+		<input type="hidden" name="[% partyOrgName   	%]" value="[% $partyOrgName    %]" />	
+		<input type="hidden" name="[% partyEmail     	%]" value="[% $partyEmail      %]" />	
+		<input type="hidden" name="[% partyPhone     	%]" value="[% $partyPhone      %]" />	
+		<input type="hidden" name="[% partyFAX       	%]" value="[% $partyFAX        %]" />	
+		<input type="hidden" name="[% partyDelivery  	%]" value="[% $partyDelivery   %]" />	
+		<input type="hidden" name="[% partyCity      	%]" value="[% $partyCity       %]" />	
+		<input type="hidden" name="[% partyState     	%]" value="[% $partyState      %]" />	
+		<input type="hidden" name="[% partyStateOther	%]" value="[% $partyStateOther %]" />	
+		<input type="hidden" name="[% partyZIP       	%]" value="[% $partyZIP        %]" />	
+		<input type="hidden" name="[% partyCountry   	%]" value="[% $partyCountry    %]" />			
+
+		<input type="hidden" name="partyFirstName" value="[% $partyFirstName %]" /> 	
+		<input type="hidden" name="partyLastName" value="[% $partyLastName %]" />	
+		<input type="hidden" name="partyRole" value="[% $partyRole %]" />	
+		<input type="hidden" name="partyOrgName" value="[% $partyOrgName %]" />	
+		<input type="hidden" name="partyEmail" value="[% $partyEmail %]" />	
+		<input type="hidden" name="partyPhone" value="[% $partyPhone %]" />	
+		<input type="hidden" name="partyFAX" value="[% $partyFAX %]" />	
+		<input type="hidden" name="partyDelivery" value="[% $partyDelivery %]" />	
+		<input type="hidden" name="partyCity" value="[% $partyCity %]" />	
+		<input type="hidden" name="partyState" value="[% $partyState %]" />	
+		<input type="hidden" name="partyStateOther" value="[% $partyStateOther %]" />	
+		<input type="hidden" name="partyZIP" value="[% $partyZIP %]" />	
+		<input type="hidden" name="partyCountry" value="[% $partyCountry %]" />			
+
+  	[% cnt = cnt + 1 %]
   [% END %]
+	
   <input type="hidden" name="abstract" value="[%abstract%]" />
   <input type="hidden" name="keyCount" value="[%keyCount%]" />
   [% cnt = 1 %]
