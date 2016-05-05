@@ -7,6 +7,7 @@
   <script language="JavaScript" type="text/javascript">
     // enable Bootstrap tooltip popovers for licensing choices
     $('.popover-target').popover();
+		$('#party-tooltip').tooltip({trigger: 'manual'}).tooltip('show');
   </script>
 
 	<!-- CONTENT SECTION ======================================================================= -->
@@ -197,10 +198,34 @@
 							<a class="accordion-toggle" data-toggle="collapse" data-target="#collapseParties" >
 								People and Organizations  
 							</a>
-							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-question-sign"></i></a>
+							<a data-toggle="modal" data-target="#myModal" role="button" href="[% cgiPrefix %]/register-dataset.cgi?cfg=[%cfg%]&amp;stage=guide#AdditionalOriginators"><i class="icon-info-sign"></i></a>
 						</div>
 						<div id="collapseParties" class="accordion-body collapse in">
 							<div class="accordion-inner">
+								<div class="control-group">
+									<label class="control-label" for="assocPartyRole">Role</label>
+									<div class="controls">
+										<select name="assocPartyRole" id="assocPartyRole">
+											<option value="creator">Creator (Author/Owner/Originator)</option>
+											<option value="principalInvestigator">Principal Investigator</option>
+											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
+											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
+											<option value="contact">Contact</option>
+											<option value="metadataProvider">Metadata Provider</option>
+											<option value="custodianSteward">Custodian/Steward</option>
+											<option value="publisher">Publisher</option>
+											<option value="user">User</option>
+										</select>
+                    <i class="icon-info-sign popover-target" id="part-tooltip"
+                        data-original-title="People and Organizations"
+                        data-toggle="popover"
+                        data-trigger="hover"
+                        data-placement="bottom"
+                        data-html="true"
+                        data-content="<p>A person or organization with a 'Creator' role is required.<p><p>Enter a person's first and last name (and optionally their organization) or just an organization name.</p><p>Creators will be listed in citations.  If a Contact is not added, the first Creator will be used. Use the 'Add Person or Organization' button below to add your entries.<p>"
+                        title=""></i>
+									</div>
+								</div>
 								<div class="control-group">
 									<label class="control-label" for="assocPartyFirstName">First Name</label>
 									<div class="controls">
@@ -211,22 +236,6 @@
 									<label class="control-label" for="assocPartyLastName">Last Name</label>
 									<div class="controls">
 										<input type="text" name="assocPartyLastName" id="assocPartyLastName" />
-									</div>
-								</div>
-								<div class="control-group">
-									<label class="control-label" for="assocPartyRole">Role</label>
-									<div class="controls">
-										<select name="assocPartyRole" id="assocPartyRole">
-											<option value="principalInvestigator">Principal Investigator</option>
-											<option value="coPrincipalInvestigator">Co-Principal Investigator</option>
-											<option value="collaboratingPrincipalInvestigator">Collaborating-Principal Investigator</option>
-											<option value="creator">Creator (Author/Owner/Originator)</option>
-											<option value="contact">Contact</option>
-											<option value="metadataProvider">Metadata Provider</option>
-											<option value="custodianSteward">Custodian/Steward</option>
-											<option value="publisher">Publisher</option>
-											<option value="user">User</option>
-										</select>
 									</div>
 								</div>
 								<div class="control-group">
@@ -358,49 +367,85 @@
 									</div>
 								</div>
 								
-								<table class="table table-striped table-bordered table-hover" id="assocPartyTable">   
-									[% cnt = 1 %]
+								<table class="table table-striped table-bordered table-hover" id="partyTable">   
+									[% cnt = 0 %]
 									<tbody>
-									  [% WHILE cnt < assocPartyCount %]
-											<tr>
-												<td>
+									  [% WHILE cnt < partyCount %]
+											[% SET partyId         = "partyId${cnt}" %]
+											[% SET partyFirstName  = "partyFirstName${cnt}" %]
+											[% SET partyLastName   = "partyLastName${cnt}" %]
+											[% SET partyRole       = "partyRole${cnt}" %]
+											[% SET partyOrgName    = "partyOrgName${cnt}" %]
+											[% SET partyEmail      = "partyEmail${cnt}" %]
+											[% SET partyPhone      = "partyPhone${cnt}" %]
+											[% SET partyFAX        = "partyFAX${cnt}" %]
+											[% SET partyDelivery   = "partyDelivery${cnt}" %]
+											[% SET partyCity       = "partyCity${cnt}" %]
+											[% SET partyState      = "partyState${cnt}" %]
+											[% SET partyStateOther = "partyStateOther${cnt}" %] 
+											[% SET partyZIP        = "partyZIP${cnt}" %]
+											[% SET partyCountry    = "partyCountry${cnt}" %]
+											[% SET roles = {
+												principalInvestigator              => 'Principal Investigator',
+												coPrincipalInvestigator            => 'Co-Principal Investigator',
+												collaboratingPrincipalInvestigator => 'Collaborating-Principal Investigator',
+												creator                            => 'Creator (Author/Owner/Originator)',
+												contact                            => 'Contact',
+												metadataProvider                   => 'Metadata Provider',
+												custodianSteward                   => 'Custodian/Steward',
+												publisher                          => 'Publisher',
+												user                               => 'User'} %]
+											<tr id="[% $partyId %]">
+												<input type="hidden" name="partyId"         value="[% $partyId %]" />
+												<input type="hidden" name="partyFirstName"  value="[% $partyFirstName %]" />
+												<input type="hidden" name="partyLastName"   value="[% $partyLastName %]" />
+												<input type="hidden" name="partyRole"       value="[% $partyRole %]" />
+												<input type="hidden" name="partyOrgName"    value="[% $partyOrgName %]" />
+												<input type="hidden" name="partyEmail" 			value="[% $partyEmail %]" />
+												<input type="hidden" name="partyPhone"      value="[% $partyPhone %]" />
+												<input type="hidden" name="partyFAX" 				value="[% $partyFAX %]" />
+												<input type="hidden" name="partyDelivery"   value="[% $partyDelivery %]" />
+												<input type="hidden" name="partyCity"       value="[% $partyCity %]" />
+												<input type="hidden" name="partyState"      value="[% $partyState %]" />
+												<input type="hidden" name="partyStateOther" value="[% $partyStateOther %]" />
+												<input type="hidden" name="partyZIP"        value="[% $partyZIP %]" />
+												<input type="hidden" name="partyCountry"    value="[% $partyCountry %]" />
+												[% IF $partyFirstName != '' && $partyLastName != '' %]
+													<td>[% $partyFirstName %]</td>
+													<td>[% $partyLastName %]</td>
+													<td>[% $partyRole %]</td>
+													
+												[% ELSE %]
+													<td colspan="2">[% $partyOrgName %]</td>
+													<td>[% $partyRole %]</td>
+													
+												[% END %]
+												<td style="text-align: center">
 													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveUpRow(event)"
-																class="icon-arrow-up" alt="Move Up"></i>
+														<i onClick="moveUpRow(event)" class="icon-arrow-up" alt="Move Up"></i>
 													</a>
 												</td>
-												<td>
+												<td style="text-align: center">
 													<a style="cursor:pointer">
-														<i onClick="cleanTextNodes('aoHRRow', 'assocPartyRowMarker');moveDownRow(event, 'assocPartyRowMarker')"
-																class="icon-arrow-down" alt="Move Down"></i>
+														<i onClick="moveDownRow(event, 'partyRowMarker')" class="icon-arrow-down" alt="Move Down"></i>
 													</a>
 												</td>
-												<td>
+												<td style="text-align: center">
+													<a style="cursor:pointer">
+														<i class="icon-pencil" alt="Edit" onclick="editParty(event)"></i>
+													</a>
+												</td>
+												<td style="text-align: center">
 													<a style="cursor:pointer">
 														<i class="icon-remove-sign" onClick="delRow(event)" alt="Delete"></i>
 													</a>
 												</td>
-												<td style="cursor:pointer" onClick="alert('Load into editing fields.')">
-													[% assocPartyFirstName %]
-													<input type="hidden" name="assocPartyFirstName"  value="[% assocPartyFirstName %] " />
-													<input type="hidden" name="assocPartyLastName"   value="[% assocPartyLastName %]  " />
-													<input type="hidden" name="assocPartyOrgName"    value="[% assocPartyOrgName %]   " />
-													<input type="hidden" name="assocPartyEmail" 			value="[% assocPartyEmail %]     " />
-													<input type="hidden" name="assocPartyPhone"      value="[% assocPartyPhone %]     " />
-													<input type="hidden" name="assocPartyFAX" 				value="[% assocPartyFAX %]       " />
-													<input type="hidden" name="assocPartyCity"       value="[% assocPartyCity %]      " />
-													<input type="hidden" name="assocPartyStateOther" value="[% assocPartyStateOther %]" />
-													<input type="hidden" name="assocPartyZip"        value="[% assocPartyZip %]       " />
-													<input type="hidden" name="assocPartyCountry"    value="[% assocPartyCountry %]   " />
-												</td>
-												<td>[% assocPartyLastName %]</td>
-												<td>[% assocPartyRole %]</td>
 											</tr>
 											[% cnt = cnt + 1 %]
 									  [% END %]
-										<tr id="assocPartyRowMarker">
+										<tr id="partyRowMarker">
 											<td colspan="7">
-												<input type="hidden" name="assocPartyCount" value="[% assocPartyCount %]" id="assocPartyCount" />
+												<input type="hidden" name="partyCount" value="[% partyCount %]" id="partyCount" />
 											</td>
 										</tr>
 									</tbody>
@@ -489,7 +534,6 @@
 										 [% numKey = 0 %]
 										 [% IF keyCount %]
 										   [% numKey = keyCount %]
-										        [% numAO = assocPartyCount %]
 										        <tr class="sectbody" id="keywordHRRow">
 										            <td colSpan="6">
 										                <hr width = "85%"/>
