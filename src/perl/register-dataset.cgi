@@ -558,7 +558,7 @@ if ( !$error ) {
 			$xmldoc =~ s/docid/$docid/;
 			debugDoc($xmldoc);
 
-            debug('Updating docid: ' . $docid);
+      debug('Updating docid: ' . $docid);
 			my $response = $metacat->update( $docid, $xmldoc );
 
 			if ( !$response ) {
@@ -4924,101 +4924,50 @@ sub toConfirmData {
 	$$templateVars{'identifierCount'} = $identifierCount - 1;
 	
 	$$templateVars{'title'}          = normalizeCD($FORM::title);
-	$$templateVars{'partyFirstName0'} = normalizeCD($FORM::partyFirstName0);
-	$$templateVars{'partyLastName0'}  = normalizeCD($FORM::partyLastName0);
-	$$templateVars{'partyOrgName'}    = normalizeCD($FORM::partyOrgName);
-	$$templateVars{'origDelivery'}   = normalizeCD($FORM::origDelivery);
-	$$templateVars{'origCity'}       = normalizeCD($FORM::origCity);
 
-	if ( $FORM::origState =~ /select state/i ) {
-		$$templateVars{'origState'} = "";
-	}
-	else {
-		$$templateVars{'origState'} = $FORM::origState;
-	}
-	$$templateVars{'origStateOther'} = normalizeCD($FORM::origStateOther);
-	$$templateVars{'origZIP'}        = normalizeCD($FORM::origZIP);
-	$$templateVars{'origCountry'}    = normalizeCD($FORM::origCountry);
-	$$templateVars{'origPhone'}      = normalizeCD($FORM::origPhone);
-	$$templateVars{'origFAX'}        = normalizeCD($FORM::origFAX);
-	$$templateVars{'origEmail'}      = normalizeCD($FORM::origEmail);
-	$$templateVars{'useOrigAddress'} = normalizeCD($FORM::useOrigAddress);
-	if ( $FORM::useOrigAddress eq "on" ) {
-		$$templateVars{'partyFirstNameContact'} =
-		  normalizeCD($FORM::partyFirstName0);
-		$$templateVars{'partyLastNameContact'} =
-		  normalizeCD($FORM::partyLastName0);
-		$$templateVars{'partyOrgNameContact'} = normalizeCD($FORM::partyOrgName);
-		$$templateVars{'origDeliveryContact'} =
-		  normalizeCD($FORM::origDelivery);
-		$$templateVars{'origCityContact'} = normalizeCD($FORM::origCity);
-		if ( $FORM::origState =~ /select state/i ) {
-			$$templateVars{'origStateContact'} = "";
+	# Handle multiple parties
+	my $partyIds = \@FORM::partyId;
+	my $partyFirstNames = \@FORM::partyFirstName;
+	my $partyLastNames = \@FORM::partyLastName;
+	my $partyRoles = \@FORM::partyRole; # role is required no matter what
+	my $partyOrgNames = \@FORM::partyOrgName;
+	my $partyEmails = \@FORM::partyEmail;
+	my $partyPhones = \@FORM::partyPhone;
+	my $partyFaxes = \@FORM::partyFAX;
+	my $partyDeliveries = \@FORM::partyDelivery;
+	my $partyCities = \@FORM::partyCity;
+	my $partyStates = \@FORM::partyState;
+	my $partyStatesOther = \@FORM::partyStateOther;
+	my $partyZIPs = \@FORM::partyZIP;
+	my $partyCountries = \@FORM::partyCountry;
+	
+	my $partyCount = $FORM::partyCount;
+	for ( my $partyIndex = 0; $partyIndex <= $partyCount; $partyIndex++ ) {
+		$$templateVars{'partyId' . $partyIndex}        = normalizeCD($partyIds->[$partyIndex]);
+		$$templateVars{'partyFirstName' . $partyIndex} = normalizeCD($partyFirstNames->[$partyIndex]);
+		$$templateVars{'partyLastName' . $partyIndex}  = normalizeCD($partyLastNames->[$partyIndex]);
+		$$templateVars{'partyRole' . $partyIndex}      = normalizeCD($partyRoles->[$partyIndex]);
+		$$templateVars{'partyOrgName' . $partyIndex}   = normalizeCD($partyOrgNames->[$partyIndex]);
+		$$templateVars{'partyEmail' . $partyIndex}     = normalizeCD($partyEmails->[$partyIndex]);
+		$$templateVars{'partyPhone' . $partyIndex}     = normalizeCD($partyPhones->[$partyIndex]);
+		$$templateVars{'partyFAX' . $partyIndex}       = normalizeCD($partyFaxes->[$partyIndex]);
+		$$templateVars{'partyDelivery' . $partyIndex}  = normalizeCD($partyDeliveries->[$partyIndex]);
+		$$templateVars{'partyCity' . $partyIndex}      = normalizeCD($partyCities->[$partyIndex]);
+  
+		if ( $partyStates->[$partyIndex] =~ /select state/i ) {
+			$$templateVars{'partyState' . $partyIndex} = "";
+		} else {
+			$$templateVars{'partyState' . $partyIndex} = $partyStates->[$partyIndex];
 		}
-		else {
-			$$templateVars{'origStateContact'} = $FORM::origState;
-		}
-		$$templateVars{'origStateOtherContact'} =
-		  normalizeCD($FORM::origStateOther);
-		$$templateVars{'origZIPContact'}     = normalizeCD($FORM::origZIP);
-		$$templateVars{'origCountryContact'} = normalizeCD($FORM::origCountry);
-		$$templateVars{'origPhoneContact'}   = normalizeCD($FORM::origPhone);
-		$$templateVars{'origFAXContact'}     = normalizeCD($FORM::origFAX);
-		$$templateVars{'origEmailContact'}   = normalizeCD($FORM::origEmail);
+		$$templateVars{'partyStateOther' . $partyIndex} = normalizeCD($partyStatesOther->[$partyIndex]);
+		$$templateVars{'partyZIP' . $partyIndex}        = normalizeCD($partyZIPs->[$partyIndex]);
+		$$templateVars{'partyCountry' . $partyIndex}    = normalizeCD($partyCountries->[$partyIndex]);
+		
+		#$partyCount++;
 	}
-	else {
-		$$templateVars{'partyFirstNameContact'} =
-		  normalizeCD($FORM::partyFirstNameContact);
-		$$templateVars{'partyLastNameContact'} =
-		  normalizeCD($FORM::partyLastNameContact);
-		$$templateVars{'partyOrgNameContact'} =
-		  normalizeCD($FORM::partyOrgNameContact);
-		$$templateVars{'origDeliveryContact'} =
-		  normalizeCD($FORM::origDeliveryContact);
-		$$templateVars{'origCityContact'} = normalizeCD($FORM::origCityContact);
-		if ( $FORM::origStateContact =~ /select state/i ) {
-			$$templateVars{'origStateContact'} = "";
-		}
-		else {
-			$$templateVars{'origStateContact'} = $FORM::origStateContact;
-		}
-		$$templateVars{'origStateOtherContact'} =
-		  normalizeCD($FORM::origStateOtherContact);
-		$$templateVars{'origZIPContact'} = normalizeCD($FORM::origZIPContact);
-		$$templateVars{'origCountryContact'} =
-		  normalizeCD($FORM::origCountryContact);
-		$$templateVars{'origPhoneContact'} =
-		  normalizeCD($FORM::origPhoneContact);
-		$$templateVars{'origFAXContact'} = normalizeCD($FORM::origFAXContact);
-		$$templateVars{'origEmailContact'} =
-		  normalizeCD($FORM::origEmailContact);
-	}
-
-	my $aoFNArray   = \@FORM::aoFirstName;
-	my $aoLNArray   = \@FORM::aoLastName;
-	my $partyRoleArray = \@FORM::partyRole;
-	my $partyCount     = 1;
-
-	for ( my $i = 0 ; $i <= $#$partyRoleArray ; $i++ ) {
-		if ( hasContent( $aoFNArray->[$i] ) && hasContent( $aoLNArray->[$i] ) )
-		{
-			debug(  "Processing Associated Party: origName = "
-				  . $aoFNArray->[$i]
-				  . " partyLastName = "
-				  . $aoLNArray->[$i]
-				  . " origRole = "
-				  . $partyRoleArray->[$i] );
-			$$templateVars{ "partyFirstName" . $partyCount } =
-			  normalizeCD( $aoFNArray->[$i] );
-			$$templateVars{ "partyLastName" . $partyCount } =
-			  normalizeCD( $aoLNArray->[$i] );
-			$$templateVars{ "origRole" . $partyCount } =
-			  normalizeCD( $partyRoleArray->[$i] );
-			$partyCount++;
-		}
-	}
-
-	$$templateVars{'partyCount'}  = $partyCount;
+	#$$templateVars{'partyCount'} = $partyCount - 1; 
+	$$templateVars{'partyCount'} = $FORM::partyCount; 
+	
 	$$templateVars{'abstract'} = normalizeCD($FORM::abstract);
 
 	my $keywordArray     = \@FORM::keyword;
@@ -5254,21 +5203,8 @@ sub copyFormToTemplateVars {
 			}
 		}
 	}
-	
-	
+		
 	$$templateVars{'title'}          = $FORM::title;
-	$$templateVars{'partyFirstName0'} = $FORM::partyFirstName0;
-	$$templateVars{'partyLastName0'}  = $FORM::partyLastName0;
-	$$templateVars{'partyOrgName'}    = $FORM::partyOrgName;
-	$$templateVars{'origDelivery'}   = $FORM::origDelivery;
-	$$templateVars{'origCity'}       = $FORM::origCity;
-	$$templateVars{'origState'}      = $FORM::origState;
-	$$templateVars{'origStateOther'} = $FORM::origStateOther;
-	$$templateVars{'origZIP'}        = $FORM::origZIP;
-	$$templateVars{'origCountry'}    = $FORM::origCountry;
-	$$templateVars{'origPhone'}      = $FORM::origPhone;
-	$$templateVars{'origFAX'}        = $FORM::origFAX;
-	$$templateVars{'origEmail'}      = $FORM::origEmail;
 
 	if ( $FORM::useSiteCoord ne "" ) {
 		$$templateVars{'useOrigAddress'} = "CHECKED";
@@ -5276,42 +5212,64 @@ sub copyFormToTemplateVars {
 	else {
 		$$templateVars{'useOrigAddress'} = $FORM::useOrigAddress;
 	}
-	$$templateVars{'partyFirstNameContact'}  = $FORM::partyFirstNameContact;
-	$$templateVars{'partyLastNameContact'}   = $FORM::partyLastNameContact;
-	$$templateVars{'partyOrgNameContact'}    = $FORM::partyOrgNameContact;
-	$$templateVars{'origDeliveryContact'}   = $FORM::origDeliveryContact;
-	$$templateVars{'origCityContact'}       = $FORM::origCityContact;
-	$$templateVars{'origStateContact'}      = $FORM::origStateContact;
-	$$templateVars{'origStateOtherContact'} = $FORM::origStateOtherContact;
-	$$templateVars{'origZIPContact'}        = $FORM::origZIPContact;
-	$$templateVars{'origCountryContact'}    = $FORM::origCountryContact;
-	$$templateVars{'origPhoneContact'}      = $FORM::origPhoneContact;
-	$$templateVars{'origFAXContact'}        = $FORM::origFAXContact;
-	$$templateVars{'origEmailContact'}      = $FORM::origEmailContact;
 
 	$$templateVars{'partyCount'} = $FORM::partyCount;
-	foreach my $origName ( param() ) {
-		if ( $origName =~ /partyFirstName/ ) {
-			my $origNameIndex = $origName;
-			$origNameIndex =~
-			  s/partyFirstName//;    # get the index of the parameter 0, ..., 10
-			my $partyLastName = "partyLastName" . $origNameIndex;
-			my $origRole     = "origRole" . $origNameIndex;
-			if ( $origNameIndex =~ /[0-9]+/ && $origNameIndex > 0 ) {
-				if (   hasContent( param($origName) )
-					&& hasContent( param($partyLastName) )
-					&& hasContent( param($origRole) ) )
-				{
-					debug(  "Processing keyword: $origName = "
-						  . param($origName)
-						  . " $partyLastName = "
-						  . param($partyLastName)
-						  . " $origRole = "
-						  . param($origRole) );
-					$$templateVars{$origName} = normalizeCD( param($origName) );
-					$$templateVars{$partyLastName} =
-					  normalizeCD( param($partyLastName) );
-					$$templateVars{$origRole} = normalizeCD( param($origRole) );
+
+	foreach my $paramName ( param() ) {
+		if ( $paramName =~ /partyRole/ ) {
+			my $partyIndex = $paramName;
+			$partyIndex =~ s/partyRole//; # get the index of the parameter 0, 1, 2, ...
+			
+			my $partyId         = "partyId" . $partyIndex;
+			my $partyFirstName  = "partyFirstName" . $partyIndex;
+			my $partyLastName   = "partyLastName" . $partyIndex;
+			my $partyRole       = "partyRole" . $partyIndex;
+			my $partyOrgName    = "partyOrgName" . $partyIndex;
+			my $partyDelivery   = "partyDelivery" . $partyIndex;
+			my $partyCity       = "partyCity" . $partyIndex;
+			my $partyState      = "partyState" . $partyIndex;
+			my $partyStateOther = "partyStateOther" . $partyIndex;
+			my $partyZIP        = "partyZIP" . $partyIndex;
+			my $partyCountry    = "partyCountry" . $partyIndex;
+			my $partyPhone      = "partyPhone" . $partyIndex;
+			my $partyFAX        = "partyFAX" . $partyIndex;
+			my $partyEmail      = "partyEmail" . $partyIndex;
+			
+			if ( $partyIndex >= 0 ) {
+				if ( hasContent(param($partyRole)) ) {
+					$$templateVars{$partyId}         = normalizeCD(param($partyId));
+					$$templateVars{$partyFirstName}  = normalizeCD(param($partyFirstName));
+					$$templateVars{$partyLastName}   = normalizeCD(param($partyLastName));
+					$$templateVars{$partyRole}       = normalizeCD(param($partyRole));
+					$$templateVars{$partyOrgName}    = normalizeCD(param($partyOrgName));
+					$$templateVars{$partyDelivery}   = normalizeCD(param($partyDelivery));
+					$$templateVars{$partyCity}       = normalizeCD(param($partyCity));
+					$$templateVars{$partyState}      = normalizeCD(param($partyState));
+					$$templateVars{$partyStateOther} = normalizeCD(param($partyStateOther));
+					$$templateVars{$partyZIP}        = normalizeCD(param($partyZIP));
+					$$templateVars{$partyCountry}    = normalizeCD(param($partyCountry));
+					$$templateVars{$partyPhone}      = normalizeCD(param($partyPhone));
+					$$templateVars{$partyFAX}        = normalizeCD(param($partyFAX));
+					$$templateVars{$partyEmail}      = normalizeCD(param($partyEmail));
+					
+					if ( $debug_enabled) {
+						debug("Copied party:\n" .
+							$partyId         . ": " . $$templateVars{$partyId}         . "\n" .							
+							$partyFirstName  . ": " . $$templateVars{$partyFirstName}  . "\n" .							
+							$partyLastName   . ": " . $$templateVars{$partyLastName}   . "\n" .							
+							$partyRole       . ": " . $$templateVars{$partyRole}       . "\n" .							
+							$partyOrgName    . ": " . $$templateVars{$partyOrgName}    . "\n" .							
+							$partyDelivery   . ": " . $$templateVars{$partyDelivery}   . "\n" .							
+							$partyCity       . ": " . $$templateVars{$partyCity}       . "\n" .							
+							$partyState      . ": " . $$templateVars{$partyState}      . "\n" .							
+							$partyStateOther . ": " . $$templateVars{$partyStateOther} . "\n" .							
+							$partyZIP        . ": " . $$templateVars{$partyZIP}        . "\n" .							
+							$partyCountry    . ": " . $$templateVars{$partyCountry}    . "\n" .							
+							$partyPhone      . ": " . $$templateVars{$partyPhone}      . "\n" .							
+							$partyFAX        . ": " . $$templateVars{$partyFAX}        . "\n" .							
+							$partyEmail      . ": " . $$templateVars{$partyEmail});
+							
+					}
 				}
 			}
 		}
