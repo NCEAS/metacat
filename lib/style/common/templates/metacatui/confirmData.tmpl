@@ -81,7 +81,8 @@
 							[% END %]
 							
 							[% IF $partyRole != '' %]
-							<tr><td>Role</td><td>[% $partyRole %]</td></tr>
+						  [%- pRole = $partyRole -%]
+							<tr><td>Role</td><td>[% roles.$pRole %]</td></tr>
 							[% END %]
 							
 							[% IF $partyOrgName != '' %]

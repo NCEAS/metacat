@@ -386,15 +386,15 @@
 											[% SET partyZIP        = "partyZIP${cnt}" %]
 											[% SET partyCountry    = "partyCountry${cnt}" %]
 											[% SET roles = {
-												principalInvestigator              => 'Principal Investigator',
-												coPrincipalInvestigator            => 'Co-Principal Investigator',
-												collaboratingPrincipalInvestigator => 'Collaborating-Principal Investigator',
-												creator                            => 'Creator (Author/Owner/Originator)',
-												contact                            => 'Contact',
-												metadataProvider                   => 'Metadata Provider',
-												custodianSteward                   => 'Custodian/Steward',
-												publisher                          => 'Publisher',
-												user                               => 'User'} %]
+												principalInvestigator              = 'Principal Investigator',
+												coPrincipalInvestigator            = 'Co-Principal Investigator',
+												collaboratingPrincipalInvestigator = 'Collaborating-Principal Investigator',
+												creator                            = 'Creator (Author/Owner/Originator)',
+												contact                            = 'Contact',
+												metadataProvider                   = 'Metadata Provider',
+												custodianSteward                   = 'Custodian/Steward',
+												publisher                          = 'Publisher',
+												user                               = 'User'} %]
 											<tr id="[% $partyId %]">
 												<input type="hidden" name="partyId"         value="[% $partyId %]" />
 												<input type="hidden" name="partyFirstName"  value="[% $partyFirstName %]" />
@@ -413,11 +413,13 @@
 												[% IF $partyFirstName != '' && $partyLastName != '' %]
 													<td>[% $partyFirstName %]</td>
 													<td>[% $partyLastName %]</td>
-													<td>[% $partyRole %]</td>
+												  [%- pRole = $partyRole -%]
+													<td>[% roles.$pRole %]</td>
 													
 												[% ELSE %]
 													<td colspan="2">[% $partyOrgName %]</td>
-													<td>[% $partyRole %]</td>
+												  [%- pRole = $partyRole -%]
+													<td>[% roles.$partyRole %]</td>
 													
 												[% END %]
 												<!--
