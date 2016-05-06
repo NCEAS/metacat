@@ -7,7 +7,7 @@
   <script language="JavaScript" type="text/javascript">
     // enable Bootstrap tooltip popovers for licensing choices
     $('.popover-target').popover();
-		$('#party-tooltip').tooltip({trigger: 'manual'}).tooltip('show');
+		$('#party-tooltip').popover('show');
   </script>
 
 	<!-- CONTENT SECTION ======================================================================= -->
@@ -216,14 +216,6 @@
 											<option value="publisher">Publisher</option>
 											<option value="user">User</option>
 										</select>
-                    <i class="icon-info-sign popover-target" id="part-tooltip"
-                        data-original-title="People and Organizations"
-                        data-toggle="popover"
-                        data-trigger="hover"
-                        data-placement="bottom"
-                        data-html="true"
-                        data-content="<p>A person or organization with a 'Creator' role is required.<p><p>Enter a person's first and last name (and optionally their organization) or just an organization name.</p><p>Creators will be listed in citations.  If a Contact is not added, the first Creator will be used. Use the 'Add Person or Organization' button below to add your entries.<p>"
-                        title=""></i>
 									</div>
 								</div>
 								<div class="control-group">
@@ -242,6 +234,14 @@
 									<label class="control-label" for="assocPartyOrgName">Organization Name</label>
 									<div class="controls">
 										<input type="text" name="assocPartyOrgName" id="assocPartyOrgName" />
+                    <i class="icon-info-sign popover-target" id="party-tooltip"
+                        data-original-title="People and Organizations"
+                        data-toggle="popover"
+                        data-trigger="click"
+                        data-placement="right"
+                        data-html="true"
+                        data-content="<p>A person or organization with a 'Creator' role is required.<p><p>Enter a person's first and last name (and optionally their organization) or just an organization name.</p><p>Only creators are listed in the dataset citation.  If a Contact is not added, the first Creator will be used. Use the 'Add Person or Organization' button below to add your entries.<p>"
+                        title=""></i>
 									</div>
 								</div>
 								<div class="control-group">
