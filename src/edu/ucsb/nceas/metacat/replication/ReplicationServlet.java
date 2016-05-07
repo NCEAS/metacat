@@ -117,7 +117,7 @@ public class ReplicationServlet extends HttpServlet {
 
 			// verify the client certificate on the request
 			boolean isValid = false;
-			String msg = "Metacat received the replication request. So the client certificate is trusted by the server's Apache/Tomcat. However, Metacat can't find the enity of the client certificate or the server parameter on the request url is registered in the xml_replication table. ";
+			String msg = "Metacat received the replication request. However, Metacat can't find the enity of the client certificate or the server parameter on the request url is registered in the xml_replication table. ";
 			try {
 				isValid = hasValidCertificate(request, server);
 			} catch (Exception e) {
@@ -220,7 +220,7 @@ public class ReplicationServlet extends HttpServlet {
 		X509Certificate certificate = CertificateManager.getInstance().getCertificate(request);
 		if (certificate != null) {
 			String givenSubject = CertificateManager.getInstance().getSubjectDN(certificate);
-			logMetacat.debug("Given certificate subject: " + givenSubject);
+			logMetacat.info("Given client's certificate subject: " + givenSubject);
 
 			// get the CN from the DN:
 			String givenServerCN = null;
@@ -245,6 +245,10 @@ public class ReplicationServlet extends HttpServlet {
 				// match (ends with) same certificate name (domain)?
 				return serverHost.endsWith(givenServerCN);
 			}
+		} else {
+		    String error = "ReplicationServlet.hasValidCertifcate - the client certificate is null. This means somehow the client certificate wasn't passed to Metacat!";
+		    logMetacat.error(error);
+		    throw new ServiceException(error);
 		}
  		return false;
 	}
