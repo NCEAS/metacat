@@ -1547,7 +1547,7 @@ sub createProjectDocument {
 	$doc .= datasetStart();
 	$doc .= titleElement();
 	$doc .= creatorNameElement();
-	$doc .= creatorElement();
+	$doc .= partyElement();
 
 	$doc .= pubElement();
 	$doc .= setDisplayType('project');
@@ -1557,13 +1557,11 @@ sub createProjectDocument {
 	# putting everything else under project
 	$doc .= "<project>";
 	$doc .= titleElement();
-	my %originators = personnelCreate('personnel');
-	$doc .= personnelList( \%originators );
+	$doc .= createParties('personnel');
 	$doc .= abstractElement();
 	$doc .= "<studyAreaDescription>\n";
 	$doc .= coverageElement();
 	$doc .= "</studyAreaDescription>\n";
-
 	$doc .= "</project>";
 	$doc .= datasetEnd();
 	$doc .= EMLEnd();
@@ -1582,19 +1580,16 @@ sub createDatasetDocument {
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
-	# $doc .= creatorElement();
-	$doc .= creatorContactElement();
-	my %originators = personnelCreate('associatedParty');
-	$doc .= personnelList( \%originators );
-
+	$doc .= createParties('creator');
+	$doc .= createParties('metadataProvider');
+	$doc .= createParties('associatedParty');
 	$doc .= pubElement();
 	$doc .= abstractElement();
-
-	#    $doc .= setDisplayType('dataset');
 	$doc .= keywordElement();
 	$doc .= distributionElement();
 	$doc .= coverageElement();
-	$doc .= contactElement();
+	$doc .= createParties('contact');
+	$doc .= createParties('publisher');
 	$doc .= methodsElement();
 	$doc .= fundingElement();
 	my %fileData = allFileData();
@@ -1605,93 +1600,244 @@ sub createDatasetDocument {
 
 # EML document creation functions
 
-sub personnelCreate {
+# Build a party element based on the party type passed in and the submitted party form fields.
+# Party types are limited to:
+#     creator, contact, metadataProvider, publisher, personnel, and associatedParty
+sub createParties {
 
-	# passed parameter defines default role for individuals
-	my $defaultRole = shift;
+	my $partyType = shift;
+	my $partiesStr = "";
+	my $partyStr = "";
+	my @associatedPartyRoles = [
+		'principalInvestigator',
+		'coPrincipalInvestigator',
+		'collaboratingPrincipalInvestigator',
+		'custodianSteward',
+		'user'];
 
-	# element name => objects of that type
-	my %orig = (
-		'creator'          => [],
-		'metadataProvider' => [],
-		'publisher'        => [],
-		$defaultRole       => [],
-	);
+	# Process the party* parameters, first getting the indexed number
+  foreach my $paramName ( param() ) {
 
-	# form name => EML element name
-	my %roles = (
-		'Originator'        => 'creator',
-		'Metadata Provider' => 'metadataProvider',
-		'Publisher'         => 'publisher',
-	);
+		$partyStr = "";
+		my $partyNumber = $paramName;
+		$partyNumber =~ s/partyRole//; # indexed number 1, 2, 3, etc
+		
+		# Check that the party number is valid
+		if ( $partyNumber =~ /^([0-9]+)$/) {
 
-	push(
-		@{ $orig{'metadataProvider'} },
-		[ $FORM::providerGivenName, $FORM::providerSurName ]
-	);
+			# The role we're processing
+			my $partyRole = normalize(param("partyRole" . $partyNumber));
 
-	# Additional originators
-	foreach my $origName ( param() ) {
-		my $origNum = $origName;
-		$origNum =~ s/partyLastName//;   # get the index of the parameter 0 to 10
-		if ( $origNum =~ /^([0-9]+)$/ ) {
+			# Process roles corresponding to specific EML elements
+			if ( $partyRole eq $partyType ) {
+				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
 
-			# do not generate EML for empty originator fields
-			if ( hasContent( param( "partyFirstName" . $origNum ) ) ) {
-				my $first    = normalize( param( "partyFirstName" . $origNum ) );
-				my $last     = normalize( param( "partyLastName" . $origNum ) );
-				my $origRole = param( "origRole" . $origNum );
-				my $roleName = $roles{$origRole};
-				if ( !hasContent($roleName) ) {
-					$roleName = $defaultRole;
+			# handle associated parties
+			} elsif ( $partyType eq "associatedParty" && $partyRole ~~ @associatedPartyRoles ) {
+				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
+				
+			# handle personnel
+			} elsif ( $partyType eq "personnel" && $partyRole ~~ @associatedPartyRoles ) {
+				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
+			
+			} else {
+				if ( $debug_enabled ) {
+					debug("Role: " . $partyRole . " is not a recognized role.");
 				}
-
-				push( @{ $orig{$roleName} }, [ $first, $last, $origRole ] );
+				
 			}
 		}
-	}
-	return %orig;
+		$partiesStr .= $partyStr;
+  }	
+	
+	return $partiesStr;
 }
 
-sub personnelList {
-	my ( $orig, $type ) = @_;
-	my %orig = %$orig;
-
-	my $elemList = "";
-	foreach my $role ( keys %orig ) {
-		foreach my $v ( @{ $orig->{$role} } ) {
-			my ( $first, $last, $origRole ) = @$v;
-			my $elem = "<individualName>\n";
-			$elem .= "<givenName>" . normalize($first) . "</givenName>\n";
-			$elem .= "<surName>" . normalize($last) . "</surName>\n";
-			$elem .= "</individualName>\n";
-
-			if ( ( $role eq 'personnel' ) && ($FORM::partyOrgNameContact) ) {
-				$elem .= "<organizationName>$FORM::partyOrgNameContact</organizationName>\n";
-			}
-
-			if ( ( $role eq 'personnel' ) || ( $role eq 'associatedParty' ) ) {
-				my $roleElem = $role;
-				if ( hasContent($origRole) ) {
-					$roleElem = $origRole;
-				}
-				$elem .= "<role>" . normalize($roleElem) . "</role>\n";
-			}
-                        # Ensure the metadataProvider is added before additionalParty
-                        my $fullElement = "<$role>$elem</$role>\n";
-                        if ( $role eq "metadataProvider" ) {
-				$fullElement .= $elemList;
-				$elemList = $fullElement;
-
-                        } else {
-				$elemList .= $fullElement;
-
-			}
+# Build an EML party based on the given element type (creator, associatedParty, contact, publisher, personnel)
+sub createParty() {
+	my $partyType = shift;
+	my $partyRole = shift;
+	my $partyNumber = shift;
+	
+	my $partyStr         = "";
+	my $partyRole        = "";						
+	my $partyId          = "";		
+	my $partyFirstName   = "";		
+	my $partyLastName    = "";		
+	my $partyOrgName     = "";		
+	my $partyEmail       = "";		
+	my $partyPhone       = "";		
+	my $partyFAX         = "";		
+	my $partyDelivery    = "";		
+	my $partyCity        = "";		
+	my $partyState       = "";		
+	my $partyStateOther  = "";		
+	my $partyZIP         = "";		
+	my $partyCountry     = "";		
+	my $individualName   = "";
+	my $organizationName = "";
+	my $address          = "";
+	my $phone            = "";
+	my $fax              = ""; 
+	my $email            = "";
+	my $role             = "";
+	
+	if ( hasContent(param("partyRole" . $partyNumber))) {
+		$partyRole = normalize(param("partyRole" . $partyNumber));
+		$role .= "<role>";
+		$role .= $partyRole;
+		$role .= "</role>\n";
+	}
+							
+	if ( hasContent(param("partyId" . $partyNumber))) {
+		$partyId = normalize(param("partyId" . $partyNumber));
+		
+	}
+			
+	if ( hasContent(param("partyLastName" . $partyNumber))) {
+		$individualName .= "<individualName>\n";
+		if ( hasContent(param("partyFirstName" . $partyNumber))) {
+			$partyFirstName = normalize(param("partyFirstName" . $partyNumber));
+			$individualName .= "<givenName>";
+			$individualName .= $partyFirstName;
+			$individualName .= "</givenName>\n";
+			
 		}
+		$partyLastName = normalize(param("partyLastName" . $partyNumber));
+		$individualName .= "<surName>";
+		$individualName .= $partyLastName;
+		$individualName .= "</surName>\n";
+		$individualName .= "</individualName>\n";
+			
 	}
-	return $elemList;
-}
+			
+	if ( hasContent(param("partyOrgName" . $partyNumber))) {
+		$organizationName .= "<organizationName>";
+		$partyOrgName = normalize(param("partyOrgName" . $partyNumber));
+		$organizationName .= $partyOrgName;
+		$organizationName .= "</organizationName>\n";
+		
+	}
+	
+	$address .= "<address>";
+	
+	if ( hasContent(param("partyDelivery" . $partyNumber))) {
+		$partyDelivery = normalize(param("partyDelivery" . $partyNumber));
+		$address .= "<deliveryPoint>";
+		$address .= $partyDelivery;
+		$address .= "</deliveryPoint>\n";
+		
+	}
+			
+	if ( hasContent(param("partyCity" . $partyNumber))) {
+		$partyCity = normalize(param("partyCity" . $partyNumber));
+		$address .= "<city>";
+		$address .= $partyCity;
+		$address .= "</city>\n";
+		
+	}
+			
+	if ( hasContent(param("partyState" . $partyNumber))) {
+		$partyState = normalize(param("partyState" . $partyNumber));
+		$address .= "<administrativeArea>";
+		$address .= $partyState;
+		$address .= "</administrativeArea>\n";
+		
+	} elsif ( hasContent(param("partyStateOther" . $partyNumber))) {
+		$partyStateOther = normalize(param("partyStateOther" . $partyNumber));
+		$address .= "<administrativeArea>";
+		$address .= $partyStateOther;
+		$address .= "</administrativeArea>\n";
+	}
+			
+	if ( hasContent(param("partyZIP" . $partyNumber))) {
+		$partyZIP = normalize(param("partyZIP" . $partyNumber));
+		$address .= "<postalCode>";
+		$address .= $partyZIP;
+		$address .= "</postalCode>\n";
+		
+	}
+		
+	if ( hasContent(param("partyCountry" . $partyNumber))) {
+		$partyCountry = normalize(param("partyCountry" . $partyNumber));
+		$address .= "<country>";
+		$address .= $partyCountry;
+		$address .= "</country>\n";
+		
+	}
+	
+	$address .= "</address>\n";
 
+	if ( hasContent(param("partyPhone" . $partyNumber))) {
+		$partyPhone = normalize(param("partyPhone" . $partyNumber));
+		$phone .= "<phone phonetype=\"voice\">";
+		$phone .= $partyPhone;
+		$phone .= "</phone>\n";
+	}
+			
+	if ( hasContent(param("partyFAX" . $partyNumber))) {
+		$partyFAX = normalize(param("partyFAX" . $partyNumber));
+		$fax .= "<phone phonetype=\"facsimile\">";
+		$fax .= $partyFAX;
+		$fax .= "</phone>\n";
+		
+	}
+	
+	if ( hasContent(param("partyEmail" . $partyNumber))) {
+		$partyEmail = normalize(param("partyEmail" . $partyNumber));
+		$email .= "<electronicMailAddress>";
+		$email .= $partyEmail;
+		$email .= "</electronicMailAddress>\n";
+	}
+					
+	# add the party begin tag (like <creator>)
+	$partyStr .= "<" . $partyType . ">\n";
+	
+	# add in the person
+	if ( $individualName ne "" ) {
+		$partyStr .= $individualName;
+		
+	} 
+
+	# add in the organization
+	if ( $organizationName ne "" ) {
+		$partyStr .= $organizationName;
+		
+	} 
+
+	# add in the address
+	if ( $address ne "" || $address ne "<address></address>") {
+		$partyStr .= $address;
+		
+	} 
+
+	# add in the phone
+	if ( $phone ne "") {
+		$partyStr .= $phone;
+		
+	} 
+
+	# add in the fax
+	if ( $fax ne "") {
+		$partyStr .= $fax;
+		
+	} 
+
+	# add in the email
+	if ( $email ne "") {
+		$partyStr .= $email;
+		
+	}
+	
+	if ( $partyType eq "associatedParty" || $partyType eq "personnel" ) {
+			$partyStr .= $role;
+			
+	}
+
+	# add the party end tag (like </creator>)
+	$partyStr .= "</" . $partyType . ">\n";
+			
+}
 sub entityElement() {
 	my $entityObjects = shift;
 	my %entityObjects = %$entityObjects;
@@ -1888,7 +2034,7 @@ sub abstractElement() {
 	  . "</para>\n</abstract>\n";
 }
 
-sub creatorElement() {
+sub partyElement() {
 	my $creators;
 	if ( $skinName eq 'nceas' ) {
 		for ( my $i = 0 ; $i < scalar(@FORM::wg) ; $i++ ) {
@@ -2010,80 +2156,81 @@ sub fundingElement() {
     return $project;
 }
 
-# sub creatorContactElement() {
-# 	my $cont = "";
-# 
-# 	$cont .= "<individualName>\n";
-# 	$cont .=
-# 	  "<givenName>" . normalize($FORM::partyFirstName) . "</givenName>\n";
-# 	$cont .=
-# 	  "<surName>" . normalize($FORM::partyLastName) . "</surName>\n";
-# 	$cont .= "</individualName>\n";
-# 
-# 	if ( hasContent($FORM::partyOrgName) ) {
-# 		$cont .=
-# 		    "<organizationName>"
-# 		  . normalize($FORM::partyOrgName)
-# 		  . "</organizationName>\n";
-# 	}
-# 
-# 	if (   hasContent($FORM::partyDelivery)
-# 		|| hasContent($FORM::partyCity)
-# 		|| hasContent($FORM::partyState)
-# 		|| hasContent($FORM::partyStateOther)
-# 		|| hasContent($FORM::partyZIP)
-# 		|| hasContent($FORM::partyCountry) )
-# 	{
-# 		$cont .= "<address>\n";
-# 		if ( hasContent($FORM::partyDelivery) ) {
-# 			$cont .= "<deliveryPoint>" . normalize($FORM::partyDelivery);
-# 			$cont .= "</deliveryPoint>\n";
-# 		}
-# 		if ( hasContent($FORM::partyCity) ) {
-# 			$cont .= "<city>" . normalize($FORM::partyCity) . "</city>\n";
-# 		}
-# 		if ( hasContent($FORM::partyState)
-# 			&& ( $FORM::partyState !~ /select state/i ) )
-# 		{
-# 			$cont .=
-# 			  "<administrativeArea>" . normalize($FORM::partyState);
-# 			$cont .= "</administrativeArea>\n";
-# 		}
-# 		elsif ( hasContent($FORM::partyStateOther) ) {
-# 			$cont .=
-# 			  "<administrativeArea>" . normalize($FORM::partyStateOther);
-# 			$cont .= "</administrativeArea>\n";
-# 		}
-# 		if ( hasContent($FORM::partyZIP) ) {
-# 			$cont .=
-# 			    "<postalCode>"
-# 			  . normalize($FORM::partyZIP)
-# 			  . "</postalCode>\n";
-# 		}
-# 		if ( hasContent($FORM::partyCountry) ) {
-# 			$cont .=
-# 			    "<country>"
-# 			  . normalize($FORM::partyCountry)
-# 			  . "</country>\n";
-# 		}
-# 		$cont .= "</address>\n";
-# 	}
-# 	if ( hasContent($FORM::partyPhone) ) {
-# 		$cont .= "<phone>" . normalize($FORM::partyPhone) . "</phone>\n";
-# 	}
-# 	if ( hasContent($FORM::partyFAXContact) ) {
-# 		$cont .=
-# 		    "<phone phonetype=\"Fax\">"
-# 		  . normalize($FORM::partyFAXContact)
-# 		  . "</phone>\n";
-# 	}
-# 	if ( hasContent($FORM::partyEmail) ) {
-# 		$cont .= "<electronicMailAddress>" . normalize($FORM::partyEmail);
-# 		$cont .= "</electronicMailAddress>\n";
-# 	}
-# 
-# 	return "<creator>\n$cont</creator>\n";
-# }
+sub partyElement() {
+	my $cont = "";
+	if ( hasContent($FORM::partyLastName) ) {
+		$cont .= "<individualName>\n";
+		if ( hasContent($FORM::partyFirstName) ) {
+			$cont .= "<givenName>" . normalize($FORM::partyFirstName) . "</givenName>\n";
+		}
+		$cont .= "<surName>" . normalize($FORM::partyLastName) . "</surName>\n";
+		$cont .= "</individualName>\n";
+	}
+
+	if ( hasContent($FORM::partyOrgName) ) {
+		$cont .=
+		    "<organizationName>"
+		  . normalize($FORM::partyOrgName)
+		  . "</organizationName>\n";
+	}
+
+	if (   hasContent($FORM::partyDelivery)
+		|| hasContent($FORM::partyCity)
+		|| hasContent($FORM::partyState)
+		|| hasContent($FORM::partyStateOther)
+		|| hasContent($FORM::partyZIP)
+		|| hasContent($FORM::partyCountry) )
+	{
+		$cont .= "<address>\n";
+		if ( hasContent($FORM::partyDelivery) ) {
+			$cont .= "<deliveryPoint>" . normalize($FORM::partyDelivery);
+			$cont .= "</deliveryPoint>\n";
+		}
+		if ( hasContent($FORM::partyCity) ) {
+			$cont .= "<city>" . normalize($FORM::partyCity) . "</city>\n";
+		}
+		if ( hasContent($FORM::partyState)
+			&& ( $FORM::partyState !~ /select state/i ) )
+		{
+			$cont .=
+			  "<administrativeArea>" . normalize($FORM::partyState);
+			$cont .= "</administrativeArea>\n";
+		}
+		elsif ( hasContent($FORM::partyStateOther) ) {
+			$cont .=
+			  "<administrativeArea>" . normalize($FORM::partyStateOther);
+			$cont .= "</administrativeArea>\n";
+		}
+		if ( hasContent($FORM::partyZIP) ) {
+			$cont .=
+			    "<postalCode>"
+			  . normalize($FORM::partyZIP)
+			  . "</postalCode>\n";
+		}
+		if ( hasContent($FORM::partyCountry) ) {
+			$cont .=
+			    "<country>"
+			  . normalize($FORM::partyCountry)
+			  . "</country>\n";
+		}
+		$cont .= "</address>\n";
+	}
+	if ( hasContent($FORM::partyPhone) ) {
+		$cont .= "<phone>" . normalize($FORM::partyPhone) . "</phone>\n";
+	}
+	if ( hasContent($FORM::partyFAXContact) ) {
+		$cont .=
+		    "<phone phonetype=\"Fax\">"
+		  . normalize($FORM::partyFAXContact)
+		  . "</phone>\n";
+	}
+	if ( hasContent($FORM::partyEmail) ) {
+		$cont .= "<electronicMailAddress>" . normalize($FORM::partyEmail);
+		$cont .= "</electronicMailAddress>\n";
+	}
+
+	return "<creator>\n$cont</creator>\n";
+}
 
 sub contactElement() {
 	my $role = shift;
