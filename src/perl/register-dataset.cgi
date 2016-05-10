@@ -5772,7 +5772,7 @@ sub populatePartyFields() {
 	my $doc = shift;
 	my $searchNode = shift;
 	my $partyCount = shift; # this is a reference, update it as $$partyCount
-	my $results = $$doc->findnodes($searchNode);
+	my $results = $$doc->findnodes($searchNode);  
 	
 	debug( "Looking for: " . $searchNode . ", found " . $results->size() );
 	foreach my $partyChild ( $results->get_nodelist ) {
@@ -5800,6 +5800,7 @@ sub populatePartyFields() {
 		
 		# Add the last name to the form fields
 		if ( $surNames->size() > 0 ) {
+			debug("=======LAST NAME: " . findValue($partyChild, './individualName/surName'));
 			$$templateVars{'partyLastName' . $$partyCount} = findValue($partyChild, './individualName/surName');
 			
 		}
@@ -5858,56 +5859,56 @@ sub populatePartyFields() {
 		}
 		
 		# Add the phones to the form fields
-		# if ( $phones->size() > 2 ) {
-		# 	errMoreThanN("phone");
-		# 	
-		# } elsif ( $phones->size() > 0) {
-		# 	# use Data::Dumper;
-		# 	# debug(Dumper($templateVars));
-		# 	foreach my $phone ($phones->get_nodelist()) {
-		# 		if ( $phone->hasAttribute("phonetype") ) {
-		# 			my $phoneType = $phone->getAttribute("phonetype");
-		# 			# Is this a fax number?
-		# 			if ( lc $phoneType eq lc "Fax" || lc $phoneType eq lc "facsimile") {
-		# 				$$templateVars->{'partyFAX' . $$partyCount} = normalizeCD($phone->textContent());
-		# 				
-		# 			} else {
-		# 				$$templateVars->{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
-		# 				
-		# 			}
-		# 		} else {
-		# 			# Default to a voice phone
-		# 			$$templateVars->{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
-		# 			
-		# 		}
-		# 	}
-		# }
+		if ( $phones->size() > 2 ) {
+			errMoreThanN("phone");
+			
+		} elsif ( $phones->size() > 0) {
+			# use Data::Dumper;
+			# debug(Dumper($templateVars));
+			foreach my $phone ($phones->get_nodelist()) {
+				if ( $phone->hasAttribute("phonetype") ) {
+					my $phoneType = $phone->getAttribute("phonetype");
+					# Is this a fax number?
+					if ( lc $phoneType eq lc "Fax" || lc $phoneType eq lc "facsimile") {
+						$$templateVars{'partyFAX' . $$partyCount} = normalizeCD($phone->textContent());
+						
+					} else {
+						$$templateVars{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
+						
+					}
+				} else {
+					# Default to a voice phone
+					$$templateVars{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
+					
+				}
+			}
+		}
 
 		# Add the email to the form fields
 		if ( $emails->size() > 0 ) {
 			$$templateVars{'partyEmail' . $$partyCount} = findValue($partyChild, './electronicMailAddress');
-			
+
 		}
 		
 		# Add the role to the form fields
-		# if ( $searchNode =~ /creator/ ) {
-		# 	$$templateVars->{'partyRole' . $$partyCount} = 'creator';
-		# 	
-		# } elsif ( $searchNode =~ /metadataProvider/ ) {
-		# 	$$templateVars->{'partyRole' . $$partyCount} = 'metadataProvider';
-		# 	
-		# } elsif ( $searchNode =~ /contact/ ) {
-		# 	$$templateVars->{'partyRole' . $$partyCount} = 'contact';
-		# 	
-		# } elsif ( $searchNode =~ /publisher/ ) {
-		# 	$$templateVars->{'partyRole' . $$partyCount} = 'publisher';
-		# 	
-		# } elsif ( $searchNode =~ /associatedParty/ ) {
-		# 	if ( $roles->size() > 0 ) {
-		# 		$$templateVars{'partyRole' . $$partyCount} = findValue($partyChild, './role');
-		# 	
-		# 	}
-		# }
+		if ( $searchNode =~ /creator/ ) {
+			$$templateVars{'partyRole' . $$partyCount} = "creator";
+
+		} elsif ( $searchNode =~ /metadataProvider/ ) {
+			$$templateVars{'partyRole' . $$partyCount} = "metadataProvider";
+			
+		} elsif ( $searchNode =~ /contact/ ) {
+			$$templateVars{'partyRole' . $$partyCount} = "contact";
+
+		} elsif ( $searchNode =~ /publisher/ ) {
+			$$templateVars{'partyRole' . $$partyCount} = "publisher";
+			
+		} elsif ( $searchNode =~ /associatedParty/ ) {
+			if ( $roles->size() > 0 ) {
+				$$templateVars{'partyRole' . $$partyCount} = findValue($partyChild, './role');
+			
+			}
+		}
+		$$partyCount++;
 	}
-	$$partyCount++;
 }
