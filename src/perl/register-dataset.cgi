@@ -1838,6 +1838,7 @@ sub createParty() {
 	$partyStr .= "</" . $partyType . ">\n";
 			
 }
+
 sub entityElement() {
 	my $entityObjects = shift;
 	my %entityObjects = %$entityObjects;
@@ -2864,7 +2865,7 @@ sub getFormValuesFromEml2 {
 	# perform any required transformation
 	$doc = transformEml($doc);
 
-	# find out the tag <alternateIdentifier>.
+	# Find <alternateIdentifier>.
 	$results = $doc->findnodes('//dataset/alternateIdentifier');
 	if ( $results->size() > 0 ) {		
 		# handle multiple alternate identifiers
@@ -2880,243 +2881,36 @@ sub getFormValuesFromEml2 {
 	}
 	
 
-	# find out the tag <title>.
+	# Find <title>.
 	$results = $doc->findnodes('//dataset/title');
 	if ( $results->size() > 1 ) {
 		errMoreThanOne("title");
-	}
-	elsif ( $results->size() < 1 ) {
+		
+	} elsif ( $results->size() < 1 ) {
 		$error = "Following tag not found: title. Please use Morpho to edit this document";
 		push( @errorMessages, $error . "\n" );
-	}
-	else {
+		
+	} else {
 		foreach $node ( $results->get_nodelist ) {
 			$$templateVars{'title'} = findValue( $node, '../title' );
 		}
+		
 	}
 
-	# find out the tag <creator>.
-	$results = $doc->findnodes('//dataset/creator/individualName');
-	debug( "Creators: " . $results->size() );
-	foreach $node ( $results->get_nodelist ) {
-		dontOccur(
-			$node,
-			"../positionName|../onlineURL|../userId",
-			"positionName, onlineURL, userId"
-		);
+	# Find <creator>s 
+	populatePartyFields(\$doc, "//dataset/creator", \$partyCount);
+	
+	# Find <metadataProvider>s 
+	populatePartyFields(\$doc, "//dataset/metadataProvider", \$partyCount);
 
-		dontOccur( $node, "./salutation", "salutation" );
+	# Find <associatedParty>s 
+	populatePartyFields(\$doc, "//dataset/associatedParty", \$partyCount);
 
-		debug("Checking a creator in loop 1...");
-		$tempResult = $node->findnodes(
-			'../address|../phone|../electronicmailAddress|../organizationName');
-		if ( $tempResult->size > 0 ) {
-			if ( $foundDSO == 0 ) {
-				$foundDSO = 1;
+	# Find <publisher>s 
+	populatePartyFields(\$doc, "//dataset/publisher", \$partyCount);
 
-				debug("Recording a creator in loop 1...");
-				$$templateVars{'partyFirstName0'} =
-				  findValue( $node, 'givenName' );
-				$$templateVars{'partyLastName0'} = findValue( $node, 'surName' );
-
-				my $tempResult2 = $node->findnodes('../address');
-				if ( $tempResult2->size > 1 ) {
-					errMoreThanOne("address");
-				}
-				else {
-					foreach my $tempNode2 ( $tempResult2->get_nodelist ) {
-						$$templateVars{'origDelivery'} =
-						  findValue( $tempNode2, 'deliveryPoint' );
-						$$templateVars{'origCity'} =
-						  findValue( $tempNode2, 'city' );
-						$$templateVars{'origState'} =
-						  findValue( $tempNode2, 'administrativeArea' );
-						$$templateVars{'origZIP'} =
-						  findValue( $tempNode2, 'postalCode' );
-						$$templateVars{'origCountry'} =
-						  findValue( $tempNode2, 'country' );
-					}
-				}
-
-				my $tempResult3 = $node->findnodes('../phone');
-				if ( $tempResult3->size > 2 ) {
-					errMoreThanN("phone");
-				}
-				else {
-					foreach my $tempNode2 ( $tempResult3->get_nodelist ) {
-						if ( $tempNode2->hasAttributes() ) {
-							my @attlist = $tempNode2->attributes();
-							if ( $attlist[0]->value eq "Fax" ) {
-								$$templateVars{'origFAX'} =
-								  $tempNode2->textContent();
-							}
-							else {
-								$$templateVars{'origPhone'} =
-								  $tempNode2->textContent();
-							}
-						}
-						else {
-							$$templateVars{'origPhone'} =
-							  $tempNode2->textContent();
-						}
-					}
-				}
-				$$templateVars{'origEmail'} =
-				  findValue( $node, '../electronicMailAddress' );
-				$$templateVars{'partyOrgName'} =
-				  findValue( $node, '../organizationName' );
-			}
-			else {
-				errMoreThanN("address, phone and electronicMailAddress");
-			}
-		}
-	}
-	foreach $node ( $results->get_nodelist ) {
-		debug("Checking a creator in loop 2...");
-		$tempResult = $node->findnodes(
-			'../address|../phone|../electronicmailAddress|../organizationName');
-		if ( $tempResult->size == 0 ) {
-			if ( $foundDSO == 0 ) {
-				debug("Recording a creator in loop 2 block A...");
-				$foundDSO = 1;
-				$$templateVars{'partyFirstName0'} =
-				  findValue( $node, 'givenName' );
-				$$templateVars{'partyLastName0'} = findValue( $node, 'surName' );
-				$$templateVars{'partyOrgName'} =
-				  findValue( $node, '../organizationName' );
-			}
-			else {
-				debug("Recording a creator in loop 2 block B...");
-				$$templateVars{"partyFirstName$partyCount"} =
-				  findValue( $node, './givenName' );
-				$$templateVars{"partyLastName$partyCount"} =
-				  findValue( $node, './surName' );
-				$$templateVars{"origRole$partyCount"} = "Originator";
-				$partyCount++;
-			}
-		}
-	}
-
-	$results = $doc->findnodes('//dataset/creator/organizationName');
-	my $wgroups = $doc->findnodes(
-		"//dataset/creator/organizationName[contains(text(),'(NCEAS ')]");
-	debug( "Number Org: " . $results->size() );
-	debug( " Number WG: " . $wgroups->size() );
-	if ( $results->size() - $wgroups->size() > 3 ) {
-		errMoreThanN("creator/organizationName");
-	}
-	else {
-		foreach $node ( $results->get_nodelist ) {
-			my $tempValue = findValue( $node, '../organizationName' );
-			$tempResult = $node->findnodes('../individualName');
-			if (   $tempResult->size == 0
-				&& $tempValue ne $config->{'organization'} )
-			{
-				$$templateVars{'site'} = $tempValue;
-			}
-		}
-		if ( $skinName eq 'nceas' ) {
-			my @wg;
-			foreach $node ( $results->get_nodelist ) {
-				my $tempValue = findValue( $node, '../organizationName' );
-				$wg[ scalar(@wg) ] = $tempValue;
-			}
-			my $projects = getProjectList($properties);
-			$$templateVars{'projects'} = $projects;
-			$$templateVars{'wg'}       = \@wg;
-		}
-	}
-
-	$results = $doc->findnodes('//dataset/metadataProvider');
-	foreach $node ( $results->get_nodelist ) {
-		dontOccur(
-			$node,
-"./organizationName|./positionName|./onlineURL|./userId|./electronicMailAddress|./phone|./address",
-"organizationName, positionName, onlineURL, userId, electronicMailAddress, phone, address in metadataProvider"
-		);
-
-		$tempResult = $node->findnodes('./individualName');
-		if ( $tempResult->size > 1 ) {
-			errMoreThanOne("metadataProvider/indvidualName");
-		}
-		else {
-			foreach $tempNode ( $tempResult->get_nodelist ) {
-				if ( $$templateVars{'providerGivenName'} ne "" ) {
-					$$templateVars{"partyFirstName$partyCount"} =
-					  findValue( $tempNode, './givenName' );
-					$$templateVars{"partyLastName$partyCount"} =
-					  findValue( $tempNode, './surName' );
-					$$templateVars{"origRole$partyCount"} = "Metadata Provider";
-					$partyCount++;
-				}
-				else {
-					$$templateVars{'providerGivenName'} =
-					  findValue( $tempNode, './givenName' );
-					$$templateVars{'providerSurName'} =
-					  findValue( $tempNode, './surName' );
-				}
-			}
-		}
-	}
-
-	$results = $doc->findnodes('//dataset/associatedParty');
-	foreach $node ( $results->get_nodelist ) {
-		dontOccur(
-			$node,
-"./organizationName|./positionName|./onlineURL|./userId|./electronicMailAddress|./phone|./address",
-"organizationName, positionName, onlineURL, userId, electronicMailAddress, phone, address in associatedParty"
-		);
-
-		$tempResult = $node->findnodes('./individualName');
-		if ( $tempResult->size > 1 ) {
-			errMoreThanOne("associatedParty/indvidualName");
-		}
-		else {
-			foreach $tempNode ( $tempResult->get_nodelist ) {
-				$$templateVars{"partyFirstName$partyCount"} =
-				  findValue( $tempNode, './givenName' );
-				$$templateVars{"partyLastName$partyCount"} =
-				  findValue( $tempNode, './surName' );
-				$$templateVars{"origRole$partyCount"} =
-				  findValue( $tempNode, '../role' );
-				$partyCount++;
-			}
-		}
-	}
-
-	$results = $doc->findnodes('//dataset/publisher');
-
-	#    if ($results->size() > 10) {
-	#       errMoreThanN("publisher");
-	#   } else {
-	foreach $node ( $results->get_nodelist ) {
-		dontOccur(
-			$node,
-			"./organizationName|./positionName|./onlineURL|./userId|./electronicMailAddress|./phone|./address",
-			"organizationName, positionName, onlineURL, userId, electronicMailAddress, phone, address in associatedParty"
-		);
-
-		$tempResult = $node->findnodes('./individualName');
-		if ( $tempResult->size > 1 ) {
-			errMoreThanOne("publisher/indvidualName");
-		}
-		else {
-			foreach $tempNode ( $tempResult->get_nodelist ) {
-				$$templateVars{"partyFirstName$partyCount"} =
-				  findValue( $tempNode, './givenName' );
-				$$templateVars{"partyLastName$partyCount"} =
-				  findValue( $tempNode, './surName' );
-				$$templateVars{"origRole$partyCount"} = "Publisher";
-				$partyCount++;
-			}
-		}
-	}
-
-	#  }
-
-	#  if ($partyCount > 11) {
-	#      errMoreThanN("Additional Originators");
-	#   }
+	# Find <contact>s 
+	populatePartyFields(\$doc, "//dataset/contact", \$partyCount);
 
 	$$templateVars{'partyCount'} = $partyCount;
 
@@ -3183,7 +2977,7 @@ sub getFormValuesFromEml2 {
 			dontOccur( $node, "./section", "section in intellectualRights" );
 
 			$tempResult = $node->findnodes("para");
-			if ( $tempResult->size > 2 ) {
+			if ( $tempResult->size() > 2 ) {
 				errMoreThanN("para");
 			}
 			else {
@@ -3274,7 +3068,7 @@ sub getFormValuesFromEml2 {
 			);
 
 			$tempResult = $node->findnodes('./temporalCoverage');
-			if ( $tempResult->size > 1 ) {
+			if ( $tempResult->size() > 1 ) {
 				errMoreThanOne("temporalCoverage");
 			}
 			else {
@@ -3311,7 +3105,7 @@ sub getFormValuesFromEml2 {
 			}
 
 			$tempResult = $node->findnodes('./geographicCoverage');
-			if ( $tempResult->size > 1 ) {
+			if ( $tempResult->size() > 1 ) {
 				errMoreThanOne("geographicCoverage");
 			}
 			else {
@@ -3421,86 +3215,6 @@ sub getFormValuesFromEml2 {
 	}
 	dontOccur( $doc, "./purpose",     "purpose" );
 	dontOccur( $doc, "./maintenance", "maintnance" );
-
-	$results = $doc->findnodes('//dataset/contact/individualName');
-	if ( $results->size() > 1 ) {
-		errMoreThanOne("contact/individualName");
-	}
-	else {
-		foreach $node ( $results->get_nodelist ) {
-			dontOccur(
-				$node,
-				"../positionName|../onlineURL|../userId",
-				"positionName, onlineURL, userId in contact tag"
-			);
-			dontOccur( $node, "./saluation", "saluation in contact tag" );
-
-			$tempResult = $node->findnodes(
-'../address|../phone|../electronicmailAddress|../organizationName'
-			);
-			if ( $tempResult->size > 0 ) {
-				$$templateVars{'partyFirstNameContact'} =
-				  findValue( $node, 'givenName' );
-				$$templateVars{'partyLastNameContact'} =
-				  findValue( $node, 'surName' );
-
-				my $tempResult2 = $node->findnodes('../address');
-				if ( $tempResult2->size > 1 ) {
-					errMoreThanOne("address");
-				}
-				else {
-					foreach my $tempNode2 ( $tempResult2->get_nodelist ) {
-						$$templateVars{'origDeliveryContact'} =
-						  findValue( $tempNode2, 'deliveryPoint' );
-						$$templateVars{'origCityContact'} =
-						  findValue( $tempNode2, 'city' );
-						$$templateVars{'origStateContact'} =
-						  findValue( $tempNode2, 'administrativeArea' );
-						$$templateVars{'origZIPContact'} =
-						  findValue( $tempNode2, 'postalCode' );
-						$$templateVars{'origCountryContact'} =
-						  findValue( $tempNode2, 'country' );
-					}
-				}
-
-				my $tempResult3 = $node->findnodes('../phone');
-				if ( $tempResult3->size > 2 ) {
-					errMoreThanN("phone");
-				}
-				else {
-					foreach my $tempNode2 ( $tempResult3->get_nodelist ) {
-						if ( $tempNode2->hasAttributes() ) {
-							my @attlist = $tempNode2->attributes();
-							if ( $attlist[0]->value eq "Fax" ) {
-								$$templateVars{'origFAXContact'} =
-								  $tempNode2->textContent();
-							}
-							else {
-								$$templateVars{'origPhoneContact'} =
-								  $tempNode2->textContent();
-							}
-						}
-						else {
-							$$templateVars{'origPhoneContact'} =
-							  $tempNode2->textContent();
-						}
-					}
-				}
-				$$templateVars{'origEmailContact'} =
-				  findValue( $node, '../electronicMailAddress' );
-				$$templateVars{'partyOrgNameContact'} =
-				  findValue( $node, '../organizationName' );
-			}
-			else {
-				$$templateVars{'partyFirstNameContact'} =
-				  findValue( $node, 'givenName' );
-				$$templateVars{'partyLastNameContact'} =
-				  findValue( $node, 'surName' );
-				$$templateVars{'partyOrgNameContact'} =
-				  findValue( $node, '../organizationName' );
-			}
-		}
-	}
 
 	$results =
 	  $doc->findnodes('//dataset/methods/methodStep/description/section');
@@ -3771,7 +3485,7 @@ sub getFormValuesFromEml2 {
 	dontOccur( $doc, "//protocol", "protocol" );
 	$results =
 	  $doc->findnodes('//additionalMetadata/metadata/moderatorComment');
-	if ( $results->size == 0 ) {
+	if ( $results->size() == 0 ) {
 		dontOccur( $doc, "//additionalMetadata", "additionalMetadata" );
 	}
 	
@@ -5557,7 +5271,7 @@ sub findValue {
 	my $tempNode;
 
 	$result = $node->findnodes("./$value");
-	if ( $result->size > 1 ) {
+	if ( $result->size() > 1 ) {
 		errMoreThanOne("$value");
 	}
 	else {
@@ -5584,7 +5298,7 @@ sub findValueNoChild {
 	my $error;
 
 	$result = $node->findnodes("./$value");
-	if ( $result->size > 1 ) {
+	if ( $result->size() > 1 ) {
 		errMoreThanOne("$value");
 	}
 	else {
@@ -5613,7 +5327,7 @@ sub dontOccur {
 	my $errVal = shift;
 
 	my $result = $node->findnodes("$value");
-	if ( $result->size > 0 ) {
+	if ( $result->size() > 0 ) {
 		debug("Error trying to find $value, $errVal.");
 		$error = "One of the following tags found: $errVal. Please use Morpho to edit this document";
 		push( @errorMessages, $error . "\n" );
@@ -6047,4 +5761,153 @@ sub hasValidAuthToken() {
     }
 
     return $token_info->{'isValid'};
+}
+
+################################################################################
+# Given an EML document, a node to search and the current count of 
+# parties in the template variables, add more party* fields in the template 
+# variables found in the search node passed in
+################################################################################
+sub populatePartyFields() {
+	my $doc = shift;
+	my $searchNode = shift;
+	my $partyCount = shift; # this is a reference, update it as $$partyCount
+	my $results = $$doc->findnodes($searchNode);
+	
+	debug( "Looking for: " . $searchNode . ", found " . $results->size() );
+	foreach my $partyChild ( $results->get_nodelist ) {
+		dontOccur($partyChild, "positionName|onlineURL|userId", "positionName, onlineURL, userId");
+		dontOccur( $partyChild, "./individualName/salutation", "salutation" );
+
+		my $givenNames     = $partyChild->findnodes('./individualName/givenName');
+		my $surNames       = $partyChild->findnodes('./individualName/surName');
+		my $orgNames       = $partyChild->findnodes('./organizationName');
+		my $addresses      = $partyChild->findnodes('./address');
+		my $deliveryPoints = $partyChild->findnodes('./address/deliveryPoint');
+		my $cities         = $partyChild->findnodes('./address/city');
+		my $states         = $partyChild->findnodes('./address/administrativeArea');
+		my $postalCodes    = $partyChild->findnodes('./address/postalCode');
+		my $countries      = $partyChild->findnodes('./address/country');
+		my $phones         = $partyChild->findnodes('./phone');
+		my $emails         = $partyChild->findnodes('./electronicMailAddress');
+		my $roles          = $partyChild->findnodes('./role');
+		
+		# Add the first name to the form fields
+		if ( $givenNames->size() > 0 ) {
+			$$templateVars{'partyFirstName' . $$partyCount} = findValue($partyChild, './individualName/givenName');
+			
+		}
+		
+		# Add the last name to the form fields
+		if ( $surNames->size() > 0 ) {
+			$$templateVars{'partyLastName' . $$partyCount} = findValue($partyChild, './individualName/surName');
+			
+		}
+		
+		# Add the organization name to the form fields
+		if ( $orgNames->size() > 0 ) {
+			$$templateVars{'partyOrgName' . $$partyCount} = findValue($partyChild, './organizationName');
+			
+		}
+		
+		# Add the address fields to the form fields
+		if ( $addresses->size() > 1 ) {
+			errMoreThanOne("address");
+			
+		} else {
+			# Add the deliveryPoint fields to the form fields
+			if ( $deliveryPoints->size() > 0 ) {
+				my $deliveryPointStr = "";
+				for ( my $i = 0; $i < $deliveryPoints->size; $i++ ) {
+					my $deliveryPoint = $deliveryPoints->get_node($i);
+					$deliveryPointStr .= $deliveryPoint->textContent();
+					# Add an address delimiter for all but the last deliveryPoint
+					if ( $i < $deliveryPoints->size() - 1 ) {
+						$deliveryPointStr .= ", ";
+						
+					}
+				}
+				$$templateVars{'partyDelivery' . $$partyCount} = normalizeCD($deliveryPointStr);
+			
+			}
+			
+		}
+
+		# Add the city to the form fields
+		if ( $cities->size() > 0 ) {
+			$$templateVars{'partyCity' . $$partyCount} = findValue($partyChild, './address/city');
+			
+		}
+				
+		# Add the state to the form fields
+		if ( $states->size() > 0 ) {
+			$$templateVars{'partyState' . $$partyCount} = findValue($partyChild, './address/administrativeArea');
+			
+		}
+				
+		# Add the postal code to the form fields
+		if ( $postalCodes->size() > 0 ) {
+			$$templateVars{'partyZIP' . $$partyCount} = findValue($partyChild, './address/postalCode');
+			
+		}
+				
+		# Add the country to the form fields
+		if ( $countries->size() > 0 ) {
+			$$templateVars{'partyCountry' . $$partyCount} = findValue($partyChild, './address/country');
+			
+		}
+		
+		# Add the phones to the form fields
+		# if ( $phones->size() > 2 ) {
+		# 	errMoreThanN("phone");
+		# 	
+		# } elsif ( $phones->size() > 0) {
+		# 	# use Data::Dumper;
+		# 	# debug(Dumper($templateVars));
+		# 	foreach my $phone ($phones->get_nodelist()) {
+		# 		if ( $phone->hasAttribute("phonetype") ) {
+		# 			my $phoneType = $phone->getAttribute("phonetype");
+		# 			# Is this a fax number?
+		# 			if ( lc $phoneType eq lc "Fax" || lc $phoneType eq lc "facsimile") {
+		# 				$$templateVars->{'partyFAX' . $$partyCount} = normalizeCD($phone->textContent());
+		# 				
+		# 			} else {
+		# 				$$templateVars->{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
+		# 				
+		# 			}
+		# 		} else {
+		# 			# Default to a voice phone
+		# 			$$templateVars->{'partyPhone' . $$partyCount} = normalizeCD($phone->textContent());
+		# 			
+		# 		}
+		# 	}
+		# }
+
+		# Add the email to the form fields
+		if ( $emails->size() > 0 ) {
+			$$templateVars{'partyEmail' . $$partyCount} = findValue($partyChild, './electronicMailAddress');
+			
+		}
+		
+		# Add the role to the form fields
+		# if ( $searchNode =~ /creator/ ) {
+		# 	$$templateVars->{'partyRole' . $$partyCount} = 'creator';
+		# 	
+		# } elsif ( $searchNode =~ /metadataProvider/ ) {
+		# 	$$templateVars->{'partyRole' . $$partyCount} = 'metadataProvider';
+		# 	
+		# } elsif ( $searchNode =~ /contact/ ) {
+		# 	$$templateVars->{'partyRole' . $$partyCount} = 'contact';
+		# 	
+		# } elsif ( $searchNode =~ /publisher/ ) {
+		# 	$$templateVars->{'partyRole' . $$partyCount} = 'publisher';
+		# 	
+		# } elsif ( $searchNode =~ /associatedParty/ ) {
+		# 	if ( $roles->size() > 0 ) {
+		# 		$$templateVars{'partyRole' . $$partyCount} = findValue($partyChild, './role');
+		# 	
+		# 	}
+		# }
+	}
+	$$partyCount++;
 }
