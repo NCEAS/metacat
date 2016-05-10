@@ -1692,6 +1692,8 @@ sub createParty() {
 	if ( hasContent(param("partyId" . $partyNumber))) {
 		$partyId = normalize(param("partyId" . $partyNumber));
 		
+	} else {
+		$partyId = int(rand(10000000000000000));
 	}
 			
 	if ( hasContent(param("partyLastName" . $partyNumber))) {
@@ -1791,7 +1793,7 @@ sub createParty() {
 	}
 					
 	# add the party begin tag (like <creator>)
-	$partyStr .= "<" . $partyType . ">\n";
+	$partyStr .= "<" . $partyType . " id=\"" . $partyId ."\">\n";
 	
 	# add in the person
 	if ( $individualName ne "" ) {
@@ -5779,6 +5781,7 @@ sub populatePartyFields() {
 		dontOccur($partyChild, "positionName|onlineURL|userId", "positionName, onlineURL, userId");
 		dontOccur( $partyChild, "./individualName/salutation", "salutation" );
 
+		my $ids            = $partyChild->findnodes('./@id');
 		my $givenNames     = $partyChild->findnodes('./individualName/givenName');
 		my $surNames       = $partyChild->findnodes('./individualName/surName');
 		my $orgNames       = $partyChild->findnodes('./organizationName');
@@ -5791,6 +5794,19 @@ sub populatePartyFields() {
 		my $phones         = $partyChild->findnodes('./phone');
 		my $emails         = $partyChild->findnodes('./electronicMailAddress');
 		my $roles          = $partyChild->findnodes('./role');
+
+		# Add the id to the form fields
+		my $id = "";
+		if ( $ids->size() > 0 ) {
+			$id = findValue($partyChild, './@id');
+			debug("++++++FOUND Id: " . $id);
+		} else {
+			# No /eml/dataset/{party}/@id attributes are present. Assign a random id.
+	    $id = int(rand(10000000000000000));
+			debug("++++++GENERATED Id: " . $id);
+			
+		}
+		$$templateVars{'partyId' . $$partyCount} = $id;
 		
 		# Add the first name to the form fields
 		if ( $givenNames->size() > 0 ) {
@@ -5800,8 +5816,7 @@ sub populatePartyFields() {
 		
 		# Add the last name to the form fields
 		if ( $surNames->size() > 0 ) {
-			debug("=======LAST NAME: " . findValue($partyChild, './individualName/surName'));
-			$$templateVars{'partyLastName' . $$partyCount} = findValue($partyChild, './individualName/surName');
+				$$templateVars{'partyLastName' . $$partyCount} = findValue($partyChild, './individualName/surName');
 			
 		}
 		
