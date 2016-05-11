@@ -3153,8 +3153,8 @@ sub getFormValuesFromEml2 {
 		foreach $node ( $results->get_nodelist ) {
 			dontOccur(
 				$node,
-				"./temporalCoverage/rangeOfDates/beginDate/time|./temporalCoverage/rangeOfDates/beginDate/alternativeTimeScale|./temporalCoverage/rangeOfDates/endDate/time|./temporalCoverage/rangeOfDates/endDate/alternativeTimeScale|./taxonomicCoverage/taxonomicSystem|./taxonomicCoverage/taxonomicClassification/commonName|./taxonomicCoverage/taxonomicClassification/taxonomicClassification|./geographicCoverage/datasetGPolygon|./geographicCoverage/boundingCoordinates/boundingAltitudes",
-				"temporalCoverage/rangeOfDates/beginDate/time, /temporalCoverage/rangeOfDates/beginDate/alternativeTimeScale, /temporalCoverage/rangeOfDates/endDate/time, /temporalCoverage/rangeOfDates/endDate/alternativeTimeScale, /taxonomicCoverage/taxonomicSystem, /taxonomicCoverage/taxonomicClassification/commonName, /taxonomicCoverage/taxonomicClassification/taxonomicClassification, /geographicCoverage/datasetGPolygon, /geographicCoverage/boundingCoordinates/boundingAltitudes"
+				"./temporalCoverage/rangeOfDates/beginDate/alternativeTimeScale|./temporalCoverage/rangeOfDates/endDate/alternativeTimeScale|./taxonomicCoverage/taxonomicSystem|./taxonomicCoverage/taxonomicClassification/commonName|./taxonomicCoverage/taxonomicClassification/taxonomicClassification|./geographicCoverage/datasetGPolygon|./geographicCoverage/boundingCoordinates/boundingAltitudes",
+				"/temporalCoverage/rangeOfDates/beginDate/alternativeTimeScale, /temporalCoverage/rangeOfDates/endDate/alternativeTimeScale, /taxonomicCoverage/taxonomicSystem, /taxonomicCoverage/taxonomicClassification/commonName, /taxonomicCoverage/taxonomicClassification/taxonomicClassification, /geographicCoverage/datasetGPolygon, /geographicCoverage/boundingCoordinates/boundingAltitudes"
 			);
 
 			$tempResult = $node->findnodes('./temporalCoverage');
