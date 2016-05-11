@@ -109,6 +109,13 @@ my $styleCommonPath = $contextUrl . "/style/common";
 my $userManagementUrl = $properties->getProperty('auth.userManagementUrl');
 
 my $now = time;
+# The party param index of the first creator role encountered
+my $firstCreatorIndex = -1;
+# Was a contact submitted in the form?
+my $hasContact = 0;
+# Was a metadataProvider submitted in the form?
+my $hasMetadataProvider = 0;
+
 
 # Import all of the HTML form fields as variables
 import_names('FORM');
@@ -865,9 +872,6 @@ sub validateParameters {
 	push( @invalidParams, "Name of the Project is not selected in the form." )
 	  if ( scalar(@FORM::wg) == 0 && $required->{'wgList'} eq 'true' );
 	
-	push( @invalidParams, "Please provide the first and last name of person entering the form." )
-	  unless (hasContent($FORM::providerGivenName) && hasContent($FORM::providerSurName));
-	
 	push( @invalidParams, "Please provide a dataset title." )
 	  unless hasContent($FORM::title);
 	
@@ -1525,12 +1529,11 @@ sub uploadData {
 #
 ################################################################################
 sub createXMLDocument {
-    if ( $debug_enabled ) {
-        debug("createXMLDocument() called.");
-
-    }
-
-
+	if ( $debug_enabled ) {
+	    debug("createXMLDocument() called.");
+	
+	}
+	
 	#FIXME placeholder for $FORM element, should be determined by config
 
 	if ( $skinName eq "ebm" ) {
@@ -1546,13 +1549,26 @@ sub createProjectDocument {
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
-	$doc .= creatorNameElement();
-	$doc .= partyElement();
-
+	$doc .= createParties('creator');
+	if ( $hasMetadataProvider > 0 ) {
+		$doc .= createParties('metadataProvider');
+		
+	} else {
+		copyFirstCreator('metadataProvider');
+		$doc .= createParties('metadataProvider');
+		
+	}
 	$doc .= pubElement();
 	$doc .= setDisplayType('project');
 	$doc .= keywordElement();
-	$doc .= contactElement();
+	if ( $hasContact > 0 ) {
+		$doc .= createParties('contact');
+		
+	} else {
+		copyFirstCreator('contact');
+		$doc .= createParties('contact');
+		
+	}
 
 	# putting everything else under project
 	$doc .= "<project>";
@@ -1575,20 +1591,33 @@ sub createDatasetDocument {
 	
 	}
 
-	my $doc = EMLStart();
-		
+	my $doc = EMLStart();		
 	$doc .= accessElement();
 	$doc .= datasetStart();
 	$doc .= titleElement();
 	$doc .= createParties('creator');
-	$doc .= createParties('metadataProvider');
+	if ( $hasMetadataProvider > 0 ) {
+		$doc .= createParties('metadataProvider');
+		
+	} else {
+		copyFirstCreator('metadataProvider');
+		$doc .= createParties('metadataProvider');
+		
+	}
 	$doc .= createParties('associatedParty');
 	$doc .= pubElement();
 	$doc .= abstractElement();
 	$doc .= keywordElement();
 	$doc .= distributionElement();
 	$doc .= coverageElement();
-	$doc .= createParties('contact');
+	if ( $hasContact > 0 ) {
+		$doc .= createParties('contact');
+		
+	} else {
+		copyFirstCreator('contact');
+		$doc .= createParties('contact');
+		
+	}
 	$doc .= createParties('publisher');
 	$doc .= methodsElement();
 	$doc .= fundingElement();
@@ -1614,7 +1643,7 @@ sub createParties {
 		'collaboratingPrincipalInvestigator',
 		'custodianSteward',
 		'user'];
-
+	
 	# Process the party* parameters, first getting the indexed number
   foreach my $paramName ( param() ) {
 
@@ -1627,6 +1656,21 @@ sub createParties {
 
 			# The role we're processing
 			my $partyRole = normalize(param("partyRole" . $partyNumber));
+			
+			# Find the first creator index in the parties if present
+			if ( $partyRole eq "creator" && $firstCreatorIndex == -1 ) {
+				$firstCreatorIndex = $partyNumber;
+			} 
+
+			# Find the first metadataProvider in the parties if present
+			if ( $partyRole eq "metadataProvider" ) {
+				$hasMetadataProvider = 1;
+			} 
+
+			# Find the first contact in the parties if present
+			if ( $partyRole eq "contact" ) {
+				$hasContact = 1;
+			} 
 
 			# Process roles corresponding to specific EML elements
 			if ( $partyRole eq $partyType ) {
@@ -5926,4 +5970,64 @@ sub populatePartyFields() {
 		}
 		$$partyCount++;
 	}
+}
+
+################################################################################
+# Copy the first creator party to the given role argument passed in.  
+# Use the partyCount to determine what index to use (i.e. append to the party* array)
+################################################################################
+sub copyFirstCreator('metadataProvider') {
+	my $targetRole = shift;
+	my $partyCount = param('partyCount');
+	$partyCount++;
+	
+	# Copy the first creator, and replace the id and role
+	my $partyId = int(rand(10000000000000000));
+	my $partyFirstName  = param("partyFirstName"  . $firstCreatorIndex);
+	my $partyLastName   = param("partyLastName"   . $firstCreatorIndex);
+	my $partyRole       = $targetRole;
+	my $partyOrgName    = param("partyOrgName"    . $firstCreatorIndex);
+	my $partyEmail      = param("partyEmail"      . $firstCreatorIndex);
+	my $partyPhone      = param("partyPhone"      . $firstCreatorIndex);
+	my $partyFAX        = param("partyFAX"        . $firstCreatorIndex);
+	my $partyDelivery   = param("partyDelivery"   . $firstCreatorIndex);
+	my $partyCity       = param("partyCity"       . $firstCreatorIndex);
+	my $partyState      = param("partyState"      . $firstCreatorIndex);
+	my $partyStateOther = param("partyStateOther" . $firstCreatorIndex);
+	my $partyZIP        = param("partyZIP"        . $firstCreatorIndex);
+	my $partyCountry    = param("partyCountry"    . $firstCreatorIndex);
+
+  # Add the new party into the params
+	param("partyFirstName"  . $partyCount, $partyFirstName );
+	param("partyLastName"   . $partyCount, $partyLastName  );
+	param("partyRole"       . $partyCount, $partyRole      );
+	param("partyOrgName"    . $partyCount, $partyOrgName   );
+	param("partyEmail"      . $partyCount, $partyEmail     );
+	param("partyPhone"      . $partyCount, $partyPhone     );
+	param("partyFAX"        . $partyCount, $partyFAX       );
+	param("partyDelivery"   . $partyCount, $partyDelivery  );
+	param("partyCity"       . $partyCount, $partyCity      );
+	param("partyState"      . $partyCount, $partyState     );
+	param("partyStateOther" . $partyCount, $partyStateOther);
+	param("partyZIP"        . $partyCount, $partyZIP       );
+	param("partyCountry"    . $partyCount, $partyCountry   );
+
+  # Add the new party into the template variabes
+	$$templateVars{"partyFirstName"  . $partyCount} = $partyFirstName ;
+	$$templateVars{"partyLastName"   . $partyCount} = $partyLastName  ;
+	$$templateVars{"partyRole"       . $partyCount} = $partyRole      ;
+	$$templateVars{"partyOrgName"    . $partyCount} = $partyOrgName   ;
+	$$templateVars{"partyEmail"      . $partyCount} = $partyEmail     ;
+	$$templateVars{"partyPhone"      . $partyCount} = $partyPhone     ;
+	$$templateVars{"partyFAX"        . $partyCount} = $partyFAX       ;
+	$$templateVars{"partyDelivery"   . $partyCount} = $partyDelivery  ;
+	$$templateVars{"partyCity"       . $partyCount} = $partyCity      ;
+	$$templateVars{"partyState"      . $partyCount} = $partyState     ;
+	$$templateVars{"partyStateOther" . $partyCount} = $partyStateOther;
+	$$templateVars{"partyZIP"        . $partyCount} = $partyZIP       ;
+	$$templateVars{"partyCountry"    . $partyCount} = $partyCountry   ;
+
+	# Update the party count
+  param("partyCount", $partyCount);
+	$$templateVars{"partyCount" . $partyCount} = $partyCount;
 }
