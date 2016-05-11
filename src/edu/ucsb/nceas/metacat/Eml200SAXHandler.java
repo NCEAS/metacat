@@ -352,9 +352,10 @@ public class Eml200SAXHandler extends DBSAXHandler implements
     			
     			PermissionController control = new PermissionController(previousDocid);
             	
-            	 // If the action is update and user doesn't have "ALL" permission
+            	 // If the action is update and user doesn't have "ALL" or "CHMOD" permission
                 // we need to check if user update access subtree
-            	if ( !control.hasPermission(user, groups, AccessControlInterface.ALLSTRING) 
+            	if ( !control.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+            			&& !control.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
                         && !AuthUtil.isAdministrator(user, groups)) {
                 		
                     needToCheckAccessModule = true;
@@ -2780,7 +2781,8 @@ public class Eml200SAXHandler extends DBSAXHandler implements
           String previousDocid = 
         	  docid + PropertyService.getProperty("document.accNumSeparator") + previousRevision;
           PermissionController controller = new PermissionController(previousDocid);
-          if (controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING)) {
+          if (controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+        		  || controller.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)) {
             return guid;
           }
           else

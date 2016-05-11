@@ -1655,7 +1655,8 @@ public class IdentifierManager {
     		return AccessControlInterface.WRITE;
     	}
     	if (permission.equals(Permission.CHANGE_PERMISSION)) {
-    		return AccessControlInterface.CHMOD;
+    		// implies all permission, rather than just CHMOD
+    		return AccessControlInterface.ALL;
     	}
 		return -1;
     }
