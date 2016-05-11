@@ -891,6 +891,18 @@ sub validateParameters {
 		         (hasContent($FORM::partyOrgName) && 
 						  hasContent($FORM::partyRole)));
 	
+    my @partyRoles = param('partyRole');
+    my $hasCreator = 0;
+    foreach  my $partyRole (@partyRoles) {
+        if ( $partyRole eq 'creator' ) {
+            $hasCreator = 1;
+            last;
+            
+        }
+    }
+	push( @invalidParams, "Please provide a party entry with a 'Creator' role." )
+	  unless $hasCreator == 1;
+    
 	push( @invalidParams, "Please provide a dataset abstract." )
 	  unless hasContent($FORM::abstract);
 
