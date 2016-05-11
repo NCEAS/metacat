@@ -3914,14 +3914,16 @@ sub getUserGroups {
 	my $parser = XML::LibXML->new();
 	my $parsedDoc = $parser->parse_string($userInfo);
 
-	my $groupString = $parsedDoc->findvalue('//userInformation/group');
+	my $results = $parsedDoc->findnodes('//userInformation/group');
+	#my $groupString = $parsedDoc->findvalue('//userInformation/group');
 
 	my @groupArray;
-	foreach (split(":", $groupString)) {
-		$_ =~ s/^\s+//;
-		$_ =~ s/\s+$//;
-		debug("pushing: $_");
-		push(@groupArray, $_);
+	foreach $node ( $results->get_nodelist ) {
+		my $group   = $node->textContent();
+		$group =~ s/^\s+//;
+		$group =~ s/\s+$//;
+		debug("pushing: $group");
+		push(@groupArray, $group);
 	}
 
 	return @groupArray;
