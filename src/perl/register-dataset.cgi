@@ -3396,7 +3396,7 @@ sub getFormValuesFromEml2 {
 	}
 	push( @admins, $adminUsername );
 
-	#debug("getting user groups for current user");
+	debug("getting user groups for current user");
 
 	my @userGroups = getUserGroups();
 
@@ -3435,21 +3435,21 @@ sub getFormValuesFromEml2 {
 			my ($username, $password) = getCredentials();
 
 			# 1) check if user matches principal
-			#debug("does user $username match principal $principal?");
+			debug("does user $username match principal $principal?");
 			if ($principal eq $username) {
 				$accessGranted = 1;
-				#debug("Access granted: user $username matches principal");
+				debug("Access granted: user $username matches principal");
 			}
 
 			# 2) if access not granted, check if user group matches principal
 			if (!$accessGranted) {
-				#debug("is one of the user groups @userGroups the principal $principal?");
+				debug("is one of the user groups @userGroups the principal $principal?");
 				for my $userGroup (@userGroups) {
 					my $lowercaseUserGroup = lc $userGroup;
 					my $lowercasePrincipal = lc $principal;
 					if ($lowercaseUserGroup eq $lowercasePrincipal) {
 							$accessGranted = 1;
-							#debug("Access granted: user group $userGroup matches principal");
+							debug("Access granted: user group $userGroup matches principal");
 							last;
 					}
 				}
@@ -3469,7 +3469,7 @@ sub getFormValuesFromEml2 {
 
 		# 3) if access not granted, check if the user is a moderator or admin
 		if (!$accessGranted) {
-			#debug("is user $username in admins @admins?");
+			debug("is user $username in admins @admins?");
 			if (grep { $_ eq $username } @admins) {
 				$accessGranted = 1;
 				#debug("Access granted: user $username is an admin or moderator");
@@ -3478,7 +3478,7 @@ sub getFormValuesFromEml2 {
 
 		# 4) if access not granted, check if user group in moderator/admin list
 		if (!$accessGranted) {
-			#debug("is one of the user groups @userGroups in admins @admins?");
+			debug("is one of the user groups @userGroups in admins @admins?");
 			foreach my $userGroup (split(":", @userGroups)) {
 				if (grep {$_ eq $userGroup} @admins) {
 					$accessGranted = 1;
@@ -3498,7 +3498,7 @@ sub getFormValuesFromEml2 {
 
 	# push the error message, if any
 	if ( $accessError ) {
-		#debug($errorMessage);
+		debug($errorMessage);
 		push( @errorMessages, $errorMessage );
 	}
 
