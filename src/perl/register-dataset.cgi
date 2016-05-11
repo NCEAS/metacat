@@ -6,6 +6,8 @@
 #   '$Author$'
 #     '$Date$'
 # '$Revision$'
+#     '$Date$'
+# '$Revision$'
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2886,6 +2888,35 @@ sub transformEml {
 
 ################################################################################
 #
+# Parse getaccesscontrol XML response
+# from Metacat and return the allow elements
+#
+################################################################################
+sub getAllowAccess {
+	
+	my $docid = shift;
+
+	# read the access control block
+	my $parser = XML::LibXML->new();
+
+	$response = $metacat->getaccess($docid);
+	my $doc    = $response->content();
+	my $xmldoc = $parser->parse_string($doc);
+	if ( $xmldoc eq "" || $doc =~ /<error/ ) {
+
+		# not able to parse
+		$errorMessage =
+		  $errorMessage . " Error in retrieving access control for docid:" . $docid;
+	}
+	
+	# return the allow access nodes
+	$results = $xmldoc->findnodes('/access/allow');
+
+	return $results;
+}
+
+################################################################################
+#
 # Parse an EML 2.x file and extract the metadata into perl variables for
 # processing and returning to the template processor
 #
@@ -3340,9 +3371,15 @@ sub getFormValuesFromEml2 {
 
 	# Code for checking ACL: with EML 2.1, we should only look within the top-level elements
 	#debug("checking user access");
+	
+	# deny rules have been discontinued in metacat, but we'll keep this in here
 	dontOccur( $doc, "/eml:eml/access/deny", "access/deny" );
 
-	$results = $doc->findnodes('/eml:eml/access/allow');
+	#  check access from Metacat API instead of eml-embedded rules
+	my $docid   = $FORM::docid;
+	$results = getAllowAccess($docid);
+	# $results = $doc->findnodes('/eml:eml/access/allow');
+	
 	my $accessError = 0;
 	my $accessGranted = 0;
 	my $docOwner;
@@ -3475,6 +3512,7 @@ sub getFormValuesFromEml2 {
 
 			# have a file with a ecogrid distUrl, use this to set up the file parameters
 			$distUrl =~ s/ecogrid:\/\/knb\///g;
+			# TODO: check getaccess() method for access control rules?
 			my $accessNodes = $node->findnodes('distribution/access/allow');
 			my $accessRule    = 'private';
 			
