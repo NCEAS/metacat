@@ -2893,7 +2893,8 @@ sub transformEml {
 sub getAllowAccess {
 	
 	my $docid = shift;
-
+	debug("looking up access control block for docid: $docid");
+	
 	# read the access control block
 	my $parser = XML::LibXML->new();
 
@@ -2902,12 +2903,14 @@ sub getAllowAccess {
     
 	my $response = $metacat->getaccess($docid);
 	my $doc    = $response->content();
+	debug("Retrieved access control block: $doc");
 	my $xmldoc = $parser->parse_string($doc);
 	if ( $xmldoc eq "" || $doc =~ /<error/ ) {
 
 		# not able to parse
 		my $errorMessage =
 		  "Error in retrieving access control for docid:" . $docid;
+		  
 	}
 	
 	# return the allow access nodes
