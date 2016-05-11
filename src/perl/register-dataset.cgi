@@ -1091,9 +1091,6 @@ sub validateParameters {
 		}
 	}
 	
-	push ( @invalidParams, "Please provide the required award number.")
-	unless ( hasContent($FORM::funding) && $show->{'funding'});
-	
 	push( @invalidParams, "Please provide usage rights." )
 	  unless ( hasContent($FORM::useConstraints) );
 	if ( $FORM::useConstraints eq 'other' ) {
