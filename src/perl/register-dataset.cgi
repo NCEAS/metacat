@@ -3421,13 +3421,13 @@ sub getFormValuesFromEml2 {
 			$accessError = 1;
 			debug($errorMessage);
 		}
-		if (($principal eq $adminUsername) && ($permission ne 'all' || $permission ne 'chmod' || $permission ne 'write')) {
-			# If the principal is the admin and permission is not 'all' then this document
-	    	# could not have been created in the registry.
-			$errorMessage = "The ACL for this document has been changed outside the registry. Please use Morpho to edit this document (Access Error: admin principal cannot have $permission permission).\n";
-			$accessError = 1;
-			debug($errorMessage);
-		}
+		#if (($principal eq $adminUsername) && ($permission ne 'all' || $permission ne 'chmod' || $permission ne 'write')) {
+		#	# If the principal is the admin and permission is not 'all' then this document
+	    #	# could not have been created in the registry.
+		#	$errorMessage = "The ACL for this document has been changed outside the registry. Please use Morpho to edit this document (Access Error: admin principal cannot have $permission permission).\n";
+		#	$accessError = 1;
+		#	debug($errorMessage);
+		#}
 
 		# no access error in doc, if principal is not equal to public and permission is
 		# 'all' (requirements in registry) then try and determine if user has access
