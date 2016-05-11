@@ -6,8 +6,6 @@
 #   '$Author$'
 #     '$Date$'
 # '$Revision$'
-#     '$Date$'
-# '$Revision$'
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -2899,6 +2897,9 @@ sub getAllowAccess {
 	# read the access control block
 	my $parser = XML::LibXML->new();
 
+	my $metacat = Metacat->new($metacatUrl);
+    setAuthToken($metacat);
+    
 	my $response = $metacat->getaccess($docid);
 	my $doc    = $response->content();
 	my $xmldoc = $parser->parse_string($doc);
