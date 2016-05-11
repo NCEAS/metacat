@@ -377,7 +377,7 @@ sub getaccess {
     my $self = shift;
     my $docid = shift;
     
-    my %postData = ( action => 'getaccess',
+    my %postData = ( action => 'getaccesscontrol',
     docid => $docid
     );
     
