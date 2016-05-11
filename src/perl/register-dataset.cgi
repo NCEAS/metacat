@@ -3918,6 +3918,7 @@ sub getUserGroups {
 	#my $groupString = $parsedDoc->findvalue('//userInformation/group');
 
 	my @groupArray;
+	my $node = '';
 	foreach $node ( $results->get_nodelist ) {
 		my $group   = $node->textContent();
 		$group =~ s/^\s+//;
