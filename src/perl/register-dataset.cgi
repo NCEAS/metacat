@@ -2899,18 +2899,18 @@ sub getAllowAccess {
 	# read the access control block
 	my $parser = XML::LibXML->new();
 
-	$response = $metacat->getaccess($docid);
+	my $response = $metacat->getaccess($docid);
 	my $doc    = $response->content();
 	my $xmldoc = $parser->parse_string($doc);
 	if ( $xmldoc eq "" || $doc =~ /<error/ ) {
 
 		# not able to parse
-		$errorMessage =
-		  $errorMessage . " Error in retrieving access control for docid:" . $docid;
+		my $errorMessage =
+		  "Error in retrieving access control for docid:" . $docid;
 	}
 	
 	# return the allow access nodes
-	$results = $xmldoc->findnodes('/access/allow');
+	my $results = $xmldoc->findnodes('/access/allow');
 
 	return $results;
 }
