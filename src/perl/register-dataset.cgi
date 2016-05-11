@@ -3431,7 +3431,7 @@ sub getFormValuesFromEml2 {
 
 		# no access error in doc, if principal is not equal to public and permission is
 		# 'all' (requirements in registry) then try and determine if user has access
-		if (!$accessError && ($principal ne 'public') && ($permission eq 'all' || $permission eq 'write')) {
+		if (!$accessError && ($principal ne 'public') && ($permission eq 'all' || $permission eq 'write' || $permission eq 'chmod')) {
 			my ($username, $password) = getCredentials();
 
 			# 1) check if user matches principal
