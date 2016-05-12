@@ -2203,9 +2203,17 @@ sub fundingElement() {
                     "</personnel>\n";
 
         # Add the funding info (grant number)
-        $project .= "<funding><para>" .
-                    normalize($FORM::funding) .
-                    "</para></funding>\n";
+        $project .= "<funding>\n";                    
+
+        # split funding by comma delimiter
+        my $funding = normalize($FORM::funding);
+        foreach my $para (split(',', $funding)) {
+        	$project .= "<para>" .
+                    $para .
+                    "</para>\n";
+        }
+                    
+        $project .= "</funding>\n";                    
         $project .= "</project>\n";
     }
 
@@ -3597,7 +3605,10 @@ sub getFormValuesFromEml2 {
 					debug("Found a funding paragraph: $fundingPara");
 				
 				}
-				$$templateVars{'funding'} = $fundingPara;
+				if ($$templateVars{'funding'} ne '') {
+					$$templateVars{'funding'} .= ', ';
+				}
+				$$templateVars{'funding'} .= $fundingPara;
 			
 			} else {
 				if ( $debug_enabled ) {
