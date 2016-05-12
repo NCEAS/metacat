@@ -5899,7 +5899,18 @@ sub populatePartyFields() {
 		
 		# Add the first name to the form fields
 		if ( $givenNames->size() > 0 ) {
-			$$templateVars{'partyFirstName' . $$partyCount} = findValue($partyChild, './individualName/givenName');
+		
+			# handle multiple givenName
+			for ( my $i = 0; $i < $givenNames->size; $i++ ) {
+				my $givenNameNode = $givenNames->get_node($i);
+				$givenNameStr .= $givenNameNode->textContent();
+				# Add a space delimiter for all but the last given name
+				if ( $i < $givenNames->size() - 1 ) {
+					$givenNameStr .= " ";
+				}
+			}
+			$$templateVars{'partyFirstName' . $$partyCount} = normalizeCD($givenNameStr);
+			# $$templateVars{'partyFirstName' . $$partyCount} = findValue($partyChild, './individualName/givenName');
 			
 		}
 		
