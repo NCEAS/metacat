@@ -565,7 +565,7 @@ if ( !$error ) {
 			$xmldoc =~ s/docid/$docid/;
 			debugDoc($xmldoc);
 
-      debug('Updating docid: ' . $docid);
+            debug('Updating docid: ' . $docid);
 			my $response = $metacat->update( $docid, $xmldoc );
 
 			if ( !$response ) {
@@ -1090,6 +1090,9 @@ sub validateParameters {
 			}
 		}
 	}
+
+	push( @invalidParams, "Please provide the data medium." )
+	  unless ( hasContent($FORM::dataMedium));
 	
 	push( @invalidParams, "Please provide usage rights." )
 	  unless ( hasContent($FORM::useConstraints) );
@@ -1683,21 +1686,18 @@ sub createParties {
 
 			# Process roles corresponding to specific EML elements
 			if ( $partyRole eq $partyType ) {
+                debug("Role: " . $partyRole . " matches Type: " . $partyType );
 				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
-
 			# handle associated parties
 			} elsif ( $partyType eq "associatedParty" && $partyRole ~~ @associatedPartyRoles ) {
 				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
+                debug("Asscociated Party Type: " . $partyType . " and Role: " . $partyRole . " is in @associatedPartyRoles");
 				
 			# handle personnel
 			} elsif ( $partyType eq "personnel" && $partyRole ~~ @associatedPartyRoles ) {
 				$partyStr = createParty( $partyType, $partyRole, $partyNumber); 
+                debug("Personnel Type: " . $partyType . " and Role: " . $partyRole . " is in @associatedPartyRoles");
 			
-			} else {
-				if ( $debug_enabled ) {
-					debug("Role: " . $partyRole . " is not a recognized role.");
-				}
-				
 			}
 		}
 		$partiesStr .= $partyStr;
