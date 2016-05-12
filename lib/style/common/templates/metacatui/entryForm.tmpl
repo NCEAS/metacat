@@ -219,6 +219,12 @@
 									</div>
 								</div>
 								<div class="control-group">
+									<label class="control-label" for="assocPartyPositionName">Position Name</label>
+									<div class="controls">
+										<input type="text" name="assocPartyPositionName" id="assocPartyPositionName" />
+									</div>
+								</div>
+								<div class="control-group">
 									<label class="control-label" for="assocPartyEmail">Email</label>
 									<div class="controls">
 										<input type="text" name="assocPartyEmail" id="assocPartyEmail" />
@@ -350,6 +356,7 @@
 											[% SET partyLastName   = "partyLastName${cnt}" %]
 											[% SET partyRole       = "partyRole${cnt}" %]
 											[% SET partyOrgName    = "partyOrgName${cnt}" %]
+											[% SET partyPositionName = "partyPositionName${cnt}" %]
 											[% SET partyEmail      = "partyEmail${cnt}" %]
 											[% SET partyPhone      = "partyPhone${cnt}" %]
 											[% SET partyFAX        = "partyFAX${cnt}" %]
@@ -375,6 +382,7 @@
 												<input type="hidden" name="partyLastName"   value="[% $partyLastName %]" />
 												<input type="hidden" name="partyRole"       value="[% $partyRole %]" />
 												<input type="hidden" name="partyOrgName"    value="[% $partyOrgName %]" />
+												<input type="hidden" name="partyPositionName" value="[% $partyPositionName %]" />
 												<input type="hidden" name="partyEmail" 			value="[% $partyEmail %]" />
 												<input type="hidden" name="partyPhone"      value="[% $partyPhone %]" />
 												<input type="hidden" name="partyFAX" 				value="[% $partyFAX %]" />
@@ -391,10 +399,15 @@
 													<td>[% roles.$pRole %]</td>
 													
 												[% ELSE %]
-													<td colspan="2">[% $partyOrgName %]</td>
-												  [%- pRole = $partyRole -%]
-													<td>[% roles.$partyRole %]</td>
-													
+													[% IF $partyOrgName != '' %]
+														<td colspan="2">[% $partyOrgName %]</td>
+												  	[%- pRole = $partyRole -%]
+														<td>[% roles.$partyRole %]</td>
+													[% ELSE %]
+														<td colspan="2">[% $partyPositionName %]</td>
+												  	[%- pRole = $partyRole -%]
+														<td>[% roles.$partyRole %]</td>
+													[% END %]
 												[% END %]
 												<td style="text-align: center">
 													<a style="cursor:pointer">
