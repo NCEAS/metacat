@@ -5901,6 +5901,7 @@ sub populatePartyFields() {
 		if ( $givenNames->size() > 0 ) {
 		
 			# handle multiple givenName
+			my $givenNameStr = '';
 			for ( my $i = 0; $i < $givenNames->size; $i++ ) {
 				my $givenNameNode = $givenNames->get_node($i);
 				$givenNameStr .= $givenNameNode->textContent();
