@@ -862,13 +862,13 @@ public class OnlineDataAccessTest
 
             // try to upload another data with updated id
             uploadDocid(onlineDocid + ".2",
-                          onlinetestdatafile2, FAILURE, true);
+                          onlinetestdatafile2, SUCCESS, false);
 
             // try to set the permissions for the uploaded document
             // the docid given is for the online document
             testdocument = get201TestEmlDoc("OnlineDataAccessTest: Doing insert",
                                          null, null,
-                                         "ecogrid://knb/" + onlineDocid + ".1",
+                                         "ecogrid://knb/" + onlineDocid + ".2",
                                          null, getAccessBlock(anotheruser, true,
                                          false, false, false, true),
                                          null, null, null, null);
@@ -878,7 +878,7 @@ public class OnlineDataAccessTest
             // insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
 
             // delete the document
-            deleteDocid(onlineDocid + ".1", FAILURE, true);
+            deleteDocid(onlineDocid + ".2", FAILURE, true);
             m.logout();
 
             /////////Case 4/////////////////////
@@ -1064,7 +1064,7 @@ public class OnlineDataAccessTest
 
             // try to upload another data with updated id
             uploadDocid(onlineDocid + ".2",
-                          onlinetestdatafile2, FAILURE, true);
+                          onlinetestdatafile2, SUCCESS, false);
 
             // try to set the permissions for the uploaded document
             // the docid given is for the online document
@@ -1080,7 +1080,7 @@ public class OnlineDataAccessTest
             // insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
 
             // delete the document
-            deleteDocid(onlineDocid + ".1", FAILURE, true);
+            deleteDocid(onlineDocid + ".2", FAILURE, true);
             m.logout();
 
             /////////Case 4/////////////////////
@@ -1468,7 +1468,7 @@ public class OnlineDataAccessTest
 
             // try to upload another data with updated id
             uploadDocid(onlineDocid + ".2",
-                        onlinetestdatafile2, FAILURE, true);
+                        onlinetestdatafile2, SUCCESS, false);
 
             // try to set the permissions for the uploaded document
             // the docid given is for the online document
@@ -1484,7 +1484,7 @@ public class OnlineDataAccessTest
             // insertDocid(newdocid + ".1", testdocument, SUCCESS, false);
 
             // delete the document
-            deleteDocid(onlineDocid + ".1", FAILURE, true);
+            deleteDocid(onlineDocid + ".2", FAILURE, true);
             m.logout();
 
             /////////Case 4/////////////////////
