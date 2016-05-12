@@ -5224,24 +5224,6 @@ sub copyFormToTemplateVars {
 					$$templateVars{$partyFAX}        = normalizeCD(param($partyFAX));
 					$$templateVars{$partyEmail}      = normalizeCD(param($partyEmail));
 					
-					if ( $debug_enabled) {
-						debug("Copied party:\n" .
-							$partyId         . ": " . $$templateVars{$partyId}         . "\n" .							
-							$partyFirstName  . ": " . $$templateVars{$partyFirstName}  . "\n" .							
-							$partyLastName   . ": " . $$templateVars{$partyLastName}   . "\n" .							
-							$partyRole       . ": " . $$templateVars{$partyRole}       . "\n" .							
-							$partyOrgName    . ": " . $$templateVars{$partyOrgName}    . "\n" .							
-							$partyDelivery   . ": " . $$templateVars{$partyDelivery}   . "\n" .							
-							$partyCity       . ": " . $$templateVars{$partyCity}       . "\n" .							
-							$partyState      . ": " . $$templateVars{$partyState}      . "\n" .							
-							$partyStateOther . ": " . $$templateVars{$partyStateOther} . "\n" .							
-							$partyZIP        . ": " . $$templateVars{$partyZIP}        . "\n" .							
-							$partyCountry    . ": " . $$templateVars{$partyCountry}    . "\n" .							
-							$partyPhone      . ": " . $$templateVars{$partyPhone}      . "\n" .							
-							$partyFAX        . ": " . $$templateVars{$partyFAX}        . "\n" .							
-							$partyEmail      . ": " . $$templateVars{$partyEmail});
-							
-					}
 				}
 			}
 		}
@@ -5908,11 +5890,9 @@ sub populatePartyFields() {
 		my $id = "";
 		if ( $ids->size() > 0 ) {
 			$id = findValue($partyChild, './@id');
-			debug("++++++FOUND Id: " . $id);
 		} else {
 			# No /eml/dataset/{party}/@id attributes are present. Assign a random id.
 	    $id = int(rand(10000000000000000));
-			debug("++++++GENERATED Id: " . $id);
 			
 		}
 		$$templateVars{'partyId' . $$partyCount} = $id;
