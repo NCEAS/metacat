@@ -13,7 +13,7 @@ Metacat Administrator's Guide
 
     License: GPL
     
-    Release Date: March, 2016
+    Release Date: May, 2016
 
 Metacat is a repository for data and metadata (documentation about data) that helps 
 scientists find, understand and effectively use data sets they manage or that 
