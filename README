@@ -58,7 +58,11 @@ Release Notes for 2.6.0:
 ------------------------
 This release supports token-based authentication in the data registry
 as well as:
-* MetacatUI 1.11.0
+* Cascading access control rules ("all" and "change permission" imply "read" and "write")
+* OAI-PMH support for EML 2.1.1
+* SOLR index support for ISO 211 documents
+* Configurable Metacat read-only mode for system maintenance
+* MetacatUI 1.11.2
 
 Release Notes for 2.5.1:
 ------------------------
