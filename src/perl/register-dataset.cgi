@@ -5929,7 +5929,7 @@ sub populatePartyFields() {
 				$givenNameStr = $givenNameStr . $givenNameNode->textContent();
 				
 				# Add a space delimiter for all but the last given name
-				if ( $i < $givenNames->size() - 1 ) {
+				if ( $i > 0 ) {
 					$givenNameStr .= " ";
 				}
 			}
