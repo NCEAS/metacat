@@ -5925,7 +5925,9 @@ sub populatePartyFields() {
 			my $givenNameStr = '';
 			for ( my $i = 0; $i < $givenNames->size; $i++ ) {
 				my $givenNameNode = $givenNames->get_node($i);
-				$givenNameStr .= $givenNameNode->textContent();
+				# $givenNameStr .= $givenNameNode->textContent();
+				$givenNameStr = $givenNameStr . $givenNameNode->textContent();
+				
 				# Add a space delimiter for all but the last given name
 				if ( $i < $givenNames->size() - 1 ) {
 					$givenNameStr .= " ";
