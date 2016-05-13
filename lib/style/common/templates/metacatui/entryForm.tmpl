@@ -159,7 +159,10 @@
 									<div id="funding-group" class="control-group">
 										<label class="control-label" for="site">*Award Number</label>
 										<div class="controls">
-											<input type="text" id="funding" name="funding" value="[%funding%]">
+											<input type="text" id="funding-visible" value="">
+                                            <input type="hidden" id="funding" name="funding" value="[%funding%]">
+                                            <div class="input-help-msg subtle"></div>
+                                            <table class="table table-striped table-bordered" id="funding-list"></table>
 										</div>
 									</div>
 								[% END %]
