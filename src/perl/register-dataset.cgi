@@ -5923,7 +5923,7 @@ sub populatePartyFields() {
 		
 			# handle multiple givenName
 			my $givenNameStr = '';
-			for ( my $i = 0; $i < $givenNames->size; $i++ ) {
+			for ( my $i = ($givenNames->size - 1); $i >= 0; $i- ) {
 				my $givenNameNode = $givenNames->get_node($i);
 				# $givenNameStr .= $givenNameNode->textContent();
 				$givenNameStr = $givenNameStr . $givenNameNode->textContent();
