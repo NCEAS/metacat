@@ -880,8 +880,12 @@ sub validateParameters {
 		  unless ( ( hasContent($FORM::site) && !( $FORM::site =~ /^Select/ ) )
 			|| $skinName eq "nceas" );
 	}
-	push( @invalidParams, "Please provide an award number." )
-	  unless hasContent($FORM::funding) && $required->{'funding'} eq 'true';
+    
+    if ( $required->{'funding'} eq 'true' ) {
+    	push( @invalidParams, "Please provide an award number." )
+    	  unless hasContent($FORM::funding);
+        
+    }
 
 	push( @invalidParams, "Please provide a person's first name, last name, and role, or an organization name and it's role.")
 	  unless ((hasContent($FORM::partyFirstName) && 
