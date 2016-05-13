@@ -5913,7 +5913,7 @@ sub populatePartyFields() {
 	
 	debug( "Looking for: " . $searchNode . ", found " . $results->size() );
 	foreach my $partyChild ( $results->get_nodelist ) {
-		dontOccur($partyChild, "onlineURL|userId", "onlineURL, userId");
+		dontOccur($partyChild, "userId", "userId");
 		dontOccur( $partyChild, "./individualName/salutation", "salutation" );
 
 		my $ids            = $partyChild->findnodes('./@id');
