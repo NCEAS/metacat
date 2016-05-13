@@ -402,11 +402,11 @@
 													[% IF $partyOrgName != '' %]
 														<td colspan="2">[% $partyOrgName %]</td>
 												  	[%- pRole = $partyRole -%]
-														<td>[% roles.$partyRole %]</td>
+														<td>[% roles.$pRole %]</td>
 													[% ELSE %]
 														<td colspan="2">[% $partyPositionName %]</td>
 												  	[%- pRole = $partyRole -%]
-														<td>[% roles.$partyRole %]</td>
+														<td>[% roles.$pRole %]</td>
 													[% END %]
 												[% END %]
 												<td style="text-align: center">
