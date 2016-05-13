@@ -1718,6 +1718,7 @@ sub createParty() {
 	my $partyFirstName   = "";		
 	my $partyLastName    = "";		
 	my $partyOrgName     = "";		
+	my $partyPositionName = "";		
 	my $partyEmail       = "";		
 	my $partyPhone       = "";		
 	my $partyFAX         = "";		
@@ -1729,6 +1730,7 @@ sub createParty() {
 	my $partyCountry     = "";		
 	my $individualName   = "";
 	my $organizationName = "";
+	my $positionName     = "";
 	my $address          = "";
 	my $phone            = "";
 	my $fax              = ""; 
@@ -1771,6 +1773,14 @@ sub createParty() {
 		$partyOrgName = normalize(param("partyOrgName" . $partyNumber));
 		$organizationName .= $partyOrgName;
 		$organizationName .= "</organizationName>\n";
+		
+	}
+	
+	if ( hasContent(param("partyPositionName" . $partyNumber))) {
+		$positionName .= "<positionName>";
+		$partyPositionName = normalize(param("partyPositionName" . $partyNumber));
+		$positionName .= $partyPositionName;
+		$positionName .= "</positionName>\n";
 		
 	}
 	
@@ -1860,8 +1870,14 @@ sub createParty() {
 		
 	} 
 
+	# add in the position
+	if ( $positionName ne "" ) {
+		$partyStr .= $positionName;
+		
+	} 
+
 	# add in the address
-	if ( $address ne "" || $address ne "<address></address>") {
+	if ( $address ne "" || $address ne "<address></address>\n") {
 		$partyStr .= $address;
 		
 	} 
@@ -4903,6 +4919,7 @@ sub toConfirmData {
 	my $partyLastNames = \@FORM::partyLastName;
 	my $partyRoles = \@FORM::partyRole; # role is required no matter what
 	my $partyOrgNames = \@FORM::partyOrgName;
+	my $partyPositionNames = \@FORM::partyPositionName;
 	my $partyEmails = \@FORM::partyEmail;
 	my $partyPhones = \@FORM::partyPhone;
 	my $partyFaxes = \@FORM::partyFAX;
@@ -4920,6 +4937,7 @@ sub toConfirmData {
 		$$templateVars{'partyLastName' . $partyIndex}  = normalizeCD($partyLastNames->[$partyIndex]);
 		$$templateVars{'partyRole' . $partyIndex}      = normalizeCD($partyRoles->[$partyIndex]);
 		$$templateVars{'partyOrgName' . $partyIndex}   = normalizeCD($partyOrgNames->[$partyIndex]);
+		$$templateVars{'partyPositionName' . $partyIndex} = normalizeCD($partyPositionNames->[$partyIndex]);
 		$$templateVars{'partyEmail' . $partyIndex}     = normalizeCD($partyEmails->[$partyIndex]);
 		$$templateVars{'partyPhone' . $partyIndex}     = normalizeCD($partyPhones->[$partyIndex]);
 		$$templateVars{'partyFAX' . $partyIndex}       = normalizeCD($partyFaxes->[$partyIndex]);
@@ -5197,6 +5215,7 @@ sub copyFormToTemplateVars {
 			my $partyLastName   = "partyLastName" . $partyIndex;
 			my $partyRole       = "partyRole" . $partyIndex;
 			my $partyOrgName    = "partyOrgName" . $partyIndex;
+			my $partyPositionName = "partyPositionName" . $partyIndex;
 			my $partyDelivery   = "partyDelivery" . $partyIndex;
 			my $partyCity       = "partyCity" . $partyIndex;
 			my $partyState      = "partyState" . $partyIndex;
@@ -5214,6 +5233,7 @@ sub copyFormToTemplateVars {
 					$$templateVars{$partyLastName}   = normalizeCD(param($partyLastName));
 					$$templateVars{$partyRole}       = normalizeCD(param($partyRole));
 					$$templateVars{$partyOrgName}    = normalizeCD(param($partyOrgName));
+					$$templateVars{$partyPositionName} = normalizeCD(param($partyPositionName));
 					$$templateVars{$partyDelivery}   = normalizeCD(param($partyDelivery));
 					$$templateVars{$partyCity}       = normalizeCD(param($partyCity));
 					$$templateVars{$partyState}      = normalizeCD(param($partyState));
@@ -5876,6 +5896,7 @@ sub populatePartyFields() {
 		my $givenNames     = $partyChild->findnodes('./individualName/givenName');
 		my $surNames       = $partyChild->findnodes('./individualName/surName');
 		my $orgNames       = $partyChild->findnodes('./organizationName');
+		my $positionNames  = $partyChild->findnodes('./positionName');
 		my $addresses      = $partyChild->findnodes('./address');
 		my $deliveryPoints = $partyChild->findnodes('./address/deliveryPoint');
 		my $cities         = $partyChild->findnodes('./address/city');
@@ -5924,6 +5945,12 @@ sub populatePartyFields() {
 		# Add the organization name to the form fields
 		if ( $orgNames->size() > 0 ) {
 			$$templateVars{'partyOrgName' . $$partyCount} = findValue($partyChild, './organizationName');
+			
+		}
+		
+		# Add the organization name to the form fields
+		if ( $positionNames->size() > 0 ) {
+			$$templateVars{'partyPositionName' . $$partyCount} = findValue($partyChild, './positionName');
 			
 		}
 		
@@ -6044,6 +6071,7 @@ sub copyFirstCreator('metadataProvider') {
 	my $partyLastName   = param("partyLastName"   . $firstCreatorIndex);
 	my $partyRole       = $targetRole;
 	my $partyOrgName    = param("partyOrgName"    . $firstCreatorIndex);
+	my $partyPositionName = param("partyPositionName" . $firstCreatorIndex);
 	my $partyEmail      = param("partyEmail"      . $firstCreatorIndex);
 	my $partyPhone      = param("partyPhone"      . $firstCreatorIndex);
 	my $partyFAX        = param("partyFAX"        . $firstCreatorIndex);
@@ -6059,6 +6087,7 @@ sub copyFirstCreator('metadataProvider') {
 	param("partyLastName"   . $partyCount, $partyLastName  );
 	param("partyRole"       . $partyCount, $partyRole      );
 	param("partyOrgName"    . $partyCount, $partyOrgName   );
+	param("partyPositionName" . $partyCount, $partyPositionName );
 	param("partyEmail"      . $partyCount, $partyEmail     );
 	param("partyPhone"      . $partyCount, $partyPhone     );
 	param("partyFAX"        . $partyCount, $partyFAX       );
@@ -6074,6 +6103,7 @@ sub copyFirstCreator('metadataProvider') {
 	$$templateVars{"partyLastName"   . $partyCount} = $partyLastName  ;
 	$$templateVars{"partyRole"       . $partyCount} = $partyRole      ;
 	$$templateVars{"partyOrgName"    . $partyCount} = $partyOrgName   ;
+	$$templateVars{"partyPositionName" . $partyCount} = $partyPositionName;
 	$$templateVars{"partyEmail"      . $partyCount} = $partyEmail     ;
 	$$templateVars{"partyPhone"      . $partyCount} = $partyPhone     ;
 	$$templateVars{"partyFAX"        . $partyCount} = $partyFAX       ;
