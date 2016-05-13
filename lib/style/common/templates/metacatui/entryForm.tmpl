@@ -231,6 +231,12 @@
 									</div>
 								</div>
 								<div class="control-group">
+									<label class="control-label" for="assocPartyEmail">Online Link</label>
+									<div class="controls">
+										<input type="text" name="assocPartyURL" id="assocPartyURL" placeholder="URL"/>
+									</div>
+								</div>
+								<div class="control-group">
 									<label class="control-label" for="assocPartyPhone">Phone</label>
 									<div class="controls">
 										<input type="text" name="assocPartyPhone" id="assocPartyPhone"/>
@@ -358,6 +364,7 @@
 											[% SET partyOrgName    = "partyOrgName${cnt}" %]
 											[% SET partyPositionName = "partyPositionName${cnt}" %]
 											[% SET partyEmail      = "partyEmail${cnt}" %]
+											[% SET partyURL        = "partyURL${cnt}" %]
 											[% SET partyPhone      = "partyPhone${cnt}" %]
 											[% SET partyFAX        = "partyFAX${cnt}" %]
 											[% SET partyDelivery   = "partyDelivery${cnt}" %]
@@ -384,6 +391,7 @@
 												<input type="hidden" name="partyOrgName"    value="[% $partyOrgName %]" />
 												<input type="hidden" name="partyPositionName" value="[% $partyPositionName %]" />
 												<input type="hidden" name="partyEmail" 			value="[% $partyEmail %]" />
+												<input type="hidden" name="partyURL" 			  value="[% $partyURL %]" />
 												<input type="hidden" name="partyPhone"      value="[% $partyPhone %]" />
 												<input type="hidden" name="partyFAX" 				value="[% $partyFAX %]" />
 												<input type="hidden" name="partyDelivery"   value="[% $partyDelivery %]" />

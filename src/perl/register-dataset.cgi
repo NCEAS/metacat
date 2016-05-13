@@ -1720,6 +1720,7 @@ sub createParty() {
 	my $partyOrgName     = "";		
 	my $partyPositionName = "";		
 	my $partyEmail       = "";		
+	my $partyURL         = "";		
 	my $partyPhone       = "";		
 	my $partyFAX         = "";		
 	my $partyDelivery    = "";		
@@ -1735,6 +1736,7 @@ sub createParty() {
 	my $phone            = "";
 	my $fax              = ""; 
 	my $email            = "";
+	my $onlineUrl        = "";
 	my $role             = "";
 	
 	if ( hasContent(param("partyRole" . $partyNumber))) {
@@ -1855,6 +1857,13 @@ sub createParty() {
 		$email .= "</electronicMailAddress>\n";
 	}
 					
+	if ( hasContent(param("partyURL" . $partyNumber))) {
+		$partyURL = normalize(param("partyURL" . $partyNumber));
+		$onlineUrl .= "<onlineUrl>";
+		$onlineUrl .= $partyURL;
+		$onlineUrl .= "</onlineUrl>\n";
+	}
+					
 	# add the party begin tag (like <creator>)
 	$partyStr .= "<" . $partyType . " id=\"" . $partyId ."\">\n";
 	
@@ -1897,6 +1906,12 @@ sub createParty() {
 	# add in the email
 	if ( $email ne "") {
 		$partyStr .= $email;
+		
+	}
+	
+	# add in the online URL
+	if ( $onlineUrl ne "") {
+		$partyStr .= $onlineUrl;
 		
 	}
 	
@@ -2307,6 +2322,11 @@ sub partyElement() {
 	if ( hasContent($FORM::partyEmail) ) {
 		$cont .= "<electronicMailAddress>" . normalize($FORM::partyEmail);
 		$cont .= "</electronicMailAddress>\n";
+	}
+
+	if ( hasContent($FORM::partyURL) ) {
+		$cont .= "<onlineUrl>" . normalize($FORM::partyURL);
+		$cont .= "</onlineUrl>\n";
 	}
 
 	return "<creator>\n$cont</creator>\n";
@@ -4921,6 +4941,7 @@ sub toConfirmData {
 	my $partyOrgNames = \@FORM::partyOrgName;
 	my $partyPositionNames = \@FORM::partyPositionName;
 	my $partyEmails = \@FORM::partyEmail;
+	my $partyURLs = \@FORM::partyURL;
 	my $partyPhones = \@FORM::partyPhone;
 	my $partyFaxes = \@FORM::partyFAX;
 	my $partyDeliveries = \@FORM::partyDelivery;
@@ -4939,6 +4960,7 @@ sub toConfirmData {
 		$$templateVars{'partyOrgName' . $partyIndex}   = normalizeCD($partyOrgNames->[$partyIndex]);
 		$$templateVars{'partyPositionName' . $partyIndex} = normalizeCD($partyPositionNames->[$partyIndex]);
 		$$templateVars{'partyEmail' . $partyIndex}     = normalizeCD($partyEmails->[$partyIndex]);
+		$$templateVars{'partyURL' . $partyIndex}       = normalizeCD($partyURLs->[$partyIndex]);
 		$$templateVars{'partyPhone' . $partyIndex}     = normalizeCD($partyPhones->[$partyIndex]);
 		$$templateVars{'partyFAX' . $partyIndex}       = normalizeCD($partyFaxes->[$partyIndex]);
 		$$templateVars{'partyDelivery' . $partyIndex}  = normalizeCD($partyDeliveries->[$partyIndex]);
@@ -5225,6 +5247,7 @@ sub copyFormToTemplateVars {
 			my $partyPhone      = "partyPhone" . $partyIndex;
 			my $partyFAX        = "partyFAX" . $partyIndex;
 			my $partyEmail      = "partyEmail" . $partyIndex;
+			my $partyURL        = "partyURL" . $partyIndex;
 			
 			if ( $partyIndex >= 0 ) {
 				if ( hasContent(param($partyRole)) ) {
@@ -5243,6 +5266,7 @@ sub copyFormToTemplateVars {
 					$$templateVars{$partyPhone}      = normalizeCD(param($partyPhone));
 					$$templateVars{$partyFAX}        = normalizeCD(param($partyFAX));
 					$$templateVars{$partyEmail}      = normalizeCD(param($partyEmail));
+					$$templateVars{$partyURL}        = normalizeCD(param($partyURL));
 					
 				}
 			}
@@ -5905,6 +5929,7 @@ sub populatePartyFields() {
 		my $countries      = $partyChild->findnodes('./address/country');
 		my $phones         = $partyChild->findnodes('./phone');
 		my $emails         = $partyChild->findnodes('./electronicMailAddress');
+		my $onlineUrls     = $partyChild->findnodes('./onlineUrl');
 		my $roles          = $partyChild->findnodes('./role');
 
 		# Add the id to the form fields
@@ -6035,6 +6060,12 @@ sub populatePartyFields() {
 
 		}
 		
+		# Add the online URL to the form fields
+		if ( $onlineUrls->size() > 0 ) {
+			$$templateVars{'partyURL' . $$partyCount} = findValue($partyChild, './onlineUrl');
+
+		}
+		
 		# Add the role to the form fields
 		if ( $searchNode =~ /creator/ ) {
 			$$templateVars{'partyRole' . $$partyCount} = "creator";
@@ -6075,6 +6106,7 @@ sub copyFirstCreator('metadataProvider') {
 	my $partyOrgName    = param("partyOrgName"    . $firstCreatorIndex);
 	my $partyPositionName = param("partyPositionName" . $firstCreatorIndex);
 	my $partyEmail      = param("partyEmail"      . $firstCreatorIndex);
+	my $partyURL        = param("partyURL"        . $firstCreatorIndex);
 	my $partyPhone      = param("partyPhone"      . $firstCreatorIndex);
 	my $partyFAX        = param("partyFAX"        . $firstCreatorIndex);
 	my $partyDelivery   = param("partyDelivery"   . $firstCreatorIndex);
@@ -6091,6 +6123,7 @@ sub copyFirstCreator('metadataProvider') {
 	param("partyOrgName"    . $partyCount, $partyOrgName   );
 	param("partyPositionName" . $partyCount, $partyPositionName );
 	param("partyEmail"      . $partyCount, $partyEmail     );
+	param("partyURL"        . $partyCount, $partyURL       );
 	param("partyPhone"      . $partyCount, $partyPhone     );
 	param("partyFAX"        . $partyCount, $partyFAX       );
 	param("partyDelivery"   . $partyCount, $partyDelivery  );
@@ -6107,6 +6140,7 @@ sub copyFirstCreator('metadataProvider') {
 	$$templateVars{"partyOrgName"    . $partyCount} = $partyOrgName   ;
 	$$templateVars{"partyPositionName" . $partyCount} = $partyPositionName;
 	$$templateVars{"partyEmail"      . $partyCount} = $partyEmail     ;
+	$$templateVars{"partyURL"        . $partyCount} = $partyURL       ;
 	$$templateVars{"partyPhone"      . $partyCount} = $partyPhone     ;
 	$$templateVars{"partyFAX"        . $partyCount} = $partyFAX       ;
 	$$templateVars{"partyDelivery"   . $partyCount} = $partyDelivery  ;

@@ -49,6 +49,7 @@
 					[% SET partyPositionName = "partyPositionName${cnt}" %]
 					[% SET partyOrgName    = "partyOrgName${cnt}" %]
 					[% SET partyEmail      = "partyEmail${cnt}" %]
+					[% SET partyURL        = "partyURL${cnt}" %]
 					[% SET partyPhone      = "partyPhone${cnt}" %]
 					[% SET partyFAX        = "partyFAX${cnt}" %]
 					[% SET partyDelivery   = "partyDelivery${cnt}" %]
@@ -93,6 +94,10 @@
 							
 							[% IF $partyEmail != '' %]
 							<tr><td>Email</td><td>[%- $partyEmail -%]</td></tr>
+							[% END %]
+							
+							[% IF $partyURL != '' %]
+							<tr><td>Online Link</td><td>[%- $partyURL -%]</td></tr>
 							[% END %]
 							
 							[% IF $partyPhone != '' %]
@@ -391,6 +396,7 @@
 						[% SET partyOrgName    = "partyOrgName${cnt}" %]
 						[% SET partyPositionName = "partyPositionName${cnt}" %]
 						[% SET partyEmail      = "partyEmail${cnt}" %]
+						[% SET partyURL        = "partyURL${cnt}" %]
 						[% SET partyPhone      = "partyPhone${cnt}" %]
 						[% SET partyFAX        = "partyFAX${cnt}" %]
 						[% SET partyDelivery   = "partyDelivery${cnt}" %]
@@ -407,6 +413,7 @@
 						<input type="hidden" name="[% partyOrgName   	%]" value="[% $partyOrgName    %]" />	
 						<input type="hidden" name="[% partyPositionName %]" value="[% $partyPositionName %]" />	
 						<input type="hidden" name="[% partyEmail     	%]" value="[% $partyEmail      %]" />	
+						<input type="hidden" name="[% partyURL      	%]" value="[% $partyURL        %]" />	
 						<input type="hidden" name="[% partyPhone     	%]" value="[% $partyPhone      %]" />	
 						<input type="hidden" name="[% partyFAX       	%]" value="[% $partyFAX        %]" />	
 						<input type="hidden" name="[% partyDelivery  	%]" value="[% $partyDelivery   %]" />	
@@ -422,6 +429,7 @@
 						<input type="hidden" name="partyOrgName" value="[% $partyOrgName %]" />	
 						<input type="hidden" name="partyPositionName" value="[% $partyPositionName %]" />	
 						<input type="hidden" name="partyEmail" value="[% $partyEmail %]" />	
+						<input type="hidden" name="partyURL" value="[% $partyURL %]" />	
 						<input type="hidden" name="partyPhone" value="[% $partyPhone %]" />	
 						<input type="hidden" name="partyFAX" value="[% $partyFAX %]" />	
 						<input type="hidden" name="partyDelivery" value="[% $partyDelivery %]" />	
