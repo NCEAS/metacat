@@ -44,6 +44,8 @@ public class Eml2oai_dc extends Crosswalk {
   private static final String XSLT_NAME_200 = "eml200toDublinCore.xsl";
   private static final String XSLT_NAME_201 = "eml201toDublinCore.xsl";
   private static final String XSLT_NAME_210 = "eml210toDublinCore.xsl";
+  private static final String XSLT_NAME_211 = "eml211toDublinCore.xsl";
+
   private static final String SCHEMA_LOCATION =
     "http://www.openarchives.org/OAI/2.0/oai_dc/ " +
     "http://www.openarchives.org/OAI/2.0/oai_dc.xsd";
@@ -55,6 +57,7 @@ public class Eml2oai_dc extends Crosswalk {
   private Transformer transformer200 = null;
   private Transformer transformer201 = null;
   private Transformer transformer210 = null;
+  private Transformer transformer211 = null;
   
   
   /* Constructors */
@@ -71,9 +74,13 @@ public class Eml2oai_dc extends Crosswalk {
     String xsltPath200 = dirPath + "/" + XSLT_NAME_200;
     String xsltPath201 = dirPath + "/" + XSLT_NAME_201;
     String xsltPath210 = dirPath + "/" + XSLT_NAME_210;
+    String xsltPath211 = dirPath + "/" + XSLT_NAME_211;
+
     FileInputStream fileInputStream200 = null;
     FileInputStream fileInputStream201 = null;
     FileInputStream fileInputStream210 = null;
+    FileInputStream fileInputStream211 = null;
+
     
     try {
       TransformerFactory tFactory200 = TransformerFactory.newInstance();
@@ -93,6 +100,12 @@ public class Eml2oai_dc extends Crosswalk {
       StreamSource xslSource210 = new StreamSource(fileInputStream210);
       this.transformer210 = tFactory210.newTransformer(xslSource210);
       fileInputStream210.close();
+      
+      TransformerFactory tFactory211 = TransformerFactory.newInstance();
+      fileInputStream211 = new FileInputStream(xsltPath211);
+      StreamSource xslSource211 = new StreamSource(fileInputStream211);
+      this.transformer211 = tFactory210.newTransformer(xslSource211);
+      fileInputStream211.close();
 
     } 
     catch (Exception e) {
@@ -102,6 +115,8 @@ public class Eml2oai_dc extends Crosswalk {
         IOUtils.closeQuietly(fileInputStream200);
         IOUtils.closeQuietly(fileInputStream201);
         IOUtils.closeQuietly(fileInputStream210);
+        IOUtils.closeQuietly(fileInputStream211);
+
     }
   }
   
@@ -152,6 +167,9 @@ public class Eml2oai_dc extends Crosswalk {
       else if (xmlRec.contains("eml://ecoinformatics.org/eml-2.1.0")) {
         transformer = transformer210;
       }
+      else if (xmlRec.contains("eml://ecoinformatics.org/eml-2.1.1")) {
+          transformer = transformer211;
+        }
       
       StringReader stringReader = new StringReader(xmlRec);
       StreamSource streamSource = new StreamSource(stringReader);
@@ -162,6 +180,7 @@ public class Eml2oai_dc extends Crosswalk {
       return stringWriter.toString();
     } 
     catch (Exception e) {
+    	e.printStackTrace();
       throw new CannotDisseminateFormatException(e.getMessage());
     }
   }
