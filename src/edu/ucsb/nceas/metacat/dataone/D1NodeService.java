@@ -448,7 +448,11 @@ public abstract class D1NodeService {
       	//String objectAsXML = "";
         try {
 	        //objectAsXML = IOUtils.toString(object, "UTF-8");
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert");
+            String formatId = null;
+            if(sysmeta.getFormatId() != null)  {
+                formatId = sysmeta.getFormatId().getValue();
+            }
+	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId);
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
@@ -1303,8 +1307,8 @@ public abstract class D1NodeService {
    * @return localId - the resulting docid of the document created or updated
    * 
    */
-  public String insertOrUpdateDocument(InputStream xml, String encoding,  Identifier pid, 
-    Session session, String insertOrUpdate) 
+  public String insertOrUpdateDocument(InputStream xmlStream, String encoding,  Identifier pid, 
+    Session session, String insertOrUpdate, String formatId) 
     throws ServiceFailure, IOException {
     
   	logMetacat.debug("Starting to insert xml document...");
@@ -1312,7 +1316,8 @@ public abstract class D1NodeService {
 
     // generate pid/localId pair for sysmeta
     String localId = null;
-    byte[] xmlBytes  = IOUtils.toByteArray(xml);
+    byte[] xmlBytes  = IOUtils.toByteArray(xmlStream);
+    IOUtils.closeQuietly(xmlStream);
     String xmlStr = new String(xmlBytes, encoding);
     if(insertOrUpdate.equals("insert")) {
       localId = im.generateLocalId(pid.getValue(), 1);
@@ -1378,7 +1383,7 @@ public abstract class D1NodeService {
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
     String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
-                        null, params, username, groupnames, false, false, xmlBytes);
+                        null, params, username, groupnames, false, false, xmlBytes, formatId);
     
     if(result.indexOf("<error>") != -1) {
     	String detailCode = "";
@@ -1415,14 +1420,15 @@ public abstract class D1NodeService {
     String[] groupnames = null;
     if (session != null ) {
     	username = session.getSubject().getValue();
-    	if (session.getSubjectInfo() != null) {
-    		List<Group> groupList = session.getSubjectInfo().getGroupList();
-    		if (groupList != null) {
-    			groupnames = new String[groupList.size()];
-    			for (int i = 0; i < groupList.size(); i++ ) {
-    				groupnames[i] = groupList.get(i).getSubject().getValue();
-    			}
-    		}
+    	Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
+    	if (otherSubjects != null) {    		
+			groupnames = new String[otherSubjects.size()];
+			int i = 0;
+			Iterator<Subject> iter = otherSubjects.iterator();
+			while (iter.hasNext()) {
+				groupnames[i] = iter.next().getValue();
+				i++;
+			}
     	}
     }
   
@@ -1870,7 +1876,7 @@ public abstract class D1NodeService {
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream data) 
+  private File writeStreamToFile(File dir, String fileName, InputStream dataStream) 
     throws ServiceFailure {
     
     File newFile = new File(dir, fileName);
@@ -1880,7 +1886,7 @@ public abstract class D1NodeService {
         if (newFile.createNewFile()) {
           // write data stream to desired file
           OutputStream os = new FileOutputStream(newFile);
-          long length = IOUtils.copyLarge(data, os);
+          long length = IOUtils.copyLarge(dataStream, os);
           os.flush();
           os.close();
         } else {
@@ -1895,6 +1901,8 @@ public abstract class D1NodeService {
       logMetacat.debug("IOE: " + e.getMessage());
       throw new ServiceFailure("1190", "File was not written: " + fileName 
                 + " " + e.getMessage());
+    } finally {
+        IOUtils.closeQuietly(dataStream);
     }
 
     return newFile;
