@@ -448,11 +448,7 @@ public abstract class D1NodeService {
       	//String objectAsXML = "";
         try {
 	        //objectAsXML = IOUtils.toString(object, "UTF-8");
-            String formatId = null;
-            if(sysmeta.getFormatId() != null)  {
-                formatId = sysmeta.getFormatId().getValue();
-            }
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId);
+	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert");
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
@@ -1274,7 +1270,7 @@ public abstract class D1NodeService {
           " is science metadata: " + e.getMessage());*/
     
     } catch (NotFound e) {
-      logMetacat.warn("There was a problem determining if the object identified by" + 
+      logMetacat.debug("There was a problem determining if the object identified by" + 
           sysmeta.getIdentifier().getValue() + 
           " is science metadata: " + e.getMessage());
     
@@ -1307,8 +1303,8 @@ public abstract class D1NodeService {
    * @return localId - the resulting docid of the document created or updated
    * 
    */
-  public String insertOrUpdateDocument(InputStream xmlStream, String encoding,  Identifier pid, 
-    Session session, String insertOrUpdate, String formatId) 
+  public String insertOrUpdateDocument(InputStream xml, String encoding,  Identifier pid, 
+    Session session, String insertOrUpdate) 
     throws ServiceFailure, IOException {
     
   	logMetacat.debug("Starting to insert xml document...");
@@ -1316,8 +1312,7 @@ public abstract class D1NodeService {
 
     // generate pid/localId pair for sysmeta
     String localId = null;
-    byte[] xmlBytes  = IOUtils.toByteArray(xmlStream);
-    IOUtils.closeQuietly(xmlStream);
+    byte[] xmlBytes  = IOUtils.toByteArray(xml);
     String xmlStr = new String(xmlBytes, encoding);
     if(insertOrUpdate.equals("insert")) {
       localId = im.generateLocalId(pid.getValue(), 1);
@@ -1383,7 +1378,7 @@ public abstract class D1NodeService {
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
     String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
-                        null, params, username, groupnames, false, false, xmlBytes, formatId);
+                        null, params, username, groupnames, false, false, xmlBytes);
     
     if(result.indexOf("<error>") != -1) {
     	String detailCode = "";
@@ -1407,22 +1402,35 @@ public abstract class D1NodeService {
   /**
    * Insert a data document
    * 
-   * @param object   * @param pid   * @param sessionData   * @throws ServiceFailure   * @returns localId of the data object inserted   */  public String insertDataObject(InputStream object, Identifier pid,           Session session) throws ServiceFailure {          String username = Constants.SUBJECT_PUBLIC;
+   * @param object
+   * @param pid
+   * @param sessionData
+   * @throws ServiceFailure
+   * @returns localId of the data object inserted
+   */
+  public String insertDataObject(InputStream object, Identifier pid, 
+          Session session) throws ServiceFailure {
+      
+    String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
     if (session != null ) {
     	username = session.getSubject().getValue();
-    	Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
-    	if (otherSubjects != null) {    		
-			groupnames = new String[otherSubjects.size()];
-			int i = 0;
-			Iterator<Subject> iter = otherSubjects.iterator();
-			while (iter.hasNext()) {
-				groupnames[i] = iter.next().getValue();
-				i++;
-			}
+    	if (session.getSubjectInfo() != null) {
+    		List<Group> groupList = session.getSubjectInfo().getGroupList();
+    		if (groupList != null) {
+    			groupnames = new String[groupList.size()];
+    			for (int i = 0; i < groupList.size(); i++ ) {
+    				groupnames[i] = groupList.get(i).getSubject().getValue();
+    			}
+    		}
     	}
     }
-      // generate pid/localId pair for object    logMetacat.debug("Generating a pid/localId mapping");    IdentifierManager im = IdentifierManager.getInstance();    String localId = im.generateLocalId(pid.getValue(), 1);  
+  
+    // generate pid/localId pair for object
+    logMetacat.debug("Generating a pid/localId mapping");
+    IdentifierManager im = IdentifierManager.getInstance();
+    String localId = im.generateLocalId(pid.getValue(), 1);
+  
     // Save the data file to disk using "localId" as the name
     String datafilepath = null;
 	try {
@@ -1431,7 +1439,8 @@ public abstract class D1NodeService {
 		ServiceFailure sf = new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
 		sf.initCause(e);
 		throw sf;
-	}    boolean locked = false;
+	}
+    boolean locked = false;
 	try {
 		locked = DocumentImpl.getDataFileLockGrant(localId);
 	} catch (Exception e) {
@@ -1439,15 +1448,62 @@ public abstract class D1NodeService {
 		sf.initCause(e);
 		throw sf;
 	}
-    logMetacat.debug("Case DATA: starting to write to disk.");	if (locked) {          File dataDirectory = new File(datafilepath);          dataDirectory.mkdirs();            File newFile = writeStreamToFile(dataDirectory, localId, object);            // TODO: Check that the file size matches SystemMetadata          // long size = newFile.length();          // if (size == 0) {          //     throw new IOException("Uploaded file is 0 bytes!");          // }            // Register the file in the database (which generates an exception          // if the localId is not acceptable or other untoward things happen          try {            logMetacat.debug("Registering document...");            DocumentImpl.registerDocument(localId, "BIN", localId,                    username, groupnames);            logMetacat.debug("Registration step completed.");
-                      } catch (SQLException e) {            //newFile.delete();            logMetacat.debug("SQLE: " + e.getMessage());            e.printStackTrace(System.out);            throw new ServiceFailure("1190", "Registration failed: " + 
+
+    logMetacat.debug("Case DATA: starting to write to disk.");
+	if (locked) {
+
+          File dataDirectory = new File(datafilepath);
+          dataDirectory.mkdirs();
+  
+          File newFile = writeStreamToFile(dataDirectory, localId, object);
+  
+          // TODO: Check that the file size matches SystemMetadata
+          // long size = newFile.length();
+          // if (size == 0) {
+          //     throw new IOException("Uploaded file is 0 bytes!");
+          // }
+  
+          // Register the file in the database (which generates an exception
+          // if the localId is not acceptable or other untoward things happen
+          try {
+            logMetacat.debug("Registering document...");
+            DocumentImpl.registerDocument(localId, "BIN", localId,
+                    username, groupnames);
+            logMetacat.debug("Registration step completed.");
+            
+          } catch (SQLException e) {
+            //newFile.delete();
+            logMetacat.debug("SQLE: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
             		e.getMessage());
-                      } catch (AccessionNumberException e) {            //newFile.delete();            logMetacat.debug("ANE: " + e.getMessage());            e.printStackTrace(System.out);            throw new ServiceFailure("1190", "Registration failed: " + 
+            
+          } catch (AccessionNumberException e) {
+            //newFile.delete();
+            logMetacat.debug("ANE: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
             	e.getMessage());
-                      } catch (Exception e) {            //newFile.delete();            logMetacat.debug("Exception: " + e.getMessage());            e.printStackTrace(System.out);            throw new ServiceFailure("1190", "Registration failed: " + 
-            	e.getMessage());          }            logMetacat.debug("Logging the creation event.");          EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, "create");            // Schedule replication for this data file, the "insert" action is important here!          logMetacat.debug("Scheduling replication.");          ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", false, null);      }
-            return localId;
-      }
+            
+          } catch (Exception e) {
+            //newFile.delete();
+            logMetacat.debug("Exception: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
+            	e.getMessage());
+          }
+  
+          logMetacat.debug("Logging the creation event.");
+          EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, "create");
+  
+          // Schedule replication for this data file, the "insert" action is important here!
+          logMetacat.debug("Scheduling replication.");
+          ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", false, null);
+      }
+      
+      return localId;
+    
+  }
 
   /**
    * Insert a systemMetadata document and return its localId
@@ -1814,7 +1870,7 @@ public abstract class D1NodeService {
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream dataStream) 
+  private File writeStreamToFile(File dir, String fileName, InputStream data) 
     throws ServiceFailure {
     
     File newFile = new File(dir, fileName);
@@ -1824,7 +1880,7 @@ public abstract class D1NodeService {
         if (newFile.createNewFile()) {
           // write data stream to desired file
           OutputStream os = new FileOutputStream(newFile);
-          long length = IOUtils.copyLarge(dataStream, os);
+          long length = IOUtils.copyLarge(data, os);
           os.flush();
           os.close();
         } else {
@@ -1839,8 +1895,6 @@ public abstract class D1NodeService {
       logMetacat.debug("IOE: " + e.getMessage());
       throw new ServiceFailure("1190", "File was not written: " + fileName 
                 + " " + e.getMessage());
-    } finally {
-        IOUtils.closeQuietly(dataStream);
     }
 
     return newFile;
@@ -2331,4 +2385,4 @@ public abstract class D1NodeService {
       return guid;
       
   }
-}
+}
