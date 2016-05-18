@@ -209,6 +209,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 				
 				PermissionController control = new PermissionController(previousDocid );
 				if (!control.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+						&& !control.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
 						&& action != null) {
 					needToCheckAccessModule = true;
 					unChangeableAccessSubTreeVector = getAccessSubTreeListFromDB();
@@ -1972,7 +1973,9 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 					PermissionController previousController = new PermissionController(previousDocid);
 					PermissionController currentController = new PermissionController(accessionNumber);				
 					if (previousController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+							|| previousController.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
 							|| currentController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+							|| currentController.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
 							) {
 						onlineDataFileIdInTopAccessVector.add(guid);
 					} else {

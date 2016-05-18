@@ -2254,15 +2254,15 @@ public class AccessControlTest extends MCTestCase {
 			debug("logging in as: anotheruser=" + anotheruser + " anotherpassword="
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
-			readDocumentIdWhichEqualsDoc(newdocid + ".6", testdocument, FAILURE, true);
+			readDocumentIdWhichEqualsDoc(newdocid + ".6", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should also be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".7", testdocument, FAILURE, true);
+			updateDocumentId(newdocid + ".7", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, false, false,
 							false, true), null, null, null, null);
@@ -2271,7 +2271,7 @@ public class AccessControlTest extends MCTestCase {
 
 			// try to delete the document
 			// deleteDocumentId(newdocid + ".7", FAILURE, true);
-			deleteDocumentId(newdocid + ".6", FAILURE, true);
+			//deleteDocumentId(newdocid + ".7", SUCCESS, false);
 
 			debug("logging out");
 			m.logout();
@@ -2326,13 +2326,14 @@ public class AccessControlTest extends MCTestCase {
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".10", testdocument, SUCCESS, false);
-			// should not be able to update the document
+			
+			// should also be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".11", testdocument, FAILURE, true);
+			updateDocumentId(newdocid + ".11", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, false, false,
 							false, true), null, null, null, null);
@@ -2340,7 +2341,7 @@ public class AccessControlTest extends MCTestCase {
 
 			// try to delete the document
 			// deleteDocumentId(newdocid + ".11", FAILURE, true);
-			deleteDocumentId(newdocid + ".10", FAILURE, true);
+			//deleteDocumentId(newdocid + ".11", FAILURE, true);
 
 			debug("logging out");
 			m.logout();
@@ -2363,21 +2364,22 @@ public class AccessControlTest extends MCTestCase {
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".12", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".13", testdocument, FAILURE, true);
-			// but can chg the permissions
+			updateDocumentId(newdocid + ".13", testdocument, SUCCESS, false);
+			
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
 			// ERRRRRRRRRRRRRRRR
-			// updateDocumentId(newdocid + ".13", testdocument, SUCCESS, false);
+			// updateDocumentId(newdocid + ".12", testdocument, SUCCESS, false);
 
 			// try to delete the document
 			// deleteDocumentId(newdocid + ".13", FAILURE, true);
-			deleteDocumentId(newdocid + ".12", FAILURE, true);
+			//deleteDocumentId(newdocid + ".13", SUCCESS, false);
 
 			debug("logging out");
 			m.logout();
@@ -2400,14 +2402,14 @@ public class AccessControlTest extends MCTestCase {
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".14", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
 			updateDocumentId(newdocid + ".15", testdocument, SUCCESS, false);
 			readDocumentIdWhichEqualsDoc(newdocid + ".15", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, true,
 							false, false, false), null, null, null, null);
@@ -2415,7 +2417,7 @@ public class AccessControlTest extends MCTestCase {
 			readDocumentIdWhichEqualsDoc(newdocid + ".16", testdocument, SUCCESS, false);
 
 			// try to delete the document
-			deleteDocumentId(newdocid + ".16", FAILURE, true);
+			//deleteDocumentId(newdocid + ".16", FAILURE, true);
 
 			debug("logging out");
 			m.logout();
@@ -2438,14 +2440,14 @@ public class AccessControlTest extends MCTestCase {
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".17", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
 			updateDocumentId(newdocid + ".18", testdocument, SUCCESS, false);
 			readDocumentIdWhichEqualsDoc(newdocid + ".18", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, true,
 							false, false, false), null, null, null, null);
@@ -2647,24 +2649,24 @@ public class AccessControlTest extends MCTestCase {
 			debug("logging in as: anotheruser=" + anotheruser + " anotherpassword="
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
-			readDocumentIdWhichEqualsDoc(newdocid + ".6", testdocument, FAILURE, true);
+			readDocumentIdWhichEqualsDoc(newdocid + ".6", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should also be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".7", testdocument, FAILURE, true);
+			updateDocumentId(newdocid + ".7", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions, of course
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, false, false,
 							false, true), null, null, null, null);
 			// ERRRRRRRROR
 			// updateDocumentId(newdocid + ".7", testdocument, SUCCESS, false);
 
-			// try to delete the document
+			// we don't want to delete the document yet try to delete the document
 			// deleteDocumentId(newdocid + ".7", FAILURE, true);
-			deleteDocumentId(newdocid + ".6", FAILURE, true);
+			//deleteDocumentId(newdocid + ".6", FAILURE, true);
 
 			debug("logging out");
 			m.logout();
@@ -2719,21 +2721,22 @@ public class AccessControlTest extends MCTestCase {
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".10", testdocument, SUCCESS, false);
-			// should not be able to update the document
+			
+			// should also be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".11", testdocument, FAILURE, true);
+			updateDocumentId(newdocid + ".11", testdocument, SUCCESS, false);
 
-			// but can chg the permissions
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, false, false,
 							false, true), null, null, null, null);
-			// updateDocumentId(newdocid + ".11", testdocument, SUCCESS, false);
+			// updateDocumentId(newdocid + ".12", testdocument, SUCCESS, false);
 
 			// try to delete the document
-			// deleteDocumentId(newdocid + ".11", FAILURE, true);
-			deleteDocumentId(newdocid + ".10", FAILURE, true);
+			// deleteDocumentId(newdocid + ".12", FAILURE, true);
+			//deleteDocumentId(newdocid + ".12", SUCCESS, false);
 
 			debug("logging out");
 			m.logout();
@@ -2756,21 +2759,22 @@ public class AccessControlTest extends MCTestCase {
 			m.login(anotheruser, anotherpassword);
 			readDocumentIdWhichEqualsDoc(newdocid + ".12", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should also be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, true, false), null, null, null, null);
-			updateDocumentId(newdocid + ".13", testdocument, FAILURE, true);
-			// but can chg the permissions
+			updateDocumentId(newdocid + ".13", testdocument, SUCCESS, false);
+			
+			// and can chg the permissions
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
-			// ERRRRRRRRRRRRRRRR
-			// updateDocumentId(newdocid + ".13", testdocument, SUCCESS, false);
+			// 
+			updateDocumentId(newdocid + ".14", testdocument, SUCCESS, false);
 
 			// try to delete the document
 			// deleteDocumentId(newdocid + ".13", FAILURE, true);
-			deleteDocumentId(newdocid + ".12", FAILURE, true);
+			//deleteDocumentId(newdocid + ".14", SUCCESS, false);
 
 			debug("logging out");
 			m.logout();
@@ -2782,8 +2786,8 @@ public class AccessControlTest extends MCTestCase {
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, true, true, true,
 							false), null, null, null, null);
-			updateDocumentId(newdocid + ".14", testdocument, SUCCESS, false);
-			readDocumentIdWhichEqualsDoc(newdocid + ".14", testdocument, SUCCESS, false);
+			updateDocumentId(newdocid + ".15", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".15", testdocument, SUCCESS, false);
 
 			// check if the user mentioned is able to read the document
 			debug("logging out");
@@ -2791,24 +2795,24 @@ public class AccessControlTest extends MCTestCase {
 			debug("logging in as: anotheruser=" + anotheruser + " anotherpassword="
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
-			readDocumentIdWhichEqualsDoc(newdocid + ".14", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".15", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
-			updateDocumentId(newdocid + ".15", testdocument, SUCCESS, false);
-			readDocumentIdWhichEqualsDoc(newdocid + ".15", testdocument, SUCCESS, false);
-
-			// but can chg the permissions
-			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
-					null, null, null, null, getAccessBlock(anotheruser, true, true,
-							false, false, false), null, null, null, null);
 			updateDocumentId(newdocid + ".16", testdocument, SUCCESS, false);
 			readDocumentIdWhichEqualsDoc(newdocid + ".16", testdocument, SUCCESS, false);
 
+			// and can chg the permissions
+			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
+					null, null, null, null, getAccessBlock(anotheruser, true, true,
+							false, false, false), null, null, null, null);
+			updateDocumentId(newdocid + ".17", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".17", testdocument, SUCCESS, false);
+
 			// try to delete the document
-			deleteDocumentId(newdocid + ".16", FAILURE, true);
+			//deleteDocumentId(newdocid + ".17", SUCCESS, false);
 
 			debug("logging out");
 			m.logout();
@@ -2820,8 +2824,8 @@ public class AccessControlTest extends MCTestCase {
 			testdocument = getTestEmlDoc("Testing update access block", emlVersion, null,
 					null, null, null, getAccessBlock(anotheruser, true, false, false,
 							false, true), null, null, null, null);
-			updateDocumentId(newdocid + ".17", testdocument, SUCCESS, false);
-			readDocumentIdWhichEqualsDoc(newdocid + ".17", testdocument, SUCCESS, false);
+			updateDocumentId(newdocid + ".18", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".18", testdocument, SUCCESS, false);
 
 			// check if the user mentioned is able to read the document
 			debug("logging out");
@@ -2829,24 +2833,24 @@ public class AccessControlTest extends MCTestCase {
 			debug("logging in as: anotheruser=" + anotheruser + " anotherpassword="
 					+ anotherpassword);
 			m.login(anotheruser, anotherpassword);
-			readDocumentIdWhichEqualsDoc(newdocid + ".17", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".18", testdocument, SUCCESS, false);
 
-			// should not be able to update the document
+			// should be able to update the document
 			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
 					null, null, null, null, getAccessBlock(anotheruser, true, false,
 							false, false, true), null, null, null, null);
-			updateDocumentId(newdocid + ".18", testdocument, SUCCESS, false);
-			readDocumentIdWhichEqualsDoc(newdocid + ".18", testdocument, SUCCESS, false);
-
-			// but can chg the permissions
-			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
-					null, null, null, null, getAccessBlock(anotheruser, true, true,
-							false, false, false), null, null, null, null);
 			updateDocumentId(newdocid + ".19", testdocument, SUCCESS, false);
 			readDocumentIdWhichEqualsDoc(newdocid + ".19", testdocument, SUCCESS, false);
 
+			// and can chg the permissions
+			testdocument = getTestEmlDoc("Testing update from another user", emlVersion,
+					null, null, null, null, getAccessBlock(anotheruser, true, true,
+							false, false, false), null, null, null, null);
+			updateDocumentId(newdocid + ".20", testdocument, SUCCESS, false);
+			readDocumentIdWhichEqualsDoc(newdocid + ".20", testdocument, SUCCESS, false);
+
 			// try to delete the document
-			deleteDocumentId(newdocid + ".19", FAILURE, true);
+			deleteDocumentId(newdocid + ".20", FAILURE, true);
 
 			debug("logging out");
 			m.logout();
@@ -2854,7 +2858,7 @@ public class AccessControlTest extends MCTestCase {
 			// delete the document
 			debug("logging in as: username=" + username + " password=" + password);
 			m.login(username, password);
-			deleteDocumentId(newdocid + ".19", SUCCESS, false);
+			deleteDocumentId(newdocid + ".20", SUCCESS, false);
 			debug("logging out");
 			m.logout();
 		} catch (MetacatAuthException mae) {

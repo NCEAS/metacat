@@ -1,7 +1,5 @@
 
-	<!-- CONTENT SECTION
-    ======================================================================= -->
-	<article id="RegistryGuide">
+	<article style="font-size: .5em" id="RegistryGuide">
 		<div class="container">
 		
 			<div class="row-fluid">
@@ -11,8 +9,8 @@
 				</p>
 				<p>
 					This guide provides information on how to complete the registration form.
-					There are up to 11 sections to the form; some fields are required (denoted by an asterisk *),
-					while others are optional.
+					There are multiple sections to the form, and some fields are required
+					(denoted by an asterisk * or in a tooltip), while others are optional.
 				</p>
 				<p>	
 					Information on individual fields and examples for their content are provided below.
@@ -20,35 +18,30 @@
 			</div>
 			
 			<div class="row-fluid">
-				<h4><a name="Submitter">Submitter</a></h4>
-				<p>
-					<span class="text-info">*First name, *Last name: </span>
-					The first and last names of the person completing this form.
-				</p>
-				
-			</div>
-			
-			<div class="row-fluid">
 				<h4><a name="BasicInformation">Basic Information</a></h4>
 				<p>
-					<span class="text-info">*Data Set Title:</span>
-					A descriptive title
-					of the data set. The title should provide enough information for
-					someone casually scanning a list of data sets to know whether the data are
-					relevant to them.  This implies that the data context should be indicated 
-					in the title without making the title be too long. In general, the title
-					should indicate what kind of data were collected and the spatial,
-					taxonomic, and temporal extents the data set covers.
+					*Data Set Title:
+					A descriptive title of the data set. The title should
+					provide enough information for someone casually scanning a list of data
+					sets to know whether the data are relevant to them. This implies that the
+					data context should be indicated in the title without making the title be
+					too long. In general, the title should indicate what kind of data were
+					collected and the spatial, taxonomic, and temporal extents the data set
+					covers.
+				</p>
+				<p>
+					Funding: Add the award number from the funding agency. Type in
+					a keyword to look up award numbers. Multiple award numbers can be separated by commas.
 				</p>
 				
-				<div class="span6">
+				<div>
 					<em>Examples of descriptive titles: </em>
 					<ul>
 						<li>Hastings Reserve (CA) Small Mammal Trapline Data from 1972 to 1988.</li>
 						<li>Tassajara Hot Springs Reserve Water Chemistry Data from 1990 to 2000.</li>
 					</ul>
 				</div>
-				<div class="span6">
+				<div>
 					<em>Examples of incomplete titles: </em>
 					<ul>
 						<li>Mammals Data</li>
@@ -56,7 +49,7 @@
 					</ul>	
 				</div>
 					
-[% IF cfg == 'nceas' %]
+				[% IF cfg == 'nceas' %]
 				<span class="text-info">*NCEAS Project(s):</span>
 				<p>Select one or more
 					NCEAS activities from the list to indicate that the data set is
@@ -68,9 +61,9 @@
 					sets that contribute to synthesis can be included in the repository and should
 					be associated with the appropriate NCEAS activities.
 				</p>
-[% END %]
+				[% END %]
 
-[% IF cfg == 'esa' || cfg == 'ltss' %]  
+				[% IF cfg == 'esa' || cfg == 'ltss' %]  
 
 				<span class="text-info">*Organization Name:</span>
 				<p>The name of the organization with which the data set is
@@ -80,7 +73,7 @@
 					set was generated; that the data set is owned by the organization; etc.
 				</p>
 				
-				<div class="span6">
+				<div>
 					<em>Examples of correct organization names: </em>
 					<ul>
 						<li>University of Michigan Biological Station</li>
@@ -88,7 +81,7 @@
 						<li>National Center for Ecological Analysis and Synthesis</li>
 					</ul>
 				</div>
-				<div class="span6">
+				<div>
 					<em>Examples of incorrect organization names: </em>
 					<ul>
 						<li>Michigan Station</li>
@@ -97,9 +90,9 @@
 					</ul>	
 				</div>				
 
-[% END %]
+				[% END %]
 
-[% IF cfg == 'obfs' || cfg == 'nrs' || cfg == 'specnet'%]
+				[% IF cfg == 'obfs' || cfg == 'nrs' || cfg == 'specnet'%]
 
 				<span class="text-info">*[% config.site | ucfirst %] Name:</span>
 				<p>Select a [% config.site %] from the drop-down list to indicate that the data set is
@@ -116,81 +109,69 @@
 					with a locality keyword.
 				</p> 
 
-[% END %]
+				[% END %]
 
 			</div>
 			
 			<div class="row-fluid">
-				<h4><a name="DataSetOriginator">Principal Data Set Owner</a></h4> 
+				<h4><a name="DataSetOriginator">People and Organizations</a></h4> 
 
-				<p>The person responsible for developing the data set. For example, the principal 
-					investigator in a collaborative project, the first author of the main publication using the data set, etc. 
-					The first and last names of the principal data set owner are required; the organization name, e-mail, phone, fax, and
-					address information are optional.
+				<p>
+					Add one or more people, organizations, or position names
+					associated with the dataset. At least one entry with a Creator role is
+					required, and creators will be listed in the dataset citation. The person
+					responsible for developing the data set. Other roles include, for example,
+					the principal investigator in a collaborative project, the first author of
+					the main publication using the data set, etc. The organization name, e-mail,
+					online link, phone, fax, and address information are optional.
+				</p>
+				<p>
+					Use the Add Person or Organization button to add entries to
+					the list. Use the Edit icon (pencil) to change an entry. Use the Update
+					Person or Organization button to update the entry, or Add Person or
+					Organization to duplicate a changed entry. If you have entered several
+					associated parties and want to change the order in which they appear, use
+					the up and down arrows.
 				</p>
 
-				<p><em>Note: </em>If there is more than one owner, information 
-					about the co-owner(s) can be provided in the <em>Associated Parties</em> section below.
-				</p>
+				<p>*First Name: The given name(s) of the person.</p>
+				
+				<p>*Last Name: The last name (surname) of the person.</p>
+				
+				<p>Organization Name: The name of the organization from which
+				the data set originated, if any</p>
+				
+				<p>Position Name: A named position in an organization from which
+				the data set originated, if any.</p>
 
-				<p><span class="text-info">*First Name:</span>
-				The first name of the principal data set owner.</p>
+				<p>E-Mail: The e-mail address by which the person or organization can be contacted.</p>
 				
-				<p><span class="text-info">*Last Name:</span>
-				The last name (surname) of the principal data set owner.</p>
+				<p>Phone: The phone number of the person or organization, including the area code (999-999-9999).</p>
 				
-				<p><span class="text-info">Organization Name:</span>
-				The name of the organization from which the data set
-				originated.</p>
+				<p>FAX: The fax number of the person or organization, including the area code (999-999-9999).</p>
 				
-				<p><span class="text-info">E-Mail:</span>
-				The e-mail address by which the principal data set owner can be contacted.</p>
-				
-				<p><span class="text-info">Phone:</span>
-				The phone number of the principal data set owner, including the area code (999-999-9999).</p>
-				
-				<p><span class="text-info">FAX:</span>
-				The fax number of the principal data set owner, including the area code (999-999-9999).</p>
-				
-				<p><span class="text-info">Street Information:</span>
-				A comma-separated list of street number, street, unit,
+				<p>Street Information: A comma-separated list of street number, street, unit,
 				etc.<br> <em>Example: </em> 735 State Street, Suite 300</p>
 				
-				<p><span class="text-info">City:</span>
-				The city
-				name of the principal data set owner's address.</p>
+				<p>City: The city name of the person or organization's
+				address.</p>
 				
-				<p><span class="text-info">U.S. State or Territory:</span>
-				Select a U.S. state or territory from the drop-down menu for the principal data set owner's address. If the address is not in 
-				the United States, used the "Other State/Province" field below. For a shortcut,
-				press the first letter of the state on your keyboard (e.g.,  M-key to skip to Maine).</p>
+				<p>U.S. State or Territory: Select a U.S. state or territory
+				from the drop-down menu for the principal data set owner's address. If the
+				address is not in the United States, used the "Other State/Province" field
+				below. For a shortcut, press the first letter of the state on your keyboard
+				(e.g., M-key to skip to Maine).</p>
 				
-				<p><span class="text-info">Other State/Province:</span>
-				A non-U.S. state or a province for 
-				the principal data set owner's address.</p>
+				<p>Other State/Province: A non-U.S. state or a province for the
+				person or organization's address.</p>
 				
-				<p><span class="text-info">Postal Code:</span>
-				The postal code or ZIP code
-				for the principal data set owner's address.</p>
+				<p>Postal Code: The postal code or ZIP code for the person or organization's address.</p>
 				
-				<p><span class="text-info">Country:</span>
-				The country
-				for the principal data set owner's address.</p>
+				<p>Country: The country for the person or organization's
+				address.</p>
 			
 			</div>
-			
-			<div class="row-fluid">
-				<h4><a name="AdditionalOriginators">Associated Parties</a></h4> 
-
-				<p>If applicable, enter the first and last names of an associated party (e.g., co-owner of the data set, a data custodian/steward, a metadata provider, a user of 
-				the data set), select a role for this person, and click on "Add Associated Party".  Repeat to add another associated party.</p>
-
-				<p>To edit an entry, click on the name of the person entered, change the name and/or 
-				the role, and click on the area just right of the drop-down menu for the role (the text fields and the drop-down menu will disappear). To delete an entry, click on the "X". 
-				If you have entered several associated parties and want to change the order in which they appear, use the blue up and down arrows.</p>
-				
-			</div>
-			
+						
 			<div class="row-fluid">
 				<h4><a name="DataSetAbstract">*Data Set Abstract</a></h4>
 				<p>Short (maximum of 350 words) summary of the purpose and content of the data set. 
@@ -380,8 +361,36 @@ for locating the data set at a [% config.site %].
 					digital (e.g., computer file) or hardcopy (e.g., paper), or specify any other type of data medium the data are recorded on (e.g., video tape).
 				</p>
 				<p>
-					<span class="text-info">*Usage Rights:</span> Specify the usage rights that apply
-					to the data set (e.g., no restrictions, obtain permission from data set owner(s), cite the data set in publications, etc.). 
+					*Usage Rights:
+					[% IF cfg == 'metacatui' &&  config.abbrev == 'ARCTIC' %]
+						Choose either the:
+						<ul>
+							<li>
+								<a href="https://creativecommons.org/publicdomain/zero/1.0/">
+									Creative Commons Public Domain Dedication (CC-0)
+								</a>
+							</li>
+							<li>
+								<a href="https://creativecommons.org/licenses/by/4.0/">
+									Creative Commons Attribution License(CC-BY)
+								</a>	
+							</li>
+						</ul>
+						Choosing CC-0, you waive your interest in your work and place the
+						work as completely as possible in the public domain so others may freely
+						use the work without restriction under copyright or database law.
+						Attribution for your work is still expected according to norms in your
+						research field. Choosing CC-BY licenses your work, and you let others
+						copy, distribute, display, and perform your copyrighted work, and
+						derivative works based upon it, but only if they give you appropriate
+						credit. For more information on choosing, see the
+						<a href="https://blog.datadryad.org/2011/10/05/why-does-dryad-use-cc0/">Dryad discussion</a> 
+						and the 
+						<a href="http://www.bitlaw.com/copyright/unprotected.html">Bitlaw commentary</a>.
+					[% ELSE %]
+						Specify the usage rights that apply to the data set (e.g., no restrictions, 
+						obtain permission from data set owner(s), cite the data set in publications, etc.). 
+					[% END %]
 				</p>
 				<p>
 					<span class="text-info">URL:</span> If available, provide a link for the
