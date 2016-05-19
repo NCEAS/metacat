@@ -111,6 +111,7 @@
         <xsl:apply-templates select="geoform"/>
         <xsl:apply-templates select="pubinfo"/>
         <xsl:apply-templates select="othercit"/>
+        <xsl:apply-templates select="onlink"/>
     </xsl:template>
     
     <xsl:template match="descript">
@@ -261,6 +262,17 @@
 	                    <xsl:value-of select="."/>
 	                </xsl:with-param>
 	            </xsl:call-template>
+	        </div>
+        </div>
+    </xsl:template>
+    
+    <xsl:template match="onlink">
+        <div class="control-group">
+			<label class="control-label">Online Access</label>
+	        <div class="controls controls-well">
+	        	<a>
+	        	<xsl:attribute name="href"><xsl:value-of select="."/></xsl:attribute>
+	        	<xsl:value-of select="."/></a>
 	        </div>
         </div>
     </xsl:template>
