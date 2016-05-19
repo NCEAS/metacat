@@ -168,4 +168,4 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('S
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.w3.org/1999/xlink', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/xlink/xlinks.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.7.0',1,CURRENT_DATE);
+  VALUES ('2.8.0',1,CURRENT_DATE);
