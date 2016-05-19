@@ -32,7 +32,8 @@
 
   <xsl:template name="downloads">
     <div id="downloadContents">
-      <xsl:for-each select="dcx:simpleDc/references">
+    <h4>Online Access</h4>
+      <xsl:for-each select="dcx:dcTerms/dct:references">
         <a>
           <xsl:attribute name="href">
             <xsl:value-of select="."/>
@@ -106,6 +107,13 @@
   </xsl:template>
 
   <xsl:template name="people">
+	<h4>Creators</h4>
+	  <xsl:for-each select="dcx:simpleDc/dct:creator">
+	  <div class="controls controls-well">
+	  	<xsl:value-of select="." />
+	  </div>
+	  </xsl:for-each>
+  
   </xsl:template>
 
   <xsl:template name="geography">
