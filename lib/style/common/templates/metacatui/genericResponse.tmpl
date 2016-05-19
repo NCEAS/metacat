@@ -65,6 +65,8 @@
                         <input type="hidden" name="funding" value="[%funding%]">
                         
                         [% cnt = 1 %]
+                        [% numIdentifier = 0 %]
+						[% numIdentifier = identifierCount %]
 						[% WHILE cnt <= numIdentifier %]
 							[% SET id = "identifierValue${cnt}" %]
 							<input type="hidden" name="[% id %]" value="[% $id %]" />
