@@ -19,7 +19,12 @@
   <doctype publicid="FGDC-STD-001-1998">
   	<target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
   </doctype>
-
+  
+	<!-- DCX metadata -->
+	<doctype publicid="http://ns.dataone.org/metadata/schema/onedcx/v1.0">
+		<target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
+	</doctype>
+  
   <doctype publicid="-//NCEAS//login//EN">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui-login.xsl</target>
   </doctype>
