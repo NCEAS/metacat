@@ -135,9 +135,11 @@
 
 				<div data-content="boundingCoordinates" class="control-group boundingCoordinates">
 					<label class="control-label">Bounding Coordinates</label>
-					<xsl:for-each select="//dcx:dcTerms/dct:spatial[@xsi:type='Box']">
-						<xsl:call-template name="extract-coordinates" />
-					</xsl:for-each>
+					<div class="controls controls-well">					
+						<xsl:for-each select="//dcx:dcTerms/dct:spatial[@xsi:type='Box']">
+							<xsl:call-template name="extract-coordinates" />
+						</xsl:for-each>
+					</div>	
 				</div>
 
 			</div>
