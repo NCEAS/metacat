@@ -94,9 +94,11 @@
 	
 	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" unless="build-metacat-ui-called">
 		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
+			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 			<arg value="clean"/>
 		</artifact:mvn>
 		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
+			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 		   <arg value="package"/>
 		</artifact:mvn>
 		<property name="build-metacat-ui-called" value="true"/>
@@ -1340,7 +1342,7 @@
 		description="deletes build dir and files that can be regenerated form the release">
 		<delete dir="${build.dir}" />
 		<delete dir="${dist.dir}" />
-	    <delete dir="${metacatui.build.dir}" />
+		<delete dir="${metacatui.build.dir}" />
 	</target>
 
 	<target name="fullclean" depends="clean"
@@ -1712,9 +1714,11 @@
 	<!-- build metacat-common jar -->
 	<target name="build-metacat-common" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
 		<artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
+			        <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 		            <arg value="clean"/>
 		</artifact:mvn>
 		<artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
+			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 		   <arg value="install"/>
 		</artifact:mvn>
 		<property name="build-metacat-common-called" value="true"/>
@@ -1723,9 +1727,11 @@
 	<!-- build metacat-index war -->
 	<target name="build-metacat-index" description="Calls the Maven build for metacat-index.war" >		
 		<artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
+			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 			<arg value="clean"/>
 		</artifact:mvn>
 		<artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
+			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 			<arg value="package"/>
 			<!--<arg value="-Dmaven.test.skip=true"/>-->
 		</artifact:mvn>
