@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.6.0 Release
+Version: 2.7.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,15 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+Relese Notes for 2.7.0:
+------------------------
+* Use different format ids to identity variants of the schema with same namespace
+* Add EML 2.1.1 to Darwin Core supporting for OAI-PMH provider  
+* Bugs fixed include:
+  - Series head resolution should use obsoletes field as part of determination(7020)
+  - The InputStream (parameter) in the CN/MN.create and MN.update method is not closed(7005)
+  - Use the AutoCloseClientInputStream class in the d1_libclient_java in Metacat replication(7004)
 
 Release Notes for 2.6.0:
 ------------------------
