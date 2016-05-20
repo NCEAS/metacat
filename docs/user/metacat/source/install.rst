@@ -119,7 +119,7 @@ Download Metacat Source Code
 ............................
 To get the Metacat source distribution:
 
-1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., 2.6.0).
+1. Browse to the `Metacat Download Page`_. In the Metacat section, select the link to the Metacat Source code (it will look something like this: metacat-src-X.X.X.tar.gz, where X.X.X is the latest version of Metacat, e.g., 2.7.0).
 2. Save the file locally. 
 3. Extract the Metacat package files by typing (replace X.X.X with the current version number): 
 
