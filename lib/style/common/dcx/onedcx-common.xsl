@@ -7,16 +7,19 @@
 
 	<xsl:template name="onedcx">
 		<article class="container" id="Metadata">
-			<xsl:for-each select="*">
-
-				<xsl:call-template name="citation" />
-				<xsl:call-template name="general" />
-				<xsl:call-template name="keywords" />
-				<xsl:call-template name="people" />
-				<xsl:call-template name="geography" />
-				<xsl:call-template name="temporal" />
-
-			</xsl:for-each>
+			<form class="form-horizontal">
+				<xsl:for-each select="*">
+	
+					<xsl:call-template name="citation" />
+					<xsl:call-template name="general" />
+					<xsl:call-template name="keywords" />
+					<xsl:call-template name="people" />
+					<xsl:call-template name="geography" />
+					<xsl:call-template name="temporal" />
+	
+				</xsl:for-each>
+			</form>
+			
 
 		</article>
 	</xsl:template>
