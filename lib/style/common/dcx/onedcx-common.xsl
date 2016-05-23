@@ -193,31 +193,55 @@
 			</div>
 		</div>
 	</xsl:template>
+	
+	<xsl:template name="extract-period">
+		<xsl:call-template name="show-temporal">
+			<xsl:with-param name="data" select="." />
+			<xsl:with-param name="field" select="'start'" />
+			<xsl:with-param name="label" select="'Begin Date'" />
+		</xsl:call-template>
+		<xsl:call-template name="show-temporal">
+			<xsl:with-param name="data" select="." />
+			<xsl:with-param name="field" select="'end'" />
+			<xsl:with-param name="label" select="'End Date'" />
+		</xsl:call-template>
+	</xsl:template>
+	
+	<xsl:template name="show-temporal">
+		<xsl:param name="data" />
+		<xsl:param name="field" />
+		<xsl:param name="label" />
+		<xsl:variable name="date"
+			select="substring-before(substring-after($data,concat($field,'=')),';')" />
+		<label class="control-label">
+			<xsl:value-of select="$label" />
+		</label>
+		<div class="controls controls-well">
+			<xsl:value-of select="$date" />
+		</div>
+	</xsl:template>
 
 	<xsl:template name="temporal">
 		<div class="row-fluid">
 			<div data-content="temporalCoverage" class="row-fluid temporalCoverage">
 				<h4>Temporal Coverage</h4>
 				<div class="control-group">
-					<label class="control-label">Date Range</label>
-					<div class="controls controls-well">
-						<div class="control-group">
-							<label class="control-label">Begin</label>
-							<div class="controls">
-								<div class="row-fluid">
-									<xsl:value-of select="dcx:dcTerms/dct:temporal" />
-								</div>
-							</div>
-						</div>
-						<div class="control-group">
-							<label class="control-label">End</label>
-							<div class="controls">
-								<div class="row-fluid">
-									<xsl:value-of select="dcx:dcTerms/dct:temporal" />
-								</div>
-							</div>
-						</div>
-					</div>
+					<xsl:if test="//dcx:dcTerms/dct:temporal[@xsi:type='Period']/text() != ''">
+						<label class="control-label">Date Range</label>
+						<div class="controls controls-well">					
+							<xsl:for-each select="//dcx:dcTerms/dct:temporal[@xsi:type='Period']">
+								<xsl:call-template name="extract-period" />
+							</xsl:for-each>
+						</div>	
+					</xsl:if>
+					<xsl:if test="//dcx:dcTerms/dct:temporal[not(@xsi:type='Period')]/text() != ''">
+						<label class="control-label">Single Date</label>
+						<div class="controls controls-well">					
+							<xsl:for-each select="//dcx:dcTerms/dct:temporal[not(@xsi:type='Period')]">
+								<xsl:value-of select="." />
+							</xsl:for-each>
+						</div>	
+					</xsl:if>
 				</div>
 			</div>
 		</div>
