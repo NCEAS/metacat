@@ -1091,7 +1091,7 @@ public class MNodeService extends D1NodeService
 
             // Set the properties of the node based on configuration information and
             // calls to current status methods
-            String serviceName = SystemUtil.getSecureContextURL() + "/" + PropertyService.getProperty("dataone.serviceName");
+            String serviceName = SystemUtil.getContextURL() + "/" + PropertyService.getProperty("dataone.serviceName");
             Node node = new Node();
             node.setBaseURL(serviceName + "/" + nodeTypeString);
             node.setDescription(nodeDesc);
