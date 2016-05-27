@@ -56,6 +56,7 @@ for your OS.
 
 Relese Notes for 2.7.0:
 ------------------------
+* Drop support for Oracle database
 * Use different format ids to identity variants of the schema with same namespace
 * Add EML 2.1.1 to Darwin Core supporting for OAI-PMH provider  
 * Add external link to FGDC stylesheet(7033)
