@@ -1365,6 +1365,8 @@ sub processFile {
 		debug( "Error receiving file " . cgi_error() );
 	}
 
+	debug( "Process file: " . $fileName );
+
 	# write file to disk, get SHA1 hash and size
 	my ( $outFile, $fileHash ) = writeFile($fileName);
 	debug( "processed file to temp directory:  $outFile" );
@@ -1383,7 +1385,10 @@ sub processFile {
 	# http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=313141
 	if ( !$contentType ) {
 		$contentType = 'text/plain';
-	}
+	} elsif ( $contentType =~ "application/vnd.ms-excel" && $fileName =~ /\.csv$/) {
+        	debug("Reassigning content type (" . $contentType . ")to CSV for file: " . $fileName);
+        	$contentType = 'text/csv';
+    	}
 
 	my %dataInfo = (
 		'fileName'    => $outFile,
