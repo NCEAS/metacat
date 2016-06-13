@@ -1231,7 +1231,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         	}
             // do we have mediaType/encoding in SM?
             MediaType mediaType = sm.getMediaType();
-            if (mediaType == null) {
+            if (mediaType == null && objectFormat != null) {
             	try {
             		mediaType = objectFormat.getMediaType();
             	} catch (Exception e) {
