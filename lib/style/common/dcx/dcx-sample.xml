@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:metadata
+	xsi:schemaLocation="http://ns.dataone.org/metadata/schema/onedcx/v1.0 http://ns.dataone.org/metadata/schema/onedcx/v1.0/onedcx_v1.0.xsd"
+	xmlns="http://purl.org/dc/terms/" xmlns:ns2="http://ns.dataone.org/metadata/schema/onedcx/v1.0"
+	xmlns:ns3="http://purl.org/dc/elements/1.1/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<ns2:simpleDc>
+		<title>Mugs of the Mesa and Old Chocolate: Evidence of Prehistoric
+			Cacao Use in the Mesa Verde Region of the North American Southwest
+			(Contributed Poster)</title>
+		<creator>De Loera, Alexia (The University of San Diego)</creator>
+		<creator>Millar, Donald (The University of San Diego)</creator>
+		<creator>Klein, Lauren (The University of San Diego)</creator>
+		<creator>Fernandez, Andrew</creator>
+		<subject>ceramic analysis</subject>
+		<subject>Mesa Verde</subject>
+		<subject>American Southwest</subject>
+		<type>Document</type>
+		<identifier>http://alpha.tdar.org/document/48701/mugs-of-the-mesa-and-old-chocolate-evidence-of-prehistoric-cacao-use-in-the-mesa-verde-region-of-the-north-american-southwest-contributed-poster
+		</identifier>
+		<type>Text</type>
+		<contributor>Society of American Archaeology</contributor>
+		<publisher>Society of American Archaeology, San Francisco, California
+		</publisher>
+		<type>conference</type>
+	</ns2:simpleDc>
+	<ns2:dcTerms>
+		<abstract>Undergraduate Anthropology and Chemistry students at the
+			University of San Diego (USD) collaborated on the application of
+			analytical chemistry to archaeological ceramics. USD curates 1000’s
+			of prehistoric Southwestern artifacts, all of which are available for
+			student research. We examined some of the collections vessels for
+			cacao, which is the raw form of chocolate. Patricia Crown and W.
+			Jeffrey Hurst recently found it in cylinder jar fragments from Chaco
+			Canyon. Crown’s methodology was adapted for our project, using the
+			university’s mugs from the Mesa Verde region near Durango, Colorado.
+			The chemical analysis of residues extracted from Pueblo II to Pueblo
+			III period (A.D. 1100 to 1300) Mesa Verde mugs indicates the presence
+			of theobromine, a chemical component of cacao. In all, 24 vessels
+			were tested using liquid chromatography-mass spectrometry. Two mugs
+			had positive indications for chocolate. Cacao is endemic to
+			Mesoamerica and was used in ritual practice that made its way north
+			with other exotica. The chemical results will be discussed along with
+			an analysis of long distance trade networks as well as the
+			morphological, iconographic and use-wear characteristic of each
+			vessel.</abstract>
+		<created xsi:type="W3CDTF">2015-04-02T21:49:28-07:00</created>
+		<bibliographicCitation>Mugs of the Mesa and Old Chocolate: Evidence of
+			Prehistoric Cacao Use in the Mesa Verde Region of the North American
+			Southwest (Contributed Poster). Alexia De Loera, Donald Millar,
+			Lauren Klein, Andrew Fernandez. Presented at Society of American
+			Archaeology, San Francisco, California. 2015 ( tDAR id: 48701) ;
+			doi:10.6067/XCV848701</bibliographicCitation>
+		<spatial>North America - Southwest</spatial>
+		<references>http://alpha.tdar.org/document/48701/mugs-of-the-mesa-and-old-chocolate-evidence-of-prehistoric-cacao-use-in-the-mesa-verde-region-of-the-north-american-southwest-contributed-poster
+		</references>
+		<spatial xsi:type="Box">northlimit=42.02554333723747;
+			southlimit=30.675715404167743; westlimit=-115.5322265625;
+			eastlimit=-102.36926193209942;</spatial>
+		<!--  <temporal>2014</temporal> -->
+		<temporal xsi:type="Period">start=2015;end=2016;</temporal>
+		<created>2015</created>
+	</ns2:dcTerms>
+</ns2:metadata>
