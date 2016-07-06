@@ -64,6 +64,7 @@ import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -192,7 +193,7 @@ public class SolrIndex {
      */
     private Map<String, SolrDoc> process(String id, SystemMetadata systemMetadata, String objectPath)
                     throws IOException, SAXException, ParserConfigurationException,
-                    XPathExpressionException, JiBXException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType{
+                    XPathExpressionException, MarshallingException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType{
 
         // Load the System Metadata document
         ByteArrayOutputStream systemMetadataOutputStream = new ByteArrayOutputStream();
@@ -379,7 +380,7 @@ public class SolrIndex {
      */
     private synchronized void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath) 
                     throws IOException, SAXException, ParserConfigurationException,
-                    XPathExpressionException, SolrServerException, JiBXException, EncoderException, NotImplemented, NotFound, UnsupportedType {
+                    XPathExpressionException, SolrServerException, MarshallingException, EncoderException, NotImplemented, NotFound, UnsupportedType {
         checkParams(pid, systemMetadata, objectPath);
         Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, objectPath);
         
