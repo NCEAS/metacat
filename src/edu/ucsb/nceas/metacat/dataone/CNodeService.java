@@ -44,6 +44,7 @@ import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.cn.v2.CNAuthorization;
 import org.dataone.service.cn.v2.CNCore;
 import org.dataone.service.cn.v2.CNRead;
@@ -84,9 +85,8 @@ import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.SystemMetadata;
-import org.dataone.service.types.v2.util.ServiceMethodRestrictionUtil;
 import org.dataone.service.util.TypeMarshaller;
-import org.jibx.runtime.JiBXException;
+
 
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.EventLog;
@@ -1251,7 +1251,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         try {
             os = new PipedOutputStream(is);
             TypeMarshaller.marshalTypeToOutputStream(objectFormatList, os);
-        } catch (JiBXException | IOException e) {
+        } catch (MarshallingException | IOException e) {
             throw new ServiceFailure("0000", "Unable to marshal object format list.\n" + e.getMessage());
         } finally {
             try {

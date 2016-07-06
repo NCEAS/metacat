@@ -10,8 +10,8 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.log4j.Logger;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Identifier;
-import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import com.hazelcast.core.MapLoader;
@@ -71,7 +71,7 @@ public class ObjectPathMap implements MapLoader<Identifier, String> {
 	 * the data.  The doctype value for metadata can vary, but for data
 	 * is always 'BIN', so using a simple if-then-else to separate
 	 */
-	private String pathToDocid(String localid) throws AccessControlException, HandlerException, JiBXException, IOException, McdbException, SAXException  
+	private String pathToDocid(String localid) throws AccessControlException, HandlerException, MarshallingException, IOException, McdbException, SAXException  
 	{	
 		Hashtable<String, String> ht = ReplicationService.getDocumentInfoMap(localid);
 		if (ht.get("doctype").equals("BIN")) {

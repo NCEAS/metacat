@@ -28,6 +28,7 @@ import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.apache.log4j.Logger;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
@@ -35,7 +36,6 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v2.ObjectFormatList;
-import org.jibx.runtime.JiBXException;
 
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.DocumentImpl;
@@ -205,7 +205,7 @@ public class ObjectFormatService {
 							"Unexpected exception from the service - "
 									+ e.getClass() + ": " + e.getMessage());
 
-				} catch (JiBXException e) {
+				} catch (MarshallingException e) {
 					throw new ServiceFailure("4841",
 							"Unexpected exception from the service - "
 									+ e.getClass() + ": " + e.getMessage());

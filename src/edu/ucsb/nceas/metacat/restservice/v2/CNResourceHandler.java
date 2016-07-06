@@ -41,6 +41,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -78,7 +79,6 @@ import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.EncodingUtilities;
 import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
-import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
@@ -480,11 +480,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidToken
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     private void checksum(String guid) throws InvalidToken, ServiceFailure,
             NotAuthorized, NotFound, InvalidRequest, NotImplemented,
-            JiBXException, IOException {
+            MarshallingException, IOException {
         Identifier guidid = new Identifier();
         guidid.setValue(guid);
         logMetacat.debug("getting checksum for object " + guid);
@@ -510,10 +510,10 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidToken
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized,
-            InvalidRequest, NotImplemented, IOException, JiBXException {
+            InvalidRequest, NotImplemented, IOException, MarshallingException {
 
         Date fromDate = null;
         Date toDate = null;
@@ -628,11 +628,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidToken
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     protected void getSystemMetadataObject(String guid) throws InvalidToken,
             ServiceFailure, NotAuthorized, NotFound, InvalidRequest,
-            NotImplemented, IOException, JiBXException {
+            NotImplemented, IOException, MarshallingException {
 
         Identifier id = new Identifier();
         id.setValue(guid);
@@ -658,7 +658,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest
      * @throws ServiceFailure
      * @throws IdentifierNotUnique
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws NotImplemented
      * @throws InvalidSystemMetadata
      * @throws InsufficientResources
@@ -670,7 +670,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      */
     protected void putObject(String action) throws ServiceFailure,
-            InvalidRequest, IdentifierNotUnique, JiBXException, InvalidToken,
+            InvalidRequest, IdentifierNotUnique, MarshallingException, InvalidToken,
             NotAuthorized, UnsupportedType, InsufficientResources,
             InvalidSystemMetadata, NotImplemented, IOException,
             InstantiationException, IllegalAccessException {
@@ -723,10 +723,10 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidRequest
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     private void listFormats() throws InvalidRequest, ServiceFailure, NotFound,
-            InsufficientResources, NotImplemented, IOException, JiBXException {
+            InsufficientResources, NotImplemented, IOException, MarshallingException {
         logMetacat.debug("Entering listFormats()");
 
         ObjectFormatList objectFormatList = CNodeService.getInstance(request)
@@ -751,7 +751,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     }
     
     private void listChecksumAlgorithms() throws IOException, ServiceFailure,
-			NotImplemented, JiBXException {
+			NotImplemented, MarshallingException {
 		logMetacat.debug("Entering listFormats()");
 
 		ChecksumAlgorithmList result = CNodeService.getInstance(request).listChecksumAlgorithms();
@@ -814,9 +814,9 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotAuthorized 
      * @throws ServiceFailure 
      * @throws InvalidToken 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      */
-    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, JiBXException 
+    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, MarshallingException 
     {
 
         OutputStream out = response.getOutputStream();
@@ -841,9 +841,9 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws NotImplemented
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
-    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, JiBXException {
+    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, MarshallingException {
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -870,11 +870,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws InvalidRequest
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     private void getFormat(String fmtidStr) throws InvalidRequest,
             ServiceFailure, NotFound, InsufficientResources, NotImplemented,
-            IOException, JiBXException {
+            IOException, MarshallingException {
         logMetacat.debug("Entering listFormats()");
 
         ObjectFormatIdentifier fmtid = new ObjectFormatIdentifier();
@@ -900,7 +900,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented 
      * @throws InvalidRequest 
      * @throws ServiceFailure 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws IOException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
@@ -910,7 +910,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      */
     private void addFormat(String formatIdStr) 
             throws NotImplemented, ServiceFailure, InvalidRequest, InstantiationException, 
-            IllegalAccessException, IOException, JiBXException, NotFound, NotAuthorized, InvalidToken {
+            IllegalAccessException, IOException, MarshallingException, NotFound, NotAuthorized, InvalidToken {
         
         logMetacat.debug("addFormat: " + formatIdStr);
         
@@ -999,7 +999,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             logMetacat.debug(msg);
             throw new ServiceFailure("4210", msg);
         
-        } catch (JiBXException e) {
+        } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
@@ -1018,11 +1018,11 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws NotImplemented
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
     private void resolve(String id) throws InvalidRequest, InvalidToken,
             ServiceFailure, NotAuthorized, NotFound, NotImplemented,
-            IOException, JiBXException {
+            IOException, MarshallingException {
         Identifier pid = new Identifier();
         pid.setValue(id);
         ObjectLocationList locationList = CNodeService.getInstance(request)
@@ -1132,7 +1132,7 @@ public class CNResourceHandler extends D1ResourceHandler {
             logMetacat.debug(msg);
             throw new ServiceFailure("4490", msg);
         
-        } catch (JiBXException e) {
+        } catch (MarshallingException e) {
             String msg = "Couldn't marshall the identifier to the response output stream: " +
             e.getMessage();
             logMetacat.debug(msg);
@@ -1171,7 +1171,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * 
      * @param pid
      *            identifier for System Metadata entry
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws FileUploadException
      * @throws IOException
      * @throws InvalidRequest
@@ -1184,7 +1184,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      */
     protected void registerSystemMetadata()
             throws ServiceFailure, InvalidRequest, IOException,
-            FileUploadException, JiBXException, NotImplemented, NotAuthorized,
+            FileUploadException, MarshallingException, NotImplemented, NotAuthorized,
             InvalidSystemMetadata, InstantiationException,
             IllegalAccessException {
     	
@@ -1217,7 +1217,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     /**
      * set the access perms on a document
      * 
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws InvalidRequest
      * @throws NotImplemented
      * @throws NotAuthorized
@@ -1231,7 +1231,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws ParserConfigurationException
      * @throws VersionMismatch 
      */
-    protected void setAccess(String pid) throws JiBXException, InvalidToken,
+    protected void setAccess(String pid) throws MarshallingException, InvalidToken,
             ServiceFailure, NotFound, NotAuthorized, NotImplemented,
             InvalidRequest, IOException, InstantiationException,
             IllegalAccessException, ParserConfigurationException, SAXException, VersionMismatch {
@@ -1278,12 +1278,12 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidToken
      * @throws NotFound
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws Exception
      */
     private void listObjects() throws InvalidToken, ServiceFailure,
             NotAuthorized, InvalidRequest, NotImplemented, NotFound,
-            IOException, JiBXException {
+            IOException, MarshallingException {
 
         Date startTime = null;
         Date endTime = null;
@@ -1427,13 +1427,13 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws InstantiationException
      * @throws IllegalAccessException
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws VersionMismatch 
      */
     public boolean setReplicationPolicy(String pid) throws NotImplemented,
             NotFound, NotAuthorized, ServiceFailure, InvalidRequest,
             InvalidToken, IOException, InstantiationException,
-            IllegalAccessException, JiBXException, VersionMismatch {
+            IllegalAccessException, MarshallingException, VersionMismatch {
 
         boolean result = false;
         long serialVersion = 0L;
@@ -1659,7 +1659,7 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws NotAuthorized
      * @throws InvalidRequest
      * @throws NotFound
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      * @throws IOException 
@@ -1765,14 +1765,14 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest
      * @throws NotFound
      * @throws VersionMismatch 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws IOException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      */
     public boolean updateReplicationMetadata(String pid) throws ServiceFailure,
             NotImplemented, InvalidToken, NotAuthorized, InvalidRequest,
-            NotFound, VersionMismatch, InstantiationException, IllegalAccessException, IOException, JiBXException {
+            NotFound, VersionMismatch, InstantiationException, IllegalAccessException, IOException, MarshallingException {
 
         boolean result = false;
         long serialVersion = 0L;
@@ -1811,14 +1811,14 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws InstantiationException
      * @throws IllegalAccessException
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws NotImplemented
      * @throws NotAuthorized
      * @throws InvalidSystemMetadata
      * @throws InvalidToken
      */
     protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest, InstantiationException, 
-                        IllegalAccessException, IOException, JiBXException, NotImplemented, NotAuthorized, InvalidSystemMetadata, InvalidToken {
+                        IllegalAccessException, IOException, MarshallingException, NotImplemented, NotAuthorized, InvalidSystemMetadata, InvalidToken {
         // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
         

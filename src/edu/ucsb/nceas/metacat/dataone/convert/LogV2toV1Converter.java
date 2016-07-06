@@ -25,11 +25,11 @@ package edu.ucsb.nceas.metacat.dataone.convert;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
-import org.jibx.runtime.JiBXException;
+
 /**
  * This class represents a converter to convert an DataONE v2 Log object to a v1 Log object.
  * It probably will be removed to d1_common_java in the future. 
@@ -56,7 +56,7 @@ public class LogV2toV1Converter {
      * @throws InstantiationException 
      */
     public org.dataone.service.types.v1.Log convert(Log logV2) 
-            throws InstantiationException, IllegalAccessException, InvocationTargetException, JiBXException, IOException {
+            throws InstantiationException, IllegalAccessException, InvocationTargetException, MarshallingException, IOException {
         org.dataone.service.types.v1.Log logV1 = null;
         int removedLogCount =0;
         if(logV2 != null) {
@@ -104,7 +104,7 @@ public class LogV2toV1Converter {
          * @throws InstantiationException 
          */
         public org.dataone.service.types.v1.LogEntry convert(LogEntry logEntryV2) 
-                throws InstantiationException, IllegalAccessException, InvocationTargetException, JiBXException, IOException {
+                throws InstantiationException, IllegalAccessException, InvocationTargetException, MarshallingException, IOException {
             org.dataone.service.types.v1.LogEntry logEntryV1 = null;;
             if(logEntryV2 != null) {
                 logEntryV1 = new org.dataone.service.types.v1.LogEntry();

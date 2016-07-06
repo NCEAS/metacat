@@ -53,6 +53,7 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.eml.DataoneEMLParser;
 import org.dataone.eml.EMLDocument;
 import org.dataone.eml.EMLDocument.DistributionMetadata;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.NotFound;
@@ -69,7 +70,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dspace.foresite.ResourceMap;
-import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import java.util.Calendar;
@@ -123,7 +123,7 @@ public class SystemMetadataFactory {
 	 * @throws PropertyNotFoundException
 	 * @throws BaseException
 	 * @throws NoSuchAlgorithmException
-	 * @throws JiBXException
+	 * @throws MarshallingException
 	 * @throws AccessControlException
 	 * @throws HandlerException
 	 * @throws SAXException
@@ -134,7 +134,7 @@ public class SystemMetadataFactory {
             IOException, AccessionNumberException, ClassNotFoundException,
             InsufficientKarmaException, ParseLSIDException,
             PropertyNotFoundException, BaseException, NoSuchAlgorithmException,
-            JiBXException, AccessControlException, HandlerException, SAXException, AccessException {
+            MarshallingException, AccessControlException, HandlerException, SAXException, AccessException {
 	        boolean indexDataFile = false;
 	        return createSystemMetadata(indexDataFile, localId, includeORE, downloadData);
 	}
@@ -161,7 +161,7 @@ public class SystemMetadataFactory {
 			IOException, AccessionNumberException, ClassNotFoundException,
 			InsufficientKarmaException, ParseLSIDException,
 			PropertyNotFoundException, BaseException, NoSuchAlgorithmException,
-			JiBXException, AccessControlException, HandlerException, SAXException, AccessException {
+			MarshallingException, AccessControlException, HandlerException, SAXException, AccessException {
 		
 		logMetacat.debug("createSystemMetadata() called for localId " + localId);
 
@@ -702,7 +702,7 @@ public class SystemMetadataFactory {
      * @throws SQLException
 	 * @throws SAXException 
 	 * @throws HandlerException 
-	 * @throws JiBXException 
+	 * @throws MarshallingException 
 	 * @throws BaseException 
 	 * @throws ParseLSIDException 
 	 * @throws InsufficientKarmaException 
@@ -713,7 +713,7 @@ public class SystemMetadataFactory {
 	 * @throws AccessControlException 
      */
     public static void generateSystemMetadata(List<String> idList, boolean includeOre, boolean downloadData) 
-    throws PropertyNotFoundException, NoSuchAlgorithmException, AccessionNumberException, SQLException, AccessControlException, AccessException, McdbException, IOException, ClassNotFoundException, InsufficientKarmaException, ParseLSIDException, BaseException, JiBXException, HandlerException, SAXException 
+    throws PropertyNotFoundException, NoSuchAlgorithmException, AccessionNumberException, SQLException, AccessControlException, AccessException, McdbException, IOException, ClassNotFoundException, InsufficientKarmaException, ParseLSIDException, BaseException, MarshallingException, HandlerException, SAXException 
     {
         
         for (String localId : idList) { 

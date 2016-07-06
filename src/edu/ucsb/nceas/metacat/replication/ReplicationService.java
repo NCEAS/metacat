@@ -75,11 +75,11 @@ import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.rest.RestClient;
 import org.dataone.client.types.AutoCloseHttpClientInputStream;
 import org.dataone.client.utils.HttpUtils;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
-import org.jibx.runtime.JiBXException;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
@@ -1146,7 +1146,7 @@ public class ReplicationService extends BaseService {
 	}
 	
 	public static Hashtable<String, String> getDocumentInfoMap(String docid)
-			throws HandlerException, AccessControlException, JiBXException,
+			throws HandlerException, AccessControlException, MarshallingException,
 			IOException, McdbException, SAXException {
 		
 		// Try get docid info from remote server
@@ -1174,7 +1174,7 @@ public class ReplicationService extends BaseService {
 	 * @throws IOException
 	 * @throws McdbException
 	 */
-	public static String getDocumentInfo(String docid) throws AccessControlException, JiBXException, IOException, McdbException {
+	public static String getDocumentInfo(String docid) throws AccessControlException, MarshallingException, IOException, McdbException {
 		StringBuffer sb = new StringBuffer();
 
 		DocumentImpl doc = new DocumentImpl(docid);

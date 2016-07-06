@@ -45,6 +45,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.TokenGenerator;
@@ -83,7 +84,6 @@ import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
-import org.jibx.runtime.JiBXException;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -764,9 +764,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure 
      * @throws InvalidToken 
      * @throws IOException 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      */
-    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, IOException, JiBXException {
+    private void generateIdentifier() throws InvalidToken, ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, IOException, MarshallingException {
         
         // make sure we have the multipart params
         try {
@@ -896,12 +896,12 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      * @throws IOException 
      */
-    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, JiBXException, IOException, InstantiationException, IllegalAccessException {
+    private void syncError() throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest, MarshallingException, IOException, InstantiationException, IllegalAccessException {
     	SynchronizationFailed syncFailed = null;
 		try {
 			syncFailed = collectSynchronizationFailed();
@@ -917,7 +917,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	/**
      * Calculate the checksum 
      * @throws NotImplemented
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws IOException
      * @throws InvalidToken
      * @throws ServiceFailure
@@ -925,7 +925,7 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws InvalidRequest
      */
-    private void checksum(String pid) throws NotImplemented, JiBXException, IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
+    private void checksum(String pid) throws NotImplemented, MarshallingException, IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest {
     	String checksumAlgorithm = "MD5";
     	try {
     		checksumAlgorithm = PropertyService.getProperty("dataone.checksumAlgorithm.default");
@@ -954,7 +954,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     
 	/**
      * handle the replicate action for MN
-	 * @throws JiBXException 
+	 * @throws MarshallingException 
 	 * @throws FileUploadException 
 	 * @throws IOException 
 	 * @throws InvalidRequest 
@@ -969,7 +969,7 @@ public class MNResourceHandler extends D1ResourceHandler {
      */
     private void replicate() 
         throws ServiceFailure, InvalidRequest, IOException, FileUploadException, 
-        JiBXException, NotImplemented, NotAuthorized, InsufficientResources, 
+        MarshallingException, NotImplemented, NotAuthorized, InsufficientResources, 
         UnsupportedType, InstantiationException, IllegalAccessException, InvalidToken {
 
         logMetacat.debug("in POST replicate()");
@@ -1064,7 +1064,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     /**
      * Get the Node information
      * 
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws IOException
      * @throws InvalidRequest 
      * @throws ServiceFailure 
@@ -1072,7 +1072,7 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotImplemented 
      */
     private void node() 
-        throws JiBXException, IOException, NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest {
+        throws MarshallingException, IOException, NotImplemented, NotAuthorized, ServiceFailure, InvalidRequest {
         
         Node n = MNodeService.getInstance(request).getCapabilities();
         
@@ -1135,9 +1135,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure 
      * @throws InvalidToken 
      * @throws IOException 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      */
-    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, IOException, JiBXException
+    private void getLog() throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, IOException, MarshallingException
     {
             
         Date fromDate = null;
@@ -1208,9 +1208,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws ServiceFailure 
      * @throws InvalidToken 
      * @throws IOException 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      */
-    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, JiBXException {
+    protected void getObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
         OutputStream out = null;
         
         if (pid != null) { //get a specific document                
@@ -1417,7 +1417,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotFound, NotImplemented, IOException,
-			JiBXException, InvalidRequest, IdentifierNotUnique,
+			MarshallingException, InvalidRequest, IdentifierNotUnique,
 			UnsupportedType, InsufficientResources, InvalidSystemMetadata {
 
 		// publish the object
@@ -1443,9 +1443,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest
      * @throws NotImplemented
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
-    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, JiBXException {
+    protected void getSystemMetadataObject(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, InvalidRequest, NotImplemented, IOException, MarshallingException {
 
         Identifier id = new Identifier();
         id.setValue(pid);
@@ -1467,7 +1467,7 @@ public class MNResourceHandler extends D1ResourceHandler {
      *               is the existing pid.  If insert, the pid is the new one
      * @throws InvalidRequest 
      * @throws ServiceFailure 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws NotImplemented 
      * @throws InvalidSystemMetadata 
      * @throws InsufficientResources 
@@ -1480,7 +1480,7 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, JiBXException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException {
+    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException {
        
     	// Read the incoming data from its Mime Multipart encoding
     	Map<String, File> files = collectMultipartFiles();
@@ -1570,9 +1570,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotAuthorized 
      * @throws ServiceFailure 
      * @throws InvalidToken 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      */
-    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, JiBXException 
+    private void deleteObject(String pid) throws IOException, InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, InvalidRequest, MarshallingException 
     {
 
         OutputStream out = response.getOutputStream();
@@ -1597,9 +1597,9 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws NotFound
      * @throws NotImplemented
      * @throws IOException
-     * @throws JiBXException
+     * @throws MarshallingException
      */
-    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, JiBXException {
+    private void archive(String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, MarshallingException {
 
         OutputStream out = response.getOutputStream();
         response.setStatus(200);
@@ -1615,7 +1615,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         
     }
 
-	protected SynchronizationFailed collectSynchronizationFailed() throws IOException, ServiceFailure, InvalidRequest, JiBXException, InstantiationException, IllegalAccessException, ParserConfigurationException, SAXException  {
+	protected SynchronizationFailed collectSynchronizationFailed() throws IOException, ServiceFailure, InvalidRequest, MarshallingException, InstantiationException, IllegalAccessException, ParserConfigurationException, SAXException  {
 		
 		// Read the incoming data from its Mime Multipart encoding
 		logMetacat.debug("Disassembling MIME multipart form");
@@ -1662,14 +1662,14 @@ public class MNResourceHandler extends D1ResourceHandler {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 * @throws IOException
-	 * @throws JiBXException
+	 * @throws MarshallingException
 	 * @throws NotImplemented
 	 * @throws NotAuthorized
 	 * @throws InvalidSystemMetadata
 	 * @throws InvalidToken
 	 */
 	protected void updateSystemMetadata() throws ServiceFailure, InvalidRequest, 
-	                        InstantiationException, IllegalAccessException, IOException, JiBXException, NotImplemented, 
+	                        InstantiationException, IllegalAccessException, IOException, MarshallingException, NotImplemented, 
 	                        NotAuthorized, InvalidSystemMetadata, InvalidToken {
 	    // Read the incoming data from its Mime Multipart encoding
         Map<String, File> files = collectMultipartFiles();
