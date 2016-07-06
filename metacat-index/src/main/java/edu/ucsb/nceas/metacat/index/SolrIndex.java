@@ -75,7 +75,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.OREParserException;
-import org.jibx.runtime.JiBXException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
@@ -184,7 +183,7 @@ public class SolrIndex {
      * @throws SAXException
      * @throws ParserConfigurationException
      * @throws XPathExpressionException
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws SolrServerException 
      * @throws EncoderException
      * @throws UnsupportedType 
@@ -372,7 +371,7 @@ public class SolrIndex {
      * @param systemMetadata  the system metadata associated with the data object
      * @param data  the path to the object file itself
      * @throws SolrServerException 
-     * @throws JiBXException 
+     * @throws MarshallingException 
      * @throws EncoderException 
      * @throws UnsupportedType 
      * @throws NotFound 
@@ -572,7 +571,7 @@ public class SolrIndex {
      * @throws SAXException
      * @throws ParserConfigurationException
      * @throws OREParserException
-     * @throws JiBXException
+     * @throws MarshallingException
      * @throws EncoderException
      */
     void update(Identifier pid, SystemMetadata systemMetadata, String objectPath) throws Exception {
