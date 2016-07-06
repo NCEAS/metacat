@@ -64,6 +64,7 @@ import junit.framework.TestSuite;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.util.Constants;
@@ -100,7 +101,6 @@ import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
-import org.jibx.runtime.JiBXException;
 import org.junit.After;
 import org.junit.Before;
 
@@ -898,7 +898,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       assertNotNull(node);
       // TODO: should probably test other parts of the node information
       
-    } catch (JiBXException e) {
+    } catch (MarshallingException e) {
         e.printStackTrace();
         fail("The node instance couldn't be parsed correctly:" + e.getMessage());
         

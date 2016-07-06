@@ -102,7 +102,6 @@ import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
-import org.jibx.runtime.JiBXException;
 import org.junit.After;
 import org.junit.Before;
 
