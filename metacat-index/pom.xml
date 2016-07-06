@@ -7,7 +7,12 @@
 	<version>2.8.0-SNAPSHOT</version>
 	<name>metacat-index</name>
 	<url>http://maven.apache.org</url>
-
+	
+	<properties>
+        <d1_cn_index_processor_version>2.3.0-SNAPSHOT</d1_cn_index_processor_version>
+        <metacat_common_version>2.8.0-SNAPSHOT</metacat_common_version>
+    </properties>
+	
 	<repositories>
 		<repository>
 			<id>dataone.org</id>
@@ -32,7 +37,7 @@
 		<dependency>
 			<groupId>edu.ucsb.nceas.metacat.common</groupId>
 			<artifactId>metacat-common</artifactId>
-			<version>2.8.0-SNAPSHOT</version>
+			<version>${metacat_common_version}</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
@@ -45,7 +50,7 @@
 		 <dependency>
         <groupId>org.dataone</groupId>
         <artifactId>d1_cn_index_processor</artifactId>
-        <version>2.2.0-SNAPSHOT</version>
+        <version>${d1_cn_index_processor_version}</version>
         <type>jar</type>
         <exclusions>
                 <exclusion>
