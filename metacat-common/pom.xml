@@ -8,6 +8,7 @@
 	<name>metacat-common</name>
 	<url>http://maven.apache.org</url>
 	<properties>
+	    <d1_common_java_version>2.3.0-SNAPSHOT</d1_common_java_version>
         <d1_solr_index_schema_name>index-solr-schema-v1_1.xml</d1_solr_index_schema_name>
         <d1_solr_index_schema_url>scm:svn:https://repository.dataone.org/software/cicore/tags/DATAONE-CN-INDEX_v1.2.1/usr/share/dataone-cn-index</d1_solr_index_schema_url>         
     </properties>
@@ -61,7 +62,7 @@
 		<dependency>
 			<groupId>org.dataone</groupId>
 			<artifactId>d1_common_java</artifactId>
-			<version>2.2.0-SNAPSHOT</version>
+			<version>${d1_common_java_version}</version>
 			<type>jar</type>
 			<!-- exclude extraneous artifacts (jars) -->
 			<exclusions>
