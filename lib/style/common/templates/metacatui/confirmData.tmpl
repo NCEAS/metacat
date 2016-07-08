@@ -137,290 +137,61 @@
 				[% END %]
 				</table>
 
-<p><span class="text-info">First Name:</span>        [%origNamefirstContact%]
-</p>
-
-<p><span class="text-info">Last Name:</span>         [%origNamelastContact%]
-</p>
-
-<p><span class="text-info">Organization Name:</span> [%origNameOrgContact%]
-</p>
-
-<p><span class="text-info">E-Mail:</span>            [%origEmailContact%]
-</p>
-
-<p><span class="text-info">Phone:</span>             [%origPhoneContact%]
-</p>
-
-<p><span class="text-info">FAX:</span>               [%origFAXContact%]
-</p>
-
-<p><span class="text-info">Street Information:</span> 
-                                                    [%origDeliveryContact%]
-</p>
-
-<p><span class="text-info">City:</span>              [%origCityContact%]
-</p>
-
-<p><span class="text-info">State:</span>             [%origStateContact%]
-</p>
-
-<p><span class="text-info">Other State/Province:</span>       [%origStateOtherContact%]
-</p>
-
-<p><span class="text-info">Postal Code:</span>               [%origZIPContact%]
-</p>
-
-<p><span class="text-info">Country:</span>           [%origCountryContact%]
-</p>
-
-
-<hr class="rule" />
-<a name="DistributionIinformation"></a>
-<h4>Distribution Information</h4> 
-
-<a name="Site-specificCode"></a>
-<p><span class="text-info">Data Set Identifiers:</span> 
-
-[% numIdentifier = 0 %]
-[% IF identifierCount > 0 %]
-    [% numIdentifier = identifierCount %]
-[% END %]
-[% cnt = 1 %]
-[% WHILE cnt <= numIdentifier %]
-    [% SET id = "identifierValue${cnt}" %]
-    <p><span class="text-info">Identifier:</span> [% $id %]</p>
-    [% cnt = cnt + 1 %]
- [% END %]
-
-</p>
-
-<p><span class="text-info">Data Medium:</span>       [%dataMedium%]    <span class="text-info">Other Data Medium</span>: [%dataMediumOther%]
-</p>
-
-
-<p><span class="text-info">Usage Constraints:</span>   [%useConstraints%]    <span class="text-info">Other Usage Constraints:</span>  [%useConstraintsOther%]
-</p>
-
-
-<p><span class="text-info">URL</span>:               [%url%]
-</p>
-<p><span class="text-info">Additional Information:</span>  [%addComments%]
-</p>
-<hr class="rule" />
-<p>
-  All data and metadata are released under either the 
-  <a href="http://creativecommons.org/publicdomain/zero/1.0/">CC-0 Public Domain Dedication</a>
-  or the 
-  <a href="http://creativecommons.org/licenses/by/4.0/">
-    Creative Commons Attribution 4.0 International License
-  </a>. 
-  As a repository dedicated to helping researchers increase collaboration 
-  and the pace of science, this repository needs certain rights to copy, store, 
-  and redistribute data. By uploading data, metadata, and any other content to 
-  this repository, you warrant that you own any rights to the content and are 
-  authorized to do so under copyright or any other right that might pertain 
-  to the content. 
-  <a href="http://www.bitlaw.com/copyright/database.html">
-    Data and facts themselves are not covered under copyright
-  </a> 
-  in the US and most countries, since facts in and of themselves are not 
-  eligible for copyright. That said, some associated metadata and some 
-  particular compilations of data could potentially be covered by copyright 
-  in some jurisdictions. By uploading content, you grant this repository and 
-  UCSB all rights needed to copy, store, redistribute, and share data, metadata, 
-  and any other content. By marking content as publicly available, you grant this 
-  repository, UCSB, and any other users the right to copy the content and redistribute 
-  it to the public without restriction under the terms of the 
-  <a href="http://creativecommons.org/licenses/by/4.0/">
-    Creative Commons Attribution 4.0 International License
-  </a> 
-  or the 
-  <a href="http://creativecommons.org/publicdomain/zero/1.0/">CC-0 Public Domain Dedication</a>, 
-  depending on which you choose at the time of upload.
-</p>
-<form id="confirmForm" action="[% cgiPrefix %]/register-dataset.cgi" method="post">
-  <input type="hidden" name="cfg" value="[% cfg %]" />
-  <input type="hidden" name="docid" value="[% docid %]" />
-  <input type="hidden" name="stage" value="confirmed" />
-  <input type="hidden" name="providerGivenName" value="[%providerGivenName%]" />
-  <input type="hidden" name="providerSurName" value="[%providerSurName%]"/>
-  <input type="hidden" name="site" value="[%site%]"/>
-  [% IF cfg == 'nceas' %]
-      [% FOREACH group = wg %]
-          <input type="hidden" name="wg" value="[%group%]" />
-      [% END %]
-  [% END %]
-
-  [% cnt = 1 %]
-  [% WHILE cnt <= numIdentifier %]
-      [% SET id = "identifierValue${cnt}" %]
-      <input type="hidden" name="[% id %]" value="[% $id %]" />
-      <input type="hidden" name="identifier" value="[% $id %]" />
-      [% cnt = cnt + 1 %]
-  [% END %]  
-  <input type="hidden" name="identifierCount" value="[% identifierCount %]" />
-
-  <input type="hidden" name="title" value="[%title%]" />
-  <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]" />
-  <input type="hidden" name="origNamelast0" value="[%origNamelast0%]" />
-  <input type="hidden" name="origNameOrg" value="[%origNameOrg%]" />
-  <input type="hidden" name="origRole0" value="[%origRole0%]" />
-  <input type="hidden" name="origDelivery" value="[%origDelivery%]" />
-  <input type="hidden" name="origCity" value="[%origCity%]" /> 
-  <input type="hidden" name="origState" value="[%origState%]" />
-  <input type="hidden" name="origStateOther" value="[%origStateOther%]" />
-  <input type="hidden" name="origZIP" value="[%origZIP%]" />
-  <input type="hidden" name="origCountry" value="[%origCountry%]" />
-  <input type="hidden" name="origPhone" value="[%origPhone%]" />
-  <input type="hidden" name="origFAX" value="[%origFAX%]"/>
-  <input type="hidden" name="origEmail" value="[%origEmail%]" />
-  <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]" />
-  <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]" />
-  <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]" />
-  <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]" />
-  <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]" />
-  <input type="hidden" name="origCityContact" value="[%origCityContact%]" /> 
-  <input type="hidden" name="origStateContact" value="[%origStateContact%]" />
-  <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]" />
-  <input type="hidden" name="origZIPContact" value="[%origZIPContact%]"/>
-  <input type="hidden" name="origCountryContact" value="[%origCountryContact%]" />
-  <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]" />
-  <input type="hidden" name="origFAXContact" value="[%origFAXContact%]" />
-  <input type="hidden" name="origEmailContact" value="[%origEmailContact%]" />
-  <input type="hidden" name="aoCount" value="[%aoCount%]" />
-  [% cnt = 1 %]
-  [% WHILE cnt <= numAO %]
-      [% SET origNamefirst = "origNamefirst${cnt}" %]
-      [% SET origNamelast = "origNamelast${cnt}" %]
-      [% SET origRole = "origRole${cnt}" %]
-      <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst %]" />
-      <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast %]" />
-      <input type="hidden" name="[% origRole %]" value="[% $origRole %]" />
-      [% cnt = cnt + 1 %]
-  [% END %]
-  <input type="hidden" name="abstract" value="[%abstract%]" />
-  <input type="hidden" name="keyCount" value="[%keyCount%]" />
-  [% cnt = 1 %]
-  [% WHILE cnt <= numKey %]
-      [% SET kyd = "keyword${cnt}" %]
-      [% SET keyType = "kwType${cnt}" %]
-      [% SET keyTh = "kwTh${cnt}" %]
-      <input type="hidden" name="[% kyd %]" value="[% $kyd %]" />
-      <input type="hidden" name="[% keyType %]" value="[% $keyType %]" />
-      <input type="hidden" name="[% keyTh %]" value="[% $keyTh %]" />
-      [% cnt = cnt + 1 %]
-  [% END %]
-  <input type="hidden" name="addComments" value="[%addComments%]" />
-  <input type="hidden" name="useConstraints" value="[%useConstraints%]" />
-  <input type="hidden" name="useConstraintsOther" value="[%useConstraintsOther%]" />
-  <input type="hidden" name="url" value="[%url%]" />
-  <input type="hidden" name="dataMedium" value="[%dataMedium%]" />
-  <input type="hidden" name="dataMediumOther" value="[%dataMediumOther%]" />
-  <input type="hidden" name="beginningYear" value="[%beginningYear%]" />
-  <input type="hidden" name="beginningMonth" value="[%beginningMonth%]" />
-  <input type="hidden" name="beginningDay" value="[%beginningDay%]" />
-  <input type="hidden" name="endingYear" value="[%endingYear%]" />
-  <input type="hidden" name="endingMonth" value="[%endingMonth%]" />
-  <input type="hidden" name="endingDay" value="[%endingDay%]" />
-  <input type="hidden" name="geogdesc" value="[%geogdesc%]" />
-  <input type="hidden" name="useSiteCoord" value="[%useSiteCoord%]" />
-  <input type="hidden" name="latDeg1" value="[% latDeg1 %]" />
-  <input type="hidden" name="latMin1" value="[%latMin1%]" />
-  <input type="hidden" name="latSec1" value="[%latSec1%]" />
-  <input type="hidden" name="hemisphLat1" value="[%hemisphLat1%]" />	
-  <input type="hidden" name="longDeg1" value="[% longDeg1 %]" />
-  <input type="hidden" name="longMin1" value="[%longMin1%]" />
-  <input type="hidden" name="longSec1" value="[%longSec1%]" />
-  <input type="hidden" name="hemisphLong1" value="[%hemisphLong1%]" />
-  <input type="hidden" name="latDeg2" value="[%latDeg2%]" />
-  <input type="hidden" name="latMin2" value="[%latMin2%]" />
-  <input type="hidden" name="latSec2" value="[%latSec2%]" />
-  <input type="hidden" name="hemisphLat2" value="[%hemisphLat2%]" />	
-  <input type="hidden" name="longDeg2" value="[%longDeg2%]" />
-  <input type="hidden" name="longMin2" value="[%longMin2%]" />
-  <input type="hidden" name="longSec2" value="[%longSec2%]" />
-  <input type="hidden" name="hemisphLong2" value="[%hemisphLong2%]" />
-  <input type="hidden" name="taxaCount" value="[%taxaCount%]" />
-  <input type="hidden" name="userLoggedIn" value="[%userLoggedIn%]" />
-  [% cnt = 1 %]
-  [% WHILE cnt <= numTaxa %]
-      [% SET trn = "taxonRankName${cnt}" %]
-      [% SET trv = "taxonRankValue${cnt}" %]
-      <input type="hidden" name="[% trn %]" value="[% $trn %]" />
-      <input type="hidden" name="[% trv %]" value="[% $trv %]" />
-      [% cnt = cnt + 1 %]
-  [% END %]
-  <input type="hidden" name="taxaAuth" value="[%taxaAuth%]" />
-
-  <input type="hidden" name="methodTitle" value="[%methodTitle%]" />
-  [% FOREACH para = methodPara %]
-      <input type="hidden" name="methodPara" value="[%para%]" />
-  [% END %]
-  <input type="hidden" name="studyExtentDescription" value="[%studyExtentDescription%]" />
-  <input type="hidden" name="samplingDescription" value="[%samplingDescription%]" />
-  <input type="hidden" name="upCount" value="[%upCount%]" />
-  <input type="hidden" name="delCount" value="[% delCount %]" />
-  [% dCount = 0 %]
-  [% IF delCount > 0 %]
-     [% dCount = delCount %]
-  [% END %]
-  [% cnt = 0 %]
-  [% WHILE cnt < dCount %]
- 		  [% SET delfile = "deletefile_${cnt}" %]
-      		<input type="hidden" name="[% delfile %]" value="[% $delfile %]" />
-			<input type="hidden" name="deletefile" value="[% $delfile %]" />
-			[% cnt = cnt + 1 %]
-	[% END %]		
-
-  [% fCount = 0 %]
-  [% IF upCount > 0 %]
-      [% fCount = upCount %]
-  [% END %]
-
-  [% cnt = 0 %]
-  [% WHILE cnt < fCount %]
-      [% SET fileSum = "upload_${cnt}" %]
-      [% SET fileName = "uploadname_${cnt}" %]
-      [% SET fileType = "uploadtype_${cnt}" %] 
-      [% SET filePerm = "uploadperm_${cnt}" %]
-
-      [% IF fileSum %]
-        <input type="hidden" name="[% fileSum %]" value="[% $fileSum %]" />
-        <input type="hidden" name="[% fileName %]" value="[% $fileName %]" />
-        <input type="hidden" name="[% fileType %]" value="[% $fileType %]" />
-        <input type="hidden" name="[% filePerm %]" value="[% $filePerm %]" />
-      [% END %]
-      [% cnt = cnt + 1 %]
-  [% END %]
-  
-  	<!-- form submission -->
-	<a name="buttons"></a>
-	<p><span class="text-info">Is the information above correct?</span></p> 
-	<input id="dataCorrect" type="button" class="btn" value="     Yes, submit    " name="dataCorrect" />
-	<input id="dataWrongButton" type="button" class="btn" value="No, go back to editing" />
-	<input id="dataWrong" name="dataWrong" type="hidden" class="btn" value="TBD" />
-
-</form>
-
-[% IF userLoggedIn != 'true' %]
-
-			<div class="row-fluid">
-				<div class="span6 pagination-left">
-					<h2>Login</h2>
-					<p class="lead">
-						<em>NOTE:</em> You must enter your username and password. 
-					</p>
-					<p>	
-						This is for the protection of your metadata. 
-						The username and password will prevent any unauthorized person from
-						modifying your metadata.
-					</p>
-  
-					<form method="post" action="[% cgiPrefix %]/register-dataset.cgi" onsubmit="return submitform(this);" >
-						<input type="hidden" name="stage" value="login" /> 
-						<input type="hidden" name="username" value="" /> 
-						<input type="hidden" name="cfg" value="[%cfg%]" /> 
+				<a name="DataSetAbstract"></a>
+				<h4>Data Set Abstract</h4>
+				<p>[%- abstract -%]</p>
+				[% IF modules.keyword == 'true' %]
+					<a name="KeywordInformation"></a>
+					<h4>Keyword Information</h4> 
+      	
+					[% numKey = 0 %]
+					[% IF keyCount > 1 %]
+						[% numKey = keyCount %]
+					[% END %]
+      	
+					<table class="table table-bordered table-striped teble-condensed">
+						<thead>
+							<tr>
+								<th>Keyword</th>
+							  <th>Keyword Type</th>
+							  <th>Keyword Thesaurus</th>
+							</tr>						
+						</thead>
+						<tbody>
+							[% cnt = 1 %]
+							[% WHILE cnt <= numKey %]
+								[% SET key = "keyword${cnt}" %]
+								[% SET keyType = "kwType${cnt}" %]
+								[% SET keyTh = "kwTh${cnt}" %]
+								<tr> 
+								 <td>[%- $key -%]</td>
+								 <td>[%- $keyType -%]</td>
+								 <td>[%- $keyTh -%]</td>
+								</tr>
+								[% cnt = cnt + 1 %]
+							[% END %]						
+						</tbody>
+					</table>
+				[% END %]
+      	
+				[% IF modules.temporal == 'true' %]
+					<a name="TemporalCoverageOfData"></a>
+					<h4>Temporal Coverage of Data</h4> 
+					<table class="table table-bordered table-striped teble-condensed">
+						<tr>
+							<td>Start Date:</td>
+							<td>[%beginningYear%][%IF beginningMonth != ''%]-[% END%][%beginningMonth%][%IF beginningDay != ''%]-[% END%][%beginningDay%]</td>
+						</tr>
+						<tr>
+							<td>Stop Date:</td>
+							<td>[%endingYear%][%IF endingMonth != ''%]-[% END%][%endingMonth%][%IF endingDay != ''%]-[% END%][%endingDay%]</td>
+						</tr>
+					</table>				
+				[% END %]
+      	
+				[% IF modules.spatial == 'true' %]
+					<a name="SpatialCoverageOfData"></a>
+					<h4>Spatial Coverage of Data</h4> 
 					
 					
 					<table class="table table-bordered table-striped teble-condensed">
