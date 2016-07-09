@@ -377,7 +377,7 @@
 		<property name="deb.pkg.dir" value="${pkg.dir}/debian" />
 
 		<property name="ecogrid-target-name" value="metacatImpl" />
-		<property name="ecogrid-module-dest-dir" value=".." />
+		<property name="ecogrid-module-dest-dir" value="${build.dir}" />
 		<property name="ecogrid-module" value="seek/projects/ecogrid" />
 		<property name="ecogrid-dist-dir"
 			value="${dist.dir}/${ecogrid-module}" />
@@ -1462,10 +1462,10 @@
 		</copy>
 		
 
-		<mkdir dir="${ecogrid-dist-dir}" />
+		<!--<mkdir dir="${ecogrid-dist-dir}" />
 		<copy todir="${ecogrid-dist-dir}">
 			<fileset dir="${ecogrid-dir}" excludes="**/CVS*" />
-		</copy>
+		</copy>-->
 
 
 		<delete file="./${name}-src-${release}.zip" />
