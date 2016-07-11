@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+
+DataOne Dublin Core Extended Schema v1.0
+
+This schema is based on the Library of Congres Dublin Core Extended Schema:
+www.loc.gov/standards/sru/cql/contextSets/dcx/dcx.xsd
+by Ray Denenberg (Library of Congress)
+
+However this schema uses an unmodified dcterms.xsd schema and 
+removes use of the 'mediator' and 'educationLevel' elements.  This is done
+to avoid the substitution group ambiguity issues found in these elements
+ when used in <xs:choice> defined parent element.
+
+This schema allows you to include
+1. dcterm simple elements (original 15)
+2. dcterms elements
+3. other elements
+
+An instance looks like this:
+
+<metadata>
+	<simpleDc>
+		<dcterms:title/>
+		<dcterms:creator/>
+	</simpleDc>
+	<dcTerms>
+		<dcterms:abstract/>
+	</dcTerms>
+	<otherElements>
+		<other:xyz xmlns:other="info:xxx"/>
+	</otherElements>
+</metadata>
+
+It is strongly encouraged that one 'title', 'abstract', at least one 'creator', 
+	and a 'dateSubmitted' or 'available' date be provided.  This aids in the display of the document
+	in the search index and search engine views.
+
+-->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	targetNamespace="http://ns.dataone.org/metadata/schema/onedcx/v1.0"
+ 	xmlns="http://ns.dataone.org/metadata/schema/onedcx/v1.0"
+  	xmlns:dcterms="http://purl.org/dc/terms/" 
+  	elementFormDefault="qualified" 
+  	attributeFormDefault="unqualified">
+
+	<xs:import namespace="http://purl.org/dc/terms/" schemaLocation="http://dublincore.org/schemas/xmls/qdc/2008/02/11/dcterms.xsd"/>
+	<!--
+Root element declarations:
+-->
+	<xs:element name="metadata" type="onedcxType"/>
+	<!--
+End root element declarations:
+-->
+	<xs:complexType name="onedcxType">
+		<xs:sequence>
+			<xs:element name="simpleDc" minOccurs="0" maxOccurs="1" type="simpleDcType"/>
+			<xs:element name="dcTerms" minOccurs="0" maxOccurs="1" type="dcTermsType"/>
+			<xs:element name="otherElements" minOccurs="0" maxOccurs="1" type="otherElementsType"/>
+		</xs:sequence>
+	</xs:complexType>
+	<xs:complexType name="simpleDcType">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element ref="dcterms:title"/>
+			<xs:element ref="dcterms:creator"/>
+			<xs:element ref="dcterms:subject"/>
+			<xs:element ref="dcterms:description"/>
+			<xs:element ref="dcterms:publisher"/>
+			<xs:element ref="dcterms:contributor"/>
+			<xs:element ref="dcterms:date"/>
+			<xs:element ref="dcterms:type"/>
+			<xs:element ref="dcterms:format"/>
+			<xs:element ref="dcterms:identifier"/>
+			<xs:element ref="dcterms:source"/>
+			<xs:element ref="dcterms:language"/>
+			<xs:element ref="dcterms:relation"/>
+			<xs:element ref="dcterms:coverage"/>
+			<xs:element ref="dcterms:rights"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="dcTermsType">
+		<xs:choice maxOccurs="unbounded">
+			<xs:element ref="dcterms:alternative"/>
+			<xs:element ref="dcterms:tableOfContents"/>
+			<xs:element ref="dcterms:abstract"/>
+			<xs:element ref="dcterms:created"/>
+			<xs:element ref="dcterms:valid"/>
+			<xs:element ref="dcterms:available"/>
+			<xs:element ref="dcterms:issued"/>
+			<xs:element ref="dcterms:modified"/>
+			<xs:element ref="dcterms:dateAccepted"/>
+			<xs:element ref="dcterms:dateCopyrighted"/>
+			<xs:element ref="dcterms:dateSubmitted"/>
+			<xs:element ref="dcterms:extent"/>
+			<xs:element ref="dcterms:medium"/>
+			<xs:element ref="dcterms:isVersionOf"/>
+			<xs:element ref="dcterms:hasVersion"/>
+			<xs:element ref="dcterms:isReplacedBy"/>
+			<xs:element ref="dcterms:replaces"/>
+			<xs:element ref="dcterms:isRequiredBy"/>
+			<xs:element ref="dcterms:requires"/>
+			<xs:element ref="dcterms:isPartOf"/>
+			<xs:element ref="dcterms:hasPart"/>
+			<xs:element ref="dcterms:isReferencedBy"/>
+			<xs:element ref="dcterms:references"/>
+			<xs:element ref="dcterms:isFormatOf"/>
+			<xs:element ref="dcterms:hasFormat"/>
+			<xs:element ref="dcterms:conformsTo"/>
+			<xs:element ref="dcterms:spatial"/>
+			<xs:element ref="dcterms:temporal"/>
+			<xs:element ref="dcterms:audience"/>
+			<xs:element ref="dcterms:accrualMethod"/>
+			<xs:element ref="dcterms:accrualPeriodicity"/>
+			<xs:element ref="dcterms:accrualPolicy"/>
+			<xs:element ref="dcterms:instructionalMethod"/>
+			<xs:element ref="dcterms:provenance"/>
+			<xs:element ref="dcterms:rightsHolder"/>
+			<xs:element ref="dcterms:accessRights"/>
+			<xs:element ref="dcterms:license"/>
+			<xs:element ref="dcterms:bibliographicCitation"/>
+		</xs:choice>
+	</xs:complexType>
+	<xs:complexType name="otherElementsType">
+		<xs:sequence>
+			<xs:any maxOccurs="unbounded" namespace="##any" processContents="lax"/>
+		</xs:sequence>
+	</xs:complexType>
+</xs:schema>
