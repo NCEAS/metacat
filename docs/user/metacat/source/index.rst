@@ -2,7 +2,7 @@
 Metacat Administrator's Guide
 =============================
 
-.. sidebar:: Version: 2.8.0
+.. sidebar:: Version: |release|
 
     .. image:: themes/metacatui/static/metacat-logo-darkgray.png
        :height: 130pt
