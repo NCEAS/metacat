@@ -33,6 +33,7 @@
 
 	<xsl:template name="general">
 		<h4>General Content</h4>
+		
 		<div class="control-group">
 			<label class="control-label">Title</label>
 			<div class="controls controls-well">
@@ -41,6 +42,7 @@
 				</strong>
 			</div>
 		</div>
+		
 		<div class="control-group">
 			<label class="control-label">Identifier</label>
 			<div class="controls">
@@ -49,36 +51,40 @@
 				</div>
 			</div>
 		</div>
-		<div class="control-group">
-			<label class="control-label">Alternate Identifier</label>
-			<div class="controls">
-				<div class="controls-well">
-					<xsl:value-of select="normalize-space(dcx:simpleDc/dct:identifier)" />
+		
+		<xsl:if test="dcx:simpleDc/dct:identifier!=''">
+			<div class="control-group">
+				<label class="control-label">Alternate Identifier</label>
+				<div class="controls">
+					<div class="controls-well">
+						<xsl:value-of select="normalize-space(dcx:simpleDc/dct:identifier)" />
+					</div>
 				</div>
 			</div>
-		</div>
+		</xsl:if>
 		
-		<div class="control-group">
-			<label class="control-label">Online Access</label>
-			<div class="controls controls-well">
-				<xsl:for-each select="dcx:dcTerms/dct:references">
-					<a>
-						<xsl:attribute name="href">
+		<xsl:if test="dcx:dcTerms/dct:references!=''">
+			<div class="control-group">
+				<label class="control-label">Online Access</label>
+				<div class="controls controls-well">
+					<xsl:for-each select="dcx:dcTerms/dct:references">
+						<a>
+							<xsl:attribute name="href">
+								<xsl:value-of select="." />
+							</xsl:attribute>
 							<xsl:value-of select="." />
-						</xsl:attribute>
-						<xsl:value-of select="." />
-					</a>
-				</xsl:for-each>
+						</a>
+					</xsl:for-each>
+				</div>
 			</div>
-		</div>
-		
+		</xsl:if>
 		
 		<div class="control-group">
 			<label class="control-label">Abstract</label>
 			<div class="controls controls-well">
 				<div class="sectionText">
 					<p>
-						<xsl:value-of select="normalize-space(dcx:dcTerms/dct:abstract)" />
+						<xsl:value-of select="normalize-space(dcx:dcTerms/dct:abstract|dcx:simpleDc/dct:description)" />
 					</p>
 				</div>
 			</div>
@@ -116,37 +122,54 @@
 
 	<xsl:template name="people">
 		<h4>Creators</h4>
-		<xsl:for-each select="dcx:simpleDc/dct:creator">
-			<div class="controls controls-well">
-				<xsl:value-of select="." />
-			</div>
-		</xsl:for-each>
-
+		<div class="controls">
+			<xsl:for-each select="dcx:simpleDc/dct:creator">
+				<div class="controls-well">
+					<xsl:value-of select="." />
+				</div>
+			</xsl:for-each>
+		</div>
+		<xsl:if test="dcx:simpleDc/dct:contributor!=''">
+			<label class="control-label">Contributors</label>
+			<xsl:for-each select="dcx:simpleDc/dct:contributor">
+				<div class="controls controls-well">
+					<xsl:value-of select="." />
+				</div>
+			</xsl:for-each>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template name="geography">
-		<div class="row-fluid">
-			<div data-content="geographicCoverage" class="row-fluid geographicCoverage">
-				<h4>Geographic Region</h4>
-				<div data-content="geographicDescription" class="control-group geographicDescription">
-					<label class="control-label">Geographic Description</label>
-					<div class="controls controls-well">
-						<xsl:value-of
-							select="//dcx:dcTerms/dct:spatial[not(@xsi:type='dcterms:Box')]" />
+		<xsl:if test="//dcx:dcTerms/dct:spatial!=''">
+			<div class="row-fluid">
+				<div data-content="geographicCoverage" class="row-fluid geographicCoverage">
+					<h4>Geographic Region</h4>
+					
+					<xsl:if test="//dcx:dcTerms/dct:spatial[not(contains(@xsi:type, 'Box'))]!=''">
+						<div data-content="geographicDescription" class="control-group geographicDescription">
+							<label class="control-label">Geographic Description</label>
+							<div class="controls">
+								<xsl:for-each select="//dcx:dcTerms/dct:spatial[not(contains(@xsi:type, 'Box'))]">
+									<div class="controls-well">
+										<xsl:value-of select="." />
+									</div>
+								</xsl:for-each>
+							</div>
+						</div>
+					</xsl:if>
+					
+					<div data-content="boundingCoordinates" class="control-group boundingCoordinates">
+						<label class="control-label">Bounding Coordinates</label>
+						<div class="controls controls-well">					
+							<xsl:for-each select="//dcx:dcTerms/dct:spatial[contains(@xsi:type, 'Box')]">
+								<xsl:call-template name="extract-coordinates" />
+							</xsl:for-each>
+						</div>	
 					</div>
+	
 				</div>
-
-				<div data-content="boundingCoordinates" class="control-group boundingCoordinates">
-					<label class="control-label">Bounding Coordinates</label>
-					<div class="controls controls-well">					
-						<xsl:for-each select="//dcx:dcTerms/dct:spatial[@xsi:type='Box']">
-							<xsl:call-template name="extract-coordinates" />
-						</xsl:for-each>
-					</div>	
-				</div>
-
 			</div>
-		</div>
+		</xsl:if>
 	</xsl:template>
 
 	<xsl:template name="extract-coordinates">
@@ -181,8 +204,18 @@
 		<xsl:param name="corner" />
 		<xsl:param name="label" />
 		<xsl:param name="bound" />
-		<xsl:variable name="coord"
-			select="substring-before(substring-after($data,concat($corner,'=')),';')" />
+		
+		<xsl:variable name="coord">
+			<xsl:choose>
+				<xsl:when test="contains(substring-after($data,concat($corner,'=')), ';')">
+					<xsl:value-of select="substring-before(substring-after($data,concat($corner,'=')), ';')" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="substring-after($data,concat($corner,'='))" />
+				</xsl:otherwise>
+			</xsl:choose>
+		</xsl:variable>	
+		
 		<div data-value="{$coord}" data-content="{$bound}" class="control-group {$bound}">
 			<label class="control-label">
 				<xsl:value-of select="$label" />
@@ -222,29 +255,31 @@
 	</xsl:template>
 
 	<xsl:template name="temporal">
-		<div class="row-fluid">
-			<div data-content="temporalCoverage" class="row-fluid temporalCoverage">
-				<h4>Temporal Coverage</h4>
-				<div class="control-group">
-					<xsl:if test="//dcx:dcTerms/dct:temporal[@xsi:type='Period']/text() != ''">
-						<label class="control-label">Date Range</label>
-						<div class="controls controls-well">					
-							<xsl:for-each select="//dcx:dcTerms/dct:temporal[@xsi:type='Period']">
-								<xsl:call-template name="extract-period" />
-							</xsl:for-each>
-						</div>	
-					</xsl:if>
-					<xsl:if test="//dcx:dcTerms/dct:temporal[not(@xsi:type='Period')]/text() != ''">
-						<label class="control-label">Single Date</label>
-						<div class="controls controls-well">					
+		<xsl:if test="//dcx:dcTerms/dct:temporal!=''">
+			<div class="row-fluid">
+				<div data-content="temporalCoverage" class="row-fluid temporalCoverage">
+					<h4>Temporal Coverage</h4>
+					<div class="control-group">
+						<xsl:if test="//dcx:dcTerms/dct:temporal[@xsi:type='Period']/text() != ''">
+							<label class="control-label">Date Range</label>
+							<div class="controls controls-well">					
+								<xsl:for-each select="//dcx:dcTerms/dct:temporal[@xsi:type='Period']">
+									<xsl:call-template name="extract-period" />
+								</xsl:for-each>
+							</div>	
+						</xsl:if>
+						<xsl:if test="//dcx:dcTerms/dct:temporal[not(@xsi:type='Period')]/text() != ''">
+							<label class="control-label">Date(s)</label>
 							<xsl:for-each select="//dcx:dcTerms/dct:temporal[not(@xsi:type='Period')]">
-								<xsl:value-of select="." />
+								<div class="controls controls-well">					
+									<xsl:value-of select="." />
+								</div>
 							</xsl:for-each>
-						</div>	
-					</xsl:if>
+						</xsl:if>
+					</div>
 				</div>
 			</div>
-		</div>
+		</xsl:if>
 	</xsl:template>
 
 </xsl:stylesheet>

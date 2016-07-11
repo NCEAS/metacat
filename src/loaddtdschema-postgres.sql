@@ -18,7 +18,10 @@ DELETE FROM xml_catalog
         AND system_id LIKE '%/dwc/%';
 DELETE FROM xml_catalog 
       WHERE entry_type LIKE 'Schema'
-        AND system_id LIKE '%/dryad/%';                
+        AND system_id LIKE '%/dryad/%'; 
+DELETE FROM xml_catalog 
+      WHERE entry_type LIKE 'Schema'
+        AND system_id LIKE '%/onedcx/%';                
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('DTD', '-//ecoinformatics.org//eml-access-@eml-version@//EN',
          '/dtd/eml-access-@eml-version@.dtd');
@@ -166,6 +169,7 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('S
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/gts', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/gts/gts.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/srv', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/srv/srv.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.w3.org/1999/xlink', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/xlink/xlinks.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id) VALUES ('Schema', 'http://ns.dataone.org/metadata/schema/onedcx/v1.0', '/schema/onedcx/onedcx.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.8.0',1,CURRENT_DATE);
