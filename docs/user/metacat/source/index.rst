@@ -35,7 +35,7 @@ in other ways.
 
 .. |bin-link-pre| raw:: html
 
-    <a href="http://knb.ecoinformatics.org/software/dist/metacat-bin-
+    <a href="https://knb.ecoinformatics.org/software/dist/metacat-bin-
 
 .. |bin-gz-link-post1| raw:: html
 
@@ -55,7 +55,7 @@ in other ways.
 
 .. |src-link-pre| raw:: html
 
-    <a href="http://knb.ecoinformatics.org/software/dist/metacat-src-
+    <a href="https://knb.ecoinformatics.org/software/dist/metacat-src-
 
 .. |src-gz-link-post1| raw:: html
 
@@ -67,11 +67,11 @@ in other ways.
    
 - For Developers: Metacat `API documentation`_
 
-.. _Administrators Guide: http://knb.ecoinformatics.org/software/metacat/MetacatAdministratorGuide.pdf
+.. _Administrators Guide: https://knb.ecoinformatics.org/software/metacat/MetacatAdministratorGuide.pdf
 
 .. _API documentation: ./api/index.html
 
-.. _Older versions: http://knb.ecoinformatics.org/software/dist/
+.. _Older versions: https://knb.ecoinformatics.org/software/dist/
 
 Contents
 ========
