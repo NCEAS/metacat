@@ -26,30 +26,50 @@ in other ways.
 - Download Metacat
 
     - Binary Distribution (A war file installation)
-        - GZIP File: |bin-gz|_
-        - ZIP File: |bin-zip|_
+        - GZIP File: |bin-link-pre|\ |release|\ |bin-gz-link-post1|\ |release|\ |gz-link-post2|
+        - ZIP File: |bin-link-pre|\ |release|\ |bin-zip-link-post1|\ |release|\ |zip-link-post2|
     - Source Distribution (Full source, requiring build)
-        - GZIP File: |src-gz|_
-        - ZIP File: |src-zip|_
+        - GZIP File: |src-link-pre|\ |release|\ |src-gz-link-post1|\ |release|\ |gz-link-post2|
+        - ZIP File: |src-link-pre|\ |release|\ |src-zip-link-post1|\ |release|\ |zip-link-post2|
     - `Older versions`_
+
+.. |bin-link-pre| raw:: html
+
+    <a href="http://knb.ecoinformatics.org/software/dist/metacat-bin-
+
+.. |bin-gz-link-post1| raw:: html
+
+    .tar.gz">metacat-bin-
+
+.. |gz-link-post2| raw:: html
+
+    .tar.gz</a>
     
+.. |bin-zip-link-post1| raw:: html
+
+    .zip">metacat-bin-
+
+.. |zip-link-post2| raw:: html
+
+    .zip</a>
+
+.. |src-link-pre| raw:: html
+
+    <a href="http://knb.ecoinformatics.org/software/dist/metacat-src-
+
+.. |src-gz-link-post1| raw:: html
+
+    .tar.gz">metacat-src-
+
+.. |src-zip-link-post1| raw:: html
+
+    .zip">metacat-src-
+   
 - For Developers: Metacat `API documentation`_
 
 .. _Administrators Guide: http://knb.ecoinformatics.org/software/metacat/MetacatAdministratorGuide.pdf
 
 .. _API documentation: ./api/index.html
-
-.. |bin-gz| replace:: metacat-bin-|release|.tar.gz
-.. _bin-gz: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.8.0.tar.gz
-
-.. |bin-zip| replace:: metacat-bin-|release|.zip
-.. _bin-zip: http://knb.ecoinformatics.org/software/dist/metacat-bin-2.8.0.zip
-
-.. |src-gz| replace:: metacat-src-|release|.tar.gz
-.. _src-gz: http://knb.ecoinformatics.org/software/dist/metacat-src-2.8.0.tar.gz
-
-.. |src-zip| replace:: metacat-src-|release|.zip
-.. _src-zip: http://knb.ecoinformatics.org/software/dist/metacat-src-2.8.0.zip
 
 .. _Older versions: http://knb.ecoinformatics.org/software/dist/
 
