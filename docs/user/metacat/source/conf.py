@@ -51,7 +51,7 @@ copyright = u'2012, Regents of the University of California'
 # built documents.
 #
 # The short X.Y version.
-version = '2.8'
+#version = '2.8'
 # The full version, including alpha/beta/rc tags.
 release = config.get('dummy', 'application.metacatVersion')
 
