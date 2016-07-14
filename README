@@ -59,6 +59,7 @@ Release Notes for 2.7.1:
 ------------------------
 * Fixed some bugs on the data registery form
 * Support the onedcx schema
+	- Fixed several onedcx stylesheet issues
 
 Relese Notes for 2.7.0:
 ------------------------
