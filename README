@@ -57,7 +57,7 @@ for your OS.
 
 Release Notes for 2.7.1:
 ------------------------
-* Fixed some bugs on the data registery form
+* Fixed several bugs on the data registry form
 * Support the onedcx schema
 	- Fixed several onedcx stylesheet issues
 
