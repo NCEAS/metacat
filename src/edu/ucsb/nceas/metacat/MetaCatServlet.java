@@ -754,7 +754,7 @@ public class MetaCatServlet extends HttpServlet {
 					// see: https://projects.ecoinformatics.org/ecoinfo/issues/6546
 					if (!skin.equals("xml")) {
 						String uiContext = PropertyService.getProperty("ui.context");
-						String docidNoRev = DocumentUtil.getDocIdFromAccessionNumber(docidToRead);
+						String docidNoRev = DocumentUtil.getSmartDocId(docidToRead);
 						int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
 						String pid = null;
 						try {
