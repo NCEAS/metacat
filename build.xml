@@ -597,7 +597,7 @@
 	<target name="geteml" depends="getemlpre2,getemlpre2beta4,geteml2+,getConversionXSL"
 		if="eml.required" description="Calls getemlpre2 and geteml2+ targets" />
 
-	<target name="getemlpre2" depends="prepare" if="eml.required"
+	<target name="getemlpre2" depends="prepare,giteml" if="eml.required"
 		description="Checks EML-beta6 out of svn and copies dtds and xsl to your metacat sandbox">
 		<mkdir dir="lib/dtd" />
 		<copy todir="lib/dtd" filtering="yes">
