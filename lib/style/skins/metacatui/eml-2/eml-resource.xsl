@@ -84,7 +84,7 @@
       <xsl:param name="resfirstColStyle"/>
       <xsl:param name="ressecondColStyle"/>
       <xsl:if test="normalize-space(.)!=''">
-      <div class="control-group">
+      <div class="control-group hidden">
       	<label class="control-label">Title</label>
         <div class="controls controls-well">
           <strong>
