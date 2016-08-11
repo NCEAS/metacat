@@ -1278,7 +1278,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	            }
             }
             response.setContentType(mimeType);
-            response.setHeader("Content-Disposition", "inline; filename=" + filename);
+            response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
             
             InputStream data = MNodeService.getInstance(request).get(session, id);
 
@@ -1406,7 +1406,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         } else {
         	filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
         }
-        response.setHeader("Content-Disposition", "inline; filename=" + filename);
+        response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
         response.setStatus(200);
         OutputStream out = response.getOutputStream();
