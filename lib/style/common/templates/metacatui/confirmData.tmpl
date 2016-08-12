@@ -9,7 +9,8 @@
 			<div class="row-fluid">
 				<h2>Review your entry</h2>
 				<p class="lead">
-					Please review the information that you've entered. To make changes, click on the edit button <a href="#buttons">at the bottom of the page</a>.
+					Please review the information that you've entered. To make changes, 
+					<input type="button" class="btn dataWrongButton" value="Go back to editing" />.
 				</p>
 			</div>
 			
@@ -330,9 +331,9 @@
 				<p>Additional Information: [%addComments%]</p>
 				<p>
 				  All data and metadata are released under either the 
-				  <a href="http://creativecommons.org/publicdomain/zero/1.0/">CC-0 Public Domain Dedication</a>
+				  <a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC-0 Public Domain Dedication</a>
 				  or the 
-				  <a href="http://creativecommons.org/licenses/by/4.0/">
+				  <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">
 				    Creative Commons Attribution 4.0 International License
 				  </a>. 
 				  As a repository dedicated to helping researchers increase collaboration 
@@ -341,7 +342,7 @@
 				  this repository, you warrant that you own any rights to the content and are 
 				  authorized to do so under copyright or any other right that might pertain 
 				  to the content. 
-				  <a href="http://www.bitlaw.com/copyright/database.html">
+				  <a href="http://www.bitlaw.com/copyright/database.html" target="_blank">
 				    Data and facts themselves are not covered under copyright
 				  </a> 
 				  in the US and most countries, since facts in and of themselves are not 
@@ -352,11 +353,11 @@
 				  and any other content. By marking content as publicly available, you grant this 
 				  repository, UCSB, and any other users the right to copy the content and redistribute 
 				  it to the public without restriction under the terms of the 
-				  <a href="http://creativecommons.org/licenses/by/4.0/">
+				  <a href="http://creativecommons.org/licenses/by/4.0/" target="_blank">
 				    Creative Commons Attribution 4.0 International License
 				  </a> 
 				  or the 
-				  <a href="http://creativecommons.org/publicdomain/zero/1.0/">CC-0 Public Domain Dedication</a>, 
+				  <a href="http://creativecommons.org/publicdomain/zero/1.0/" target="_blank">CC-0 Public Domain Dedication</a>, 
 				  depending on which you choose at the time of upload.
 				</p>
 				<form id="confirmForm" action="[% cgiPrefix %]/register-dataset.cgi" method="post">
@@ -540,8 +541,8 @@
 				  	<!-- form submission -->
 					<a name="buttons"></a>
 					<p><strong>Is the information above correct?</strong></p> 
-					<input id="dataCorrect" type="button" class="btn" value="     Yes, submit    " name="dataCorrect" />
-					<input id="dataWrongButton" type="button" class="btn" value="No, go back to editing" />
+					<input id="dataCorrect" type="button" class="btn btn-primary" value="     Yes, submit    " name="dataCorrect" />
+					<input type="button" class="btn dataWrongButton" value="No, go back to editing" />
 					<input id="dataWrong" name="dataWrong" type="hidden" class="btn" value="TBD" />
 				
 				</form>
