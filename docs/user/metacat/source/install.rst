@@ -104,7 +104,7 @@ metacat-site-ssl.conf   Sample SSL definition file used by Apache on Ubuntu/Debi
 jk.conf                 Sample JkMount configuration file used by Apache on Ubuntu/Debian Linux systems. 
 workers.properties      Sample workers definition file used by Apache on Ubuntu/Debian Linux systems. 
 metacat-index.war       The Metacat Index WAR for supporting SOLR query features Optional unless Metacat UI is being used.
-metacatui.war          The Metacat UI - can be deployed as a webapp or directly in webserverMetacat UI requires metacat-index be deployed and configured.
+metacatui.war           The Metacat UI - can be deployed as a webapp or directly in webserverMetacat UI requires metacat-index be deployed and configured.
 authority.war           The optional LSID Server application WAR
 =====================   ==================================================================================================================================
 
@@ -864,8 +864,7 @@ We recommend that you install Tomcat version 7.  To download and install Tomcat:
 
 PostgreSQL Database
 ...................
-Metacat can be run with several SQL92-compliant database systems, but it has 
-been most widely tested with PostgreSQL_. Instructions for installing and 
+Metacat only can be run with PostgreSQL_. Instructions for installing and 
 configuring PostgreSQL for use with Metacat are included in this section.
 
 To download and install PostgreSQL:
