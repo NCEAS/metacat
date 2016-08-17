@@ -11,7 +11,7 @@ In addition to meeting the recommended system requirements, the server on which
 you wish to install Metacat must have the following software installed and
 running correctly:
 
-* PostgreSQL_ (or another SQL92-compliant RDBMS like Oracle_) 
+* PostgreSQL_ 
 * `Apache Ant`_ (if building from source)
 * `Apache Tomcat`_ 
 * `Apache HTTPD Server`_ (recommended)
@@ -34,7 +34,7 @@ running correctly:
 
 System requirements for running Metacat:
 
-* a server running an SQL92-compliant database (PostgreSQL_ recommended) 
+* a server running PostgreSQL_ database
 * at least 512MB RAM
 * 200 MB disk space (Note: The amount of disk space required depends on the size of your RDBMS tablespace and the the size and number of documents stored. Metacat itself requires only about 140 MB of free space after installation).
 
@@ -53,7 +53,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-1. Download and install prerequisites (`Java 6`_, `Apache Tomcat`_ 6, PostgreSQL_, `Apache HTTPD Server`_)
+1. Download and install prerequisites (`Java 7`_, `Apache Tomcat`_ 6, PostgreSQL_, `Apache HTTPD Server`_)
 2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 3. Log in to PostgreSQL and create the 'metacat' user
 4. Download Metacat from the `Metacat Download Page`_ and extract the archive
@@ -95,24 +95,18 @@ You should see a WAR file and several sample supporting files (Table 2.1). The
 extraction location will be referred to as the ``<metacat_package_dir>`` for the
 remainder of this documentation.
 
-================== =====================================================================
-File               Description
-================== =====================================================================
-metacat.war        The Metacat Web archive file (WAR) 
-metacat-site.conf       Sample Web definition file used by Apache on Ubuntu/Debian 
-                   Linux systems. 
-metacat-site-ssl.conf   Sample SSL definition file used by Apache on Ubuntu/Debian 
-                   Linux systems.
-jk.conf            Sample JkMount configuration file used by Apache on 
-                   Ubuntu/Debian Linux systems. 
-workers.properties Sample workers definition file used by Apache on Ubuntu/Debian 
-                   Linux systems. 
-metacat-index.war  The Metacat Index WAR for supporting SOLR query features
-					Optional unless Metacat UI is being used.
-metacat-ui.war     The Metacat UI - can be deployed as a webapp or directly in webserver
-					Metacat UI requires metacat-index be deployed and configured.
-authority.war      The optional LSID Server application WAR
-================== ======================================================================
+=====================   ==================================================================================================================================
+File                    Description
+=====================   ==================================================================================================================================
+metacat.war             The Metacat Web archive file (WAR) 
+metacat-site.conf       Sample Web definition file used by Apache on Ubuntu/Debian Linux systems. 
+metacat-site-ssl.conf   Sample SSL definition file used by Apache on Ubuntu/Debian Linux systems.
+jk.conf                 Sample JkMount configuration file used by Apache on Ubuntu/Debian Linux systems. 
+workers.properties      Sample workers definition file used by Apache on Ubuntu/Debian Linux systems. 
+metacat-index.war       The Metacat Index WAR for supporting SOLR query features Optional unless Metacat UI is being used.
+metacatui.war           The Metacat UI - can be deployed as a webapp or directly in webserverMetacat UI requires metacat-index be deployed and configured.
+authority.war           The optional LSID Server application WAR
+=====================   ==================================================================================================================================
 
 
 Download Metacat Source Code
@@ -174,7 +168,7 @@ build-file has an "install" target that will build and deploy the WAR for you.
 Installing and Configuring Required Software
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Before you can install and run Metacat, you must ensure that a recent Java SDK,
-PostgreSQL (or another SQL92-compliant RDBMS like Oracle), Ant (if
+PostgreSQL, Ant (if
 installing from source), and Tomcat are installed and running correctly. We
 also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
@@ -182,7 +176,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 * `Java 7`_
 * `Apache Tomcat`_ 
 * `Apache HTTPD Server`_ (Highly Recommended)
-* PostgreSQL_ Database (or Oracle_)
+* PostgreSQL_ Database 
 * `Apache Ant`_ (if building from Source)
 
 Java 7
@@ -364,9 +358,7 @@ these helper files will be in one of two locations:
 
 PostgreSQL Database
 ...................
-Metacat has been most widely tested with PostgreSQL_ and we recommend using it.
-Instructions for installing and configuring Oracle are also included in the
-next section.  To install and configure PostgreSQL_:
+Currently Metacat only supports PostgreSQL_. To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
 
@@ -459,24 +451,6 @@ next section.  To install and configure PostgreSQL_:
 The Metacat servlet automatically creates the required database schema. For
 more information about configuring the database, please see Database
 Configuration.
-
-Installing and Configuring Oracle
-.................................
-To use Oracle with Metacat, the Oracle RDBMS must be installed and running
-as a daemon on the system. In addition the JDBC listener must be enabled.
-Enable it by logging in as an Oracle user and typing::
-
-  lsnrctl start
-
-Your instance should have a table space of at least 5 MB (10 MB or higher
-recommended). You must also create and enable a username specific to Metacat.
-The Metacat user must have most normal permissions including: CREATE SESSION,
-CREATE TABLE, CREATE INDEX, CREATE TRIGGER, EXECUTE PROCEDURE, EXECUTE TYPE,
-etc. If an action is unexplainably rejected by Metacat, the user permissions
-are (most likely) not correctly set.
-
-The Metacat servlet automatically creates the required database schema. For
-more information, please see Database Configuration.
 
 Apache Ant (if building from Source)
 ....................................
@@ -890,8 +864,7 @@ We recommend that you install Tomcat version 7.  To download and install Tomcat:
 
 PostgreSQL Database
 ...................
-Metacat can be run with several SQL92-compliant database systems, but it has 
-been most widely tested with PostgreSQL_. Instructions for installing and 
+Metacat only can be run with PostgreSQL_. Instructions for installing and 
 configuring PostgreSQL for use with Metacat are included in this section.
 
 To download and install PostgreSQL:
@@ -1023,4 +996,3 @@ To upgrade an existing Metacat installation:
 
 Congratulations! You are now ready to configure Metacat. Please see Configuring
 Metacat for more information.
-
