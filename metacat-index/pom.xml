@@ -4,7 +4,7 @@
 	<groupId>edu.ucsb.nceas.metacat.index</groupId>
 	<artifactId>metacat-index</artifactId>
 	<packaging>war</packaging>
-	<version>2.7.1</version>
+	<version>2.7.2</version>
 	<name>metacat-index</name>
 	<url>http://maven.apache.org</url>
 
@@ -32,7 +32,7 @@
 		<dependency>
 			<groupId>edu.ucsb.nceas.metacat.common</groupId>
 			<artifactId>metacat-common</artifactId>
-			<version>2.7.1</version>
+			<version>2.7.2</version>
 			<type>jar</type>
 		</dependency>
 		<dependency>
@@ -45,7 +45,7 @@
 		 <dependency>
         <groupId>org.dataone</groupId>
         <artifactId>d1_cn_index_processor</artifactId>
-        <version>2.2.0</version>
+        <version>2.2.1</version>
         <type>jar</type>
         <exclusions>
                 <exclusion>
