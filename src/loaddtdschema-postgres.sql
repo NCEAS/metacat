@@ -172,4 +172,4 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('S
 INSERT INTO xml_catalog (entry_type, public_id, system_id) VALUES ('Schema', 'http://ns.dataone.org/metadata/schema/onedcx/v1.0', '/schema/onedcx/onedcx.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.7.1',1,CURRENT_DATE);
+  VALUES ('2.7.2',1,CURRENT_DATE);
