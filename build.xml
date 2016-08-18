@@ -233,15 +233,13 @@
 		<property name="schema-cvsrelpath" value="lib${schema-relpath}" />
 		<property name="style-skins-relpath" value="/style/skins" />
 		<property name="seek-tag" value="tags/ECOGRID_1_2_3" />
+		<property name="eml.git.repository.url" value="https://github.com/NCEAS/eml.git" />
 		<property name="eml-module" value="eml" />
 		<property name="eml-version" value="2.0.0beta6" />
 		<property name="eml-beta4-version" value="2.0.0beta4" />
-		<property name="eml-beta-tag"
-			value="BRANCH_EML_2_0_0_BETA_6_FOR_METACAT" />
-		<property name="eml-beta4-tag"
-					value="RELEASE_EML_2_BETA_4" />
-		<property name="eml2_0_0-schema-tag"
-			value="RELEASE_EML_2_0_0_UPDATE_1" />
+		<property name="eml-beta-tag" value="BRANCH_EML_2_0_0_BETA_6_FOR_METACAT" />
+		<property name="eml-beta4-tag" value="RELEASE_EML_2_BETA_4" />
+		<property name="eml2_0_0-schema-tag" value="RELEASE_EML_2_0_0_UPDATE_1" />
 		<property name="eml2_0_1-schema-tag" value="RELEASE_EML_2_0_1" />
 		<property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0" />
 		<property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1" />
@@ -395,22 +393,9 @@
 			value="${svnant.lib}/svnjavahl.jar" />
 		<property name="svn.ecogridUrl"
 			value="https://code.ecoinformatics.org/code/seek/${seek-tag}/projects/ecogrid/" />
-		<property name="svn.emlBetaUrl"
-			value="https://code.ecoinformatics.org/code/eml/branches/${eml-beta-tag}" />
-		<property name="svn.emlBeta4Url"
-					value="https://code.ecoinformatics.org/code/eml/tags/${eml-beta4-tag}" />
-		<property name="svn.eml200SchemaUrl"
-			value="https://code.ecoinformatics.org/code/eml/tags/${eml2_0_0-schema-tag}" />
-		<property name="svn.eml201SchemaUrl"
-			value="https://code.ecoinformatics.org/code/eml/tags/${eml2_0_1-schema-tag}" />
-		<property name="svn.eml210SchemaUrl"
-			value="https://code.ecoinformatics.org/code/eml/tags/${eml2_1_0-schema-tag}" />
-		<property name="svn.eml211SchemaUrl"
-			value="https://code.ecoinformatics.org/code/eml/tags/${eml2_1_1-schema-tag}" />
-		<property name="svn.eml2StyleUrl"
-			value="https://code.ecoinformatics.org/code/eml/tags/${eml2-style-tag}" />
+
 		
-		<!-- the git repo -->
+		<!-- the git repo for MetacatUI-->
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.git.repository.refname"
@@ -441,6 +426,9 @@
 				</not>
 				<not>
 					<available file="lib/schema/eml-2.1.0/eml.xsd" />
+				</not>
+				<not>
+				    <available file="lib/schema/eml-2.1.1/eml.xsd" />
 				</not>
 				<not>
 					<available
@@ -610,12 +598,8 @@
 	<target name="geteml" depends="getemlpre2,getemlpre2beta4,geteml2+,getConversionXSL"
 		if="eml.required" description="Calls getemlpre2 and geteml2+ targets" />
 
-	<target name="getemlpre2" depends="prepare" if="eml.required"
+	<target name="getemlpre2" depends="prepare,giteml" if="eml.required"
 		description="Checks EML-beta6 out of svn and copies dtds and xsl to your metacat sandbox">
-		<svn>
-			<export srcUrl="${svn.emlBetaUrl}"
-				destPath="${build.tmp}/eml_${eml-beta-tag}" />
-		</svn>
 		<mkdir dir="lib/dtd" />
 		<copy todir="lib/dtd" filtering="yes">
 			<fileset
@@ -636,10 +620,6 @@
 	
 	<target name="getemlpre2beta4" depends="prepare" if="eml.required"
 			description="Checks EML-beta4 out of svn and copies dtds to your metacat sandbox">
-			<svn>
-				<export srcUrl="${svn.emlBeta4Url}"
-					destPath="${build.tmp}/eml_${eml-beta4-tag}" />
-			</svn>
 			<mkdir dir="lib/dtd" />
 			<copy todir="lib/dtd" filtering="yes">
 				<fileset
@@ -650,22 +630,29 @@
 					to="eml-*-${eml-beta4-version}.dtd" />
 			</copy>
 
-			<!--
-			<copy todir="${style-common-cvsrelpath}" filtering="yes">
-				<fileset
-					dir="${build.tmp}/eml_${eml-beta4-tag}/style">
-					<include name="**/*.xsl" />
-				</fileset>
-			</copy>
-			-->
 		</target>
+	
+	<target name="giteml" depends="prepare" if="eml.required"
+	            description="Git clone EML code from various tagged releases of the EML git repository">
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml-beta4-tag}" refname="${eml-beta4-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml-beta-tag}" refname="${eml-beta-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml2_0_0-schema-tag}" refname="${eml2_0_0-schema-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml2_0_1-schema-tag}" refname="${eml2_0_1-schema-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml2_1_0-schema-tag}" refname="${eml2_1_0-schema-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}" />
+	        <git-clone-pull repository="${eml.git.repository.url}" 
+	                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="master" />
+	    </target>
 
-	<target name="geteml2+" depends="prepare" if="eml.required"
+	<target name="geteml2+" depends="prepare,giteml" if="eml.required"
 		description="Checks eml-2 out of svn and copies schema and xsl to your metacat sandbox">
-		<svn>
-			<export srcUrl="${svn.eml200SchemaUrl}"
-				destPath="${build.tmp}/eml_${eml2_0_0-schema-tag}" />
-		</svn>
+		<!-- Checkout eml200 for given schema tag-->
 		<mkdir dir="lib/schema/eml-2.0.0" />
 		<copy todir="lib/schema/eml-2.0.0" filtering="yes">
 			<fileset
@@ -676,20 +663,12 @@
 			<!-- shouldn't we have a mapper here like this??
 				<mapper type="glob" from="eml-*.xsd" to="eml-*-${eml-version}.xsd" />
 				
-				Jing's code didn't nave one - does it need to be added?
+				Jing's code didn't have one - does it need to be added?
 				NOTE that eml-version is set to beta 6, so this would need changing -->
 
 		</copy>
-		<!-- <antcall target="copyxsl">
-			<param name="cvs.tagname" value="${eml2_0_0-schema-tag}" />
-			<param name="dirname" value="eml-2.0.0" />
-			</antcall> -->
 
 		<!-- Checkout eml201 for given schema tag-->
-		<svn>
-			<export srcUrl="${svn.eml201SchemaUrl}"
-				destPath="${build.tmp}/eml_${eml2_0_1-schema-tag}" />
-		</svn>
 		<mkdir dir="lib/schema/eml-2.0.1" />
 		<copy todir="lib/schema/eml-2.0.1" filtering="yes">
 			<fileset
@@ -698,22 +677,8 @@
 			</fileset>
 		</copy>
 
-		<!-- Checkout eml201 again for given style sheet tag-->
-		<!-- echo>Enter CVS password: </echo>
-			<cvs cvsRoot="${cvsroot}"
-			package="${eml-module}"
-			tag="${eml2_0_1-style-tag}"
-			dest="${build.tmp}/eml_${eml2_0_1-style-tag}" />
-			<antcall target="copyxsl">
-			<param name="cvs.tagname" value="${eml2_0_1-style-tag}" />
-			<param name="dirname" value="eml-2.0.1" />
-			</antcall -->
 
 		<!-- Checkout eml210 for given schema tag-->
-		<svn>
-			<export srcUrl="${svn.eml210SchemaUrl}"
-				destPath="${build.tmp}/eml_${eml2_1_0-schema-tag}" />
-		</svn>
 		<mkdir dir="lib/schema/eml-2.1.0" />
 		<copy todir="lib/schema/eml-2.1.0" filtering="yes">
 			<fileset
@@ -723,21 +688,13 @@
 		</copy>
 
 		<!-- Checkout eml210 for given style sheet tag-->
-		<svn>
-			<export srcUrl="${svn.eml2StyleUrl}"
-				destPath="${build.tmp}/eml_${eml2-style-tag}" />
-		</svn>
 		<antcall target="copyxsl">
 			<param name="cvs.tagname" value="${eml2-style-tag}" />
 			<!-- param name="dirname" value="eml-2.1.0" / -->
 			<param name="dirname" value="eml-2" />
 		</antcall>
 		
-		<!-- Checkout eml210 for given schema tag-->
-		<svn>
-			<export srcUrl="${svn.eml211SchemaUrl}"
-				destPath="${build.tmp}/eml_${eml2_1_1-schema-tag}" />
-		</svn>
+		<!-- Checkout eml211 for given schema tag-->
 		<mkdir dir="lib/schema/eml-2.1.1" />
 		<copy todir="lib/schema/eml-2.1.1" filtering="yes">
 			<fileset
@@ -1093,19 +1050,13 @@
 		</copy>
 	</target>
 
-	<target name="getConversionXSL" depends="prepare"
+	<target name="getConversionXSL" depends="prepare,giteml"
 		unless="styles.not.needed"
 		description="Gets the conversion stylesheets for eml2 beta 6 to eml 2.0.0">
-
-		<svn>
-			<export srcUrl="${svn.eml2StyleUrl}"
-				destPath="${build.tmp}/conv_eml_${eml2-style-tag}" />
-		</svn>
-
 		<mkdir dir="lib/style/common/emlb6toeml2" />
 		<copy todir="lib/style/common/emlb6toeml2" filtering="yes">
 			<fileset
-				dir="${build.tmp}/conv_eml_${eml2-style-tag}/lib/beta6toeml2/xsl">
+				dir="${build.tmp}/eml_${eml2-style-tag}/lib/beta6toeml2/xsl">
 				<include name="*.xsl" />
 				<include name="*.xml" />
 			</fileset>
