@@ -55,6 +55,17 @@ See the file "docs/install.html" for detailed instructions
 for your OS.
 
 
+Release Notes for 2.7.2:
+------------------------
+Bugs fixed in this release:
+* Legacy Metacat "shortcut" url does not work if revision is omitted
+* Migrate metacat build to use EML git repo
+* All links on the registry page should open up in a new tab 
+* Metadata/data objects which have obsoletedBy field ignore the resource map index
+* Metacat creates an Invalid Content-Disposition value for some filenames
+* External links in the registry should open in new tab
+* Remove the support of Oracle on documentation
+
 Release Notes for 2.7.1:
 ------------------------
 * Fixed several bugs on the data registry form
