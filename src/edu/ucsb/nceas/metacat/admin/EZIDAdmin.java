@@ -215,6 +215,7 @@ public class EZIDAdmin extends MetacatAdmin {
 					PropertyService.setPropertyNoPersist("guid.ezid.doishoulder.1", doishoulder);
 					// persist them all
 					PropertyService.persistProperties();
+					PropertyService.syncToSettings();
                     // save a backup in case the form has errors, we reload from these
                     PropertyService.persistMainBackupProperties();
 				}

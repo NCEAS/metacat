@@ -190,6 +190,7 @@ public class AuthAdmin extends MetacatAdmin {
 				// we need to write the options from memory to the properties
 				// file
 				PropertyService.persistProperties();
+				PropertyService.syncToSettings();
 
 				// Validate that the options provided are legitimate. Note that
 				// we've allowed them to persist their entries. As of this point

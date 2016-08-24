@@ -140,6 +140,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 						externalDir + FileUtil.getFS() + "solr-home");
 
 				PropertyService.persistProperties();
+				PropertyService.syncToSettings();
 
 				// Add the list of properties from metacat.properties to the request
 				Vector<String> propertyNames = PropertyService.getPropertyNames();
