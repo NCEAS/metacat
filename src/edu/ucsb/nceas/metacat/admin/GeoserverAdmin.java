@@ -201,6 +201,7 @@ public class GeoserverAdmin extends MetacatAdmin {
 					PropertyService.setPropertyNoPersist("geoserver.context", context);
 					boolean reconfig = PropertyService.checkAndSetProperty(request, "geoserver.GEOSERVER_DATA_DIR");
 					PropertyService.persistProperties();
+					PropertyService.syncToSettings();
 					// put the web.xml in place
 					reconfig = true; //force all the time in cases where geoserver has been redeployed
 					if (reconfig) {

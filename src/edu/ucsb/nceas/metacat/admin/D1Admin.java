@@ -326,6 +326,7 @@ public class D1Admin extends MetacatAdmin {
 					
 		            // persist them all
 					PropertyService.persistProperties();
+					PropertyService.syncToSettings();
 					
 					// save a backup in case the form has errors, we reload from these
 					PropertyService.persistMainBackupProperties();
