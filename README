@@ -65,6 +65,7 @@ Bugs fixed in this release:
 * Metacat creates an Invalid Content-Disposition value for some filenames
 * External links in the registry should open in new tab
 * Remove the support of Oracle on documentation
+* Changing a Metacat member node's synchronization value on the d1 admin page doesn't work
 
 Release Notes for 2.7.1:
 ------------------------
