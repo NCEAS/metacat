@@ -132,25 +132,6 @@
          	</xsl:for-each>
          </xsl:variable>
 
-		<!--  Header for the section and annotation target -->
-		<div class="annotation-target">
-			<xsl:attribute name="id">sem_entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
-			<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$attributeindex"/>])</xsl:attribute>
-			
-			<xsl:choose>
-				<xsl:when test="references!=''">
-		          <xsl:variable name="ref_id" select="references"/>
-		          <xsl:variable name="references" select="$ids[@id=$ref_id]" />
-		          <xsl:for-each select="$references">
-		            <xsl:value-of select="attributeName"/>
-		          </xsl:for-each>
-		        </xsl:when>
-		        <xsl:otherwise>
-		          <xsl:value-of select="attributeName"/>
-		        </xsl:otherwise>
-		     </xsl:choose>
-		</div>	
-
   	<!--  Name -->
   	<div class="control-group">
 		<label class="control-label">Name</label>
@@ -168,6 +149,27 @@
 		        </xsl:otherwise>
 		     </xsl:choose>
 		</div>
+	</div>	
+	
+	<!--  Header for the section and annotation target -->
+	<div class="annotation-target">
+		<xsl:attribute name="id">sem_entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
+		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$attributeindex"/>])</xsl:attribute>
+		
+		<span class="annotation-attribute-name">
+			<xsl:choose>
+				<xsl:when test="references!=''">
+		          <xsl:variable name="ref_id" select="references"/>
+		          <xsl:variable name="references" select="$ids[@id=$ref_id]" />
+		          <xsl:for-each select="$references">
+		            <xsl:value-of select="attributeName"/>
+		          </xsl:for-each>
+		        </xsl:when>
+		        <xsl:otherwise>
+		          <xsl:value-of select="attributeName"/>
+		        </xsl:otherwise>
+		     </xsl:choose>
+		</span>
 	</div>	
     
   
