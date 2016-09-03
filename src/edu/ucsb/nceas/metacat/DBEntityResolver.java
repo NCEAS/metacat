@@ -112,12 +112,12 @@ public class DBEntityResolver implements EntityResolver
           // public ID is doctype
           if (publicId != null) {
             doctype = publicId;
-            logMetacat.debug("DBEntityResolver.resolveEntity - in get type from publicId and doctype is: "
+            logMetacat.debug("DBEntityResolver.resolveEntity - the publicId is not null, so the publicId is the doctype. The doctype is: "
                                      + doctype);
           // assume public ID (doctype) is docname
           } else {
             doctype = dhandler.getDocname();
-            logMetacat.debug("DBEntityResolver.resolveEntity - there is not public id and in get type from the doc name and doctype is: "
+            logMetacat.debug("DBEntityResolver.resolveEntity - the publicId is null and we treat the doc name(the root element name) as the doc type. The doctype is: "
                     + doctype);
           }
         }
@@ -135,7 +135,7 @@ public class DBEntityResolver implements EntityResolver
         }
       }
     } else {
-        logMetacat.debug("DBEntityResolver.resolveEntity - the handler is null");
+        logMetacat.debug("DBEntityResolver.resolveEntity - the xml handler is null. So we can't find the doctype.");
     }
 
     // get System ID for doctype
@@ -143,9 +143,10 @@ public class DBEntityResolver implements EntityResolver
       // look at db XML Catalog for System ID
       logMetacat.info("DBEntityResolver.resolveEntity - get systemId from doctype: " + doctype);
       dbSystemID = getDTDSystemID(doctype);
-      logMetacat.info("DBEntityResolver.resolveEntity - The Systemid is: " + dbSystemID);
+      logMetacat.info("DBEntityResolver.resolveEntity - The Systemid from xml_catalog table is: " + dbSystemID);
       if(dbSystemID == null) {
-          throw new SAXException("The doctype "+doctype+" ,which was defined by a DTD document, isn't registered in Metacat. Please contact the operator of the Metacat");
+          logMetacat.error("DBEntityResolver.resolveEntity - "+"The doctype: "+doctype+" , which was defined by a DTD document, isn't registered in Metacat. Please contact the operator of the Metacat");
+          throw new SAXException("The doctype: "+doctype+" , which was defined by a DTD document, isn't registered in Metacat. Please contact the operator of the Metacat");
       }
       // check that it is accessible on our system before getting too far
       try {
