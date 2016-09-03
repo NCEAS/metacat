@@ -120,6 +120,7 @@ public class MetacatValidationAlgorithmTest extends MCTestCase {
             fail("We can't get since the inserted xml has a unregistered dtd");
         } catch (MetacatException e) {
             assertTrue(e.getMessage().contains("<error>"));
+            assertTrue(e.getMessage().contains("isn't registered in Metacat"));
         }
     }
     
