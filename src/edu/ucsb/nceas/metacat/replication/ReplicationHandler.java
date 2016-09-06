@@ -1035,7 +1035,7 @@ public class ReplicationHandler extends TimerTask
             //logMetacat.debug("publicID: " + publicId.toString());
             logReplication.info
                               ("ReplicationHandler.updateCatalog - v.elementAt(3): " + (String)v.elementAt(3));
-           if(!publicId.contains(v.elementAt(3)))
+           /*if(!publicId.contains(v.elementAt(3)))
            { //so we don't have this public id in our local table so we need to
              //add it.
         	   
@@ -1072,7 +1072,7 @@ public class ReplicationHandler extends TimerTask
              pstmt.close();
              logReplication.info("ReplicationHandler.updateCatalog - Success fully to insert new publicid "+
                                (String)v.elementAt(3) + " from server"+server);
-           }
+           }*/
         }
         catch(Exception e)
         {

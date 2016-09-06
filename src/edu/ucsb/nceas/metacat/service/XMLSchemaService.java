@@ -241,7 +241,8 @@ public class XMLSchemaService extends BaseService {
 				XMLSchema xmlSchema = new XMLSchema(fileNamespace, fileLocation, formatId);
 				if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://"))
 				{
-				    //System.out.println("processing an http schemal location");
+				    continue;//skip the external schemas.
+				    /*//System.out.println("processing an http schemal location");
 				    logMetacat.debug("XMLService.populateRegisteredSchemaList - Processing http schema location: " + fileLocation);
 				    xmlSchema.setExternalFileUri(fileLocation);
 				    //cache the file
@@ -293,7 +294,7 @@ public class XMLSchemaService extends BaseService {
                                 " because the property 'application.tempDir' could not be found.");
                     }
 				    
-				    xmlSchema.setFileName(fileLocation);
+				    xmlSchema.setFileName(fileLocation);*/
 				}
 				else
 				{
@@ -306,7 +307,7 @@ public class XMLSchemaService extends BaseService {
 				}
 				else if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://"))
                 {  //the schema resides on a different server, to validate, we need to go get it 
-                    registeredSchemaList.add(xmlSchema);
+                    //registeredSchemaList.add(xmlSchema);
                 }
 				else 
 				{
