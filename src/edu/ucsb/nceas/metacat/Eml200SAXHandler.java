@@ -826,9 +826,9 @@ public class Eml200SAXHandler extends DBSAXHandler implements
               if (attributeName != null
                       && attributeName
                               .indexOf(MetaCatServlet.SCHEMALOCATIONKEYWORD) != -1) {
-                  SchemaLocationResolver resolver = new SchemaLocationResolver(
+                  /*SchemaLocationResolver resolver = new SchemaLocationResolver(
                           attributeValue);
-                  resolver.resolveNameSpace();
+                  resolver.resolveNameSpace();*/
 
               }
               else if (attributeName != null && attributeName.equals(ID) &&

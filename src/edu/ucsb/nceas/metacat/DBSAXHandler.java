@@ -270,13 +270,13 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 		
 		// If we get here, the document and schema parsed okay.  If there are
 		// any schemas in the schema list, they are new and need to be registered.
-    	for (XMLSchema xmlSchema : schemaList) {
+    	/*for (XMLSchema xmlSchema : schemaList) {
     		String externalFileUri = xmlSchema.getExternalFileUri();
     		String fileNamespace = xmlSchema.getFileNamespace();
     		SchemaLocationResolver resolver = 
     			new SchemaLocationResolver(fileNamespace, externalFileUri);
     		resolver.resolveNameSpace();
-    	}
+    	}*/
 	}
 
     /** SAX Handler that is called at the start of Namespace */

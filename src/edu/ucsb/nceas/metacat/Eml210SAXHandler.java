@@ -471,9 +471,9 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 				// in catalog table it will be registered.
 				if (attributeName != null
 						&& attributeName.indexOf(MetaCatServlet.SCHEMALOCATIONKEYWORD) != -1) {
-					SchemaLocationResolver resolver = new SchemaLocationResolver(
+					/*SchemaLocationResolver resolver = new SchemaLocationResolver(
 							attributeValue);
-					resolver.resolveNameSpace();
+					resolver.resolveNameSpace();*/
 
 				} else if (attributeName != null && attributeName.equals(ID)) {
 
