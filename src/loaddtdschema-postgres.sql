@@ -170,6 +170,11 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('S
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.isotc211.org/2005/srv', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/srv/srv.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) VALUES ('Schema', 'http://www.w3.org/1999/xlink', 'http://www.isotc211.org/2005/gmd-noaa', '/schema/isotc211-noaa/xlink/xlinks.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id) VALUES ('Schema', 'http://ns.dataone.org/metadata/schema/onedcx/v1.0', '/schema/onedcx/onedcx.xsd');
+INSERT INTO xml_catalog (entry_type, format_id, system_id) VALUES ('Schema', 'FGDC-STD-001-1998', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
+INSERT INTO xml_catalog (entry_type, no_namespace_schema_location, system_id) VALUES ('Schema', 'https://www.fgdc.gov/schemas/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
+INSERT INTO xml_catalog (entry_type, no_namespace_schema_location, system_id) VALUES ('Schema', 'http://www.fgdc.gov/schemas/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd'); 
+INSERT INTO xml_catalog (entry_type, no_namespace_schema_location, system_id) VALUES ('Schema', 'https://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd'); 
+INSERT INTO xml_catalog (entry_type, no_namespace_schema_location, system_id) VALUES ('Schema', 'http://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.8.0',1,CURRENT_DATE);

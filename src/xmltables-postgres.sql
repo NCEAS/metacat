@@ -131,6 +131,7 @@ CREATE TABLE xml_catalog (
 	public_id VARCHAR(500),	-- the unique id for this type
 	system_id VARCHAR(1000),	-- the local location of the object
   format_id VARCHAR(1000),  -- the format id from dataone 
+  no_namespace_schema_location VARCHAR(2000), -- the identifier for a no-namespace schema
    CONSTRAINT xml_catalog_pk PRIMARY KEY (catalog_id),
    CONSTRAINT xml_catalog_uk UNIQUE
               (entry_type, source_doctype, target_doctype, public_id, format_id)
