@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<metadata xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd">
+  <idinfo>
+    <citation>
+      <citeinfo>
+        <origin>National Center for Earth Surface Dynamics</origin>
+        <pubdate>20160811</pubdate>
+        <title>Shuttle Radar Topography Mission (SRTM)</title>
+        <onlink>http://doi.org/10.5967/M09W0CGK</onlink>
+      </citeinfo>
+    </citation>
+    <descript>
+      <abstract>This is the SRTM dataset. The Shuttle Radar Topography Mission (SRTM) obtained elevation data on a near-global scale to generate the most complete high-resolution digital topographic database of Earth. SRTM consisted of a specially modified radar system that flew onboard the Space Shuttle Endeavour during an 11-day mission in February of 2000.
+
+SRTM is an international project spearheaded by the National Geospatial-Intelligence Agency (NGA) and the National Aeronautics and Space Administration (NASA).
+
+
+--- 
+
+Obtained on 5/30/2007 from:
+
+30m US:
+ftp://e0srp01u.ecs.nasa.gov/srtm/version1/United_States_1arcsec/1arcsec/
+
+90m World:
+ftp://e0srp01u.ecs.nasa.gov/srtm/version2</abstract>
+      <purpose>Data related to Sustainability Science Research</purpose>
+    </descript>
+    <timeperd>
+      <timeinfo>
+        <rngdates>
+          <begdate>20160811</begdate>
+          <enddate>20160811</enddate>
+        </rngdates>
+      </timeinfo>
+      <current>ground condition</current>
+    </timeperd>
+    <status>
+      <progress>Complete</progress>
+      <update>As needed</update>
+    </status>
+    <spdom>
+      <bounding>
+        <westbc>-180.0</westbc>
+        <eastbc>180.0</eastbc>
+        <northbc>90.0</northbc>
+        <southbc>-90.0</southbc>
+      </bounding>
+    </spdom>
+    <keywords>
+      <theme>
+        <themekt>None</themekt>
+        <themekey>None</themekey>
+      </theme>
+      <place>
+        <placekt>None</placekt>
+        <placekey>None</placekey>
+      </place>
+      <temporal>
+        <tempkt>None</tempkt>
+        <tempkey>None</tempkey>
+      </temporal>
+    </keywords>
+    <accconst>Public</accconst>
+    <useconst>Default</useconst>
+  </idinfo>
+  <metainfo>
+    <metd>20160811</metd>
+    <metc>
+      <cntinfo>
+        <cntperp>
+          <cntper>None</cntper>
+        </cntperp>
+        <cntaddr>
+          <addrtype>None</addrtype>
+          <city>None</city>
+          <state>None</state>
+          <postal>None</postal>
+        </cntaddr>
+        <cntvoice>None</cntvoice>
+      </cntinfo>
+    </metc>
+    <metstdn>FGDC Standard for Digital Geospatial Metadata</metstdn>
+    <metstdv>FGDC-STD-001-1998</metstdv>
+  </metainfo>
+</metadata>
