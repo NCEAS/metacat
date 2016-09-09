@@ -44,6 +44,7 @@ import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -71,8 +72,12 @@ public class XMLSchemaService extends BaseService {
 //	private static String documentNamespace = null;
 	
 	// all schema objects that represent schemas registered in the db that 
-	// actually have files on disk.
+	// actually have files on disk. It doesn't include the schemas without namespace
 	private static Vector<XMLSchema> registeredSchemaList = new Vector<XMLSchema>();
+	
+	// all non-amespace schema objects that represent schemas registered in the db that 
+    // actually have files on disk. It doesn't include the schemas with namespaces
+	private static Vector<XMLNoNamespaceSchema> registeredNoNamespaceSchemaList = new Vector<XMLNoNamespaceSchema>();
 	
 	// a convenience list that holds the names of registered namespaces.
     private static Vector<String> nameSpaceList = new Vector<String>();
@@ -121,6 +126,7 @@ public class XMLSchemaService extends BaseService {
 	    logMetacat.debug("XMLService.doRefresh - refreshing the schema service.");
 		try {
 			populateRegisteredSchemaList();
+			populateRegisteredNoNamespaceSchemaList();
 			setUseFullSchemaValidation();
 			createRegisteredNameSpaceList();
 			createRegisteredNameSpaceAndLocationString();
@@ -220,7 +226,7 @@ public class XMLSchemaService extends BaseService {
 
 		// get the system id from the xml_catalog table for all schemas.
 		String sql = "SELECT public_id, system_id, format_id FROM xml_catalog where "
-				+ "entry_type ='" + DocumentImpl.SCHEMA + "'";
+				+ "entry_type ='" + XMLSchema.getType() + "'";
 		try {
 			// check out DBConnection
 			conn = DBConnectionPool
@@ -308,11 +314,12 @@ public class XMLSchemaService extends BaseService {
 				else if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://"))
                 {  //the schema resides on a different server, to validate, we need to go get it 
                     //registeredSchemaList.add(xmlSchema);
+				    logMetacat.warn("XMLService.populateRegisteredSchemaList - Schema file: " + fileLocation + " resides on a different server. So we don't add it to the registered schema list.");
                 }
 				else 
 				{
 					logMetacat.warn("XMLService.populateRegisteredSchemaList - Schema file: " + xmlSchema.getLocalFileDir() + " is registered "
-							+ " in the database but does not exist on the file system.");
+							+ " in the database but does not exist on the file system. So we don't add it to the registered schema list.");
 				}
 			}
 		} catch (SQLException e) {
@@ -329,6 +336,73 @@ public class XMLSchemaService extends BaseService {
 			DBConnectionPool.returnDBConnection(conn, serialNumber);
 		}
 	}	
+	
+	/*
+	 * Populate the list of registered no-namespace schemas. This reads all no-namespace schemas in the
+     * xml_catalog table and then makes sure the schema actually exists and is
+     * readable on disk.
+	 */
+	private void populateRegisteredNoNamespaceSchemaList() {
+	    DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        ResultSet resultSet = null;
+        registeredNoNamespaceSchemaList = new Vector<XMLNoNamespaceSchema>();
+        // get the system id from the xml_catalog table for all schemas.
+        String sql = "SELECT no_namespace_schema_location, system_id, format_id FROM xml_catalog where "
+                + "entry_type ='" + XMLNoNamespaceSchema.getType()+ "'";
+        try {
+            // check out DBConnection
+            conn = DBConnectionPool
+                    .getDBConnection("XMLService.populateRegisteredNoNamespaceSchemaList");
+            serialNumber = conn.getCheckOutSerialNumber();
+            pstmt = conn.prepareStatement(sql);
+            logMetacat.debug("XMLService.populateRegisteredNoNamespaceSchemaList - Selecting schemas: " + pstmt.toString());
+            pstmt.execute();
+            resultSet = pstmt.getResultSet();
+
+            // make sure the schema actually exists on the file system. If so,
+            // add it to the registered schema list.
+            while (resultSet.next()) {
+                String noNamespaceSchemaLocationURI = resultSet.getString(1);
+                String fileLocation = resultSet.getString(2);
+                String formatId = resultSet.getString(3);
+                logMetacat.debug("XMLService.populateRegisteredNoNamespaceSchemaList - try to register schema: " + noNamespaceSchemaLocationURI + "(no namespace-schema-location-uri) " + fileLocation+ " and format id "+formatId);
+                XMLNoNamespaceSchema xmlSchema = new XMLNoNamespaceSchema(noNamespaceSchemaLocationURI, fileLocation, formatId);
+                if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://")) {
+                    continue;//skip the external schemas.
+                }
+                else {
+                    xmlSchema.setFileName(fileLocation);
+                }
+                                
+                if (FileUtil.getFileStatus(xmlSchema.getLocalFileDir()) >= FileUtil.EXISTS_READABLE) {
+                    registeredNoNamespaceSchemaList.add(xmlSchema);
+                }
+                else if(fileLocation.startsWith("http://") || fileLocation.startsWith("https://")) {  //the schema resides on a different server, to validate, we need to go get it 
+                    //registeredSchemaList.add(xmlSchema);
+                    logMetacat.warn("XMLService.populateRegisteredNoNamespaceSchemaList - Schema file: " + fileLocation + " resides on a different server. So we don't add it to the registered no-namespace schema list.");
+                }
+                else {
+                    logMetacat.warn("XMLService.populateRegisteredNoNamespaceSchemaList - Schema file: " + xmlSchema.getLocalFileDir() + " is registered "
+                            + " in the database but does not exist on the file system. So we don't add it to the registered no-namespace schema list.");
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            logMetacat.error("XMLService.populateRegisteredNoNamespaceSchemaList - SQL Error: "
+                    + e.getMessage());
+        } finally {
+            try {
+                pstmt.close();
+            }// try
+            catch (SQLException sqlE) {
+                logMetacat.error("XMLSchemaService.populateRegisteredNoNamespaceSchemaList - Error in close the pstmt: "
+                        + sqlE.getMessage());
+            }
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+	}
 	
 	/**
 	 * create a space delimited string of all namespaces and locations
@@ -414,6 +488,123 @@ public class XMLSchemaService extends BaseService {
 		return false;
 	}
 	
+	/**
+	 * Test if the given namespace registered in Metacat
+	 * @param namespace the namespace will be tested
+	 * @return true if the namespace is registered; otherwise false.
+	 */
+	public static boolean isNamespaceRegistered(String namespace) {
+	    boolean registered = false;
+	    if(namespace != null && !namespace.trim().equals("")) {
+	        if(nameSpaceList != null && !nameSpaceList.isEmpty()) {
+	            for (String registeredNamespace : nameSpaceList) {
+	                logMetacat.debug("XMLSchemaService.isNamespaceRegistered - Loop the registered namespaces in Metacat: "+
+	                                                    registeredNamespace+" to compare the given namespace "+namespace);
+	                if (registeredNamespace != null && registeredNamespace.equals(namespace)) {
+	                    registered = true;
+	                    break;
+	                }
+	            }
+	        } else {
+	            logMetacat.error("XMLSchemaService.isNamespaceRegistered - The registered namespace list is null or empty! So we will reject any document which needs validataion");
+	        }
+	        
+	    } else {
+	        logMetacat.debug("XMLSchemaService.isNamespaceRegistered - The given namespace is null or blank. So it is not registered.");
+	    }
+	    logMetacat.debug("XMLSchemaService.isNamespaceRegistered - Is the namespace "+namespace+" registered in Metacat? "+registered);
+	    return registered;
+	}
+	
+	/**
+	 * Get the namespace-schemaLocation pairs string based on given formatId and namespace.
+	 * The algorithm is:
+	 * 1. Look up all pairs of namespace--schemalocation for the given formatId in the xml_catalog table. If we find it, return all of the pairs.
+	 * 2. If we can't find anything on the step 1, look up the record for the given namespace. If we find it, return all of pairs namespace-location without formatid.
+	 * 3. Return null if we can't find anything. 
+	 * @param formatId  the given format id
+	 * @param namespace  the given namespace
+	 * @return the string of the namespace-schemaLocation pairs (separated by white spaces). The null will be returned, if we can't find one.
+	 */
+	public String findNamespaceAndSchemaLocalLocation(String formatId, String namespace) {
+	    String location = null;
+	    location = getNameSpaceAndLocation(formatId);
+	    logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the location based the format id "+formatId+" is "+location);
+	    if(location == null) {
+	        //can't find it for given formId. Now we look up namespace
+	        logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the location based on the format id "+formatId+" is null and we will lookup the given namespace "+namespace);
+            if(isNamespaceRegistered(namespace)) {
+                location = getNameSpaceAndLocationStringWithoutFormatId();
+                logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the given namespace "+namespace+" is registered in Metacat");
+            } else {
+                logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the given namespace "+namespace+" is NOT registered in Metacat");
+            }
+	    }
+	    logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - The final location string for the namespace "+namespace+" and format id "+formatId+" is "+location);
+	    return location;
+	}
+	
+	/**
+	 * Get the local (official) location for a no-namespace schema based on the given format id or no-name-space schema location uri.
+	 * The format id has the higher priority
+	 * 1. Compare the given format id with all registered no-namespace schema. If a match is found, return it.
+	 * 2. If the step 1 return null, compare the given noNamespaceSchemaLocationuri.
+	 * @param formatId
+	 * @param noNamespaceSchemaLocation
+	 * @return
+	 */
+	public String findNoNamespaceSchemaLocalLocation(String formatId, String noNamespaceSchemaLocation) {
+	    String location = null;
+        logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given format id for determining the schema local location is "+formatId);
+        logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given noNamespaceSchemaLocationURI for determining the schema local location is "+noNamespaceSchemaLocation);
+	    if(registeredNoNamespaceSchemaList != null && !registeredNoNamespaceSchemaList.isEmpty()) {
+	        if((formatId != null && !formatId.trim().equals(""))) {
+                logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given format id "+formatId+ "is not null and let's compare format id first.");
+    	        for(XMLNoNamespaceSchema schema : registeredNoNamespaceSchemaList) {
+    	            if(schema != null) {
+    	                String registeredFormatId = schema.getFormatId();
+    	                logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the registered no-namespace schema has the format id "+registeredFormatId);
+    	                    if(registeredFormatId != null && !registeredFormatId.trim().equals("")) {
+    	                        logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the registered format id "+registeredFormatId+ "is not null as well. Compare it");
+    	                        if(formatId.equals(registeredFormatId)) {
+    	                            logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given and registered format id is the same: "+formatId+". Match sucessfully!");
+    	                            location = schema.getLocalFileUri();
+    	                            break;
+    	                        }
+    	                    }
+    	             } 
+    	         }
+	        }
+	        if(location == null) {
+	           logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - we can't find any regisered no-namespace schema has the foramtid "+formatId+ 
+	                   " (if it is null, this means there is no given format id.) Let's compare the noNamespaceSchemaLocaionURL which the given value is "+noNamespaceSchemaLocation);
+	           if(noNamespaceSchemaLocation != null && !noNamespaceSchemaLocation.trim().equals("")) {
+	               logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given noNamespaceSchemaLocation URI "+noNamespaceSchemaLocation+ "is not null and let's compare it.");
+	                for(XMLNoNamespaceSchema schema : registeredNoNamespaceSchemaList) {
+	                    if(schema != null) {
+	                        String registeredSchemaLocationURI = schema.getNoNamespaceSchemaLocation();
+	                        logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the registered no-namespace schema has noNamespaceSchemaLocation uri "+registeredSchemaLocationURI);
+	                            if(registeredSchemaLocationURI != null && !registeredSchemaLocationURI.trim().equals("")) {
+	                                logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the registered registeredSchemaLocation URI "+registeredSchemaLocationURI+ "is not null as well. Compare it");
+	                                if(noNamespaceSchemaLocation.equals(registeredSchemaLocationURI)) {
+	                                    logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given and registered noNamespaceSchemaLocation is the same: "+noNamespaceSchemaLocation+". Match sucessfully!");
+	                                    location = schema.getLocalFileUri();
+	                                    break;
+	                                }
+	                            }
+	                        } 
+	                 }
+	           }
+	        }
+	        
+	    } else {
+	        logMetacat.warn("XMLSchemaService.findNoNamespaceSchemaLocalLocation - there is no registered no-namespace schema in the Metacat");
+	    }
+	    logMetacat.warn("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the schema location is "+location+" (if it is null, this means it is not registered) for the format id "+formatId+
+	            " or noNamespaceSchemaLocation URI "+noNamespaceSchemaLocation);
+	    return location;
+	}
+	
     /**
 	 * See if schemas have been specified in the xml:schemalocation attribute.
 	 * If so, return a vector of the system ids.
@@ -472,38 +663,40 @@ public class XMLSchemaService extends BaseService {
 			}
 		}
 
-		logMetacat.debug("XMLSchemaService.findSchemasInXML - Schemas for eml are " + schemaList.toString());
+		logMetacat.debug("XMLSchemaService.findSchemasInXML - Schemas for xml are " + schemaList.toString());
 
 		return schemaList;
 	}    
     
     /**
-	 * Returns all the namespace for an xml document.  This is done by getting
-	 * the internal namespace declaration (prefix) and looking for xmlns:<prefix>
-	 * 
+	 * Returns the namespace for an xml document. 
 	 * @param xml
 	 *            the document to search
-	 * @return a string holding the namespace
+	 * @return a string holding the namespace. Null will be returned if there is no namespace.
+     * @throws SAXException 
+     * @throws PropertyNotFoundException 
 	 */
-	public static String findDocumentNamespace(StringReader xml) throws IOException {
+	public static String findDocumentNamespace(StringReader xml) throws IOException, PropertyNotFoundException, SAXException {
 		String namespace = null;
 
-		String eml2_0_0NameSpace = DocumentImpl.EML2_0_0NAMESPACE;
+		/*String eml2_0_0NameSpace = DocumentImpl.EML2_0_0NAMESPACE;
 		String eml2_0_1NameSpace = DocumentImpl.EML2_0_1NAMESPACE;
 		String eml2_1_0NameSpace = DocumentImpl.EML2_1_0NAMESPACE;
-		String eml2_1_1NameSpace = DocumentImpl.EML2_1_1NAMESPACE;
+		String eml2_1_1NameSpace = DocumentImpl.EML2_1_1NAMESPACE;*/
 
 
 		if (xml == null) {
 			logMetacat.debug("XMLSchemaService.findDocumentNamespace - XML doc is null.  There is no namespace.");
 			return namespace;
 		}
-
-		String targetLine = getSchemaLine(xml);
+		XMLNamespaceParser namespaceParser = new XMLNamespaceParser(xml);
+		namespaceParser.parse();
+		namespace = namespaceParser.getNamespace();
+		/*String targetLine = getSchemaLine(xml);
 
 		// the prefix is at the beginning of the doc
 		String prefix = null;
-		String regex1 = "^\\s*(\\p{Graph}+):\\p{Graph}* ";
+		String regex1 = "^\\s*(\\p{Graph}+):\\p{Graph}*\\s+";
 		Pattern pattern = Pattern.compile(regex1, Pattern.CASE_INSENSITIVE);
 		Matcher matcher = pattern.matcher(targetLine);
 		if (matcher.find()) {
@@ -511,17 +704,24 @@ public class XMLSchemaService extends BaseService {
 		}
 
 		// if a prefix was found, we are looking for xmlns:<prefix>="namespace"
-		// if no prefix was found, we grab the first namespace.
+		// if no prefix was found, we will look for the default namespace.
 		String regex2;
 		if (prefix != null) {
-			regex2 = "xmlns:" + prefix + "=['\"](.*)['\"]";
+		    logMetacat.debug("XMLSchemaService.findDocumentNamespace - found the prefix for the document "+prefix);
+			regex2 = "xmlns:" + prefix + "=['\"]([^\"])*['\"]";
 		} else {
-			regex2 = "xmlns:.*=['\"](.*)['\"]";
+			//regex2 = "xmlns:.*=['\"](.*)['\"]";
+		    logMetacat.debug("XMLSchemaService.findDocumentNamespace - can't found the prefix for the document, so we look for the default namespace");
+		    regex2 = "xmlns=['\"](.*)['\"]";
 		}
 		Pattern pattern2 = Pattern.compile(regex2, Pattern.CASE_INSENSITIVE);
 		Matcher matcher2 = pattern2.matcher(targetLine);
 		if (matcher2.find()) {
+		    logMetacat.debug("XMLSchemaService.findDocumentNamespace - it has either a prefix or a default namespace");
+		    System.out.println("the match group 0"+" is "+matcher2.group());
 			namespace = matcher2.group(1);
+			
+			System.out.println("the match group "+" is "+namespace);
 
 			if (namespace.indexOf(eml2_0_0NameSpace) != -1) {
 				namespace = eml2_0_0NameSpace;
@@ -532,9 +732,26 @@ public class XMLSchemaService extends BaseService {
 			} else if (namespace.indexOf(eml2_1_1NameSpace) != -1) {
 				namespace = eml2_1_1NameSpace;
 			}
-		}
-
+		}*/
+		logMetacat.debug("XMLSchemaService.findDocumentNamespace - the namespace (null means no namespace) in the document is "+namespace);
 		return namespace;
+	}
+	
+	/**
+	 * Get the attribute value of the noNamespaceSchemaLcation of the given xml
+	 * @param xml the xml obect needs to be searched
+	 * @return the attribute value of the noNamespaceSchemaLcation. The null will return if it can't be found.
+	 * @throws SAXException 
+	 * @throws PropertyNotFoundException 
+	 * @throws IOException 
+	 */
+	public static String findNoNamespaceSchemaLocationAttr(StringReader xml) throws PropertyNotFoundException, SAXException, IOException {
+	    String noNamespaceSchemaLocation = null;
+	    XMLNamespaceParser namespaceParser = new XMLNamespaceParser(xml);
+        namespaceParser.parse();
+        noNamespaceSchemaLocation = namespaceParser.getNoNamespaceSchemaLocation();
+        logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocation - the noNamespaceSchemaLocation (null means no namespace) in the document is "+noNamespaceSchemaLocation);
+	    return noNamespaceSchemaLocation;
 	}
     
     /**
