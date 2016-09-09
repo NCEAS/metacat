@@ -28,6 +28,7 @@ package edu.ucsb.nceas.metacat.service;
 
 import org.apache.log4j.Logger;
 
+import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -40,6 +41,8 @@ public class XMLSchema {
 	private String localFileUri = null;
 	private String localFileDir = null;
 	private String formatId = null;
+	
+	private static final String type = DocumentImpl.SCHEMA;
 	
 
     private Logger logMetacat = Logger.getLogger(XMLSchema.class);
@@ -221,5 +224,13 @@ public class XMLSchema {
 	 */
     public void setFormatId(String formatId) {
             this.formatId = formatId;
+    }
+    
+    /**
+     * Return the type of the schema. It always is "Schema"
+     * @return
+     */
+    public static String getType() {
+        return type;
     }
 }
