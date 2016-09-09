@@ -109,6 +109,7 @@ public class DocumentImpl
 {
     /* Constants */
     public static final String SCHEMA = "Schema";
+    public static final String NONAMESPACESCHEMA = "NoNamespaceSchema";
     public static final String DTD = "DTD";
     public static final String EML200 = "eml200";
     public static final String EML210 = "eml210";
