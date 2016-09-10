@@ -287,9 +287,9 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 		// for element <eml:eml...> qname is "eml:eml", local name is "eml"
 		// for element <acl....> both qname and local name is "eml"
 		// uri is namesapce
-		logMetacat.debug("Start ELEMENT(qName) " + qName);
-		logMetacat.debug("Start ELEMENT(localName) " + localName);
-		logMetacat.debug("Start ELEMENT(uri) " + uri);
+		logMetacat.trace("Start ELEMENT(qName) " + qName);
+		logMetacat.trace("Start ELEMENT(localName) " + localName);
+		logMetacat.trace("Start ELEMENT(uri) " + uri);
 
 		DBSAXNode parentNode = null;
 		DBSAXNode currentNode = null;
@@ -617,7 +617,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			inlineDataNameSpace = null;
 			inlineDataNameSpace = new Hashtable<String, String>();
 			// write inline data into file
-			logMetacat.debug("the inline element data is: " + inlineElements.toString());
+			logMetacat.trace("the inline element data is: " + inlineElements.toString());
 			writeInlineDataIntoFile(inlineDataFileWriter, inlineElements);
 		}// else
 
@@ -756,7 +756,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 
 	/** SAX Handler that is called for each XML text node */
 	public void characters(char[] cbuf, int start, int len) throws SAXException {
-		logMetacat.debug("CHARACTERS");
+		logMetacat.trace("CHARACTERS");
 		if (!handleInlineData) {
 			// buffer all text nodes for same element. This is for if text was
 			// split into different nodes
@@ -766,7 +766,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			// if text buffer .size is greater than max, write it to db.
 			// so we can save memory
 			if (textBuffer.length() > MAXDATACHARS) {
-				logMetacat.debug("Write text into DB in charaters"
+				logMetacat.trace("Write text into DB in charaters"
 						+ " when text buffer size is greater than maxmum number");
 				DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
 				endNodeId = writeTextForDBSAXNode(endNodeId, textBuffer, currentNode);
@@ -778,7 +778,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			// we don't need to buffer it.
 			StringBuffer inlineText = new StringBuffer();
 			inlineText.append(new String(cbuf, start, len));
-			logMetacat.debug("The inline text data write into file system: "
+			logMetacat.trace("The inline text data write into file system: "
 					+ inlineText.toString());
 			writeInlineDataIntoFile(inlineDataFileWriter, inlineText);
 		}
@@ -787,12 +787,12 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 	/** SAX Handler that is called at the end of each XML element */
 	public void endElement(String uri, String localName, String qName)
 			throws SAXException {
-		logMetacat.debug("End ELEMENT " + qName);
+		logMetacat.trace("End ELEMENT " + qName);
 
 		if (localName.equals(INLINE) && handleInlineData) {
 			// Get the node from the stack
 			DBSAXNode currentNode = (DBSAXNode) nodeStack.pop();
-			logMetacat.debug("End of inline data");
+			logMetacat.trace("End of inline data");
 			// close file writer
 			try {
 				inlineDataFileWriter.close();
@@ -864,7 +864,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 				}// else if
 				
 				// write text to db if it is not inline data
-				logMetacat.debug("Write text into DB in End Element");
+				logMetacat.trace("Write text into DB in End Element");
 
 				// compare top level access module
 				if (processingTopLevelAccess && needToCheckAccessModule) {
@@ -1022,7 +1022,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			endElement.append("</");
 			endElement.append(qName);
 			endElement.append(">");
-			logMetacat.debug("inline endElement: " + endElement.toString());
+			logMetacat.trace("inline endElement: " + endElement.toString());
 			writeInlineDataIntoFile(inlineDataFileWriter, endElement);
 		}
 	}
@@ -1031,7 +1031,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 	 * SAX Handler that receives notification of comments in the DTD
 	 */
 	public void comment(char[] ch, int start, int length) throws SAXException {
-		logMetacat.debug("COMMENT");
+		logMetacat.trace("COMMENT");
 		if (!handleInlineData) {
 			if (!processingDTD) {
 				DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
@@ -1058,7 +1058,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			inlineComment.append("<!--");
 			inlineComment.append(new String(ch, start, length));
 			inlineComment.append("-->");
-			logMetacat.debug("inline data comment: " + inlineComment.toString());
+			logMetacat.trace("inline data comment: " + inlineComment.toString());
 			writeInlineDataIntoFile(inlineDataFileWriter, inlineComment);
 		}
 	}
@@ -1073,11 +1073,11 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			logMetacat.error("the stack is empty for comment data");
 			throw new SAXException(error);
 		}
-		logMetacat.debug("current node type from xml is COMMENT");
-		logMetacat.debug("node type from stack: " + node.getNodeType());
-		logMetacat.debug("current node data from xml is: " + string);
-		logMetacat.debug("node data from stack: " + node.getNodeData());
-		logMetacat.debug("node is from stack: " + node.getNodeId());
+		logMetacat.trace("current node type from xml is COMMENT");
+		logMetacat.trace("node type from stack: " + node.getNodeType());
+		logMetacat.trace("current node data from xml is: " + string);
+		logMetacat.trace("node data from stack: " + node.getNodeData());
+		logMetacat.trace("node is from stack: " + node.getNodeId());
 		// if not consistent terminate program and throw a exception
 		if (!node.getNodeType().equals("COMMENT") || !string.equals(node.getNodeData())) {
 			logMetacat.error("Inconsistence happened: ");
@@ -1095,7 +1095,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 	 * PI may occur before or after the root element.
 	 */
 	public void processingInstruction(String target, String data) throws SAXException {
-		logMetacat.debug("PI");
+		logMetacat.trace("PI");
 		if (!handleInlineData) {
 			DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
 			endNodeId = currentNode.writeChildNodeToDB("PI", target, data, docid);
@@ -1106,14 +1106,14 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			inlinePI.append(" ");
 			inlinePI.append(data);
 			inlinePI.append("?>");
-			logMetacat.debug("inline data pi is: " + inlinePI.toString());
+			logMetacat.trace("inline data pi is: " + inlinePI.toString());
 			writeInlineDataIntoFile(inlineDataFileWriter, inlinePI);
 		}
 	}
 
 	/** SAX Handler that is called at the start of Namespace */
 	public void startPrefixMapping(String prefix, String uri) throws SAXException {
-		logMetacat.debug("NAMESPACE");
+		logMetacat.trace("NAMESPACE");
 		if (!handleInlineData) {
 			namespaces.put(prefix, uri);
 		} else {
@@ -1129,7 +1129,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 		// When validation is turned "on", white spaces are reported here
 		// When validation is turned "off" white spaces are not reported here,
 		// but through characters() callback
-		logMetacat.debug("IGNORABLEWHITESPACE");
+		logMetacat.trace("IGNORABLEWHITESPACE");
 		if (!handleInlineData) {
 			DBSAXNode currentNode = (DBSAXNode) nodeStack.peek();
 				String data = new String(cbuf, start, len);
@@ -1179,7 +1179,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 
 	/** SAX Handler that receives notification of end of the document */
 	public void endDocument() throws SAXException {
-		logMetacat.debug("end Document");
+		logMetacat.trace("end Document");
 		// There are some unchangable subtree didn't be compare
 		// This maybe cause user change the subtree id
 		if (!super.getIsRevisionDoc()) {
