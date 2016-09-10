@@ -66,7 +66,7 @@ public class DocumentImplWrapper {
 
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
-			String homeServer, String notifyServer, Date createDate, Date updateDate, String formatId)
+			String homeServer, String notifyServer, Date createDate, Date updateDate)
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false (first false)
@@ -101,7 +101,7 @@ public class DocumentImplWrapper {
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
 			String action, String accnum, String user, String[] groups,
 			String homeServer, String notifyServer, String tableName,
-			boolean timedReplication, Date createDate, Date updateDate, String formatId)
+			boolean timedReplication, Date createDate, Date updateDate)
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false
