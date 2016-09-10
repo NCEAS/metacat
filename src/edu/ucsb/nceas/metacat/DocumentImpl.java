@@ -1801,7 +1801,7 @@ public class DocumentImpl
                     
                     currentNode.setNodeType(parentNode.getNodeType());
                     currentNode.setNodeName("");
-                    logMetacat.debug("DocumentImpl.buildIndex - Converted node " + currentNode.getNodeId() + 
+                    logMetacat.trace("DocumentImpl.buildIndex - Converted node " + currentNode.getNodeId() + 
                       " to type " + parentNode.getNodeType());
                     
                   	traverseParents(nodeRecordMap, rootNodeId,
@@ -1812,7 +1812,7 @@ public class DocumentImpl
                 }
                 // Lastly, update the xml_path_index table
                 if(!pathsFound.isEmpty()){
-                	logMetacat.debug("DocumentImpl.buildIndex - updating path index");
+                	logMetacat.trace("DocumentImpl.buildIndex - updating path index");
                     	
                 	updatePathIndex(dbConn, pathsFound);
 
@@ -1901,7 +1901,7 @@ public class DocumentImpl
                 if (current.getNodeType().equals("ATTRIBUTE")) {
                     currentName = "@" + currentName;
                 }
-                logMetacat.debug("DocumentImpl.traverseParents - A: " + currentName +"\n");
+                logMetacat.trace("DocumentImpl.traverseParents - A: " + currentName +"\n");
                 if ( currentName != null ) {
                   if ( !currentName.equals("") ) {
                     pathList.put(currentName, new PathIndexEntry(leafNodeId,
@@ -1910,7 +1910,7 @@ public class DocumentImpl
                 }
 				if (pathsForIndexing.contains(currentName)
 						&& leafData.trim().length() != 0) {
-					logMetacat.debug("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
+					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
 					pathsFoundForIndexing.put(currentName, new PathIndexEntry(
 							leafNodeId, currentName, docid, leafParentId, leafData,
 							leafDataNumerical, leafDataDate));
@@ -1929,12 +1929,12 @@ public class DocumentImpl
             String path = current.getNodeName() + children;
             
             if ( !children.equals("") ) {
-                logMetacat.debug("DocumentImpl.traverseParents - B: " + path +"\n");
+                logMetacat.trace("DocumentImpl.traverseParents - B: " + path +"\n");
                 pathList.put(path, new PathIndexEntry(leafNodeId, path, docid,
                     doctype, parentId));
 				if (pathsForIndexing.contains(path)
 						&& leafData.trim().length() != 0) {
-					logMetacat.debug("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
+					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
 					pathsFoundForIndexing.put(path, new PathIndexEntry(leafNodeId,
 							path, docid, leafParentId, leafData, leafDataNumerical, leafDataDate));
 				}
@@ -1945,13 +1945,13 @@ public class DocumentImpl
                 if ( !path.equals("") ) {
                   fullPath = '/' + path;
                 }
-                logMetacat.debug("DocumentImpl.traverseParents - C: " + fullPath +"\n");
+                logMetacat.trace("DocumentImpl.traverseParents - C: " + fullPath +"\n");
                 pathList.put(fullPath, new PathIndexEntry(leafNodeId, fullPath,
                     docid, doctype, parentId));
 
 				if (pathsForIndexing.contains(fullPath)
 						&& leafData.trim().length() != 0) {
-					logMetacat.debug("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
+					logMetacat.trace("DocumentImpl.traverseParents - paths found for indexing: " + currentName);
 					pathsFoundForIndexing.put(fullPath, new PathIndexEntry(
 							leafNodeId, fullPath, docid, leafParentId, leafData,
 							leafDataNumerical, leafDataDate));
