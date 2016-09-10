@@ -1,7 +1,9 @@
 package edu.ucsb.nceas.metacattest.service;
 
 import org.apache.commons.io.FileUtils;
+
 import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.service.XMLSchemaParser;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 
@@ -115,9 +117,14 @@ public class XMLSchemaServiceTest extends MCTestCase
   public void testFindNamespaceAndSchemaLocalLocation() throws Exception {
       String formatId = null;
       String namespace = null;
-      String location = XMLSchemaService.getInstance().findNamespaceAndSchemaLocalLocation(formatId, namespace);
-      assertTrue(location == null);
-      
+      String location = null;
+      try {
+          location = XMLSchemaService.getInstance().findNamespaceAndSchemaLocalLocation(formatId, namespace);
+          fail("we can't get here. The above line should throw an exception.");
+      } catch (MetacatException e) {
+          assertTrue(e.getMessage().contains("not registered in the Metacat"));
+      }
+
       //registered formatid
       formatId = "http://www.isotc211.org/2005/gmd-noaa";
       namespace = null;
@@ -142,12 +149,27 @@ public class XMLSchemaServiceTest extends MCTestCase
       location = XMLSchemaService.getInstance().findNamespaceAndSchemaLocalLocation(formatId, namespace);
       assertTrue(location.contains("/schema/isotc211/gco/gco.xsd"));
       
+      formatId = "http://foo.com";
+      namespace = "http://foo.com";
+      try {
+          location = XMLSchemaService.getInstance().findNamespaceAndSchemaLocalLocation(formatId, namespace);
+          fail("we can't get here. The above line should throw an exception.");
+      } catch (MetacatException e) {
+          assertTrue(e.getMessage().contains("not registered in the Metacat"));
+      }
   }
   
   public void testFindNoNamespaceSchemaLocalLocation() throws Exception {
       String formatId = null;
       String nonamespaceURI = null;
-      String location = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, nonamespaceURI);
+      String location = null;
+      try {
+          location = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, nonamespaceURI);
+          fail("we can't get here. The above line should throw an exception.");
+      } catch (MetacatException e) {
+          assertTrue(e.getMessage().contains("not registered in the Metacat"));
+      }
+              
       assertTrue(location == null);
       
       formatId = "FGDC-STD-001-1998";
@@ -181,10 +203,14 @@ public class XMLSchemaServiceTest extends MCTestCase
       location = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, nonamespaceURI);
       assertTrue(location.contains("/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd"));
       
-      formatId = "FGDC-STD-001";
-      nonamespaceURI = "https://www.fgdc.gov/metadata-std-001-1998.xsd";
-      location = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, nonamespaceURI);
-      assertTrue(location == null);
+      formatId = "foo-001";
+      nonamespaceURI = "https://www.fgdc.gov/foo";
+      try {
+          location = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, nonamespaceURI);
+          fail("we can't get here. The above line should throw an exception.");
+      } catch (MetacatException e) {
+          assertTrue(e.getMessage().contains("not registered in the Metacat"));
+      }
   }
   
   public void testIsNamespaceRegistered() throws Exception {
