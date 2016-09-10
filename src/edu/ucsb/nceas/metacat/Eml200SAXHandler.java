@@ -411,7 +411,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
             // Bind the values to the query
             pstmt.setString(1, docid);
             pstmt.setString(2, TOPLEVEL);
-            logMetacat.debug("Eml200SAXHandler.getTopAccessSubTreeFromDB - executing SQL: " + pstmt.toString());
+            logMetacat.trace("Eml200SAXHandler.getTopAccessSubTreeFromDB - executing SQL: " + pstmt.toString());
             pstmt.execute();
 
             // Get result set
@@ -598,9 +598,9 @@ public class Eml200SAXHandler extends DBSAXHandler implements
         // for element <eml:eml...> qname is "eml:eml", local name is "eml"
         // for element <acl....> both qname and local name is "eml"
         // uri is namesapce
-        logMetacat.debug("Start ELEMENT(qName) " + qName);
-        logMetacat.debug("Start ELEMENT(localName) " + localName);
-        logMetacat.debug("Start ELEMENT(uri) " + uri);
+        logMetacat.trace("Start ELEMENT(qName) " + qName);
+        logMetacat.trace("Start ELEMENT(localName) " + localName);
+        logMetacat.trace("Start ELEMENT(uri) " + uri);
 
         DBSAXNode parentNode = null;
         DBSAXNode currentNode = null;
@@ -2401,7 +2401,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
             logMetacat.info("Start node id is: " + startNodeId);
             pstmt.setLong(6, endNodeId);
             logMetacat.info("End node id is: " + endNodeId);
-            logMetacat.debug("Eml200SAXHandler.writeAccessSubTreeIntoDB - executing SQL: " + pstmt.toString());
+            logMetacat.trace("Eml200SAXHandler.writeAccessSubTreeIntoDB - executing SQL: " + pstmt.toString());
             pstmt.execute();
             pstmt.close();
         }//try
@@ -2663,7 +2663,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
             //bind variable
             pStmt.setString(1, docid);
             //execute query
-            logMetacat.debug("Eml200SAXHandler.deleteRelations - executing SQL: " + pStmt.toString());
+            logMetacat.trace("Eml200SAXHandler.deleteRelations - executing SQL: " + pStmt.toString());
             pStmt.execute();
             pStmt.close();
         }//try
@@ -2700,7 +2700,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
             pStmt.setString(4, RELATION);
             pStmt.setString(5, dataId);
             //execute query
-            logMetacat.debug("Eml200SAXHandler.writeOnlineDataFileIdIntoRelationTable - executing SQL: " + pStmt.toString());
+            logMetacat.trace("Eml200SAXHandler.writeOnlineDataFileIdIntoRelationTable - executing SQL: " + pStmt.toString());
             pStmt.execute();
             pStmt.close();
         }//try
