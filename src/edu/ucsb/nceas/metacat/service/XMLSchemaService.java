@@ -48,6 +48,7 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
+import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -526,7 +527,7 @@ public class XMLSchemaService extends BaseService {
 	 * @param namespace  the given namespace
 	 * @return the string of the namespace-schemaLocation pairs (separated by white spaces). The null will be returned, if we can't find one.
 	 */
-	public String findNamespaceAndSchemaLocalLocation(String formatId, String namespace) {
+	public String findNamespaceAndSchemaLocalLocation(String formatId, String namespace) throws MetacatException{
 	    String location = null;
 	    location = getNameSpaceAndLocation(formatId);
 	    logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the location based the format id "+formatId+" is "+location);
@@ -539,6 +540,11 @@ public class XMLSchemaService extends BaseService {
             } else {
                 logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - the given namespace "+namespace+" is NOT registered in Metacat");
             }
+	    }
+	    if(location == null) {
+	        logMetacat.error("XMLSchemaService.findNamespaceAndSchemaLocation - We can't find the schema location for the namespace "+namespace+" and format id "+formatId+". This means they are not registered in Metacat.");
+	        throw new MetacatException("The namespace "+namespace+" and the format id "+formatId+
+	                " are not registered in the Metacat. So the object using the namespace was rejected since Metacat can't validate the xml instance. Please contact the Metacat operator to register them.");
 	    }
 	    logMetacat.debug("XMLSchemaService.findNamespaceAndSchemaLocation - The final location string for the namespace "+namespace+" and format id "+formatId+" is "+location);
 	    return location;
@@ -553,7 +559,7 @@ public class XMLSchemaService extends BaseService {
 	 * @param noNamespaceSchemaLocation
 	 * @return
 	 */
-	public String findNoNamespaceSchemaLocalLocation(String formatId, String noNamespaceSchemaLocation) {
+	public String findNoNamespaceSchemaLocalLocation(String formatId, String noNamespaceSchemaLocation) throws MetacatException {
 	    String location = null;
         logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given format id for determining the schema local location is "+formatId);
         logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the given noNamespaceSchemaLocationURI for determining the schema local location is "+noNamespaceSchemaLocation);
@@ -600,7 +606,14 @@ public class XMLSchemaService extends BaseService {
 	    } else {
 	        logMetacat.warn("XMLSchemaService.findNoNamespaceSchemaLocalLocation - there is no registered no-namespace schema in the Metacat");
 	    }
-	    logMetacat.warn("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the schema location is "+location+" (if it is null, this means it is not registered) for the format id "+formatId+
+	    
+	    if(location == null) {
+            logMetacat.error("XMLSchemaService.findNoNamespaceSchemaLocalLocation - We can't find Metacat local schema location for the noNamespaceLocation "+noNamespaceSchemaLocation+
+                    " and format id "+formatId+". This means they are not registered in Metacat.");
+            throw new MetacatException("The noNamespaceSchemaLocation "+noNamespaceSchemaLocation+" or the format id "+formatId+
+                    " is not registered in the Metacat. So the object using them was rejected since Metacat can't validate the xml instance. Please contact the Metacat operator to register them.");
+        }
+	    logMetacat.debug("XMLSchemaService.findNoNamespaceSchemaLocalLocation - the schema location is "+location+" (if it is null, this means it is not registered) for the format id "+formatId+
 	            " or noNamespaceSchemaLocation URI "+noNamespaceSchemaLocation);
 	    return location;
 	}
