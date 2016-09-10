@@ -59,9 +59,9 @@ public class DocumentImplWrapper {
 	}//Constructor
 
 	public String write(DBConnection conn, String xml, String pub, Reader dtd,
-			String action, String docid, String user, String[] groups, byte[]xmlBytes, String formatId) throws Exception {
+			String action, String docid, String user, String[] groups, byte[]xmlBytes, String schemaLocalLocation) throws Exception {
 		return DocumentImpl.write(conn, xml, pub, dtd, action, docid, user, groups,
-				ruleBase, needValidation, writeAccessRules, xmlBytes, formatId);
+				ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocalLocation);
 	}
 
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
@@ -72,9 +72,11 @@ public class DocumentImplWrapper {
 		// so rule base is null and need validation is false (first false)
 		// this method is for force replication. so the table name is xml_documents
 		// and timed replication is false (last false)
+	    String schemaLocation = null;
+	    boolean needValidate = false;
 		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
-				groups, homeServer, notifyServer, ruleBase, false,
-				DocumentImpl.DOCUMENTTABLE, false, createDate, updateDate, formatId);
+				groups, homeServer, notifyServer, ruleBase, needValidate,
+				DocumentImpl.DOCUMENTTABLE, false, createDate, updateDate, schemaLocation);
 		// last false means is not timed replication
 
 	}
@@ -103,9 +105,11 @@ public class DocumentImplWrapper {
 			throws Exception {
 		//we don't need to check validation in replication
 		// so rule base is null and need validation is false
+	    String schemaLocation = null;
+	    boolean needValidate = false;
 		return DocumentImpl.writeReplication(conn, xml, xmlBytes, pub, dtd, action, accnum, user,
-				groups, homeServer, notifyServer, ruleBase, false, tableName,
-				timedReplication, createDate, updateDate, formatId);
+				groups, homeServer, notifyServer, ruleBase, needValidate, tableName,
+				timedReplication, createDate, updateDate, schemaLocation);
 	}
 
 }

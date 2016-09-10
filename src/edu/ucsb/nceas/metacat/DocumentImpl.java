@@ -114,6 +114,7 @@ public class DocumentImpl
     public static final String EML200 = "eml200";
     public static final String EML210 = "eml210";
     public static final String EXTERNALSCHEMALOCATIONPROPERTY = "http://apache.org/xml/properties/schema/external-schemaLocation";
+    public static final String EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
     public static final String REVISIONTABLE = "xml_revisions";
     public static final String DOCUMENTTABLE = "xml_documents";
     /*
@@ -2658,7 +2659,7 @@ public class DocumentImpl
 
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String docid, String user,
-            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String formatId)
+            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation)
             throws Exception
     {
         //this method will be called in handleUpdateOrInsert method
@@ -2666,7 +2667,7 @@ public class DocumentImpl
         // get server location for this doc
         int serverLocation = getServerLocationNumber(docid);
         return write(conn, xmlString, pub, dtd, action, docid, user, groups,
-                serverLocation, false, ruleBase, needValidation, writeAccessRules, xmlBytes, formatId);
+                serverLocation, false, ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocation);
     }
 
     /**
@@ -2703,7 +2704,7 @@ public class DocumentImpl
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String accnum, String user,
             String[] groups, int serverCode, boolean override, String ruleBase,
-            boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String formatId) throws Exception
+            boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation) throws Exception
     {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
     	
@@ -2790,7 +2791,7 @@ public class DocumentImpl
                     logMetacat.debug("DocumentImpl.write - initializing parser");
                     parser = initializeParser(conn, action, docid, xmlReader, updaterev,
                             user, groups, pub, serverCode, dtd, ruleBase,
-                            needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, formatId);
+                            needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, schemaLocation);
                     	// false means it is not a revision doc
                                    //null, null are createdate and updatedate
                                    //null will use current time as create date time
@@ -2894,13 +2895,13 @@ public class DocumentImpl
 	        Vector<String>guidsToSync = new Vector<String>();
 
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
-                    pub, serverCode, dtd, ruleBase, needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, formatId);
+                    pub, serverCode, dtd, ruleBase, needValidation, false, null, null, encoding, writeAccessRules, guidsToSync, schemaLocation);
                     // null and null are createtime and updatetime
                     // null will create current time
                     //false means it is not a revision doc
 
             conn.setAutoCommit(false);
-            logMetacat.debug("DocumentImpl.write - XML to be parsed: " + xmlString);
+            //logMetacat.debug("DocumentImpl.write - XML to be parsed: " + xmlString);
             parser.parse(new InputSource(xmlReader));
 
             conn.commit();
@@ -3038,7 +3039,7 @@ public class DocumentImpl
             String pub, Reader dtd, String action, String accnum, String user,
             String[] groups, String homeServer, String notifyServer,
             String ruleBase, boolean needValidation, String tableName, 
-            boolean timedReplication, Date createDate, Date updateDate, String formatId) throws Exception
+            boolean timedReplication, Date createDate, Date updateDate, String schemaLocation) throws Exception
     {
     	// Get the xml as a string so we can write to file later
     	StringReader xmlReader = new StringReader(xmlString);
@@ -3106,7 +3107,7 @@ public class DocumentImpl
 
             parser = initializeParser(conn, action, docid, xmlReader, rev, user, groups,
                     pub, serverCode, dtd, ruleBase, needValidation, 
-                    isRevision, createDate, updateDate, encoding, writeAccessRules, guidsToSync, formatId);
+                    isRevision, createDate, updateDate, encoding, writeAccessRules, guidsToSync, schemaLocation);
          
             conn.setAutoCommit(false);
             parser.parse(new InputSource(xmlReader));
@@ -3725,7 +3726,7 @@ public class DocumentImpl
             String action, String docid, Reader xml, String rev, String user,
             String[] groups, String pub, int serverCode, Reader dtd,
             String ruleBase, boolean needValidation, boolean isRevision,
-            Date createDate, Date updateDate, String encoding, boolean writeAccessRules, Vector<String> guidsToSync, String formatId) throws Exception
+            Date createDate, Date updateDate, String encoding, boolean writeAccessRules, Vector<String> guidsToSync, String schemaLocation) throws Exception
     {
         XMLReader parser = null;
         try {
@@ -3736,7 +3737,7 @@ public class DocumentImpl
             // Get an instance of the parser
             String parserName = PropertyService.getProperty("xml.saxparser");
             parser = XMLReaderFactory.createXMLReader(parserName);
-            XMLSchemaService.getInstance().populateRegisteredSchemaList();
+            //XMLSchemaService.getInstance().populateRegisteredSchemaList();
             if (ruleBase != null && ruleBase.equals(EML200)) {
                 logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.0.0 parser");
                 chandler = new Eml200SAXHandler(dbconn, action, docid, rev,
@@ -3747,32 +3748,25 @@ public class DocumentImpl
                 parser.setErrorHandler((ErrorHandler) chandler);
                 parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
                 parser.setProperty(LEXICALPROPERTY, chandler);
-                // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
                 parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                // From DB to find the register external schema location
-                String externalSchemaLocation = null;
-//                SchemaLocationResolver resolver = new SchemaLocationResolver();
-                logMetacat.debug("DocumentImpl.initalizeParser - the final formatId of the object "+docid+" is "+formatId);
-                externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocation(formatId);
-                if(externalSchemaLocation == null) {
-                    logMetacat.info("DocumentImpl.initalizeParser - there is no register schemas for the formatid "+ formatId+". So we will use the old way."+
-                    " Put all registred schema/location paris for the validation.");
-                    externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocationStringWithoutFormatId();
-                    
-                } 
-                logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 external schema location: " + externalSchemaLocation);
-                // Set external schemalocation.
-                if (externalSchemaLocation != null
-                        && !(externalSchemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                            externalSchemaLocation);
-                } else {
-                    throw new Exception ("The schema for the format id "+formatId+" can't be found in any place. So we can't validate the xml instance.");
+                if(needValidation) {
+                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser sets up validation feature since the parameter of the needValidataion is "+needValidation);
+                    // turn on schema validation feature
+                    parser.setFeature(VALIDATIONFEATURE, true);
+                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+                    logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 external schema location: " + schemaLocation);
+                    // Set external schemalocation.
+                    if (schemaLocation != null
+                            && !(schemaLocation.trim()).equals("")) {
+                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
+                                schemaLocation);
+                    } else {
+                        throw new Exception ("The schema for the namespace on docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                    }
                 }
-                logMetacat.debug("DocumentImpl.initalizeParser - 2.0.0 parser configured");
+                
+                logMetacat.info("DocumentImpl.initalizeParser - 2.0.0 parser configured");
             } else if (ruleBase != null && ruleBase.equals(EML210)) {
                 logMetacat.info("DocumentImpl.initalizeParser - Using eml 2.1.0 parser");
                 chandler = new Eml210SAXHandler(dbconn, action, docid, rev,
@@ -3784,28 +3778,21 @@ public class DocumentImpl
                 parser.setProperty(DECLARATIONHANDLERPROPERTY, chandler);
                 parser.setProperty(LEXICALPROPERTY, chandler);
                 // turn on schema validation feature
-                parser.setFeature(VALIDATIONFEATURE, true);
                 parser.setFeature(NAMESPACEFEATURE, true);
-                //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
-                parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
-                // From DB to find the register external schema location
-                String externalSchemaLocation = null;
-                logMetacat.debug("DocumentImpl.initalizeParser - the final formatId of the object "+docid+" is "+formatId);
-                externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocation(formatId);
-                if(externalSchemaLocation == null) {
-                    logMetacat.info("DocumentImpl.initalizeParser - there is no register schemas for the formatid "+ formatId+". So we will use the old way."+
-                    " Put all registred schema/location paris for the validation.");
-                    externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocationStringWithoutFormatId();
-                    
-                } 
-                logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 external schema location: " + externalSchemaLocation);
-                // Set external schemalocation.
-                if (externalSchemaLocation != null
-                        && !(externalSchemaLocation.trim()).equals("")) {
-                    parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                            externalSchemaLocation);
-                } else {
-                    throw new Exception ("The schema for the format id "+formatId+" can't be found in any place. So we can't validate the xml instance.");
+                if(needValidation) {
+                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 parser sets up validation features since the parameter of the needValidataion is "+needValidation);
+                    parser.setFeature(VALIDATIONFEATURE, true);
+                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+                    logMetacat.info("DocumentImpl.initalizeParser - 2.1.0 external schema location: " + schemaLocation);
+                    // Set external schemalocation.
+                    if (schemaLocation != null
+                            && !(schemaLocation.trim()).equals("")) {
+                        parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
+                                schemaLocation);
+                    } else {
+                        throw new Exception ("The schema for the docid "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                    }
                 }
                 logMetacat.debug("DocumentImpl.initalizeParser - Using eml 2.1.0 parser configured");
             } else {
@@ -3824,7 +3811,7 @@ public class DocumentImpl
                         && needValidation) {
                 
                     XMLSchemaService xmlss = XMLSchemaService.getInstance();
-                    xmlss.doRefresh();
+                    //xmlss.doRefresh();
                     logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
                     // turn on schema validation feature
                     parser.setFeature(VALIDATIONFEATURE, true);
@@ -3838,26 +3825,33 @@ public class DocumentImpl
                     if (xmlss.useFullSchemaValidation() && !allSchemasRegistered) {
                     	parser.setFeature(FULLSCHEMAVALIDATIONFEATURE, true);
                     }
-                    // From DB to find the register external schema location
-                    String externalSchemaLocation = null;
-                    logMetacat.debug("DocumentImpl.initalizeParser - the final formatId of the object "+docid+" is "+formatId);
-                    externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocation(formatId);
-                    if(externalSchemaLocation == null) {
-                        logMetacat.info("DocumentImpl.initalizeParser - there is no register schemas for the formatid "+ formatId+". So we will use the old way."+
-                        " Put all registred schema/location paris for the validation.");
-                        externalSchemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocationStringWithoutFormatId();
-                        
-                    } 
-                    logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + externalSchemaLocation);              
+                    logMetacat.info("DocumentImpl.initalizeParser - Generic external schema location: " + schemaLocation);              
                     // Set external schemalocation.
-                    if (externalSchemaLocation != null
-                            && !(externalSchemaLocation.trim()).equals("")) {
+                    if (schemaLocation != null
+                            && !(schemaLocation.trim()).equals("")) {
                         parser.setProperty(EXTERNALSCHEMALOCATIONPROPERTY,
-                                externalSchemaLocation);
+                                schemaLocation);
                     } else {
-                        throw new Exception ("The schema for the format id "+formatId+" can't be found in any place. So we can't validate the xml instance.");
+                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
                     }
-
+                } else if (ruleBase != null && ruleBase.equals(NONAMESPACESCHEMA)
+                        && needValidation) {
+                    //xmlss.doRefresh();
+                    logMetacat.info("DocumentImpl.initalizeParser - Using General schema parser");
+                    // turn on schema validation feature
+                    parser.setFeature(VALIDATIONFEATURE, true);
+                    parser.setFeature(NAMESPACEFEATURE, true);
+                    //parser.setFeature(NAMESPACEPREFIXESFEATURE, true);
+                    parser.setFeature(SCHEMAVALIDATIONFEATURE, true);
+                    logMetacat.info("DocumentImpl.initalizeParser - Generic external no-namespace schema location: " + schemaLocation);              
+                    // Set external schemalocation.
+                    if (schemaLocation != null
+                            && !(schemaLocation.trim()).equals("")) {
+                        parser.setProperty(EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY,
+                                schemaLocation);
+                    } else {
+                        throw new Exception ("The schema for the document "+docid+" can't be found in any place. So we can't validate the xml instance.");
+                    }
                 } else if (ruleBase != null && ruleBase.equals(DTD)
                         && needValidation) {
                     logMetacat.info("DocumentImpl.initalizeParser - Using dtd parser");
