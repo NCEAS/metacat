@@ -1722,7 +1722,7 @@ public class MetacatHandler {
           boolean validate = false;
           DocumentImplWrapper documentWrapper = null;
           String namespace = null;
-
+          String schemaLocation = null;
           try {
             // look inside XML Document for <!DOCTYPE ... PUBLIC/SYSTEM ...
             // >
@@ -1730,13 +1730,15 @@ public class MetacatHandler {
             validate = needDTDValidation(xmlReader);
             if (validate) {
                 // set a dtd base validation parser
+                logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - the xml object will be validate by a dtd");
                 String rule = DocumentImpl.DTD;
                 documentWrapper = new DocumentImplWrapper(rule, validate, writeAccessRules);
             } else {
-                
+                XMLSchemaService.getInstance().doRefresh();
                 namespace = XMLSchemaService.findDocumentNamespace(xmlReader);
-                
                 if (namespace != null) {
+                    logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - the xml object will be validated by a schema which has a target namespace: "+namespace);
+                    schemaLocation = XMLSchemaService.getInstance().findNamespaceAndSchemaLocalLocation(formatId, namespace);
                     if (namespace.compareTo(DocumentImpl.EML2_0_0NAMESPACE) == 0
                             || namespace.compareTo(
                             DocumentImpl.EML2_0_1NAMESPACE) == 0) {
@@ -1756,12 +1758,26 @@ public class MetacatHandler {
                         EMLParser parser = new EMLParser(doctext[0]);
                         documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
                     } else {
+                        if(!XMLSchemaService.isNamespaceRegistered(namespace)) {
+                            throw new Exception("The namespace "+namespace+" used in the xml object hasn't been registered in the Metacat. Metacat can't validate the object and rejected it. Please contact the operator of the Metacat for regsitering the namespace.");
+                        }
                         // set schema base validation parser
                         String rule = DocumentImpl.SCHEMA;
                         documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
                     }
                 } else {
-                    documentWrapper = new DocumentImplWrapper("", false, writeAccessRules);
+                    xmlReader = new StringReader(doctext[0]);
+                    String noNamespaceSchemaLocationAttr = XMLSchemaService.findNoNamespaceSchemaLocationAttr(xmlReader);
+                    if(noNamespaceSchemaLocationAttr != null) {
+                        logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - the xml object will be validated by a schema which deoe NOT have a target namespace.");
+                        schemaLocation = XMLSchemaService.getInstance().findNoNamespaceSchemaLocalLocation(formatId, noNamespaceSchemaLocationAttr);
+                        String rule = DocumentImpl.NONAMESPACESCHEMA;
+                        documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
+                    } else {
+                        logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - the xml object will NOT be validated.");
+                        documentWrapper = new DocumentImplWrapper("", false, writeAccessRules);
+                    }
+                    
                 }
             }
             
@@ -1805,7 +1821,7 @@ public class MetacatHandler {
               
               } else {*/
               newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
-                          doAction, accNumber, user, groups, xmlBytes, formatId);
+                          doAction, accNumber, user, groups, xmlBytes, schemaLocation);
             
               EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
               
@@ -1909,7 +1925,7 @@ public class MetacatHandler {
             output += e.getMessage();
             output += this.ERRORCLOSE;
             logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +
-            		        "General error when writing eml " +
+            		        "General error when writing the xml object " +
             		        "document to the database: " + 
             		        e.getMessage());
             e.printStackTrace();

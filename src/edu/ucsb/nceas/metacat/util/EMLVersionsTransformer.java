@@ -41,6 +41,7 @@ import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.Transformer;
@@ -49,6 +50,7 @@ import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.URIResolver;
+
 import org.ecoinformatics.eml.EMLParser;
 
 
@@ -165,8 +167,9 @@ public class EMLVersionsTransformer {
             	 dbconn = DBConnectionPool
                  .getDBConnection("EMLVersionsTransformer.handleSingleEML200Document");
                   serialNumber = dbconn.getCheckOutSerialNumber();
+                  String schemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocationStringWithoutFormatId();
                   documentWrapper.write(dbconn, eml210Content, pub, dtd,
-                          doAction, newId, owner, groups, null, formatId);
+                          doAction, newId, owner, groups, null, schemaLocation);
                   logMetacat.warn("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
                   transformLog("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
              }
