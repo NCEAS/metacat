@@ -104,6 +104,7 @@ public class DBEntityResolver implements EntityResolver
 
     // Won't have a handler under all cases
     if ( handler != null ) {
+        String message = "Metacat can't determine the public id or the name of the root element of the document, so the validation can't be applied and the document is rejected";
         logMetacat.debug("DBEntityResolver.resolveEntity - the handler class is "+handler.getClass().getCanonicalName());
       if ( handler instanceof DBSAXHandler ) {
         DBSAXHandler dhandler = null;
@@ -121,23 +122,43 @@ public class DBEntityResolver implements EntityResolver
             logMetacat.debug("DBEntityResolver.resolveEntity - the publicId is null and we treat the doc name(the root element name) as the doc type. The doctype is: "
                     + doctype);
           }
+          
+          if(doctype == null || doctype.trim().equals("")) {
+              //we can't determine the public id or the name of the root element in for this dtd defined xml document
+              logMetacat.error("DBEntityResolver.resolveEntity - "+message);
+              throw new SAXException(message);
+          } else {
+              logMetacat.debug("DBEntityResolver.resolveEntity - the final doctype for DBSAXHandler "+doctype);
+          }
         }
       } else if ( handler instanceof AccessControlList ) {
           logMetacat.debug("DBEntityResolver.resolveEntity - in the branch of the handler class is AccessControlList");
         AccessControlList ahandler = null;
         ahandler = (AccessControlList)handler;
-        //if ( ahandler.processingDTD() ) {
+        if ( ahandler.processingDTD() ) {
           // public ID is doctype
           if (publicId != null) {
             doctype = publicId;
+            logMetacat.debug("DBEntityResolver.resolveEntity - the publicId is not null, so the publicId is the doctype. The doctype in AccessControlList is: "
+                    + doctype);
           // assume public ID (doctype) is docname
           } else {
             doctype = ahandler.getDocname();
+            logMetacat.debug("DBEntityResolver.resolveEntity - the publicId is null and we treat the doc name(the root element name) as the doc type. The doctype in AccessControlList is: "
+                    + doctype);
           }
-        //}
+          if(doctype == null || doctype.trim().equals("")) {
+              //we can't determine the public id or the name of the root element in for this dtd defined xml document
+              logMetacat.error("DBEntityResolver.resolveEntity - "+message);
+              throw new SAXException(message);
+          } else {
+              logMetacat.debug("DBEntityResolver.resolveEntity - the final doctype for AccessControList "+doctype);
+          }
+        } else {
+            logMetacat.debug("DBEntityResolver.resolveEntity - the method resolverEntity for the AccessControList class is not processing a dtd");
+        }
       } else {
           logMetacat.debug("DBEntityResolver.resolveEntity - in the branch of the other handler class");
-          doctype = publicId;
       }
     } else {
         logMetacat.debug("DBEntityResolver.resolveEntity - the xml handler is null. So we can't find the doctype.");
@@ -217,10 +238,7 @@ public class DBEntityResolver implements EntityResolver
       is.setByteStream(istream);
       return is;*/
     } else {
-      //we can't determine the public id or the name of the root element in for this dtd defined xml document
-      String message = "Metacat can't determine the public id or the name of the root element of the document, so the validation can't be imposed and the document is rejected";
-      logMetacat.error("DBEntityResolver.resolveEntity - "+message);
-      throw new SAXException(message);
+    
       //InputStream istream = checkURLConnection(systemId);
       //return null;
     }
