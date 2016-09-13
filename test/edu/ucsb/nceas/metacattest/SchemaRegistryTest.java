@@ -149,13 +149,13 @@ public class SchemaRegistryTest extends MCTestCase {
 		TestSuite suite = new TestSuite();
 		suite.addTest(new SchemaRegistryTest("initialize"));
 		// Test basic functions
-		suite.addTest(new SchemaRegistryTest("newGoodSchemaRegisterTest"));
+		/*suite.addTest(new SchemaRegistryTest("newGoodSchemaRegisterTest"));
 		suite.addTest(new SchemaRegistryTest("existingSchemaRegisterTest"));
 		suite.addTest(new SchemaRegistryTest("newNonexistantSchemaLocationRegisterTest"));
 		suite.addTest(new SchemaRegistryTest("newGoodSchemaBadXmlRegisterTest"));
 		suite.addTest(new SchemaRegistryTest("existingGoodSchemaBadXmlRegisterTest"));
 		suite.addTest(new SchemaRegistryTest("schemaInDbNotOnFileSystemTest"));
-		suite.addTest(new SchemaRegistryTest("includedSchemaRegisterTest"));
+		suite.addTest(new SchemaRegistryTest("includedSchemaRegisterTest"));*/
 		return suite;
 	}
 
