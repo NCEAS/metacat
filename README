@@ -66,6 +66,10 @@ Bugs fixed in this release:
 * External links in the registry should open in new tab
 * Remove the support of Oracle on documentation
 * Changing a Metacat member node's synchronization value on the d1 admin page doesn't work
+* Add the feature to support the noNamespaceSchemaLocation attribute in xml objects
+* Provide clear messages to clients if the namespaces/formatids of the schemas of xml objects are not registered in Metacat
+* Disable the feature of downloading external schemas for unregistered namespaces
+
 
 Release Notes for 2.7.1:
 ------------------------
