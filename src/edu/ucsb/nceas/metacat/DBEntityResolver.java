@@ -104,11 +104,12 @@ public class DBEntityResolver implements EntityResolver
 
     // Won't have a handler under all cases
     if ( handler != null ) {
+        logMetacat.debug("DBEntityResolver.resolveEntity - the handler class is "+handler.getClass().getCanonicalName());
       if ( handler instanceof DBSAXHandler ) {
         DBSAXHandler dhandler = null;
         dhandler = (DBSAXHandler)handler;
         if ( dhandler.processingDTD() ) {
-         
+            logMetacat.debug("DBEntityResolver.resolveEntity - in the branch of the handler class is  DBSAXHandler");
           // public ID is doctype
           if (publicId != null) {
             doctype = publicId;
@@ -122,9 +123,10 @@ public class DBEntityResolver implements EntityResolver
           }
         }
       } else if ( handler instanceof AccessControlList ) {
+          logMetacat.debug("DBEntityResolver.resolveEntity - in the branch of the handler class is AccessControlList");
         AccessControlList ahandler = null;
         ahandler = (AccessControlList)handler;
-        if ( ahandler.processingDTD() ) {
+        //if ( ahandler.processingDTD() ) {
           // public ID is doctype
           if (publicId != null) {
             doctype = publicId;
@@ -132,7 +134,10 @@ public class DBEntityResolver implements EntityResolver
           } else {
             doctype = ahandler.getDocname();
           }
-        }
+        //}
+      } else {
+          logMetacat.debug("DBEntityResolver.resolveEntity - in the branch of the other handler class");
+          doctype = publicId;
       }
     } else {
         logMetacat.debug("DBEntityResolver.resolveEntity - the xml handler is null. So we can't find the doctype.");
