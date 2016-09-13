@@ -259,11 +259,11 @@ public class DBConnectionPool implements Runnable
             db.setCheckOutMethodName(methodName);
             db.setAutoCommit(true);
             //debug message
-            logMetacat.debug("DBConnectionPool.getDBConnection - The connection is checked out: " + db.getTag());
-            logMetacat.debug("DBConnectionPool.getDBConnection - The method for checking is: " + db.getCheckOutMethodName());
-            logMetacat.debug("DBConnectionPool.getDBConnection - The age is " + db.getAge());
-            logMetacat.debug("DBConnectionPool.getDBConnection - The usage is " + db.getUsageCount());
-            logMetacat.debug("DBConnectionPool.getDBConnection - The connection time is: " + db.getConnectionTime());
+            logMetacat.trace("DBConnectionPool.getDBConnection - The connection is checked out: " + db.getTag());
+            logMetacat.trace("DBConnectionPool.getDBConnection - The method for checking is: " + db.getCheckOutMethodName());
+            logMetacat.trace("DBConnectionPool.getDBConnection - The age is " + db.getAge());
+            logMetacat.trace("DBConnectionPool.getDBConnection - The usage is " + db.getUsageCount());
+            logMetacat.trace("DBConnectionPool.getDBConnection - The connection time is: " + db.getConnectionTime());
             
 //            System.out.println("DBConnectionPool.getDBConnection - The connection is checked out: " + db.getTag());
 //            System.out.println("DBConnectionPool.getDBConnection - The method for checking is: " + db.getCheckOutMethodName());
