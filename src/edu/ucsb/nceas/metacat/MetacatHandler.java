@@ -2745,6 +2745,7 @@ public class MetacatHandler {
                     for(String id : successList) {
                         results.append("<pid>" + id + "</pid>\n");
                     }
+                    results.append("<note>The object(s) was/were submitted to the index queue successfully. However, this doesn't mean they were indexed successfully.</note>");
                     results.append("</success>");
                 }
                 
@@ -2753,6 +2754,7 @@ public class MetacatHandler {
                     for(String id : failedList) {
                         results.append("<pid>" + id + "</pid>\n");
                     }
+                    results.append("<note>The object(s) couldn't be submitted to the index queue.</note>");
                     results.append("</error>");
                 }
                 results.append("</results>\n");
