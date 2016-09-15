@@ -57,7 +57,7 @@ for your OS.
 
 Release Notes for 2.7.2:
 ------------------------
-Bugs fixed in this release:
+New features and bugs fixed in this release:
 * Legacy Metacat "shortcut" url does not work if revision is omitted
 * Migrate metacat build to use EML git repo
 * All links on the registry page should open up in a new tab 
@@ -69,6 +69,7 @@ Bugs fixed in this release:
 * Add the feature to support the noNamespaceSchemaLocation attribute in xml objects
 * Provide clear messages to clients if the namespaces/formatids of the schemas of xml objects are not registered in Metacat
 * Disable the feature of downloading external schemas for unregistered namespaces
+* Metacat-index picks up the changes in log4j.properteis without restarting tomcat
 
 Release Notes for 2.7.1:
 ------------------------
