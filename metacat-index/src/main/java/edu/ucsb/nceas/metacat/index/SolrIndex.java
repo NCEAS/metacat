@@ -591,11 +591,11 @@ public class SolrIndex {
         if(isArchive ) {
             //delete the index for the archived objects
             remove(pid.getValue(), systemMetadata);
-            log.info("SolrIndex.update============================= archive the idex for the identifier "+pid);
+            log.info("SolrIndex.update============================= archive the idex for the identifier "+pid.getValue());
         } else {
             //generate index for either add or update.
             insert(pid, systemMetadata, objectPath);
-            log.info("SolrIndex.update============================= insert index for the identifier "+pid);
+            log.info("SolrIndex.update============================= insert index for the identifier "+pid.getValue());
         }
     }
     
