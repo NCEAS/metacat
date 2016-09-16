@@ -31,6 +31,11 @@
 -->
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
+	
+	<property name="metacatui-tag" value="METACATUI_1_12_1" />
+    <property name="eml2-style-tag" value="trunk" />
+    <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
+	
 	<property environment="env" />
 	<property file="build.properties" /><!-- USER SPECIFIC PROPS -->
 	<property name="java.target.version" value="1.7" /> <!-- the target version for java compilation-->
@@ -232,7 +237,6 @@
 			value="lib${style-common-relpath}" />
 		<property name="schema-cvsrelpath" value="lib${schema-relpath}" />
 		<property name="style-skins-relpath" value="/style/skins" />
-		<property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 		<property name="eml.git.repository.url" value="https://github.com/NCEAS/eml.git" />
 		<property name="eml-module" value="eml" />
 		<property name="eml-version" value="2.0.0beta6" />
@@ -244,7 +248,7 @@
 		<property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0" />
 		<property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1" />
 		<!--<property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_0_7" />-->
-		<property name="eml2-style-tag" value="trunk" />
+		
 
 		<property name="eml2_0_0namespace"
 			value="eml://ecoinformatics.org/eml-2.0.0" />
@@ -398,7 +402,7 @@
 		<property name="metacatui.git.repository.url"
 					value="https://github.com/NCEAS/metacatui.git" />
 		<property name="metacatui.git.repository.refname"
-							value="METACATUI_1_11_3" />
+							value="${metacatui-tag}" />
 		<!--<property name="metacatui.git.repository.refname"
 									value="master" />-->
 		<property name="metacatui.build.dir"
