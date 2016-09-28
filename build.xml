@@ -440,7 +440,7 @@
 			</or>
 		</condition>
 
-		<condition property="ecogrid.required">
+	<!--	<condition property="ecogrid.required">
 			<or>
 				<not>
 					<available file="${ecogrid-dir}/build.properties" />
@@ -450,7 +450,7 @@
 						file="${ecogrid-dir}/buildfiles/metacatImpl.xml" />
 				</not>
 			</or>
-		</condition>
+		</condition> -->
 		
 		<property name="init.called" value="true" />
 
@@ -800,7 +800,7 @@
 	</target>
 
 	<target name="get-ecogrid" depends="init"
-		description="Check out ecogrid module" if="ecogrid.required">
+		description="Check out ecogrid module">
 		<svn>
 			<export srcUrl="${svn.ecogridUrl}" force="true"
 				destPath="${ecogrid-dir}" />
