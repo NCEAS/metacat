@@ -62,6 +62,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -394,7 +395,22 @@ public class MNodeService extends D1NodeService
         // does the subject have WRITE ( == update) priveleges on the pid?
         //allowed = isAuthorized(session, pid, Permission.WRITE);
         //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
-        allowed = allowUpdating(session, pid, Permission.WRITE);
+        try {
+            allowed = allowUpdating(session, pid, Permission.WRITE);
+        }   catch (NotFound e) {
+            throw new NotFound("1280", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+        } catch(ServiceFailure e) {
+            throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+        } catch(NotAuthorized e) {
+            throw new NotAuthorized("1200", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+        } catch(NotImplemented e) {
+            throw new NotImplemented("1201","Can't determine if the client has the permission to update he object with id "+pid.getValue()+" since "+e.getDescription());
+        } catch(InvalidRequest e) {
+            throw new InvalidRequest("1202", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+        } catch(InvalidToken e) {
+            throw new InvalidToken("1210", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+        }
+        
         if (allowed) {
         	
         	// check quality of SM
@@ -2584,6 +2600,16 @@ public class MNodeService extends D1NodeService
              }
          } catch (NotFound e) {
              throw new InvalidRequest("4869", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         } catch(ServiceFailure e) {
+             throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         } catch(NotAuthorized e) {
+             throw new NotAuthorized("4861", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         } catch(NotImplemented e) {
+             throw new NotImplemented("4866","Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         } catch(InvalidRequest e) {
+             throw new InvalidRequest("4869", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+         } catch(InvalidToken e) {
+             throw new InvalidToken("4957", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
          }
          
      }
@@ -2680,7 +2706,7 @@ public class MNodeService extends D1NodeService
      * 2. If it is not a cn object, the client should have approperate permission and it should also happen on the authorative node.
      * 3. If it's the authoritative node, the MN Admin Subject is allowed.
      */
-    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest {
+    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest, ServiceFailure, NotImplemented, InvalidToken {
         boolean allow = false;
         
         if( isCNAdmin (session) ) {

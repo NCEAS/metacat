@@ -72,6 +72,7 @@ import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.OptionList;
@@ -1147,7 +1148,7 @@ public abstract class D1NodeService {
    * 1. Owner can have any permission.
    * 2. Access table allow the user has the permission
    */
-  public static boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound{
+  public static boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound, ServiceFailure, NotImplemented, InvalidRequest, InvalidToken, NotAuthorized {
       boolean allowed = false;
       // permissions are hierarchical
       List<Permission> expandedPermissions = null;
@@ -1197,6 +1198,12 @@ public abstract class D1NodeService {
           allowed = systemMetadata.getRightsHolder().equals(s);
           if (allowed) {
               return allowed;
+          } else {
+              //check if the rightHolder is a group name. If it is, any member of the group can be considered a the right holder.
+              allowed = expandRightsHolder(systemMetadata.getRightsHolder(), s);
+              if(allowed) {
+                  return allowed;
+              }
           }
       }    
       
@@ -1229,6 +1236,70 @@ public abstract class D1NodeService {
         
       }
       return allowed;
+  }
+  
+  
+  /**
+   * Check if the given userSession is the member of the right holder group (if the right holder is a group subject).
+   * If the right holder is not a group, it will be false of course.
+   * @param rightHolder the subject of the right holder.
+   * @param userSession the subject will be compared
+   * @return true if the user session is a member of the right holder group; false otherwise.
+ * @throws NotImplemented 
+ * @throws ServiceFailure 
+ * @throws NotAuthorized 
+ * @throws InvalidToken 
+ * @throws InvalidRequest 
+   */
+  public static boolean expandRightsHolder(Subject rightHolder, Subject userSession) throws ServiceFailure, NotImplemented, InvalidRequest, InvalidToken, NotAuthorized {
+      boolean is = false;
+      if(rightHolder != null && userSession != null && rightHolder.getValue() != null && !rightHolder.getValue().trim().equals("") && userSession.getValue() != null && !userSession.getValue().trim().equals("")) {
+          CNode cn = D1Client.getCN();
+          logMetacat.debug("D1NodeService.expandRightHolder - after getting the cn node and cn node is "+cn.getNodeBaseServiceUrl());
+          String query= rightHolder.getValue();
+          int start =0;
+          int count=-1;
+          String status = null;
+          Session session = null;
+          SubjectInfo subjects = cn.listSubjects(session, query, status, start, count);
+          if(subjects != null) {
+              logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is not null");
+              List<Group> groups = subjects.getGroupList();
+              if(groups != null) {
+                  logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result does include groups and the size of groups is "+groups.size());
+                  for(Group group : groups) {
+                      //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
+                      if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
+                          logMetacat.debug("D1NodeService.expandRightHolder - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
+                          List<Subject> members = group.getHasMemberList();
+                          if(members != null ){
+                              logMetacat.debug("D1NodeService.expandRightHolder - the group "+group.getSubject().getValue()+" in the cn has members");
+                              for(Subject member : members) {
+                                  logMetacat.debug("D1NodeService.expandRightHolder - compare the member "+member.getValue()+" with the user "+userSession.getValue());
+                                  if(member.getValue() != null && !member.getValue().trim().equals("") && userSession.getValue() != null && member.getValue().equals(userSession.getValue())) {
+                                      logMetacat.debug("D1NodeService.expandRightHolder - Find it! The member "+member.getValue()+" in the group "+group.getSubject().getValue()+" matches the user "+userSession.getValue());
+                                      is = true;
+                                      return is;
+                                  }
+                              }
+                          }
+                          break;//we found the group but can't find the member matches the user. so break it.
+                      }
+                  }
+              } else {
+                  logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result does NOT have a group");
+              }
+          } else {
+              logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is null");
+          }
+          if(!is) {
+              logMetacat.debug("D1NodeService.expandRightHolder - We can NOT find any member in the group "+query+" (if it is a group) matches the user "+userSession.getValue());
+          }
+      } else {
+          logMetacat.debug("D1NodeService.expandRightHolder - We can't determine if the use subject is a member of the right holder group since one of them is null or blank");
+      }
+     
+      return is;
   }
   /*
    * parse a logEntry and get the relevant field from it
