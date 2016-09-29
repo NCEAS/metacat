@@ -155,6 +155,9 @@ public class PermissionController
 		//isOwner = D1NodeService.userHasPermission(userSession, pid, Permission.CHANGE_PERMISSION);
 		SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 		isOwner = (sysMeta.getRightsHolder().equals(subject));
+		if(!isOwner) {
+		    isOwner = D1NodeService.expandRightsHolder(sysMeta.getRightsHolder(), subject);
+		}
     } catch (Exception e) {
 		logMetacat.warn("Error checking for DataONE permissions: " + e.getMessage(), e);
 		isOwner = false;
