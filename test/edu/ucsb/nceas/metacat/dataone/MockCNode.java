@@ -20,10 +20,14 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 import org.dataone.client.exception.ClientSideException;
+import org.dataone.client.utils.ExceptionUtils;
 import org.dataone.client.v2.impl.MultipartCNode;
+import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -35,9 +39,12 @@ import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.Constants;
+import org.dataone.service.util.D1Url;
 
 /**
  * MockCNode mimics a DataONE Coordinating Node, and should be used only for testing
@@ -107,6 +114,26 @@ public class MockCNode extends MultipartCNode {
         NotAuthorized, NotImplemented {
     	// always return true
         return true;
+    }
+    
+    
+    @Override
+    public SubjectInfo getSubjectInfo(Session session, Subject subject)
+    throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
+        
+        return null;
+    }
+
+
+    /* (non-Javadoc)
+     * @see org.dataone.client.CNode#listSubjects(org.dataone.service.types.v1.Session, String, String, Integer, Integer)
+     */
+    @Override
+    public SubjectInfo listSubjects(Session session, String query, String status, Integer start,
+            Integer count) throws InvalidRequest, ServiceFailure, InvalidToken, NotAuthorized,
+            NotImplemented {
+       
+        return null;
     }
     
     /*
