@@ -300,7 +300,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
         + "when they don't have write permission!";
 
     private static final String UPDATEACCESSERROR = "User tried to update an "
-        + "access module when they don't have \"ALL\" permission!";
+        + "access module when they don't have \"ALL\" permission on the object ";
 
     public static final String TOPLEVEL = "top";
 
@@ -356,7 +356,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                 // we need to check if user update access subtree
             	if ( !control.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
             			&& !control.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
-                        && !AuthUtil.isAdministrator(user, groups)) {
+                        && !AuthUtil.isAdministrator(user, groups) && writeAccessRules) {
                 		
                     needToCheckAccessModule = true;
                     topAccessSubTreeFromDB = getTopAccessSubTreeFromDB();
@@ -1717,16 +1717,24 @@ public class Eml200SAXHandler extends DBSAXHandler implements
      * topLevel, additionalLevel(data access) and referenced access module*/
     private void compareAllAccessModules() throws SAXException
     {
+        String guid = docid+"."+revision;
+        try {
+            guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(revision));
+        } catch (Exception e) {
+            logMetacat.warn("Eml200SAXHandler.compareAllAccessModules - we can't get object identifier for metacat id "+guid);
+        }
       //compare top level
-      compareAccessSubtree(topAccessSubTreeFromDB, topAccessSection);
+      compareAccessSubtree(topAccessSubTreeFromDB, topAccessSection, guid);
 
       //compare additional level
       int oldSize = additionalAccessSubTreeListFromDB.size();
       int newSize = additionalAccessVector.size();
+     
+      
       // if size is different, use deleted or added rules, so throw a exception
       if (oldSize != newSize)
       {
-        throw new SAXException(UPDATEACCESSERROR);
+        throw new SAXException(UPDATEACCESSERROR+guid);
       }
       //because access modules are both ordered in ASC in vectors, so we can
       // compare one bye one
@@ -1736,7 +1744,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                           additionalAccessSubTreeListFromDB.elementAt(i);
         AccessSection fromParser = (AccessSection)
                                 additionalAccessVector.elementAt(i);
-        compareAccessSubtree(fromDB, fromParser);
+        compareAccessSubtree(fromDB, fromParser, guid);
       }
 
       //compare referenced level
@@ -1748,7 +1756,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
                                referencedAccessSubTreeListFromDB.get(id);
         AccessSection fromParser = (AccessSection)
                                possibleReferencedAccessHash.get(id);
-        compareAccessSubtree(fromDB, fromParser);
+        compareAccessSubtree(fromDB, fromParser, guid);
       }
     }
 
@@ -1757,12 +1765,12 @@ public class Eml200SAXHandler extends DBSAXHandler implements
      * compare the parsed result
      */
     private void compareAccessSubtree(AccessSection fromDBTable,
-                                       AccessSection fromParser)
+                                       AccessSection fromParser, String identifier)
                                       throws SAXException
     {
        if (fromDBTable == null || fromParser == null)
        {
-         throw new SAXException(UPDATEACCESSERROR);
+         throw new SAXException(UPDATEACCESSERROR+identifier);
        }
        Stack nodeStackFromDBTable = fromDBTable.getSubTreeNodeStack();
        Stack nodeStackFromParser  = fromParser.getStoredTmpNodeStack();
@@ -1771,17 +1779,17 @@ public class Eml200SAXHandler extends DBSAXHandler implements
        while(!nodeStackFromDBTable.isEmpty()){
            tempStack.push(nodeStackFromDBTable.pop());
        }
-       comparingNodeStacks(tempStack, nodeStackFromParser);
+       comparingNodeStacks(tempStack, nodeStackFromParser, identifier);
     }
 
     /* Compare two node stacks to see if they are same */
-  private void comparingNodeStacks(Stack stack1, Stack stack2)
+  private void comparingNodeStacks(Stack stack1, Stack stack2, String identifier)
           throws SAXException
   {
       // make sure stack1 and stack2 are not empty
       if (stack1.isEmpty() || stack2.isEmpty()) {
           logMetacat.info("Because stack is empty!");
-          throw new SAXException(UPDATEACCESSERROR);
+          throw new SAXException(UPDATEACCESSERROR+identifier);
       }
       // go throw two stacks and compare every element
       while (!stack1.isEmpty()) {
@@ -1796,13 +1804,13 @@ public class Eml200SAXHandler extends DBSAXHandler implements
 
               logMetacat.error(
                       "Node stack2 is empty but stack1 isn't!");
-              throw new SAXException(UPDATEACCESSERROR);
+              throw new SAXException(UPDATEACCESSERROR+identifier);
           }
           // if two records are not same throw a exception
           if (!record1.contentEquals(record2)) {
               logMetacat.info("Two records from new and old stack are not "
                                       + "same!" + record1 + "--" +record2);
-              throw new SAXException(UPDATEACCESSERROR);
+              throw new SAXException(UPDATEACCESSERROR+identifier);
           }//if
       }//while
 
@@ -1812,7 +1820,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
           logMetacat.info(
                   "stack2 still have some elements while stack1 "
                           + "is empty! ");
-          throw new SAXException(UPDATEACCESSERROR);
+          throw new SAXException(UPDATEACCESSERROR+identifier);
       }//if
   }//comparingNodeStacks
 
