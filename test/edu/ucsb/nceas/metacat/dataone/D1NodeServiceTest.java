@@ -86,7 +86,7 @@ public class D1NodeServiceTest extends MCTestCase {
     {
         TestSuite suite = new TestSuite();
         suite.addTest(new D1NodeServiceTest("initialize"));
-        suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
+        //suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
         return suite;
     }
     
@@ -119,55 +119,7 @@ public class D1NodeServiceTest extends MCTestCase {
 		D1Client.setNodeLocator(null);
 	}
 	
-	public void testExpandRighsHolder() throws Exception {
-	     // set back to force it to use defaults
-          D1Client.setNodeLocator(null);
-	      Subject rightsHolder = new Subject();
-	      rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
-	      Subject user = new Subject();
-	      
-	      user.setValue("CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org");
-	      assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
-	      
-	      user.setValue("uid=foo");
-	      assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-	      
-	      user.setValue("http://orcid.org/0000-0002-1586-0121");
-	      assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
-	      
-	      rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-	      assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-	      
-	      user.setValue("uid=foo");
-          assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-          
-          rightsHolder.setValue(null);
-          assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-          
-          rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-          user.setValue(null);
-          assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-          
-          rightsHolder.setValue(null);
-          assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-          
-          rightsHolder.setValue("");
-          user.setValue("");
-          assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
-          NodeLocator nodeLocator = new NodeLocator() {
-              @Override
-              public D1Node getCNode() throws ClientSideException {
-                  D1Node node = null;
-                  try {
-                      node = new MockCNode();
-                  } catch (IOException e) {
-                      throw new ClientSideException(e.getMessage());
-                  }
-                  return node;
-              }
-          };
-          D1Client.setNodeLocator(nodeLocator );
-	  }
+	
 	
 	/**
 	 * constructs a "fake" session with a test subject
