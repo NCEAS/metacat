@@ -2311,11 +2311,20 @@ public class IdentifierManager {
             stmt.close();
             
             // remove the smmediatypeproperties
-            query = "delete from smmediatypeproperties " + 
+            query = "delete from smMediaTypeProperties " + 
                     "where guid = ?";
             stmt = dbConn.prepareStatement(query);
             stmt.setString(1, guid);
-            logMetacat.debug("delete smmediatypeproperties: " + stmt.toString());
+            logMetacat.debug("delete smMediaTypeProperties: " + stmt.toString());
+            rows = stmt.executeUpdate();
+            stmt.close();
+            
+            // remove the xml_access
+            query = "delete from xml_access " + 
+                    "where guid = ?";
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, guid);
+            logMetacat.debug("delete xml_access: " + stmt.toString());
             rows = stmt.executeUpdate();
             stmt.close();
             
@@ -2334,7 +2343,6 @@ public class IdentifierManager {
             // Metacat keeps "deleted" documents so we should not remove access rules.
             
         } catch (Exception e) {
-            e.printStackTrace();
             logMetacat.error("Error while deleting " + TYPE_SYSTEM_METADATA + " record: " + guid, e );
             try {
 				dbConn.rollback();
