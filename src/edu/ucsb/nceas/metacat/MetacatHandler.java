@@ -1674,9 +1674,18 @@ public class MetacatHandler {
         } catch (MetacatUtilException ue) {
             logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " + 
             		         "Could not determine if user could insert or update: " + 
-            		         ue.getMessage());
-            ue.printStackTrace(System.out);
-            // TODO: This is a bug, as it allows one to bypass the access check -- need to throw an exception
+            		         ue.getMessage(), ue);
+            String msg = this.PROLOG +
+                    this.ERROR +
+                    "MetacatHandler.handleInsertOrUpdateAction - " + 
+                             "Could not determine if user could insert or update: " + 
+                             ue.getMessage() +
+                    this.ERRORCLOSE;
+            if(out != null)
+            {
+              out.println(msg);
+            }
+            return msg;
         }
         
         try {
@@ -1875,14 +1884,14 @@ public class MetacatHandler {
         			}
                     
                   } catch ( McdbDocNotFoundException dnfe ) {
-                    logMetacat.debug(
+                    logMetacat.error(
                       "There was a problem finding the localId " +
                       newdocid + "The error was: " + dnfe.getMessage());
                     throw dnfe;
             
                   } catch ( AccessionNumberException ane ) {
             
-                    logMetacat.debug(
+                    logMetacat.error(
                       "There was a problem creating the accession number " +
                       "for " + newdocid + ". The error was: " + ane.getMessage());
                     throw ane;
@@ -1924,10 +1933,10 @@ public class MetacatHandler {
             output += this.ERROR;
             output += e.getMessage();
             output += this.ERRORCLOSE;
-            logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +
+            logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " +
             		        "General error when writing the xml object " +
             		        "document to the database: " + 
-            		        e.getMessage());
+            		        e.getMessage(), e);
             e.printStackTrace();
         }
         
@@ -1945,6 +1954,7 @@ public class MetacatHandler {
                 trans.transformXMLDocument(output,
                         "message", "-//W3C//HTML//EN", qformat,
                         out, null, null);
+                return output;
             } catch (Exception e) {
                 
                 logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " +
@@ -1953,7 +1963,7 @@ public class MetacatHandler {
                 e.printStackTrace(System.out);
             }
         }
-        return null;
+        return output;
     }
     
     /**

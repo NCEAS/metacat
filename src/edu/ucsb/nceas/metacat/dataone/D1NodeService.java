@@ -468,7 +468,8 @@ public abstract class D1NodeService {
             throw e;
         } catch (Exception e) {
             removeSystemMeta(pid);
-            throw new ServiceFailure("1190", "The node is unable to create the object: " + e.getMessage());
+            logMetacat.error("The node is unable to create the object: "+pid.getValue()+ " since " + e.getMessage(), e);
+            throw new ServiceFailure("1190", "The node is unable to create the object: " +pid.getValue()+" since "+ e.getMessage());
         }
                     
       } else {
@@ -1467,8 +1468,9 @@ public abstract class D1NodeService {
     		detailCode = "1310";
     		
     	}
+    	logMetacat.error("D1NodeService.insertOrUpdateDocument - Error inserting or updating document: "+pid.getValue()+" since "+result);
         throw new ServiceFailure(detailCode, 
-          "Error inserting or updating document: " + result);
+          "Error inserting or updating document: " +pid.getValue()+" since "+ result);
     }
     logMetacat.debug("Finsished inserting xml document with id " + localId);
     
