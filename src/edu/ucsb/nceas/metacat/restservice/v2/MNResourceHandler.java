@@ -1506,21 +1506,20 @@ public class MNResourceHandler extends D1ResourceHandler {
         InputStream object = null;
         InputStream sysmeta = null;
         File smFile = files.get("sysmeta");
-        sysmeta = new FileInputStream(smFile);
         File objFile = files.get("object");
-        object = new FileInputStream(objFile);
-        
         // ensure we have the object bytes
         if  ( objFile == null ) {
             throw new InvalidRequest("1102", "The object param must contain the object bytes.");
             
         }
+        object = new FileInputStream(objFile);
         
         // ensure we have the system metadata
         if  ( smFile == null ) {
             throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
             
         }
+        sysmeta = new FileInputStream(smFile);
         
         response.setStatus(200);
         response.setContentType("text/xml");
