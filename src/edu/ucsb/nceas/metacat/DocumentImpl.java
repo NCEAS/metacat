@@ -3565,7 +3565,7 @@ public class DocumentImpl
         	guid.setValue(pid);          
             
             //removal the access rules for removeAll.
-            if(removeAll) {
+            /*if(removeAll) {
             	
                 logMetacat.info("DocumentImpl.delete - deleting from xml_access");
                 pstmt = conn.prepareStatement("DELETE FROM xml_access WHERE guid = ?");
@@ -3576,7 +3576,7 @@ public class DocumentImpl
                 //Usaga count increase 1
                 conn.increaseUsageCount(1);             
             	
-            }
+            }*/
             
             
             // clear cache after inserting or updating a document
