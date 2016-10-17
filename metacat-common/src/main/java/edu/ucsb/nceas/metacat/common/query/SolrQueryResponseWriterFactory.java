@@ -26,7 +26,7 @@ import org.apache.solr.response.PHPSerializedResponseWriter;
 import org.apache.solr.response.PythonResponseWriter;
 import org.apache.solr.response.QueryResponseWriter;
 import org.apache.solr.response.RubyResponseWriter;
-import org.apache.solr.response.VelocityResponseWriter;
+//import org.apache.solr.response.VelocityResponseWriter;
 import org.apache.solr.response.XMLResponseWriter;
 
 /**
@@ -69,8 +69,8 @@ public class SolrQueryResponseWriterFactory {
             writer = new PHPResponseWriter();
         } else if(wt.equals(PHPS)) {
             writer = new PHPSerializedResponseWriter();
-        } else if(wt.equals(VELOCITY)) {
-            writer = new VelocityResponseWriter();
+        /*} else if(wt.equals(VELOCITY)) {
+            writer = new VelocityResponseWriter();*/
         } else if(wt.equals(CSV)) {
             writer = new CSVResponseWriter();
         } else {
