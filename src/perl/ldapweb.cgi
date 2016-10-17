@@ -1,4 +1,4 @@
-#!/usr/bin/perl -w
+﻿#!/usr/bin/perl -w
 #
 #  '$RCSfile$'
 #  Copyright: 2001 Regents of the University of California 
@@ -290,11 +290,13 @@ foreach my $element (@displayOrgList) {
 
 if(!@validDisplayOrgList) {
      my $sender;
+     my $contact;
      $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+     $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
     print "Content-type: text/html\n\n";
     print "The value of property ldap.templates.organizationList in " 
      . $skinName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
-     . $skinName . ".properties file) is invalid. Please send the information to ". $sender;
+     . $skinName . ".properties file) is invalid. Please send the information to ". $contact;
     exit(0);
 }
 
@@ -453,8 +455,11 @@ sub handleSearchNameByEmail{
 
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
+    my $contact;
     $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+    $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
     debug("the sender is " . $sender);
+    debug("the contact is " . $contact);
     my $recipient = $query->param('mail');
     # Send the email message to them
     my $smtp = Net::SMTP->new($mailhost) or do {  
@@ -993,6 +998,7 @@ sub sendPasswordNotification {
 
         Thanks,
             $sender
+            $contact
     
         ENDOFMESSAGE
         $message =~ s/^[ \t\r\f]+//gm;
@@ -1230,8 +1236,10 @@ sub createTemporaryAccount {
     if(!$nextUidNumber) {
         print "Content-type: text/html\n\n";
          my $sender;
+         my $contact;
         $sender = $skinProperties->getProperty("email.recipient") or $sender = $properties->getProperty('email.recipient');
-        my $errorMessage = "The Identity Service can't get the next avaliable uid number. Please try again.  If the issue persists, please contact the administrator - $sender.
+        $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
+        my $errorMessage = "The Identity Service can't get the next avaliable uid number. Please try again.  If the issue persists, please contact the administrator - $contact.
                            The possible reasons are: the dn - $dn_store_next_uid or its attribute - $attribute_name_store_next_uid don't exist; the value of the attribute - $attribute_name_store_next_uid
                            is not a number; or lots of users were registering and you couldn't get a lock on the dn - $dn_store_next_uid.";
         fullTemplate(['register'], { stage => "register",
@@ -1302,8 +1310,11 @@ sub createTemporaryAccount {
     
     my $mailhost = $properties->getProperty('email.mailhost');
     my $sender;
+    my $contact;
     $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
+    $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
     debug("the sender is " . $sender);
+    debug("the contact is :" . $contact);
     my $recipient = $query->param('mail');
     # Send the email message to them
     my $smtp = Net::SMTP->new($mailhost) or do {  
@@ -1327,6 +1338,7 @@ sub createTemporaryAccount {
 
     Thanks,
         $sender
+        $contact
     
      ENDOFMESSAGE
      $message =~ s/^[ \t\r\f]+//gm;
