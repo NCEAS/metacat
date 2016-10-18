@@ -33,7 +33,7 @@
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
 	<property name="metacatui-tag" value="METACATUI_1_12_1" />
-    <property name="eml2-style-tag" value="trunk" />
+    <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
 	<property environment="env" />
@@ -649,7 +649,7 @@
         <git-clone-pull repository="${eml.git.repository.url}" 
                         dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}" />
         <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="master" />
+                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="${eml2-style-tag}" />
     </target>
 
 	<target name="geteml2+" depends="prepare,giteml" if="eml.required"
