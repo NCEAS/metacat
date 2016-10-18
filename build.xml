@@ -649,7 +649,7 @@
         <git-clone-pull repository="${eml.git.repository.url}" 
                         dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}" />
         <git-clone-pull repository="${eml.git.repository.url}" 
-                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="master" />
+                        dest="${build.tmp}/eml_${eml2-style-tag}" refname="${eml2-style-tag}" />
     </target>
 
 	<target name="geteml2+" depends="prepare,giteml" if="eml.required"
