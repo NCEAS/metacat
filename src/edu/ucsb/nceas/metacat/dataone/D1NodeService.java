@@ -1005,7 +1005,7 @@ public abstract class D1NodeService {
       for ( Node node : nodes ) {
           
           NodeReference nodeReference = node.getIdentifier();
-          logMetacat.debug("In isCNAdmin(), Node reference is: " + nodeReference.getValue());
+          logMetacat.debug("In isCNAdmin(), a Node reference from the CN node list is: " + nodeReference.getValue());
           
           Subject subject = session.getSubject();
           
@@ -1015,7 +1015,7 @@ public abstract class D1NodeService {
               // check if the session subject is in the node subject list
               for (Subject nodeSubject : nodeSubjects) {
                   logMetacat.debug("In isCNAdmin(), comparing subjects: " +
-                      nodeSubject.getValue() + " and " + subject.getValue());
+                      nodeSubject.getValue() + " and the user " + subject.getValue());
                   if ( nodeSubject.equals(subject) ) {
                       allowed = true; // subject of session == target node subject
                       break;
@@ -1048,7 +1048,7 @@ public abstract class D1NodeService {
          return false;
       }
       
-      logMetacat.debug("In isNodeAdmin(), MN authorization for " +
+      logMetacat.debug("In isNodeAdmin(), MN authorization for the user " +
            session.getSubject().getValue());
       
       Node node = MNodeService.getInstance(request).getCapabilities();
@@ -1063,7 +1063,7 @@ public abstract class D1NodeService {
           // check if the session subject is in the node subject list
           for (Subject nodeSubject : nodeSubjects) {
               logMetacat.debug("In isNodeAdmin(), comparing subjects: " +
-                  nodeSubject.getValue() + " and " + subject.getValue());
+                  nodeSubject.getValue() + " and the user" + subject.getValue());
               if ( nodeSubject.equals(subject) ) {
                   allowed = true; // subject of session == this node's subect
                   break;
