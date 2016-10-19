@@ -2684,7 +2684,7 @@ public class MNodeService extends D1NodeService
                     logMetacat.debug("The node id in metacat.properties is "+currentNodeId);
                     //System.out.println("The node id in metacat.properties is "+currentNodeId);
                     if(currentNodeId != null && !currentNodeId.trim().equals("") && currentNodeId.equals(nodeValue)) {
-                        logMetacat.debug("They are matching");
+                        logMetacat.debug("They are matching, so the authoritative mn of the object "+pid.getValue()+" is the current node");
                         //System.out.println("They are matching");
                         isAuthoritativeNode = true;
                     }
@@ -2734,7 +2734,7 @@ public class MNodeService extends D1NodeService
             	}
                     
             } else {
-                throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node.");
+                throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());
                 
             }
         }
