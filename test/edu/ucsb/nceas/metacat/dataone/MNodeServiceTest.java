@@ -180,6 +180,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateXMLWithUnmatchingEncoding"));
     suite.addTest(new MNodeServiceTest("testListViews"));
     suite.addTest(new MNodeServiceTest("testCreateNOAAObject"));
+    
+    suite.addTest(new MNodeServiceTest("testPermissionOfUpdateSystemmeta"));
+    
    
     
     
@@ -2482,4 +2485,48 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(pid.getValue().equals(guid.getValue()));
     }
     
+    
+    /**
+     * Test the permission control on the updateSystemMetadata method
+     * @throws Exception
+     */
+    public void testPermissionOfUpdateSystemmeta() throws Exception {
+        String str = "object1";
+       
+        Date date = new Date();
+        Thread.sleep(2000);
+        //insert a test document
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        
+        //Test cn session -success
+        Session cnSession= getCNSession();
+        MNodeService.getInstance(request).updateSystemMetadata(cnSession, guid, metadata);
+        
+        //Test mn session - success
+        Session mnSession = getMNSession();
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        MNodeService.getInstance(request).updateSystemMetadata(mnSession, guid, metadata);
+        
+        //Test the owner session -success
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+        
+        //Test another session -failed
+        Session anotherSession = getAnotherSession();
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        try {
+             MNodeService.getInstance(request).updateSystemMetadata(anotherSession, guid, metadata);
+            fail("Another user can't update the system metadata");
+        } catch (NotAuthorized e)  {
+            
+        }
+       
+    }
 }
