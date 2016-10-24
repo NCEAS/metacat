@@ -1921,7 +1921,7 @@ public class MetacatHandler {
               output += this.ERROR;
               output += npe.getMessage();
               output += this.ERRORCLOSE;
-              logMetacat.warn("MetacatHandler.handleInsertOrUpdateAction - " +
+              logMetacat.error("MetacatHandler.handleInsertOrUpdateAction - " +
             		          "Null pointer error when writing eml " +
             		          "document to the database: " + 
             		          npe.getMessage());
@@ -1941,7 +1941,7 @@ public class MetacatHandler {
         }
         
         if (qformat == null || qformat.equals("xml")) {
-            if(response != null)
+            if(response != null && out != null)
             {
               response.setContentType("text/xml");
               out.println(output);
