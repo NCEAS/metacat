@@ -515,7 +515,13 @@ public abstract class D1NodeService {
    * Roll-back method when inserting data object fails.
    */
   protected void removeSystemMeta(Identifier id){
+      if(id != null) {
+          logMetacat.debug("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" will removed from both hazelcast and db tables");
+      }
       HazelcastService.getInstance().getSystemMetadataMap().remove(id);
+      if(id != null) {
+          logMetacat.debug("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" has been removed from both hazelcast and db tables");
+      }
   }
   
   /*
