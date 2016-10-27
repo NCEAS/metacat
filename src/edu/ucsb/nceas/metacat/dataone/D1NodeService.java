@@ -1172,8 +1172,8 @@ public abstract class D1NodeService {
       } catch (Exception e) {
           // convert Hazelcast RuntimeException to NotFound
           logMetacat.error("An error occurred while getting system metadata for identifier " +
-              pid.getValue() + ". The error message was: " + e.getMessage());
-          throw new NotFound("1800", "No record found for " + pidStr);
+              pid.getValue() + ". The error message was: " + e.getMessage(), e);
+          throw new ServiceFailure("1090", "Can't get the system metadata for " + pidStr+ " since "+e.getMessage());
           
       } 
       
