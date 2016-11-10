@@ -197,15 +197,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   
               }
               D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
-              String version = checker.getVersion("MNStorage");
+              String version = checker.getVersion("MNRead");
               if(version == null) {
-                  throw new ServiceFailure("4882", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+                  throw new ServiceFailure("4882", "Couldn't determine the MNRead version of the authoritative member node for the pid "+pid.getValue());
               } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
                   //we don't apply this method to an object whose authoritative node is v2
                   throw new NotAuthorized("4881", V2V1MISSMATCH);
               } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                   //we don't understand this version (it is not v1 or v2)
-                  throw new InvalidRequest("4883", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+                  throw new InvalidRequest("4883", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
               }
               // does the request have the most current system metadata?
               if ( systemMetadata.getSerialVersion().longValue() != serialVersion ) {
@@ -598,15 +598,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
           SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
           D1NodeVersionChecker checker = new D1NodeVersionChecker(sysMeta.getAuthoritativeMemberNode());
-          String version = checker.getVersion("MNStorage");
+          String version = checker.getVersion("MNRead");
           if(version == null) {
-              throw new ServiceFailure("4972", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+              throw new ServiceFailure("4972", "Couldn't determine the MNRead version of the authoritative member node for the pid "+pid.getValue());
           } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
               //we don't apply this method to an object whose authoritative node is v2
               throw new NotAuthorized("4970", V2V1MISSMATCH);
           } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
               //we don't understand this version (it is not v1 or v2)
-              throw new NotImplemented("4974", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+              throw new NotImplemented("4974", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
           }
           boolean needModifyDate = true;
           archiveCNObjectWithNotificationReplica(session, pid, sysMeta, needModifyDate);
@@ -738,15 +738,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 				
 				 //only apply to the object whose authoritative member node is v1.
 	              D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
-	              String version = checker.getVersion("MNStorage");
+	              String version = checker.getVersion("MNRead");
 	              if(version == null) {
-	                  throw new ServiceFailure("4941", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+	                  throw new ServiceFailure("4941", "Couldn't determine the MNRead version of the authoritative member node for the pid "+pid.getValue());
 	              } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
 	                  //we don't apply this method to an object whose authoritative node is v2
 	                  throw new NotAuthorized("4945", V2V1MISSMATCH);
 	              } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
 	                  //we don't understand this version (it is not v1 or v2)
-	                  throw new InvalidRequest("4942", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+	                  throw new InvalidRequest("4942", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
 	              }
 
 			} catch (RuntimeException e) { // Catch is generic since HZ throws RuntimeException
@@ -1423,7 +1423,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               //for the object whose authoriative mn is v1. we need reset the modification date.
               //d1-sync already set the serial version. so we don't need do again.
               D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
-              String version = checker.getVersion("MNStorage");
+              String version = checker.getVersion("MNRead");
               if(version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                   sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
               }
@@ -1604,15 +1604,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
               //only apply to the object whose authoritative member node is v1.
               D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
-              String version = checker.getVersion("MNStorage");
+              String version = checker.getVersion("MNRead");
               if(version == null) {
-                  throw new ServiceFailure("4490", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+                  throw new ServiceFailure("4490", "Couldn't determine the MNRead version of the authoritative member node storage version for the pid "+pid.getValue());
               } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
                   //we don't apply this method to an object whose authoritative node is v2
                   throw new NotAuthorized("4440", V2V1MISSMATCH);
               } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                   //we don't understand this version (it is not v1 or v2)
-                  throw new InvalidRequest("4442", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+                  throw new InvalidRequest("4442", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
               }
               
               
@@ -1842,7 +1842,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               //for the object whose authoritative mn is v1. we need reset the modification date.
               //for the object whose authoritative mn is v2. we just accept the modification date.
               D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
-              String version = checker.getVersion("MNStorage");
+              String version = checker.getVersion("MNRead");
               if(version != null && version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                   sysmeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
               }
@@ -1956,15 +1956,15 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               }
               
               D1NodeVersionChecker checker = new D1NodeVersionChecker(systemMetadata.getAuthoritativeMemberNode());
-              String version = checker.getVersion("MNStorage");
+              String version = checker.getVersion("MNRead");
               if(version == null) {
-                  throw new ServiceFailure("4430", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+                  throw new ServiceFailure("4430", "Couldn't determine the version of MNRead of the authoritative member node for the pid "+pid.getValue());
               } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
                   //we don't apply this method to an object whose authoritative node is v2
                   throw new NotAuthorized("4420", V2V1MISSMATCH);
               } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
                   //we don't understand this version (it is not v1 or v2)
-                  throw new InvalidRequest("4402", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+                  throw new InvalidRequest("4402", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
               }
               
           } catch (RuntimeException e) {

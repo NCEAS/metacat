@@ -646,15 +646,15 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 		}
 		//this method will apply to the objects whose authoritative mn is v1.
         D1NodeVersionChecker checker = new D1NodeVersionChecker(v2Sysmeta.getAuthoritativeMemberNode());
-        String version = checker.getVersion("MNStorage");
+        String version = checker.getVersion("MNRead");
         if(version == null) {
-            throw new ServiceFailure("4862", "Couldn't determine the authoritative member node storage version for the pid "+pid.getValue());
+            throw new ServiceFailure("4862", "Couldn't determine the MNRead version of the authoritative member node for the pid "+pid.getValue());
         } else if (version.equalsIgnoreCase(D1NodeVersionChecker.V2)) {
             //we don't apply this method to an object whose authoritative node is v2
             throw new NotAuthorized("4861", edu.ucsb.nceas.metacat.dataone.CNodeService.V2V1MISSMATCH);
         } else if (!version.equalsIgnoreCase(D1NodeVersionChecker.V1)) {
             //we don't understand this version (it is not v1 or v2)
-            throw new InvalidRequest("4863", "The version of the MNStorage is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
+            throw new InvalidRequest("4863", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
         }
         //set the serial version to one
         v2Sysmeta.setSerialVersion(BigInteger.ONE);
