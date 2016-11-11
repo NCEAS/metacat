@@ -322,11 +322,46 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testSetOwner");
 
 	    try {
+            //v2 mn should fail
+            Session session = getCNSession();
+            Identifier guid = new Identifier();
+            guid.setValue("testSetOwner." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            NodeReference nr = new NodeReference();
+            nr.setValue(MockCNode.V1MNNODEID);
+            sysmeta.setOriginMemberNode(nr);
+            sysmeta.setAuthoritativeMemberNode(nr);
+            long serialVersion = 1L;
+            // save it
+            Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
+            assertEquals(guid.getValue(), retGuid.getValue());
+            Subject rightsHolder = new Subject();
+            rightsHolder.setValue("newUser");
+            // set it
+            Identifier retPid = CNodeService.getInstance(request).setRightsHolder(session, guid, rightsHolder, serialVersion);
+            assertEquals(guid, retPid);
+            // get it
+            sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertNotNull(sysmeta);
+            // check it
+            assertTrue(rightsHolder.equals(sysmeta.getRightsHolder()));
+            
+        } catch(Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+	    try {
+	        //v2 mn should fail
             Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testSetOwner." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+			NodeReference nr = new NodeReference();
+            nr.setValue(MockCNode.V2MNNODEID);
+            sysmeta.setOriginMemberNode(nr);
+            sysmeta.setAuthoritativeMemberNode(nr);
 			long serialVersion = 1L;
 			// save it
 			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
@@ -344,8 +379,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			
         } catch(Exception e) {
             e.printStackTrace();
-            if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
+            if(e instanceof NotAuthorized) {
+                assertTrue(e.getMessage().contains("The Coordinating Node is not authorized to make systemMetadata changes"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -354,14 +389,57 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	
 	public void testSetAccessPolicy() {
 	    printTestHeader("testSetAccessPolicy");
+	    
+	    
+	    try {
+            // trys to set access policy on an object whose authortiative memeber node is MNRead v2. It should fail.
+            Session session = getCNSession();
+            Identifier guid = new Identifier();
+            guid.setValue("testSetAccessPolicy." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            NodeReference nr = new NodeReference();
+            nr.setValue(MockCNode.V1MNNODEID);
+            sysmeta.setOriginMemberNode(nr);
+            sysmeta.setAuthoritativeMemberNode(nr);
+            
+            long serialVersion = 1L;
+
+            // save it
+            Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
+            assertEquals(guid.getValue(), retGuid.getValue());
+            AccessPolicy accessPolicy = new AccessPolicy();
+            AccessRule accessRule = new AccessRule();
+            accessRule.addPermission(Permission.WRITE);
+            Subject publicSubject = new Subject();
+            publicSubject.setValue(Constants.SUBJECT_PUBLIC);
+            accessRule.addSubject(publicSubject);
+            accessPolicy.addAllow(accessRule);
+            // set it
+            boolean result = CNodeService.getInstance(request).setAccessPolicy(session, guid, accessPolicy, serialVersion );
+            assertTrue(result);
+            // check it
+            result = CNodeService.getInstance(request).isAuthorized(session, guid, Permission.WRITE);
+            assertTrue(result);
+        } catch(Exception e) {
+            
+            fail("Unexpected error: " + e.getMessage());
+
+        }
 
 	    try {
+	        // trys to set access policy on an object whose authortiative memeber node is MNRead v2. It should fail.
             Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testSetAccessPolicy." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-	    long serialVersion = 1L;
+			NodeReference nr = new NodeReference();
+	        nr.setValue(MockCNode.V2MNNODEID);
+	        sysmeta.setOriginMemberNode(nr);
+			sysmeta.setAuthoritativeMemberNode(nr);
+			
+	        long serialVersion = 1L;
 
 			// save it
 			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
@@ -381,8 +459,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			assertTrue(result);
         } catch(Exception e) {
             e.printStackTrace();
-            if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
+            if(e instanceof NotAuthorized) {
+                assertTrue(e.getMessage().contains("The Coordinating Node is not authorized to make systemMetadata changes"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -426,12 +504,53 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 	    printTestHeader("testReplicationPolicy");
 
 	    try {
+            //v2 mn should fail
+            Session session = getCNSession();
+            Identifier guid = new Identifier();
+            guid.setValue("testReplicationPolicy." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            NodeReference nr = new NodeReference();
+            nr.setValue(MockCNode.V1MNNODEID);
+            sysmeta.setOriginMemberNode(nr);
+            sysmeta.setAuthoritativeMemberNode(nr);
+            long serialVersion = 1L;
+
+            // save it
+            Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
+            assertEquals(guid.getValue(), retGuid.getValue());
+            
+            ReplicationPolicy policy = new ReplicationPolicy();
+            NodeReference node = new NodeReference();
+            node.setValue("testNode");
+            policy.addPreferredMemberNode(node );
+            // set it
+            boolean result = CNodeService.getInstance(request).setReplicationPolicy(session, guid, policy, serialVersion);
+            assertTrue(result);
+            // get it
+            sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
+            assertNotNull(sysmeta);
+            // check it
+            assertEquals(policy.getPreferredMemberNode(0).getValue(), sysmeta.getReplicationPolicy().getPreferredMemberNode(0).getValue());
+            
+        } catch(Exception e) {
+           
+                fail("Unexpected error: " + e.getMessage());
+           
+            
+        }
+	    try {
+	        //v2 mn should fail
             Session session = getCNSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testReplicationPolicy." + System.currentTimeMillis());
 			InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-	    long serialVersion = 1L;
+			NodeReference nr = new NodeReference();
+            nr.setValue(MockCNode.V2MNNODEID);
+            sysmeta.setOriginMemberNode(nr);
+            sysmeta.setAuthoritativeMemberNode(nr);
+	        long serialVersion = 1L;
 
 			// save it
 			Identifier retGuid = CNodeService.getInstance(request).registerSystemMetadata(session, guid, sysmeta);
@@ -452,8 +571,8 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			
         } catch(Exception e) {
             e.printStackTrace();
-            if(e instanceof ServiceFailure) {
-                assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
+            if(e instanceof NotAuthorized) {
+                assertTrue(e.getMessage().contains("The Coordinating Node is not authorized to make systemMetadata changes"));
             } else {
                 fail("Unexpected error: " + e.getMessage());
             }
@@ -1454,21 +1573,43 @@ public class CNodeServiceTest extends D1NodeServiceTest {
   }
   
   public void testArchive() throws Exception {
-      Session session = getCNSession();
-      Identifier guid = new Identifier();
-      guid.setValue("testArchive." + System.currentTimeMillis());
-      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
-      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-      Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
       try {
+          Session session = getCNSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testArchive." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          NodeReference nr = new NodeReference();
+          nr.setValue(MockCNode.V1MNNODEID);
+          sysmeta.setOriginMemberNode(nr);
+          sysmeta.setAuthoritativeMemberNode(nr);
+          Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
           CNodeService.getInstance(request).archive(session, guid);
       } catch (Exception e) {
          e.printStackTrace();
-         if(e instanceof ServiceFailure) {
-          assertTrue(e.getMessage().contains("Couldn't determine the authoritative member node"));
-        } else {
-          fail("Unexpected error: " + e.getMessage());
-        }
+         fail("Unexpected error: " + e.getMessage());
+     }
+      
+      try {
+          //v2 mn should faile
+          Session session = getCNSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testArchive." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          NodeReference nr = new NodeReference();
+          nr.setValue(MockCNode.V2MNNODEID);
+          sysmeta.setOriginMemberNode(nr);
+          sysmeta.setAuthoritativeMemberNode(nr);
+          Identifier pid = CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          CNodeService.getInstance(request).archive(session, guid);
+      } catch (Exception e) {
+         e.printStackTrace();
+         if(e instanceof NotAuthorized) {
+             assertTrue(e.getMessage().contains("The Coordinating Node is not authorized to make systemMetadata changes"));
+         } else {
+             fail("Unexpected error: " + e.getMessage());
+         }
      }
   }
   
