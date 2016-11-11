@@ -37,6 +37,8 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
+import org.dataone.service.types.v1.Service;
+import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
@@ -51,6 +53,9 @@ import org.dataone.service.util.D1Url;
  * when there is a dependency on CN services
  */
 public class MockCNode extends MultipartCNode {
+    
+    public final static String V1MNNODEID= "urn:node:test_MN-v1";
+    public final static String V2MNNODEID= "urn:node:test_MN-v2";
 
     /**
      * See superclass for documentation
@@ -65,6 +70,8 @@ public class MockCNode extends MultipartCNode {
 		NodeList list = new NodeList();
 		list.addNode(getCapabilities());
 		list.addNode(getTestMN());
+		list.addNode(getTestV1MN());
+		list.addNode(getTestV2MN());
 		return list;
 	}
     
@@ -136,6 +143,17 @@ public class MockCNode extends MultipartCNode {
         return null;
     }
     
+    @Override
+    public Node getNodeCapabilities(NodeReference nodeId) throws NotImplemented, ServiceFailure {
+        if(nodeId != null && nodeId.getValue().equals(V1MNNODEID)) {
+            return getTestV1MN();
+        } else if (nodeId != null && nodeId.getValue().equals(V2MNNODEID)) {
+            return getTestV2MN();
+        } else {
+            return getCapabilities();
+        }
+    }
+    
     /*
      * Create a test mn in this env.
      */
@@ -151,4 +169,53 @@ public class MockCNode extends MultipartCNode {
         return node;
     }
     
+    
+    /*
+     * Create a v1 mn in this env
+     */
+    private Node getTestV1MN() {
+        Node node = new Node();
+        NodeReference nodeRef = new NodeReference();
+        nodeRef.setValue(V1MNNODEID);
+        node.setIdentifier(nodeRef);
+        Subject subject = new Subject();
+        subject.setValue("cn=" + V1MNNODEID + ",dc=dataone,dc=org");
+        node.addSubject(subject );
+        node.setType(NodeType.MN);
+        Service service = new Service();
+        service.setName("MNRead");
+        service.setVersion("V1");
+        service.setAvailable(true);
+        Services services = new Services();
+        services.addService(service);
+        node.setServices(services);
+        return node;
+    }
+    
+    /*
+     * Create a v2 mn in this env
+     */
+    private Node getTestV2MN() {
+        Node node = new Node();
+        NodeReference nodeRef = new NodeReference();
+        nodeRef.setValue(V2MNNODEID);
+        node.setIdentifier(nodeRef);
+        Subject subject = new Subject();
+        subject.setValue("cn=" + V2MNNODEID + ",dc=dataone,dc=org");
+        node.addSubject(subject);
+        node.setType(NodeType.MN);
+        Service service = new Service();
+        service.setName("MNRead");
+        service.setVersion("V1");
+        service.setAvailable(true);
+        Service service2 = new Service();
+        service2.setName("MNRead");
+        service2.setVersion("V2");
+        service2.setAvailable(true);
+        Services services = new Services();
+        services.addService(service);
+        services.addService(service2);
+        node.setServices(services);
+        return node;
+    }
 }
