@@ -793,21 +793,21 @@ public class SystemMetadataFactory {
 	 * than or equal to zero, no policy needs to be set, so return null.
 	 * @return ReplicationPolicy, or null if no replication policy is needed
 	 */
-    private static ReplicationPolicy getDefaultReplicationPolicy() {
+    protected static ReplicationPolicy getDefaultReplicationPolicy() {
         ReplicationPolicy rp = null;
         int numReplicas = -1;
         try {
             numReplicas = new Integer(PropertyService.getProperty("dataone.replicationpolicy.default.numreplicas"));
         } catch (NumberFormatException e) {
-            // The property is not a valid integer, so return a null policy
-            return null;
+            // The property is not a valid integer, so set it to 0
+            numReplicas = 0;
         } catch (PropertyNotFoundException e) {
-            // The property is not found, so return a null policy
-            return null;
+            // The property is not found, so set it to 0
+            numReplicas = 0;
         }
         
+        rp = new ReplicationPolicy();
         if (numReplicas > 0) {
-            rp = new ReplicationPolicy();
             rp.setReplicationAllowed(true);
             rp.setNumberReplicas(numReplicas);
             try {
@@ -832,6 +832,9 @@ public class SystemMetadataFactory {
             } catch (PropertyNotFoundException e) {
                 // No blocked list found in properties, so just ignore it; no action needed
             }
+        } else {
+            rp.setReplicationAllowed(false);
+            rp.setNumberReplicas(0);
         }
         return rp;
     }
