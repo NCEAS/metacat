@@ -5,6 +5,11 @@
   xmlns:gco="http://www.isotc211.org/2005/gco" 
   xmlns:gml="http://www.opengis.net/gml/3.2" version="1.0">
 
+  <xsl:output method="html" encoding="UTF-8"
+      doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
+      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
+      indent="yes" />  
+
   <!-- EX_BoundingPolygon-->
   <!-- TODO: This whole thing -->
   <xsl:template name="ex_boundingpolygon" match="gmd:EX_BoundingPolygon">
@@ -49,6 +54,7 @@
         </div>
       </div>
     </xsl:for-each>
+
     <!-- Vertical -->
     <xsl:for-each select=".//gmd:verticalElement">
       <div class="control-group">
@@ -64,18 +70,32 @@
 
   <!-- EX_GeographicBoundingBox-->
   <xsl:template name="ex_geographicboundingbox" match="gmd:EX_GeographicBoundingBox">
-    <span>westBoundingLongitude:     
-      <xsl:value-of select="./gmd:westBoundLongitude/gco:Decimal" />
-    </span>
-    <span>eastBoundLongitude:     
-      <xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal" />
-    </span>
-    <span>southBoundLatitude:     
-      <xsl:value-of select="./gmd:southBoundLatitude/gco:Decimal" />
-    </span>
-    <span>northBoundLatitude:     
-      <xsl:value-of select="./gmd:northBoundLatitude/gco:Decimal" />
-    </span>
+  	<xsl:variable name="north"><xsl:value-of select="./gmd:northBoundLongitude/gco:Decimal" /></xsl:variable>
+  	<xsl:variable name="east"><xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal" /></xsl:variable>
+  	<xsl:variable name="south"><xsl:value-of select="./gmd:southBoundLongitude/gco:Decimal" /></xsl:variable>
+  	<xsl:variable name="west"><xsl:value-of select="./gmd:westBoundLongitude/gco:Decimal" /></xsl:variable>
+
+
+    <div data-value="{$north}" data-content="northBoundingCoordinate" class="control-group northBoundingCoordinate">
+      <label class="control-label">North</label>
+      <div class="controls"><xsl:value-of select="$north" />&#xa0; degrees</div>
+    </div>
+
+    <div data-value="{$east}" data-content="eastBoundingCoordinate" class="control-group eastBoundingCoordinate">
+      <label class="control-label">East</label>
+      <div class="controls"><xsl:value-of select="$east" />&#xa0; degrees</div>
+    </div>
+
+    <div data-value="{$south}" data-content="southBoundingCoordinate" class="control-group southBoundingCoordinate">
+      <label class="control-label">South</label>
+      <div class="controls"><xsl:value-of select="$south" />&#xa0; degrees</div>
+    </div>
+
+    <div data-value="{$west}" data-content="westBoundingCoordinate" class="control-group westBoundingCoordinate">
+      <label class="control-label">West</label>
+      <div class="controls"><xsl:value-of select="$west" />&#xa0; degrees</div>
+    </div>
+
     <span>
       <xsl:apply-templates select="./gmd:extentTypeCode" />
     </span>
@@ -145,28 +165,38 @@
         - timeInterval units, radix, factor
     -->
   <xsl:template name="timeperiod" match="gml:TimePeriod">
+
+
+
+
     <xsl:if test=".//gml:beginPosition">
-      <span>beginPosition:         
-        <xsl:value-of select=".//gml:beginPosition" /></span>
-        <xsl:if test=".//gml:beginPosition/@calendarEraName">
-          <span><xsl:value-of select=".//gml:beginPosition/@calendarEraName" /> (calendarEraName)</span>                        
-        </xsl:if>
-        <xsl:if test=".//gml:beginPosition/@indeterminatePosition">
-          <span><xsl:value-of select=".//gml:beginPosition/@indeterminatePosition" /> (indeterminatePosition)</span>                        
-        </xsl:if>
-      </span>
+      <div class="control-group">
+        <label class="control-label">Begin</label>
+        <div class="controls">
+          <span><xsl:value-of select=".//gml:beginPosition" /></span>
+          <xsl:if test=".//gml:beginPosition/@calendarEraName">
+            <span><xsl:value-of select=".//gml:beginPosition/@calendarEraName" /> (calendarEraName)</span>                        
+          </xsl:if>
+          <xsl:if test=".//gml:beginPosition/@indeterminatePosition">
+            <span><xsl:value-of select=".//gml:beginPosition/@indeterminatePosition" /> (indeterminatePosition)</span>                        
+          </xsl:if>
+        </div>
+      </div>
     </xsl:if>
 
     <xsl:if test=".//gml:endPosition">
-      <span>endPosition:         
-        <xsl:value-of select=".//gml:endPosition" /></span>
-        <xsl:if test=".//gml:endPosition/@calendarEraName">
-          <span><xsl:value-of select=".//gml:endPosition/@calendarEraName" /> (calendarEraName)</span>                         
-        </xsl:if>
-        <xsl:if test=".//gml:endPosition/@indeterminatePosition">
-          <span><xsl:value-of select=".//gml:endPosition/@indeterminatePosition" /> (indeterminatePosition)</span>                        
-        </xsl:if>
-      </span>
+      <div class="control-group">
+        <label class="control-label">End</label>
+        <div class="controls">
+          <span><xsl:value-of select=".//gml:endPosition" /></span>
+          <xsl:if test=".//gml:endPosition/@calendarEraName">
+            <span><xsl:value-of select=".//gml:endPosition/@calendarEraName" /> (calendarEraName)</span>                        
+          </xsl:if>
+          <xsl:if test=".//gml:endPosition/@indeterminatePosition">
+            <span><xsl:value-of select=".//gml:endPosition/@indeterminatePosition" /> (indeterminatePosition)</span>                        
+          </xsl:if>
+        </div>
+      </div>
     </xsl:if>
 
     <xsl:if test=".//gml:duration">
@@ -185,10 +215,10 @@
   <!-- extentTypeCode -->
   <!-- TODO: Work on language. Not sure what I want here.-->
   <xsl:template name="gmd_extent_type_code" match="gmd:extentTypeCode">
-  <span>extentTypeCode:             
+  <span>extentTypeCode:     
     <xsl:choose>
-      <xsl:when test="./gco:Boolean = 0"><span>Exclusion<span></xsl:when>
-      <xsl:when test="./gco:Boolean = 1"><span>Inclusion<span></xsl:when>
+      <xsl:when test="./gco:Boolean = 0"><span>Exclusion</span></xsl:when>
+      <xsl:when test="./gco:Boolean = 1"><span>Inclusion</span></xsl:when>
     </xsl:choose>
     </span>
   </xsl:template>
