@@ -605,7 +605,7 @@ public class CNResourceHandler extends D1ResourceHandler {
         if(filename == null || filename.trim().equals("")) {
             filename = id.getValue();
             String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
-            if (extension != null) {
+            if (extension != null && filename != null && !filename.endsWith(extension)) {
                 filename = id.getValue() + extension;
             }
         }

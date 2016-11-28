@@ -1273,7 +1273,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	            	extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
 	            }
 	            filename = id.getValue();
-	            if (extension != null) {
+	            if (extension != null && filename != null && !filename.endsWith(extension)) {
 	            	filename = id.getValue() + "." + extension;
 	            }
             }
