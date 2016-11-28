@@ -1116,7 +1116,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             }
             String extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
             String filename = id.getValue();
-            if (extension != null) {
+            if (extension != null && filename != null && !filename.endsWith(extension)) {
             	filename = id.getValue() + extension;
             }
             response.setContentType(mimeType);
