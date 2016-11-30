@@ -154,17 +154,7 @@
 
       <!-- Extent (geographic, temporal, vertical) -->
       <xsl:for-each select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent">
-        <div class="control-group entity">
-          <h4>Extent</h4>
-          <div class="control-group">
-            <label class="control-label">Extent</label>
-            <div class="controls">
-              <div class="controls-well">
-                <xsl:call-template name="extent" />
-              </div>
-            </div>
-          </div>
-        </div>
+        <xsl:apply-templates />
       </xsl:for-each>
 
       <!-- TODO Methods -->
