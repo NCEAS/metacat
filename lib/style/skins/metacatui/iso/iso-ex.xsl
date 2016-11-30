@@ -8,73 +8,84 @@
   <xsl:output method="html" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
       doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-      indent="yes" />  
+      indent="yes" />
 
-  <!-- EX_BoundingPolygon-->
-  <!-- TODO: This whole thing -->
-  <xsl:template name="ex_boundingpolygon" match="gmd:EX_BoundingPolygon">
+    <xsl:template match="gmd:EX_Extent">
+      <h4>Extent</h4>
+
+      <!-- description -->
+      <xsl:if test=".//gmd:description">
+        <div class="control-group">
+          <label class="control-label">Description</label>
+          <div class="controls">
+            <div class="controls-well">
+              <xsl:apply-templates />
+            </div>
+          </div>
+        </div>
+      </xsl:if>
+
+      <!-- Geographic -->
+      <xsl:for-each select=".//gmd:geographicElement">
+        <div class="control-group">
+          <label class="control-label">Geographic</label>
+          <div class="controls">
+            <div class="controls-well">
+              <xsl:apply-templates />
+            </div>
+          </div>
+        </div>
+      </xsl:for-each>
+
+      <!-- Temporal -->
+      <xsl:for-each select=".//gmd:temporalElement">
+        <div class="control-group">
+          <label class="control-label">Temporal</label>
+          <div class="controls">
+            <div class="controls-well">
+              <xsl:apply-templates />
+            </div>
+          </div>
+        </div>
+      </xsl:for-each>
+
+      <!-- Vertical -->
+      <xsl:for-each select=".//gmd:verticalElement">
+        <div class="control-group">
+          <label class="control-label">Vertical</label>
+          <div class="controls">
+            <div class="controls-well">
+              <xsl:apply-templates />
+            </div>
+          </div>
+        </div>
+      </xsl:for-each>
+    </xsl:template>
+
+  <!-- EX_GeographicExtent-->
+  <xsl:template match="gmd:EX_GeographicExtent">
     <xsl:apply-templates />
   </xsl:template>
 
-  <!-- EX_Extent-->
-  <!-- TODO: Convert this to EX_Extent and use apply-templates elsewhere-->
-  <xsl:template name="extent">
-    <!-- description -->
-    <xsl:if test=".//gmd:description">
-      <div class="control-group">
-        <label class="control-label">Description</label>
-        <div class="controls">
-          <div class="controls-well">
-            <xsl:value-of select=".//gmd:description/gco:CharacterString/text()" />
-          </div>
-        </div>
-      </div>
-    </xsl:if>
-
-    <!-- Geographic -->
-    <xsl:for-each select=".//gmd:geographicElement">
-      <div class="control-group">
-        <label class="control-label">Geographic</label>
-        <div class="controls">
-          <div class="controls-well">
-            <xsl:apply-templates />
-          </div>
-        </div>
-      </div>
-    </xsl:for-each>
-
-    <!-- Temporal -->
-    <xsl:for-each select=".//gmd:temporalElement">
-      <div class="control-group">
-        <label class="control-label">Temporal</label>
-        <div class="controls">
-          <div class="controls-well">
-            <xsl:apply-templates />
-          </div>
-        </div>
-      </div>
-    </xsl:for-each>
-
-    <!-- Vertical -->
-    <xsl:for-each select=".//gmd:verticalElement">
-      <div class="control-group">
-        <label class="control-label">Vertical</label>
-        <div class="controls">
-          <div class="controls-well">
-            <xsl:apply-templates />
-          </div>
-        </div>
-      </div>
-    </xsl:for-each>
+  <!-- EX_BoundingPolygon-->
+  <xsl:template match="gmd:EX_BoundingPolygon">
+    <xsl:apply-templates />
   </xsl:template>
 
-  <!-- EX_GeographicBoundingBox-->
-  <xsl:template name="ex_geographicboundingbox" match="gmd:EX_GeographicBoundingBox">
-  	<xsl:variable name="north"><xsl:value-of select="./gmd:northBoundLongitude/gco:Decimal" /></xsl:variable>
-  	<xsl:variable name="east"><xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal" /></xsl:variable>
-  	<xsl:variable name="south"><xsl:value-of select="./gmd:southBoundLongitude/gco:Decimal" /></xsl:variable>
-  	<xsl:variable name="west"><xsl:value-of select="./gmd:westBoundLongitude/gco:Decimal" /></xsl:variable>
+  <!-- EX_GeographicDescription-->
+  <xsl:template match="gmd:EX_GeographicDescription">
+    <xsl:apply-templates />
+  </xsl:template>
 
+
+
+  <!-- EX_GeographicBoundingBox-->
+  <xsl:template match="gmd:EX_GeographicBoundingBox">
+    <!-- Set up variables for N E S W -->
+    <xsl:variable name="north"><xsl:value-of select="./gmd:northBoundLatitude/gco:Decimal/text()" /></xsl:variable>
+    <xsl:variable name="east"><xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal/text())" /></xsl:variable>
+    <xsl:variable name="south"><xsl:value-of select="./gmd:southBoundLatitude/gco:Decimal/text()" /></xsl:variable>
+    <xsl:variable name="west"><xsl:value-of select="./gmd:westBoundLongitude/gco:Decimal/text()" /></xsl:variable>
 
     <div data-value="{$north}" data-content="northBoundingCoordinate" class="control-group northBoundingCoordinate">
       <label class="control-label">North</label>
@@ -96,23 +107,22 @@
       <div class="controls"><xsl:value-of select="$west" />&#xa0; degrees</div>
     </div>
 
-    <span>
-      <xsl:apply-templates select="./gmd:extentTypeCode" />
-    </span>
+    <xsl:apply-templates select="./gmd:extentTypeCode" />
   </xsl:template>
 
-  <!-- EX_GeographicDescription-->
-  <xsl:template name="ex_geographicdescription" match="gmd:EX_GeographicDescription">
-    <xsl:apply-templates />
-  </xsl:template>
-
-  <!-- EX_GeographicExtent-->
-  <xsl:template name="ex_geographicextent" match="gmd:EX_GeographicExtent">
-    <xsl:apply-templates />
+  <xsl:template match="gmd:polygon">
+    <div class="control-group">
+      <label class="control-label">Polygon</label>
+      <div class="controls">
+        <div class="controls-well">
+          <xsl:apply-templates />
+        </div>
+      </div>
+    </div>
   </xsl:template>
 
   <!-- EX_TemporalExtent -->
-  <xsl:template name="ex_temporalextent" match="gmd:EX_TemporalExtent">
+  <xsl:template match="gmd:EX_TemporalExtent">
     <span>temporal extent                
       <xsl:apply-templates select=".//gmd:extent/*" />
     </span>
@@ -213,13 +223,16 @@
   </xsl:template>
 
   <!-- extentTypeCode -->
-  <!-- TODO: Work on language. Not sure what I want here.-->
-  <xsl:template name="gmd_extent_type_code" match="gmd:extentTypeCode">
-  <span>extentTypeCode:     
-    <xsl:choose>
-      <xsl:when test="./gco:Boolean = 0"><span>Exclusion</span></xsl:when>
-      <xsl:when test="./gco:Boolean = 1"><span>Inclusion</span></xsl:when>
-    </xsl:choose>
-    </span>
+  <xsl:template match="gmd:extentTypeCode">
+    <div class="control-group extentTypeCode">
+      <label class="control-label">Type</label>
+      <div class="controls">
+        <xsl:choose>
+          <xsl:when test="./gco:Boolean = 0">Exclusion</xsl:when>
+          <xsl:when test="./gco:Boolean = 1">Inclusion</xsl:when>
+          <xsl:when test="./@nilReason"><xsl:value-of select="./@nilReason" /></xsl:when>
+        </xsl:choose>
+      </div>
+    </div>
   </xsl:template>
 </xsl:stylesheet>
