@@ -200,7 +200,7 @@
     </xsl:if>
 
     <xsl:if test=".//gml:duration">
-      <span>duration:         
+        <span>duration:         
         <xsl:value-of select=".//gml:duration" />
       </span>
     </xsl:if>
