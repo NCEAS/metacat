@@ -16,26 +16,22 @@
 				<ref bean="annotation.expansion" />
 				<ref bean="annotation.bioportal.expansion" />
 				<ref bean="annotation.esor.expansion" />
+				<ref bean="annotation.cosine.expansion" />
 			</list>
 		</property>
 		<property name="fieldsToMerge">
      		<list>
      			<value>sem_annotation</value>
      			<value>sem_annotation_bioportal_sm</value>
-     			<value>sem_annotation_esor_sm</value>     			
+     			<value>sem_annotation_esor_sm</value>     	
+     			<value>sem_annotation_cosine_sm</value>     			     					
      			<value>sem_annotates</value>
      			<value>sem_annotated_by</value>
      		</list>
      	</property>
      	<property name="ontologyList">
 			<list>
-				<value>http://purl.org/spar/datacite/</value>
-				<value>http://purl.org/dc/terms/</value>
-				<value>http://www.w3.org/2006/time</value>
 				<value>http://purl.dataone.org/ontologies/observation/d1-ECSO.owl</value>
-				<value>http://purl.dataone.org/ontologies/provenance/ProvONE/v1/owl/provone.owl</value>
-				<value>http://purl.obolibrary.org/obo/envo.owl</value>
-				<value>http://purl.obolibrary.org/obo/chebi.owl</value>
 			</list>
 		</property>
 	</bean>
@@ -125,6 +121,25 @@
 				SELECT ?sem_annotation_esor_raw_sm
 				WHERE { 
 						<$CONCEPT_URI> rdf:about ?sem_annotation_esor_raw_sm .
+				 	} 
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+	
+	<!-- cosine-based annotation -->
+	<bean id="annotation.cosine.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="sem_annotation_cosine_sm" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
+				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
+				
+				SELECT ?sem_annotation_cosine_sm
+				WHERE { 
+						<$CONCEPT_URI> rdfs:subClassOf+ ?sem_annotation_cosine_sm .
 				 	} 
 				 ]]>
 			</value>
