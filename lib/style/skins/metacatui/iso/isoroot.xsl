@@ -3,14 +3,15 @@
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
   xmlns:gmd="http://www.isotc211.org/2005/gmd" 
   xmlns:gco="http://www.isotc211.org/2005/gco" 
-  xmlns:gmx="http://www.isotc211.org/2005/gmx"
-  xmlns:gml="http://www.opengis.net/gml/3.2" 
-  xmlns:xlink="http://www.w3.org/1999/xlink"
   version="1.0">
 
+  <xsl:import href="iso-md.xsl"/>
   <xsl:import href="iso-ci.xsl"/>
   <xsl:import href="iso-ex.xsl"/>
-  <xsl:import href="iso-md.xsl"/>
+  <xsl:import href="iso-gco.xsl"/>
+  <xsl:import href="iso-gmd.xsl"/>
+  <xsl:import href="iso-gml.xsl"/>
+  <xsl:import href="iso-gmx.xsl"/>
 
   <xsl:output method="html" encoding="UTF-8"
       doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -85,11 +86,20 @@
             <label class="control-label">Topic Categories</label>
             <div class="controls">
               <div class="controls-well">
-                <ul>
-                  <xsl:for-each select="//gmd:topicCategory">
-                    <li><xsl:value-of select="./gmd:MD_TopicCategoryCode/text()" /></li>                
-                  </xsl:for-each>
-                </ul>
+                <table class="table table-condensed">
+                  <thead>
+                    <tr>
+                      <th>Topic</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <xsl:for-each select="//gmd:topicCategory">
+                      <tr>
+                        <td><xsl:apply-templates /></td>
+                      </tr>
+                    </xsl:for-each>
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -166,39 +176,9 @@
 
   <!-- TODO: Figure out how to do this: I want to capture the scenario where
   an element like gmd:individualName has on child gco:CharacterString or 
-  equivalent but has a nilReasona attribute. -->
-  <xsl:template match="@nilReason">
+  equivalent but has a nilReason attribute. -->
+  <xsl:template match="*[not(*) and ./@nilReason]">
+    nilReason!
     <xsl:value-of select="@nilReason" />
-  </xsl:template>
-
-  <xsl:template match="gco:CharacterString">
-    <xsl:value-of select="." />
-  </xsl:template>
-
-  <xsl:template match="gmx:Anchor">
-    <xsl:element name="a">
-      <xsl:attribute name="href">
-        <xsl:value-of select="./@xlink:href" />
-      </xsl:attribute>
-
-      <!-- Create the attributes for a Bootstrap tooltip to hold the title -->
-      <xsl:if test="./@xlink:title">
-        <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
-        <xsl:attribute name="data-placement">top</xsl:attribute>
-        <xsl:attribute name="title"><xsl:value-of select="./@xlink:title" /></xsl:attribute>
-      </xsl:if>
-
-      <xsl:value-of select="./text()" />
-    </xsl:element>
-  </xsl:template>
-
-  <xsl:template match="gmd:URL">
-    <xsl:variable name="url"><xsl:value-of select="./text()" /></xsl:variable>
-    <xsl:element name="a">
-      <xsl:attribute name="href">
-        <xsl:value-of select="$url" />
-      </xsl:attribute>
-      <xsl:value-of select="$url" />
-    </xsl:element>
   </xsl:template>
 </xsl:stylesheet>

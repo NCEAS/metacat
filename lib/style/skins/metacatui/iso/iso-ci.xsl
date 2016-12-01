@@ -278,5 +278,156 @@
     </xsl:if>
   </xsl:template>
 
-  
+    <xsl:template match="gmd:CI_Citation">
+        <div class="control-group">
+            <label class="control-label">Title</label>
+            <div class="controls">
+                <div class="controls-well">
+                    <xsl:apply-templates select="./gmd:title" />
+                </div>
+            </div>
+        </div>
+
+        <xsl:if test="./gmd:alternateTitle">
+            <xsl:for-each select="./gmd:alternateTitle">
+                <div class="control-group">
+                    <label class="control-label">Alternate Title</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates />
+                        </div>
+                    </div>
+                </div>
+            </xsl:for-each>
+        </xsl:if>
+
+        <xsl:for-each select="./gmd:date">
+            <div class="control-group">
+                <label class="control-label">Date</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:for-each>
+
+        <xsl:if test="./gmd:edition">
+            <xsl:for-each select="./gmd:edition">
+                <div class="control-group">
+                    <label class="control-label">Edition</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates />
+                        </div>
+                    </div>
+                </div>
+            </xsl:for-each>
+        </xsl:if>
+
+        <xsl:if test="./gmd:editionDate">
+            <div class="control-group">
+                <label class="control-label">Edition Date</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+
+        <xsl:if test="./gmd:identifier">
+            <xsl:for-each select="./gmd:identifier">
+                <div class="control-group">
+                    <label class="control-label">Identifier</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates />
+                        </div>
+                    </div>
+                </div>
+            </xsl:for-each>
+        </xsl:if>
+
+        <xsl:if test="./gmd:citedResponsibleParty">
+            <xsl:for-each select="./gmd:citedResponsibleParty">
+                <div class="control-group">
+                    <label class="control-label">Cited Responsible Party</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates />
+                        </div>
+                    </div>
+                </div>
+            </xsl:for-each>
+        </xsl:if>
+
+        <xsl:if test="./gmd:presentationForm">
+            <xsl:for-each select="./gmd:presentationForm">
+                <div class="control-group">
+                    <label class="control-label">Presentation Form</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates />
+                        </div>
+                    </div>
+                </div>
+            </xsl:for-each>
+        </xsl:if>
+
+        <xsl:if test="./gmd:series">
+            <div class="control-group">
+                <label class="control-label">Series</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+
+        <xsl:if test="./gmd:otherCitationDetails">
+            <div class="control-group">
+                <label class="control-label">Other Citation Details</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+
+        <xsl:if test="./gmd:collectiveTitle">
+            <div class="control-group">
+                <label class="control-label">Collective Title</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+
+        <xsl:if test="./gmd:ISBN">
+            <div class="control-group">
+                <label class="control-label">ISBN</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+
+        <xsl:if test="./gmd:ISSN">
+            <div class="control-group">
+                <label class="control-label">ISSN</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
+    </xsl:template>
 </xsl:stylesheet>

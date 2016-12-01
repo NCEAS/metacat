@@ -5,11 +5,6 @@
   xmlns:gco="http://www.isotc211.org/2005/gco" 
   xmlns:gml="http://www.opengis.net/gml/3.2" version="1.0">
 
-  <xsl:output method="html" encoding="UTF-8"
-      doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
-      doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-      indent="yes" />
-
     <xsl:template match="gmd:EX_Extent">
       <h4>Extent</h4>
 
@@ -83,7 +78,7 @@
   <xsl:template match="gmd:EX_GeographicBoundingBox">
     <!-- Set up variables for N E S W -->
     <xsl:variable name="north"><xsl:value-of select="./gmd:northBoundLatitude/gco:Decimal/text()" /></xsl:variable>
-    <xsl:variable name="east"><xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal/text())" /></xsl:variable>
+    <xsl:variable name="east"><xsl:value-of select="./gmd:eastBoundLongitude/gco:Decimal/text()" /></xsl:variable>
     <xsl:variable name="south"><xsl:value-of select="./gmd:southBoundLatitude/gco:Decimal/text()" /></xsl:variable>
     <xsl:variable name="west"><xsl:value-of select="./gmd:westBoundLongitude/gco:Decimal/text()" /></xsl:variable>
 
