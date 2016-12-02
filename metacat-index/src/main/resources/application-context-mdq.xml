@@ -87,13 +87,13 @@
 	<bean id="mdq.score.green" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_green_i" />
 		<constructor-arg name="xpath"
-			value="count(//result[check/level[text() != 'SKIP']]/status[text() = 'SUCCESS'])" />
+			value="count(//result[check/level[text() != 'INFO']]/status[text() = 'SUCCESS'])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	<bean id="mdq.score.orange" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_orange_i" />
 		<constructor-arg name="xpath"
-			value="count( //result/status[text() = 'ERROR'] | //result[check/level[text() = 'OPTIONAL']]/status[text() = 'FAILURE'])" />
+			value="count( //result[check/level[text() != 'INFO']]/status[text() = 'ERROR'] | //result[check/level[text() = 'OPTIONAL']]/status[text() = 'FAILURE'])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	<bean id="mdq.score.red" class="org.dataone.cn.indexer.parser.SolrField">
@@ -105,7 +105,7 @@
 	<bean id="mdq.score.blue" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_blue_i" />
 		<constructor-arg name="xpath"
-			value="count(//result/status[text() = 'SKIP'])" />
+			value="count(//result/status[text() = 'SKIP'] | //result[check/level[text() = 'INFO']])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
@@ -113,25 +113,25 @@
 	<bean id="mdq.score.identification" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_identification_d" />
 		<constructor-arg name="xpath"
-			value="count(//result[check/type[text() = 'identification']]/status[text() = 'SUCCESS']) / count(//result[check/type[text() = 'identification']])" />
+			value="count(//result[check/type[text() = 'identification']]/status[text() = 'SUCCESS']) div count(//result[check/type[text() = 'identification']])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	<bean id="mdq.score.interpretation" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_interpretation_d" />
 		<constructor-arg name="xpath"
-			value="count(//result[check/type[text() = 'interpretation']]/status[text() = 'SUCCESS']) / count(//result[check/type[text() = 'interpretation']])" />
+			value="count(//result[check/type[text() = 'interpretation']]/status[text() = 'SUCCESS']) div count(//result[check/type[text() = 'interpretation']])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	<bean id="mdq.score.discovery" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_discovery_d" />
 		<constructor-arg name="xpath"
-			value="count(//result[check/type[text() = 'discovery']]/status[text() = 'SUCCESS']) / count(//result[check/type[text() = 'discovery']])" />
+			value="count(//result[check/type[text() = 'discovery']]/status[text() = 'SUCCESS']) div count(//result[check/type[text() = 'discovery']])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	<bean id="mdq.score.other" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_other_d" />
 		<constructor-arg name="xpath"
-			value="count(//result[check/type[text() != 'identification' and text() != 'interpretation' and text() != 'discovery']]/status[text() = 'SUCCESS']) / count(//result[check/type[text() != 'identification' and text() != 'interpretation' and text() != 'discovery']])" />
+			value="count(//result[check/type[text() != 'identification' and text() != 'interpretation' and text() != 'discovery']]/status[text() = 'SUCCESS']) div count(//result[check/type[text() != 'identification' and text() != 'interpretation' and text() != 'discovery']])" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
