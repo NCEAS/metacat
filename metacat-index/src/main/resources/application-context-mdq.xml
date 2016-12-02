@@ -15,7 +15,7 @@
 			<list>
 				<ref bean="mdq.objectIdentifier" />
 				<ref bean="mdq.suiteId" />
-				<!--  <ref bean="mdq.timestamp" />-->
+				<ref bean="mdq.timestamp" />
 				<ref bean="mdq.metadata.formatId" />
 				<ref bean="mdq.metadata.datasource" />
 				<ref bean="mdq.metadata.funder" />
@@ -48,6 +48,7 @@
 		<constructor-arg name="xpath"
 			value="//run/timestamp" />
 		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
 	</bean>
 	
 	<bean id="mdq.metadata.formatId" class="org.dataone.cn.indexer.parser.SolrField">
