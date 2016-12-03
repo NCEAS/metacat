@@ -121,7 +121,7 @@
 	</bean>
 	
 	<bean id="prov.wasDerivedFrom" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="wasDerivedFrom" />
+		<constructor-arg name="name" value="prov_wasDerivedFrom" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -132,7 +132,7 @@
 				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
 				PREFIX dcterms: <http://purl.org/dc/terms/>
 
-				SELECT (str(?pidValue) as ?pid) (str(?wasDerivedFromValue) as ?wasDerivedFrom)
+				SELECT (str(?pidValue) as ?pid) (str(?wasDerivedFromValue) as ?prov_wasDerivedFrom)
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
@@ -147,7 +147,7 @@
 	</bean>
 	
 	<bean id="prov.wasGeneratedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="wasGeneratedBy" />
+		<constructor-arg name="name" value="prov_wasGeneratedBy" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -158,7 +158,7 @@
 				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
 				PREFIX dcterms: <http://purl.org/dc/terms/>
 
-				SELECT (str(?pidValue) as ?pid) (str(?wasGeneratedByValue) as ?wasGeneratedBy)
+				SELECT (str(?pidValue) as ?pid) (str(?wasGeneratedByValue) as ?prov_wasGeneratedBy)
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
@@ -173,7 +173,7 @@
 	</bean>
 	
 	<bean id="prov.wasInformedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="wasInformedBy" />
+		<constructor-arg name="name" value="prov_wasInformedBy" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -184,7 +184,7 @@
 				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
 				PREFIX dcterms: <http://purl.org/dc/terms/>
 
-				SELECT (str(?pidValue) as ?pid) (str(?wasInformedByValue) as ?wasInformedBy)
+				SELECT (str(?pidValue) as ?pid) (str(?wasInformedByValue) as ?prov_wasInformedBy)
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
@@ -199,7 +199,7 @@
 	</bean>
 	
 	<bean id="prov.used" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="used" />
+		<constructor-arg name="name" value="prov_used" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -210,7 +210,7 @@
 				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
 				PREFIX dcterms: <http://purl.org/dc/terms/>
 
-				SELECT (str(?pidValue) as ?pid) (str(?usedValue) as ?used)
+				SELECT (str(?pidValue) as ?pid) (str(?usedValue) as ?prov_used)
 				FROM <$GRAPH_NAME>
 				WHERE { 
 						
