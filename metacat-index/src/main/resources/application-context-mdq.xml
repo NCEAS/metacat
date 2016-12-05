@@ -8,7 +8,7 @@
 		<!-- match MDQ documents -->
 		<property name="matchDocuments">
 			<list>
-				<value>https://nceas.ucsb.edu/mdqe#run</value>
+				<value>https://nceas.ucsb.edu/mdqe/v1#run</value>
 			</list>
 		</property>
 		<property name="fieldList">
