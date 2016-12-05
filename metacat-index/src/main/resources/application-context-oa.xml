@@ -15,10 +15,6 @@
 				<ref bean="annotation.standard" />
 				<ref bean="annotation.characteristic" />
 				<ref bean="annotation.creator" />
-				<ref bean="prov.wasDerivedFrom" />
-				<ref bean="prov.wasGeneratedBy" />
-				<ref bean="prov.wasInformedBy" />
-				<ref bean="prov.used" />
 			</list>
 		</property>	
 	</bean>
@@ -120,108 +116,4 @@
 		<!--property name="multivalue" value="false" /-->
 	</bean>
 	
-	<bean id="prov.wasDerivedFrom" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="prov_wasDerivedFrom" />
-		<constructor-arg name="query">
-			<value>
-				<![CDATA[
-				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-				PREFIX prov: <http://www.w3.org/ns/prov#> 
-				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
-				PREFIX dcterms: <http://purl.org/dc/terms/>
-
-				SELECT (str(?pidValue) as ?pid) (str(?wasDerivedFromValue) as ?prov_wasDerivedFrom)
-				FROM <$GRAPH_NAME>
-				WHERE { 
-						
-					?derived_data		prov:wasDerivedFrom	?primary_data .
-					?derived_data		dcterms:identifier 	?pidValue . 
-					?primary_data		dcterms:identifier 	?wasDerivedFromValue .
-						
-				 	} 
-				 ]]>
-			</value>
-		</constructor-arg>
-	</bean>
-	
-	<bean id="prov.wasGeneratedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="prov_wasGeneratedBy" />
-		<constructor-arg name="query">
-			<value>
-				<![CDATA[
-				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-				PREFIX prov: <http://www.w3.org/ns/prov#> 
-				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
-				PREFIX dcterms: <http://purl.org/dc/terms/>
-
-				SELECT (str(?pidValue) as ?pid) (str(?wasGeneratedByValue) as ?prov_wasGeneratedBy)
-				FROM <$GRAPH_NAME>
-				WHERE { 
-						
-					?result			prov:wasGeneratedBy	?activity .
-					?result			dcterms:identifier	?pidValue . 
-					?activity		dcterms:identifier	?wasGeneratedByValue .
-						
-				 	} 
-				 ]]>
-			</value>
-		</constructor-arg>
-	</bean>
-	
-	<bean id="prov.wasInformedBy" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="prov_wasInformedBy" />
-		<constructor-arg name="query">
-			<value>
-				<![CDATA[
-				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-				PREFIX prov: <http://www.w3.org/ns/prov#> 
-				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
-				PREFIX dcterms: <http://purl.org/dc/terms/>
-
-				SELECT (str(?pidValue) as ?pid) (str(?wasInformedByValue) as ?prov_wasInformedBy)
-				FROM <$GRAPH_NAME>
-				WHERE { 
-						
-					?activity				prov:wasInformedBy	?previousActivity .
-					?activity				dcterms:identifier	?pidValue . 
-					?previousActivity		dcterms:identifier	?wasInformedByValue .
-						
-				 	} 
-				 ]]>
-			</value>
-		</constructor-arg>
-	</bean>
-	
-	<bean id="prov.used" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="prov_used" />
-		<constructor-arg name="query">
-			<value>
-				<![CDATA[
-				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> 
-				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> 
-				PREFIX owl: <http://www.w3.org/2002/07/owl#> 
-				PREFIX prov: <http://www.w3.org/ns/prov#> 
-				PREFIX ore: <http://www.openarchives.org/ore/terms/> 
-				PREFIX dcterms: <http://purl.org/dc/terms/>
-
-				SELECT (str(?pidValue) as ?pid) (str(?usedValue) as ?prov_used)
-				FROM <$GRAPH_NAME>
-				WHERE { 
-						
-					?activity		prov:used			?data .
-					?activity		dcterms:identifier	?pidValue . 
-					?data			dcterms:identifier	?usedValue .
-						
-				 	} 
-				 ]]>
-			</value>
-		</constructor-arg>
-	</bean>
-
 </beans>
