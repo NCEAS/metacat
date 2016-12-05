@@ -40,7 +40,8 @@
     <import resource="application-context-isotc211.xml" />
     <import resource="application-context-isotc211-noaa.xml" />
     
-    <import resource="application-context-mdq.xml" />
+    <import resource="application-context-prov-base.xml" />
+    <import resource="application-context-provone20150115.xml" />
     
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
@@ -110,12 +111,11 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
-       <ref bean="rdfXmlSubprocessor" />
+       <ref bean="prov20150115RdfXmlSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
        <ref bean="isotc211NoaaSubprocessor" />
-       <ref bean="mdqSubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">
