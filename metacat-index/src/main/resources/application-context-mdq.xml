@@ -36,21 +36,21 @@
 	<bean id="mdq.objectIdentifier" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_objectIdentifier_s" />
 		<constructor-arg name="xpath"
-			value="//run/objectIdentifier" />
+			value="//objectIdentifier" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.suiteId" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_suiteId_s" />
 		<constructor-arg name="xpath"
-			value="//run/suiteId" />
+			value="//suiteId" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.timestamp" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_timestamp_dt" />
 		<constructor-arg name="xpath"
-			value="//run/timestamp" />
+			value="//timestamp" />
 		<property name="multivalue" value="false" />
 		<property name="converter" ref="dateConverter" />
 	</bean>
@@ -58,28 +58,28 @@
 	<bean id="mdq.metadata.formatId" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_formatId_s" />
 		<constructor-arg name="xpath"
-			value="//run/metadata/formatId" />
+			value="//metadata/formatId" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.metadata.datasource" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_datasource_s" />
 		<constructor-arg name="xpath"
-			value="//run/metadata/datasource" />
+			value="//metadata/datasource" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.metadata.funder" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_funder_s" />
 		<constructor-arg name="xpath"
-			value="//run/metadata/funder" />
+			value="//metadata/funder" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.metadata.rightsHolder" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_rightsHolder_s" />
 		<constructor-arg name="xpath"
-			value="//run/metadata/rightsHolder" />
+			value="//metadata/rightsHolder" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
