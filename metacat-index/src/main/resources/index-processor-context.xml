@@ -43,6 +43,8 @@
     <import resource="application-context-prov-base.xml" />
     <import resource="application-context-provone20150115.xml" />
     
+    <import resource="application-context-mdq.xml" />
+    
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
@@ -111,11 +113,12 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
-       <ref bean="prov20150115RdfXmlSubprocessor" />
+       <ref bean="rdfXmlSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
        <ref bean="isotc211NoaaSubprocessor" />
+       <ref bean="mdqSubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">
