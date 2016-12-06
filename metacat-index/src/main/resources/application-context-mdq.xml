@@ -29,6 +29,7 @@
 				<ref bean="mdq.score.interpretation" />
 				<ref bean="mdq.score.discovery" />
 				<ref bean="mdq.score.other" />
+				<ref bean="mdq.score.composite" />
 			</list>
 		</property>
 	</bean>
@@ -106,6 +107,14 @@
 		<constructor-arg name="name" value="mdq_blue_i" />
 		<constructor-arg name="xpath"
 			value="count(//result/status[text() = 'SKIP'] | //result[check/level[text() = 'INFO']])" />
+		<property name="multivalue" value="false" />
+	</bean>
+	
+	<!-- the composite score -->
+	<bean id="mdq.score.composite" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="mdq_composite_d" />
+		<constructor-arg name="xpath"
+			value="count(//result[check/level[text() != 'INFO']]/status[text() = 'SUCCESS']) div (count(//result) - count(//result/status[text() = 'SKIP'] | //result[check/level[text() = 'INFO']]))" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
