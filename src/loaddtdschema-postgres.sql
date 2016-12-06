@@ -176,4 +176,4 @@ INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, sy
 INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, system_id) VALUES ('NoNamespaceSchema', 'FGDC-STD-001-1998', 'http://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.8.0',1,CURRENT_DATE);
+  VALUES ('2.8.1',1,CURRENT_DATE);
