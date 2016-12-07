@@ -219,7 +219,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             // get the rest of the path info
             String extra = null;
                         
-            logMetacat.debug("handling verb " + httpVerb + " request with resource '" + resource + "'");
+            logMetacat.info("MNResourceHandler.handle - V2 handling verb " + httpVerb + " request with resource '" + resource + "'");
             logMetacat.debug("resource: '" + resource + "'");
             boolean status = false;
             
@@ -1689,5 +1689,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         
         MNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
 	}
+	
+	
 
 }
