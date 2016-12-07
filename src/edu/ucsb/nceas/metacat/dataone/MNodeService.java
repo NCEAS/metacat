@@ -154,6 +154,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.v2.MNResourceHandler;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -2639,29 +2640,55 @@ public class MNodeService extends D1NodeService
       }
       
       if(success) {
+          this.cn = D1Client.getCN();
           //TODO
           //notify the cns the synchornize the new system metadata.
-          this.cn = D1Client.getCN();
-          try {
-              if(this.cn == null)  {
-                  logMetacat.warn("updateSystemMetadata - can't get the instance of the CN. So the system metadata in CN can't be updated.");
-              } else {
-                  this.cn.synchronize(null, pid);
+          // run it in a thread to avoid connection timeout
+          Runnable runner = new Runnable() {
+              private CNode cNode = null;
+              private SystemMetadata sys = null;
+              private Identifier id = null;
+              @Override
+              public void run() {
+                  try {
+                      if(this.cNode == null)  {
+                          logMetacat.warn("MNodeService.updateSystemMetadata - can't get the instance of the CN. So can't call cn.synchronize to update the system metadata in CN.");
+                      } else if(id != null) {
+                          logMetacat.info("MNodeService.updateSystemMetadata - calling cn.synchornized in another thread for pid "+id.getValue());
+                          this.cNode.synchronize(null, id);
+                      } else {
+                          logMetacat.warn("MNodeService.updateSystemMetadata - can't update system metadata in CN can't be updated.");
+                      }
+                  } catch (BaseException e) {
+                      e.printStackTrace();
+                      logMetacat.error("It is a DataONEBaseException and its detail code is "+e.getDetail_code() +" and its code is "+e.getCode());
+                      logMetacat.error("Can't update the systemmetadata of pid "+id.getValue()+" in CNs through cn.synchronize method since "+e.getMessage(), e);
+                  } catch (Exception e) {
+                      e.printStackTrace();
+                      logMetacat.error("Can't update the systemmetadata of pid "+id.getValue()+" in CNs through cn.synchronize method since "+e.getMessage(), e);
+                  }
+                  
+                  // attempt to re-register the identifier (it checks if it is a doi)
+                  try {
+                      logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sys.getIdentifier().getValue()+" is a doi");
+                      DOIService.getInstance().registerDOI(sys);
+                  } catch (Exception e) {
+                    logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
+                  }
               }
-          } catch (BaseException e) {
-              e.printStackTrace();
-              logMetacat.error("It is a DataONEBaseException and its detail code is "+e.getDetail_code() +" and its code is "+e.getCode());
-              logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
-          } catch (Exception e) {
-              e.printStackTrace();
-              logMetacat.error("Can't update the systemmetadata of pid "+pid.getValue()+" in CNs since "+e.getMessage());
-          }
-          
-          // attempt to re-register the identifier (it checks if it is a doi)
-          try {
-        	  DOIService.getInstance().registerDOI(sysmeta);
-          } catch (Exception e) {
-  			logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
+              private Runnable init(CNode cn, SystemMetadata sys, Identifier id){
+                  this.cNode = cn;
+                  this.sys = sys;
+                  this.id = id;
+                  return this;
+                 
+              }
+          }.init(cn, sysmeta, pid);
+          // submit the task, and that's it
+          if(MNResourceHandler.getExecutorService() != null) {
+              MNResourceHandler.getExecutorService().submit(runner);
+          } else {
+              logMetacat.error("MNodeSerivce.updateSystemMetadata - since the executor service for submit the change to cn is null, the system metadata change of the id "+pid.getValue()+" can't go to cn by the method through cn.synchronize.");
           }
       }
       return success;
