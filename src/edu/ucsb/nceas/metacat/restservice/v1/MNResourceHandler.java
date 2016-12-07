@@ -210,7 +210,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             // get the rest of the path info
             String extra = null;
                         
-            logMetacat.debug("handling verb " + httpVerb + " request with resource '" + resource + "'");
+            logMetacat.info("MNResourceHanlder.handle - V1 handling verb " + httpVerb + " request with resource '" + resource + "'");
             logMetacat.debug("resource: '" + resource + "'");
             boolean status = false;
             
