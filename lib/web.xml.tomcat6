@@ -310,6 +310,17 @@
 		<servlet-name>MNRestServletV2</servlet-name>
 		<url-pattern>/d1/mn/v2/*</url-pattern>
 	</servlet-mapping>
+
+ <!-- MN root url -->
+  <servlet-mapping>
+    <servlet-name>MNRestServletV2</servlet-name>
+    <url-pattern>/d1/mn/</url-pattern>
+  </servlet-mapping> 
+
+  <servlet-mapping>
+    <servlet-name>MNRestServletV2</servlet-name>
+    <url-pattern>/d1/mn</url-pattern>
+  </servlet-mapping> 
 	
  <!-- uncomment this if you want the admin servlet -->
   <servlet-mapping>
