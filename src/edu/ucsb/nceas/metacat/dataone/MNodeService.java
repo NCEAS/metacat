@@ -52,6 +52,8 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.UUID;
 import java.util.Vector;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.Result;
@@ -154,7 +156,6 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.restservice.v2.MNResourceHandler;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -213,6 +214,18 @@ public class MNodeService extends D1NodeService
     
     /* A reference to a Coordinating Node */
     private CNode cn;
+    
+    // shared executor
+    private static ExecutorService executor = null;
+
+    static {
+        // use a shared executor service with nThreads == one less than available processors
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        int nThreads = availableProcessors * 1;
+        nThreads--;
+        nThreads = Math.max(1, nThreads);
+        executor = Executors.newFixedThreadPool(nThreads);  
+    }
 
 
     /**
@@ -2657,7 +2670,7 @@ public class MNodeService extends D1NodeService
                           logMetacat.info("MNodeService.updateSystemMetadata - calling cn.synchornized in another thread for pid "+id.getValue());
                           this.cNode.synchronize(null, id);
                       } else {
-                          logMetacat.warn("MNodeService.updateSystemMetadata - can't update system metadata in CN can't be updated.");
+                          logMetacat.warn("MNodeService.updateSystemMetadata - the pid is null. So can't call cn.synchronize to update the system metadata in CN.");
                       }
                   } catch (BaseException e) {
                       e.printStackTrace();
@@ -2685,10 +2698,10 @@ public class MNodeService extends D1NodeService
               }
           }.init(cn, sysmeta, pid);
           // submit the task, and that's it
-          if(MNResourceHandler.getExecutorService() != null) {
-              MNResourceHandler.getExecutorService().submit(runner);
+          if(executor != null) {
+              executor.submit(runner);
           } else {
-              logMetacat.error("MNodeSerivce.updateSystemMetadata - since the executor service for submit the change to cn is null, the system metadata change of the id "+pid.getValue()+" can't go to cn by the method through cn.synchronize.");
+              logMetacat.warn("MNodeSerivce.updateSystemMetadata - since the executor service for submitting the call of cn.synchronize() is null, the system metadata change of the id "+pid.getValue()+" can't go to cn through cn.synchronize.");
           }
       }
       return success;
