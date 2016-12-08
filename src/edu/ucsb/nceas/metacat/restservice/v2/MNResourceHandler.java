@@ -1689,13 +1689,5 @@ public class MNResourceHandler extends D1ResourceHandler {
         
         MNodeService.getInstance(request).updateSystemMetadata(session, pid, systemMetadata);
 	}
-	
-	/**
-     * Get the executor from the service. 
-     * @return
-     */
-    public static ExecutorService getExecutorService() {
-        return executor;
-    }
 
 }
