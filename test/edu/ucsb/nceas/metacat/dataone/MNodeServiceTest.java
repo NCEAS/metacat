@@ -183,8 +183,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     
     suite.addTest(new MNodeServiceTest("testPermissionOfUpdateSystemmeta"));
     
-   
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletesChain"));
     
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
     
     return suite;
     
@@ -2528,5 +2529,170 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             
         }
        
+    }
+    
+    
+    /**
+     * Test if the updateSystemmetadata method can catch the circular obsoletes fields chain
+     */
+    public void testUpdateSystemMetadataWithCircularObsoletesChain() throws Exception{
+        
+        Date date = new Date();
+        Thread.sleep(1000);
+        String str = "object1";
+        //insert a test document
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        Thread.sleep(1000);
+        Identifier guid1 = new Identifier();
+        guid1.setValue(generateDocumentId());
+        object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid1, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid1, object1, sysmeta);
+        //Test the generating object succeeded. 
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        
+        Thread.sleep(1000);
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid2, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid2, object1, sysmeta);
+        //Test the generating object succeeded. 
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        
+        // test to create a circular obsoletes chain: guid obsoletes guid
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        metadata.setObsoletes(guid);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+             fail("We can't update the system metadata which the obsoletes field is itself");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail and the error message should have the wording - circular chain", e.getMessage().contains("a circular chain"));
+       }
+       
+       // guid obsolete guid1
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+       metadata.setObsoletes(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+       
+       // guid1 obsoletedBy guid
+       // guid1  obsoletes  guid2
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+       metadata.setObsoletes(guid2);
+       metadata.setObsoletedBy(guid);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid1, metadata);
+       
+       // crete a circular obsolete chain:
+       // guid2 obsoletes guid
+       //guid2 obsoletedBy guid1
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+       metadata.setObsoletes(guid);
+       metadata.setObsoletedBy(guid1);
+       
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid2, metadata);
+           fail("We can't update the system metadata which has a circular obsoletes chain");
+      } catch (InvalidRequest e)  {
+          assertTrue("The update system metadata should fail and the error message should have the wording - circular chain", e.getMessage().contains("a circular chain"));
+      }
+       
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+       metadata.setObsoletedBy(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid2, metadata);
+    }
+    
+    
+    
+    
+    /**
+     * Test if the updateSystemmetadata method can catch the circular obsoletedBy chain
+     */
+    public void testUpdateSystemMetadataWithCircularObsoletedByChain() throws Exception{
+        
+        Date date = new Date();
+        Thread.sleep(1000);
+        String str = "object1";
+        //insert a test document
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        Thread.sleep(1000);
+        Identifier guid1 = new Identifier();
+        guid1.setValue(generateDocumentId());
+        object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid1, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid1, object1, sysmeta);
+        //Test the generating object succeeded. 
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+        
+        Thread.sleep(1000);
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid2, session.getSubject(), object1);
+        MNodeService.getInstance(request).create(session, guid2, object1, sysmeta);
+        //Test the generating object succeeded. 
+        metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+        
+      
+       // guid obsolete guid1
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+       metadata.setObsoletes(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+       
+       // guid1  obsoletes  guid2
+       // guid1 obsoletedBy guid1 (a circular chain)
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+       metadata.setObsoletes(guid2);
+       metadata.setObsoletedBy(guid1);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid1, metadata);
+            fail("We can't update the system metadata which the obsoletes field is itself");
+      } catch (InvalidRequest e)  {
+          assertTrue("The update system metadata should fail and the error message should have the wording - circular chain", e.getMessage().contains("a circular chain"));
+      }
+       
+       
+       // guid1  obsoletes  guid2
+       // guid1 obsoletedBy guid 
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+       metadata.setObsoletes(guid2);
+       metadata.setObsoletedBy(guid);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid1, metadata);
+      
+       
+       //guid2 obsoletedBy guid1
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+       metadata.setObsoletedBy(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid2, metadata);
+       
+       
+       //guid2 obsoletedBy guid1
+       //guid1 obsoletedBy guid
+       //guid  obsoletedBy guid2 (created a circle)
+       metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+       metadata.setObsoletedBy(guid2);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata which has a circular obsoletes chain");
+      } catch (InvalidRequest e)  {
+          assertTrue("The update system metadata should fail and the error message should have the wording - circular chain", e.getMessage().contains("a circular chain"));
+      }
+       
+   
     }
 }
