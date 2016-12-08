@@ -1790,7 +1790,7 @@ public abstract class D1NodeService {
                           " already obsoletes the pid "+sysmeta.getObsoletes().getValue() +". You can't set the object "+pid.getValue()+" to obsolete the pid "+sysmeta.getObsoletes().getValue()+" again.");
               }
           }
-          
+          checkCircularObsoletesChain(sysmeta);
           if(currentSysmeta.getObsoletedBy() == null && sysmeta.getObsoletedBy() != null) {
               //we are setting a value to the obsoletedBy field, so we should make sure that the no another object obsoletes the pid we are updating. 
               String obsoletedBy = existsInObsoletedBy(sysmeta.getObsoletedBy());
@@ -1799,6 +1799,7 @@ public abstract class D1NodeService {
                           " already is obsoleted by the pid "+sysmeta.getObsoletedBy().getValue() +". You can't set the pid "+pid.getValue()+" to be obsoleted by the pid "+sysmeta.getObsoletedBy().getValue()+" again.");
               }
           }
+          checkCircularObsoletedByChain(sysmeta);
       }
       
       // do the actual update
@@ -1920,6 +1921,84 @@ public abstract class D1NodeService {
 	        }
 	    }
 	}
+	
+	
+	/**
+	 * Try to check the scenario of a circular obsoletes chain: 
+	 * A obsoletes B
+	 * B obsoletes C
+	 * C obsoletes A
+	 * @param sys
+	 * @throws InvalidRequest
+	 */
+	private void checkCircularObsoletesChain(SystemMetadata sys) throws InvalidRequest {
+	    if(sys != null && sys.getObsoletes() != null && sys.getObsoletes().getValue() != null && !sys.getObsoletes().getValue().trim().equals("")) {
+	        logMetacat.debug("D1NodeService.checkCircularObsoletesChain - the object "+sys.getIdentifier().getValue() +" obsoletes "+sys.getObsoletes().getValue());
+	        if(sys.getObsoletes().getValue().equals(sys.getIdentifier().getValue())) {
+	            // the obsoletes field points to itself and creates a circular chain
+	            throw new InvalidRequest("4869", "The obsoletes field and identifier of the system metadata has the same value "+sys.getObsoletes().getValue()+
+	                    ". This creates a circular chain and it is illegal.");
+	        } else {
+	            Vector <Identifier> pidList = new Vector<Identifier>();
+	            pidList.add(sys.getIdentifier());
+	            SystemMetadata obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletes());
+	            while (obsoletesSym != null && obsoletesSym.getObsoletes() != null && obsoletesSym.getObsoletes().getValue() != null && !obsoletesSym.getObsoletes().getValue().trim().equals("")) {
+	                pidList.add(obsoletesSym.getIdentifier());
+	                logMetacat.debug("D1NodeService.checkCircularObsoletesChain - the object "+obsoletesSym.getIdentifier().getValue() +" obsoletes "+obsoletesSym.getObsoletes().getValue());
+	                /*for(Identifier id: pidList) {
+	                    logMetacat.debug("D1NodeService.checkCircularObsoletesChain - the pid in the chanin"+id.getValue());
+	                }*/
+	                if(pidList.contains(obsoletesSym.getObsoletes())) {
+	                    logMetacat.error("D1NodeService.checkCircularObsoletesChain - when Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletes field value "+sys.getObsoletes().getValue()+
+	                            " in its new system metadata creating a circular chain at the object "+obsoletesSym.getObsoletes().getValue()+". This is illegal");
+	                    throw new InvalidRequest("4869", "When Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletes field value "+sys.getObsoletes().getValue()+
+                                " in its new system metadata creating a circular chain at the object "+obsoletesSym.getObsoletes().getValue()+". This is illegal");
+	                } else {
+	                    obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletesSym.getObsoletes());
+	                }
+	            }
+	        }
+	    }
+	}
+	
+	
+	/**
+     * Try to check the scenario of a circular obsoletedBy chain: 
+     * A obsoletedBy B
+     * B obsoletedBy C
+     * C obsoletedBy A
+     * @param sys
+     * @throws InvalidRequest
+     */
+    private void checkCircularObsoletedByChain(SystemMetadata sys) throws InvalidRequest {
+        if(sys != null && sys.getObsoletedBy() != null && sys.getObsoletedBy().getValue() != null && !sys.getObsoletedBy().getValue().trim().equals("")) {
+            logMetacat.debug("D1NodeService.checkCircularObsoletedByChain - the object "+sys.getIdentifier().getValue() +" is obsoletedBy "+sys.getObsoletedBy().getValue());
+            if(sys.getObsoletedBy().getValue().equals(sys.getIdentifier().getValue())) {
+                // the obsoletedBy field points to itself and creates a circular chain
+                throw new InvalidRequest("4869", "The obsoletedBy field and identifier of the system metadata has the same value "+sys.getObsoletedBy().getValue()+
+                        ". This creates a circular chain and it is illegal.");
+            } else {
+                Vector <Identifier> pidList = new Vector<Identifier>();
+                pidList.add(sys.getIdentifier());
+                SystemMetadata obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletedBy());
+                while (obsoletedBySym != null && obsoletedBySym.getObsoletedBy() != null && obsoletedBySym.getObsoletedBy().getValue() != null && !obsoletedBySym.getObsoletedBy().getValue().trim().equals("")) {
+                    pidList.add(obsoletedBySym.getIdentifier());
+                    logMetacat.debug("D1NodeService.checkCircularObsoletedByChain - the object "+obsoletedBySym.getIdentifier().getValue() +" is obsoletedBy "+obsoletedBySym.getObsoletedBy().getValue());
+                    /*for(Identifier id: pidList) {
+                        logMetacat.debug("D1NodeService.checkCircularObsoletedByChain - the pid in the chanin"+id.getValue());
+                    }*/
+                    if(pidList.contains(obsoletedBySym.getObsoletedBy())) {
+                        logMetacat.error("D1NodeService.checkCircularObsoletedByChain - When Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletedBy field value "+sys.getObsoletedBy().getValue()+
+                                " in its new system metadata creating a circular chain at the object "+obsoletedBySym.getObsoletedBy().getValue()+". This is illegal");
+                        throw new InvalidRequest("4869",  "When Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletedBy field value "+sys.getObsoletedBy().getValue()+
+                                " in its new system metadata creating a circular chain at the object "+obsoletedBySym.getObsoletedBy().getValue()+". This is illegal");
+                    } else {
+                        obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBySym.getObsoletedBy());
+                    }
+                }
+            }
+        }
+    }
   
   /**
    * Given a Permission, returns a list of all permissions that it encompasses
