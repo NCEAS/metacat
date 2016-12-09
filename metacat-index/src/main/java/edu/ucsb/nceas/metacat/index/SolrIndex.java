@@ -244,6 +244,13 @@ public class SolrIndex {
 	        }
        }
 
+        /*if(docs != null) {
+                SolrDoc solrDoc = docs.get(id);
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                solrDoc.serialize(baos, "UTF-8");
+                log.warn("after process the science metadata, the solr doc is \n"+baos.toString());
+        }*/
+        
        // TODO: in the XPathDocumentParser class in d1_cn_index_process module,
        // merge is only for resource map. We need more work here.
        for (SolrDoc mergeDoc : docs.values()) {
@@ -252,6 +259,12 @@ public class SolrIndex {
            }
        }
 
+       /*if(docs != null) {
+               SolrDoc solrDoc  = docs.get(id);
+               ByteArrayOutputStream baos = new ByteArrayOutputStream();
+               solrDoc.serialize(baos, "UTF-8");
+               log.warn("after merge, the solr doc is \n"+baos.toString());
+       }*/
        //SolrElementAdd addCommand = getAddCommand(new ArrayList<SolrDoc>(docs.values()));
                
        return docs;
@@ -285,6 +298,7 @@ public class SolrIndex {
             EncoderException, XPathExpressionException, SolrServerException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
         List<String> ids = new ArrayList<String>();
         ids.add(indexDocument.getIdentifier());
+        //Retrieve the existing solr document from the solr server for the id. If it doesn't exist, null or empty solr doc will be returned.
         List<SolrDoc> indexedDocuments = ResourceMapSubprocessor.getSolrDocs(ids);
         SolrDoc indexedDocument = indexedDocuments == null || indexedDocuments.size() <= 0 ? null
                 : indexedDocuments.get(0);
@@ -300,7 +314,9 @@ public class SolrIndex {
                         .getName().equals(SolrElementField.FIELD_RESOURCEMAP))
                         && !indexDocument.hasFieldWithValue(field.getName(), field.getValue())) {
                     indexDocument.addField(field);
-                } else if (!indexSchema.isCopyFieldTarget(indexSchema.getField(field.getName())) && !indexDocument.hasField(field.getName())) {
+                } else if (!indexSchema.isCopyFieldTarget(indexSchema.getField(field.getName())) && !indexDocument.hasField(field.getName()) && !isSystemMetadataField(field.getName())) {
+                    // we don't merge the system metadata field since they can be removed.
+                    log.debug("SolrIndex.mergeWithIndexedDocument - merge the existing solr field "+field.getName()+" with value "+field.getValue()+" from the solr server to the currently processing document of "+indexDocument.getIdentifier());
                     indexDocument.addField(field);
                 }
             }
@@ -310,6 +326,22 @@ public class SolrIndex {
         }
     }
     
+    /*
+     * If the given field name is a system metadata field.
+     */
+    private boolean isSystemMetadataField(String fieldName) {
+        boolean is = false;
+        if (fieldName != null && !fieldName.trim().equals("") && sysmetaSolrFields != null) {
+            for(SolrField field : sysmetaSolrFields) {
+                if(field !=  null && field.getName() != null && field.getName().equals(fieldName)) {
+                    log.debug("SolrIndex.isSystemMetadataField - the field name "+fieldName+" matches one record of system metadata field list. It is a system metadata field.");
+                    is = true;
+                    break;
+                }
+            }
+        }
+        return is;
+    }
     /*
      * Generate a Document from the InputStream
      */
