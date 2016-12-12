@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -308,6 +309,7 @@ public class SolrIndex {
         if (indexedDocument == null || indexedDocument.getFieldList().size() <= 0) {
             return indexDocument;
         } else {
+            Vector<SolrElementField> mergeNeededFields = new Vector<SolrElementField>(); 
             for (SolrElementField field : indexedDocument.getFieldList()) {
                 if ((field.getName().equals(SolrElementField.FIELD_ISDOCUMENTEDBY)
                         || field.getName().equals(SolrElementField.FIELD_DOCUMENTS) || field
@@ -316,11 +318,17 @@ public class SolrIndex {
                     indexDocument.addField(field);
                 } else if (!indexSchema.isCopyFieldTarget(indexSchema.getField(field.getName())) && !indexDocument.hasField(field.getName()) && !isSystemMetadataField(field.getName())) {
                     // we don't merge the system metadata field since they can be removed.
+                    log.debug("SolrIndex.mergeWithIndexedDocument - put the merge-needed existing solr field "+field.getName()+" with value "+field.getValue()+" from the solr server to a vector. We will merge it later.");
+                    //indexDocument.addField(field);
+                    mergeNeededFields.add(field);//record this name since we can have mutiple name/value for the same name. See https://projects.ecoinformatics.org/ecoinfo/issues/7168
+                } 
+            }
+            if(mergeNeededFields != null) {
+                for(SolrElementField field: mergeNeededFields) {
                     log.debug("SolrIndex.mergeWithIndexedDocument - merge the existing solr field "+field.getName()+" with value "+field.getValue()+" from the solr server to the currently processing document of "+indexDocument.getIdentifier());
                     indexDocument.addField(field);
                 }
             }
-
             indexDocument.setMerged(true);
             return indexDocument;
         }
