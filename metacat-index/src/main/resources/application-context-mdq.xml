@@ -71,10 +71,10 @@
 	</bean>
 	
 	<bean id="mdq.metadata.funder" class="org.dataone.cn.indexer.parser.SolrField">
-		<constructor-arg name="name" value="mdq_metadata_funder_s" />
+		<constructor-arg name="name" value="mdq_metadata_funder_sm" />
 		<constructor-arg name="xpath"
 			value="//metadata/funder" />
-		<property name="multivalue" value="false" />
+		<property name="multivalue" value="true" />
 	</bean>
 	
 	<bean id="mdq.metadata.rightsHolder" class="org.dataone.cn.indexer.parser.SolrField">
