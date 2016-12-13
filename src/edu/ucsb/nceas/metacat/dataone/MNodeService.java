@@ -325,6 +325,8 @@ public class MNodeService extends D1NodeService
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest {
         
+        long startTime = System.currentTimeMillis();
+        
         if(isReadOnlyMode()) {
             throw new ServiceFailure("1310", ReadOnlyChecker.DATAONEERROR);
         }
@@ -389,6 +391,9 @@ public class MNodeService extends D1NodeService
                     "identifier "+pid.getValue()+" can't be identified since - "+ee.getMessage());
         }
         
+        long end =System.currentTimeMillis();
+        logMetacat.debug("MNodeService.update - the time spending on checking the validation of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" is "+(end- startTime)+ " milli seconds.");
+        
         // set the originating node
         NodeReference originMemberNode = this.getCapabilities().getIdentifier();
         sysmeta.setOriginMemberNode(originMemberNode);
@@ -405,7 +410,7 @@ public class MNodeService extends D1NodeService
         if (serialVersion == null) {
         	sysmeta.setSerialVersion(BigInteger.ZERO);
         }
-
+        long startTime2 = System.currentTimeMillis();
         // does the subject have WRITE ( == update) priveleges on the pid?
         //allowed = isAuthorized(session, pid, Permission.WRITE);
         //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
@@ -425,8 +430,11 @@ public class MNodeService extends D1NodeService
             throw new InvalidToken("1210", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         }
         
+        end =System.currentTimeMillis();
+        logMetacat.debug("MNodeService.update - the time spending on checking if the user has the permission to update the old pid "+pid.getValue()+" with the new pid "+newPid.getValue()+" is "+(end- startTime2)+ " milli seconds.");
+        
         if (allowed) {
-        	
+            long startTime3 = System.currentTimeMillis();
         	// check quality of SM
         	if (sysmeta.getObsoletedBy() != null) {
         		throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
@@ -451,6 +459,9 @@ public class MNodeService extends D1NodeService
             	throw new InvalidRequest("1202", 
             			"The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
             }
+            end =System.currentTimeMillis();
+            logMetacat.debug("MNodeService.update - the time spending on checking the quality of the system metadata of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" is "+(end- startTime3)+ " milli seconds.");
+           
             //check the sid in the system metadata. If it exists, it should be non-exist or match the old sid in the previous system metadata.
             Identifier sidInSys = sysmeta.getSeriesId();
             if(sidInSys != null) {
@@ -492,6 +503,10 @@ public class MNodeService extends D1NodeService
                     throw new InvalidSystemMetadata("1300", "The series id "+sidInSys.getValue()+" in the system metadata shouldn't have the same value of the pid.");
                 }
             }
+            
+            long end2 =System.currentTimeMillis();
+            logMetacat.debug("MNodeService.update - the time spending on checking the sid validation of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" is "+(end2- end)+ " milli seconds.");
+           
 
             isScienceMetadata = isScienceMetadata(sysmeta);
 
@@ -529,6 +544,9 @@ public class MNodeService extends D1NodeService
 
             }
             
+            long end3 =System.currentTimeMillis();
+            logMetacat.debug("MNodeService.update - the time spending on saving the object with the new pid "+newPid.getValue()+" is "+(end3- end2)+ " milli seconds.");
+           
             // add the newPid to the obsoletedBy list for the existing sysmeta
             existingSysMeta.setObsoletedBy(newPid);
             //increase version
@@ -550,18 +568,25 @@ public class MNodeService extends D1NodeService
             // log the update event
             EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
             
+            long end4 =System.currentTimeMillis();
+            logMetacat.debug("MNodeService.update - the time spending on updating/saving system metadata  of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" and saving the log information is "+(end4- end3)+ " milli seconds.");
+            
             // attempt to register the identifier - it checks if it is a doi
             try {
     			DOIService.getInstance().registerDOI(sysmeta);
     		} catch (Exception e) {
                 throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
     		}
-
+            long end5 =System.currentTimeMillis();
+            logMetacat.debug("MNodeService.update - the time spending on registering the doi (if it is doi ) of the new pid "+newPid.getValue()+" is "+(end5- end4)+ " milli seconds.");
+            
         } else {
             throw new NotAuthorized("1200", "The provided identity does not have " + "permission to UPDATE the object identified by " + pid.getValue()
                     + " on the Member Node.");
         }
 
+        long end6 =System.currentTimeMillis();
+        logMetacat.debug("MNodeService.update - the total time of updating the old pid " +pid.getValue() +" whth the new pid "+newPid.getValue()+" is "+(end6- startTime)+ " milli seconds.");
         return newPid;
     }
 
