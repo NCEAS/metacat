@@ -80,7 +80,7 @@
 	<bean id="mdq.metadata.rightsHolder" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_rightsHolder_s" />
 		<constructor-arg name="xpath"
-			value="//metadata/rightsHolder" />
+			value="//result[/check/id[text() = 'check.echo.funder.1']]/output" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
