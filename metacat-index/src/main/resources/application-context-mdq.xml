@@ -71,16 +71,16 @@
 	</bean>
 	
 	<bean id="mdq.metadata.funder" class="org.dataone.cn.indexer.parser.SolrField">
-		<constructor-arg name="name" value="mdq_metadata_funder_sm" />
+		<constructor-arg name="name" value="mdq_metadata_funder_s" />
 		<constructor-arg name="xpath"
-			value="//metadata/funder" />
-		<property name="multivalue" value="true" />
+			value="//result[check/id[text() = 'check.echo.funder.1']]/output" />
+		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.metadata.rightsHolder" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_rightsHolder_s" />
 		<constructor-arg name="xpath"
-			value="//result[/check/id[text() = 'check.echo.funder.1']]/output" />
+			value="//metadata/rightsHolder" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
