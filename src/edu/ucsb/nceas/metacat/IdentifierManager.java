@@ -24,6 +24,7 @@
 
 package edu.ucsb.nceas.metacat;
 
+import java.io.File;
 import java.math.BigInteger;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -66,6 +67,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
+import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
 import edu.ucsb.nceas.utilities.access.XMLAccessDAO;
@@ -2393,6 +2395,49 @@ public class IdentifierManager {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+    }
+    
+    /**
+     * Determine if the object file exist for the given localId.
+     * @param localId
+     * @param isScienceMetadata
+     * @return
+     * @throws PropertyNotFoundException
+     */
+    public boolean objectFileExists(String localId, boolean isScienceMetadata) throws PropertyNotFoundException {
+        boolean exist =false;
+        if (localId != null) {
+            String documentPath = getObjectFilePath(localId, isScienceMetadata);
+            if(documentPath != null) {
+                File file = new File(documentPath);
+                exist = file.exists();
+            }
+        } 
+        logMetacat.debug("IdentifierManager.ObjectFileExist - Does the object file for the local id "+localId+" which is science metadata "+isScienceMetadata+" exist in the Metacast file system? The answer is "+exist);
+        return exist;   
+    }
+    
+    /**
+     *Get the the file path for the given object local id
+     * @param localId
+     * @param isScienceMetadata
+     * @return
+     * @throws PropertyNotFoundException
+     */
+    public String getObjectFilePath(String localId, boolean isScienceMetadata) throws PropertyNotFoundException {
+        String documentPath = null;
+        if (localId != null) {      
+            String documentDir = null;
+            // get the correct location on disk
+            if (isScienceMetadata) {
+                documentDir = PropertyService.getProperty("application.documentfilepath");
+            } else {
+                documentDir = PropertyService.getProperty("application.datafilepath");
+            }
+            documentPath = documentDir + FileUtil.getFS() + localId;
+        } 
+        logMetacat.debug("IdentifierManager.getObjectFilePath - the file path for the object with localId "+localId+" which is scienceMetacat "+isScienceMetadata+", is "+documentPath+". If the value is null, this means we can't find it.");
+        return documentPath;   
     }
 }
 
