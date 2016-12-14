@@ -26,12 +26,15 @@ package edu.ucsb.nceas.metacattest;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.File;
 import java.math.BigInteger;
 import java.sql.SQLException;
 import java.util.*;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
+
+import org.apache.commons.io.FileUtils;
 
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
@@ -91,6 +94,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testQuerySystemMetadata"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataPIDExists"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
+        suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         return suite;
     }
     /**
@@ -1686,6 +1690,56 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         assertTrue(size4 > 0);
     }
     
+    public void testObjectFileExist() throws Exception {
+        //test the data object
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        String localId =  IdentifierManager.getInstance().getLocalId(guid.getValue());
+        boolean isScienceMetadata = false;
+        assertTrue("The data file "+localId+" should exists.", IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
+        
+        localId = "boo.foo.12w3d";
+        assertTrue("The data file "+localId+" should exists.", !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
+        
+        Thread.sleep(500);
+        //test the medata object
+        guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        object = new ByteArrayInputStream(FileUtils.readFileToByteArray(new File("./test/eml-sample.xml")));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        localId =  IdentifierManager.getInstance().getLocalId(guid.getValue());
+        isScienceMetadata = true;
+        assertTrue("The science data file "+localId+" should exists.", IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
+        
+        localId = "boo.foo.12w3d";
+        assertTrue("The science data file "+localId+" should exists.", !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
+        
+        Thread.sleep(500);
+        //test the medata object
+        guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        object = new ByteArrayInputStream(FileUtils.readFileToByteArray(new File("./test/resourcemap.xml")));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        formatId = new ObjectFormatIdentifier();
+        formatId.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta.setFormatId(formatId);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        localId =  IdentifierManager.getInstance().getLocalId(guid.getValue());
+        System.out.println("The local id for resource map ================================= is "+localId);
+        isScienceMetadata = false;
+        assertTrue("The science data file "+localId+" should exists.", IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
+        
+     
+        
+    }
     /**
      * We want to act as the CN itself
      * @throws ServiceFailure 
