@@ -531,10 +531,14 @@ public class MNodeService extends D1NodeService
                     }
 
                 } catch (IOException e) {
-                    String msg = "The Node is unable to create the object. " + "There was a problem converting the object to XML";
-                    logMetacat.info(msg);
+                    String msg = "The Node is unable to create the object: "+pid.getValue() + "There was a problem converting the object to XML";
+                    logMetacat.error(msg, e);
                     throw new ServiceFailure("1310", msg + ": " + e.getMessage());
 
+                }  catch (PropertyNotFoundException e) {
+                    String msg = "The Node is unable to create the object. " +pid.getValue()+ " since the properties are not configured well "+e.getMessage();
+                    logMetacat.error(msg, e);
+                    throw new ServiceFailure("1310", msg);
                 }
 
             } else {
