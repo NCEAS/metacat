@@ -1494,7 +1494,7 @@ public abstract class D1NodeService {
         throw new ServiceFailure(detailCode, 
           "Error inserting or updating document: " +pid.getValue()+" since "+ result);
     }
-    logMetacat.debug("Finsished inserting xml document with id " + localId);
+    logMetacat.info("D1NodeService.insertOrUpdateDocument - Finsished inserting xml document with local id " + localId +" and its pid is "+pid.getValue());
     
     return localId;
   }
