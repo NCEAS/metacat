@@ -457,18 +457,18 @@ public abstract class D1NodeService {
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
-            removeSystemMetaAndIdentifier(pid, localId);
+            removeSystemMetaAndIdentifier(pid);
         	String msg = "The Node is unable to create the object "+pid.getValue() +
           " There was a problem converting the object to XML";
         	logMetacat.error(msg, e);
           throw new ServiceFailure("1190", msg + ": " + e.getMessage());
 
         } catch (ServiceFailure e) {
-            removeSystemMetaAndIdentifier(pid, localId);
+            removeSystemMetaAndIdentifier(pid);
             logMetacat.error("D1NodeService.create - the node couldn't create the object "+pid.getValue()+" since "+e.getMessage(), e);
             throw e;
         } catch (Exception e) {
-            removeSystemMetaAndIdentifier(pid, localId);
+            removeSystemMetaAndIdentifier(pid);
             logMetacat.error("The node is unable to create the object: "+pid.getValue()+ " since " + e.getMessage(), e);
             throw new ServiceFailure("1190", "The node is unable to create the object: " +pid.getValue()+" since "+ e.getMessage());
         }
@@ -479,10 +479,10 @@ public abstract class D1NodeService {
           try {
               localId = insertDataObject(object, pid, session);
           } catch (ServiceFailure e) {
-              removeSystemMetaAndIdentifier(pid, localId);
+              removeSystemMetaAndIdentifier(pid);
               throw e;
           } catch (Exception e) {
-              removeSystemMetaAndIdentifier(pid, localId);
+              removeSystemMetaAndIdentifier(pid);
               throw new ServiceFailure("1190", "The node is unable to create the object "+pid.getValue()+" since " + e.getMessage());
           }
 	      
@@ -495,11 +495,11 @@ public abstract class D1NodeService {
     // setting the resulting identifier failed. We will check if the object does exist.
     try {
         if (localId == null || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata) ) {
-            removeSystemMetaAndIdentifier(pid, localId);
+            removeSystemMetaAndIdentifier(pid);
           throw new ServiceFailure("1190", "The Node is unable to create the object. "+pid.getValue());
         }
     } catch (PropertyNotFoundException e) {
-        removeSystemMetaAndIdentifier(pid, localId);
+        removeSystemMetaAndIdentifier(pid);
         throw new ServiceFailure("1190", "The Node is unable to create the object. "+pid.getValue() + " since "+e.getMessage());
     }
    
@@ -524,18 +524,19 @@ public abstract class D1NodeService {
   /*
    * Roll-back method when inserting data object fails.
    */
-  protected void removeSystemMetaAndIdentifier(Identifier id, String localId){
+  protected void removeSystemMetaAndIdentifier(Identifier id){
       if(id != null) {
           logMetacat.debug("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" will removed from both hazelcast and db tables since the object creation failed");
           HazelcastService.getInstance().getSystemMetadataMap().remove(id);
           logMetacat.info("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" has been removed from both hazelcast and db tables since the object creation failed");
           try {
-              if(localId != null && !localId.trim().equals("") && IdentifierManager.getInstance().mappingExists(id.getValue())) {
+              if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
+                 String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
                  IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
                  logMetacat.info("D1NodeService.removeSystemMeta - the identifier "+id.getValue()+" and local id "+localId+" have been removed from the identifier table since the object creation failed");
               }
           } catch (Exception e) {
-              logMetacat.warn("D1NodeService.removeSysteMeta - can't decide if the mapping of  the pid "+id.getValue()+" and local id "+localId+" exists on the identifier table.");
+              logMetacat.warn("D1NodeService.removeSysteMeta - can't decide if the mapping of  the pid "+id.getValue()+" exists on the identifier table.");
           }
       }
   }
