@@ -1,4 +1,4 @@
-﻿#!/usr/bin/perl -w
+#!/usr/bin/perl -w
 #
 #  '$RCSfile$'
 #  Copyright: 2001 Regents of the University of California 
@@ -977,6 +977,7 @@ sub sendPasswordNotification {
     
         my $mailhost = $properties->getProperty('email.mailhost');
         my $sender;
+        my $contact;
         $sender = $skinProperties->getProperty("email.sender") or $sender = $properties->getProperty('email.sender');
         # Send the email message to them
         my $smtp = Net::SMTP->new($mailhost);
