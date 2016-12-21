@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.8.0 Release
+Version: 2.8.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -54,14 +54,30 @@ Installation
 See the file "docs/install.html" for detailed instructions
 for your OS.
 
-Release Notes for 2.8.0:
+Release Notes for 2.8.1:
 ------------------------
 New features and bugs fixed in this release:
+* Register schema files for the format id FGDC-STD-100.1-1999
+* ReIndexing a document lost some prov information in the new generated solr doc
+* MNodeService.updateSystemMetadata() needs to validate obsolescence chain pids
+* Metacat DataONE base url always gets 404 not found page
+* Use the provenance Spring bean file from d1_cn_index_processor in Metacat
+* Calling cn.synchronize method asynchronously in mn.updatesystemmeta on Metacat
+* Uploading a resource map with provenance data causes an NPE during indexing
+* replicationPolicy missing numberReplicas and replicationAllowed attributes
+* Archive operation not permitted for V1 readonly MNs
+* Solr index still keeps the obsoletedBy field even though it was removed from the system metadata and reindexed
+* Private metadata is indexed as isPublic=true
+
+
+Release Notes for 2.8.0:
+------------------------
 New features and bugs fixed in this release:
 * Modify Metacat code according to the change of dataone library migrating from JibX to JAXB
 * Upgrade Solr to 3.6.2 to fix searching issues
 * Metacat is not expanding groups in the rightsHolder field during authorization
 * Improve error message for: User tried to update an access module when they dont have ‘ALL’ permission!"
+
 
 Release Notes for 2.7.2:
 ------------------------
