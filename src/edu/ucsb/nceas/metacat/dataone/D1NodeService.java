@@ -121,7 +121,7 @@ public abstract class D1NodeService {
   protected MetacatHandler handler;
   
   /* parameters set in the incoming request */
-  private Hashtable<String, String[]> params;
+  //private Hashtable<String, String[]> params;
   
   /**
    * limit paged results sets to a configured maximum
@@ -1448,7 +1448,7 @@ public abstract class D1NodeService {
       
     }
 
-    params = new Hashtable<String, String[]>();
+    Hashtable<String, String[]> params = new Hashtable<String, String[]>();
     String[] action = new String[1];
     action[0] = insertOrUpdate;
     params.put("action", action);
