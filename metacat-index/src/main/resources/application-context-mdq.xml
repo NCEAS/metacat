@@ -60,14 +60,14 @@
 	<bean id="mdq.metadata.formatId" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_formatId_s" />
 		<constructor-arg name="xpath"
-			value="//metadata/formatId" />
+			value="//result[check/id[text() = 'check.echo.formatId.1']]/output/text()" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
 	<bean id="mdq.metadata.datasource" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_datasource_s" />
 		<constructor-arg name="xpath"
-			value="//metadata/datasource" />
+			value="//result[check/id[text() = 'check.echo.datasource.1']]/output/text()" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
@@ -82,7 +82,7 @@
 	<bean id="mdq.metadata.rightsHolder" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="mdq_metadata_rightsHolder_s" />
 		<constructor-arg name="xpath"
-			value="//metadata/rightsHolder" />
+			value="//result[check/id[text() = 'check.echo.rightsHolder.1']]/output/text()" />
 		<property name="multivalue" value="false" />
 	</bean>
 	
