@@ -209,12 +209,23 @@
   <xsl:template match="userId" mode="party">
       <xsl:param name="partyfirstColStyle"/>
       <xsl:if test="normalize-space(.)!=''">
-      <div class="control-group">
-      	<label class="control-label">Id</label>
-      	<div class="controls">
-        	<xsl:value-of select="."/>
-        </div>
-       </div>
+          <div class="control-group">
+              <label class="control-label">Id</label>
+              <div class="controls">
+                  <!-- Display the userId as a link when it appears to be an ORCID -->
+                  <xsl:choose>
+                      <xsl:when test="./@directory = 'http://orcid.org' and starts-with(., 'http')">
+                          <xsl:element name="a">
+                              <xsl:attribute name="href"><xsl:value-of select="."/></xsl:attribute>
+                              <xsl:value-of select="."/>
+                          </xsl:element>
+                      </xsl:when>
+                      <xsl:otherwise>
+                          <xsl:value-of select="."/>
+                      </xsl:otherwise>
+                  </xsl:choose>
+              </div>
+          </div>
       </xsl:if>
   </xsl:template>
   <xsl:template match="text()" mode="party" />
