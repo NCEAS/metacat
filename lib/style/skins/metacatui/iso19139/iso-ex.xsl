@@ -22,11 +22,13 @@
 
       <!-- Geographic -->
       <xsl:for-each select=".//gmd:geographicElement">
-        <div class="control-group">
-          <label class="control-label">Geographic</label>
-          <div class="controls">
-            <div class="controls-well">
-              <xsl:apply-templates />
+        <div class="row-fluid geographicCoverage">
+          <div class="control-group">
+            <label class="control-label">Geographic</label>
+            <div class="controls">
+              <div class="controls-well">
+                <xsl:apply-templates />
+              </div>
             </div>
           </div>
         </div>
@@ -118,9 +120,7 @@
 
   <!-- EX_TemporalExtent -->
   <xsl:template match="gmd:EX_TemporalExtent">
-    <span>temporal extent                
-      <xsl:apply-templates select=".//gmd:extent/*" />
-    </span>
+    <xsl:apply-templates select=".//gmd:extent/*" />
   </xsl:template>
 
   <!-- EX_VerticalExtent-->
