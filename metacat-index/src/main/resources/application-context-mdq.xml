@@ -19,7 +19,8 @@
 				<ref bean="mdq.metadata.formatId" />
 				<ref bean="mdq.metadata.datasource" />
 				<ref bean="mdq.metadata.funder" />
-				<ref bean="mdq.metadata.rightsHolder" />				
+				<ref bean="mdq.metadata.rightsHolder" />	
+				<ref bean="mdq.metadata.group" />				
 				<ref bean="mdq.score.green" />
 				<ref bean="mdq.score.orange" />
 				<ref bean="mdq.score.red" />
@@ -83,6 +84,14 @@
 		<constructor-arg name="xpath"
 			value="//metadata/rightsHolder" />
 		<property name="multivalue" value="false" />
+	</bean>
+	
+	<bean id="mdq.metadata.group" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="mdq_metadata_group_sm" />
+		<constructor-arg name="xpath"
+			value="//result[check/id[text() = 'check.lookup.group.1']]/output/text()" />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
 	</bean>
 	
 	<!-- scoring by result status -->
