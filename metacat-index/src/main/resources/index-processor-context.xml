@@ -112,7 +112,6 @@
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
        <ref bean="prov20150115RdfXmlSubprocessor" />
-       <ref bean="rdfXmlSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
