@@ -6,7 +6,7 @@
   xmlns:gml="http://www.opengis.net/gml/3.2" version="1.0">
 
     <xsl:template match="gmd:EX_Extent">
-      <h4>Extent</h4>
+      <h4>Coverage</h4>
 
       <!-- description -->
       <xsl:if test=".//gmd:description">
@@ -86,22 +86,38 @@
 
     <div data-value="{$north}" data-content="northBoundingCoordinate" class="control-group northBoundingCoordinate">
       <label class="control-label">North</label>
-      <div class="controls"><xsl:value-of select="$north" />&#xa0; degrees</div>
+      <div class="controls">
+          <div class="controls-well">
+              <xsl:value-of select="$north" />&#xa0; degrees
+          </div>
+      </div>
     </div>
 
     <div data-value="{$east}" data-content="eastBoundingCoordinate" class="control-group eastBoundingCoordinate">
       <label class="control-label">East</label>
-      <div class="controls"><xsl:value-of select="$east" />&#xa0; degrees</div>
+      <div class="controls">
+          <div class="controls-well">
+              <xsl:value-of select="$east" />&#xa0; degrees
+          </div>
+      </div>
     </div>
 
     <div data-value="{$south}" data-content="southBoundingCoordinate" class="control-group southBoundingCoordinate">
       <label class="control-label">South</label>
-      <div class="controls"><xsl:value-of select="$south" />&#xa0; degrees</div>
+      <div class="controls">
+          <div class="controls-well">
+              <xsl:value-of select="$south" />&#xa0; degrees
+          </div>
+      </div>
     </div>
 
     <div data-value="{$west}" data-content="westBoundingCoordinate" class="control-group westBoundingCoordinate">
       <label class="control-label">West</label>
-      <div class="controls"><xsl:value-of select="$west" />&#xa0; degrees</div>
+      <div class="controls">
+          <div class="controls-well">
+              <xsl:value-of select="$west" />&#xa0; degrees
+          </div>
+      </div>
     </div>
 
     <xsl:apply-templates select="./gmd:extentTypeCode" />

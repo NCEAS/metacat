@@ -37,7 +37,7 @@
     <xsl:import href="../../common/resultset-table-solr.xsl"/>
     <xsl:import href="./fgdc/fgdc-root.xsl"/>
     <xsl:import href="./eml-2/emlroot.xsl"/>
-    <xsl:import href="./iso19139/isoroot.xsl"/>
+    <xsl:import href="./iso19115/isoroot.xsl"/>
     <xsl:import href="metacatui-common.xsl"/>
     <xsl:import href="../../common/dcx/onedcx-common.xsl"/>
     
