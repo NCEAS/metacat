@@ -36,4 +36,7 @@
         </xsl:if>
         <xsl:apply-templates />
     </xsl:template>
+    <xsl:template match="gmd:distributionInfo">
+        <xsl:apply-templates />
+    </xsl:template>
 </xsl:stylesheet>

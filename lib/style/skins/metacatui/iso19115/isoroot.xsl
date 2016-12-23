@@ -152,7 +152,15 @@
                     </div>
                 </div>
             </div>
-            <!-- TODO: otherEntities? -->
+
+            <xsl:if test="//gmd:distributionInfo">
+                <div class="control-group entity">
+                    <h4>Distribution Information</h4>
+
+                    <xsl:apply-templates select="//gmd:distributionInfo" />
+                </div>
+            </xsl:if>
+
             <!-- Extent (geographic, temporal, vertical) -->
             <xsl:for-each select="//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent">
                 <xsl:apply-templates />
