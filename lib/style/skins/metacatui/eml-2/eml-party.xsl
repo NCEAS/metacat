@@ -206,27 +206,65 @@
   </xsl:template>
 
 
-  <xsl:template match="userId" mode="party">
-      <xsl:param name="partyfirstColStyle"/>
-      <xsl:if test="normalize-space(.)!=''">
-          <div class="control-group">
-              <label class="control-label">Id</label>
-              <div class="controls">
-                  <!-- Display the userId as a link when it appears to be an ORCID -->
-                  <xsl:choose>
-                      <xsl:when test="./@directory = 'http://orcid.org' and starts-with(., 'http')">
-                          <xsl:element name="a">
-                              <xsl:attribute name="href"><xsl:value-of select="."/></xsl:attribute>
-                              <xsl:value-of select="."/>
-                          </xsl:element>
-                      </xsl:when>
-                      <xsl:otherwise>
-                          <xsl:value-of select="."/>
-                      </xsl:otherwise>
-                  </xsl:choose>
-              </div>
-          </div>
-      </xsl:if>
-  </xsl:template>
-  <xsl:template match="text()" mode="party" />
+    
+    <xsl:template match="userId" mode="party">
+        <xsl:param name="partyfirstColStyle"/>
+        <xsl:if test="normalize-space(.)!=''">
+            <div class="control-group">
+                <label class="control-label">Id</label>
+                <div class="controls">
+                    <!-- Display the userId as a link when it appears to be an
+                    ORCID. The display of ORCID information is subject to
+                    ORCID's guidelines:
+
+                        https://orcid.org/trademark-and-id-display-guidelines
+
+                    We want to display the content as a hyperlinked ORCID when
+                    we're reasonably sure the value of the userId element is an
+                    ORCID and otherwise just display the non-hyperlinked value
+                    of the element.
+
+                    An example serialization of an ORCID in EML is
+
+                        <userId directory="http://orcid.org">
+                            http://orcid.org/0000-0003-1315-3818
+                        </userId>
+                    -->
+
+                    <!-- Set up space-normalized variables for later use. -->
+                    <xsl:variable name="directory" select="normalize-space(./@directory)" />
+                    <xsl:variable name="value" select="normalize-space(.)" />
+                    
+                    <xsl:choose>
+                        <xsl:when test="starts-with($directory, 'http://orcid.org') or starts-with($directory, 'https://orcid.org') or ($directory = '' and (starts-with($value, 'http://orcid.org') or starts-with(@value, 'https://orcid.org')))">
+                            <!-- ORCID Logo -->
+                            <a href="https://orcid.org">
+                                <img src="img/orcid_64x64.png" style="display: inline; margin-right: 5px;" width="16" height="16" />
+                            </a>
+                            <!-- ORCID Link-->
+                            <xsl:element name="a">
+                                <xsl:choose>
+                                    <xsl:when test="starts-with($value, 'http://orcid.org') or starts-with(./@value, 'https://orcid.org')">
+                                        <xsl:attribute name="href">
+                                            <xsl:value-of select="$value"/>
+                                        </xsl:attribute>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:attribute name="href">
+                                            <xsl:value-of select="concat('http://orcid.org/', $value)" />
+                                        </xsl:attribute>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:value-of select="$value"/>
+                            </xsl:element>
+                        </xsl:when>
+                        <xsl:otherwise>                            
+                            <xsl:value-of select="."/>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </div>
+            </div>
+        </xsl:if>
+    </xsl:template>
+    <xsl:template match="text()" mode="party" />
 </xsl:stylesheet>
