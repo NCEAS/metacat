@@ -2827,25 +2827,35 @@ public class MetacatHandler {
            // Process all of the documents
            logMetacat.info("queueing doc index for all documents");
            try {
-                    List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
-                    Iterator<String> it = allIdentifiers.iterator();
+                    Runnable indexAll = new Runnable () {
+                       public void run() {
+                           List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
+                           Iterator<String> it = allIdentifiers.iterator();
+                           while (it.hasNext()) {
+                               String id = it.next();
+                               Identifier identifier = new Identifier();
+                               identifier.setValue(id);
+                               SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                               if (sysMeta != null) {
+                                   
+                                   // submit for indexing
+                                   Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                                   try {
+                                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                                   } catch (Exception e) {
+                                       System.out.println("we can't submit the id "+id+" to the index queue since "+e.getMessage());
+                                   }
+                                   //results.append("<pid>" + id + "</pid>\n");
+                                   System.out.println("queued SystemMetadata for index on pid: " + id);
+                               }
+                               
+                           }
+                       }
+                    };
+                    Thread thread = new Thread(indexAll);
+                    thread.start();
                     results.append("<success>");
-                    while (it.hasNext()) {
-                        String id = it.next();
-                        Identifier identifier = new Identifier();
-                        identifier.setValue(id);
-                        SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                        if (sysMeta != null) {
-                        	
-                            // submit for indexing
-    					    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                            MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
-
-    					    results.append("<pid>" + id + "</pid>\n");
-                            logMetacat.debug("queued SystemMetadata for index on pid: " + id);
-                        }
-                        
-                    }
+                    results.append("The indexall action was accepted by Metacat and it is working on the background right now. It doesn't guarantee all the object will be reindexed successfully. You may monitor the process in the Metacat log.");
                     results.append("</success>");
                     logMetacat.info("done queueing index for all documents");
            } catch (Exception e) {
