@@ -2855,7 +2855,7 @@ public class MetacatHandler {
                     Thread thread = new Thread(indexAll);
                     thread.start();
                     results.append("<success>");
-                    results.append("The indexall action was accepted by Metacat and it is working on the background right now. It doesn't guarantee all the object will be reindexed successfully. You may monitor the process in the Metacat log.");
+                    results.append("The indexall action was accepted by the Metacat and it is working on the background right now. It doesn't guarantee all objects will be reindexed successfully. You may monitor the process through the Metacat log file.");
                     results.append("</success>");
                     logMetacat.info("done queueing index for all documents");
            } catch (Exception e) {
