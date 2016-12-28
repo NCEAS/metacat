@@ -68,6 +68,7 @@ New features and bugs fixed in this release:
 * Archive operation not permitted for V1 readonly MNs
 * Solr index still keeps the obsoletedBy field even though it was removed from the system metadata and reindexed
 * Private metadata is indexed as isPublic=true
+* Action reindexall should be asynchronized
 
 
 Release Notes for 2.8.0:
