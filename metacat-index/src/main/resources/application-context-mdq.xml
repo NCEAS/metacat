@@ -19,6 +19,7 @@
 				<ref bean="mdq.metadata.formatId" />
 				<ref bean="mdq.metadata.datasource" />
 				<ref bean="mdq.metadata.funder" />
+				<ref bean="mdq.metadata.funder.lookup" />
 				<ref bean="mdq.metadata.rightsHolder" />	
 				<ref bean="mdq.metadata.group" />				
 				<ref bean="mdq.score.green" />
@@ -75,6 +76,14 @@
 		<constructor-arg name="name" value="mdq_metadata_funder_sm" />
 		<constructor-arg name="xpath"
 			value="//result[check/id[text() = 'check.echo.funder.1']]/output/text()" />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="mdq.metadata.funder.lookup" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="mdq_metadata_funder_lookup_sm" />
+		<constructor-arg name="xpath"
+			value="//result[check/id[text() = 'check.lookup.funder.1']]/output/text()" />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
