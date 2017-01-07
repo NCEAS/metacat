@@ -155,6 +155,7 @@ import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStrea
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.mdq.MDQClient;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
@@ -572,6 +573,9 @@ public class MNodeService extends D1NodeService
             // log the update event
             EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
             
+            // queue for QC reporting
+            MDQClient.submit(sysmeta);
+            
             long end4 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on updating/saving system metadata  of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" and saving the log information is "+(end4- end3)+ " milli seconds.");
             
@@ -682,6 +686,9 @@ public class MNodeService extends D1NodeService
 			sf.initCause(e);
             throw sf;
 		}
+        
+        // queue for QC reporting
+        MDQClient.submit(sysmeta);
         
         // return 
 		return resultPid ;

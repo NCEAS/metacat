@@ -82,7 +82,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
 
 import au.com.bytecode.opencsv.CSVWriter;
-
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.utilities.access.AccessControlInterface;
@@ -100,6 +99,7 @@ import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.mdq.MDQClient;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -1873,6 +1873,9 @@ public class MetacatHandler {
                     
                     // submit for indexing
                     MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                    
+                    // queue for QC reporting
+                    MDQClient.submit(sysMeta);
                     
                     // [re]index the resource map now that everything is saved
                     // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
