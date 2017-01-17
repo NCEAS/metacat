@@ -9,6 +9,8 @@ import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import javax.servlet.http.HttpServletRequest;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -16,6 +18,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.log4j.Logger;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.types.AccessPolicyEditor;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
@@ -114,9 +117,13 @@ public class MDQClient {
 		entity.addFilePart("document", docStream);
 		
 		// add sysMeta 
+		logMetacat.debug("marshalling sysMeta for: " + sysMeta.getIdentifier().getValue());
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		TypeMarshaller.marshalTypeToOutputStream(sysMeta, baos);
 		entity.addFilePart("systemMetadata", new ByteArrayInputStream(baos.toByteArray()));
+		
+		// make sure we get XML back
+		post.addHeader("Accept", "application/xml");
 		
 		// send to service
 		post.setEntity(entity);
@@ -133,7 +140,9 @@ public class MDQClient {
 	}
 	
 	private static Identifier saveRun(InputStream runStream, SystemMetadata metadataSysMeta) throws Exception {
-		MNodeService mn = MNodeService.getInstance(null);
+		
+		HttpServletRequest request = new MockHttpServletRequest(null, null, null);
+		MNodeService mn = MNodeService.getInstance(request);
 		
 		// copy the properties from the metadata sysmeta to the run sysmeta
 		byte[] bytes = IOUtils.toByteArray(runStream);
