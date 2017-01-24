@@ -159,24 +159,46 @@
         - Attributes: frame, calendarEraName, indeterminatePosition
     -->
     <xsl:template match="gml:TimeInstant">
-        <span>time instant</span>
-        <span>description:
-            <xsl:value-of select=".//gmd:description" />
-        </span>
-        <div>
-            <span>timePosition:
-                <xsl:value-of select=".//gml:timePosition" />
-            </span>
-            <xsl:if test=".//gml:timePosition/@calendarEraName">
-                <span>
-                    <xsl:value-of select=".//gml:timePosition/@calendarEraName" /> (calendarEraName)
-                </span>
-            </xsl:if>
-            <xsl:if test=".//gml:timePosition/@indeterminatePosition">
-                <span>
-                    <xsl:value-of select=".//gml:timePosition/@indeterminatePosition" /> (indeterminatePosition)
-                </span>
-            </xsl:if>
+        <label class="control-label">Instant</label>
+        <div class="controls">
+            <div class="controls-well">  
+                <xsl:if test="./gmd:description">
+                    <label class="control-label">Description</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:if test="./gmd:description">
+                                <xsl:value-of select=".//gmd:description" />
+                            </xsl:if>
+                        </div>
+                    </div>
+                </xsl:if>
+
+                <label class="control-label">Time Position</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:value-of select=".//gml:timePosition" />
+                    </div>
+                </div>
+
+                <xsl:if test=".//gml:timePosition/@calendarEraName">
+                    <label class="control-label">Calendar Era Name</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:value-of select=".//gml:timePosition/@calendarEraName" />
+                        </div>
+                    </div>
+                    
+                
+                </xsl:if>
+                <xsl:if test=".//gml:timePosition/@indeterminatePosition">
+                    <label class="control-label">Time Position</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:value-of select=".//gml:timePosition/@indeterminatePosition" /> 
+                        </div>
+                    </div>
+                </xsl:if>
+            </div>
         </div>
     </xsl:template>
 
@@ -190,9 +212,7 @@
             <div class="control-group">
                 <label class="control-label">Begin</label>
                 <div class="controls">
-                    <span>
-                        <xsl:value-of select=".//gml:beginPosition" />
-                    </span>
+                    <div class="controls-well"><xsl:value-of select=".//gml:beginPosition" /></div>
                     <xsl:if test=".//gml:beginPosition/@calendarEraName">
                         <span>
                             <xsl:value-of select=".//gml:beginPosition/@calendarEraName" /> (calendarEraName)
@@ -210,9 +230,7 @@
             <div class="control-group">
                 <label class="control-label">End</label>
                 <div class="controls">
-                    <span>
-                        <xsl:value-of select=".//gml:endPosition" />
-                    </span>
+                    <div class="controls-well"><xsl:value-of select=".//gml:endPosition" /></div>
                     <xsl:if test=".//gml:endPosition/@calendarEraName">
                         <span>
                             <xsl:value-of select=".//gml:endPosition/@calendarEraName" /> (calendarEraName)
