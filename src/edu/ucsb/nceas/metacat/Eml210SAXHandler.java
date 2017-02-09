@@ -197,7 +197,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 			Date createDate, Date updateDate, boolean writeAccessRules, Vector<String> guidsToSync) throws SAXException {
 		super(conn, action, docid, revision, user, groups, pub, serverCode, createDate,
 				updateDate, writeAccessRules);
-		
+		logMetacat.info("the write access rule flag is"+writeAccessRules);
 		this.guidsToSync = guidsToSync;
 		// Get the unchangeable subtrees (user doesn't have write permission)
 		try {
@@ -1979,15 +1979,17 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 					// check EITHER previous or current id for access rules
 					// see: https://projects.ecoinformatics.org/ecoinfo/issues/5647
 					PermissionController previousController = new PermissionController(previousDocid);
-					PermissionController currentController = new PermissionController(accessionNumber);				
-					if (previousController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+					PermissionController currentController = new PermissionController(accessionNumber);	
+					if(writeAccessRules) {
+					    if (previousController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
 							|| previousController.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
 							|| currentController.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
 							|| currentController.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)
 							) {
-						onlineDataFileIdInTopAccessVector.add(guid);
-					} else {
-						throw new SAXException(UPDATEACCESSERROR+identifier+" for the data object "+previousDocid);
+					        onlineDataFileIdInTopAccessVector.add(guid);
+					    } else {
+					        throw new SAXException(UPDATEACCESSERROR+identifier+" for the data object "+previousDocid);
+					    }
 					}
 				} 
 			}// try
