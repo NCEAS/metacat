@@ -2789,14 +2789,16 @@ public class Eml200SAXHandler extends DBSAXHandler implements
           String previousDocid = 
         	  docid + PropertyService.getProperty("document.accNumSeparator") + previousRevision;
           PermissionController controller = new PermissionController(previousDocid);
-          if (controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
+          if(writeAccessRules) {
+              if (controller.hasPermission(user, groups, AccessControlInterface.ALLSTRING)
         		  || controller.hasPermission(user, groups, AccessControlInterface.CHMODSTRING)) {
-            return guid;
-          }
-          else
-          {
-            throw new SAXException("User: " + user + " does not have permission to update " +
+                  return guid;
+              }
+              else
+              {
+                  throw new SAXException("User: " + user + " does not have permission to update " +
                   "access rules for data file "+ guid);
+              }
           }
         }//try
         catch(Exception e)
