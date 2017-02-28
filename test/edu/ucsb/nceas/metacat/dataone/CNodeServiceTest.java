@@ -1591,6 +1591,78 @@ public class CNodeServiceTest extends D1NodeServiceTest {
      }
       
       try {
+         
+          Session session = getTestSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testArchive." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          NodeReference nr = new NodeReference();
+          nr.setValue(MockCNode.V1MNNODEID);
+          sysmeta.setOriginMemberNode(nr);
+          sysmeta.setAuthoritativeMemberNode(nr);
+          Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          //another session without any permission shouldn't archive the object
+          try {
+              Session session2 = getAnotherSession();
+              CNodeService.getInstance(request).archive(session2, guid);
+              fail("Another session shouldn't archive the object");
+          } catch (NotAuthorized ee){
+              
+          }
+          //rights holder should archive objects whose authoritative mn is a v1 node
+          CNodeService.getInstance(request).archive(session, guid);
+      } catch (Exception e) {
+         e.printStackTrace();
+         fail("Unexpected error: " + e.getMessage());
+     }
+      
+      try {
+          //a session has the change permission should archive objects whose authoritative mn is a v1 node
+          String user1 = "test12";
+          String user2 = "test34";
+          Session session = getTestSession();
+          Identifier guid = new Identifier();
+          guid.setValue("testArchive." + System.currentTimeMillis());
+          InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+          NodeReference nr = new NodeReference();
+          nr.setValue(MockCNode.V1MNNODEID);
+          sysmeta.setOriginMemberNode(nr);
+          sysmeta.setAuthoritativeMemberNode(nr);
+          Subject sub1 = new Subject();
+          sub1.setValue(user1);
+          AccessRule rule1 = new AccessRule();
+          rule1.addSubject(sub1);
+          rule1.addPermission(Permission.CHANGE_PERMISSION);
+          Subject sub2 = new Subject();
+          sub2.setValue(user2);
+          AccessRule rule2 = new AccessRule();
+          rule2.addSubject(sub2);
+          rule2.addPermission(Permission.READ);
+          AccessPolicy policy = new AccessPolicy();
+          policy.addAllow(rule1);
+          policy.addAllow(rule2);
+          sysmeta.setAccessPolicy(policy);
+          Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          //read permission can't archive the object
+          try {
+              Session session2 = new Session();
+              session2.setSubject(sub2);
+              CNodeService.getInstance(request).archive(session2, guid);
+              fail("READ permision session shouldn't archive the object");
+          } catch (NotAuthorized ee){
+              ee.printStackTrace();
+          }
+          Session session3 = new Session();
+          session3.setSubject(sub1);
+          CNodeService.getInstance(request).archive(session, guid);
+      } catch (Exception e) {
+         e.printStackTrace();
+         fail("Unexpected error: " + e.getMessage());
+     }
+      
+      try {
           //v2 mn should faile
           Session session = getCNSession();
           Identifier guid = new Identifier();
