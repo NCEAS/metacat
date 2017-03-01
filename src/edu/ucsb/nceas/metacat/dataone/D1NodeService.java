@@ -2188,8 +2188,32 @@ public abstract class D1NodeService {
               //HazelcastService.getInstance().getIndexQueue().add(sysMeta);
               
           } catch (McdbDocNotFoundException e) {
-              throw new NotFound("1340", "The provided identifier was invalid.");
-
+              try {
+                  AccessionNumber acc = new AccessionNumber(localId, "NOACTION");
+                  String docid = acc.getDocid();
+                  int rev = 1;
+                  if (acc.getRev() != null) {
+                    rev = (new Integer(acc.getRev()).intValue());
+                  }
+                  if(IdentifierManager.getInstance().existsInXmlLRevisionTable(docid, rev)) {
+                      //somehow the document is in the xml_revision table.
+                      // archive it
+                      sysMeta.setArchived(true);
+                      if(needModifyDate) {
+                          sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
+                          sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+                      }
+                      HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                  } else {
+                      throw new NotFound("1340", "The provided identifier "+ pid.getValue()+" is invalid");
+                  }
+              } catch (SQLException ee) {
+                  ee.printStackTrace();
+                  throw new NotFound("1340", "The provided identifier "+ pid.getValue()+" is invalid");
+              } catch (AccessionNumberException ee) {
+                  ee.printStackTrace();
+                  throw new NotFound("1340", "The provided identifier "+ pid.getValue()+" is invalid");
+              }
           } catch (SQLException e) {
               throw new ServiceFailure("1350", "There was a problem archiving the object." + "The error message was: " + e.getMessage());
 
