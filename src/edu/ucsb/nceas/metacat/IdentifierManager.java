@@ -2439,5 +2439,51 @@ public class IdentifierManager {
         logMetacat.debug("IdentifierManager.getObjectFilePath - the file path for the object with localId "+localId+" which is scienceMetacat "+isScienceMetadata+", is "+documentPath+". If the value is null, this means we can't find it.");
         return documentPath;   
     }
+    
+    /**
+     * IF the given localId exists on the xml_revisions table
+     * @param localId
+     * @return
+     * @throws SQLException
+     */
+    public boolean existsInXmlLRevisionTable(String docid, int rev) throws SQLException{
+        boolean exist =false;
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - the docid is "+docid +" and rev is "+rev);
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool.getDBConnection("IdentifierManager.existsInXmlLRevisionTable");
+            serialNumber = conn.getCheckOutSerialNumber();
+            // Check if the document exists in xml_revisions table.
+            //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
+            logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - check if the document "+docid+"."+rev+ " exists in the xml_revision table");
+            pstmt = conn.prepareStatement("SELECT rev, docid FROM xml_revisions WHERE docid = ? AND rev = ?");
+            pstmt.setString(1, docid);
+            pstmt.setInt(2, rev);
+            logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - executing SQL: " + pstmt.toString());
+            pstmt.execute();
+            rs = pstmt.getResultSet();
+            if(rs.next()){
+                exist = true;
+            }
+            conn.increaseUsageCount(1);
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+            if(rs != null) {
+                rs.close();
+            }
+            if(pstmt != null) {
+                pstmt.close();
+            }
+        }
+        logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid "+docid+"."+rev+ " exist in the xml_revision table? - "+exist);
+        return exist;
+    }
 }
 
