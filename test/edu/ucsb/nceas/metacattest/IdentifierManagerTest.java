@@ -95,6 +95,8 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testSystemMetadataPIDExists"));
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
+        suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
+        
         return suite;
     }
     /**
@@ -1738,6 +1740,18 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         assertTrue("The science data file "+localId+" should exists.", IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata));
         
      
+        
+    }
+    
+    public void testExistsInXmlRevisionTable() {
+        try {
+            String localId = "test.12";
+            int rev =1;
+            assertTrue("The object "+localId+" should not exists in the xml_revisions table.", !IdentifierManager.getInstance().existsInXmlLRevisionTable(localId, rev));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("testExistsInXmlRevisiontable failed since" +e.getMessage());
+        }
         
     }
     /**
