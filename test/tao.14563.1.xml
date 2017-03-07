@@ -12,8 +12,12 @@
 		<title>Test EML package - public-readable from morpho</title>
 		<creator id="1320966812705">
 			<individualName>
-				<surName>adfasd</surName>
+				<givenName>John</givenName>
+				<surName>Doe</surName>
 			</individualName>
+		</creator>
+		<creator>
+			<organizationName>NCEAS</organizationName>
 		</creator>
 		<abstract>
 			<para>adf</para>

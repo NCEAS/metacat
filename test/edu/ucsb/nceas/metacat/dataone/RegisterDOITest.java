@@ -238,7 +238,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			}
 			if (isMetadata) {
 				String creator = metadata.get(DataCiteProfile.CREATOR.toString());
-				assertTrue(creator.equals("adfasd"));				
+				assertTrue(creator.equals("John Doe;NCEAS"));				
 			}
 			
 			System.out.println("tested with DOI: " + pid.getValue());
