@@ -24,11 +24,15 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.itk.D1Client;
@@ -51,6 +55,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.Constants;
 import org.ecoinformatics.datamanager.parser.DataPackage;
+import org.ecoinformatics.datamanager.parser.Party;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
@@ -159,21 +164,19 @@ public class DOIService {
 				// enter metadata about this identifier
 				HashMap<String, String> metadata = new HashMap<String, String>();
 				
-				// title 
-				String title = ErcMissingValueCode.UNKNOWN.toString();
+				// default values first
+				metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
+				metadata.put(DataCiteProfile.CREATOR.toString(), ErcMissingValueCode.UNKNOWN.toString());
+
+				// now look up title and creators from EML content 
+				Map<String, String> emlMetadata = null;
 				try {
-					title = lookupTitle(sysMeta);
+					emlMetadata = this.lookupEMLMetadata(sysMeta);
+					metadata.putAll(emlMetadata);
+
 				} catch (Exception e) {
+					// TODO Auto-generated catch block
 					e.printStackTrace();
-					// ignore
-				}
-				
-				// creator
-				String creator = sysMeta.getRightsHolder().getValue();
-				try {
-					creator = lookupCreator(sysMeta.getRightsHolder());
-				} catch (Exception e) {
-					// ignore and use default
 				}
 				
 				// publisher
@@ -225,8 +228,6 @@ public class DOIService {
 				}
 				
 				// set the datacite metadata fields
-				metadata.put(DataCiteProfile.TITLE.toString(), title);
-				metadata.put(DataCiteProfile.CREATOR.toString(), creator);
 				metadata.put(DataCiteProfile.PUBLISHER.toString(), publisher);
 				metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), year);
 				metadata.put(DataCiteProfile.RESOURCE_TYPE.toString(), resourceType);
@@ -293,8 +294,13 @@ public class DOIService {
 	 * @return appropriate title if known, or the missing value code
 	 * @throws Exception
 	 */
-	private String lookupTitle(SystemMetadata sysMeta) throws Exception {
+	private Map<String, String> lookupEMLMetadata(SystemMetadata sysMeta) throws Exception {
+		
+		Map<String, String> emlMetadata = new HashMap<String, String>();
+		
 		String title = ErcMissingValueCode.UNKNOWN.toString();
+		List<String> people = new ArrayList<String>();
+
 		if (sysMeta.getFormatId().getValue().startsWith("eml://")) {
 			DataPackageParserInterface parser = new Eml200DataPackageParser();
 			// for using the MN API as the MN itself
@@ -306,8 +312,43 @@ public class DOIService {
 			parser.parse(emlStream);
 			DataPackage dataPackage = parser.getDataPackage();
 			title = dataPackage.getTitle();
+			
+			emlMetadata.put(DataCiteProfile.TITLE.toString(), title);
+
+			// extract the creator[s]
+			String creator = sysMeta.getRightsHolder().getValue();
+			List<Party> creators = dataPackage.getCreators();
+			if (creators != null) {
+				for (Party party: creators) {
+					String name = "";
+					if (party.getSurName() != null) {
+						name = party.getSurName();
+						if (party.getGivenNames() != null && party.getGivenNames().size() > 0) {
+							String givenNames = "";
+							for (String givenName: party.getGivenNames()) {
+								givenNames = givenName + " ";
+							}
+							name = givenNames + name;
+						}
+					} else {
+						name = party.getOrganization();
+					}
+					
+					people.add(name);
+				}
+				creator = StringUtils.join(people, ";");
+			} else {
+				try {
+					// from SM
+					creator = lookupCreator(sysMeta.getRightsHolder());
+				} catch (Exception e) {
+					// ignore and use default
+				}
+			}
+			
+			emlMetadata.put(DataCiteProfile.CREATOR.toString(), creator);
 		}
-		return title;
+		return emlMetadata;
 	}
 	
 	private String lookupResourceType(SystemMetadata sysMeta) {
