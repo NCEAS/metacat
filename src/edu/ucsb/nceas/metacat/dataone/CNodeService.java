@@ -1820,6 +1820,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       if (!isValidIdentifier(pid)) {
           throw new InvalidRequest("4891", "The provided identifier is invalid.");
       }
+      logMetacat.debug("CN.create -start to create the object with pid "+pid.getValue());
       // The lock to be used for this identifier
       Lock lock = null;
 
@@ -1846,7 +1847,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   }
               }
               // create the coordinating node version of the document      
-              logMetacat.debug("Locked identifier " + pid.getValue());
+              logMetacat.debug("CN.create - after locking identifier, passing authorization check, continue to create the object " + pid.getValue());
               sysmeta.setSerialVersion(BigInteger.ONE);
               //for the object whose authoritative mn is v1. we need reset the modification date.
               //for the object whose authoritative mn is v2. we just accept the modification date.
@@ -1871,8 +1872,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
           } else {
               String msg = "The subject listed as " + session.getSubject().getValue() + 
-                  " isn't allowed to call create() on a Coordinating Node.";
-              logMetacat.info(msg);
+                  " isn't allowed to call create() on a Coordinating Node for pid "+pid.getValue();
+              logMetacat.error(msg);
               throw new NotAuthorized("1100", msg);
           }
           
