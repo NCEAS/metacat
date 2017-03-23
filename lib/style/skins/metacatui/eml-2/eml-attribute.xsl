@@ -1277,7 +1277,7 @@
          <xsl:with-param name="stripes" select="$stripes"/>
        </xsl:call-template>
     </xsl:for-each>
-    <xsl:for-each select="datetime">
+    <xsl:for-each select="dateTime">
        <xsl:call-template name="datetime">
           <xsl:with-param name="stripes" select="$stripes"/>
        </xsl:call-template>
