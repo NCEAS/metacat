@@ -101,7 +101,6 @@
      <xsl:param name="nondomainfirstColStyle"/>
      <xsl:if test="codeDefinition">
         <p>Enumerated Domain</p>
-        <table class="table table-striped">
         	<thead>
         		<tr>
         			<th>Code</th>
@@ -116,7 +115,6 @@
 					<td class="{$secondColStyle}"><xsl:value-of select="source"/></td>
 				</tr>
 			</xsl:for-each>
-		</table>
      </xsl:if>
      <xsl:if test="externalCodeSet">
      	<p>Enumerated Domain (External Set)</p>
