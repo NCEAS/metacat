@@ -71,6 +71,7 @@ public class D1RestServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         System.out.println("HTTP Verb: GET");
+        logMetacat.info("D1RestServlet.doGet - HTTP Verb: GET");
         handler = createHandler(request, response);
         handler.handle(D1ResourceHandler.GET);
     }
@@ -80,6 +81,7 @@ public class D1RestServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         System.out.println("HTTP Verb: POST");
+        logMetacat.info("D1RestServlet.doPost - HTTP Verb: POST");
         handler = createHandler(request, response);
         handler.handle(D1ResourceHandler.POST);
     }
@@ -89,6 +91,7 @@ public class D1RestServlet extends HttpServlet {
     protected void doDelete(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         System.out.println("HTTP Verb: DELETE");
+        logMetacat.info("D1RestServlet.doDelete - HTTP Verb: DELETE");
         handler = createHandler(request, response);
         handler.handle(D1ResourceHandler.DELETE);
     }
@@ -98,6 +101,7 @@ public class D1RestServlet extends HttpServlet {
     protected void doPut(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         System.out.println("HTTP Verb: PUT");
+        logMetacat.info("D1RestServlet.doPut - HTTP Verb: PUT");
         handler = createHandler(request, response);
         handler.handle(D1ResourceHandler.PUT);
     }
@@ -107,6 +111,7 @@ public class D1RestServlet extends HttpServlet {
     protected void doHead(HttpServletRequest request,
             HttpServletResponse response) throws ServletException, IOException {
         System.out.println("HTTP Verb: HEAD");
+        logMetacat.info("D1RestServlet.doHead - HTTP Verb: HEAD");
         handler = createHandler(request, response);
         handler.handle(D1ResourceHandler.HEAD);
     }

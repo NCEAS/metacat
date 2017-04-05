@@ -30,12 +30,15 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
+import org.apache.log4j.Logger;
+
 /**
  * @author berkley
  * Class to override getPathInfo on the servlet request
  */
 public class D1HttpRequest extends HttpServletRequestWrapper
 {   
+    private static Logger logMetacat = Logger.getLogger(D1HttpRequest.class);
     /**
      * HttpServletRequestWrapper(HttpServletRequest request) 
      */
@@ -53,6 +56,7 @@ public class D1HttpRequest extends HttpServletRequestWrapper
     {
         String s = super.getPathInfo();
         System.out.println("original pathInfo: " + s);
+        logMetacat.info("D1HttpRequest.getPathInfo - the orignial pathInfo: "+s);
         String reqUri = this.getRequestURI();
         System.out.println("original requestURI: " + reqUri);
         String strip = this.getContextPath() + this.getServletPath();
@@ -67,6 +71,7 @@ public class D1HttpRequest extends HttpServletRequestWrapper
             s = URLDecoder.decode(s);
         }*/
         System.out.println("new pathinfo: " + s);
+        logMetacat.info("D1HttpRequest.getPathInfo - the new pathInfo: "+s);
         return s;
     }
     
