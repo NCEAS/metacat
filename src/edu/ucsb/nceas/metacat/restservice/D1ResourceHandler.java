@@ -453,8 +453,8 @@ public class D1ResourceHandler {
         response.setContentType("text/xml");
         response.setStatus(e.getCode());
         
-        logMetacat.error("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage());
-        e.printStackTrace();
+        logMetacat.error("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage(), e);
+        //e.printStackTrace();
         
         try {
             IOUtils.write(e.serialize(BaseException.FMT_XML), out);
