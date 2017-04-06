@@ -1312,7 +1312,14 @@ public class MNodeService extends D1NodeService
 
         String localId;
         Identifier pid;
-        if ( syncFailed.getPid() != null ) {
+        //synFailed.getPid was obsolseted since d1_common_java 2.4
+        String pidStr = syncFailed.getIdentifier();
+        if (pidStr == null || pidString.trim().equals("")) {
+            pidStr = syncFailed.getPid();
+        }
+        logMetacat.debug("MNodeService.synchronizationFailed - the failed identifier is "+pidStr);
+        if ( pidString != null && !pidString.trim().equals("") ) {
+            
             pid = new Identifier();
             pid.setValue(syncFailed.getPid());
             boolean allowed;
