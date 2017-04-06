@@ -72,6 +72,7 @@ import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
+import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.Node;
@@ -1279,43 +1280,52 @@ public abstract class D1NodeService {
       boolean is = false;
       if(rightHolder != null && userSession != null && rightHolder.getValue() != null && !rightHolder.getValue().trim().equals("") && userSession.getValue() != null && !userSession.getValue().trim().equals("")) {
           CNode cn = D1Client.getCN();
-          logMetacat.debug("D1NodeService.expandRightHolder - after getting the cn node and cn node is "+cn.getNodeBaseServiceUrl());
+          logMetacat.debug("D1NodeService.expandRightHolder - at the start of method: after getting the cn node and cn node is "+cn.getNodeBaseServiceUrl());
           String query= rightHolder.getValue();
           int start =0;
-          int count=-1;
+          int count= 200;
           String status = null;
           Session session = null;
           SubjectInfo subjects = cn.listSubjects(session, query, status, start, count);
-          if(subjects != null) {
+
+          while(subjects != null) {
               logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is not null");
               List<Group> groups = subjects.getGroupList();
-              if(groups != null) {
-                  logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result does include groups and the size of groups is "+groups.size());
-                  for(Group group : groups) {
-                      //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
-                      if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
-                          logMetacat.debug("D1NodeService.expandRightHolder - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
-                          List<Subject> members = group.getHasMemberList();
-                          if(members != null ){
-                              logMetacat.debug("D1NodeService.expandRightHolder - the group "+group.getSubject().getValue()+" in the cn has members");
-                              for(Subject member : members) {
-                                  logMetacat.debug("D1NodeService.expandRightHolder - compare the member "+member.getValue()+" with the user "+userSession.getValue());
-                                  if(member.getValue() != null && !member.getValue().trim().equals("") && userSession.getValue() != null && member.getValue().equals(userSession.getValue())) {
-                                      logMetacat.debug("D1NodeService.expandRightHolder - Find it! The member "+member.getValue()+" in the group "+group.getSubject().getValue()+" matches the user "+userSession.getValue());
-                                      is = true;
-                                      return is;
-                                  }
-                              }
-                          }
-                          break;//we found the group but can't find the member matches the user. so break it.
-                      }
-                  }
+              is = isInGroups(userSession, rightHolder, groups);
+              if(is) {
+                  //since we find it, return it.
+                  return is;
               } else {
-                  logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result does NOT have a group");
+                  //decide if we need to try the page query for another trying.
+                  int sizeOfGroups = 0;
+                  if(groups != null) {
+                     sizeOfGroups  = groups.size();
+                  }
+                  List<Person> persons = subjects.getPersonList();
+                  int sizeOfPersons = 0;
+                  if(persons != null) {
+                      sizeOfPersons = persons.size();
+                  }
+                  int totalSize = sizeOfGroups+sizeOfPersons;
+                  //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result is "+totalSize);
+                 //we can't find the target on the first query, maybe query again.
+                  if(totalSize == count) {
+                      start = start+count;
+                      logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result equals the count "+totalSize+" .And we didn't find the target in the this query. So we have to use the page query with the start number "+start);
+                      subjects = cn.listSubjects(session, query, status, start, count);
+                  } else if (totalSize < count){
+                      logMetacat.debug("D1NodeService.expandRightHolder - we are already at the end of the returned restult since the size of returned results "+totalSize+
+                          " is less than the count "+count+". So we have to break the loop and finish the try.");
+                      break;
+                  } else if (totalSize >count) {
+                      logMetacat.warn("D1NodeService.expandRightHolder - Something is wrong on the implementation of the method listSubject since the size of returned results "+totalSize+
+                              " is greater than the count "+count+". So we have to break the loop and finish the try.");
+                      break;
+                  }
               }
-          } else {
-              logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is null");
-          }
+              
+          } 
+          //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is null");
           if(!is) {
               logMetacat.debug("D1NodeService.expandRightHolder - We can NOT find any member in the group "+query+" (if it is a group) matches the user "+userSession.getValue());
           }
@@ -1323,6 +1333,38 @@ public abstract class D1NodeService {
           logMetacat.debug("D1NodeService.expandRightHolder - We can't determine if the use subject is a member of the right holder group since one of them is null or blank");
       }
      
+      return is;
+  }
+  
+  /*
+   * If the given useSession is a member of a group which is in the given list of groups and has the name of righHolder.
+   */
+  private static boolean isInGroups(Subject userSession, Subject rightHolder, List<Group> groups) {
+      boolean is = false;
+      if(groups != null) {
+          logMetacat.debug("D1NodeService.isInGroups -  the given groups' (the returned result including groups) size is "+groups.size());
+          for(Group group : groups) {
+              //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
+              if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
+                  logMetacat.debug("D1NodeService.isInGroups - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
+                  List<Subject> members = group.getHasMemberList();
+                  if(members != null ){
+                      logMetacat.debug("D1NodeService.isInGroups - the group "+group.getSubject().getValue()+" in the cn has members");
+                      for(Subject member : members) {
+                          logMetacat.debug("D1NodeService.isInGroups - compare the member "+member.getValue()+" with the user "+userSession.getValue());
+                          if(member.getValue() != null && !member.getValue().trim().equals("") && userSession.getValue() != null && member.getValue().equals(userSession.getValue())) {
+                              logMetacat.debug("D1NodeService.isInGroups - Find it! The member "+member.getValue()+" in the group "+group.getSubject().getValue()+" matches the user "+userSession.getValue());
+                              is = true;
+                              return is;
+                          }
+                      }
+                  }
+                  break;//we found the group but can't find the member matches the user. so break it.
+              }
+          }
+      } else {
+          logMetacat.debug("D1NodeService.isInGroups -  the given group is null (the returned result does NOT have a group");
+      }
       return is;
   }
   /*
