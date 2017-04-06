@@ -1662,6 +1662,7 @@ sub createParties {
 		'principalInvestigator',
 		'coPrincipalInvestigator',
 		'collaboratingPrincipalInvestigator',
+		'collaborator',
 		'custodianSteward',
 		'user'];
 	
