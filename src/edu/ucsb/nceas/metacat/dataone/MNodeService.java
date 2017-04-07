@@ -1313,7 +1313,6 @@ public class MNodeService extends D1NodeService
         String localId;
         Identifier pid;
         if ( syncFailed.getPid() != null ) {
-            
             pid = new Identifier();
             pid.setValue(syncFailed.getPid());
             boolean allowed;
