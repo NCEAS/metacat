@@ -334,8 +334,8 @@
         </constructor-arg>
     </bean>
 
-    <!--  Find the source pids used by a program -->
-    <!--  This is the inverse relationship of prov_usedByProgram -->
+    <!--  This index field is inteded for use across multiple documents, which requires
+          a triple store, which is not currently implemented, so it is disabled for now..
     <bean id="prov20150115.hasSources" class="org.dataone.cn.indexer.annotation.SparqlField">
         <constructor-arg name="name" value="prov_hasSources" />
         <constructor-arg name="query">
@@ -363,6 +363,7 @@
             </value>
         </constructor-arg>
     </bean>
+    -->
     
     <bean id="prov20150115.hasDerivations" class="org.dataone.cn.indexer.annotation.SparqlField">
         <constructor-arg name="name" value="prov_hasDerivations" />
