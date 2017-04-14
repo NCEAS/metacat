@@ -55,7 +55,6 @@ public class MetacatRdfXmlSubprocessorTest {
                 } else if (newId.equals("urn:uuid:9ceeaeb3-6ef3-4b1e-bc4d-96e299fab3a4")) {
                     SolrElementField field1 = resultSolrDoc.getField("prov_used");
                     //assertTrue(" the used value should be urn:uuid:621a115f-f1ed-4bef-bca5-f8741793a540. But the real value is "+field1.getValue(), field1.getValue().equals("urn:uuid:621a115f-f1ed-4bef-bca5-f8741793a540"));
-                   
                 } else if (newId.equals("urn:uuid:621a115f-f1ed-4bef-bca5-f8741793a540")) {
                     List<String>list = resultSolrDoc.getAllFieldValues("prov_wasDerivedFrom");
                     assertTrue("The list must contain urn:uuid:ee635a61-c930-444d-8214-db65178a1a47", list.contains("urn:uuid:ee635a61-c930-444d-8214-db65178a1a47"));

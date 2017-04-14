@@ -25,7 +25,7 @@
                 <ref bean="prov20150115.wasExecutedByExecution" />
                 <ref bean="prov20150115.wasExecutedByUser" />
                 <ref bean="prov20150115.instanceOfClass" />
-                <ref bean="prov20150115.hasSources" />
+                <!--  <ref bean="prov20150115.hasSources" /> -->
                 <ref bean="prov20150115.hasDerivations" />
 			</list>
 		</property>
@@ -43,7 +43,7 @@
      			<value>prov_usedByUser</value>
      			<value>prov_wasExecutedByExecution</value>
      			<value>prov_wasExecutedByUser</value>
-     			<value>prov_hasSources</value>
+     			<!-- <value>prov_hasSources</value> -->
      			<value>prov_hasDerivations</value>
      			<value>prov_instanceOfClass</value>
      		</list>

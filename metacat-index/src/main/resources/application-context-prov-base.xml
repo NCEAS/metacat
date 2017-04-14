@@ -334,6 +334,8 @@
         </constructor-arg>
     </bean>
 
+    <!--  This index field is inteded for use across multiple documents, which requires
+          a triple store, which is not currently implemented, so it is disabled for now..
     <bean id="prov20150115.hasSources" class="org.dataone.cn.indexer.annotation.SparqlField">
         <constructor-arg name="name" value="prov_hasSources" />
         <constructor-arg name="query">
@@ -351,15 +353,17 @@
                 SELECT (str(?pidValue) as ?pid) (str(?sourceDataPidValue) as ?prov_hasSources)
                 FROM <$GRAPH_NAME>
                 WHERE {
-                    ?derived_data prov:wasDerivedFrom ?source_data .
-                    ?derived_data cito:documentedBy ?derived_metadata .
-                    ?derived_metadata dcterms:identifier ?pidValue .
+                    ?execution prov:used ?source_data .
+                    ?execution prov:qualifiedAssociation ?association .
+                    ?association prov:hadPlan ?program .
+                    ?program dcterms:identifier ?pidValue .
                     ?source_data dcterms:identifier ?sourceDataPidValue .
                 }                
                 ]]>
             </value>
         </constructor-arg>
     </bean>
+    -->
     
     <bean id="prov20150115.hasDerivations" class="org.dataone.cn.indexer.annotation.SparqlField">
         <constructor-arg name="name" value="prov_hasDerivations" />
