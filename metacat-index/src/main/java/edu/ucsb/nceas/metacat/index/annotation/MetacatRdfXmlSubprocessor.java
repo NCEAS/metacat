@@ -175,103 +175,112 @@ public class MetacatRdfXmlSubprocessor implements IDocumentSubprocessor {
         
         // get the triplestore dataset
         long start = System.currentTimeMillis();
+        Map<String, SolrDoc> mergedDocuments;
         Dataset dataset = TripleStoreService.getInstance().getDataset();
-        perfLog.log("RdfXmlSubprocess.process gets a dataset from tripe store service ", System.currentTimeMillis() - start);
-        
-        // read the annotation
-        String indexDocId = indexDocument.getIdentifier();
-        String name = indexDocId;
-
-        //Check if the identifier is a valid URI and if not, make it one by prepending "http://"
-        URI nameURI;
-        String scheme = null;
         try {
-            nameURI = new URI(indexDocId);
-            scheme = nameURI.getScheme();
+            perfLog.log("RdfXmlSubprocess.process gets a dataset from tripe store service ", System.currentTimeMillis() - start);
             
-        } catch (URISyntaxException use) {
-            // The identifier can't be parsed due to offending characters. It's not a URL
+            // read the annotation
+            String indexDocId = indexDocument.getIdentifier();
+            String name = indexDocId;
+    
+            //Check if the identifier is a valid URI and if not, make it one by prepending "http://"
+            URI nameURI;
+            String scheme = null;
+            try {
+                nameURI = new URI(indexDocId);
+                scheme = nameURI.getScheme();
+                
+            } catch (URISyntaxException use) {
+                // The identifier can't be parsed due to offending characters. It's not a URL
+                
+                name = "https://cn.dataone.org/cn/v1/resolve/"+indexDocId;
+            }
             
-            name = "https://cn.dataone.org/cn/v1/resolve/"+indexDocId;
-        }
-        
-        // The had no scheme prefix. It's not a URL
-        if ((scheme == null) || (scheme.isEmpty())) {
-            name = "https://cn.dataone.org/cn/v1/resolve/"+indexDocId;
+            // The had no scheme prefix. It's not a URL
+            if ((scheme == null) || (scheme.isEmpty())) {
+                name = "https://cn.dataone.org/cn/v1/resolve/"+indexDocId;
+                
+            }
             
-        }
-        
-        long startOntModel = System.currentTimeMillis();
-        boolean loaded = dataset.containsNamedModel(name);
-        if (!loaded) {
-            OntModel ontModel = ModelFactory.createOntologyModel();
-            ontModel.read(is, name);
-            dataset.addNamedModel(name, ontModel);
-        }
-        perfLog.log("RdfXmlSubprocess.process adds ont-model ", System.currentTimeMillis() - startOntModel);
-        //dataset.getDefaultModel().add(ontModel);
-
-        // process each field query
-        Map<String, SolrDoc> documentsToIndex = new HashMap<String, SolrDoc>();
-        long startField = System.currentTimeMillis();
-        for (ISolrDataField field : this.fieldList) {
-            long filed = System.currentTimeMillis();
-            String q = null;
-            if (field instanceof SparqlField) {
-                q = ((SparqlField) field).getQuery();
-                q = q.replaceAll("\\$GRAPH_NAME", name);
-                Query query = QueryFactory.create(q);
-                log.trace("Executing SPARQL query:\n" + query.toString());
-                QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
-                ResultSet results = qexec.execSelect();
-                while (results.hasNext()) {
-                    SolrDoc solrDoc = null;
-                    QuerySolution solution = results.next();
-                    log.trace(solution.toString());
-
-                    // find the index document we are trying to augment with the annotation
-                    if (solution.contains("pid")) {
-                        String id = solution.getLiteral("pid").getString();
-
-                        // TODO: check if anyone with permissions on the annotation document has write permission on the document we are annotating
-                        boolean statementAuthorized = true;
-                        if (!statementAuthorized) {
-                            continue;
+            long startOntModel = System.currentTimeMillis();
+            boolean loaded = dataset.containsNamedModel(name);
+            if (!loaded) {
+                OntModel ontModel = ModelFactory.createOntologyModel();
+                ontModel.read(is, name);
+                dataset.addNamedModel(name, ontModel);
+            }
+            perfLog.log("RdfXmlSubprocess.process adds ont-model ", System.currentTimeMillis() - startOntModel);
+            //dataset.getDefaultModel().add(ontModel);
+    
+            // process each field query
+            Map<String, SolrDoc> documentsToIndex = new HashMap<String, SolrDoc>();
+            long startField = System.currentTimeMillis();
+            for (ISolrDataField field : this.fieldList) {
+                long filed = System.currentTimeMillis();
+                String q = null;
+                if (field instanceof SparqlField) {
+                    q = ((SparqlField) field).getQuery();
+                    q = q.replaceAll("\\$GRAPH_NAME", name);
+                    Query query = QueryFactory.create(q);
+                    log.trace("Executing SPARQL query:\n" + query.toString());
+                    QueryExecution qexec = QueryExecutionFactory.create(query, dataset);
+                    ResultSet results = qexec.execSelect();
+                    while (results.hasNext()) {
+                        SolrDoc solrDoc = null;
+                        QuerySolution solution = results.next();
+                        log.trace(solution.toString());
+    
+                        // find the index document we are trying to augment with the annotation
+                        if (solution.contains("pid")) {
+                            String id = solution.getLiteral("pid").getString();
+    
+                            // TODO: check if anyone with permissions on the annotation document has write permission on the document we are annotating
+                            boolean statementAuthorized = true;
+                            if (!statementAuthorized) {
+                                continue;
+                            }
+    
+                            // otherwise carry on with the indexing
+                            solrDoc = documentsToIndex.get(id);
+                            if (solrDoc == null) {
+                                solrDoc = new SolrDoc();
+                                solrDoc.addField(new SolrElementField(SolrElementField.FIELD_ID, id));
+                                documentsToIndex.put(id, solrDoc);
+                            }
                         }
-
-                        // otherwise carry on with the indexing
-                        solrDoc = documentsToIndex.get(id);
-                        if (solrDoc == null) {
-                            solrDoc = new SolrDoc();
-                            solrDoc.addField(new SolrElementField(SolrElementField.FIELD_ID, id));
-                            documentsToIndex.put(id, solrDoc);
-                        }
-                    }
-
-                    // add the field to the index document
-                    if (solution.contains(field.getName())) {
-                        String value = solution.get(field.getName()).toString();
-                        SolrElementField f = new SolrElementField(field.getName(), value);
-                        if (!solrDoc.hasFieldWithValue(f.getName(), f.getValue())) {
-                            solrDoc.addField(f);
+    
+                        // add the field to the index document
+                        if (solution.contains(field.getName())) {
+                            String value = solution.get(field.getName()).toString();
+                            SolrElementField f = new SolrElementField(field.getName(), value);
+                            if (!solrDoc.hasFieldWithValue(f.getName(), f.getValue())) {
+                                solrDoc.addField(f);
+                            }
                         }
                     }
                 }
+                perfLog.log("RdfXmlSubprocess.process process the field "+field.getName(), System.currentTimeMillis() - filed);
             }
-            perfLog.log("RdfXmlSubprocess.process process the field "+field.getName(), System.currentTimeMillis() - filed);
+            perfLog.log("RdfXmlSubprocess.process process the fields total ", System.currentTimeMillis() - startField);
+            // clean up the triple store
+            //TDBFactory.release(dataset);
+    
+            // merge the existing index with the new[er] values
+            long getStart = System.currentTimeMillis();
+            Map<String, SolrDoc> existingDocuments = getSolrDocs(documentsToIndex.keySet());
+            perfLog.log("RdfXmlSubprocess.process get existing solr docs ", System.currentTimeMillis() - getStart);
+            mergedDocuments = mergeDocs(documentsToIndex, existingDocuments);
+            mergedDocuments.put(indexDocument.getIdentifier(), indexDocument);
+    
+            perfLog.log("RdfXmlSubprocess.process() total take ", System.currentTimeMillis() - start);
+        } finally {
+            try {
+                TripleStoreService.getInstance().destoryDataset(dataset);
+            } catch (Exception e) {
+                log.warn("A tdb directory can't be removed since "+e.getMessage(), e);
+            }
         }
-        perfLog.log("RdfXmlSubprocess.process process the fields total ", System.currentTimeMillis() - startField);
-        // clean up the triple store
-        TDBFactory.release(dataset);
-
-        // merge the existing index with the new[er] values
-        long getStart = System.currentTimeMillis();
-        Map<String, SolrDoc> existingDocuments = getSolrDocs(documentsToIndex.keySet());
-        perfLog.log("RdfXmlSubprocess.process get existing solr docs ", System.currentTimeMillis() - getStart);
-        Map<String, SolrDoc> mergedDocuments = mergeDocs(documentsToIndex, existingDocuments);
-        mergedDocuments.put(indexDocument.getIdentifier(), indexDocument);
-
-        perfLog.log("RdfXmlSubprocess.process() total take ", System.currentTimeMillis() - start);
         return new ArrayList<SolrDoc>(mergedDocuments.values());
     }
 
