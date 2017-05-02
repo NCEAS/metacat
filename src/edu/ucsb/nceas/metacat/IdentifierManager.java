@@ -39,6 +39,7 @@ import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.AccessPolicy;
@@ -85,6 +86,8 @@ public class IdentifierManager {
     
     public static final String TYPE_SYSTEM_METADATA = "systemmetadata";
     public static final String TYPE_IDENTIFIER = "identifier";
+    
+    private static boolean filterWhiteSpaces = Settings.getConfiguration().getBoolean("dataone.listingidentifier.filteringwhitespaces", true);
   
     /**
      * The single instance of the manager that is always returned.
@@ -1868,6 +1871,7 @@ public class IdentifierManager {
             boolean f2 = false;
             boolean f3 = false;
             boolean f4 = false;
+            boolean f5 = false;
 
 
             if (startTime != null) {
@@ -1930,6 +1934,19 @@ public class IdentifierManager {
                     whereClauseSql += " and authoritive_member_node = '" +
                         nodeId.getValue().trim() + "'";
                 }
+                f5 = true;
+            }
+            
+          //add a filter to remove pids whith white spaces
+            if(filterWhiteSpaces) {
+                logMetacat.debug("IdnetifierManager.querySystemMetadata - the default value of the property \"dataone.listingidentifier.filteringwhitespaces\" is true, so we will filter the white spaces in the query");
+                if(!f1 && !f2 && !f3 && !f4 && !f5) {
+                    whereClauseSql += " where guid not like '% %' ";
+                } else {
+                    whereClauseSql += " and guid not like '% %' ";
+                }
+            } else {
+                logMetacat.debug("IdnetifierManager.querySystemMetadata - the property \"dataone.listingidentifier.filteringwhitespaces\" is configured to be false, so we don't filter the white spaces in the query.");
             }
            
             
@@ -2045,9 +2062,9 @@ public class IdentifierManager {
                 //do nothing
             }
 
-            logMetacat.debug("list objects fieldStmt: " + fieldStmt.toString());
+            logMetacat.info("list objects fieldStmt: " + fieldStmt.toString());
             
-            logMetacat.debug("list objects countStmt: " + countStmt.toString());
+            logMetacat.info("list objects countStmt: " + countStmt.toString());
             
             // get the total object count no matter what
             int total = 0;
