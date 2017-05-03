@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.8.1 Release
+Version: 2.8.2 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,17 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+
+Release Notes for 2.8.2:
+------------------------
+New bugs fixed in this release:
+* The listObjects method fails if there is pid with a white space in the list
+* EML SAX parser will not check if the user has the all permission on data objects (described by the eml object) when the parser is called by DataONE API
+* The count number is -1 when the expandRightsHolder method lists the subjects
+* CN V1/V2.archive implementation only allows CN and MN administrators to act
+* Metacat-index RDF/XML subprocessor not populating prov_hasDerivations field
+
 
 Release Notes for 2.8.1:
 ------------------------
