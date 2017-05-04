@@ -36,6 +36,9 @@ KEYLOCATION=/etc/ssl/private
 #Location of the server certificate
 CERTLOCATION=/etc/ssl/certs/www_arcticdata_io.crt
 
+# Location of the AWS client utility
+AWS=/usr/local/bin/aws
+
 #
 # Below here lie demons
 #
@@ -64,14 +67,14 @@ METALIST=${ARCHDIR}/meta-list
 echo Generate a list of new metadata files since the last backup
 if [ ! -e ${METALIST} ];
 then
-	aws s3 ls ${BUCKET}/documents/ |awk -F" " '{print $4}' > ${METALIST}
+	$AWS s3 ls ${BUCKET}/documents/ |awk -F" " '{print $4}' > ${METALIST}
 fi
 diff --old-line-format="" --unchanged-line-format="" <(sort ${METALIST}) <(ls -1 ${DATADIR}/documents | sort) > ${METALIST}-new
 
 echo Generate a list of new data files since the last backup
 if [ ! -e ${DATALIST} ];
 then
-	aws s3 ls ${BUCKET}/data/ |awk -F" " '{print $4}' > ${DATALIST}
+	$AWS s3 ls ${BUCKET}/data/ |awk -F" " '{print $4}' > ${DATALIST}
 fi
 diff --old-line-format="" --unchanged-line-format="" <(sort ${DATALIST}) <(ls -1 ${DATADIR}/data | sort) > ${DATALIST}-new
 
@@ -86,22 +89,22 @@ tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF $KEYLOCATION $CERTLOCATIO
 
 echo Sync the backup directory to Amazon S3
 echo Handle each of the subdirectories independently
-aws s3 sync $DATADIR/certs $BUCKET/certs
-aws s3 sync $DATADIR/dataone $BUCKET/dataone
-aws s3 sync $DATADIR/inline-data $BUCKET/inline-data
-aws s3 sync $DATADIR/logs $BUCKET/logs
-aws s3 sync $DATADIR/.metacat $BUCKET/.metacat
-aws s3 sync $DATADIR/metacat-backup $BUCKET/metacat-backup
-#aws s3 sync $DATADIR/solr-home $BUCKET/solr-home
-#aws s3 sync $DATADIR/tdb $BUCKET/tdb
-#aws s3 sync $DATADIR/temporary $BUCKET/temporary
+$AWS s3 sync $DATADIR/certs $BUCKET/certs
+$AWS s3 sync $DATADIR/dataone $BUCKET/dataone
+$AWS s3 sync $DATADIR/inline-data $BUCKET/inline-data
+$AWS s3 sync $DATADIR/logs $BUCKET/logs
+$AWS s3 sync $DATADIR/.metacat $BUCKET/.metacat
+$AWS s3 sync $DATADIR/metacat-backup $BUCKET/metacat-backup
+#$AWS s3 sync $DATADIR/solr-home $BUCKET/solr-home
+#$AWS s3 sync $DATADIR/tdb $BUCKET/tdb
+#$AWS s3 sync $DATADIR/temporary $BUCKET/temporary
 
 echo Backup metadata files to S3
-cat ${METALIST}-new | xargs -n1 -P30 -I {} aws s3 cp ${DATADIR}/documents/{} $BUCKET/documents/{}
+cat ${METALIST}-new | xargs -n1 -P30 -I {} $AWS s3 cp ${DATADIR}/documents/{} $BUCKET/documents/{}
 cat ${METALIST}-new >> ${METALIST}
 
 echo Backup data files to S3
-cat ${DATALIST}-new | xargs -n1 -P30 -I {} aws s3 cp ${DATADIR}/data/{} $BUCKET/data/{}
+cat ${DATALIST}-new | xargs -n1 -P30 -I {} $AWS s3 cp ${DATADIR}/data/{} $BUCKET/data/{}
 cat ${DATALIST}-new >> ${DATALIST}
 
 # Restart tomcat
