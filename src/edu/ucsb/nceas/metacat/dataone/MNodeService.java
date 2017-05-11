@@ -832,7 +832,7 @@ public class MNodeService extends D1NodeService
                         MNode mn = D1Client.getMN(sourceNode);
                         object = mn.getReplica(thisNodeSession, pid);
                     } else {
-                        throw new ServiceFailure("2151", "The version of MNRead service is "+nodeVersion+" in the source node "+sourceNode.getValue()+" and it is supported. Please check the information in the cn");
+                        throw new ServiceFailure("2151", "The version of MNRead service is "+nodeVersion+" in the source node "+sourceNode.getValue()+" and it is not supported. Please check the information in the cn");
                     }
                     
                     logMetacat.info("MNodeService.getReplica() called for identifier "
@@ -881,6 +881,7 @@ public class MNodeService extends D1NodeService
             }
 
             // verify checksum on the object, if supported
+            logMetacat.info("MNodeService.replicate - the class of object inputstream is "+object.getClass().getCanonicalName()+". Does it support the reset method? The answer is "+object.markSupported());
             if (object.markSupported()) {
                 Checksum givenChecksum = sysmeta.getChecksum();
                 Checksum computedChecksum = null;
