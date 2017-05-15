@@ -188,6 +188,9 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
         InputStream object = new FileInputStream(new File(replicationSourceFile));
         Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
         SystemMetadata sysmeta = createSystemMetadata(guid, subject, object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
         //create a replication policy
         Node localNode = MNodeService.getInstance(request).getCapabilities();
         if(!localNode.isReplicate()) {
@@ -205,6 +208,7 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
         if(!source.isSynchronize()) {
             throw new Exception("The source node "+source.getIdentifier().getValue()+" is configured to not to be synchronized to the cn!");
         }
+        object = new FileInputStream(new File(replicationSourceFile));
         System.out.println("------------------------before creating the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
         sourceMN.create(session, guid, object, sysmeta);
         System.out.println("scucessfully created the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
