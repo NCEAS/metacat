@@ -197,6 +197,7 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
             throw new Exception("The local node "+localNode.getIdentifier().getValue()+" is configured to not to accept replicas!");
         }
         ReplicationPolicy rePolicy = new ReplicationPolicy();
+        rePolicy.setReplicationAllowed(true);
         rePolicy.setNumberReplicas(new Integer(2));
         rePolicy.addPreferredMemberNode(localNode.getIdentifier());
         sysmeta.setReplicationPolicy(rePolicy);
