@@ -209,12 +209,15 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
             throw new Exception("The source node "+source.getIdentifier().getValue()+" is configured to not to be synchronized to the cn!");
         }
         object = new FileInputStream(new File(replicationSourceFile));
+        sysmeta.setAuthoritativeMemberNode(sourceNode);
         System.out.println("------------------------before creating the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
         sourceMN.create(session, guid, object, sysmeta);
         System.out.println("scucessfully created the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
         Thread.sleep(waitTime);
-        session = getTestSession();
-        SystemMetadata sys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        MNode local = D1Client.getMN(localNode.getIdentifier());
+        SystemMetadata sys = local.getSystemMetadata(session, guid);
+        System.out.println("--------------The pid from the replica on the localhost is  "+sys.getIdentifier().getValue());
+        assertTrue(sys.getIdentifier().equals(guid));
       } catch (Exception e) {
         e.printStackTrace();
         System.out.println("Failed to test the replicate method : " + e.getMessage());
