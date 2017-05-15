@@ -118,6 +118,7 @@ import org.junit.Before;
  *
  */
 public class MNodeReplicationTest extends D1NodeServiceTest {
+    public static final String replicationSourceFile = "./test/eml-sample.xml";
     protected static String sourceMNodeId = null;
     protected static int waitTime = 0;
 
@@ -184,7 +185,7 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
         Session session = null;
         Identifier guid = new Identifier();
         guid.setValue("testReplicate." + System.currentTimeMillis());
-        InputStream object = new FileInputStream(new File(MockReplicationMNode.replicationSourceFile));
+        InputStream object = new FileInputStream(new File(replicationSourceFile));
         Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
         SystemMetadata sysmeta = createSystemMetadata(guid, subject, object);
         //create a replication policy
