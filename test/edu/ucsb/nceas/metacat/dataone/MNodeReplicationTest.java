@@ -133,6 +133,7 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
      System.out.println("The sourceNodeId is ++++++++++++++++++ "+sourceMNodeId);
      waitTime = (new Integer(PropertyService.getProperty("test.dataone.replication.waitingTime"))).intValue();
      System.out.println("The waiting time is ++++++++++++++++++ "+waitTime+ " seconds");
+     System.out.println("The cn base url is "+Settings.getConfiguration().getString("D1Client.CN_URL"));
   }
 
   /**
