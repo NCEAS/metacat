@@ -457,7 +457,8 @@ public class SystemMetadataFactory {
 									Session session = new Session();
 									session.setSubject(submitter);
 									MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-									MNodeService.getInstance(request).insertDataObject(dataObject, dataGuid, session);
+									Checksum sum = null;
+									MNodeService.getInstance(request).insertDataObject(dataObject, dataGuid, session, sum);
 									
 									remoteData = true;
 								}
@@ -620,7 +621,7 @@ public class SystemMetadataFactory {
 								Session session = new Session();
 								session.setSubject(submitter);
 								MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-								MNodeService.getInstance(request).insertDataObject(IOUtils.toInputStream(resourceMapXML, MetaCatServlet.DEFAULT_ENCODING), resourceMapId, session);
+								MNodeService.getInstance(request).insertDataObject(IOUtils.toInputStream(resourceMapXML, MetaCatServlet.DEFAULT_ENCODING), resourceMapId, session, resourceMapSysMeta.getChecksum());
 								MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
 								logMetacat.info("Inserted ORE package: " + resourceMapId.getValue());
 							}
