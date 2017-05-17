@@ -28,6 +28,7 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
@@ -95,6 +96,7 @@ import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
+import org.dataone.service.types.v1.ReplicationPolicy;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
@@ -142,6 +144,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeServiceTest("initialize"));
     // MNStorage tests
+    
+    suite.addTest(new MNodeServiceTest("testMissMatchChecksumInCreate"));
     suite.addTest(new MNodeServiceTest("testCreate"));
     suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
     suite.addTest(new MNodeServiceTest("testUpdate"));
@@ -435,6 +439,52 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 
     }
       
+  }
+  
+  /**
+   * Test object creation
+   */
+  public void testMissMatchChecksumInCreate() {
+    printTestHeader("testMissMatchChecksumInCreate");
+    Identifier guid = new Identifier();
+    guid.setValue("testCreate." + System.currentTimeMillis());
+    Session session = null;
+    try {
+      session = getTestSession();
+      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      Node localNode = MNodeService.getInstance(request).getCapabilities();
+      ReplicationPolicy rePolicy = new ReplicationPolicy();
+      rePolicy.setReplicationAllowed(true);
+      rePolicy.setNumberReplicas(new Integer(3));
+      rePolicy.addPreferredMemberNode(localNode.getIdentifier());
+      sysmeta.setReplicationPolicy(rePolicy);
+      Checksum checksum = new Checksum();
+      checksum.setAlgorithm("md5");
+      checksum.setValue("098F6BCD4621D373CADE4E832627B4F9");
+      sysmeta.setChecksum(checksum);
+      Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+      fail("It should fail since the checksum doesn't match.");
+    } catch (InvalidSystemMetadata ee) {
+      //ee.printStackTrace();
+      try {
+          Thread.sleep(5000);
+          MNodeService.getInstance(request).getSystemMetadata(session, guid);
+          fail("We shouldn't get here since the guid "+guid.getValue()+" was deleted.");
+      } catch (NotFound e) {
+         //here is okay.
+      } catch (Exception e) {
+          fail("Unexpected error: " + e.getMessage());
+      }
+      try {
+          assertTrue(!IdentifierManager.getInstance().identifierExists(guid.getValue()));
+      } catch (Exception e) {
+          fail("Unexpected error: " + e.getMessage());
+      }
+      
+    } catch (Exception e) {
+        fail("Unexpected error: " + e.getMessage());
+    }
   }
 
   /**
