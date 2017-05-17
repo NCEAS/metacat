@@ -523,7 +523,7 @@ public class MNodeService extends D1NodeService
                 	if(sysmeta.getFormatId() != null) {
                 	    formatId = sysmeta.getFormatId().getValue();
                 	}
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId);
+                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId, sysmeta.getChecksum());
                     
                     // register the newPid and the generated localId
                     if (newPid != null) {
@@ -544,7 +544,7 @@ public class MNodeService extends D1NodeService
             } else {
 
                 // update the data object
-                localId = insertDataObject(object, newPid, session);
+                localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
 
             }
             
