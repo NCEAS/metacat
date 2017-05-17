@@ -33,6 +33,9 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.math.BigInteger;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -48,6 +51,7 @@ import java.util.Vector;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
@@ -67,6 +71,7 @@ import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessRule;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Identifier;
@@ -403,27 +408,7 @@ public abstract class D1NodeService {
     if(!allowed) {
         throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
     }
-    // verify checksum, only if we can reset the inputstream
-    if (object.markSupported()) {
-        logMetacat.debug("Checking checksum for: " + pid.getValue());
-	    String checksumAlgorithm = sysmeta.getChecksum().getAlgorithm();
-	    String checksumValue = sysmeta.getChecksum().getValue();
-	    try {
-			String computedChecksumValue = ChecksumUtil.checksum(object, checksumAlgorithm).getValue();
-			// it's very important that we don't consume the stream
-			object.reset();
-			if (!computedChecksumValue.equals(checksumValue)) {
-			    logMetacat.error("Checksum for " + pid.getValue() + " does not match system metadata, computed = " + computedChecksumValue );
-				throw new InvalidSystemMetadata("4896", "Checksum given does not match that of the object");
-			}
-		} catch (Exception e) {
-			String msg = "Error verifying checksum values";
-	      	logMetacat.error(msg, e);
-	        throw new ServiceFailure("1190", msg + ": " + e.getMessage());
-		}
-    } else {
-    	logMetacat.warn("mark is not supported on the object's input stream - cannot verify checksum without consuming stream");
-    }
+ 
     	
     // we have the go ahead
     //if ( allowed ) {
@@ -454,7 +439,7 @@ public abstract class D1NodeService {
             if(sysmeta.getFormatId() != null)  {
                 formatId = sysmeta.getFormatId().getValue();
             }
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId);
+	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId, sysmeta.getChecksum());
 	        //localId = im.getLocalId(pid.getValue());
 
         } catch (IOException e) {
@@ -478,8 +463,11 @@ public abstract class D1NodeService {
 	        
 	      // DEFAULT CASE: DATA (needs to be checked and completed)
           try {
-              localId = insertDataObject(object, pid, session);
+              localId = insertDataObject(object, pid, session, sysmeta.getChecksum());
           } catch (ServiceFailure e) {
+              removeSystemMetaAndIdentifier(pid);
+              throw e;
+          } catch (InvalidSystemMetadata e) {
               removeSystemMetaAndIdentifier(pid);
               throw e;
           } catch (Exception e) {
@@ -1445,7 +1433,7 @@ public abstract class D1NodeService {
    * 
    */
   public String insertOrUpdateDocument(InputStream xmlStream, String encoding,  Identifier pid, 
-    Session session, String insertOrUpdate, String formatId) 
+    Session session, String insertOrUpdate, String formatId, Checksum checksum) 
     throws ServiceFailure, IOException, PropertyNotFoundException{
     
   	logMetacat.debug("Starting to insert xml document...");
@@ -1520,7 +1508,7 @@ public abstract class D1NodeService {
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
     String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
-                        null, params, username, groupnames, false, false, xmlBytes, formatId);
+                        null, params, username, groupnames, false, false, xmlBytes, formatId, checksum);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
     	String detailCode = "";
@@ -1552,7 +1540,7 @@ public abstract class D1NodeService {
    * @returns localId of the data object inserted
    */
   public String insertDataObject(InputStream object, Identifier pid, 
-          Session session) throws ServiceFailure {
+          Session session, Checksum checksum) throws ServiceFailure, InvalidSystemMetadata {
       
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
@@ -1599,7 +1587,7 @@ public abstract class D1NodeService {
           File dataDirectory = new File(datafilepath);
           dataDirectory.mkdirs();
   
-          File newFile = writeStreamToFile(dataDirectory, localId, object);
+          File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
   
           // TODO: Check that the file size matches SystemMetadata
           // long size = newFile.length();
@@ -2093,30 +2081,60 @@ public abstract class D1NodeService {
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream dataStream) 
-    throws ServiceFailure {
+  private File writeStreamToFile(File dir, String fileName, InputStream dataStream, Checksum checksum, Identifier pid) 
+    throws ServiceFailure, InvalidSystemMetadata {
     
     File newFile = new File(dir, fileName);
-    logMetacat.debug("Filename for write is: " + newFile.getAbsolutePath());
+    logMetacat.debug("Filename for write is: " + newFile.getAbsolutePath()+" for the data object pid "+pid.getValue());
 
     try {
         if (newFile.createNewFile()) {
+          if(checksum == null) {
+              logMetacat.error("D1NodeService.writeStreamToFile - the checksum object from the system metadata shouldn't be null for the data object "+pid.getValue());
+              throw new InvalidSystemMetadata("1180", "The checksum object from the system metadata shouldn't be null.");
+          } 
+          String checksumValue = checksum.getValue();
+          logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
+          if(checksumValue == null || checksumValue.trim().equals("")) {
+              logMetacat.error("D1NodeService.writeStreamToFile - the checksum value from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+              throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
+          }
+          String algorithm = checksum.getAlgorithm();
+          logMetacat.info("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata is "+algorithm+" for the data object "+pid.getValue());
+          if(algorithm == null || algorithm.trim().equals("")) {
+              logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+              throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
+          }
+          MessageDigest md = MessageDigest.getInstance(algorithm);
           // write data stream to desired file
-          OutputStream os = new FileOutputStream(newFile);
+          DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
           long length = IOUtils.copyLarge(dataStream, os);
           os.flush();
           os.close();
+          String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+          logMetacat.info("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum);
+          if(localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
+              logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+" for the object "+pid.getValue());
+              boolean success = newFile.delete();
+              logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
+              throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
+          }
+          
         } else {
           logMetacat.debug("File creation failed, or file already exists.");
           throw new ServiceFailure("1190", "File already exists: " + fileName);
         }
     } catch (FileNotFoundException e) {
-      logMetacat.debug("FNF: " + e.getMessage());
+      logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);
       throw new ServiceFailure("1190", "File not found: " + fileName + " " 
                 + e.getMessage());
     } catch (IOException e) {
-      logMetacat.debug("IOE: " + e.getMessage());
+      logMetacat.error("IOE: " + e.getMessage()+" for the data object "+pid.getValue(), e);
       throw new ServiceFailure("1190", "File was not written: " + fileName 
+                + " " + e.getMessage());
+    } catch (NoSuchAlgorithmException e) {
+        logMetacat.error("D1NodeService.writeStreamToFile - no such checksum algorithm exception " + e.getMessage()+" for the data object "+pid.getValue(), e);
+        throw new ServiceFailure("1190", "No such checksum algorithm: "  
                 + " " + e.getMessage());
     } finally {
         IOUtils.closeQuietly(dataStream);
