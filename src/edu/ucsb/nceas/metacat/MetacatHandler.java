@@ -75,6 +75,7 @@ import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
@@ -1656,7 +1657,7 @@ public class MetacatHandler {
      */
     public String handleInsertOrUpdateAction(String ipAddress, String userAgent,
             HttpServletResponse response, PrintWriter out, Hashtable<String, String[]> params,
-            String user, String[] groups, boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes, String formatId) {
+            String user, String[] groups, boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes, String formatId, Checksum checksum) {
         Logger logMetacat = Logger.getLogger(MetacatHandler.class);
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -3267,8 +3268,9 @@ public class MetacatHandler {
                 boolean writeAccessRules = true;
                 //call the insert routine
                 String formatId = null;
+                Checksum checksum = null;//for Metacat API, we don't calculate the checksum
                 handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, 
-                          params, username, groupnames, true, writeAccessRules, null, formatId);
+                          params, username, groupnames, true, writeAccessRules, null, formatId, checksum);
               }
               catch(Exception e)
               {
