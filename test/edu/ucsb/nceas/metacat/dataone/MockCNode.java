@@ -37,6 +37,7 @@ import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
+import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Service;
 import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
@@ -72,6 +73,7 @@ public class MockCNode extends MultipartCNode {
 		list.addNode(getTestMN());
 		list.addNode(getTestV1MN());
 		list.addNode(getTestV2MN());
+		list.addNode(getReplicationSourceV2MN());
 		return list;
 	}
     
@@ -149,6 +151,8 @@ public class MockCNode extends MultipartCNode {
             return getTestV1MN();
         } else if (nodeId != null && nodeId.getValue().equals(V2MNNODEID)) {
             return getTestV2MN();
+        } else if (nodeId != null && nodeId.getValue().equals(MockReplicationMNode.NODE_ID)) {
+            return getReplicationSourceV2MN();
         } else {
             return getCapabilities();
         }
@@ -217,5 +221,41 @@ public class MockCNode extends MultipartCNode {
         services.addService(service2);
         node.setServices(services);
         return node;
+    }
+    
+    
+    /*
+     * Create a v2 mn in this env
+     */
+    private Node getReplicationSourceV2MN() {
+        Node node = new Node();
+        NodeReference nodeRef = new NodeReference();
+        nodeRef.setValue(MockReplicationMNode.NODE_ID);
+        node.setIdentifier(nodeRef);
+        Subject subject = new Subject();
+        subject.setValue("cn=" + MockReplicationMNode.NODE_ID + ",dc=dataone,dc=org");
+        node.addSubject(subject);
+        node.setType(NodeType.MN);
+        Service service = new Service();
+        service.setName("MNRead");
+        service.setVersion("V1");
+        service.setAvailable(true);
+        Service service2 = new Service();
+        service2.setName("MNRead");
+        service2.setVersion("V2");
+        service2.setAvailable(true);
+        Services services = new Services();
+        services.addService(service);
+        services.addService(service2);
+        node.setServices(services);
+        return node;
+    }
+    
+    @Override
+    public boolean setReplicationStatus(Session session, Identifier pid,
+            NodeReference nodeRef, ReplicationStatus status, BaseException failure)
+                    throws ServiceFailure, NotImplemented, InvalidToken, NotAuthorized,
+                    InvalidRequest, NotFound {
+        return true;
     }
 }
