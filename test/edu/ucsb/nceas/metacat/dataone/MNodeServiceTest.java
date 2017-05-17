@@ -701,21 +701,21 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testReplicate." + System.currentTimeMillis());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        System.out.println("======================the id need to be replicated is "+guid.getValue());
+        InputStream object = new FileInputStream(new File(MockReplicationMNode.replicationSourceFile));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
-        // save locally
-        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        // get our node reference (attempting to replicate with self)
-        NodeReference sourceNode = MNodeService.getInstance(request).getCapabilities().getIdentifier();
-        // attempt to replicate with ourselves -- this should fail!
-      boolean result = false;
-      try {
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        NodeReference sourceNode = new NodeReference();
+        sourceNode.setValue(MockReplicationMNode.NODE_ID);
+        sysmeta.setAuthoritativeMemberNode(sourceNode);
+        sysmeta.setOriginMemberNode(sourceNode);
+        boolean result = false;
         result = MNodeService.getInstance(request).replicate(session, sysmeta, sourceNode);
-      } catch (Exception inu) {
-        // we are expecting this to fail since we already have the doc
-        result = true;
-      }
-      assertTrue(result);
+        assertTrue(result);
+        SystemMetadata sys =  MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(sys.getIdentifier().equals(guid));
       } catch (Exception e) {
         e.printStackTrace();
       fail("Probably not yet implemented: " + e.getMessage());
