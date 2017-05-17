@@ -107,6 +107,11 @@ public class D1NodeServiceTest extends MCTestCase {
 				return node;
 			}
 		};
+		//add the replicate node into the locator
+		NodeReference nodeRef = new NodeReference();
+        nodeRef.setValue(MockReplicationMNode.NODE_ID);
+		MockReplicationMNode mNode = new MockReplicationMNode("http://replication.node.com");
+		nodeLocator.putNode(nodeRef, mNode);
 		D1Client.setNodeLocator(nodeLocator );
     	
     }
