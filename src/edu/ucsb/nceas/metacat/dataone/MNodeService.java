@@ -875,32 +875,6 @@ public class MNodeService extends D1NodeService
 
             // verify checksum on the object, if supported
             logMetacat.info("MNodeService.replicate - the class of object inputstream is "+object.getClass().getCanonicalName()+". Does it support the reset method? The answer is "+object.markSupported());
-            if (object.markSupported()) {
-                Checksum givenChecksum = sysmeta.getChecksum();
-                Checksum computedChecksum = null;
-                try {
-                    computedChecksum = ChecksumUtil.checksum(object, givenChecksum.getAlgorithm());
-                    object.reset();
-
-                } catch (Exception e) {
-                    String msg = "Error computing checksum on replica: " + e.getMessage();
-                    logMetacat.error(msg);
-                    ServiceFailure sf = new ServiceFailure("2151", msg);
-                    sf.initCause(e);
-                    setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, sf);
-                    throw sf;
-                }
-                if (!givenChecksum.getValue().equals(computedChecksum.getValue())) {
-                    logMetacat.error("Given    checksum for " + pid.getValue() + 
-                        "is " + givenChecksum.getValue());
-                    logMetacat.error("Computed checksum for " + pid.getValue() + 
-                        "is " + computedChecksum.getValue());
-                    String msg = "Computed checksum does not match declared checksum";
-                    failure = new ServiceFailure("2151", msg);
-                    setReplicationStatus(thisNodeSession, pid, nodeId, ReplicationStatus.FAILED, failure);
-                    throw new ServiceFailure("2151", msg);
-                }
-            }
 
             // add it to local store
             Identifier retPid;
