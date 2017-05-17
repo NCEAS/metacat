@@ -51,7 +51,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
-
+import org.dataone.service.types.v1.Checksum;
 
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -968,8 +968,9 @@ public class MetaCatServlet extends HttpServlet {
 				if ((userName != null) && !userName.equals("public")) {
 				    //formatid will be set null here since this is metacat api
 				    String formatId = null;
+				    Checksum checksum = null;//for Metacat API, we don't calculate the checksum
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null, formatId);
+							groupNames, true, true, null, formatId, checksum);
 				} else {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");
