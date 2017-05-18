@@ -533,18 +533,31 @@ public class MNodeService extends D1NodeService
                 } catch (IOException e) {
                     String msg = "The Node is unable to create the object: "+pid.getValue() + "There was a problem converting the object to XML";
                     logMetacat.error(msg, e);
+                    removeIdFromIdentifierTable(newPid);
                     throw new ServiceFailure("1310", msg + ": " + e.getMessage());
 
                 }  catch (PropertyNotFoundException e) {
                     String msg = "The Node is unable to create the object. " +pid.getValue()+ " since the properties are not configured well "+e.getMessage();
                     logMetacat.error(msg, e);
+                    removeIdFromIdentifierTable(newPid);
                     throw new ServiceFailure("1310", msg);
+                } catch (Exception e) {
+                    logMetacat.error("MNService.update - couldn't write the metadata object to the disk since "+e.getMessage(), e);
+                    removeIdFromIdentifierTable(newPid);
+                    throw e;
                 }
 
             } else {
 
                 // update the data object
-                localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
+                try {
+                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
+                } catch (Exception e) {
+                    logMetacat.error("MNService.update - couldn't write the data object to the disk since "+e.getMessage(), e);
+                    removeIdFromIdentifierTable(newPid);
+                    throw e;
+                }
+                
 
             }
             
@@ -592,6 +605,23 @@ public class MNodeService extends D1NodeService
         long end6 =System.currentTimeMillis();
         logMetacat.debug("MNodeService.update - the total time of updating the old pid " +pid.getValue() +" whth the new pid "+newPid.getValue()+" is "+(end6- startTime)+ " milli seconds.");
         return newPid;
+    }
+    
+    /*
+     * Roll-back method when inserting data object fails.
+     */
+    protected void removeIdFromIdentifierTable(Identifier id){
+        if(id != null) {
+            try {
+                if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
+                   String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
+                   IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
+                   logMetacat.info("MNodeService.removeIdFromIdentifierTable - the identifier "+id.getValue()+" and local id "+localId+" have been removed from the identifier table since the object creation failed");
+                }
+            } catch (Exception e) {
+                logMetacat.warn("MNodeService.removeIdFromIdentifierTable - can't decide if the mapping of  the pid "+id.getValue()+" exists on the identifier table.");
+            }
+        }
     }
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
