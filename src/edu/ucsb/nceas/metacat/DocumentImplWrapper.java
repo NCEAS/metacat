@@ -30,6 +30,8 @@ package edu.ucsb.nceas.metacat;
 import java.io.Reader;
 import java.util.Date;
 
+import org.dataone.service.types.v1.Checksum;
+
 import edu.ucsb.nceas.metacat.database.DBConnection;
 
 //import edu.ucsb.nceas.metacat.spatial.MetacatSpatialDocument;
@@ -59,9 +61,9 @@ public class DocumentImplWrapper {
 	}//Constructor
 
 	public String write(DBConnection conn, String xml, String pub, Reader dtd,
-			String action, String docid, String user, String[] groups, byte[]xmlBytes, String schemaLocalLocation) throws Exception {
+			String action, String docid, String user, String[] groups, byte[]xmlBytes, String schemaLocalLocation, Checksum checksum) throws Exception {
 		return DocumentImpl.write(conn, xml, pub, dtd, action, docid, user, groups,
-				ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocalLocation);
+				ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocalLocation, checksum);
 	}
 
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,
