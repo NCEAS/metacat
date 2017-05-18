@@ -374,6 +374,11 @@ public abstract class D1NodeService {
         
     }
     
+    if(sysmeta.getChecksum() == null) {
+        logMetacat.error("D1NodeService.create - the checksum object from the system metadata shouldn't be null for the object "+pid.getValue());
+        throw new InvalidSystemMetadata("1180", "The checksum object from the system metadata shouldn't be null.");
+    } 
+    
 
     logMetacat.debug("Checking if identifier exists: " + pid.getValue());
     // Check that the identifier does not already exist
@@ -2089,22 +2094,18 @@ public abstract class D1NodeService {
 
     try {
         if (newFile.createNewFile()) {
-          if(checksum == null) {
-              logMetacat.error("D1NodeService.writeStreamToFile - the checksum object from the system metadata shouldn't be null for the data object "+pid.getValue());
-              throw new InvalidSystemMetadata("1180", "The checksum object from the system metadata shouldn't be null.");
-          } 
-          String checksumValue = checksum.getValue();
-          logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
-          if(checksumValue == null || checksumValue.trim().equals("")) {
-              logMetacat.error("D1NodeService.writeStreamToFile - the checksum value from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
-              throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
-          }
-          String algorithm = checksum.getAlgorithm();
-          logMetacat.info("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata is "+algorithm+" for the data object "+pid.getValue());
-          if(algorithm == null || algorithm.trim().equals("")) {
-              logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
-              throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
-          }
+            String checksumValue = checksum.getValue();
+            logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
+            if(checksumValue == null || checksumValue.trim().equals("")) {
+                logMetacat.error("D1NodeService.writeStreamToFile - the checksum value from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+                throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
+            }
+            String algorithm = checksum.getAlgorithm();
+            logMetacat.info("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata is "+algorithm+" for the data object "+pid.getValue());
+            if(algorithm == null || algorithm.trim().equals("")) {
+                logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+                throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
+            }
           MessageDigest md = MessageDigest.getInstance(algorithm);
           // write data stream to desired file
           DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
