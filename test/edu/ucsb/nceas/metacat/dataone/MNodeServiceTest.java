@@ -607,6 +607,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       Identifier pid = 
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
       newSysMeta.setArchived(true);
       System.out.println("the pid is =======!!!!!!!!!!!! "+pid.getValue());
@@ -625,6 +626,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       //try to update an archived object and need to get an exception
       Identifier newPid2 = new Identifier();
       newPid2.setValue("testUpdate." + (System.currentTimeMillis() + 2)); // ensure it is different from original
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata newSysMeta2 = createSystemMetadata(newPid2, session.getSubject(), object);
       try {
            updatedPid = 
@@ -1722,6 +1724,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           
           Identifier newPid = new Identifier();
           newPid.setValue("testCreateAndUpdate." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+          object = new ByteArrayInputStream(FileUtils.readFileToByteArray(new File(unmatchingEncodingFilePath)));
           SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
                 
           // do the update
