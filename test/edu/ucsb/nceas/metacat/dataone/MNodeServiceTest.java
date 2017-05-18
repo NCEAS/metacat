@@ -144,7 +144,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeServiceTest("initialize"));
     // MNStorage tests
-    
+    suite.addTest(new MNodeServiceTest("testMissMatchMetadataCreate"));
     suite.addTest(new MNodeServiceTest("testMissMatchChecksumInCreate"));
     suite.addTest(new MNodeServiceTest("testCreate"));
     suite.addTest(new MNodeServiceTest("testCreateInvalidIdentifier"));
@@ -486,6 +486,57 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         fail("Unexpected error: " + e.getMessage());
     }
   }
+  
+  
+  /**
+   * Test miss-match checksum for metacat object.
+   */
+  public void testMissMatchMetadataCreate() {
+      printTestHeader("testMissMatchMetadataCreate");
+      Identifier guid = new Identifier();
+      guid.setValue("testCreate." + System.currentTimeMillis());
+      Session session = null;
+      try {
+        session = getTestSession();
+        InputStream object = new FileInputStream(new File(MockReplicationMNode.replicationSourceFile));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        Node localNode = MNodeService.getInstance(request).getCapabilities();
+        ReplicationPolicy rePolicy = new ReplicationPolicy();
+        rePolicy.setReplicationAllowed(true);
+        rePolicy.setNumberReplicas(new Integer(3));
+        rePolicy.addPreferredMemberNode(localNode.getIdentifier());
+        sysmeta.setReplicationPolicy(rePolicy);
+        Checksum checksum = new Checksum();
+        checksum.setAlgorithm("md5");
+        checksum.setValue("098F6BCD4621D373CADE4E832627B4F9");
+        sysmeta.setChecksum(checksum);
+        object = new FileInputStream(new File(MockReplicationMNode.replicationSourceFile));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        fail("It should fail since the checksum doesn't match.");
+      } catch (ServiceFailure ee) {
+        //ee.printStackTrace();
+        try {
+            Thread.sleep(5000);
+            MNodeService.getInstance(request).getSystemMetadata(session, guid);
+            fail("We shouldn't get here since the guid "+guid.getValue()+" was deleted.");
+        } catch (NotFound e) {
+           //here is okay.
+        } catch (Exception e) {
+            fail("Unexpected error: " + e.getMessage());
+        }
+        try {
+            assertTrue(!IdentifierManager.getInstance().identifierExists(guid.getValue()));
+        } catch (Exception e) {
+            fail("Unexpected error: " + e.getMessage());
+        }
+        
+      } catch (Exception e) {
+          fail("Unexpected error: " + e.getMessage());
+      }
+  }
 
   /**
    * test object deletion
@@ -740,10 +791,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
   }
 
   /**
-   * We currently expect this unit test to fail because it should rely on a different member node
-   * to retrieve the object from. Currently it gets the object from itself and throws 
-   * and expected error for duplicate entry.
-   * 
+   * Test the replicate method. The getReplica method is from a MockMN.
    */
   public void testReplicate() {
       printTestHeader("testReplicate");
