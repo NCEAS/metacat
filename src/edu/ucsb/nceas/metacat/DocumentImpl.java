@@ -42,6 +42,9 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URL;
+import java.security.DigestOutputStream;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -90,6 +93,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.log4j.Logger;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.ContentHandler;
@@ -1500,11 +1505,14 @@ public class DocumentImpl
 	 * @param accNumber
 	 *            the document id which is used to name the output file
 	 */
-    private static void writeToFileSystem(byte[] xml, String accNumber) throws McdbException {
+    private static void writeToFileSystem(byte[] xml, String accNumber, Checksum checksum) throws McdbException, InvalidSystemMetadata {
 
 		// write the document to disk
 		String documentDir = null;
 		String documentPath = null;
+		boolean needCalculateChecksum = false;
+		String checksumValue = null;
+		MessageDigest md = null;
 
 		try {				
 			documentDir = PropertyService.getProperty("application.documentfilepath");
@@ -1526,14 +1534,52 @@ public class DocumentImpl
 			if (accNumber != null
 					&& (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST 
 							|| FileUtil.getFileSize(documentPath) == 0)) {
+			    if(checksum != null) {
+			        needCalculateChecksum = true;
+			        checksumValue = checksum.getValue();
+			        logMetacat.info("DocumentImple.writeToFileSystem - the checksum from the system metadata is "+checksumValue);
+			        if(checksumValue == null || checksumValue.trim().equals("")) {
+		                logMetacat.error("DocumentImple.writeToFileSystem - the checksum value from the system metadata shouldn't be null or blank");
+		                throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
+		            }
+		            String algorithm = checksum.getAlgorithm();
+		            logMetacat.info("DocumentImple.writeToFileSystem - the algorithm to calculate the checksum from the system metadata is "+algorithm);
+		            if(algorithm == null || algorithm.trim().equals("")) {
+		                logMetacat.error("DocumentImple.writeToFileSystem - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank");
+		                throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
+		            }
+		            try {
+		                md = MessageDigest.getInstance(algorithm);
+		            } catch (NoSuchAlgorithmException ee) {
+		                logMetacat.error("DocumentImple.writeToFileSystem - we don't support the algorithm "+algorithm+" to calculate the checksum.", ee);
+                        throw new InvalidSystemMetadata("1180", "The algorithm "+algorithm+" to calculate the checksum is not supported: "+ee.getMessage());
+		            }
+			    }
 
-			    FileOutputStream fos = null;
+			    OutputStream fos = null;
                 try {
-                    fos = new FileOutputStream(documentPath);
+                    if(needCalculateChecksum) {
+                        logMetacat.info("DocumentImple.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
+                        fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
+                    } else {
+                        logMetacat.info("DocumentImple.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API");
+                        fos = new FileOutputStream(documentPath);
+                    }
+                    
                     IOUtils.write(xml, fos);
-
                     fos.flush();
                     fos.close();
+                    if(needCalculateChecksum) {
+                        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+                        logMetacat.info("DocumentImple.writeToFileSystem - the check sum calculated from the saved local file is "+localChecksum);
+                        if(localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
+                            logMetacat.error("DocumentImple.writeToFileSystem - the check sum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue);
+                            File newFile = new File(documentPath);
+                            boolean success = newFile.delete();
+                            logMetacat.info("Delete the file "+newFile.getAbsolutePath()+" sucessfully? "+success);
+                            throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
+                        }
+                    }
                 } catch (IOException ioe) {
                     throw new McdbException("Could not write file: " + documentPath + " : " + ioe.getMessage());
                 } finally {
@@ -2659,7 +2705,7 @@ public class DocumentImpl
 
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String docid, String user,
-            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation)
+            String[] groups, String ruleBase, boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation, Checksum checksum)
             throws Exception
     {
         //this method will be called in handleUpdateOrInsert method
@@ -2667,7 +2713,7 @@ public class DocumentImpl
         // get server location for this doc
         int serverLocation = getServerLocationNumber(docid);
         return write(conn, xmlString, pub, dtd, action, docid, user, groups,
-                serverLocation, false, ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocation);
+                serverLocation, false, ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocation, checksum);
     }
 
     /**
@@ -2704,7 +2750,7 @@ public class DocumentImpl
     public static String write(DBConnection conn, String xmlString, String pub,
             Reader dtd, String action, String accnum, String user,
             String[] groups, int serverCode, boolean override, String ruleBase,
-            boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation) throws Exception
+            boolean needValidation, boolean writeAccessRules, byte[] xmlBytes, String schemaLocation, Checksum checksum) throws Exception
     {
         // NEW - WHEN CLIENT ALWAYS PROVIDE ACCESSION NUMBER INCLUDING REV IN IT
     	
@@ -2798,15 +2844,16 @@ public class DocumentImpl
                     conn.setAutoCommit(false);
                     logMetacat.debug("DocumentImpl.write - parsing xml");
                     parser.parse(new InputSource(xmlReader));
-                    conn.commit();
-                    conn.setAutoCommit(true);
                     
                     // update the node data to include numeric and date values
                     updateNodeValues(conn, docid);
                     
                     //write the file to disk
                     logMetacat.debug("DocumentImpl.write - Writing xml to file system");                    
-                	writeToFileSystem(xmlBytes, accnum);
+                	writeToFileSystem(xmlBytes, accnum, checksum);
+                	
+                	conn.commit();
+                    conn.setAutoCommit(true);
 
                     // write to xml_node complete. start the indexing thread.
                     addDocidToIndexingQueue(docid, rev);
@@ -2904,14 +2951,14 @@ public class DocumentImpl
             //logMetacat.debug("DocumentImpl.write - XML to be parsed: " + xmlString);
             parser.parse(new InputSource(xmlReader));
 
-            conn.commit();
-            conn.setAutoCommit(true);
-            
             //update nodes
             updateNodeValues(conn, docid);
             
             //write the file to disk
-        	writeToFileSystem(xmlBytes, accnum);
+        	writeToFileSystem(xmlBytes, accnum, checksum);
+        	
+        	 conn.commit();
+             conn.setAutoCommit(true);
 
             addDocidToIndexingQueue(docid, rev);
     		if (guidsToSync.size() > 0) {
@@ -3116,7 +3163,8 @@ public class DocumentImpl
             
             // Write the file to disk
             //byte[] bytes = xmlString.getBytes(encoding);
-        	writeToFileSystem(xmlBytes, accnum);
+            Checksum checksum = null;
+        	writeToFileSystem(xmlBytes, accnum, checksum);
             
             // write to xml_node complete. start the indexing thread.
             // this only for xml_documents
