@@ -51,6 +51,7 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.URIResolver;
 
+import org.dataone.service.types.v1.Checksum;
 import org.ecoinformatics.eml.EMLParser;
 
 
@@ -168,8 +169,9 @@ public class EMLVersionsTransformer {
                  .getDBConnection("EMLVersionsTransformer.handleSingleEML200Document");
                   serialNumber = dbconn.getCheckOutSerialNumber();
                   String schemaLocation = XMLSchemaService.getInstance().getNameSpaceAndLocationStringWithoutFormatId();
+                  Checksum checksum = null;
                   documentWrapper.write(dbconn, eml210Content, pub, dtd,
-                          doAction, newId, owner, groups, null, schemaLocation);
+                          doAction, newId, owner, groups, null, schemaLocation, checksum);
                   logMetacat.warn("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
                   transformLog("Doc "+docidWithRev+" was transformed to eml210 with new id "+newId);
              }
