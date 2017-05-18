@@ -1830,7 +1830,7 @@ public class MetacatHandler {
               
               } else {*/
               newdocid = documentWrapper.write(dbConn, doctext[0], pub, dtd,
-                          doAction, accNumber, user, groups, xmlBytes, schemaLocation);
+                          doAction, accNumber, user, groups, xmlBytes, schemaLocation, checksum);
             
               EventLog.getInstance().log(ipAddress, userAgent, user, accNumber, action[0]);
               
