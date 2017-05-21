@@ -1145,6 +1145,7 @@
 			<batchtest fork="yes" todir="${build.dir}">
 				<fileset dir="${build.tests}">
 					<include name="**/*.class" />
+					<exclude name="**/MockReplicationMNode.class" />
 					<exclude name="**/MCTestCase.class" />
 					<exclude name="**/ClientViewHelperTest.class" />
 					<!-- these are not test cases -->
