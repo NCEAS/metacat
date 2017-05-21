@@ -350,6 +350,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             seriesId.setValue(sid1);
             System.out.println("the first sid is "+seriesId.getValue());
             sysmeta.setSeriesId(seriesId);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             MNodeService.getInstance(request).create(session, guid, object, sysmeta);
             System.out.println("the first pid is "+guid.getValue());
             Identifier head = IdentifierManager.getInstance().getHeadPID(seriesId);
@@ -365,9 +366,11 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             Identifier newPid = new Identifier();
             newPid.setValue(generateDocumentId()+"1");
             System.out.println("the second pid is "+newPid.getValue());
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
             newSysMeta.setObsoletes(guid);
             newSysMeta.setSeriesId(seriesId);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
             
             //check
@@ -392,6 +395,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             
             //case-2 P1(S1) ? P2(S1), S1 = P2
             // http://jenkins-1.dataone.org/documentation/unstable/API-Documentation-development/design/ContentMutability.html
+            System.out.println("case 2======= ");
             object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             Identifier pid1_case2 = new Identifier();
             pid1_case2.setValue(generateDocumentId());
@@ -400,26 +404,32 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case2.setValue(sid_case2_str);
             SystemMetadata sysmeta_case2 = createSystemMetadata(pid1_case2, session.getSubject(), object);
             sysmeta_case2.setSeriesId(sid_case2);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case2, object, sysmeta_case2);
             
             Thread.sleep(1000);
             Identifier pid2_case2 = new Identifier();
             pid2_case2.setValue(generateDocumentId());
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             sysmeta = createSystemMetadata(pid2_case2, session.getSubject(), object);
             sysmeta.setSeriesId(sid_case2);
-            try {
+            //try {
+                object = new ByteArrayInputStream("test".getBytes("UTF-8"));
                 CNodeService.getInstance(request).create(session, pid2_case2, object, sysmeta);
-                fail("we shouldn't get here and an InvalidSystemMetacat exception should be thrown.");
-            } catch (Exception e) {
-                System.out.println("case 2======= Invalid system metadata to insert the second object");
+                //fail("we shouldn't get here and an InvalidSystemMetacat exception should be thrown.");
+                head = IdentifierManager.getInstance().getHeadPID(sid_case2);
+                assertTrue(head.getValue().equals(pid2_case2.getValue()));
+                
+            //} catch (Exception e) {
+                /*System.out.println("case 2======= Invalid system metadata to insert the second object");
                 //check 
                 meta =  CNodeService.getInstance(request).getSystemMetadata(session, pid1_case2);
                 assertTrue(meta.getObsoletedBy() == null);
                 assertTrue(meta.getObsoletes() == null);
                 // the pid should be the newPid when we try to get the sid1
                 head = IdentifierManager.getInstance().getHeadPID(sid_case2);
-                assertTrue(head.getValue().equals(pid1_case2.getValue()));
-            } 
+                assertTrue(head.getValue().equals(pid1_case2.getValue()));*/
+            //} 
             
             
             //case-3  P1(S1) <- P2(S1), S1 = P2, Discouraged, but not error condition, S1 = P2 (P1 and P2 are type 1 ends, not an ideal chain )
@@ -431,6 +441,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case3.setValue(sid_case3_str);
             SystemMetadata sysmeta_case3 = createSystemMetadata(pid1_case3, session.getSubject(), object);
             sysmeta_case3.setSeriesId(sid_case3);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case3, object, sysmeta_case3);
             
             Thread.sleep(1000);
@@ -440,6 +451,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case3 = createSystemMetadata(pid2_case3, session.getSubject(), object);
             sysmeta2_case3.setSeriesId(sid_case3);
             sysmeta2_case3.setObsoletes(pid1_case3);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case3, object, sysmeta2_case3);
             
             //check
@@ -463,6 +475,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case4.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case4 = createSystemMetadata(pid1_case4, session.getSubject(), object);
             sysmeta_case4.setSeriesId(sid_case4);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case4, object, sysmeta_case4);
             
             Thread.sleep(1000);
@@ -472,6 +485,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case4 = createSystemMetadata(pid2_case4, session.getSubject(), object);
             sysmeta2_case4.setSeriesId(sid_case4);
             sysmeta2_case4.setObsoletes(pid1_case4);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case4, object, sysmeta2_case4);
             
             sysmeta_case4.setObsoletedBy(pid2_case4);
@@ -488,6 +502,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case4 = createSystemMetadata(pid3_case4, session.getSubject(), object);
             sysmeta3_case4.setSeriesId(sid2_case4);
             sysmeta3_case4.setObsoletes(pid2_case4);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case4, object, sysmeta3_case4);
             
             sysmeta2_case4.setObsoletedBy(pid3_case4);
@@ -523,6 +538,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case5.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta1_case5 = createSystemMetadata(pid1_case5, session.getSubject(), object);
             sysmeta1_case5.setSeriesId(sid_case5);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case5, object, sysmeta1_case5);
             
             Thread.sleep(1000);
@@ -532,6 +548,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case5 = createSystemMetadata(pid2_case5, session.getSubject(), object);
             sysmeta2_case5.setSeriesId(sid_case5);
             sysmeta2_case5.setObsoletes(pid1_case5);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case5, object, sysmeta2_case5);
             
             Thread.sleep(1000);
@@ -543,6 +560,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case5 = createSystemMetadata(pid3_case5, session.getSubject(), object);
             sysmeta3_case5.setSeriesId(sid2_case5);
             sysmeta3_case5.setObsoletes(pid2_case5);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case5, object, sysmeta3_case5);
             
           //check
@@ -573,6 +591,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case6.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case6 = createSystemMetadata(pid1_case6, session.getSubject(), object);
             sysmeta_case6.setSeriesId(sid_case6);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case6, object, sysmeta_case6);
             
             Thread.sleep(1000);
@@ -582,6 +601,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case6 = createSystemMetadata(pid2_case6, session.getSubject(), object);
             sysmeta2_case6.setSeriesId(sid_case6);
             sysmeta2_case6.setObsoletes(pid1_case6);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case6, object, sysmeta2_case6);
             
             sysmeta_case6.setObsoletedBy(pid2_case6);
@@ -595,6 +615,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             pid3_case6.setValue(generateDocumentId());
             SystemMetadata sysmeta3_case6 = createSystemMetadata(pid3_case6, session.getSubject(), object);
             sysmeta3_case6.setObsoletes(pid2_case6);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case6, object, sysmeta3_case6);
             
             sysmeta2_case6.setObsoletedBy(pid3_case6);
@@ -628,6 +649,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case7.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case7 = createSystemMetadata(pid1_case7, session.getSubject(), object);
             sysmeta_case7.setSeriesId(sid_case7);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case7, object, sysmeta_case7);
             
             Thread.sleep(1000);
@@ -637,6 +659,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case7 = createSystemMetadata(pid2_case7, session.getSubject(), object);
             sysmeta2_case7.setSeriesId(sid_case7);
             sysmeta2_case7.setObsoletes(pid1_case7);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case7, object, sysmeta2_case7);
             
             sysmeta_case7.setObsoletedBy(pid2_case7);
@@ -650,6 +673,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             pid3_case7.setValue(generateDocumentId());
             SystemMetadata sysmeta3_case7 = createSystemMetadata(pid3_case7, session.getSubject(), object);
             sysmeta3_case7.setObsoletes(pid2_case7);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case7, object, sysmeta3_case7);
             
             sysmeta2_case7.setObsoletedBy(pid3_case7);
@@ -666,6 +690,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case7 = createSystemMetadata(pid4_case7, session.getSubject(), object);
             sysmeta4_case7.setObsoletes(pid3_case7);
             sysmeta4_case7.setSeriesId(sid2_case7);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case7, object, sysmeta4_case7);
             
             sysmeta3_case7.setObsoletedBy(pid4_case7);
@@ -705,6 +730,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case8.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case8 = createSystemMetadata(pid1_case8, session.getSubject(), object);
             sysmeta_case8.setSeriesId(sid_case8);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case8, object, sysmeta_case8);
             
             Thread.sleep(1000);
@@ -714,6 +740,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case8 = createSystemMetadata(pid2_case8, session.getSubject(), object);
             sysmeta2_case8.setSeriesId(sid_case8);
             sysmeta2_case8.setObsoletes(pid1_case8);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case8, object, sysmeta2_case8);
             
             sysmeta_case8.setObsoletedBy(pid2_case8);
@@ -728,6 +755,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case8 = createSystemMetadata(pid3_case8, session.getSubject(), object);
             sysmeta3_case8.setObsoletes(pid2_case8);
             sysmeta3_case8.setSeriesId(sid_case8);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case8, object, sysmeta3_case8);
             
             sysmeta2_case8.setObsoletedBy(pid3_case8);
@@ -744,6 +772,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case8 = createSystemMetadata(pid4_case8, session.getSubject(), object);
             sysmeta4_case8.setObsoletes(pid3_case8);
             sysmeta4_case8.setSeriesId(sid_case8);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case8, object, sysmeta4_case8);
             
             //delete pid3_case8 
@@ -782,6 +811,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case9.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case9 = createSystemMetadata(pid1_case9, session.getSubject(), object);
             sysmeta_case9.setSeriesId(sid_case9);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case9, object, sysmeta_case9);
             
             Thread.sleep(1000);
@@ -791,6 +821,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case9 = createSystemMetadata(pid2_case9, session.getSubject(), object);
             sysmeta2_case9.setSeriesId(sid_case9);
             sysmeta2_case9.setObsoletes(pid1_case9);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case9, object, sysmeta2_case9);
             
             sysmeta_case9.setObsoletedBy(pid2_case9);
@@ -808,6 +839,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case9 = createSystemMetadata(pid3_case9, session.getSubject(), object);
             sysmeta3_case9.setObsoletes(pid2_case9);
             sysmeta3_case9.setSeriesId(sid_case9);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case9, object, sysmeta3_case9);
             
             //sysmeta2_case8.setObsoletedBy(pid3_case8);
@@ -822,6 +854,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case9 = createSystemMetadata(pid4_case9, session.getSubject(), object);
             sysmeta4_case9.setObsoletes(pid3_case9);
             sysmeta4_case9.setSeriesId(sid_case9);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case9, object, sysmeta4_case9);
             
             //delete pid3_case8 
@@ -860,6 +893,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case10.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case10 = createSystemMetadata(pid1_case10, session.getSubject(), object);
             sysmeta_case10.setSeriesId(sid_case10);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case10, object, sysmeta_case10);
             
             Thread.sleep(1000);
@@ -869,6 +903,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case10 = createSystemMetadata(pid2_case10, session.getSubject(), object);
             sysmeta2_case10.setSeriesId(sid_case10);
             sysmeta2_case10.setObsoletes(pid1_case10);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case10, object, sysmeta2_case10);
             
             sysmeta_case10.setObsoletedBy(pid2_case10);
@@ -886,6 +921,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case10 = createSystemMetadata(pid3_case10, session.getSubject(), object);
             sysmeta3_case10.setObsoletes(pid2_case10);
             sysmeta3_case10.setSeriesId(sid_case10);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case10, object, sysmeta3_case10);
             
             sysmeta2_case10.setObsoletedBy(pid3_case10);
@@ -902,6 +938,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case10 = createSystemMetadata(pid4_case10, session.getSubject(), object);
             sysmeta4_case10.setObsoletes(pid3_case10);
             sysmeta4_case10.setSeriesId(sid_case10);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case10, object, sysmeta4_case10);
             
             //delete pid3_case10 
@@ -940,6 +977,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case11.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case11 = createSystemMetadata(pid1_case11, session.getSubject(), object);
             sysmeta_case11.setSeriesId(sid_case11);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case11, object, sysmeta_case11);
             
             Thread.sleep(1000);
@@ -949,6 +987,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case11 = createSystemMetadata(pid2_case11, session.getSubject(), object);
             sysmeta2_case11.setSeriesId(sid_case11);
             sysmeta2_case11.setObsoletes(pid1_case11);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case11, object, sysmeta2_case11);
             
             sysmeta_case11.setObsoletedBy(pid2_case11);
@@ -966,6 +1005,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case11 = createSystemMetadata(pid3_case11, session.getSubject(), object);
             sysmeta3_case11.setObsoletes(pid2_case11);
             sysmeta3_case11.setSeriesId(sid_case11);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case11, object, sysmeta3_case11);
             
             sysmeta2_case11.setObsoletedBy(pid3_case11);
@@ -1005,6 +1045,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case12.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case12 = createSystemMetadata(pid1_case12, session.getSubject(), object);
             sysmeta_case12.setSeriesId(sid_case12);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case12, object, sysmeta_case12);
             
             Thread.sleep(1000);
@@ -1014,6 +1055,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case12 = createSystemMetadata(pid2_case12, session.getSubject(), object);
             sysmeta2_case12.setSeriesId(sid_case12);
             sysmeta2_case12.setObsoletes(pid1_case12);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case12, object, sysmeta2_case12);
             
             sysmeta_case12.setObsoletedBy(pid2_case12);
@@ -1031,6 +1073,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case12 = createSystemMetadata(pid3_case12, session.getSubject(), object);
             sysmeta3_case12.setObsoletes(pid2_case12);
             sysmeta3_case12.setSeriesId(sid_case12);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case12, object, sysmeta3_case12);
             
             sysmeta2_case12.setObsoletedBy(pid3_case12);
@@ -1070,6 +1113,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case13.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case13 = createSystemMetadata(pid1_case13, session.getSubject(), object);
             sysmeta_case13.setSeriesId(sid_case13);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case13, object, sysmeta_case13);
             
             Thread.sleep(1000);
@@ -1083,6 +1127,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sysmeta2_case13.setSeriesId(sid_case13);
             sysmeta2_case13.setObsoletes(pid1_case13);
             sysmeta2_case13.setObsoletedBy(pid3_case13);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case13, object, sysmeta2_case13);
             
             meta =  CNodeService.getInstance(request).getSystemMetadata(session, pid2_case13);
@@ -1107,6 +1152,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case14.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case14 = createSystemMetadata(pid1_case14, session.getSubject(), object);
             sysmeta_case14.setSeriesId(sid_case14);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case14, object, sysmeta_case14);
             
             Thread.sleep(1000);
@@ -1116,6 +1162,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case14 = createSystemMetadata(pid2_case14, session.getSubject(), object);
             sysmeta2_case14.setSeriesId(sid_case14);
             sysmeta2_case14.setObsoletes(pid1_case14);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case14, object, sysmeta2_case14);
 
             Thread.sleep(1000);
@@ -1126,6 +1173,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid2_case14.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta3_case14 = createSystemMetadata(pid3_case14, session.getSubject(), object);
             sysmeta3_case14.setSeriesId(sid2_case14);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case14, object, sysmeta3_case14);
             
             sysmeta2_case14.setObsoletedBy(pid3_case14);
@@ -1160,6 +1208,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case15.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case15 = createSystemMetadata(pid1_case15, session.getSubject(), object);
             sysmeta_case15.setSeriesId(sid_case15);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case15, object, sysmeta_case15);
             
             Thread.sleep(1000);
@@ -1169,6 +1218,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case15 = createSystemMetadata(pid2_case15, session.getSubject(), object);
             sysmeta2_case15.setSeriesId(sid_case15);
             sysmeta2_case15.setObsoletes(pid1_case15);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case15, object, sysmeta2_case15);
 
             sysmeta_case15.setObsoletedBy(pid2_case15);
@@ -1186,6 +1236,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case15 = createSystemMetadata(pid3_case15, session.getSubject(), object);
             sysmeta3_case15.setSeriesId(sid_case15);
             sysmeta3_case15.setObsoletes(pid2_case15);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case15, object, sysmeta3_case15);
             
             Thread.sleep(1000);
@@ -1195,6 +1246,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case15 = createSystemMetadata(pid4_case15, session.getSubject(), object);
             sysmeta4_case15.setSeriesId(sid_case15);
             sysmeta4_case15.setObsoletes(pid3_case15);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case15, object, sysmeta4_case15);
             
             Thread.sleep(1000);
@@ -1206,6 +1258,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta5_case15 = createSystemMetadata(pid5_case15, session.getSubject(), object);
             sysmeta5_case15.setSeriesId(sid2_case15);
             sysmeta5_case15.setObsoletes(pid4_case15);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid5_case15, object, sysmeta5_case15);
             
             sysmeta4_case15.setObsoletedBy(pid5_case15);
@@ -1254,6 +1307,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case16.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case16 = createSystemMetadata(pid1_case16, session.getSubject(), object);
             sysmeta_case16.setSeriesId(sid_case16);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case16, object, sysmeta_case16);
             
             Thread.sleep(1000);
@@ -1272,6 +1326,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case16 = createSystemMetadata(pid3_case16, session.getSubject(), object);
             sysmeta3_case16.setSeriesId(sid_case16);
             sysmeta3_case16.setObsoletes(pid2_case16);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case16, object, sysmeta3_case16);
             
             sysmeta2_case16.setObsoletedBy(pid3_case16);
@@ -1288,6 +1343,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case16 = createSystemMetadata(pid4_case16, session.getSubject(), object);
             sysmeta4_case16.setSeriesId(sid2_case16);
             sysmeta4_case16.setObsoletes(pid3_case16);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case16, object, sysmeta4_case16);
             
             CNodeService.getInstance(request).delete(session, pid3_case16);
@@ -1325,6 +1381,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case17.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case17 = createSystemMetadata(pid1_case17, session.getSubject(), object);
             sysmeta_case17.setSeriesId(sid_case17);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case17, object, sysmeta_case17);
             
             Thread.sleep(1000);
@@ -1334,6 +1391,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case17 = createSystemMetadata(pid2_case17, session.getSubject(), object);
             sysmeta2_case17.setSeriesId(sid_case17);
             sysmeta2_case17.setObsoletes(pid1_case17);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case17, object, sysmeta2_case17);
    
             Thread.sleep(1000);
@@ -1343,6 +1401,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case17 = createSystemMetadata(pid3_case17, session.getSubject(), object);
             sysmeta3_case17.setSeriesId(sid_case17);
             sysmeta3_case17.setObsoletes(pid2_case17);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case17, object, sysmeta3_case17);
             
             sysmeta2_case17.setObsoletedBy(pid3_case17);
@@ -1357,6 +1416,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case17 = createSystemMetadata(pid4_case17, session.getSubject(), object);
             sysmeta4_case17.setSeriesId(sid_case17);
             sysmeta4_case17.setObsoletes(pid3_case17);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case17, object, sysmeta4_case17);
             
             CNodeService.getInstance(request).delete(session, pid3_case17);
@@ -1393,6 +1453,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             sid_case18.setValue("sid."+System.nanoTime());
             SystemMetadata sysmeta_case18 = createSystemMetadata(pid1_case18, session.getSubject(), object);
             sysmeta_case18.setSeriesId(sid_case18);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case18, object, sysmeta_case18);
             
             Thread.sleep(1000);
@@ -1402,6 +1463,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case18 = createSystemMetadata(pid2_case18, session.getSubject(), object);
             sysmeta2_case18.setSeriesId(sid_case18);
             sysmeta2_case18.setObsoletes(pid1_case18);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case18, object, sysmeta2_case18);
 
             sysmeta_case18.setObsoletedBy(pid2_case18);
@@ -1416,6 +1478,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case18 = createSystemMetadata(pid3_case18, session.getSubject(), object);
             sysmeta3_case18.setSeriesId(sid_case18);
             sysmeta3_case18.setObsoletes(pid2_case18);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case18, object, sysmeta3_case18);
             
             sysmeta2_case18.setObsoletedBy(pid3_case18);
@@ -1430,6 +1493,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta4_case18 = createSystemMetadata(pid4_case18, session.getSubject(), object);
             sysmeta4_case18.setSeriesId(sid_case18);
             sysmeta4_case18.setObsoletes(pid3_case18);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid4_case18, object, sysmeta4_case18);
             
             Thread.sleep(1000);
@@ -1439,6 +1503,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta5_case18 = createSystemMetadata(pid5_case18, session.getSubject(), object);
             sysmeta5_case18.setSeriesId(sid_case18);
             sysmeta5_case18.setObsoletes(pid4_case18);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid5_case18, object, sysmeta5_case18);
             
             sysmeta4_case18.setObsoletedBy(pid5_case18);
@@ -1499,6 +1564,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta3_case19 = createSystemMetadata(pid3_case19, session.getSubject(), object);
             sysmeta3_case19.setSeriesId(sid_case19);
             sysmeta3_case19.setObsoletes(pid2_case19);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid3_case19, object, sysmeta3_case19);
             SystemMetadata sys3 = CNodeService.getInstance(request).getSystemMetadata(session, pid3_case19);
             Date time3 = sys3.getDateUploaded();
@@ -1508,6 +1574,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             SystemMetadata sysmeta2_case19 = createSystemMetadata(pid2_case19, session.getSubject(), object);
             sysmeta2_case19.setSeriesId(sid_case19);
             sysmeta2_case19.setObsoletes(pid1_case19);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid2_case19, object, sysmeta2_case19);
             SystemMetadata sys2 = CNodeService.getInstance(request).getSystemMetadata(session, pid2_case19);
             Date time2 = sys2.getDateUploaded();
@@ -1516,6 +1583,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             SystemMetadata sysmeta1_case19 = createSystemMetadata(pid1_case19, session.getSubject(), object);
             sysmeta1_case19.setSeriesId(sid_case19);
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
             CNodeService.getInstance(request).create(session, pid1_case19, object, sysmeta1_case19);
             SystemMetadata sys1 = CNodeService.getInstance(request).getSystemMetadata(session, pid1_case19);
             Date time1 = sys1.getDateUploaded();
