@@ -1389,6 +1389,34 @@ public class MetacatHandler {
      */
     private String generateOutputName(String docid,
             Hashtable<String, String[]> params, DocumentImpl doc) {
+    	SystemMetadata sysMeta = null;
+    	String guid = null;
+    	int rev = -1;
+    	String fileName = null;
+    	
+    	// First, if SystemMetadata.fileName is present, use it
+    	try {
+    		rev = Integer.valueOf(DocumentUtil.getRevisionStringFromString(docid)).intValue();
+    		docid = DocumentUtil.getDocIdFromAccessionNumber(docid);
+    		if (rev > 0 ) {
+				guid = IdentifierManager.getInstance().getGUID(docid, rev);
+				if ( guid != null ) {
+					sysMeta = IdentifierManager.getInstance().getSystemMetadata(guid);
+					if ( sysMeta != null ) {
+						fileName = sysMeta.getFileName();
+					}
+				}
+			}
+		} catch (McdbDocNotFoundException e) {
+			logMetacat.debug("Couldn't find the given docid: " + e.getMessage());
+			
+		}
+    	
+    	if (fileName != null ) {
+    		return fileName;
+    	}
+    	
+    	// Otherwise, generate a name
         String outputname = null;
         // check for the existence of a metadatadocid parameter,
         // if this is sent, then send a filename which contains both
