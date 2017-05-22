@@ -1995,10 +1995,19 @@ public class MNodeService extends D1NodeService
 		boolean isScienceMetadata = isScienceMetadata(sysmeta);
 		//If it's a science metadata doc, we want to update the packageId first
 		if(isScienceMetadata){
+		    boolean isEML = false;
+		    //Get the formatId
+            ObjectFormatIdentifier objFormatId = originalSystemMetadata.getFormatId();
+            String formatId = objFormatId.getValue();
+            //For all EML formats
+            if(formatId.indexOf("eml") == 0){
+                logMetacat.debug("~~~~~~~~~~~~~~~~~~~~~~MNodeService.publish - the object "+originalIdentifier.getValue()+" with format id "+formatId+" is an eml document.");
+                isEML = true;
+            }
 			InputStream originalObject = this.get(session, originalIdentifier);
 			
 			//Edit the science metadata with the new package Id (EML)
-			inputStream = editScienceMetadata(session, originalObject, originalIdentifier, newIdentifier);
+			inputStream = editScienceMetadata(session, originalObject, originalIdentifier, newIdentifier, isEML, sysmeta);
 		}
 		else{
 			inputStream = this.get(session, originalIdentifier);
@@ -2173,7 +2182,7 @@ public class MNodeService extends D1NodeService
 	   * @throws NotFound
 	   * @throws NotImplemented
 	   */
-	  public InputStream editScienceMetadata(Session session, InputStream object, Identifier pid, Identifier newPid)
+	  public InputStream editScienceMetadata(Session session, InputStream object, Identifier pid, Identifier newPid, boolean isEML, SystemMetadata newSysmeta)
 	  	throws ServiceFailure, IOException, UnsupportedEncodingException, InvalidToken, NotAuthorized, NotFound, NotImplemented {
 	    
 		logMetacat.debug("D1NodeService.editScienceMetadata() called.");
@@ -2188,26 +2197,8 @@ public class MNodeService extends D1NodeService
 	    	Document doc = XMLUtilities.getXMLReaderAsDOMDocument(new StringReader(xmlStr));
 		    org.w3c.dom.Node docNode = doc.getDocumentElement();
 
-		    //Get the system metadata for this object
-		    SystemMetadata sysMeta = null;
-		    try{
-		    	sysMeta = getSystemMetadata(session, pid);
-		    } catch(NotAuthorized e){
-		    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
-		    			"This session is not authorized to access the system metadata for " +
-		    			pid.getValue() + " : " + e.getMessage());
-		    } catch(NotFound e){
-		    	throw new ServiceFailure("1030", "D1NodeService.editScienceMetadata(): " + 
-		    			"Could not find the system metadata for " +
-		    			pid.getValue() + " : " + e.getMessage());
-		    }
-		    
-		    //Get the formatId
-	        ObjectFormatIdentifier objFormatId = sysMeta.getFormatId();
-	        String formatId = objFormatId.getValue();
-	        
 	    	//For all EML formats
-	        if(formatId.indexOf("eml") == 0){
+	        if(isEML){
 	        	//Update or add the id attribute
 	    	    XMLUtilities.addAttributeNodeToDOMTree(docNode, XPATH_EML_ID, newPid.getValue());
 	        }
@@ -2217,8 +2208,11 @@ public class MNodeService extends D1NodeService
 		    Source xmlSource = new DOMSource(docNode);
 		    Result outputTarget = new StreamResult(outputStream);
 		    TransformerFactory.newInstance().newTransformer().transform(xmlSource, outputTarget);
-		    newObject = new ByteArrayInputStream(outputStream.toByteArray());
-		    
+		    byte[] output = outputStream.toByteArray();
+		    Checksum checksum = ChecksumUtil.checksum(output, newSysmeta.getChecksum().getAlgorithm());
+		    newObject = new ByteArrayInputStream(output);
+		    newSysmeta.setChecksum(checksum);
+		    logMetacat.debug("MNNodeService.editScienceMetadata - the new checksum is "+checksum.getValue() +" with algorithm "+checksum.getAlgorithm()+" for the new pid "+newPid.getValue()+" which is published from the pid "+pid.getValue());
 	    } catch(TransformerException e) {
 	    	throw new ServiceFailure("1030", "MNNodeService.editScienceMetadata(): " +
 	                "Could not update the ID in the XML document for " +
@@ -2227,6 +2221,10 @@ public class MNodeService extends D1NodeService
 	    	throw new ServiceFailure("1030", "MNNodeService.editScienceMetadata(): " +
 	                "Could not update the ID in the XML document for " +
 	                "pid " + pid.getValue() +" : " + e.getMessage());
+	    } catch(NoSuchAlgorithmException e) {
+	        throw new ServiceFailure("1030", "MNNodeService.editScienceMetadata(): " +
+                    "Could not update the ID in the XML document for " +
+                    "pid " + pid.getValue() +" since the checksum can't be computed : " + e.getMessage());
 	    }
 	    
 	    return newObject;
