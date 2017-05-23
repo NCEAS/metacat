@@ -55,6 +55,15 @@ See the file "docs/install.html" for detailed instructions
 for your OS.
 
 
+Release Notes for 2.8.3:
+------------------------
+New bugs fixed in this release:
+* MNodeService.replicate() is failing
+* MN.publish method fails because of the mismatched checksum
+* MN.update method doesn't check the checksum
+* Set file names correctly when reading objects from Metacat
+
+
 Release Notes for 2.8.2:
 ------------------------
 New bugs fixed in this release:
