@@ -62,6 +62,7 @@ New bugs fixed in this release:
 * MN.publish method fails because of the mismatched checksum
 * MN.update method doesn't check the checksum
 * Set file names correctly when reading objects from Metacat
+* MN.publish method can't generate a new ore document when the metadata is published
 
 
 Release Notes for 2.8.2:
