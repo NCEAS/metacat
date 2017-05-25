@@ -2029,9 +2029,9 @@ public class MNodeService extends D1NodeService
 				oreInputStream = this.get(session, potentialOreIdentifier);
 			} catch (NotFound nf) {
 				// this is probably okay for many sci meta data docs
-				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
+				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue()+" by the name convention.");
 				// try the SOLR index
-				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier, false);
+				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier);
 				if (potentialOreIdentifiers != null) {
 					potentialOreIdentifier = potentialOreIdentifiers.get(0);
 					try {
@@ -2040,9 +2040,12 @@ public class MNodeService extends D1NodeService
 						// this is probably okay for many sci meta data docs
 						logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
 					}
+				} else {
+				    logMetacat.warn("MNodeService.publish - No potential ORE map found for the metadata object" + originalIdentifier.getValue()+" by both the name convention or the solr query.");
 				}
 			}
 			if (oreInputStream != null) {
+			    logMetacat.info("MNodeService.publish - we find the old ore document "+potentialOreIdentifier+" for the metacat object "+originalIdentifier);
 				Identifier newOreIdentifier = MNodeService.getInstance(request).generateIdentifier(session, MNodeService.UUID_SCHEME, null);
 	
 				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
@@ -2096,6 +2099,7 @@ public class MNodeService extends D1NodeService
 				}
 				
 				// save the updated ORE
+				logMetacat.info("MNodeService.publish - the new ore document is "+newOreIdentifier.getValue()+" for the doi "+newIdentifier.getValue());
 				this.update(
 						session, 
 						potentialOreIdentifier, 
@@ -2266,6 +2270,39 @@ public class MNodeService extends D1NodeService
 		return retList;
 	}
 	
+	
+	/**
+     * Determines if we already have registered an ORE map for this package
+     * NOTE: uses a solr query to locate OREs for the object
+     * @todo should be consolidate with the above method.
+     * @param guid of the EML/packaging object
+     */
+    private List<Identifier> lookupOreFor(Identifier guid) {
+        // Search for the ORE if we can find it
+        String pid = guid.getValue();
+        List<Identifier> retList = null;
+        try {
+            String query = "fl=id,resourceMap&wt=xml&q=id:\"" + pid + "\"";
+            InputStream results = this.query(null, "solr", query);
+            org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
+            //String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
+            org.w3c.dom.NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
+            if (nodeList != null && nodeList.getLength() > 0) {
+                retList = new ArrayList<Identifier>();
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    String found = nodeList.item(i).getFirstChild().getNodeValue();
+                    logMetacat.debug("MNodeService.lookupOreRor - found the resource map"+found);
+                    Identifier oreId = new Identifier();
+                    oreId.setValue(found);
+                    retList.add(oreId);
+                }
+            }
+        } catch (Exception e) {
+            logMetacat.error("Error checking for resourceMap[s] on pid " + pid + ". " + e.getMessage(), e);
+        }
+        
+        return retList;
+    }
 
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
