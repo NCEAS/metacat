@@ -79,6 +79,22 @@
 			</div>
 		</xsl:if>
 		
+		<xsl:if test="dcx:simpleDc/dct:source!=''">
+			<div class="control-group">
+				<label class="control-label">Online Access</label>
+				<div class="controls controls-well">
+					<xsl:for-each select="dcx:simpleDc/dct:source">
+						<a>
+							<xsl:attribute name="href">
+								<xsl:value-of select="." />
+							</xsl:attribute>
+							<xsl:value-of select="." />
+						</a>
+					</xsl:for-each>
+				</div>
+			</div>
+		</xsl:if>
+		
 		<div class="control-group">
 			<label class="control-label">Abstract</label>
 			<div class="controls controls-well">
