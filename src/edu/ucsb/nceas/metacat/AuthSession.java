@@ -276,6 +276,28 @@ public class AuthSession {
 
 		return out.toString();
 	}
+	
+	
+	/**
+	 * Get the all groups in which the given userDN is
+	 * @param logInUserName it can be null
+	 * @param logInUserPassword it can be null
+	 * @param userDN
+	 * @return null if no groups were found for the userDN
+	 */
+	public String[] getGroups(String logInUserName, String logInUserPassword, String userDN) throws Exception{
+	    String[][] groupsWithDescription = authService.getGroups(logInUserName,
+	            logInUserPassword, userDN);
+        String groups[] = null;
+        if(groupsWithDescription != null) {
+            groups = new String[groupsWithDescription.length];
+            for (int i = 0; i < groupsWithDescription.length; i++) {
+                groups[i] = groupsWithDescription[i][0];
+                logMetacat.debug("AuthSession.getGroups - found that user "+userDN+" is the member of the group "+groups[i]);
+            }
+        }
+        return groups;
+	}
 
 	/**
 	 * Instantiate a class using the name of the class at runtime
