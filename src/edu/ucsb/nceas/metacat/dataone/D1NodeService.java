@@ -1209,9 +1209,9 @@ public abstract class D1NodeService {
           
       // do we own it?
       for (Subject s: subjects) {
-        logMetacat.debug("Comparing \t" + 
+        logMetacat.debug("Comparing the rights holder in the system metadata\t" + 
                          systemMetadata.getRightsHolder().getValue() +
-                         " \tagainst \t" + s.getValue());
+                         " \tagainst one of the client's subject \t" + s.getValue());
           //includedSubjects.append(s.getValue() + "; ");
           allowed = systemMetadata.getRightsHolder().equals(s);
           if (allowed) {
