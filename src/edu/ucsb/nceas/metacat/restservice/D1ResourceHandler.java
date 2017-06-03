@@ -55,6 +55,7 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
+import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -176,6 +177,81 @@ public class D1ResourceHandler {
 						session.setSubjectInfo(subjectInfo);
 					}
 				}
+            } else {
+                //The session is not null. However, the if we got the session is from a token, the ldap group information for is missing if we logged in by the ldap account.
+                //here we just patch it.
+                Subject subject = session.getSubject();
+                if(subject != null) {
+                    String dn = subject.getValue();
+                    logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "+dn+" This dn will be used to look up the group information");
+                    if(dn != null) {
+                        String username = null;
+                        String password = null;
+                       
+                        String[] groups = null;
+                        try {
+                            AuthSession auth = new AuthSession();
+                            groups = auth.getGroups(username, password, dn);
+                        } catch (Exception e) {
+                            logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user "+dn+" from the authentication interface since :", e);
+                        }
+
+                        if(groups != null) {
+                            SubjectInfo subjectInfo = session.getSubjectInfo();
+                            if(subjectInfo != null) {
+                                logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                //we don't overwrite the existing subject info, just add the new groups informations
+                                List<Person> persons = subjectInfo.getPersonList();
+                                Person targetPerson = null;
+                                if(persons != null) {
+                                    for(Person person : persons) {
+                                        if(person.getSubject().equals(subject)) {
+                                            targetPerson = person;
+                                            logMetacat.debug("D1ReourceHandler.handle - we find a person with the subject "+dn+" in the subject info.");
+                                            break;
+                                        }
+                                    }
+                                }
+                                boolean newPerson = false;
+                                if(targetPerson == null) {
+                                    newPerson = true;
+                                    targetPerson = new Person();
+                                    targetPerson.setSubject(subject);
+                                }
+                                for (int i=0; i<groups.length; i++) {
+                                    logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for an existing subject info.");
+                                    Group group = new Group();
+                                    group.setGroupName(groups[i]);
+                                    Subject groupSubject = new Subject();
+                                    groupSubject.setValue(groups[i]);
+                                    group.setSubject(groupSubject);
+                                    subjectInfo.addGroup(group);
+                                    targetPerson.addIsMemberOf(groupSubject);
+                                }
+                                if(newPerson) {
+                                    subjectInfo.addPerson(targetPerson);
+                                }
+                            } else {
+                                logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                subjectInfo = new SubjectInfo();
+                                Person person = new Person();
+                                person.setSubject(subject);
+                                for (int i=0; i<groups.length; i++) {
+                                    logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for a new subject info.");
+                                    Group group = new Group();
+                                    group.setGroupName(groups[i]);
+                                    Subject groupSubject = new Subject();
+                                    groupSubject.setValue(groups[i]);
+                                    group.setSubject(groupSubject);
+                                    subjectInfo.addGroup(group);
+                                    person.addIsMemberOf(groupSubject);
+                                }
+                                subjectInfo.addPerson(person);
+                                session.setSubjectInfo(subjectInfo);
+                            }
+                        }
+                    }
+                }
             }
 			
             // initialize the parameters
@@ -193,7 +269,8 @@ public class D1ResourceHandler {
             logMetacat.error(e.getClass() + ": " + e.getMessage(), e);
         }
     }
-
+    
+  
     /**
      * subclasses should provide a more useful implementation
      * @return
