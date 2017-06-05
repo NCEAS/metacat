@@ -245,7 +245,43 @@ public abstract class D1NodeService {
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
       } catch (McdbDocNotFoundException e) {
-          throw new NotFound("1340", "The object with the provided " + "identifier was not found.");
+          //throw new NotFound("1340", "The object with the provided " + "identifier was not found.");
+          logMetacat.warn("D1NodeService.delete - the object itself with the provided identifier "+pid.getValue()+" doesn't exist in the system. But we will continute to delete the system metadata of the object.");
+          Lock lock = null;
+          try {
+              lock = HazelcastService.getInstance().getLock(pid.getValue());
+              lock.lock();
+              logMetacat.debug("Locked identifier " + pid.getValue());
+              SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+              if ( sysMeta != null ) {
+                HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
+                HazelcastService.getInstance().getIdentifiers().remove(pid);
+                sysMeta.setArchived(true);
+                try {
+                    MetacatSolrIndex.getInstance().submit(pid, sysMeta, null, false);
+                } catch (Exception ee ) {
+                    logMetacat.warn("D1NodeService.delete - the object with the provided identifier "+pid.getValue()+" was deleted. But the MN solr index can't be deleted.");
+                }
+                //since data objects were not registered in the identifier table, we use pid as the docid
+                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, pid.getValue(), Event.DELETE.xmlValue());
+                
+              } else {
+                  throw new ServiceFailure("1350", "Couldn't delete the object " + pid.getValue() +
+                      ". Couldn't obtain the system metadata record.");
+                  
+              }
+              
+          } catch (RuntimeException re) {
+              throw new ServiceFailure("1350", "Couldn't delete " + pid.getValue() + 
+                  ". The error message was: " + re.getMessage());
+              
+          } finally {
+              if(lock != null) {
+                  lock.unlock();
+                  logMetacat.debug("Unlocked identifier " + pid.getValue());
+              }
+          }
+          return pid;
       } catch (SQLException e) {
           throw new ServiceFailure("1350", "The object with the provided " + "identifier "+pid.getValue()+" couldn't be identified since "+e.getMessage());
       }
