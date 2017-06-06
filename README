@@ -8,7 +8,7 @@
 Metacat: XML Metadata and Data Management System
 ------------------------------------------------                      
 
-Version: 2.8.3 Release
+Version: 2.8.4 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://bugzilla.ecoinformatics.org
@@ -53,6 +53,14 @@ Installation
 ------------
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+
+Release Notes for 2.8.4:
+------------------------
+New bugs fixed in this release:
+* LDAP-based group authorization is failing
+* Display the dc:source field from DCX metadata documents in the stylesheet
+* MN.Delete should continue even though it can't find the local file
 
 
 Release Notes for 2.8.3:
