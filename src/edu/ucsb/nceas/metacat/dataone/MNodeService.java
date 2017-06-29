@@ -1132,6 +1132,7 @@ public class MNodeService extends D1NodeService
         List<String> mnAuthorizationServiceVersions = null;
         List<String> mnStorageServiceVersions = null;
         List<String> mnReplicationServiceVersions = null;
+        List<String> mnPackageServiceVersions = null;
 
         boolean nodeSynchronize = false;
         boolean nodeReplicate = false;
@@ -1140,6 +1141,7 @@ public class MNodeService extends D1NodeService
         List<String> mnAuthorizationServiceAvailables = null;
         List<String> mnStorageServiceAvailables = null;
         List<String> mnReplicationServiceAvailables = null;
+        List<String> mnPackageServiceAvailables = null;
 
         try {
             // get the properties of the node based on configuration information
@@ -1259,6 +1261,20 @@ public class MNodeService extends D1NodeService
                     sMNReplication.setVersion(version);
                     sMNReplication.setAvailable(available);
                     services.addService(sMNReplication);
+                }
+            }
+            
+            mnPackageServiceVersions = Settings.getConfiguration().getList("dataone.mnPackage.serviceVersion");
+            mnPackageServiceAvailables = Settings.getConfiguration().getList("dataone.mnPackage.serviceAvailable");
+            if(mnPackageServiceVersions != null && mnPackageServiceAvailables != null && mnPackageServiceVersions.size() == mnPackageServiceAvailables.size()) {
+                for (int i=0; i<mnPackageServiceVersions.size(); i++) {
+                    String version = mnPackageServiceVersions.get(i);
+                    boolean available = new Boolean(mnPackageServiceAvailables.get(i)).booleanValue();
+                    Service sMNPakcage = new Service();
+                    sMNPakcage.setName("MNPackage");
+                    sMNPakcage.setVersion(version);
+                    sMNPakcage.setAvailable(available);
+                    services.addService(sMNPakcage);
                 }
             }
             
