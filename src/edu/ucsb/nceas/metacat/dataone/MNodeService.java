@@ -1133,6 +1133,8 @@ public class MNodeService extends D1NodeService
         List<String> mnStorageServiceVersions = null;
         List<String> mnReplicationServiceVersions = null;
         List<String> mnPackageServiceVersions = null;
+        List<String> mnQueryServiceVersions = null;
+        List<String> mnViewServiceVersions = null;
 
         boolean nodeSynchronize = false;
         boolean nodeReplicate = false;
@@ -1142,6 +1144,8 @@ public class MNodeService extends D1NodeService
         List<String> mnStorageServiceAvailables = null;
         List<String> mnReplicationServiceAvailables = null;
         List<String> mnPackageServiceAvailables = null;
+        List<String> mnQueryServiceAvailables = null;
+        List<String> mnViewServiceAvailables = null;
 
         try {
             // get the properties of the node based on configuration information
@@ -1275,6 +1279,34 @@ public class MNodeService extends D1NodeService
                     sMNPakcage.setVersion(version);
                     sMNPakcage.setAvailable(available);
                     services.addService(sMNPakcage);
+                }
+            }
+            
+            mnQueryServiceVersions = Settings.getConfiguration().getList("dataone.mnQuery.serviceVersion");
+            mnQueryServiceAvailables = Settings.getConfiguration().getList("dataone.mnQuery.serviceAvailable");
+            if(mnQueryServiceVersions != null && mnQueryServiceAvailables != null && mnQueryServiceVersions.size() == mnQueryServiceAvailables.size()) {
+                for (int i=0; i<mnQueryServiceVersions.size(); i++) {
+                    String version = mnQueryServiceVersions.get(i);
+                    boolean available = new Boolean(mnQueryServiceAvailables.get(i)).booleanValue();
+                    Service sMNQuery = new Service();
+                    sMNQuery.setName("MNQuery");
+                    sMNQuery.setVersion(version);
+                    sMNQuery.setAvailable(available);
+                    services.addService(sMNQuery);
+                }
+            }
+            
+            mnViewServiceVersions = Settings.getConfiguration().getList("dataone.mnView.serviceVersion");
+            mnViewServiceAvailables = Settings.getConfiguration().getList("dataone.mnView.serviceAvailable");
+            if(mnViewServiceVersions != null && mnViewServiceAvailables != null && mnViewServiceVersions.size() == mnViewServiceAvailables.size()) {
+                for (int i=0; i<mnViewServiceVersions.size(); i++) {
+                    String version = mnViewServiceVersions.get(i);
+                    boolean available = new Boolean(mnViewServiceAvailables.get(i)).booleanValue();
+                    Service sMNView = new Service();
+                    sMNView.setName("MNView");
+                    sMNView.setVersion(version);
+                    sMNView.setAvailable(available);
+                    services.addService(sMNView);
                 }
             }
             
