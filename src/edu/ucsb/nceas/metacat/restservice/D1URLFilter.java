@@ -23,8 +23,20 @@
 
 package edu.ucsb.nceas.metacat.restservice;
 
-import javax.servlet.*;
-import java.io.*;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.io.IOException;
+
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+
 
 /**
  * @author berkley
@@ -33,23 +45,24 @@ import java.io.*;
 public class D1URLFilter implements Filter
 {
     ServletContext context;
+    private static Log logger = LogFactory.getLog(D1URLFilter.class);
     
     public void init(FilterConfig filterConfig) 
     {
-        System.out.println("D1URLFilter init.");
+        logger.debug("D1URLFilter init.");
         this.context = filterConfig.getServletContext();
     }
     
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) 
         throws IOException, ServletException 
     {
-        System.out.println("In D1URLFilter.");
+        logger.debug("In D1URLFilter.");
         D1HttpRequest d1h = new D1HttpRequest(request);
         chain.doFilter(d1h, response);
     }
     
     public void destroy() 
     {
-        System.out.println("D1URLFilter destroy.");
+        logger.debug("D1URLFilter destroy.");
     }
 }
