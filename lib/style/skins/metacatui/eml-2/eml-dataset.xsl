@@ -422,6 +422,20 @@
            </xsl:for-each>
          </xsl:if>
      </div>
+     
+        <!-- add in additionalInfo -->
+     <div class="row-fluid">
+         <xsl:if test="additionalInfo">
+           <label class="control-label"><xsl:text>Additional Info</xsl:text></label>
+           <xsl:for-each select="additionalInfo">
+       			<div class="controls controls-well">
+	              <xsl:call-template name="text">
+	                <xsl:with-param name="textfirstColStyle" select="$firstColStyle"/>
+	              </xsl:call-template>
+          		</div>
+           </xsl:for-each>
+         </xsl:if>
+     </div>
   </xsl:template>
 
   <xsl:template name="datasetresource">
