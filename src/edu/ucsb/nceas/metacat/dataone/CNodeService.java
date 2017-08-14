@@ -44,6 +44,10 @@ import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.cn.index.messaging.IndexTaskMessagingClient;
+import org.dataone.cn.index.messaging.IndexTaskMessagingClientFactory;
+import org.dataone.cn.index.task.IndexTask;
+import org.dataone.cn.index.task.IndexTaskGenerator;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.cn.v2.CNAuthorization;
 import org.dataone.service.cn.v2.CNCore;
@@ -87,7 +91,6 @@ import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
-
 import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
@@ -110,6 +113,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   private Logger logMetacat = null;
   public final static String V2V1MISSMATCH = "The Coordinating Node is not authorized to make systemMetadata changes on this object. Please make changes directly on the authoritative Member Node.";
 
+  private IndexTaskMessagingClient indexTaskClient = null;
   /**
    * singleton accessor
    */
@@ -123,7 +127,33 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   private CNodeService(HttpServletRequest request) {
     super(request);
     logMetacat = Logger.getLogger(CNodeService.class);
-        
+    try {
+        getIndexTaskClient();
+    } catch (Exception e) {
+        logMetacat.warn("CNodeService.constructorr - the client for sumbitting the index tasks couldn't be initialized since "+e.getMessage(), e);
+    } 
+  }
+  
+  /*
+   * Method to get the index tasks client.
+   */
+  private void getIndexTaskClient() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+      if(indexTaskClient == null) {
+          indexTaskClient = IndexTaskMessagingClientFactory.getClient();
+      }
+  }
+  
+  /*
+   * Submit a index task to the message broker.
+   */
+  private void submitIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
+      if(indexTaskClient == null) {
+          getIndexTaskClient();
+      }
+      IndexTaskGenerator generator = new IndexTaskGenerator();
+      IndexTask task = generator.generateAddTask(sysmeta, objectURI);
+      indexTaskClient.submit(task);
+
   }
     
   /**
@@ -1869,7 +1899,16 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   
               }
               pid = super.create(session, pid, object, sysmeta);
-
+              // submit the index task to the message broker.
+              try {
+                  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                  String objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
+                  submitIndexTask(sysmeta, objectURI);
+                  logMetacat.info("CNodeService.create - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
+              } catch (Exception e) {
+                  logMetacat.warn("CNodeService.create - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
+              }
+              
           } else {
               String msg = "The subject listed as " + session.getSubject().getValue() + 
                   " isn't allowed to call create() on a Coordinating Node for pid "+pid.getValue();
