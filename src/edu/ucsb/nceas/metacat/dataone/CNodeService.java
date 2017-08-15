@@ -127,11 +127,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   private CNodeService(HttpServletRequest request) {
     super(request);
     logMetacat = Logger.getLogger(CNodeService.class);
-    try {
+    /*try {
         getIndexTaskClient();
     } catch (Exception e) {
         logMetacat.warn("CNodeService.constructorr - the client for sumbitting the index tasks couldn't be initialized since "+e.getMessage(), e);
-    } 
+    }*/ 
   }
   
   /*
@@ -140,6 +140,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   private void getIndexTaskClient() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
       if(indexTaskClient == null) {
           indexTaskClient = IndexTaskMessagingClientFactory.getClient();
+          //System.out.println("generating the client .......................");
       }
   }
   
