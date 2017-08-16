@@ -127,29 +127,21 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   private CNodeService(HttpServletRequest request) {
     super(request);
     logMetacat = Logger.getLogger(CNodeService.class);
-    /*try {
-        getIndexTaskClient();
+    try {
+        indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
     } catch (Exception e) {
         logMetacat.warn("CNodeService.constructorr - the client for sumbitting the index tasks couldn't be initialized since "+e.getMessage(), e);
-    }*/ 
+    }
   }
   
-  /*
-   * Method to get the index tasks client.
-   */
-  private void getIndexTaskClient() throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-      if(indexTaskClient == null) {
-          indexTaskClient = IndexTaskMessagingClientFactory.getClient();
-          //System.out.println("generating the client .......................");
-      }
-  }
+ 
   
   /*
    * Submit a index task to the message broker.
    */
   private void submitIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
       if(indexTaskClient == null) {
-          getIndexTaskClient();
+          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
       }
       IndexTaskGenerator generator = new IndexTaskGenerator();
       IndexTask task = generator.generateAddTask(sysmeta, objectURI);
