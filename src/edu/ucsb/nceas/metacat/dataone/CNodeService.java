@@ -139,7 +139,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   /*
    * Submit a index task to the message broker.
    */
-  private void submitIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
+  private void submitAddIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
       if(indexTaskClient == null) {
           indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
       }
@@ -147,6 +147,30 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       IndexTask task = generator.generateAddTask(sysmeta, objectURI);
       indexTaskClient.submit(task);
 
+  }
+  
+  /*
+   * Submit an update index task to the message broker.
+   */
+  private void submitUpdateIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
+      if(indexTaskClient == null) {
+          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+      }
+      IndexTaskGenerator generator = new IndexTaskGenerator();
+      IndexTask task = generator.generateUpdateTask(sysmeta, objectURI);
+      indexTaskClient.submit(task);
+  }
+  
+  /*
+   * Submit a delete index task to the message broker.
+   */
+  private void submitDeleteIndexTask(SystemMetadata sysmeta) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
+      if(indexTaskClient == null) {
+          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+      }
+      IndexTaskGenerator generator = new IndexTaskGenerator();
+      IndexTask task = generator.generateDeleteTask(sysmeta);
+      indexTaskClient.submit(task);
   }
     
   /**
@@ -1896,7 +1920,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               try {
                   String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
                   String objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
-                  submitIndexTask(sysmeta, objectURI);
+                  submitAddIndexTask(sysmeta, objectURI);
                   logMetacat.info("CNodeService.create - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
               } catch (Exception e) {
                   logMetacat.warn("CNodeService.create - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
