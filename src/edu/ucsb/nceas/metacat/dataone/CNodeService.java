@@ -139,38 +139,60 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   /*
    * Submit a index task to the message broker.
    */
-  private void submitAddIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
-      if(indexTaskClient == null) {
-          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+  private void submitAddIndexTask(SystemMetadata sysmeta, String methodName, boolean isData)  {
+      try {
+          if(indexTaskClient == null) {
+              indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+          }
+          String objectURI = null;
+          if(!isData) {
+              String localId = IdentifierManager.getInstance().getLocalId(sysmeta.getIdentifier().getValue());
+              objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
+          }
+          IndexTaskGenerator generator = new IndexTaskGenerator();
+          //The objectURI will be null for data file
+          IndexTask task = generator.generateAddTask(sysmeta, objectURI);
+          indexTaskClient.submit(task);
+          logMetacat.info("CNodeService."+methodName+" - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
+      } catch (Exception e) {
+          logMetacat.warn("CNodeService."+methodName+" - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
       }
-      IndexTaskGenerator generator = new IndexTaskGenerator();
-      IndexTask task = generator.generateAddTask(sysmeta, objectURI);
-      indexTaskClient.submit(task);
-
   }
   
   /*
    * Submit an update index task to the message broker.
    */
-  private void submitUpdateIndexTask(SystemMetadata sysmeta, String objectURI) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
-      if(indexTaskClient == null) {
-          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+  private void submitUpdateIndexTask(SystemMetadata sysmeta, String methodName) {
+      try {
+          if(indexTaskClient == null) {
+              indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+          }
+          String localId = IdentifierManager.getInstance().getLocalId(sysmeta.getIdentifier().getValue());
+          String objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
+          IndexTaskGenerator generator = new IndexTaskGenerator();
+          IndexTask task = generator.generateUpdateTask(sysmeta, objectURI);
+          indexTaskClient.submit(task);
+          logMetacat.info("CNodeService."+methodName+" - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
+      } catch (Exception e) {
+          logMetacat.warn("CNodeService."+methodName+" - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
       }
-      IndexTaskGenerator generator = new IndexTaskGenerator();
-      IndexTask task = generator.generateUpdateTask(sysmeta, objectURI);
-      indexTaskClient.submit(task);
   }
   
   /*
    * Submit a delete index task to the message broker.
    */
-  private void submitDeleteIndexTask(SystemMetadata sysmeta) throws ServiceFailure, InvalidSystemMetadata, InstantiationException, IllegalAccessException, ClassNotFoundException {
-      if(indexTaskClient == null) {
-          indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+  private void submitDeleteIndexTask(SystemMetadata sysmeta, String methodName) {
+      try {
+          if(indexTaskClient == null) {
+              indexTaskClient = IndexTaskMessagingClientManager.getInstance().getMessagingClient();
+          }
+          IndexTaskGenerator generator = new IndexTaskGenerator();
+          IndexTask task = generator.generateDeleteTask(sysmeta);
+          indexTaskClient.submit(task);
+          logMetacat.info("CNodeService."+methodName+" - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
+      } catch (Exception e) {
+          logMetacat.warn("CNodeService."+methodName+" - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
       }
-      IndexTaskGenerator generator = new IndexTaskGenerator();
-      IndexTask task = generator.generateDeleteTask(sysmeta);
-      indexTaskClient.submit(task);
   }
     
   /**
@@ -821,6 +843,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			} catch (RuntimeException e) {
 				throw new ServiceFailure("4882", e.getMessage());
 			}
+			
 
 		} catch (RuntimeException e) {
 			throw new ServiceFailure("4882", e.getMessage());
@@ -1917,15 +1940,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               }
               pid = super.create(session, pid, object, sysmeta);
               // submit the index task to the message broker.
-              try {
-                  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                  String objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
-                  submitAddIndexTask(sysmeta, objectURI);
-                  logMetacat.info("CNodeService.create - Metacat successfully submitted the index task for the object "+sysmeta.getIdentifier().getValue()+" to the message broker. But it is NOT guarranteed that the broker can get it.");
-              } catch (Exception e) {
-                  logMetacat.warn("CNodeService.create - the index task for the object "+sysmeta.getIdentifier().getValue()+" failed to be submitted to the message broker since "+e.getMessage(), e);
-              }
-              
+              String methodName="create";
+              boolean isData = false;
+              submitAddIndexTask(sysmeta, methodName, isData);
           } else {
               String msg = "The subject listed as " + session.getSubject().getValue() + 
                   " isn't allowed to call create() on a Coordinating Node for pid "+pid.getValue();
