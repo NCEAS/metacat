@@ -148,6 +148,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           if(!isData) {
               String localId = IdentifierManager.getInstance().getLocalId(sysmeta.getIdentifier().getValue());
               objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
+              logMetacat.info("CNodeService.sbmitAddIndexTask - the URI for the object "+sysmeta.getIdentifier().getValue()+" is "+objectURI);
           }
           IndexTaskGenerator generator = new IndexTaskGenerator();
           //The objectURI will be null for data file
@@ -169,6 +170,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           }
           String localId = IdentifierManager.getInstance().getLocalId(sysmeta.getIdentifier().getValue());
           String objectURI = IdentifierManager.getInstance().getObjectFilePath(localId, isScienceMetadata(sysmeta));
+          logMetacat.info("CNodeService.sbmitUpdateIndexTask - the URI for the object "+sysmeta.getIdentifier().getValue()+" is "+objectURI);
           IndexTaskGenerator generator = new IndexTaskGenerator();
           IndexTask task = generator.generateUpdateTask(sysmeta, objectURI);
           indexTaskClient.submit(task);
@@ -299,6 +301,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
               systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
+              //submit the index task
+              String methodName ="setReplicationPolicy";
+              submitUpdateIndexTask(systemMetadata, methodName);
               notifyReplicaNodes(systemMetadata);
               
           } catch (RuntimeException e) {
@@ -425,6 +430,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 				//we don't need to update the modification date.
 				//systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
+				//submit the index task
+	            String methodName ="deleteReplicationMetadata";
+	            submitUpdateIndexTask(systemMetadata, methodName);
 			} catch (RuntimeException e) {
 				throw new ServiceFailure("4882", e.getMessage());
 			}
@@ -506,7 +514,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
           super.delete(session, pid);
-          
+          //submit the index task
+          String methodName="delete";
+          submitDeleteIndexTask(systemMetadata, methodName);
       } catch (McdbDocNotFoundException e) {
           // This object is not registered in the identifier table. Assume it is of formatType DATA,
     	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
@@ -526,6 +536,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	            //since this is cn, we don't need worry about the mn solr index.
 	            HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
 	            HazelcastService.getInstance().getIdentifiers().remove(pid);
+	            //submit the index task
+	            String methodName="delete";
+	            submitDeleteIndexTask(sysMeta, methodName);
 	            String username = session.getSubject().getValue();//just for logging purpose
                 //since data objects were not registered in the identifier table, we use pid as the docid
                 EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, pid.getValue(), Event.DELETE.xmlValue());
@@ -555,6 +568,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
                   ". The local id of the object with the identifier can't be identified since " + e.getMessage());
       }
+      
 
       // get the node list
       try {
@@ -717,6 +731,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
           boolean logArchive = true;
           archiveCNObject(logArchive, session, pid, sysMeta, needModifyDate);
+          //submit the delete index task
+          String methodName = "archive";
+          submitDeleteIndexTask(sysMeta, methodName);
           // notify the replicas
           notifyReplicaNodes(sysMeta);
           return pid;
@@ -843,7 +860,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 			} catch (RuntimeException e) {
 				throw new ServiceFailure("4882", e.getMessage());
 			}
-			
+			//submit an update index task
+			String methodName="setObsoletedBy";
+			submitUpdateIndexTask(systemMetadata, methodName);
 
 		} catch (RuntimeException e) {
 			throw new ServiceFailure("4882", e.getMessage());
@@ -1063,6 +1082,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               // update the modified date for changes to the replica list
               //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
+              
+              //submit the index task
+              String methodName ="setReplicationStatus";
+              submitUpdateIndexTask(systemMetadata, methodName);
 
               if ( !status.equals(ReplicationStatus.QUEUED) && 
             	   !status.equals(ReplicationStatus.REQUESTED)) {
@@ -1527,6 +1550,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       
       logMetacat.debug("Returning from registerSystemMetadata");
+      //submit the index task
+      String methodName="registerSystemMetadata";
+      boolean isData = true;
+      submitAddIndexTask(sysmeta, methodName, isData);
       
       try {
     	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
@@ -1708,6 +1735,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
               systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(pid, systemMetadata);
+              //submit the index task
+              String methodName ="setRightsHolder";
+              submitUpdateIndexTask(systemMetadata, methodName);
               notifyReplicaNodes(systemMetadata);
               
           } catch (RuntimeException e) {
@@ -2064,6 +2094,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               systemMetadata.setSerialVersion(systemMetadata.getSerialVersion().add(BigInteger.ONE));
               systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
+              //submit the index task
+              String methodName ="setAccessPolicy";
+              submitUpdateIndexTask(systemMetadata, methodName);
               notifyReplicaNodes(systemMetadata);
               
           } catch (RuntimeException e) {
@@ -2201,6 +2234,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               // update the modified date for changes to the replica list
               //systemMetadata.setDateSysMetadataModified(Calendar.getInstance().getTime());
               HazelcastService.getInstance().getSystemMetadataMap().put(systemMetadata.getIdentifier(), systemMetadata);
+              
+              //submit the index task
+              String methodName ="updateReplicationMetadata";
+              submitUpdateIndexTask(systemMetadata, methodName);
               
               // inform replica nodes of the change if the status is complete
               if ( replicaStatus.equals(ReplicationStatus.COMPLETED) ) {
@@ -2383,6 +2420,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         boolean needUpdateModificationDate = false;//cn doesn't need to change the modification date.
         boolean fromCN = true;
         success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
+        //submit the index task
+        String methodName="updateSystemMetadata";
+        submitUpdateIndexTask(sysmeta, methodName);
     } finally {
         HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
     }
