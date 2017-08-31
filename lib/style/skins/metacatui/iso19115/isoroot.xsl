@@ -67,17 +67,21 @@
                     </div>
                 </xsl:for-each>
 
-                <!-- Abstract 1:inf-->
-                <xsl:for-each select=".//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract">
-                    <div class="control-group">
-                        <label class="control-label">Abstract</label>
-                        <div class="controls">
-                            <div class="controls-well">
-                                <xsl:apply-templates />
+                <!-- Abstract 1:inf
+                    Can be missing
+                -->
+                <xsl:if test="normalize-space(.//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract/text()) != ''">
+                    <xsl:for-each select=".//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract">
+                        <div class="control-group">
+                            <label class="control-label">Abstract</label>
+                            <div class="controls">
+                                <div class="controls-well">
+                                    <xsl:apply-templates />
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </xsl:for-each>
+                    </xsl:for-each>
+                </xsl:if>
 
                 <!-- Publication 1:1 -->
                 <!-- TODO: Find out where this is in the metadata. -->
