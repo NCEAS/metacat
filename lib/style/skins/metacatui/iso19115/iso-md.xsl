@@ -39,14 +39,16 @@
           </div>
       </xsl:if>
 
-      <div class="control-group">
-          <label class="control-label">Thesaurus</label>
-          <div class="controls">
-              <div class="controls-well">
-                  <xsl:apply-templates select="./gmd:thesaurusName/gmd:CI_Citation" />
-              </div>
-          </div>
-      </div>
+        <xsl:if test="./gmd:thesaurusName">
+            <div class="control-group">
+                <label class="control-label">Thesaurus</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates select="./gmd:thesaurusName" />
+                    </div>
+                </div>
+            </div>
+        </xsl:if>
 
   </xsl:template>
 

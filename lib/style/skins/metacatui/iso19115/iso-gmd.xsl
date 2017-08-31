@@ -45,4 +45,16 @@
     <xsl:template match="gmd:distributionInfo">
         <xsl:apply-templates />
     </xsl:template>
+
+    <!-- BDM: This is a short template for the thesaurus rather than a full 
+    implementation. I did this for space reasons in the view. At some later 
+    point we could consider showing the full thesaurus citation some other way.
+    -->
+    <xsl:template match="gmd:thesaurusName">
+        <xsl:value-of select="./gmd:CI_Citation/gmd:title" />
+        <xsl:apply-templates select="./gmd:CI_Citation/gmd:date" />
+        <xsl:if test="./gmd:CI_Citation/gmd:edition">
+            <xsl:value-of select="gmd:CI_Citation/gmd:edition" />
+        </xsl:if>
+    </xsl:template>
 </xsl:stylesheet>
