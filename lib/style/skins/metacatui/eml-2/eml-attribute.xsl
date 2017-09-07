@@ -157,6 +157,8 @@
 		<xsl:attribute name="resource">#xpointer(<xsl:value-of select="$absolutePath"/>[<xsl:value-of select="$attributeindex"/>])</xsl:attribute>
 		
 		<span class="annotation-attribute-name">
+			PLACEHOLDER
+			<!--  
 			<xsl:choose>
 				<xsl:when test="references!=''">
 		          <xsl:variable name="ref_id" select="references"/>
@@ -169,6 +171,7 @@
 		          <xsl:value-of select="attributeName"/>
 		        </xsl:otherwise>
 		     </xsl:choose>
+		     -->
 		</span>
 	</div>	
   
@@ -1274,7 +1277,7 @@
          <xsl:with-param name="stripes" select="$stripes"/>
        </xsl:call-template>
     </xsl:for-each>
-    <xsl:for-each select="datetime">
+    <xsl:for-each select="dateTime">
        <xsl:call-template name="datetime">
           <xsl:with-param name="stripes" select="$stripes"/>
        </xsl:call-template>

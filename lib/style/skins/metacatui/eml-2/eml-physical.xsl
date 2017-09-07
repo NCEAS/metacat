@@ -144,7 +144,16 @@
       <div class="control-group">
 		<label class="control-label">Size</label>
         <div class="controls controls-well">
-        <xsl:value-of select="."/><xsl:text> </xsl:text><xsl:value-of select="./@unit"/></div>
+            <xsl:value-of select="."/><xsl:text> </xsl:text>
+            <xsl:choose>
+                <xsl:when test="./@unit">
+                    <xsl:value-of select="./@unit"/>
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:text>bytes</xsl:text>
+                </xsl:otherwise>
+            </xsl:choose>
+        </div>
       </div>
     </xsl:for-each>
   </xsl:template>

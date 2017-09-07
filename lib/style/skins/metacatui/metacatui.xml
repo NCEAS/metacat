@@ -25,10 +25,19 @@
 		<target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
 	</doctype>
   
+  <!-- ISO 19115 metadata -->
+  <doctype publicid="http://www.isotc211.org/2005/gmd">
+    <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
+  </doctype>
+  
+  <!-- NOAA-variant ISO 19115 metadata -->
+  <doctype publicid="http://www.isotc211.org/2005/gmd-noaa">
+    <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
+  </doctype>
+
   <doctype publicid="-//NCEAS//login//EN">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui-login.xsl</target>
   </doctype>
-
   <doctype publicid="eml://ecoinformatics.org/eml-2.1.1">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
   </doctype>

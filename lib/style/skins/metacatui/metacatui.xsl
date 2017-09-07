@@ -37,6 +37,7 @@
     <xsl:import href="../../common/resultset-table-solr.xsl"/>
     <xsl:import href="./fgdc/fgdc-root.xsl"/>
     <xsl:import href="./eml-2/emlroot.xsl"/>
+    <xsl:import href="./iso19115/isoroot.xsl"/>
     <xsl:import href="metacatui-common.xsl"/>
     <xsl:import href="../../common/dcx/onedcx-common.xsl"/>
     
@@ -58,28 +59,32 @@
 				<xsl:call-template name="bodyheader"/>
 			
 				<xsl:if test="*[local-name()='eml']">     	
-	                <xsl:call-template name="emldocument"/>
-	            </xsl:if>
+						<xsl:call-template name="emldocument"/>
+				</xsl:if>
+
+				<xsl:if test="*[local-name()='MD_Metadata'] | *[local-name()='MI_Metadata']">
+						<xsl:call-template name="isodocument"/>
+				</xsl:if>
 	            
-	            <xsl:if test="*[local-name()='response']">     	
-	                <xsl:call-template name="resultstablesolr"/>
-	            </xsl:if>
-	            
-	            <xsl:if test="*[local-name()='resultset']">     	
-	                <xsl:call-template name="resultstable"/>
-	            </xsl:if>
-	            
-	            <!--  multiple possible metadata elements -->
-	            <xsl:if test="*[local-name()='metadata']">
-		            <xsl:choose>
-		            	<xsl:when test="namespace-uri(*)='http://ns.dataone.org/metadata/schema/onedcx/v1.0'">
-		                	<xsl:call-template name="onedcx"/>
-		            	</xsl:when>
-		            	<xsl:otherwise>     	
-	                		<xsl:call-template name="metadata"/>
-                		</xsl:otherwise>
-		            </xsl:choose>
-	            </xsl:if>
+				<xsl:if test="*[local-name()='response']">     	
+						<xsl:call-template name="resultstablesolr"/>
+				</xsl:if>
+				
+				<xsl:if test="*[local-name()='resultset']">     	
+						<xsl:call-template name="resultstable"/>
+				</xsl:if>
+				
+				<!--  multiple possible metadata elements -->
+				<xsl:if test="*[local-name()='metadata']">
+					<xsl:choose>
+						<xsl:when test="namespace-uri(*)='http://ns.dataone.org/metadata/schema/onedcx/v1.0'">
+								<xsl:call-template name="onedcx"/>
+						</xsl:when>
+						<xsl:otherwise>     	
+								<xsl:call-template name="metadata"/>
+							</xsl:otherwise>
+					</xsl:choose>
+				</xsl:if>
 	                     
 				<xsl:call-template name="bodyfooter"/>
 				
