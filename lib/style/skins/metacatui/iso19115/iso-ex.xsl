@@ -17,7 +17,6 @@
                 </div>
             </div>
         </xsl:if>
-
         <!-- Geographic -->
         <xsl:for-each select=".//gmd:geographicElement">
             <div class="row-fluid geographicCoverage">
@@ -31,7 +30,6 @@
                 </div>
             </div>
         </xsl:for-each>
-
         <!-- Temporal -->
         <xsl:for-each select=".//gmd:temporalElement">
             <div class="control-group">
@@ -43,7 +41,6 @@
                 </div>
             </div>
         </xsl:for-each>
-
         <!-- Vertical -->
         <xsl:for-each select=".//gmd:verticalElement">
             <div class="control-group">
@@ -56,22 +53,18 @@
             </div>
         </xsl:for-each>
     </xsl:template>
-
     <!-- EX_GeographicExtent-->
     <xsl:template match="gmd:EX_GeographicExtent">
         <xsl:apply-templates />
     </xsl:template>
-
     <!-- EX_BoundingPolygon-->
     <xsl:template match="gmd:EX_BoundingPolygon">
         <xsl:apply-templates />
     </xsl:template>
-
     <!-- EX_GeographicDescription-->
     <xsl:template match="gmd:EX_GeographicDescription">
         <xsl:apply-templates />
     </xsl:template>
-
     <!-- EX_GeographicBoundingBox-->
     <xsl:template match="gmd:EX_GeographicBoundingBox">
         <!-- Set up variables for N E S W -->
@@ -91,7 +84,7 @@
             <label class="control-label">North</label>
             <div class="controls">
                 <div class="controls-well">
-                    <xsl:value-of select="$north" />&#xa0; degrees          
+                    <xsl:value-of select="$north" />&#xa0; degrees                          
                 </div>
             </div>
         </div>
@@ -99,7 +92,7 @@
             <label class="control-label">East</label>
             <div class="controls">
                 <div class="controls-well">
-                    <xsl:value-of select="$east" />&#xa0; degrees          
+                    <xsl:value-of select="$east" />&#xa0; degrees                          
                 </div>
             </div>
         </div>
@@ -107,7 +100,7 @@
             <label class="control-label">South</label>
             <div class="controls">
                 <div class="controls-well">
-                    <xsl:value-of select="$south" />&#xa0; degrees          
+                    <xsl:value-of select="$south" />&#xa0; degrees                          
                 </div>
             </div>
         </div>
@@ -115,13 +108,12 @@
             <label class="control-label">West</label>
             <div class="controls">
                 <div class="controls-well">
-                    <xsl:value-of select="$west" />&#xa0; degrees          
+                    <xsl:value-of select="$west" />&#xa0; degrees                          
                 </div>
             </div>
         </div>
         <xsl:apply-templates select="./gmd:extentTypeCode" />
     </xsl:template>
-
     <!-- gmd:polygon -->
     <xsl:template match="gmd:polygon">
         <div class="control-group">
@@ -133,27 +125,24 @@
             </div>
         </div>
     </xsl:template>
-
     <!-- EX_TemporalExtent -->
     <xsl:template match="gmd:EX_TemporalExtent">
         <xsl:apply-templates select=".//gmd:extent/*" />
     </xsl:template>
-
     <!-- EX_VerticalExtent-->
     <!-- TODO: Improve DOM structure -->
     <!-- TODO: Flesh this out a bit more... -->
     <xsl:template match="gmd:EX_VerticalExtent">
-        <span>minimumValue: 
+        <span>minimumValue:             
             <xsl:value-of select="./gmd:minimumValue/gco:Real" />
         </span>
-        <span>maximumValue: 
+        <span>maximumValue:             
             <xsl:value-of select="./gmd:maximumValue/gco:Real" />
         </span>
-        <span>verticalCRS: 
+        <span>verticalCRS:             
             <xsl:value-of select="./gmd:verticalCRS" />
         </span>
     </xsl:template>
-
     <!-- TimeInstant-->
     <!-- TODO
         - Attributes: frame, calendarEraName, indeterminatePosition
@@ -161,7 +150,7 @@
     <xsl:template match="gml:TimeInstant">
         <label class="control-label">Instant</label>
         <div class="controls">
-            <div class="controls-well">  
+            <div class="controls-well">
                 <xsl:if test="./gmd:description">
                     <label class="control-label">Description</label>
                     <div class="controls">
@@ -172,14 +161,12 @@
                         </div>
                     </div>
                 </xsl:if>
-
                 <label class="control-label">Time Position</label>
                 <div class="controls">
                     <div class="controls-well">
                         <xsl:value-of select=".//gml:timePosition" />
                     </div>
                 </div>
-
                 <xsl:if test=".//gml:timePosition/@calendarEraName">
                     <label class="control-label">Calendar Era Name</label>
                     <div class="controls">
@@ -187,21 +174,18 @@
                             <xsl:value-of select=".//gml:timePosition/@calendarEraName" />
                         </div>
                     </div>
-                    
-                
                 </xsl:if>
                 <xsl:if test=".//gml:timePosition/@indeterminatePosition">
                     <label class="control-label">Time Position</label>
                     <div class="controls">
                         <div class="controls-well">
-                            <xsl:value-of select=".//gml:timePosition/@indeterminatePosition" /> 
+                            <xsl:value-of select=".//gml:timePosition/@indeterminatePosition" />
                         </div>
                     </div>
                 </xsl:if>
             </div>
         </div>
     </xsl:template>
-
     <!-- TimePeriod-->
     <!-- TODO: 
         - All the attributes
@@ -212,15 +196,17 @@
             <div class="control-group">
                 <label class="control-label">Begin</label>
                 <div class="controls">
-                    <div class="controls-well"><xsl:value-of select=".//gml:beginPosition" /></div>
+                    <div class="controls-well">
+                        <xsl:value-of select=".//gml:beginPosition" />
+                    </div>
                     <xsl:if test=".//gml:beginPosition/@calendarEraName">
                         <span>
-                            <xsl:value-of select=".//gml:beginPosition/@calendarEraName" /> (calendarEraName)
+                            <xsl:value-of select=".//gml:beginPosition/@calendarEraName" /> (calendarEraName)                        
                         </span>
                     </xsl:if>
                     <xsl:if test=".//gml:beginPosition/@indeterminatePosition">
                         <span>
-                            <xsl:value-of select=".//gml:beginPosition/@indeterminatePosition" /> (indeterminatePosition)
+                            <xsl:value-of select=".//gml:beginPosition/@indeterminatePosition" /> (indeterminatePosition)                        
                         </span>
                     </xsl:if>
                 </div>
@@ -230,32 +216,33 @@
             <div class="control-group">
                 <label class="control-label">End</label>
                 <div class="controls">
-                    <div class="controls-well"><xsl:value-of select=".//gml:endPosition" /></div>
+                    <div class="controls-well">
+                        <xsl:value-of select=".//gml:endPosition" />
+                    </div>
                     <xsl:if test=".//gml:endPosition/@calendarEraName">
                         <span>
-                            <xsl:value-of select=".//gml:endPosition/@calendarEraName" /> (calendarEraName)
+                            <xsl:value-of select=".//gml:endPosition/@calendarEraName" /> (calendarEraName)                        
                         </span>
                     </xsl:if>
                     <xsl:if test=".//gml:endPosition/@indeterminatePosition">
                         <span>
-                            <xsl:value-of select=".//gml:endPosition/@indeterminatePosition" /> (indeterminatePosition)
+                            <xsl:value-of select=".//gml:endPosition/@indeterminatePosition" /> (indeterminatePosition)                        
                         </span>
                     </xsl:if>
                 </div>
             </div>
         </xsl:if>
         <xsl:if test=".//gml:duration">
-            <span>duration:
+            <span>duration:                
                 <xsl:value-of select=".//gml:duration" />
             </span>
         </xsl:if>
         <xsl:if test=".//gml:timeInterval">
-            <span>timeInterval:
+            <span>timeInterval:                
                 <xsl:value-of select=".//gml:timeInterval" />
             </span>
         </xsl:if>
     </xsl:template>
-
     <!-- extentTypeCode -->
     <xsl:template match="gmd:extentTypeCode">
         <div class="control-group extentTypeCode">
