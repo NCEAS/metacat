@@ -54,7 +54,6 @@ import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.service.util.EncodingUtilities;
 
 import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.MetacatHandler;
@@ -109,7 +108,7 @@ public class D1ResourceHandler {
     protected static final String FUNCTION_NAME_UPDATE = "update";
     
     protected ServletContext servletContext;
-    protected static Logger logMetacat;
+    protected Logger logMetacat;
     protected MetacatHandler handler;
     protected HttpServletRequest request;
     protected HttpServletResponse response;
@@ -553,14 +552,12 @@ public class D1ResourceHandler {
         if(s != null) {
             try
             {
-                result = EncodingUtilities.decodeString(s);
+                result = URLDecoder.decode(s, "UTF-8");
             }
             catch (UnsupportedEncodingException e)
             {
-                s = s.replace("+", "%2B");
                 result = URLDecoder.decode(s);
             }
-            logMetacat.info("D1ResourceHandler.decode - the string after decoding is "+result);
             System.out.println("After decoded: " + result);
         }
         
