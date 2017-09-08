@@ -59,7 +59,7 @@ Release Notes for 2.8.5:
 ------------------------
 New bugs fixed in this release:
 *	Some DataONE service packages not being reported
-* Metacat is double-decoding incoming urls on the CNs
+* Support for XSL transform of iso19115 metadata format
 
 
 Release Notes for 2.8.4:
