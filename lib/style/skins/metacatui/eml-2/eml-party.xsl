@@ -244,7 +244,7 @@
                             <!-- ORCID Link-->
                             <xsl:element name="a">
                                 <xsl:choose>
-                                    <xsl:when test="starts-with($value, 'http://orcid.org') or starts-with(./@value, 'https://orcid.org')">
+                                    <xsl:when test="starts-with($value, 'http://orcid.org') or starts-with($value, 'https://orcid.org')">
                                         <xsl:attribute name="href">
                                             <xsl:value-of select="$value"/>
                                         </xsl:attribute>
