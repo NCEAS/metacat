@@ -16,7 +16,7 @@
             <div class="control-group entity">
                 <h4>General</h4>
                 <!-- fileIdentifier 0:1 -->
-                <xsl:if test="./gmd:fileIdentifier">
+                <xsl:if test="./gmd:fileIdentifier and normalize-space(./gmd:fileIdentifier/text())!=''">
                     <div class="control-group">
                         <label class="control-label">File Identifier</label>
                         <div class="controls">
@@ -29,7 +29,7 @@
                 <!-- TODO: language 0:1 -->
                 <!-- TODO: characterSet 0:1 -->
                 <!-- Parent Identifier 0:1 -->
-                <xsl:if test="./gmd:parentIdentifier">
+                <xsl:if test="./gmd:parentIdentifier and normalize-space(./gmd:parentIdentifier/text())!=''">
                     <div class="control-group">
                         <label class="control-label">Parent Identifier</label>
                         <div class="controls">
@@ -44,15 +44,34 @@
                 <!-- Alternate identifier(s) 0:∞-->
                 <!-- gmd:identifier is an optional part of the CI_Citation element -->
                 <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier">
-                    <div class="control-group">
-                        <label class="control-label">Cited Identifier</label>
-                        <div class="controls">
-                            <div class="controls-well">
-                                <xsl:apply-templates />
+                    <xsl:if test="normalize-space(.//gmd:code/gco:CharacterString/text())!=''">
+                        <div class="control-group">
+                            <label class="control-label">Cited Identifier</label>
+                            <div class="controls">
+                                <div class="controls-well">
+                                    <xsl:variable name="code">
+                                        <xsl:value-of select=".//gmd:code/gco:CharacterString/text()" />
+                                    </xsl:variable>
+                            
+                                    <xsl:choose>
+                                        <xsl:when test="starts-with($code, 'http')">
+                                            <xsl:element name="a">
+                                                <xsl:attribute name="href">
+                                                    <xsl:value-of select="$code" />
+                                                </xsl:attribute>
+                                                <xsl:value-of select="$code" />
+                                            </xsl:element>
+                                        </xsl:when>
+                                        <xsl:otherwise>
+                                            <xsl:value-of select="$code" />
+                                        </xsl:otherwise>
+                                    </xsl:choose>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </xsl:if>
                 </xsl:for-each>
+                
                 <!-- Abstract 0:∞  Only shown if the abstract has content -->
                 <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract">
                     <xsl:if test="normalize-space(./gco:CharacterString/text()) != ''">
@@ -178,7 +197,7 @@
                 </div>
                 <!-- Cited responsible parties-->
                 <div class="control-group">
-                    <label class="control-label">Associated Parties</label>
+                    <label class="control-label">Responsible Parties</label>
                     <div class="controls">
                         <div class="controls-well">
                             <xsl:apply-templates select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty" />

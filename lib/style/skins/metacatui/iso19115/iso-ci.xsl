@@ -6,7 +6,7 @@
     <!-- CI_ResponsibleParty -->
     <xsl:template match="gmd:CI_ResponsibleParty">
         <div class="controls-well">
-            <xsl:if test="./gmd:individualName">
+            <xsl:if test="./gmd:individualName and normalize-space(./gmd:individualName/gco:CharacterString/text())!=''">
                 <div class="control-group">
                     <label class="control-label">Individual</label>
                     <div class="controls">
@@ -16,7 +16,7 @@
                     </div>
                 </div>
             </xsl:if>
-            <xsl:if test="./gmd:organisationName">
+            <xsl:if test="./gmd:organisationName and normalize-space(./gmd:organisationName/gco:CharacterString/text())!=''">
                 <div class="control-group">
                     <label class="control-label">Organization</label>
                     <div class="controls">
@@ -26,12 +26,22 @@
                     </div>
                 </div>
             </xsl:if>
-            <xsl:if test="./gmd:positionName">
+            <xsl:if test="./gmd:positionName and normalize-space(./gmd:positionName/gco:CharacterString/text())!=''">
                 <div class="control-group">
                     <label class="control-label">Position</label>
                     <div class="controls">
                         <div class="controls-well">
                             <xsl:apply-templates select="./gmd:positionName" />
+                        </div>
+                    </div>
+                </div>
+            </xsl:if>
+            <xsl:if test="./gmd:role and normalize-space(./gmd:role/gmd:CI_RoleCode/text())!=''">
+                <div class="control-group">
+                    <label class="control-label">Role</label>
+                    <div class="controls">
+                        <div class="controls-well">
+                            <xsl:apply-templates select="./gmd:role" />
                         </div>
                     </div>
                 </div>
@@ -82,16 +92,6 @@
                     <div class="controls">
                         <div class="controls-well">
                             <xsl:apply-templates select="./gmd:contactInfo/gmd:CI_Contact/gmd:contactInstructions" />
-                        </div>
-                    </div>
-                </div>
-            </xsl:if>
-            <xsl:if test="./gmd:role">
-                <div class="control-group">
-                    <label class="control-label">Role</label>
-                    <div class="controls">
-                        <div class="controls-well">
-                            <xsl:apply-templates select="./gmd:role" />
                         </div>
                     </div>
                 </div>

@@ -5,6 +5,9 @@
     <xsl:template match="gmd:MD_Identifier">
         <xsl:apply-templates select="./gmd:code" />
     </xsl:template>
+    <xsl:template match="gmd:RS_Identifier">
+        <xsl:apply-templates select="./gmd:code" />
+    </xsl:template>
     <xsl:template match="gmd:MD_TopicCategoryCode">
         <xsl:apply-templates />
     </xsl:template>
