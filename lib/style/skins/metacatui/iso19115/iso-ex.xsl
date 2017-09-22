@@ -3,7 +3,8 @@
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
     xmlns:gmd="http://www.isotc211.org/2005/gmd" 
     xmlns:gco="http://www.isotc211.org/2005/gco" 
-    xmlns:gml="http://www.opengis.net/gml/3.2" version="1.0">
+    xmlns:gml="http://www.opengis.net/gml/3.2" 
+    xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0">
     <xsl:template match="gmd:EX_Extent">
         <h4>Coverage</h4>
         <!-- description -->
@@ -12,14 +13,30 @@
                 <label class="control-label">Description</label>
                 <div class="controls">
                     <div class="controls-well">
-                        <xsl:apply-templates />
+                        <xsl:apply-templates select=".//gmd:description" />
                     </div>
                 </div>
             </div>
         </xsl:if>
         <!-- Geographic -->
         <xsl:for-each select=".//gmd:geographicElement">
-            <div class="row-fluid geographicCoverage">
+            <!--  Dynamically add the geographicCoverage class depending on 
+            whether this is a bounding box or not because Google Static Maps are
+             shown if the class is set but the current MetacatUI codebase only 
+             supports rectangular bounding boxes and not geometries like 
+             polygons.
+             -->
+
+            <xsl:element name="div">
+                <xsl:choose>
+                    <xsl:when test=".//gmd:EX_GeographicBoundingBox">
+                        <xsl:attribute name="class">row-fluid geographicCoverage</xsl:attribute>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:attribute name="class">row-fluid</xsl:attribute>
+                    </xsl:otherwise>
+                </xsl:choose>
+
                 <div class="control-group">
                     <label class="control-label">Geographic</label>
                     <div class="controls">
@@ -28,7 +45,7 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            </xsl:element>
         </xsl:for-each>
         <!-- Temporal -->
         <xsl:for-each select=".//gmd:temporalElement">
@@ -130,19 +147,35 @@
         <xsl:apply-templates select=".//gmd:extent/*" />
     </xsl:template>
     <!-- EX_VerticalExtent-->
-    <!-- TODO: Improve DOM structure -->
-    <!-- TODO: Flesh this out a bit more... -->
     <xsl:template match="gmd:EX_VerticalExtent">
-        <span>minimumValue:             
+        <div class="control-group">
+            <label class="control-label">Minimum</label>
+            <div class="controls">
+                <div class="controls-well">
             <xsl:value-of select="./gmd:minimumValue/gco:Real" />
-        </span>
-        <span>maximumValue:             
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">Maximum</label>
+            <div class="controls">
+                <div class="controls-well">
             <xsl:value-of select="./gmd:maximumValue/gco:Real" />
-        </span>
-        <span>verticalCRS:             
-            <xsl:value-of select="./gmd:verticalCRS" />
-        </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label class="control-label">CRS</label>
+            <div class="controls">
+                <div class="controls-well">
+                    <xsl:apply-templates select="./gmd:verticalCRS" />
+                </div>
+            </div>
+        </div>
     </xsl:template>
+
     <!-- TimeInstant-->
     <!-- TODO
         - Attributes: frame, calendarEraName, indeterminatePosition

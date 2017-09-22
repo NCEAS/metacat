@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <xsl:stylesheet 
     xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-    xmlns:gmd="http://www.isotc211.org/2005/gmd" 
+    xmlns:gmd="http://www.isotc211.org/2005/gmd"
+    xmlns:gco="http://www.isotc211.org/2005/gco"
     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0">
     <xsl:template match="gmd:URL">
         <xsl:variable name="url">
@@ -46,5 +47,39 @@
     -->
     <xsl:template match="gmd:thesaurusName">
         <xsl:value-of select="./gmd:CI_Citation/gmd:title" />
+    </xsl:template>
+
+    <!-- gmd:code -->
+    <xsl:template match="gmd:code">
+        <xsl:variable name="code">
+            <xsl:value-of select="./gco:CharacterString/text()" />
+        </xsl:variable>
+   
+        <xsl:choose>
+            <xsl:when test="starts-with($code, 'http://')">
+                <xsl:element name="a">
+                    <xsl:attribute name="href">
+                        <xsl:value-of select="$code" />
+                    </xsl:attribute>
+                    <xsl:value-of select="$code" />
+                </xsl:element>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:value-of select="$code" />
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <!-- gmd:verticalCRS -->
+    <xsl:template match="gmd:verticalCRS">
+        <xsl:choose>
+            <xsl:when test="./@xlink:href and ./@xlink:title">
+                <xsl:element name="a">
+                    <xsl:attribute name="href"><xsl:value-of select="./@xlink:href" /></xsl:attribute>
+                    <xsl:value-of select="./@xlink:title" />
+                </xsl:element>
+            </xsl:when>
+            <xsl:otherwise>See metadata record for full CRS information.</xsl:otherwise>
+        </xsl:choose>
     </xsl:template>
 </xsl:stylesheet>
