@@ -232,12 +232,6 @@
    <xsl:template name="entityparam">
      <xsl:choose>
       <xsl:when test="$entitytype=''">
-        <xsl:variable name="dataTableCount" select="0"/>
-        <xsl:variable name="spatialRasterCount" select="0"/>
-        <xsl:variable name="spatialVectorCount" select="0"/>
-        <xsl:variable name="storedProcedureCount" select="0"/>
-        <xsl:variable name="viewCount" select="0"/>
-        <xsl:variable name="otherEntityCount" select="0"/>
         <xsl:for-each select="dataTable|spatialRaster|spatialVector|storedProcedure|view|otherEntity">
 
         <xsl:if test="'dataTable' = name()">
