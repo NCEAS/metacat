@@ -89,6 +89,45 @@
         </div>
       </xsl:if>
   </xsl:template>
+  
+  <xsl:template match="role" mode="party">
+      <xsl:param name="partyfirstColStyle"/>
+      <xsl:if test="normalize-space(.)!=''">
+        <div class="control-group">
+        	<label class="control-label">Role</label>
+        	<div class="controls" >
+        		
+        		<xsl:variable name="role" select="." />
+        		
+        		<xsl:choose>
+			        <xsl:when test="$role='principalInvestigator'">
+			           <xsl:text>Principal Investigator</xsl:text>
+			        </xsl:when>
+			         <xsl:when test="$role='collaboratingPrincipalInvestigator'">
+			           <xsl:text>Collaborating Principal Investigator</xsl:text>
+			        </xsl:when>
+			        <xsl:when test="$role='custodianSteward'">
+			           <xsl:text>Custodian / Steward</xsl:text>
+			        </xsl:when>
+			        <xsl:when test="$role='coPrincipalInvestigator'">
+			           <xsl:text>Co-Principal Investigator</xsl:text>
+			        </xsl:when>
+			        <xsl:otherwise>
+			         	<xsl:value-of select="concat(
+							  translate(
+							    substring($role, 1, 1),
+							    'abcdefghijklmnopqrstuvwxyz',
+							    'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+							  ),
+							  substring($role,2,string-length($role)-1)
+							)"/>
+			        </xsl:otherwise>
+			     </xsl:choose>
+        		
+        	</div>
+        </div>	
+      </xsl:if>
+  </xsl:template>
 
 
   <xsl:template match="positionName" mode="party">
