@@ -58,19 +58,19 @@
     <xsl:template match="title">
         <xsl:choose>
             <xsl:when test="count(ancestor::section) > 2">
+                <b>
+                    <xsl:apply-templates />
+                </b>
+            </xsl:when>
+            <xsl:when test="count(ancestor::section) > 1">
                 <h6>
                     <xsl:apply-templates />
                 </h6>
             </xsl:when>
-            <xsl:when test="count(ancestor::section) > 1">
+            <xsl:otherwise>
                 <h5>
                     <xsl:apply-templates />
                 </h5>
-            </xsl:when>
-            <xsl:otherwise>
-                <h4>
-                    <xsl:apply-templates />
-                </h4>
             </xsl:otherwise>
         </xsl:choose>
     </xsl:template>
