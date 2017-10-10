@@ -94,9 +94,9 @@
     </xsl:template>
 
     <xsl:template match="emphasis">
-        <emphasis>
+        <em>
             <xsl:apply-templates />
-        </emphasis>
+        </em>
     </xsl:template>
 
     <xsl:template match="literalLayout">
@@ -112,6 +112,7 @@
             <xsl:attribute name="href">
                 <xsl:value-of select="./@url" />
             </xsl:attribute>
+            <xsl:attribute name="target">_default</xsl:attribute>
             <xsl:apply-templates />
         </xsl:element>
     </xsl:template>
