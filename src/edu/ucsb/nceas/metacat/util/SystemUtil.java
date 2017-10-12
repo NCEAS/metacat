@@ -585,13 +585,21 @@ public class SystemUtil {
 		logMetacat.debug("realPath: " + realPath);
 		logMetacat.debug("contextPath: " + contextPath);
 
-		Pattern pattern = Pattern.compile(contextPath + "/\\.$");
+		/*Pattern pattern = Pattern.compile(contextPath + "/\\.$");
 		Matcher matcher = pattern.matcher(realPath);
 		
 		if (matcher.find()) {
 			realPath = matcher.replaceFirst("");
-		}
-		
+		}*/
+		int index = realPath.lastIndexOf(contextPath);
+	    if(index != -1) {
+	      realPath = realPath.substring(0,index);
+	      if(realPath.equals("")) {
+	        //if the realPath is "/metacat".
+	        realPath="/";
+	      }
+	    }
+	    logMetacat.info("SystemUtil.discoverDeployDir: the deploy dir is " + realPath);
 		return realPath;
 	}
 	
