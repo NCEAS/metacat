@@ -287,11 +287,13 @@
                                         <xsl:attribute name="href">
                                             <xsl:value-of select="$value"/>
                                         </xsl:attribute>
+                                        <xsl:attribute name="target">_blank</xsl:attribute>
                                     </xsl:when>
                                     <xsl:otherwise>
                                         <xsl:attribute name="href">
                                             <xsl:value-of select="concat('http://orcid.org/', $value)" />
                                         </xsl:attribute>
+                                        <xsl:attribute name="target">_blank</xsl:attribute>
                                     </xsl:otherwise>
                                 </xsl:choose>
                                 <xsl:value-of select="$value"/>
