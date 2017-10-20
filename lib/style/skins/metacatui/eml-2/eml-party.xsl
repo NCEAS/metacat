@@ -277,7 +277,7 @@
                     <xsl:choose>
                         <xsl:when test="starts-with($directory, 'http://orcid.org') or starts-with($directory, 'https://orcid.org') or ($directory = '' and (starts-with($value, 'http://orcid.org') or starts-with(@value, 'https://orcid.org')))">
                             <!-- ORCID Logo -->
-                            <a href="https://orcid.org">
+                            <a href="https://orcid.org" target="_blank">
                                 <img src="img/orcid_64x64.png" style="display: inline; margin-right: 5px;" width="16" height="16" />
                             </a>
                             <!-- ORCID Link-->
