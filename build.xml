@@ -793,8 +793,11 @@
 			<include name="server-config.wsdd"/>
 			</webinf>
 			</war -->
-		<copy file="${ecogrid-dir}/build/${metacat.context}.war"
-			todir="${dist.dir}" overwrite="true" />
+		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
+		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war" excludes="WEB-INF/lib/log4j-1.2.8.jar"/>
+	   </jar>
+		<copy file="${ecogrid-dir}/build/${metacat.context}-new.war"
+			tofile="${dist.dir}/${metacat.context}.war" overwrite="true" />
 
 
 	</target>
