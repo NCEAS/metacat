@@ -65,6 +65,10 @@
 					<groupId>xml-apis</groupId>
 					<artifactId>xml-apis</artifactId>
 				</exclusion>
+				<exclusion>
+				   <groupId>org.apache.solr</groupId>
+                    <artifactId>solr-solrj</artifactId>
+				</exclusion>
         </exclusions>
         </dependency>
         <dependency>
