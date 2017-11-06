@@ -597,7 +597,7 @@ public class SystemMetadataFactory {
 								SystemMetadata resourceMapObsoletesSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletes);
 								if (resourceMapObsoletesSystemMetadata != null) {
 									resourceMapObsoletesSystemMetadata.setObsoletedBy(resourceMapId);
-									resourceMapObsoletesSystemMetadata.setArchived(true);
+									//resourceMapObsoletesSystemMetadata.setArchived(true);
 									HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapObsoletes, resourceMapObsoletesSystemMetadata);
 								}
 							}
@@ -608,7 +608,7 @@ public class SystemMetadataFactory {
 								Identifier resourceMapObsoletedBy = new Identifier();
 								resourceMapObsoletedBy.setValue(RESOURCE_MAP_PREFIX + obsoletedByLocalId);
 								resourceMapSysMeta.setObsoletedBy(resourceMapObsoletedBy);
-								resourceMapSysMeta.setArchived(true);
+								//resourceMapSysMeta.setArchived(true);
 								SystemMetadata resourceMapObsoletedBySystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletedBy);
 								if (resourceMapObsoletedBySystemMetadata != null) {
 									resourceMapObsoletedBySystemMetadata.setObsoletes(resourceMapId);
