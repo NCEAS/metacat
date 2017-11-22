@@ -503,7 +503,7 @@ public class SolrIndex {
 	        // insert the whole thing
 	        insertToIndex(doc);
     	} catch (Exception e) {
-    		String error = "SolrIndex.insetFields - could not update the solr index: " + e.getMessage();
+    		String error = "SolrIndex.insetFields - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
             writeEventLog(null, pid, error);
             log.error(error, e);
     	}
@@ -592,7 +592,7 @@ public class SolrIndex {
             update(pid, systemMetadata, objectPath);
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
-            String error = "SolrIndex.update - could not update the solr index since " + e.getMessage();
+            String error = "SolrIndex.update - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
             writeEventLog(systemMetadata, pid, error);
             log.error(error, e);
         }
