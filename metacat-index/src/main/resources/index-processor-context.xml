@@ -37,6 +37,7 @@
     <import resource="application-context-isotc211-base.xml" />
     <import resource="application-context-isotc211.xml" />
     <import resource="application-context-isotc211-noaa.xml" />
+    <import resource="application-context-isotc211-pangaea.xml" />
     
     <import resource="application-context-prov-base.xml" />
     <import resource="application-context-provone20150115.xml" />
@@ -116,6 +117,7 @@
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
        <ref bean="isotc211NoaaSubprocessor" />
+       <ref bean="isotc211PangaeaSubprocessor" />
        <ref bean="mdqSubprocessor" />
       </list>
      </property>
