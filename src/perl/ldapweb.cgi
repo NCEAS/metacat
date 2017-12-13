@@ -532,13 +532,18 @@ sub handleRegister {
     
     # Check the recaptcha
     my $c = Captcha::reCAPTCHA->new;
-    my $challenge = $query->param('recaptcha_challenge_field');
-    my $response = $query->param('recaptcha_response_field');
-    # Verify submission
-    my $result = $c->check_answer(
-        $recaptchaPrivateKey, $ENV{'REMOTE_ADDR'},
-        $challenge, $response
-    );
+    #my $challenge = $query->param('recaptcha_challenge_field');
+    my $response = $query->param('g-recaptcha-response');
+    if ($response) {
+       #do nothing
+       debug("users passed the test");
+    } else {
+       debug("users didn't pass the test and reset the reponse to error");
+       $response="error";
+    }
+    #debug("the reponse of recaptcha is $response");
+    # Verify submission (v2 version)
+    my $result = $c->check_answer_v2($recaptchaPrivateKey, $response, $ENV{REMOTE_ADDR});
 
     if ( $result->{is_valid} ) {
         #print "Yes!";
