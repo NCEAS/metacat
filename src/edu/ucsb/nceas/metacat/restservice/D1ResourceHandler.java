@@ -48,6 +48,7 @@ import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Group;
 import org.dataone.service.types.v1.Person;
@@ -108,7 +109,7 @@ public class D1ResourceHandler {
     protected static final String FUNCTION_NAME_UPDATE = "update";
     
     protected ServletContext servletContext;
-    protected Logger logMetacat;
+    protected static Logger logMetacat;
     protected MetacatHandler handler;
     protected HttpServletRequest request;
     protected HttpServletResponse response;
@@ -529,8 +530,11 @@ public class D1ResourceHandler {
         // TODO: Use content negotiation to determine which return format to use
         response.setContentType("text/xml");
         response.setStatus(e.getCode());
-        
-        logMetacat.error("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage(), e);
+        if( e instanceof NotFound) {
+            logMetacat.info("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage());
+        } else {
+            logMetacat.error("D1ResourceHandler: Serializing exception with code " + e.getCode() + ": " + e.getMessage(), e);
+        }
         //e.printStackTrace();
         
         try {
@@ -558,6 +562,7 @@ public class D1ResourceHandler {
             {
                 result = URLDecoder.decode(s);
             }
+            logMetacat.info("D1ResourceHandler.decode - the string after decoding is "+result);
             System.out.println("After decoded: " + result);
         }
         
