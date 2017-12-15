@@ -1160,6 +1160,7 @@
 					<exclude name="**/HzObjectPathMapTest$1.class" />
 					<exclude name="**/HzObjectPathMapTest$2.class" />
 					<exclude name="**/MultiThreadClientIT.class" />
+					<exclude name="**/MultiThreadClientIT$1.class" />
 				</fileset>
 			</batchtest>
 		</junit>
