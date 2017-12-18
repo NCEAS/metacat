@@ -55,6 +55,21 @@ See the file "docs/install.html" for detailed instructions
 for your OS.
 
 
+Release Notes for 2.8.6:
+New features and bugs fixed in this release:
+* D1ResourceHandler.serializeException should not log all exceptions returned as errors.
+* Invalidly formatted dates in listObjects fromDate / toDate parameters do not result in InvalidRequest
+* Support the formatID : http://www.isotc211.org/2005/gmd-pangaea
+* Metacat index error message doesn't have the pid information
+* metacat.EventLog.getReport should downgrade a log level
+* /object/id command get a null exception if there the object format is not found
+* Remove the duplicated the log4j file in Metacat
+* reCAPTCHA v1 will be turned off on March 31, 2018
+* Metacat sets a wrong default value for the deploy path during the totally fresh installation
+* Change the behavior to archive the older version of the resource map object when a new package is pushed to Metacat
+* Remove redundant alternate identifier form in register-dataset.cgi template
+
+
 Release Notes for 2.8.5:
 ------------------------
 New bugs fixed in this release:
