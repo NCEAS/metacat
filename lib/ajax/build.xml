@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<project name="kepler-web" default="compile" basedir=".">
+  <description>
+    kepler-web build file.  This is used to package up your project as a jar,
+    if you want to distribute it.  This isn't needed for normal operation.
+  </description>
+
+  <!-- set classpath -->
+  <path id="project.class.path">
+    <pathelement path="${java.class.path}/"/>
+    <pathelement path="/home/berkley/library.kepler-project/gwt/gwt-user.jar"/>
+    <pathelement path="/home/berkley/library.kepler-project/gwt/gwt-servlet.jar"/>
+    <pathelement path="./lib/client.jar"/>
+    <pathelement path="./lib/utilities.jar"/>
+    <pathelement path="./lib/xalan.jar"/>
+    <pathelement path="./lib/xml-apis.jar"/>
+    <!-- Additional dependencies (such as junit) go here -->
+  </path>
+
+  <target name="init">
+    <property name="installdir" value="/usr/local/devtools/tomcat/webapps"/>
+  </target>
+  
+  <target name="compile" depends="init" description="Compile src to bin">
+    <mkdir dir="bin"/>
+    <javac srcdir="src:test" destdir="bin" includes="**" debug="on" debuglevel="lines,vars,source" source="1.4">
+      <classpath refid="project.class.path"/>
+    </javac>
+  </target>
+
+  <target name="package" depends="compile" description="Package up the project as a jar">
+    <jar destfile="kepler-web.jar">
+      <fileset dir="bin">
+        <include name="**/*.class"/>
+      </fileset>
+      <!-- Get everything; source, modules, html files -->
+      <fileset dir="src">
+        <include name="**"/>
+      </fileset>
+      <fileset dir="test">
+        <include name="**"/>
+      </fileset>
+    </jar>
+  </target>
+
+  <target name="clean">
+    <!-- Delete the bin directory tree -->
+    <delete file="kepler-web.jar"/>
+    <delete>
+      <fileset dir="bin" includes="**/*.class"/>
+    </delete>
+  </target>
+
+  <target name="all" depends="package"/>
+
+</project>

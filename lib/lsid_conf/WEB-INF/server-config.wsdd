@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<deployment xmlns="http://xml.apache.org/axis/wsdd/" xmlns:java="http://xml.apache.org/axis/wsdd/providers/java">
+ <globalConfiguration>
+  <parameter name="adminPassword" value="admin"/>
+  <parameter name="attachments.implementation" value="org.apache.axis.attachments.AttachmentsImpl"/>
+  <parameter name="sendXsiTypes" value="true"/>
+  <parameter name="sendMultiRefs" value="true"/>
+  <parameter name="sendXMLDeclaration" value="true"/>
+  <parameter name="axis.sendMinimizedElements" value="true"/>
+  <requestFlow>
+   <handler type="java:com.ibm.lsid.server.soap.LSIDURLMapper"/>
+   <handler type="java:org.apache.axis.handlers.http.HTTPAuthHandler"/>
+  </requestFlow>
+ </globalConfiguration>
+ <handler name="LSIDURLMapper" type="java:com.ibm.lsid.server.soap.LSIDURLMapper"/>
+ <service name="AdminService" provider="java:MSG">
+  <parameter name="allowedMethods" value="AdminService"/>
+  <parameter name="enableRemoteAdmin" value="false"/>
+  <parameter name="className" value="org.apache.axis.utils.Admin"/>
+  <namespace>http://xml.apache.org/axis/wsdd/</namespace>
+ </service>
+ <service name="AuthorityWebService" provider="java:MSG" style="rpc" use="literal">
+  <parameter name="allowedMethods" value="getAvailableServices,notifyForeignAuthority,revokeNotificationForeignAuthority"/>
+  <parameter name="className" value="com.ibm.lsid.server.soap.AuthorityWebService"/>
+ </service>
+ <service name="MetadataWebService" provider="java:MSG" style="rpc" use="literal">
+  <parameter name="allowedMethods" value="getMetadata"/>
+  <parameter name="className" value="com.ibm.lsid.server.soap.MetadataWebService"/>
+ </service>
+ <service name="DataWebService" provider="java:MSG" style="rpc" use="literal">
+  <parameter name="allowedMethods" value="getData,getDataByRange"/>
+  <parameter name="className" value="com.ibm.lsid.server.soap.DataWebService"/>
+ </service>
+ <service name="AssigningWebService" provider="java:MSG" style="rpc" use="literal">
+  <parameter name="allowedMethods" value="assignLSID,assignLSIDFromList,getLSIDPattern,getLSIDPatternFromList,assignLSIDForNewRevision,getAllowedPropertyNames,getAuthoritiesAndNamespaces"/>
+  <parameter name="className" value="com.ibm.lsid.server.soap.AssigningWebService"/>
+ </service>
+ <service name="Version" provider="java:RPC">
+  <parameter name="allowedMethods" value="getVersion"/>
+  <parameter name="className" value="org.apache.axis.Version"/>
+ </service>
+ <transport name="http">
+  <requestFlow>
+   <handler type="java:org.apache.axis.handlers.http.HTTPAuthHandler"/>
+  </requestFlow>
+ </transport>
+ <transport name="local">
+  <responseFlow>
+   <handler type="LocalResponder"/>
+  </responseFlow>
+ </transport>
+</deployment>

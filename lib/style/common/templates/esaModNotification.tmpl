@@ -1,0 +1,175 @@
+[% IF recipient_status == 'moderator' %]
+Ecological Society of America moderator notice:
+
+[% IF stage == 'mod_accept' %]
+
+You have accepted the metadata entry for: 
+	
+	
+Title: [% dpTitle %]
+	
+Document ID: [% docid %]
+	
+Creator: [% contactName %]  
+	
+	
+This part of the article's submission process is now complete.  
+	
+	
+To view this document, login at [% contextUrl %] and click the View Submissions link.
+
+[% ELSIF stage == 'mod_decline' %]		
+
+You have rejected the metadata entry for: 
+	
+	
+Title: [% dpTitle %]
+	
+Document ID: [% docid %]
+	
+Creator: [% contactName %]
+	
+	
+This entry is no longer being considered for publication. Your comments 
+(if any) on the reason for the rejection are listed below. 
+	
+	
+Your Comments:
+[% comment %]
+
+[% ELSIF stage == 'mod_revise' %]
+
+You have sent back for review the metadata entry for: 
+	
+	
+Title: [% dpTitle %]
+	
+Document ID: [% docid %]
+	
+Creator: [% contactName %]
+	
+	
+Your comments on the areas that could be improved are noted below. 
+	
+	
+To view this document, login at [% contextUrl %] and click the View Submissions link.
+	
+	
+Your Comments:
+[% comment %]
+
+[% ELSIF stage == 'confirmed' %]
+[% IF function == 'modified' %]
+The following document has been modified and is awaiting review:
+[% ELSE %]
+The following document has been submitted and is awaiting review:
+[% END %]
+	
+Title: [% dpTitle %]
+	
+[% IF function == 'modified' %]
+Document ID: [% fullDocid %]
+[% ELSE %]
+Document ID: [% docid %]
+[% END %]
+	
+Creator: [% contactName %]
+	
+	
+To review this document, login at [% contextUrl %] and click the View Submissions link.
+
+[% END %]
+[% ELSIF recipient_status == 'user' %]
+[% IF stage == 'mod_accept' %]
+
+Dear [% contactName %],
+	
+	
+We are happy to inform you that the metadata entry for your article submission,
+[% dpTitle %], has been accepted.  This part of the submission process is now
+complete.  
+	
+	
+Your metadata entry can be cited in the future as a LSID (Life Science ID), and will be
+viewable online at [% metacatUrl %]?action=read&qformat=esa&docid=[% docid %] after publication.  
+	
+	
+Thank you for your cooperation.
+	
+	
+The Ecological Society of America
+ 		
+[% ELSIF stage == 'mod_decline' %]
+
+Dear [% contactName %],
+	
+	
+We are sorry to inform you that the metadata entry for your article submission,
+[% dpTitle %], has been rejected.  The comments of your reviewer (if any) may be
+seen at the bottom of this message.  We hope that you will submit more research for
+review in the future.
+	
+	
+Sincerely,
+	
+	
+The Ecological Society of America
+	
+	
+If this metadata entry was not made as part of an article submission to ESA:
+	
+	
+This metadata registry is only for entries associated with articles for ESA
+publications.  For those wishing to make public metadata entries not associated with
+ESA, there is a metadata registry available to the greater scientific community at
+http://knb.ecoinformatics.org
+	
+	
+Reviewer's Comments:
+[% comment %]
+
+[% ELSIF stage == 'mod_revise' %]
+
+Dear [% contactName %],
+	
+	
+Upon review, we feel that the metadata entry for your article submission,
+[% dpTitle %], is still missing some relevant information.  Please read the
+reviewer's comments below for any suggested additions and changes.  You are strongly
+encouraged to go back and address these issues with your entry.  
+	
+	
+To view this document, login at [% contextUrl %] and click the My Submissions link.
+	
+	
+The Ecological Society of America
+	
+	
+Reviewer's Notes:
+[% comment %]
+	
+[% ELSIF stage == 'confirmed' %]
+Dear [% contactName %],
+
+The following document has been submitted and is awaiting review:
+		
+Title: [% dpTitle %]
+	
+Document ID: [% docid %]
+	
+Creator: [% contactName %]
+	
+	
+To view and/or edit this document, login at [% contextUrl %] and click the My Submissions link.
+	
+	
+You will be notified by email once this document has been reviewed.
+	
+	
+Sincerely,
+	
+	
+The Ecological Society of America
+	
+[% END %]
+[% END %]

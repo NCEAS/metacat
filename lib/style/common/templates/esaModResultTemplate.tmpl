@@ -1,0 +1,23 @@
+<html>
+<head></head>
+<script language="JavaScript">
+function search(){
+    var searchForm = document.getElementById("search-form");
+    var queryInput = document.createElement("input");
+    queryInput.setAttribute("type", "hidden");
+    queryInput.setAttribute("name", "query");
+    queryInput.setAttribute("value", "<pathquery version=\"1.2\"><querytitle>Moderator-Search</querytitle><returndoctype>eml://ecoinformatics.org/eml-2.1.1</returndoctype><returndoctype>eml://ecoinformatics.org/eml-2.1.0</returndoctype><returndoctype>eml://ecoinformatics.org/eml-2.0.1</returndoctype><returndoctype>eml://ecoinformatics.org/eml-2.0.0</returndoctype><returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN</returndoctype><returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN</returndoctype><returndoctype>-//NCEAS//resource//EN</returndoctype><returndoctype>-//NCEAS//eml-dataset//EN</returndoctype><returnfield>originator/individualName/surName</returnfield><returnfield>originator/individualName/givenName</returnfield><returnfield>creator/individualName/surName</returnfield><returnfield>creator/individualName/givenName</returnfield><returnfield>originator/organizationName</returnfield><returnfield>creator/organizationName</returnfield><returnfield>dataset/title</returnfield><returnfield>keyword</returnfield><querygroup operator=\"INTERSECT\"><queryterm searchmode=\"not-contains\" casesensitive=\"false\"><value>public</value><pathexpr>access/allow/principal</pathexpr></queryterm><queryterm searchmode=\"not-contains\" casesensitive=\"false\"><value>Revision Requested</value><pathexpr>additionalMetadata/moderatorComment</pathexpr></queryterm></querygroup></pathquery>");
+    searchForm.appendChild(queryInput);
+    searchForm.submit();
+}
+</script>
+
+<body leftmargin="0" topmargin="0" marginwidth="0" marginheight="0" onload="timerID=setTimeout('search()',20)">
+          <form id="search-form" action="[% metacatUrl %]" method="post">
+                <input type="hidden" name="action" value="squery"/>
+                <input type="hidden" name="qformat" value="esa"/>
+                <input type="hidden" name="enableediting" value="true"/>
+                <input type="hidden" name="message" value="[%message%]"/>
+        </form>
+
+</body>

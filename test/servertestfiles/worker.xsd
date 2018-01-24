@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.company.org"
+            xmlns="http://www.company.org"
+            elementFormDefault="qualified">
+    <xsd:complexType name="workerType">
+        <xsd:sequence>
+           <xsd:element name="name" type="xsd:string"/>
+           <xsd:element name="workID" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+</xsd:schema>
+
+

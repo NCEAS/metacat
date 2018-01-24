@@ -1,0 +1,657 @@
+<!--
+  * sitemaps.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2008 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2008 November 4
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<HTML>
+<HEAD>
+<TITLE>Testing Metacat</TITLE>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</HEAD> 
+<BODY>
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Testing Metacat</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="./building-metacat.html">Back</a> | <a href="./index.html">Home</a> | 
+        <a href="./troubleshooting.html">Next</a>
+      </td>
+    </tr>
+  </table>
+      
+  <div class="header1">Table of Contents</div>
+  <div class="toc">
+    <div class="toc1"><a href="#Intro">About Metacat Testing</a></div>
+      <div class="toc2"><a href="#Overview">Overview</a></div>
+      <div class="toc2"><a href="#MetacatImplementation">JUnit Implementation in Metacat</a></div>
+    <div class="toc1"><a href="#WritingTestCase">Writing a Test Case</a></div>
+      <div class="toc2"><a href="#Basics">Basics</a></div>
+      <div class="toc2"><a href="#MCTestCase">MCTestCase Base Class</a></div>           
+      <div class="toc2"><a href="#BestPractices">Best Practices</a></div>
+    <div class="toc1"><a href="#RunTests">Running Test Cases</a></div>
+      <div class="toc2"><a href="#AntTask">Ant task</a></div>
+      <div class="toc2"><a href="#ConfigureMetacat">Configure Metacat For Testing</a></div>
+      <div class="toc2"><a href="#RunAllTests">Run All Tests</a></div>
+      <div class="toc2"><a href="#RunOneTest">Run One Test</a></div>
+      <div class="toc2"><a href="#ViewingOutput">Viewing Test Output</a></div>
+    <div class="toc1"><a href="#TestDbVersions">Testing Different Database Schema Versions</a></div>
+      <div class="toc2"><a href="#Scripts">Scripts to Run</a></div>
+      <div class="toc2"><a href="#CheckoutScripts">Get Scripts Via Checkout</a></div>
+      <div class="toc2"><a href="#ScriptRepo">Script Repository</a></div>
+      <div class="toc2"><a href="#ManuallyRunScripts">Manually Run Scripts</a></div>
+    <div class="toc1"><a href="#UserTesting">User Testing</a></div>
+      <div class="toc2"><a href="#TestingSkins">Testing Skins</a></div>
+      <div class="toc2"><a href="#TestingWebLDAP">Testing LDAP Web Interface</a></div>
+      <div class="toc2"><a href="#TestingRegistry">Testing Metadata Registry</a></div>
+      <div class="toc2"><a href="#TestingEcogridRegistry">Testing the EcoGrid Registry Service</a></div>
+    <div class="toc1"><a href="#LoadTesting">Load Testing</a></div>
+      <div class="toc2"><a href="#LoadTestCodeFiles">Load Test Code Files</a></div>
+      <div class="toc2"><a href="#GeneratingDictionaryFiles">Generating Dictionary Files</a></div>
+      <div class="toc2"><a href="#InsertLoadTest">Insert Load Test</a></div>
+      <div class="toc2"><a href="#SQueryLoadTest">SQuery Load Test</a></div>
+      <div class="toc2"><a href="#ReadLoadTest">Read Load Test</a></div>
+      <div class="toc2"><a href="#TestDriverScript">Test Driver Script</a></div>
+    <div class="toc1"><a href="#ProfilingMetacat">Profiling Metacat</a></div>
+  </div>  
+  
+  <a name="Intro"></a><div class="header1">About Metacat Testing</div>
+  <a name="Overview"></a><div class="header2">Overview</div>
+  <p>Metacat uses JUnit tests to test its core functionality.  These tests are
+  good for testing the internal workings of an application, but don't test the 
+  layout and appearance.  JUnit tests are meant to be one tool in the developer's 
+  test arsinal. If you are not familiar with JUnit, you should search out some 
+  tutorial documentation online.  One such tutorial is at 
+  <a href="http://clarkware.com/articles/JUnitPrimer.html"> The Clarkware JUnit primer</a></p>
+  
+  <p>Metacat test cases will need to be run on the same server as the Metacat
+  instance that you want to test.  Since Metacat and its test cases share the same
+  configuration files, there is no way to run the tests remotely.</p>
+
+  <a name="MetacatImplementation"></a><div class="header2">JUnit Implementation in Metacat</div>
+  <p>Metacat test cases are located in the code at:
+  <div class="code">&lt;workspace&gt;/metacat/test/edu/ucsb/nceas/metacat*/</div>  
+  There you will find several java files that define JUnit tests.</p>
+  
+  <p> Test cases are run via an ant task, and output from the tests appears in 
+  a build directory.  More on this to follow.</p>
+
+  <a name="WritingTestCase"></a><div class="header1">Writing a Test Case</div>
+  <a name="Basics"></a><div class="header2">Basics</div>
+  <p>All you need to do to get your JUnit test included into the Metacat test 
+  suite is to create it in one of the &lt;workspace&gt;/test/edu/ucsb/nceas/metacat*/
+  directories.  The ant test tasks will know that it should be run. </p>
+  
+  <p> The following methods are required in a test case class:
+  <ul>
+    <li>public &lt;Constructor&gt;(String name) - The constructor for the test class. </li>
+	<li>public void setUp() - Set up any dependencies for the tests.  This is run before each test case.</li> 
+	<li>public void tearDown() - Release an resources used by the test.</li> 
+	<li>public static Test suite() - define the test methods that need to be run.</li>
+	<li>public void initialize() - define any global initializations that need to be done.</li>
+  </ul>
+  
+  You will test for failure using the many assertion methods available.</p>
+  
+  <a name="MCTestCase"></a><div class="header2">MCTestCase Base Class</div>
+  <p>Metacat test cases extend the MCTestCase base class, which holds common 
+  methods and variables.  Some of these include:
+  <ul>
+    <li>SUCCESS/FALURE - boolean variables holding the values for success and failure. </li>
+	<li>metacatUrl, username, password - connection variables used for LDAP connectivity</li> 
+	<li>readDocumentIdWhichEqualsDoc() - method to read a document from Metacat server.</li> 
+	<li>debug() - method to display debug output to standard error.</li>
+  </ul>
+  These are just a few examples to give you an idea of what is in MCTestCase.
+  </p>
+  
+  <a name="BestPractices"></a><div class="header2">Best Practices</div>
+  <p>The following are a few best practices when writing test cases:
+  <ul>
+    <li>Extend MCTestCase - Although strictly speaking, it is possible to bypass MCTestCase
+    and just extend the JUnit TestCase class, you should not do so.   You should always
+    extend the MCTestCase class.</li>
+    <li>Extend Multiple Test Methods - Try to strike a balance between the number of test 
+    methods and the size of each test.  If a test method starts to get huge, you might see
+    if you can break it down into mulitple tests based on functionality.  If the number of
+    tests in the test suite starts to get large, you might see if it makes sense to 
+    separate them out into different test classes.</li>
+	<li>Use assertion message - Most assertion methods have an alternate implementation that 
+	includes a message parameter.  This message will be shown if the assertion fails.  You
+	should use this version of the assertion method.</li> 
+	<li>debug() - You should use the debug() method available in the MCTestCase class to
+	display debug output as opposed to System.err.println().  The test configuration will
+	allow you to turn off debug output when you use the debug() method.</li>
+  </ul>
+
+  <a name="RunTests"></a><div class="header1">Running Test Cases</div>
+  <a name="AntTask"></a><div class="header2">Ant task</div>
+  <p>As we discussed earlier, the test cases run from within ant tasks.  There is a 
+  task to run all tests and a task to run individual tests. </p>
+  <p>You will need to have ant installed on your system.  For downloads and instructions,
+  visit the <a href="http://ant.apache.org/">Apache Ant site</a>.
+  </p>
+  <a name="ConfigureMetacat"></a><div class="header2">Configure Metacat For Testing</div>
+  <p>The test cases will look at the server's metacat properties file for configuration, 
+  so there are two places that need to be configured.</p>
+  <p>First, you need to edit the configuration file at:
+  <div class="code">&lt;workspace&gt;/metacat/test/test.properties</div>
+  This should only hold one property: metacat.contextDir.  This should point to 
+  the context directory for the metacat server you are testing.  For example:
+  <div class="code">metacat.contextDir=/var/lib/tomcat6/webapps/knb</div>
+  The test classes will use this to determine where to look for the server
+  metacat.properties file.</p>
+  
+  <p>the remainder of the configuration needs to happen in the actual server's 
+  metacat.properties file located at:
+  <div class="code">&lt;workspace&gt;/metacat/lib/metacat.properties</div>
+  You will need to verify that all test.* properties are set correctly:
+  <ul>
+    <li>test.printdebug - true if you want debug output, false otherwise </li>
+    <li>test.metacatUrl - the url for the metacat servlet (i.e. http://localhost:8080/knb/metacat)</li>
+    <li>test.contextUrl - the url for the metacat web service (i.e. http://localhost:8080/knb)</li>
+    <li>test.metacatDeployDir - the directory where metacat is physically deployed (i.e. /usr/local/tomcat/webapps/knb)</li>
+    <li>test.mcUser - the first metacat test user ("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org" should be fine)</li>
+    <li>test.mcPassword - the first metacat test password ("kepler" should be fine)</li>
+    <li>test.mcAnotherUser - the second metacat test user.  This user must be a member of the knb-usr 
+        group in ldap. ("uid=test,o=NCEAS,dc=ecoinformatics,dc=org" should be fine)</li>
+    <li>test.mcAnotherPassword - the second metacat test password ("test" should be fine)</li>
+    <li>test.piscoUser - the pisco test user ("uid=piscotest,o=PISCO,dc=ecoinformatics,dc=org" should be fine)</li>
+    <li>test.piscoPassword - the pisco test password ("testPW" should be fine)</li>
+    <li>test.lterUser - the lter test user ("uid=tmonkey,o=LTER,dc=ecoinformatics,dc=org" should be fine)</li>
+    <li>test.lterPassword - the lter test password ("T3$tusr" should be fine)</li>
+    <li>test.testProperty - a property to verify that we can read properties (leave as "testing")</li>
+  </ul>
+  </p>
+  
+  <p>Note that none of the test users should also be administrative users.  This will mess up 
+  the access tests since some document modifications will succeed when we expect them to fail.</p>
+  
+  <p>Once this is done, you will need to rebuild and redeploy the Metacat server.  Note that
+  changing these properties does nothing to change the way the Metacat server runs.  Rebuilding
+  and redeploying merely makes the test properties available to the JUnit tests.</p>
+  
+  <a name="RunAllTests"></a><div class="header2">Run All Tests</div>
+  <p>To run all tests, go to the &lt;workspace&gt;/metacat directory and type</p>
+  <div class="code">ant clean test</div>
+  You will see a line to standard output summarizing each test result.
+  </p>
+  
+  <a name="RunOneTest"></a><div class="header2">Run One Test</div>
+  <p>To run one test, go to the &lt;workspace&gt;/metacat directory and type</p>
+  <div class="code">ant clean runonetest -Dtesttorun=&lt;test_name&gt;</div>
+  Where &lt;test_name&gt; is the name of the JUnit test class (without .java on 
+  the end).  You will see debug information print to standard error.
+  </p>
+  
+  <a name="ViewingOutput"></a><div class="header2">Viewing Test Output</div>
+  <p>Regardless of whether you ran one test or all tests, you will see output in
+  the Metacat build directory in your code at:
+  <div class="code">&lt;workspace&gt;/metacat/build</div>
+  There will be one output file for each test class.  The files will look like 
+  <div class="code">TEST-edu.ucsb.nceas.&lt;test_dir&gt;.&lt;test_name&gt;.txt</div>
+  where &lt;test_dir&gt; is the metacat* directory where the test lives and 
+  &lt;test_name&gt; is the name of the JUnit test class. These output files will have
+  all standard error and standard out output as well as information on assertion 
+  failures in the event of a failed test.
+  </p>
+  
+  <a name="TestDbVersions"></a><div class="header1">Testing Different Database Schema Versions</div>
+  <p>Now and again it is necessary to restore your test database to an older schema version
+  either because you need to test upgrade functionality, or you need to test backwords 
+  compatibility of code.  This section describes how to get your db schema to an older 
+  version.
+  
+  <a name="Scripts"></a><div class="header2">Scripts to Run</div>
+  <p>It is assumed that you have an empty metacat database up and running with a 
+  metacat user.
+  <p>There are two types of scripts that need to be run in order to create a Metacat
+  schema:</p>
+  <ul>
+  <li>xmltables-&lt;dbtype&gt;.sql - where &lt;dbtype&gt; is either oracle or postgres
+  depending on what type of database you are running against.  This script creates the
+  necessary tables for Metacat.</li>
+  <li>loaddtdschema-&lt;dbtype&gt;.sql - where &lt;dbtype&gt; is either oracle or postgres
+  depending on what type of database you are running against.  This script creates the
+  necessary seed data for Metacat.</li>
+  </ul> 
+  
+  <a name="CheckoutScripts"></a><div class="header2">Get Scripts Via Checkout</div>
+  <p>One way to get the scripts you need is to check out the release tag for the version
+  of metacat that you want to install.  You can then run the two scripts shown above to
+  create your database.</p>
+  
+  <a name="ScriptRepo"></a><div class="header2">Script Repository</div>
+  <p>For convenience, the scripts to create each version have been extracted and 
+  checked into:</p>
+    <div class="code">&lt;metacat_code&gt;/src/scripts/metacat-db-versions</div>
+  <p>The files look like:</p>
+  <ul>
+  <li>&lt;version&gt;_xmltables-&lt;dbtype&gt;.sql - where &lt;version&gt; is the version
+  of the schema that you want to create and &lt;dbtype&gt; is either oracle or postgres
+  depending on what type of database you are running against.  This script creates the
+  necessary tables for Metacat.</li>
+  <li>&lt;version&gt;_loaddtdschema-&lt;dbtype&gt;.sql - where &lt;version&gt; is the version
+  of the schema that you want to create and &lt;dbtype&gt; is either oracle or postgres
+  depending on what type of database you are running against.  This script creates the
+  necessary seed data for Metacat.</li>
+  <li>&lt;version&gt;_cleanall-&lt;dbtype&gt;.sql - where &lt;version&gt; is the version
+  of the schema that you want to create and &lt;dbtype&gt; is either oracle or postgres
+  depending on what type of database you are running against. This is a convenience script
+  to clean out the changes for that version.</li>
+  </ul>
+  
+  <a name="ManuallyRunScripts"></a><div class="header2">Manually Run Scripts</div>
+  <p>For instructions on running database scripts manually, please refer to:
+  <a href="../user/run-db-scripts.html">how to run database scripts</a></p>
+    
+  <a name="UserTesting"></a><div class="header1">User Testing</div>
+  <p>The following sections describe some basic end user testing to stress
+  code that might not get tested by unit testing.</p>
+  
+  <a name="TestingSkins"></a><div class="header2">Testing Skins</div>  
+  <p>For each Skin:</p>
+  <ul>
+  <li>View main skin page by going to:
+    <div class="code">http://dev.nceas.ucsb.edu/knb/style/skins/&lt;skin_name&gt;</div>
+  for each skin, where &lt;skin_name&gt; is in:
+    <div class="code">default, nceas, esa, knb, lter, ltss, obfs, nrs, sanparks, saeon</div>  
+  Note that the kepler skin is installed on a different metacat instance and can be found at:
+    <div class="code">http://kepler-dev.nceas.ucsb.edu/kepler</div>
+  </li>
+  <li>Test logging in.  Where applicable (available on the skin) log in using an LDAP account.</li>
+  <li>Test Basic searching
+     <ul>
+     <li>Do a basic search with nothing in the search field.  Should return all docs.</li>
+     <li>Select a distinct word in the title of a doc.  Go back to main page and search for 
+     that word.</li>
+     <li>Select the link to the doc and open the metadata.  Choose a distinct word from a 
+     field that is not Title, Abstract, Keywords or Personnel.  Go back to the main page and 
+     search all fields (if applicable)</li>
+     </ul>
+  </li>   
+  <li>Test Advanced Searching
+     <ul>
+     <li>On the main page, choose advanced search (if applicable)</li>
+     <li>Test a variety of different search criteria</li>
+     </ul>
+  </li>
+  <li>Test Registry (if applicable)
+     <ul>
+     <li>Create a new account</li>
+     <li>use the "forgot your password" link</li>
+     <li>change your password</li>
+     </ul>
+  </li>
+  <li>Test Viewing Document
+     <ul>
+     <li>Use your search to find a document</li>
+     <li>Choose the link to a document - you should see document details
+     <li>In a separate browser, try the shortcut to the doc:
+       <div class="code">http://dev.nceas.ucsb.edu/knb/metacat/&lt;doc_id&gt;/&lt;skin_name&gt;</div>
+     You should see the same results as going to the doc via search.</li>
+     </ul>
+  </li>
+  <li>Download Metadata
+     <ul>
+     <li>Choose the metadata download</li>
+     <li>Save the file</li>
+     <li>view contents for basic validity (contents exist, etc)</li>
+     </ul>
+  </li>
+  <li>Download Data
+     <ul>
+     <li>Choose the data download</li>
+     <li>view the data for basic validity (contents exist, etc)</li>
+     </ul>
+  </li>
+  <li>View Data Table
+     <ul>
+     <li>Find a document with a data table</li>
+     <li>Choose to view the data table</li>
+     <li>view the data table for basic validity (contents exist, etc)</li>
+     </ul>
+  </li>
+  </ul>
+   
+  <a name="TestingWebLDAP"></a><div class="header2">Testing LDAP Web Interface</div>  
+  <p>The following skins use a perl based LDAP web interface to create
+     accounts, change passwords and reset forgotten passwords: </p>
+     <div class="code">default, nceas, esa, knb, lter, ltss, obfs, nrs, sanparks, saeon</div>
+  <p>Following the instructions in the <a href="#TestingSkins"> Testing Skins</a>  section
+     go to each of these skins and test:</p>
+  
+  <ul>
+  <li>Create LDAP Account
+    <ul>
+    <li>Choose the "Create a New Account" link</li>
+    <li>Fill out the required information.
+      <ul>
+      <li>Choose a username that will be easy to find and remove from ldap later.</li>
+      <li>Use your real email address</li>
+      </ul>
+    </li>  
+    <li>Hit the "Register" button</li>
+    <li>You may see a page with similar accounts.  If so, choose to continue.</li>
+    <li>You should get a "Registration Succeeded" message.</li>
+    </ul>
+  </li>  
+  <li>Change LDAP Password (if available)</li>
+    <ul>
+    <li>Choose the "Change Your Password" link</li>
+    <li>Fill out the requested information</li>
+    <li>Hit the "Change password" button</li>
+    <li>You should get a "Your password has been changed" message.</li>
+    </ul>
+  </li>   
+  <li>Request Forgotten LDAP Password Reset
+    <ul>
+    <li>Choose the "Forgot Your Password" link</li>
+    <li>Enter your username</li>
+    <li>Hit the "Reset Password" button</li>
+    <li>You should get a "Your password has been reset" message.</li>
+    <li>You should get an email with your new password</li>
+    <li>Verify that you can log in with the new password</li>
+    </ul>
+  </li>
+  </ul>
+   
+  <a name="TestingRegistry"></a><div class="header2">Testing Metadata Registry</div>   
+  <p>The following skins use a perl based registry service to register metadata and
+     data in metacat via the web: </p>
+     <div class="code">nceas, esa, ltss, obfs, nrs, sanparks, saeon</div>
+  <p>Following the instructions in the <a href="#TestingSkins"> Testing Skins</a> section
+     go to each of these skins and test:</p>
+     
+  <ul>
+  <li>Choose the "Register Dataset" link</li>
+  <li>Fill out required fields.  Note that there are typically many different fields.  
+      You should test out different combinations including attaching datasets if
+      available.</li>
+  <li>Hit the "Submit Dataset" button</li>
+  <li>Review the information for accuracy</li>
+  <li>Submit the data set</li>
+  <li>You should get a "Success" message.</li>
+  <li>Search for the data set in metacat and review for accuracy</li>
+  </ul>
+       
+  <a name="TestingEcogridRegistry"></a><div class="header2">Testing the EcoGrid Registry Service</div>  
+  <p>The EcoGrid registry service maintains a database of systems that are available to EcoGrid. Primarily, 
+  these are Metacat instances which are built with the EcoGrid service automatically activated.  Testing
+  the registry service is somewhat complicated.  The procedure described here uses Eclipse to test. 
+  These instructions assume that you have Eclipse installed and the Seek project set up as a Java project
+  in Eclipse.</p>
+  
+  <ul>
+  <li>Configure the Seek project in Eclipse
+    <ul>
+    <li>Right click on the Seek project and go to Properties->Java Build Path->Source</li>
+    <li>Only the following two direcories should be set up as source:
+      <ul>
+      <li>seek/projects/ecogrid/src</li>
+      <li>seek/projects/ecogrid/tests</li>
+      </ul>
+    </li>
+    <li>Right click on the Seek project and go to Properties->Java Build Path->Libraries</li>
+    <li>Add all Jars from:
+      <ul>
+      <li>seek/projects/ecogrid/lib/</li>
+      <li>seek/projects/ecogrid/lib/axis-1_3/</li>
+      <li>seek/projects/ecogrid/build/lib/</li>
+      </ul>
+    </li>  
+    <li>If you do not already have an Ant view open in Eclipse, in the menu, go to 
+        Window->Show View->Ant</li>
+    <li>drag the file from the seek project at seek/projects/ecogrid/build.xml into
+        the Ant window you just opened.</li>
+    <li>Double click the serverjar and stubjar targets to build those jar files.<li>
+    <li>Right click on the Seek project and go to Properties->Java Build Path->Libraries</li>
+    <li>Add the two Jar files you just created:
+      <ul>
+      <li>seek/projects/ecogrid/build/lib/RegistryServiceImpl.jar</li> 
+      <li>seek/projects/ecogrid/build/lib/RegistryService-stub.jar</li>   
+      </ul> 
+    </li>  
+    </ul>
+  </li>
+  <li>View the RegistryServiceClient usage
+    <ul>
+    <li>In Eclipse, go to the registry service client at: <br>
+        seek/projects/ecogrid/src/org/ecoinformatics/ecogrid/client/RegistryServiceClient.java</li>
+    <li>Right click on RegistryServiceClient.java and go to Run As->Open Run Dialog</li>
+    <li>Name it something like "RegistryServiceClient noargs" since you are running it without arguments.</li>
+    <li>Hit the "Apply" button and then the "Run" button.</li>
+    <li>Proceed past the project error warning dialog</li>
+    <li>In the Eclipse console you should see usage instructions that look like:
+      <ul>
+      <li>Usage: java RegistryServiceClient add session_id local_file GSH</li>
+      <li>Usage: java RegistryServiceClient update session_id  docid local_file GSH</li>
+      <li>Usage: java RegistryServiceClient remove session_id docid GSH</li>
+      <li>Usage: java RegistryServiceClient list session_id GSH</li>
+      <li>Usage: java RegistryServiceClient query session_id query_field query_string GSH</li>
+      </ul>
+    </li>
+    <li>Note: now you can run the client using the green "run" button in the Eclipse
+    menu. We will use that button from now on, instead of going to the java file.</li>
+    </ul>    
+  </li> 
+  <li>List Registry Services on dev
+    <ul>
+    <li>In Eclipse, go to the green run button dropdown and choose "Open Run Dialog"</li>
+    <li>Right click on the "RegistryServiceClient noargs" configuration you created earlier and choose "duplicate".</li>   
+    <li>Name your new configuration "RegistryServiceClient list dev.nceas"
+    <li>Go to the Arguments tab and enter: list 12345 http://dev.nceas.ucsb.edu/registry/services/RegistryService
+      <ul>
+      <li>This conforms to the list usage we saw earlier</li>
+      <li>Note that the session ID is not needed for listing, so we include a random value.</li>
+      <li>GSH always refers to the server where the registry database is held.</li>
+      </ul>
+    </li>
+    <li>Choose "Run"</li>
+    <li>Proceed past the project error warning dialog</li>
+    <li>You should see a listing of details for all services registered on the dev server.</li>
+    </ul>
+  </li> 
+  <li>Register a new  service on dev
+    <ul>
+    <li>Look in your service list you just printed and find a service that has a 
+        service type of: http://ecoinformatics.org/identifierservice-1.0.0</li>
+    <li>Get the service ID and use it to get the xml description from dev metacat by going to:</br>
+        http://kepler-dev.nceas.ucsb.edu/kepler/metacat/&lt;service_id&gt;</li>
+    <li>Save the file to disk</li>
+    <li>Edit the file and change the id to something unique and the description to be something
+        easily recognizable.</li>
+    <li>In the browser, go to: http://kepler-dev.nceas.ucsb.edu/kepler/style/skins/dev/login.html</li>
+    <li>Log in and make note of the sessionId that was returned</li>
+    <li>In Eclipse, go to the green run button dropdown and choose "Open Run Dialog"</li>
+    <li>Right click on the "RegistryServiceClient noargs" configuration you created earlier and choose "duplicate".</li>   
+    <li>Name your new configuration "RegistryServiceClient add-test dev.nceas"
+    <li>Go to the Arguments tab and enter: add &lt;sessionId&gt; &lt;xml_file_path&gt; http://dev.nceas.ucsb.edu/registry/services/RegistryService
+      <ul>
+      <li>This conforms to the add usage we saw earlier</li>
+      <li>The &lt;sessionId&gt; is the id you got after loggin in via the dev skin.</li>
+      <li>The &lt;xml_file_path&gt; is the full path to the descriptor file you downloaded and modified.</li>
+      <li>GSH always refers to the server where the registry database is held.</li>
+      </ul>
+    </li>
+    <li>Choose "Run"</li>
+    <li>Proceed past the project error warning dialog</li>
+    <li>You should see a message saying: "The new id is &lt;id&gt;, where &lt;id&gt; is the unique id
+        you added to the service descriptor file.</li>
+    <li>Follow the instructions shown above to list services to make sure your new service shows up</li>
+    </ul>  
+  </li>      
+  </ul>
+  
+  <a name="LoadTesting"></a><div class="header1">Load Testing</div>
+  <p>This section dicussed the available load testing code and its usage.</p>
+
+  <a name="LoadTestCodeFiles"></a><div class="header2">Load Test Code Files</div>  
+  <p>The code to do load testing is located in the metacat project in this directory:</p>
+     <div class="code">&lt;metacat_src&gt;/test/stress-test</div>
+
+  <p>The test code files are written in python for the following tests:</p>
+
+  <ul>
+  <li> read - read-load-test.py </li>
+  <li> insert - insert-load-test.py </li>
+  <li> squery - squery-load-test.py </li>
+  </ul>
+
+  <p>While these can be run directly from the command line, there is also a driver 
+    file written in bash for convenience named: load-test-driver.sh</p>
+
+  <p>The insert and squery tests rely on the following template files respectively: </p>
+    <div class="code">insert.xml.tmpl and squery.xml.tmpl</div>
+
+  <p>The insert and squery tests rely on dictionary files to create unique document IDs. 
+    These files are generated using a shell script named:</p> 
+    <div class="code">generate-dictionaries.sh</div>
+
+  <p>Each of these files will be discussed in the next sections</p>
+
+  <a name="GeneratingDictionaryFiles"></a><div class="header2">Generating Dictionary Files</div>  
+
+  <p>The insert and squery tests (see following sections) will need to create unique document IDs to avoid conflicts and to bypass caching mechanisms. The dictionary files are created by running:
+     <div class="code">./generate-dictionaries.sh</div>
+
+  <p>This will create a separate file for each letter of the alphabet that looks like:</p>
+     <div class="code">dictionary-a.txt, dictionary-b.txt, etc.</div>
+
+  <p>Each file will contain all the five letter word combinations that start with the 
+    letter associated with that file. You should run this script right away, as it takes a little 
+    time to run.</p>
+
+  <a name="InsertLoadTest"></a><div class="header2">Insert Load Test</div>      
+
+  <p>The insert load test is run via a python script with the following usage:</p>
+     <div class="code">./insert-load-test.py &lt;letter&gt; &lt;iterations&gt; &lt;interval&gt; &lt;host&gt; 2>&1 &</div>
+
+  <p>Where:</p>
+
+  <ul>
+  <li> letter - the letter of the dictionary you want to use to generate doc IDs.</li>
+  <li> iterations - the number of inserts you would like the test to perform.</li>
+  <li> interval - the delay in seconds between each insert. You can enter a decimal for 
+    less than one second.</li>
+  <li> host - the server that is running the instance of metacat you are load testing. 
+    You should not be running the test drivers on the same machine as metacat, since that 
+    could affect the outcome of the load test.</li>
+  </ul>
+
+  <p>The insert test will iterate through the dictionary for the letter you have specified. 
+    For each word, it will create a doc ID that looks like:</p>
+     <div class="code">&lt;word>&lt;epoch_date&gt;.&lt;epoch_date&gt;.1</div>
+
+  <p>For instance, if the test started at epoch date 123914076495 and the 67th word in the 
+    dictionary file (for letter c) is caacp, your doc ID will look like:</p>
+     <div class="code">caacp123914076495.67.1</div>
+
+  <p>This docid is subtituted for each values of @!docid!@ in the insert template at:</p>
+     <div class="code">insert.xml.tmpl</div>
+
+  <p>Each doc will then be inserted into Metacat using the metacat.py interface file.</p>
+
+  <p>Output will be written to a file named:</p>
+     <div class="code">insert-&lt;letter&gt;.out</div>
+
+  <p>Note that you can run several of the insert tests at the same time. You should run 
+    each against a different letter to avoid doc ID naming conflicts and to be able to 
+    view the output from each test in a different output file. See the load-test-driver.sh 
+    for some examples.</p>
+    
+  <a name="SQueryLoadTest"></a><div class="header2">SQuery Load Test</div>  
+
+  <p>The squery load test is run via a python script with the following usage:</p>
+     <div class="code">./squery-load-test.py &lt;letter&gt; &lt;iterations&gt; &lt;interval&gt; &lt;host&gt; 2>&1 &</div>
+
+  <p>Where:</p>
+
+  <ul>
+  <li> letter - the letter of the dictionary you want to use to generate doc IDs.</li>
+  <li> iterations - the number of squeries you would like the test to perform.</li>
+  <li> interval - the delay in seconds between each squery. You can enter a decimal for 
+    less than one second.</li>
+  <li> host - the server that is running the instance of metacat you are load testing. 
+    You should not be running the test drivers on the same machine as metacat, since 
+      that could affect the outcome of the load test.</li>
+  </ul>
+
+  <p>The squery test will iterate through the dictionary for the letter you have specified. 
+    For each word, it will create a query by substituting the dictionary word for every 
+    instance of @!search-word!@ in the squery template at:</p>
+     <div class="code">squery.xml.tmpl</div>
+
+  <p>Each of these queries will be run against Metacat using the metacat.py interface file. 
+  By changing the query for each word, we insure that we do not get cached query results 
+  back from Metacat, which would not cause a significant load.</p>
+
+  <p>Output will be written to a file named:</p>
+     <div class="code">squery-&lt;letter&gt;.out</div>
+
+  <p>Note that you can run several of the squery tests at the same time. You should run 
+    each against a different letter to avoid doc ID naming conflicts and to be able to 
+    view the output from each test in a different output file. See the load-test-driver.sh 
+    for some examples. If you are going to run a test against the same letter more than 
+    once, you will need to restart the instance of Metacat being tested to clear the query 
+    cache on that system.</p>
+ 
+  <a name="ReadLoadTest"></a><div class="header2">Read Load Test</div>     
+
+  <p>The read load test is run via a python script with the following usage:</p>
+     <div class="code">./read-load-test.py &lt;letter&gt; &lt;iterations&gt; &lt;interval&gt; &lt;host&gt; 2>&1 &</div>
+
+  <p>Where:</p>
+
+  <ul>
+  <li> letter - the read test does not use a dictionary. The letter helps us insure that 
+    each test reads a different document, and writes to its own output file.</li>
+  <li> iterations - the number of reads you would like the test to perform.</li>
+  <li> interval - the delay in seconds between each read. You can enter a decimal for 
+    less than one second.</li>
+  <li> host - the server that is running the instance of metacat you are load testing. 
+    You should not be running the test drivers on the same machine as metacat, since 
+    that could affect the outcome of the load test.</li>
+  </ul>
+
+  <p>The read test will create a doc ID that looks like:</p>
+     <div class="code">readtest-&lt;letter&gt;&lt;epoch_date&gt;.1.1</div>
+
+  <p>It will do a single insert using that doc ID and the template at:</p>
+     <div class="code">insert.xml.tmpl</div>
+
+  <p>It will then do a read of that document from Metacat using the metacat.py interface 
+    file for the number of iterations you have specified.</p>
+
+  <p>Output will be written to a file named:</p>
+     <div class="code">read-&lt;letter&gt;.out</div>
+
+  <p>Note that you can run several of the read tests at the same time. You should run 
+  each against a different letter to avoid doc ID naming conflicts and to be able to 
+  view the output from each test in a different output file. See the load-test-driver.sh 
+  for some examples.</p>
+
+  <a name="TestDriverScript"></a><div class="header2">Test Driver Script</div> 
+
+  <p>There is a very simple driver script that allows you to easily run multiple instances 
+  and combinations of the different load tests called:</p>
+     <div class="code">./load-test-driver.sh</div>
+  <p>Uncomment the tests you want to run. </p>
+  
+  <br>
+  <a href="./building-metacat.html">Back</a> | <a href="./index.html">Home</a> | 
+  <!--a href="add next file here when one exists" -->Next<!-- /a -->
+
+</BODY>
+</HTML>

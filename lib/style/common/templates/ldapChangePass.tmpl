@@ -1,0 +1,79 @@
+    <h3>Change your KNB password</h3>    
+
+  <table class="intro" cellpadding="3" cellspacing="0">
+    <tr><td align="left"><span class="regtext">Enter the required information below to change your KNB password.  
+    You will need to know your username and your old password, and choose a new password (which is entered twice for confirmation). 
+    Required fields are denoted by an asterisk (*).</span></td></tr>
+    <tr><td align="left"><a href="[% cgiurl %]?stage=initresetpass&cfg=[% cfg %]">Forgot your old password?</a></td></tr>
+    <tr><td align="left"> <span class="label">[% errorMessage %]</span></td></tr>
+  </table>
+    
+    
+    
+   <table class="intro" cellpadding="3" cellspacing="0"><tr><td>
+    <form name="passwdForm" action="[% cgiurl %]" method="post">
+      <input type="hidden" name="stage" value="[% stage %]"/>
+      <input type="hidden" name="cfg" value="[% cfg %]"/>
+      
+      <table border="0">
+        <tr>
+          <td align="left" class="label">
+            *Username:
+          </td>
+          <td align="right">
+            <input name="uid" type="text"
+                   [% IF allParams.uid %]
+                   value="[% allParams.uid %]"
+                   [% END %]/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Organization:
+          </td>
+          <td align="right">
+            <select name="o">
+              [% FOREACH org = orgList %]
+		[% IF allParams.o == org %]
+                  <option value="[% org %]" selected>[% org %]</option>
+                [% ELSE %]
+                  <option value="[% org %]">[% org %]</option>
+                [% END %]
+              [% END %]
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Old password:
+          </td>
+          <td align="right">
+            <input name="oldpass" type="password" />
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *New password:
+          </td>
+          <td align="right">
+            <input name="userPassword" type="password" />
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Confirm new password:
+          </td>
+          <td align="right">
+            <input name="userPassword2" type="password" />
+          </td>
+        </tr>
+        <tr>
+          <td>
+          </td>
+          <td align="right">
+            <input name="action" type="submit" value="Change password"/>
+          </td>
+        </tr>
+      </table>
+    </form>
+    </td></tr></table>

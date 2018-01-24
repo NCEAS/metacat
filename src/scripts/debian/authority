@@ -1,0 +1,4 @@
+<IfModule mod_jk.c>
+	JkMount /authority knb
+	JkMount /authority/* knb
+</IfModule>

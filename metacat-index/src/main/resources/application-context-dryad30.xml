@@ -1,0 +1,25 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<bean id="dryad30Subprocessor"
+	  	class="org.dataone.cn.indexer.parser.ScienceMetadataDocumentSubprocessor">
+		<property name="matchDocument"
+	   		value="/d100:systemMetadata/formatId[text() = 'http://purl.org/dryad/terms/']"></property>
+	  	<property name="fieldList">
+		   	<list>
+		    	<ref bean="dryad.abstract" />
+		    	<ref bean="dryad.author" />
+		    	<ref bean="dryad.investigator" />
+		    	<ref bean="dryad.keywords" />
+		    	<ref bean="dryad.origin" />
+		    	<ref bean="dryad.pubDate" />
+				<ref bean="dryad.site" />
+		    	<ref bean="dryad.title" />
+		    	<ref bean="dryad.scientificName" />
+				<ref bean="dryad.fileID" />
+		    	<ref bean="dryad.fullText" />
+		   	</list>
+	  	</property>
+	</bean>
+</beans>

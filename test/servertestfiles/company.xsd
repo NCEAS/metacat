@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+            targetNamespace="http://www.company.org"
+            xmlns="http://www.company.org"
+            elementFormDefault="qualified">
+    <xsd:include schemaLocation="product.xsd"/>
+    <xsd:include schemaLocation="./worker.xsd"/>
+    <xsd:element name="company">
+        <xsd:complexType>
+            <xsd:sequence>
+                <xsd:element name="worker" type="workerType"
+                             maxOccurs="unbounded"/>
+                <xsd:element name="product" type="productType"
+                             maxOccurs="unbounded"/>
+            </xsd:sequence>
+        </xsd:complexType>
+    </xsd:element>
+</xsd:schema>
+

@@ -1,0 +1,448 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.0">
+
+	<!-- to change the content type or response encoding change the following line -->
+	<jsp:directive.page contentType="text/html;charset=UTF-8" />
+	<jsp:directive.page
+		import="edu.ucsb.nceas.metacat.clientview.ClientView" />
+	<jsp:directive.page
+		import="edu.ucsb.nceas.metacat.clientview.ClientViewHelper" />
+	<jsp:directive.page
+		import="edu.ucsb.nceas.metacat.clientview.ClientHtmlHelper" />
+
+	<jsp:declaration>
+        private ClientViewHelper clientViewHelper = null;
+    </jsp:declaration>
+
+<jsp:directive.include file="settings.jsp" />
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+
+	<jsp:element name="script">
+		<jsp:attribute name="language">JavaScript</jsp:attribute>
+		<jsp:attribute name="src">
+			<jsp:expression>CONTEXT_URL + "/style/skins/saeon/searchPathQuery.js"</jsp:expression>
+		</jsp:attribute>
+	</jsp:element>
+	<script type="text/javascript" language="JavaScript">
+		function trim(stringToTrim) {
+			return(stringToTrim.replace(/^\s+|\s+$/g,""));
+		}
+		
+		function isEmpty(aTextField) {
+			var value = trim(aTextField.value);
+			var result = ((value.length == 0) || (value == null));
+			return(result);
+		}
+		
+		function allowSubmit(formObj) {
+			var     result = true;
+			var     action = "";
+		
+		    action = trim(formObj.elements["action"].value);
+		    if (action == "Login") {
+		        if (isEmpty(formObj.elements["username"])) {
+		            result = false;
+		            alert("User name is required");
+		        } else if (isEmpty(formObj.elements["organization"])) {
+		            result = false;
+		            alert("Organization is required");
+		        } else if (isEmpty(formObj.elements["password"])) {
+		            result = false;
+		            alert("Password is required");
+		        }
+		    }
+		    
+			return(result);
+		}
+	</script>
+
+	<title>SAEON - South African Environmental Observation Network Repository</title>
+	<jsp:element name="link">
+		<jsp:attribute name="rel">stylesheet</jsp:attribute>
+		<jsp:attribute name="type">text/css</jsp:attribute>
+		<jsp:attribute name="href">
+			<jsp:expression>CONTEXT_URL + "/style/skins/saeon/saeon.css"</jsp:expression>
+		</jsp:attribute>
+	</jsp:element>
+</head>
+	
+<body>
+	<div class="templatecontentareaclass" style="background: #FFFFFF;">
+		<jsp:useBean id="clientViewBean" scope="session" class="edu.ucsb.nceas.metacat.clientview.ClientView" /> 
+		<jsp:setProperty name="clientViewBean" property="*" /> 
+		<jsp:scriptlet>
+			clientViewHelper = ClientViewHelper.clientViewHelperInstance(request);
+			clientViewHelper.clientRequest(request, response);
+			request.getSession().setAttribute("clientViewHelper", clientViewHelper);
+        </jsp:scriptlet>
+
+	<table>
+	<tr>
+		<td colspan="3">
+			<p class="regtext">
+			Welcome to the SAEON Data Repository. 
+			This is the primary source for comprehensive information about scientific 
+			and research data sets collected throughout the South African Environmental Observation Network.
+			</p>
+		</td>
+	</tr>
+	<tr valign="top">
+	<td>
+	
+	<h2>Search for SAEON Data</h2>
+	
+	<p class="emphasis">Searching: 
+		<jsp:scriptlet>
+			String organizationScope = request.getParameter("organizationScope");
+			if (organizationScope == null) {
+				organizationScope = "";
+			}
+			if (!organizationScope.equals("")) {
+		</jsp:scriptlet>
+			<!-- set the map to use the correct scope -->
+			<script type="text/javascript" >
+				var dropDownTimer = null;
+				
+				//this syncs the map based on the input string location
+				function setMapLocation(strLocation) {
+				
+					var mapFrameDocument = document.getElementById("mapFrame").contentDocument;
+					if (!mapFrameDocument) {
+						//alert("IE");
+						mapFrameDocument = document.getElementById("mapFrame").contentWindow;
+						if (mapFrameDocument.document) {
+							mapFrameDocument = mapFrameDocument.document;
+						}
+						
+					}
+					//alert("mapFrame=" + mapFrameDocument.name);
+					//alert("locations=" + mapFrameDocument.getElementsByTagName('locations'));
+					
+					//check if the dropdown is loaded in DOM
+					if (mapFrameDocument.getElementsByName('locations').length == 0) {
+						dropDownTimer = setTimeout("setMapLocation('" + strLocation + "')", 100);
+						return false;
+					}
+					clearTimeout(dropDownTimer);
+					
+					var locationMenu = mapFrameDocument.getElementsByName('locations')[0];
+					//alert("locationMenu=" + locationMenu);
+					var locationOptions = locationMenu.options;
+					//alert("locationOptions=" + locationOptions);
+					//loop through the options to find the correct location based on input string
+					for (var i=0; i &lt; locationOptions.length; i++) {
+						if (locationOptions[i].text == strLocation) {
+							//set as selected
+							locationMenu.selectedIndex = i;
+							break;
+						}
+					}
+					//alert("Focusing on selected location: " + locationMenu.options[locationMenu.selectedIndex].text);
+					
+					//the onchange command from select object
+					locationMenu.onchange();
+					//mapFrameDocument.config.objects.locationsSelect.setAoi(locationMenu.options[locationMenu.selectedIndex].value,'mainMap');
+				
+				}
+				
+				//kick it off
+				dropDownTimer = 
+					setTimeout(
+					"setMapLocation('<jsp:expression>organizationScope</jsp:expression>')",
+					 100);
+				
+			</script>
+			
+			<jsp:expression>organizationScope</jsp:expression>
+		<jsp:scriptlet>
+			}
+			else {
+		</jsp:scriptlet>
+			All Organizations	
+		<jsp:scriptlet>
+			}
+		</jsp:scriptlet>
+	</p>
+	
+	<jsp:element name="form">
+		<jsp:attribute name="id">searchform</jsp:attribute>
+		<jsp:attribute name="name">searchform</jsp:attribute>
+		<jsp:attribute name="method">post</jsp:attribute>
+		<jsp:attribute name="action">
+			<jsp:expression>SERVLET_URL</jsp:expression>
+		</jsp:attribute>
+		<jsp:attribute name="target">_top</jsp:attribute>
+		<jsp:attribute name="onsubmit">setQueryFormField()</jsp:attribute>
+		<p class="regtext">
+		The repository search system is used to locate data sets of interest by 
+		searching through existing registered data sets. 
+		Presently the search covers all fields, including author, title, abstract, 
+		keywords, and other documentation for each data set. 
+		<br />
+		Use a '%' symbol as a wildcard in searches (e.g., '%herbivore%' 
+		would locate any phrase with the word herbivore embedded within it).
+		</p>
+		<jsp:element name="input">
+			<jsp:attribute name="name">organizationScope</jsp:attribute>
+			<jsp:attribute name="id">organizationScope</jsp:attribute>
+			<jsp:attribute name="type">hidden</jsp:attribute>
+			<jsp:attribute name="value">
+				<jsp:expression>organizationScope</jsp:expression>
+			</jsp:attribute>
+		</jsp:element>
+		<jsp:element name="input">
+			<jsp:attribute name="name">sessionid</jsp:attribute>
+			<jsp:attribute name="type">hidden</jsp:attribute>
+			<jsp:attribute name="value">
+				<jsp:getProperty name="clientViewBean" property="sessionid" />
+			</jsp:attribute>
+		</jsp:element>
+		<input type="text" id="anyfield" name="anyfield" value="" size="14" />
+		<input type="hidden" id="query" name="query"  />
+		<input type="hidden" name="qformat" value="saeon"/>
+		<input type="hidden" name="action" value="squery" />  
+		<input type="submit" value="Search"  />
+		<br/>
+		<input type="checkbox" id="searchAll" name="searchAll" />Search all fields (slower)
+		<p class="regtext">
+		-Or-
+		<br />
+		Browse all existing data sets by title. This operation can be slow.
+		</p>
+		<input type="button" value="Browse All" onclick="setBrowseAll();form.submit()" />
+	</jsp:element>
+	
+	</td>
+	<td width="250px">
+	
+	<!-- Login section -->
+	<jsp:scriptlet>
+		if (!clientViewHelper.isLoggedIn()) {
+	</jsp:scriptlet>
+	
+	<dl class="portlet" id="portlet-login" style="width: 100%;">
+		<dt class="portletHeader">
+			Log in
+		</dt>
+		<dd class="portletItem odd">
+			<form name="loginForm" method="post" action="./"
+				onsubmit="return allowSubmit(this);">
+				<input name="qformat" type="hidden" value="saeon" />
+				<table>
+					<tr valign="top">
+						<td>
+							<span class="required">User name</span>	
+						</td>
+						<td>
+							<input name="username" type="text" value=""
+							style="width: 140" />
+						</td>
+					</tr>
+					<tr>
+						<td><span class="required">Organization</span></td>
+						<td><select name="organization" style="width: 140">
+							<option value="SAEON" selected="selected">SAEON</option>
+							<option value="SANParks">SANParks</option>
+							<option value="NCEAS">NCEAS</option>
+							<option value="unaffiliated">unaffiliated</option>
+						</select></td>
+					</tr>
+					<tr>
+						<td><span class="required">Password</span></td>
+						<td><input name="password" value="" type="password"
+							style="width: 140" maxlength="50" /></td>
+					</tr>
+					<tr>
+						<td></td>
+						<td colspan="1" align="right">
+							<input name="action"
+							value="Login" type="submit" class="button_login" />
+						</td>
+					</tr>
+				</table>
+			</form>
+		</dd>
+
+		<dd class="portletItem even">
+			<jsp:element name="a">
+				<jsp:attribute name="target">_new</jsp:attribute>
+				<jsp:attribute name="href">
+					<!--<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon"</jsp:expression>-->
+					<jsp:expression>KNB_SITE_URL + "/cgi-bin/ldapweb.cgi?cfg=saeon"</jsp:expression>
+				</jsp:attribute>
+				<jsp:element name="img">
+					<jsp:attribute name="src">
+						<jsp:expression>CONTEXT_URL + "/style/skins/saeon/images/user.gif"</jsp:expression>
+					</jsp:attribute>
+					<jsp:attribute name="alt">New User?</jsp:attribute>
+					<jsp:attribute name="title">User</jsp:attribute>
+					<jsp:attribute name="height">16</jsp:attribute>
+					<jsp:attribute name="width">16</jsp:attribute>
+				</jsp:element>	
+				New user?
+			</jsp:element>
+		</dd>
+	</dl>
+	
+	<jsp:scriptlet>
+		} else {
+	</jsp:scriptlet>
+	
+	<dl class="portlet" id="portlet-login" style="width: 100%;">
+		<dt class="portletHeader">
+			Welcome,
+			<jsp:expression>clientViewBean.getUsername()</jsp:expression>
+		</dt>
+		<dd class="portletItem odd">
+			<table>
+				<tr valign="top">
+					<td>
+						<p class="regtext">
+							You are currently logged in.
+						</p>
+					</td>
+					<td>
+						<!-- <a target='_top' href='./index.jsp?action=Logout&amp;qformat=saeon'> Logout </a> -->
+					</td>
+				</tr>
+				<!-- 
+				<tr valign="top">
+					<td colspan="2">
+						<p class="regtext">
+							(<jsp:expression>clientViewBean.getMessage(ClientView.LOGIN_MESSAGE)</jsp:expression>)
+						</p>
+					</td>
+				</tr>
+				-->
+			</table>
+		</dd>
+		<dd class="portletItem even">
+			<jsp:element name="a">
+				<jsp:attribute name="target">_top</jsp:attribute>
+				<jsp:attribute name="href">
+					<jsp:expression>CONTEXT_URL + "/style/skins/saeon/index.jsp?action=Logout&amp;qformat=saeon"</jsp:expression>
+				</jsp:attribute>
+				<jsp:element name="img">
+					<jsp:attribute name="src">
+						<jsp:expression>CONTEXT_URL + "/style/skins/saeon/images/user.gif"</jsp:expression>
+					</jsp:attribute>
+					<jsp:attribute name="alt">logout</jsp:attribute>
+					<jsp:attribute name="title">User</jsp:attribute>
+					<jsp:attribute name="height">16</jsp:attribute>
+					<jsp:attribute name="width">16</jsp:attribute>
+				</jsp:element>	
+				logout
+			</jsp:element>
+		</dd>
+		<dd class="portletItem">
+			<jsp:element name="a">
+				<jsp:attribute name="target">_parent</jsp:attribute>
+				<jsp:attribute name="href">
+					<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon&amp;stage=resetpass"</jsp:expression>
+				</jsp:attribute>
+				<jsp:element name="img">
+					<jsp:attribute name="src">
+						<jsp:expression>CONTEXT_URL + "/style/skins/saeon/images/user.gif"</jsp:expression>
+					</jsp:attribute>
+					<jsp:attribute name="alt">reset password</jsp:attribute>
+					<jsp:attribute name="title">User</jsp:attribute>
+					<jsp:attribute name="height">16</jsp:attribute>
+					<jsp:attribute name="width">16</jsp:attribute>
+				</jsp:element>	
+				reset your password
+			</jsp:element>
+		</dd>
+		<dd class="portletItem even">
+			<jsp:element name="a">
+				<jsp:attribute name="target">_parent</jsp:attribute>
+				<jsp:attribute name="href">
+					<jsp:expression>CGI_URL + "/ldapweb.cgi?cfg=saeon&amp;stage=changepass"</jsp:expression>
+				</jsp:attribute>
+				<jsp:element name="img">
+					<jsp:attribute name="src">
+						<jsp:expression>CONTEXT_URL + "/style/skins/saeon/images/user.gif"</jsp:expression>
+					</jsp:attribute>
+					<jsp:attribute name="alt">change password</jsp:attribute>
+					<jsp:attribute name="title">User</jsp:attribute>
+					<jsp:attribute name="height">16</jsp:attribute>
+					<jsp:attribute name="width">16</jsp:attribute>
+				</jsp:element>	
+				change your password
+			</jsp:element>
+		</dd>
+	</dl>		
+	<jsp:scriptlet>
+		}
+	</jsp:scriptlet> 
+	
+	<!-- File Upload Form --> 
+	<br />
+	<dl class="portlet" id="portlet-login" style="width: 100%;">
+		<dt class="portletHeader">
+			Data Package Upload
+		</dt>
+		<dd class="portletItem odd">
+			<jsp:scriptlet>
+				if (clientViewHelper.isLoggedIn()) {
+			</jsp:scriptlet>
+			<table>
+				<tr valign="top">
+					<td align="right">
+						<jsp:element name="form">
+							<jsp:attribute name="method">post</jsp:attribute>
+							<jsp:attribute name="action">
+								<jsp:expression>CONTEXT_URL + "/style/skins/saeon/upload.jsp"</jsp:expression>
+							</jsp:attribute>
+							<input type="submit" value="Go >" class="button_login" />
+						</jsp:element>
+					</td>
+				</tr>
+			</table>			
+			<jsp:scriptlet>
+				} else {
+			</jsp:scriptlet>
+			
+			<p class="regtext">
+				You must be logged into your user account before uploading a data set.
+			</p>
+			<jsp:scriptlet>
+				}
+			</jsp:scriptlet>
+		
+		</dd>
+	</dl>	
+	
+	</td>
+	
+	<!-- so the map frame doesn't overlap content -->
+	<td width="50px"></td>
+	
+	</tr>
+	
+	<tr>
+	<td colspan="2" align="left">
+
+	<!-- Map here --> 
+	<h2>Spatial Search</h2>
+	
+		<div style="padding-left: 100px">
+		<!-- map frame -->
+        <script language="JavaScript">
+            insertMap("<jsp:expression>CONTEXT_URL</jsp:expression>");
+        </script>
+        </div>
+	</td>
+	
+	<!-- so the map frame doesn't overlap content -->
+	<td width="50px"></td>
+	
+	</tr>
+	
+	</table>
+	
+	</div>
+</body>
+</html>
+</jsp:root>

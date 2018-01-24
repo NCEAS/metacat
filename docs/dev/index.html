@@ -1,0 +1,60 @@
+<!DOCTYPE html PUBliC "-//W3C//DTD html 4.0//EN">
+<html>
+
+<head>
+  <title>KNB Software Development Guide: Metacat</title>
+  <link rel="stylesheet" type="text/css" href="./default.css">
+</head>
+
+<body>
+
+<p>&nbsp;</p>
+<table class="tabledefault" width="100%">
+<tr>
+  <td class="tablehead" colspan="2"><p class="label">Metacat Development Guide</p></td>
+</tr>
+<tr>
+  <td>
+  <p>Metacat is a flexible metadata database. It utilizes 
+     <a href="http://www.w3.org/TR/REC-xml" target="offline">XML</a> as a 
+     common syntax for representing the large number of metadata content
+     standards that are relevant to ecology.  Thus, Metacat is a generic XML
+     database that allows storage, query, and retrieval of arbitrary XML 
+     documents without prior knowledge of the XML schema.  For a user level
+     overview of Metacat, please visit the 
+     <a href="../user/metacattour.html">Metacat Tour</a> documentation.
+  </p>
+  <p>
+     The Metacat database models XML documents as a DOM tree, basically 
+     decomposing the nodes of the XML document and storing the node data
+     as a series of records in a relational database via a JDBC connection.
+     At this point, only Oracle and PostgreSQL have been tested as a back end databases, 
+     but we have avoided RDBMS specific features in order to maintain portability
+     to other relational databases.
+  </p>
+  </td>
+</tr>
+<tr><td>&nbsp;</td></tr>
+
+<tr>
+  <td>The pages below provide more detailed descriptions of the 
+      various development and architecture subjects involved in Metacat.
+    <ul>
+      <li> <a href="./metacat-architecture.html">Metacat Architecture </a></li>
+      <li> <!-- a href="./metacat-dev-hardware.html" -->Metacat developement hardware requirements <!-- /a --></li>
+      <li> <a href="./metacat-eclipse-project.html">Setting up a Metacat Eclipse project </a></li>
+      <li> <a href="./building-metacat.html">Building Metacat</a></li>
+      <li> <a href="./testing-metacat.html">Testing Metacat</a></li>
+      <li> <a href="./troubleshooting.html">Troubleshooting Metacat</a></li>
+    </ul>
+  </td>
+</tr>
+<tr><td>&nbsp;</td></tr>
+
+</table>
+
+<p class="contact">
+Web Contact: <a href="mailto:jones@nceas.ucsb.edu">jones@nceas.ucsb.edu</A>
+</p>
+</body>
+</html>

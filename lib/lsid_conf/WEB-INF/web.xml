@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE web-app PUBLIC "-//Sun Microsystems, Inc.//DTD Web Application 2.3//EN" "http://java.sun.com/dtd/web-app_2_3.dtd">
+<web-app id="WebApp">
+	<display-name>LSID Server Web</display-name>
+	<servlet>
+		<servlet-name>AuthorityServlet</servlet-name>
+		<display-name>AuthorityServlet</display-name>
+		<servlet-class>com.ibm.lsid.server.servlet.AuthorityServlet</servlet-class>
+		<init-param>
+			<param-name>LSID_CLIENT_HOME</param-name>
+			<param-value>/lsid/java/server</param-value>
+		</init-param>
+		<load-on-startup>-1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>MetadataServlet</servlet-name>
+		<display-name>MetadataServlet</display-name>
+		<servlet-class>com.ibm.lsid.server.servlet.MetadataServlet</servlet-class>
+		<init-param>
+			<param-name>LSID_CLIENT_HOME</param-name>
+			<param-value>/lsid/java/server</param-value>
+		</init-param>
+		<load-on-startup>-1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>DataServlet</servlet-name>
+		<display-name>DataServlet</display-name>
+		<servlet-class>com.ibm.lsid.server.servlet.DataServlet</servlet-class>
+		<init-param>
+			<param-name>LSID_CLIENT_HOME</param-name>
+			<param-value>/lsid/java/server</param-value>
+		</init-param>
+		<load-on-startup>-1</load-on-startup>
+	</servlet>
+	<servlet>
+		<servlet-name>AssigningServlet</servlet-name>
+		<display-name>AssigningServlet</display-name>
+		<servlet-class>com.ibm.lsid.server.servlet.AssigningServlet</servlet-class>
+		<init-param>
+			<param-name>LSID_CLIENT_HOME</param-name>
+			<param-value>/lsid/java/server</param-value>
+		</init-param>
+		<load-on-startup>-1</load-on-startup>
+	</servlet>
+    <servlet>
+      <servlet-name>AxisServlet</servlet-name>
+      <display-name>Apache-Axis Servlet</display-name>
+      <servlet-class>
+          org.apache.axis.transport.http.AxisServlet
+      </servlet-class>
+    </servlet>
+    <servlet>
+      <servlet-name>AdminServlet</servlet-name>
+      <display-name>Axis Admin Servlet</display-name>
+      <servlet-class>
+          org.apache.axis.transport.http.AdminServlet
+      </servlet-class>
+      <load-on-startup>100</load-on-startup>
+    </servlet>
+
+	<servlet-mapping>
+		<servlet-name>AuthorityServlet</servlet-name>
+		<url-pattern>/</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>MetadataServlet</servlet-name>
+		<url-pattern>/metadata</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>DataServlet</servlet-name>
+		<url-pattern>/data</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>AssigningServlet</servlet-name>
+		<url-pattern>/assigning</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>MetadataServlet</servlet-name>
+		<url-pattern>/metadata/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>DataServlet</servlet-name>
+		<url-pattern>/data/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>DataServlet</servlet-name>
+		<url-pattern>/assigning/*</url-pattern>
+	</servlet-mapping>
+    <servlet-mapping>
+      <servlet-name>AxisServlet</servlet-name>
+      <url-pattern>/servlet/AxisServlet</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>AxisServlet</servlet-name>
+      <url-pattern>*.jws</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+      <servlet-name>AxisServlet</servlet-name>
+      <url-pattern>/services/*</url-pattern>
+    </servlet-mapping>
+
+	<welcome-file-list>
+		<welcome-file>index.html</welcome-file>
+		<welcome-file>index.htm</welcome-file>
+		<welcome-file>index.jsp</welcome-file>
+		<welcome-file>default.html</welcome-file>
+		<welcome-file>default.htm</welcome-file>
+		<welcome-file>default.jsp</welcome-file>
+	</welcome-file-list>
+</web-app>

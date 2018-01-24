@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.0">
+    
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <jsp:directive.page import="com.oreilly.servlet.multipart.MultipartParser"/>
+    <jsp:directive.page import="edu.ucsb.nceas.metacat.properties.PropertyService"/>
+    <jsp:directive.page import="java.io.*"/>
+    <jsp:directive.page import="javax.servlet.*"/>
+    <jsp:directive.page import="javax.servlet.http.*"/>
+    <jsp:directive.page import="edu.ucsb.nceas.metacat.clientview.ClientViewHelper"/>
+    
+    <jsp:declaration>
+        String                                              message;
+        String                                              contentType, posted_ldapUserName;
+
+        private ClientViewHelper                            clientHelper;
+        private MultipartParser                             multipartParser;
+        private int                                         sizeLimit;
+        private String                                      contenType;
+    </jsp:declaration>
+    
+    <jsp:scriptlet>
+        sizeLimit = (new Integer(PropertyService.getProperty("replication.datafilesizelimit"))).intValue();
+        clientHelper = ClientViewHelper.clientViewHelperInstance(request);
+        
+        contentType = request.getContentType();
+        message = "";
+        //*** Only process request if a file upload.
+        if (clientHelper.isLoggedIn()) {
+            if (contentType != null &amp;&amp; contentType.contains("multipart/form-data")) {
+                //*** Init the MultipartParser.
+                multipartParser = new MultipartParser(request, sizeLimit * 1024 * 1024);
+                message = clientHelper.handleFileUpdate(multipartParser);
+            } else {
+                message = clientHelper.clientRequest(request, response);
+            }
+        } else {
+            message = "You need to be logged in.";
+        }
+        response.setContentType("text/html;charset=UTF-8");
+    </jsp:scriptlet>
+    
+    <html xmlns="http://www.w3.org/1999/xhtml">
+        <head>
+        </head>
+        <body>
+            <p>
+                message = <jsp:expression>message</jsp:expression>
+            </p>
+            Press the BACK button to return.
+        </body>
+    </html>
+    
+</jsp:root>

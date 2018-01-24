@@ -1,0 +1,259 @@
+/*
+  *   '$RCSfile$'
+  *     Purpose: Default style sheet for KNB project web pages 
+  *              Using this stylesheet rather than placing styles directly in 
+  *              the KNB web documents allows us to globally change the 
+  *              formatting styles of the entire site in one easy place.
+  *   Copyright: 2008 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *     Authors: Michael Daigle
+  *
+  *    '$Author$'
+  *      '$Date$'
+  *  '$Revision$'
+  *
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation; either version 2 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+  */
+body {
+	font-family: Arial, sans-serif;
+	font-size: 11pt;
+	margin-left: 30px;
+	margin-right: 30px;
+	width: 700px;
+}
+
+h2 {
+	margin-top: 30px;
+	margin-bottom: 10px;
+}
+
+h3 {
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
+
+input {
+	padding-left: 4px;
+	width: 400px;
+}
+
+input[type="submit"] {
+	width: 100px;
+	margin-right: 5px;
+	margin-top: 20px;
+}
+
+input[type="radio"] {
+	margin-bottom: 4px;
+	width: 13px;
+}
+
+input[type="checkbox"] {
+	width: 13px;
+}
+
+label {
+	font-size: 12pt;
+}
+
+table {
+	margin-left: auto;
+	margin-right: auto;
+}
+
+.config-line {
+	color: #dddddd;
+	background-color: #dddddd;
+	height: 1px;
+}
+
+.username-input {
+	width: 500px;
+}
+
+.login-input {
+	width: 300px;
+}
+
+br {
+	clear: left;
+}
+
+br.auth-header {
+	margin-bottom: 80px;
+}
+
+br.main-header {
+	margin-bottom: 70px;
+}
+
+br.skins-header {
+	margin-bottom: 50px;
+}
+
+.button {
+	width: 100px;
+	margin-right: 5px;
+	margin-top: 20px;
+}
+
+.left-button {
+	width: 100px;
+	margin-left: 275px;
+	margin-right: 5px;
+	margin-top: 20px;
+}
+
+.warning {
+	color: red;
+}
+
+.heading-comment {
+	margin-bottom: 0px;
+}
+
+.small-message {
+	margin-top: 10px;
+	font-size: 11px;
+}
+
+.message-text {
+	font-size: 9pt;
+	font-weight: bold;
+	color: blue;
+	margin-bottom: 5px;
+}
+
+.success-text {
+	font-size: 9pt;
+	font-weight: bold;
+	color: green;
+	margin-bottom: 5px;
+}
+
+.error-text {
+	font-size: 9pt;
+	color: red;
+	margin-bottom: 5px;
+}
+
+.error-header {
+	font-size: 9pt;
+	font-weight: bold;
+	color: red;
+}
+
+.formfield-error-text {
+	font-size: 9pt;
+	color: red;
+	margin-bottom: 5px;
+}
+
+.formfield-error-header {
+	font-size: 9pt;
+	font-weight: bold;
+	color: red;
+}
+
+.configured-tag {
+	color: green;
+	width: 115px;
+	height: 30px;
+}
+
+.unconfigured-tag {
+	color: red;
+	width: 125px;
+	height: 30px;
+}
+
+.property-title {
+	font-weight: bolder;
+	font-size: 12pt;
+	width: 300px;
+}
+
+.skin-name {
+	font-size: 14pt;
+	width: 300px;
+}
+
+.smaller-text {
+	font-size: smaller;
+	display: inline;
+}
+
+.configure-link {
+	font-size: 11pt;
+}
+
+.hiding-section {
+	display: none;
+	width: 100%;
+	margin-left: 2em;
+}
+
+.checkradio {
+	text-align: left;
+	vertical-align: middle;
+	width: 3em;
+}
+
+.checkradio-label {
+	text-align: left;
+	vertical-align: middle;
+	margin-left: 1em;
+}
+
+.checkradio-label-inline {
+ 	display: inline;
+	vertical-align: middle;
+}
+
+.checkradio-description {
+	margin-left: 4.25em;
+	color: gray;
+	font-size: 11;
+}
+
+.textinput {
+	margin-left: 1em;
+	vertical-align: middle;
+	width: 30em;
+}
+
+.textinput-label {
+	text-align: right;
+	vertical-align: middle;
+	float: left;
+	width: 200px;
+}
+
+.textinput-description {
+	margin-left: 210px;
+	color: gray;
+	font-size: 11;
+}
+
+.question-mark {
+	float: right;
+	vertical-align: middle;
+	margin-right: 5px;
+}
+
+.form-row {
+	margin-top: .5em;
+}
+

@@ -1,0 +1,43 @@
+Author: Chad Berkley
+Date: 3/5/2007
+
+Setup
+-----
+1) Make sure you have the google web toolkit installed.  You can get it from 
+http://code.google.com/webtoolkit/.  From now on, I will refer to the google 
+web toolkit directory as the "gwt" directory.
+2) Make a symbolic link in the gwt directory so that 
+gwt-dev.jar -> gwt-dev-xxx.jar where xxx is either "mac", "linux" or "windows".
+This just makes the scripting easier to deal with.
+3) Edit the KeplerClient-shell file and make sure $GWT points to your 
+gwt installation.  Do the same for KeplerClient-compile
+
+Building
+--------
+Run the KeplerClient-shell script.  Upon successful compilation, you should 
+see two windows open.  One is the tomcat server shell, the other is a test 
+browser where you will see the web page.  
+
+Testing
+-------
+You can use the -shell file for incremental building and testing.  If you want 
+to "clean" the project, you can use the ant build.xml file.  The build file 
+really is not needed.
+
+Installation/Deployment
+-----------------------
+Once you have a working product and you want to deploy to a normal instance 
+of Tomcat, you can first test that your code works under a normal browser by 
+clicking the "compile/test" button on the google browser.  This will open your 
+page in whatever your default browswer is.  Your server side code is still 
+running on the google tomcat instance (port 8888).  If you want to deploy the 
+servlet and client side code to another instance of Tomcat, follow the 
+instructions in the INSTALL file.
+
+A note on using different OSs
+-----------------------------
+There are a few differences when moving between windows, linux and osx.  
+On OSX, the -XstartOnFirstThread flag must be set in the KeplerClient-shell 
+and KeplerClient-compile scripts.  Also, make sure you make a symlink for the 
+gwt-dev jar file.  For some reason, google renames this jar depending on what 
+system you download gwt for.  

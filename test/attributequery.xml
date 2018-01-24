@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<pathquery version="1.2">
+  <querytitle>Untitled-Search-2</querytitle>
+  <returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN</returndoctype>
+  <returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN</returndoctype>
+  <returndoctype>-//NCEAS//eml-dataset-2.0//EN</returndoctype>
+  <returndoctype>-//NCEAS//resource//EN</returndoctype>
+  <returnfield>dataset/title</returnfield>
+  <returnfield>originator/individualName/surName</returnfield>
+  <returnfield>keyword</returnfield>
+  <querygroup operator="INTERSECT">
+    <querygroup operator="UNION">
+      <querygroup operator="UNION">
+        <queryterm searchmode="contains" casesensitive="false">
+          <value>denyFirst</value>
+          <pathexpr>acl/@order</pathexpr>
+        </queryterm>
+      </querygroup>
+    </querygroup>
+  </querygroup>
+</pathquery>

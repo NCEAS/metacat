@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSPY v5 rel. 4 U (http://www.xmlspy.com) by Matt Jones (NCEAS) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:hrv="eml://ecoinformatics.org/harvestList" xmlns="eml://ecoinformatics.org/harvestList" targetNamespace="eml://ecoinformatics.org/harvestList" elementFormDefault="unqualified" attributeFormDefault="unqualified">
+  <xs:annotation>
+    <xs:documentation>This module defines the required information for the harvester to collect documents from the local site. The local system containing this document must give the Metacat Harvester read access to this document.	</xs:documentation>
+  </xs:annotation>
+  <xs:annotation>
+    <xs:appinfo>
+      <tooltip/>
+      <summary/>
+      <description/>
+    </xs:appinfo>
+  </xs:annotation>
+  <xs:element name="harvestList">
+    <xs:annotation>
+      <xs:documentation>This represents the local document information that is used to inform the Harvester of the docid, document type, and location of the document to be harvested.</xs:documentation>
+    </xs:annotation>
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="document" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="docid">
+                <xs:annotation>
+                  <xs:documentation>The complete document identifier to be used by metacat.  The docid is a compound element that gives a scope for the identifier, an integer local identifer that is unique within that scope, and a revision.  Each revision is assumed to specify a unique, non-changing document, so once a particular revision is harvested, there is no need for it to be harvested again.  To trigger a harvest of a document that has been updated, increment the revision number for that identifier.
+									</xs:documentation>
+                </xs:annotation>
+                <xs:complexType>
+                  <xs:sequence>
+                    <xs:element name="scope" type="xs:string">
+                      <xs:annotation>
+                        <xs:documentation>
+													The system prefix of a metacat docid that defines the scope within which the identifier is unique.																</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element name="identifier" type="xs:long">
+                      <xs:annotation>
+                        <xs:documentation>
+													The local (site specific) portion of the identifier (docid) that is unique within the context of the scope.
+												</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                    <xs:element name="revision" type="xs:long">
+                      <xs:annotation>
+                        <xs:documentation>The revision identifier for this document, indicating a unique document version.
+												</xs:documentation>
+                      </xs:annotation>
+                    </xs:element>
+                  </xs:sequence>
+                </xs:complexType>
+              </xs:element>
+              <xs:element name="documentType" type="xs:string">
+                <xs:annotation>
+                  <xs:documentation>
+										The  type of dodument to be harvested, indicated by a namespace string, formal public identifier, mime type, or other type indicator.											</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+              <xs:element name="documentURL" type="xs:anyURI">
+                <xs:annotation>
+                  <xs:documentation>
+										The documentURL field contains the URL of the document to be harvested. The Metacat harvester must be given read access to the contents at this URL.
+									</xs:documentation>
+                </xs:annotation>
+              </xs:element>
+            </xs:sequence>
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

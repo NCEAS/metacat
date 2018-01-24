@@ -1,0 +1,34 @@
+<featureType>
+  <id>FeatureTypeInfoImpl-79d092e7:12da49df6c4:-8000</id>
+  <name>data_points</name>
+  <nativeName>data_points</nativeName>
+  <namespace>
+    <id>NamespaceInfoImpl-57a97633:12da07fa7c4:-7ff7</id>
+  </namespace>
+  <title>data_points</title>
+  <srs>EPSG:4326</srs>
+  <nativeBoundingBox>
+    <minx>-119.795</minx>
+    <maxx>8.625</maxx>
+    <miny>33.69</miny>
+    <maxy>55.312</maxy>
+  </nativeBoundingBox>
+  <latLonBoundingBox>
+    <minx>-119.795</minx>
+    <maxx>8.625</maxx>
+    <miny>33.69</miny>
+    <maxy>55.312</maxy>
+  </latLonBoundingBox>
+  <projectionPolicy>FORCE_DECLARED</projectionPolicy>
+  <enabled>true</enabled>
+  <metadata>
+    <entry key="kml.regionateAttribute">the_geom</entry>
+    <entry key="cachingEnabled">false</entry>
+    <entry key="kml.regionateStrategy">geometry</entry>
+  </metadata>
+  <store class="dataStore">
+    <id>DataStoreInfoImpl-2fa2b758:12da08ba3b0:-8000</id>
+  </store>
+  <maxFeatures>0</maxFeatures>
+  <numDecimals>0</numDecimals>
+</featureType>

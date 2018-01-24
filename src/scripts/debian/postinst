@@ -1,0 +1,185 @@
+#!/bin/bash
+
+LONG_DATE=`date +%Y%m%d%H%M%S`
+
+TOMCAT_USER=tomcat6
+TOMCAT_HOME=/usr/share/tomcat6
+SOURCE_DIR=/usr/share/metacat-@metacatVersion@
+
+###############################################################################
+# Install metacat war file
+###############################################################################
+
+## Stop tomcat
+echo "Stopping Tomcat"
+/etc/init.d/tomcat6 stop
+
+## backup the old war file
+if [ -e ${TOMCAT_HOME}/webapps/knb.war ]
+then
+  echo "Backing up ${TOMCAT_HOME}/webapps/knb.war to ${TOMCAT_HOME}/webapps/knb.war.${LONG_DATE}"
+  mv ${TOMCAT_HOME}/webapps/knb.war ${TOMCAT_HOME}/webapps/knb.war.${LONG_DATE}
+fi  
+
+## remove the knb application directory
+if [ -d ${TOMCAT_HOME}/webapps/knb ]
+then
+  echo "Removing the old metacat application directorties"
+  rm -rf ${TOMCAT_HOME}/webapps/knb
+fi 
+
+## copy the new war file into the webapps directory
+echo copying new knb.war file to ${TOMCAT_HOME}/webapps/knb.war
+cp ${SOURCE_DIR}/knb.war ${TOMCAT_HOME}/webapps/knb.war
+
+## expand the war file
+CURR_DIR=`pwd`
+
+## make knb directory and extract knb.war into it.
+echo "Making knb application directory: ${TOMCAT_HOME}/webapps/knb"
+mkdir ${TOMCAT_HOME}/webapps/knb
+cd ${TOMCAT_HOME}/webapps/knb
+
+echo "extracting knb.war into ${TOMCAT_HOME}/webapps/knb"
+jar -xvf ${TOMCAT_HOME}/webapps/knb.war > /dev/null
+chown -R ${TOMCAT_USER} ${TOMCAT_HOME}/webapps/knb
+echo cd to $CURR_DIR
+cd $CURR_DIR
+
+chmod -R  +x ${TOMCAT_HOME}/webapps/knb/cgi-bin
+
+###############################################################################
+# Create Metacat External File Space
+###############################################################################
+
+## Create the /var/metacat directory
+if [ ! -d /var/metacat ]
+then
+  echo "Making Metacat utility directory: /var/metacat"
+  mkdir /var/metacat
+fi
+
+## Change the ownership of the /var/metacat directory to be the tomcat user.
+echo "changing ownership of /var/metacat to ${TOMCAT_USER}"
+chown -R ${TOMCAT_USER} /var/metacat
+
+###############################################################################
+# Configure Tomcat
+###############################################################################
+
+## Change ownership of the tomcat directories to be the tomcat user
+echo "changing ownership of ${TOMCAT_HOME} to ${TOMCAT_USER}"
+chown -R ${TOMCAT_USER} ${TOMCAT_HOME} 
+echo "changing ownership of /var/lib/tomcat6 to ${TOMCAT_USER}"
+chown -R ${TOMCAT_USER} /var/lib/tomcat6
+echo "changing ownership of /etc/tomcat6 to ${TOMCAT_USER}"
+chown -R ${TOMCAT_USER} /etc/tomcat6
+
+
+###############################################################################
+# Configure Apache
+###############################################################################
+
+## Stop apache
+echo "Stopping Apache"
+/etc/init.d/apache2 stop
+
+## copy in jk.conf file
+if [ -e /etc/apache2/mods-available/jk.conf ]
+then 
+  JK_CONF_DIFF=`diff ${SOURCE_DIR}/jk.conf /etc/apache2/mods-available/jk.conf`
+  if [ "${JK_CONF_DIFF}" != "" ]
+  then
+    echo "Backing up /etc/apache2/mods-available/jk.conf to /etc/apache2/mods-available/jk.conf.${LONG_DATE}"
+    mv /etc/apache2/mods-available/jk.conf /etc/apache2/mods-available/jk.conf.${LONG_DATE}
+  fi
+fi
+echo "Copying jk.conf to /etc/apache2/mods-available/"
+cp ${SOURCE_DIR}/jk.conf /etc/apache2/mods-available/
+
+## copy in workers.properties file
+if [ -e /etc/apache2/workers.properties ]
+then 
+  WORKERS_PROPS_DIFF=`diff ${SOURCE_DIR}/workers.properties /etc/apache2/workers.properties`
+  if [ "${WORKERS_PROPS_DIFF}" != "" ]
+  then
+    echo "Backing up /etc/apache2/workers.properties to /etc/apache2/workers.properties.${LONG_DATE}"
+    mv /etc/apache2/workers.properties /etc/apache2/workers.properties.${LONG_DATE}
+  fi
+fi
+echo "Copying workers.properties to /etc/apache2/"
+cp ${SOURCE_DIR}/workers.properties /etc/apache2/
+
+## disable and then re-enable mod jk to pick up changes
+echo "Refreshing Mod JK"
+a2dismod jk
+a2enmod jk
+
+## copy in knb site file
+if [ -e /etc/apache2/sites-available/knb ]
+then 
+  KNB_SITE_DIFF=`diff ${SOURCE_DIR}/knb /etc/apache2/sites-available/knb`
+  if [ "${KNB_SITE_DIFF}" != "" ]
+  then
+    echo "Backing up /etc/apache2/sites-available/knb to /etc/apache2/sites-available/knb.${LONG_DATE}"
+    mv /etc/apache2/sites-available/knb /etc/apache2/sites-available/knb.${LONG_DATE}
+  fi
+fi
+echo "Copying knb site file to /etc/apache2/sites-available/"
+cp ${SOURCE_DIR}/knb /etc/apache2/sites-available/
+
+## enable knb site
+echo "Enabling knb site"
+a2dissite knb
+a2ensite knb
+
+###############################################################################
+# Configure Postgres
+###############################################################################
+
+## modify pg_hba.conf
+PG_HBA_IS_MODIFIED=`grep "metacat metacat" /etc/postgresql/8.3/main/pg_hba.conf`
+if [ "${PG_HBA_IS_MODIFIED}" == "" ]
+then
+  echo "backing up /etc/postgresql/8.3/main/pg_hba.conf to /etc/postgresql/8.3/main/pg_hba.conf.${LONG_DATE}"
+  cp /etc/postgresql/8.3/main/pg_hba.conf /etc/postgresql/8.3/main/pg_hba.conf.${LONG_DATE}
+
+  echo "appending 'host metacat metacat 127.0.0.1 255.255.255.255 password' to /etc/postgresql/8.3/main/pg_hba.conf"
+  echo "host metacat metacat 127.0.0.1 255.255.255.255 password" >> /etc/postgresql/8.3/main/pg_hba.conf
+fi
+
+## create metacat schema and user
+echo "Creating metacat database schema"
+su postgres -c "createdb metacat"
+
+echo "Creating metacat user" 
+su postgres -c "psql -c \"CREATE USER metacat WITH UNENCRYPTED PASSWORD 'metacat'\""
+
+## Restart the postgres db
+echo "Restarting postgres database"
+/etc/init.d/postgresql-8.3 restart
+
+###############################################################################
+# Start Apache and Tomcat
+###############################################################################
+
+## Start Apache
+/etc/init.d/apache2 start
+
+## ugly hack to fix circular dependency bug that will keep tomcat
+## from starting within this script
+if [ ! -f /etc/java-1.5.0-sun/jvm.cfg ]; then
+  temp_jvm_cfg=/etc/java-1.5.0-sun/jvm.cfg
+  mkdir -p /etc/java-1.5.0-sun
+  printf -- "-server KNOWN\n" > $temp_jvm_cfg
+fi
+
+## Start Tomcat
+echo "starting Tomcat server"
+
+#export JAVA_HOME=/usr/lib/jvm/java-1.5.0-sun
+#/usr/share/tomcat6/bin/startup.sh
+
+/etc/init.d/tomcat6 start
+#chmod u+x ${SOURCE_DIR}/delay-tomcat-start
+#${SOURCE_DIR}/delay-tomcat-start &

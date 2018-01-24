@@ -1,0 +1,44 @@
+<metadata xmlns="http://www.ibm.com/LSID/Standard/msdl">
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:associatedInfo" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:associatedInfo">
+				<rdfs:label>Associated Information</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:creator" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:creator">
+				<rdfs:label>Creator</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:htmlVersion" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:htmlVersion">
+				<rdfs:label>HTML Version</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:keyword" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:keyword">
+				<rdfs:label>Keywords</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:xmlVersion" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:xmlVersion">
+				<rdfs:label>XML Version</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+	<lsid uri="urn:lsid:@METADATA_LABELS@:predicates:contact" location="inline">
+		<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
+			<rdf:Description rdf:about="urn:lsid:@METADATA_LABELS@:predicates:contact">
+				<rdfs:label>Contact Information</rdfs:label>
+			</rdf:Description>
+		</rdf:RDF>
+	</lsid>
+</metadata>

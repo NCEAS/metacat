@@ -1,0 +1,89 @@
+INTRODUCTION:
+This file describes how to use the sql scripts in the /metacat/test/tools directory
+to create different versions of the metacat database schema.  This is useful for testing
+the metacat auto-upgrade functionality.  
+
+These scripts were extracted from the ddl for metacat using code tags.  The scripts 
+were retrieved back to version 1.4.  For earlier scripts, you will need to go to the 
+SVN repository.
+
+Note that database scripts currently only support postgresql and oracle databases.
+
+PURPOSE AND NAMING CONVENTIONS:
+You will find three major categories of sql scripts in this directory.  Here we list
+their usage and naming conventions. 
+
+1) xmltables scripts - these are used to create a database schema for a particluar 
+version of metacat.  The naming format is:
+
+		<version_number>_xmltables-<database_type>.sql
+		
+2) loaddtdschema scripts - these are use to populate eml schema information into 
+the database.  The nameing format is:
+
+		<version_number>_loaddtdschema.sql
+		
+Note that there is no qualification for database type.  Currently, all database types
+use the same eml schema scripts.  If this should change in the future, we would need
+to add the database type qualification.
+
+3) cleanall scripts -  these clear out all data and metacat schema information.  This 
+should remove all tables, sequences and triggers for the given version.  The naming 
+format is:
+
+		<version_number>_cleanall-<database_type>.sql
+		
+HOW TO RUN SCRIPTS:
+
+If you are testing against a postgresql database, you should start with an empty
+database.  You will run the xmltables script first and then the loaddtdschema script.
+Change to the postgres user and run the script by typing:
+
+		psql -f <file_name> <database_name>
+		
+So for instance, if you have an empty postgres database named "metacat" and you wanted
+to install the 1.4 metacat schema, you would type:
+
+		sudo su - postgres
+		psql -f 1.4_xmltables-postgres.sql
+		psql -f 1.4_loaddtdschema.sql
+
+If you are testing against an oracle database, you should log into the database 
+using sqlplus.  A typical scenario is that you have downloaded and installed the 
+development XE version of oracle.  You may need to 'locate sqlplus' to find the sqlplus
+program.  
+
+the command to log into sqlplus looks like:
+		
+		sqlplus <db_user_name>@<db_sid>
+		
+Once you are at the sqlplus command line, you can run a sript by referencing it with a
+"@" and the script name.  So if you have an empty oracle XE development license database 
+with a "metacat" user, that you want to install with the 1.4 metacat schema, you would 
+run the scripts by typing:
+
+		sqlplus metacat@XE
+		SQL> @1.4_xmltables-oracle.sql
+		SQL> @1.4_loaddtdschema.sql
+		
+
+CLEANING THE DATABASE:
+Whatever version your database schema is at, you can get it back to an empty state
+by running the script named:
+
+		<version_number>_cleanall-<database_type>.sql
+		
+Follow the same steps shown above to run the script depending on which database 
+you have installed.
+
+
+
+
+
+
+
+
+
+
+
+

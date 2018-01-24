@@ -1,0 +1,31 @@
+-----------------------
+Preliminary steps
+-----------------------
+1.  Place .shp file and related files in /metacat/lib/spatial/geoserver/data/shp/ directory (or another dir under /data...this is specified when creating datastore)
+	1.1  Add a layer description to the map frame config xml before deploying - saves you the trouble after the map layer is configured in geoserver (nice for testing immediately)
+2.  [Re]Install metacat webapp so that these spatial files are included in deployment
+
+-----------------------
+GeoServer steps
+For (HELPFUL!!!) details, see: http://docs.codehaus.org/display/GEOSDOC/1.2+Add+a+Dataset
+-----------------------
+3.  login to geoserver (DEPLOYED_CONTEXT/geoserver.jsp)
+4.  create new namespace (optional since you can use an existing one ("metacat") if that makes sense)
+5.  create new datastore -- point to shapefile in data directory using file://...
+6.  create new FeatureType (use the common SRS of 4326)
+7.  create new style (SLD) - may want to manually edit it after initial creation.  It will be in the styles folder under geoserver.
+8.  'generate', 'submit'
+9.  'apply', then 'save'
+
+-----------------------
+Repository steps (to keep it around for subsequent installations/deployments)
+-----------------------
+10.  Copy GeoServer-generated files from webapp installation location to /metacat checkout area:
+	-DEPLOYED_CONTEXT/data/featureTypes/NEW_LAYER_FOLDER (includes one info.xml file) --> /metacat/lib/spatial/geoserver/data/featureTypes/
+	-DEPLOYED_CONTEXT/data/styles/NEW_LAYER_STYLE.sld --> /metacat/lib/spatial/geoserver/data/styles/
+11.  Edit /metacat/lib/spatial/geoserver/WEB-INF/catalog.xml to include the new <datastore>, <namespace>, and <style> for the new layer
+
+-----------------------
+Reinstall/deploy
+-----------------------
+12.  Try it out!

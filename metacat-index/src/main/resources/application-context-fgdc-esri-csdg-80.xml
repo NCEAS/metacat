@@ -1,0 +1,44 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+ <bean id="fgdcEsri80Subprocessor"
+  class="org.dataone.cn.indexer.parser.ScienceMetadataDocumentSubprocessor">
+  <property name="matchDocument"
+   value="/d100:systemMetadata/formatId[text() = 'http://www.esri.com/metadata/esriprof80.dtd']"></property>
+  <property name="fieldList">
+   <list>
+	    <ref bean="fgdc.abstract" />
+	    <ref bean="fgdc.beginDate"/>
+	    <ref bean="fgdc.class" />
+		<ref bean="fgdc.contactOrganization"/>
+		<ref bean="fgdc.eastBoundCoord"/>
+		<ref bean="fgdc.westBoundCoord" />
+		<ref bean="fgdc.northBoundCoord" />
+		<ref bean="fgdc.southBoundCoord" />
+		<ref bean="fgdc.edition" />
+		<ref bean="fgdc.endDate" />
+		<ref bean="fgdc.gcmdKeyword"/>
+		<ref bean="fgdc.keywords"/>
+		<ref bean="fgdc.geoform" />
+		<ref bean="fgdc.genus" />
+		<ref bean="fgdc.kingdom" />
+		<ref bean="fgdc.order" />
+		<ref bean="fgdc.phylum" />
+		<ref bean="fgdc.species" />
+		<ref bean="fgdc.origin" />
+		<ref bean="fgdc.placeKey" />
+		<ref bean="fgdc.pubDate" />
+		<ref bean="fgdc.purpose" />
+		<ref bean="fgdc.title" />
+		<ref bean="fgdc.web_url" />
+		<ref bean="fgdc.fileID" />
+		<ref bean="fgdc.fullText" />
+		<ref bean="fgdc.presentationCat" />
+		<ref bean="fgdc.author"/>
+		<ref bean="fgdc.investigator" />
+		<ref bean="fgdc.site" />
+   </list>
+  </property>
+ </bean>
+</beans>

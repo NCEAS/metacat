@@ -1,0 +1,54 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <title>Reviews</title>
+  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
+
+  <script src="[% styleCommonPath %]/prototype.js"></script>
+  <script src="[% styleCommonPath %]/accordion.js"></script>
+  <script src="[% styleCommonPath %]/review_behaviors.js"></script>
+  <link href="[% styleCommonPath %]/reviews.css" media="all" rel="Stylesheet" type="text/css" />
+
+</head>
+
+<body onload="get_reviews('[%reviewdocid%]', '[% metacatUrl %]')">
+
+[% IF isModerator == 'true' %]
+	<div class="comment_form">
+	<p class="sectionnames">Moderator Actions</p>
+	<form target="_top" id="reviewForm" method="POST" action="[% cgiPrefix %]/register-dataset.cgi">
+		<input value="mod_accept" id="stage" name="stage" type="hidden">
+		<input value="esa" name="cfg" type="hidden">
+		<input name="docid" type="hidden" value="[%docid%]">
+	<h3 style="margin-bottom: -18px;" class="review_emphasis">Please comment</h3>
+	<ul>
+	<li>
+	<textarea name="review" rows="5" cols="25"></textarea>
+	</li>
+	<li>
+	<input name="Accept" value=" Accept " type="SUBMIT" onClick="document.getElementById('stage').value='mod_accept';">
+	<input name="Decline" value="Decline" type="SUBMIT" onClick="document.getElementById('stage').value='mod_decline';">
+	<input name="Revise" value=" Revise " type="SUBMIT" onClick="document.getElementById('stage').value='mod_revise';">
+	</form>
+	</div>
+[% END %]
+
+[% IF (matches = reviewdocid.match('^Error')) %]
+   [% reviewdocid %]
+[% ELSIF reviewdocid != '' %]
+	<h3 style="margin-top:-8px" class="review_emphasis">
+	Reviews 
+	<img id="busy" src="[% contextUrl %]/style/images/spinner.gif" style="display:none; margin-bottom: -3px;"/>
+	</h3>
+
+	<!-- ajax will populate this node -->
+	<div id="review_list_container"><div id="review_list"></div></div>
+
+[% ELSE %]
+	No reviews found.
+[% END %]
+
+</body>
+</html>
+
+

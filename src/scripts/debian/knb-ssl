@@ -1,0 +1,62 @@
+<IfModule mod_ssl.c>
+NameVirtualHost *:443
+<VirtualHost *:443>
+        DocumentRoot /var/lib/tomcat6/webapps/knb
+
+        ScriptAlias /knb/cgi-bin/ /var/lib/tomcat6/webapps/knb/cgi-bin/
+        <Directory "/var/lib/tomcat6/webapps/knb/cgi-bin/">
+                AllowOverride All
+                Options +ExecCGI -MultiViews +SymLinksIfOwnerMatch
+                Order allow,deny
+                Allow from all
+        </Directory>
+
+        <IfModule mod_jk.c>
+                JkMount /knb ajp13
+                JkMount /knb/* ajp13
+                JkMount /knb/metacat ajp13
+                JkMount /*.jsp ajp13
+                JkUnMount /knb/cgi-bin/* ajp13
+
+                JkOptions +ForwardURICompatUnparsed
+        </IfModule>
+
+        AllowEncodedSlashes On
+        AcceptPathInfo      On
+        
+        #   SSL Engine Switch:
+        #   Enable/Disable SSL for this virtual host.
+        SSLEngine on
+        SSLOptions +StrictRequire +StdEnvVars +ExportCertData
+        
+        #   A self-signed (snakeoil) certificate can be created by installing
+        #   the ssl-cert package. See
+        #   /usr/share/doc/apache2.2-common/README.Debian.gz for more info.
+        #   If both key and certificate are stored in the same file, only the
+        #   SSLCertificateFile directive is needed.
+        SSLCertificateFile /etc/ssl/certs/<your_cert_name>.crt
+        SSLCertificateKeyFile /etc/ssl/private/<your_cert_name>.key
+        
+        #   Certificate Authority (CA):
+        #   Set the CA certificate verification path where to find CA
+        #   certificates for client authentication or alternatively one
+        #   huge file containing all of them (file must be PEM encoded)
+        #   Note: Inside SSLCACertificatePath you need hash symlinks
+        #         to point to the certificate files. Use the provided
+        #         Makefile to update the hash symlinks after changes.
+        SSLCACertificatePath /etc/ssl/certs/
+        #SSLCACertificateFile /etc/apache2/ssl.crt/ca-bundle.crt
+        
+        #   Client Authentication (Type):
+        #   Client certificate verification type and depth.  Types are
+        #   none, optional, require and optional_no_ca.  Depth is a
+        #   number which specifies how deeply to verify the certificate
+        #   issuer chain before deciding the certificate is not valid.
+        <Location /knb/servlet/replication>
+                SSLVerifyClient require
+                SSLVerifyDepth  10
+        </Location>
+
+</VirtualHost>
+</IfModule>
+        

@@ -1,0 +1,133 @@
+<!--
+  * metacat-architecture.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2009 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2009 January 19
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<html>
+<head>
+<title>Metacat Service Based Architecture</title>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</head> 
+
+<body>
+  <table class="tabledefault" width="100%">
+    <tr>
+      <td rowspan="2"><img src="./images/KNBLogo.gif"></td>
+      <td colspan="7"><div class="title">KNB Software Development Guide: Metacat Service Based Architecture</div></td>
+    </tr>
+    <tr>
+      <td><a href="/" class="toollink"> KNB Home </a></td>
+      <td><a href="/data.html" class="toollink"> Data </a></td>
+      <td><a href="/people.html" class="toollink"> People </a></td>
+      <td><a href="/informatics" class="toollink"> Informatics </a></td>
+      <td><a href="/biodiversity" class="toollink"> Biocomplexity </a></td>
+      <td><a href="/education" class="toollink"> Education </a></td>
+      <td><a href="/software" class="toollink"> Software </a></td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Metacat Service Based Architecture</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="./query-caching.html">Back</a> | <a href="./index.html">Home</a> | 
+        <a href="./utilities-classes.html">Next</a>
+      </td>
+    </tr>
+  </table>
+  
+  <div class="header1">Table of Contents</div>
+  <div class="toc">
+    <div class="toc1"><a href="#Overview">Overview</a></div>
+    <div class="toc1"><a href="#BaseService">Extending BaseService Class</a></div>
+    <div class="toc1"><a href="#ServiceService">Controling Services With ServiceService Class</a></div>
+  </div>  
+  
+  <a name="Overview"></a><div class="header1">Overview</div>   
+  <p>There is a goal to migrate Metacat to a service based architecture.  This
+  provides several advantages: </p>
+  <ul>
+    <li>Cached values can be refreshed via the configuration utility without
+    requiring a restart of Metacat.</li>
+    <li>Services can be gracefully shut down when Metacat is stopped.  For
+    instance, the database service can make sure all db requests have completed
+    before continuing with shutdown.</li>
+    <li>Services can have a common interface to expose MBeans for JMX monitoring
+    (see the <a href="http://java.sun.com/javase/technologies/core/mntr-mgmt/javamanagement/">Java Management Extensions</a> page).</li>
+  </ul>
+  
+  <p>From a 
+  
+  <p>There are a few basic questions that can be asked when you are creating a 
+  class to decide if it should be a service.</p>
+  <ul>
+    <li>Does this class perform some action repeatedly throughout the lifetime of 
+    the Metacat application?</li>
+    <li>Does it make sense for this class to cache certain information?  This is 
+    typically information that is accessed often and seldom changes.  For example,
+    system properties rarely change and are constantly being accessed.  (Thus the 
+    PropertyService class.)</li>
+    <li>Would it make sense for the information in the class to be refreshable?  Note 
+    that this is not a strict requirement, since, as we will discuss, a class can
+    declare itself to be non-refreshable.  A good example of a non-refreshable
+    class might be a database service.  If core database information changes,
+    that usually requires a system restart, and not a service refresh.</li>
+  </ul>  
+    
+  <p>Any of these could signify the need for a service.  Note that another option
+  is to create a utility class.  Utility classes are singletons that have static 
+  methods and less state requirements.  See the 
+  <a href="./utilities-classes.html">Utilities Classes page</a> for more information.</p>
+    
+  <a name="BaseService"></a><div class="header1">Extending BaseService Class</div>   
+  <p> All Services extend the BaseService class except the ServiceService class (discussed
+  next). </p>
+  
+  <p>Currently, BaseService defines three methods:</p>
+  <ul>
+    <li> refreshable() - a package level abstract method that reports whether the class can be
+    refreshed.  This has package level access because we only want ServiceService to be 
+    able to access this information.  You will need to decide at implementation time
+    whether it makes sense to refresh your service and return the appropriate boolean from
+    this method.</li>
+    <li> doRefresh() - a protected abstract method that performs the service refresh.  It is 
+    protected because it should only be called by the refresh() method (see next).  Typically,
+    an implementation of the doRefresh() method updates any cached values in the service and 
+    performs any appropriate state-specific service updates.</li>
+    <li> refresh() - a package level method that calls refreshable() and doRefresh().  It has
+    package level access because we only want the ServiceService to be able to refresh the 
+    service.</li>
+    <li>stop() - Gracefully shut down the service, releasing any resources.</li>
+  </ul>
+    
+  <a name="ServiceService"></a><div class="header1">Controling Services With ServiceService Class</div>   
+  <p> The ServiceService class is a exception to the BaseService extension rule.  This service
+  controls all other services.  It maintains a registry of available services.  </p>
+  
+  <p>Some of the methods available via ServiceService are: </p>
+  <ul>
+    <li>registerService() - register a service by sending the service name and an instance of 
+    the service. </li>
+    <li>refreshService() - refresh a service by name.</li>
+  </ul>  
+  
+  <br>
+  <a href="./query-caching.html">Back</a> | <a href="./index.html">Home</a> | 
+  <a href="./utilities-classes.html">Next</a>
+  </ul>
+
+</body>
+</html>

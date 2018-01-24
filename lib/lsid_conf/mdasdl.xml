@@ -1,0 +1,27 @@
+<lsid-authority name="SEEK_RDF" xmlns="http://www.ibm.com/LSID/Standard/ASDL">
+	<services>
+		<service name="SEEK_RDF_HTTP">
+			<protocol>http</protocol>
+			<hostname>@LSID_AUTHORITY_HOSTNAME@</hostname>
+			<path>/authority/metadata</path>
+			<port>@LSID_AUTHORITY_PORT@</port>
+		</service>
+		<service name="SEEK_RDF_SOAP">
+			<soap-endpoint>http://@LSID_AUTHORITY_HOSTNAME@:@LSID_AUTHORITY_PORT@/authority/metadata</soap-endpoint>
+		</service>
+	</services>
+	<lsids>
+		<lsid urn="urn:lsid:@METADATA_LABELS@:predicates:*">
+			<meta-data-services>
+				<service-ptr name="SEEK_RDF_SOAP" />
+				<service-ptr name="SEEK_RDF_HTTP" />
+			</meta-data-services>
+		</lsid>	
+		<lsid urn="urn:lsid:@METADATA_LABELS@:types:*">
+			<meta-data-services>
+				<service-ptr name="SEEK_RDF_SOAP" />
+				<service-ptr name="SEEK_RDF_HTTP" />
+			</meta-data-services>
+		</lsid>	
+	</lsids>
+</lsid-authority>

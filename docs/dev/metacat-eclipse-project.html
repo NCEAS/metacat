@@ -1,0 +1,219 @@
+<!--
+  * sitemaps.html
+  *
+  *      Authors: Michael Daigle
+  *    Copyright: 2008 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *      Created: 2008 November 4
+  *      Version: 
+  *    File Info: '$ '
+  * 
+  * 
+-->
+<HTML>
+<HEAD>
+<TITLE>Setting Up a Metacat Eclipse Project</TITLE>
+<!-- unfortunately, we have to look for the common css file in the 
+     user docs directory.  This is because the user docs deploy to 
+     the top level of the metacat docs on the knb web server -->
+<link rel="stylesheet" type="text/css" href="../user/common.css">
+<link rel="stylesheet" type="text/css" href="./default.css">
+</HEAD> 
+<BODY>
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Setting Up a Metacat Eclipse Project</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="./metacat-dev-hardware.html">Back</a> | <a href="./index.html">Home</a> | 
+        <a href="./building-metacat.html">Next</a>
+      </td>
+    </tr>
+  </table>
+    
+    <p> The following are the steps to download Eclipse, load the Metacat project and
+    its dependent projects, set up the environment, and run Metacat via Tomcat from
+    within Eclipse.</p>
+    
+    <p> One note, these instructions are based on my development system, which is a Linux
+    system.  I rarely use
+    apt-get install (debian) or yum install (fedora) to install supporting applications
+    like Java, Tomcat and Apache.  This is because I want a certain level of control
+    over where these apps are installed, and I like to be able to install several 
+    versions side by side so I can switch back and forth in my development environment.</p>
+    
+    <p> My typical approach is to install the application in the /usr directory.  Then I 
+    create a symlink from /usr/local to this install.  Any environment variables reference
+    this symlink, so I can easily modify the symlink to change the version of the 
+    application.</p>
+    
+	<p><div class="header3">Install Java (assuming it's not already installed):</div>
+	<ul>
+		<li>go to <a target="_blank" href="http://java.sun.com/javase/downloads/index.jsp">Java Download Site</a>.</li>
+		<li>download the Java SE Development Kit for your platform (I use the regular .bin file, not the
+		   rpm.bin).</li>
+		<li>make the java usr directory:  <code>sudo mkdir /usr/java</code></li>
+		<li>move the jdk .bin file you downloaded into the java user dir: 
+			<code>sudo mv jdk-6u19-linux-i586.bin /usr/java</code></li>
+		<li>make bin file executable: <code>sudo chmod +x jdk-6u19-linux-i586.bin</code></li>
+		<li>run the bin file: <code>sudo ./jdk-6u19-linux-i586.bin</code></li>
+		<li>create java symlink in /usr/local: <code>ln -s /usr/java/jdk1.6.19/ /usr/local/java</code>
+		<li>add the following lines to /etc/profile (again, this is my preference):<br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;JAVA_HOME=/usr/local/java</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;PATH=$JAVA_HOME/bin:$PATH</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;export PATH JAVA_HOME</code>
+		</li>
+	</ul>
+	
+	<p><div class="header3">Install Tomcat (assuming it's not already installed):</div>
+	<ul>
+		<li>go to <a target="_blank" href="http://tomcat.apache.org/download-60.cgi">Tomcat Download Site</a>.</li>
+		<li>download the binary core tar.gz file.</li>
+		<li>make the tomcat usr directory:  <code>sudo mkdir /usr/tomcat</code></li>
+		<li>move the tar.gz file you downloaded into the tomcat user dir: 
+			<code>sudo mv apache-tomcat-6.0.26.tar.gz /usr/tomcat</code></li>
+		<li>expand tar.gz: <code>sudo tar -xvzf apache-tomcat-6.0.26.tar.gz</code></li>
+		<li>create tomcat symlink in /usr/local: <code>ln -s /usr/tomcat/apache-tomcat-6.0.26/ /usr/local/tomcat</code>
+		<li>add the following lines to /etc/profile (again, this is my preference):<br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;TOMCAT_HOME=/usr/local/tomcat</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;PATH=$TOMCAT_HOME/bin:$PATH</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;export PATH TOMCAT_HOME</code>
+		</li>
+	</ul>
+	</p>
+	
+	<p><div class="header3">Download and Install Eclipse:</div>
+	<ul>
+		<li>go to <a target="_blank" href="http://www.eclipse.org/downloads/">Eclipse Download Site</a>.</li>
+		<li>choose Eclipse IDE for Java Developers</li>
+		<li>make the eclipse usr directory:  <code>sudo mkdir /usr/eclipse</code></li>
+		<li>move the tar.gz file you downloaded into the eclipse user dir: 
+			<code>sudo mv eclipse-java-galileo-SR2-linux-gtk.tar.gz /usr/eclipse</code></li>
+		<li>extract tar.gz: 
+		   <code>sudo tar -xvzf eclipse-java-galileo-SR2-linux-gtk.tar.gz</code></li>
+		<li>note that Eclipse extracts into a folder named eclipse.  I like to rename this
+		folder using the SR number or current date, in case I want to put another version of 
+		eclipse next to it. So: <br>&nbsp;&nbsp;&nbsp;&nbsp;<code>mv /usr/eclipse/eclipse /usr/eclipse/eclipse-galileo-SR2</code></li>
+		<li>create eclipse symlink in /usr/local: <code>ln -s /usr/eclipse/eclipse-galileo-SR2 /usr/local/eclipse</code>
+		<li>add the following lines to /etc/profile (again, this is my preference):<br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;ECLIPSE_HOME=/usr/local/eclipse</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;PATH=$ECLIPSE_HOME:$PATH</code><br>
+		    <code>&nbsp;&nbsp;&nbsp;&nbsp;export PATH ECLIPSE_HOME</code>
+		</li>
+		<li>I create a desktop launcher for Eclipse.  The command should just be <code>eclipse</code>.
+		If that doesn't work, you may need to log out and log in to pick up changes in 
+		<code>/etc/profile</code>.  You can associate the launcher with the eclipse icon
+		at <code>/usr/local/eclipse/icon.xpm</code></li>
+	</ul>
+	</p>
+
+	<p><div class="header3">Get Subversion plugin:</div>
+	<p>The subversion plugin allows you to checkout and manage your code against
+	an SVN repository</p>
+	<ul>
+		<li>in eclipse, go to Help/Install New Software</li>
+		<li>add the following update site: <code>http://subclipse.tigris.org/update_1.6.x</code>
+		Note this may change for newer versions.
+		Check <a target="_blank" href="http://subclipse.tigris.org/">Subclipse Site</a> for newer versions</li>
+		<li>Choose to install all the packages under that site</li>
+		<li>After restarting Eclipse, you should see an SVN Repository Exploring
+		perspective available.</li>
+	</ul>
+	</p>
+
+	<p><div class="header3">Check out metacat code:</div>
+	<ul>
+		<li>In eclipse go to the SVN Repository Exploring perspecitve</li>
+		<li>Click in window under svn repositories and chosse "New > Repostory Location ..."</li>
+		<li>Add <code>https://code.ecoinformatics.org/code/metacat</code></li>
+		<li>Add <code>https://code.ecoinformatics.org/code/utilities </code></li>
+		<li>If you are actively working on ecogrid, add <code>https://code.ecoinformatics.org/code/seek</code></li>
+		<li>For each repository, open its tree and right click on trunk </li>
+		<li>Choose "checkout..."</li>
+		<li>Check out as a project using the wizard</li>
+		<li>Choose java project</li>
+		<li>Name the project in workspace. One thing to keep in mind is that the build
+		process relies on the Metacat code being in a directory named "metacat".  If you will
+		absolutely only have one metacat project, you can name it "metacat".  Otherwise, I usually
+		name the project something meaningfull, like "METACAT_TRUNK" or "METACAT_1_9_1_RC2".  Then
+		I create a "metacat" simlink at the same level that points to the checkout that I 
+		actually want to build.</li>
+		<li>Note, if you want to check out a certain branch or tag, browse to that tag in the tree and follow the same steps as above.</li>
+	</ul>
+	</p>
+
+	<p><div class="header3">Set up Metacat Dependencies</div>
+	<p>These dependencies are primarily so you can eliminate reference errors in
+	the code and so you can debug when running in tomcat.</p>
+	<ul>
+		<li>In the Java perspective, hilight the utilities project you checked out.</li>
+		<ul>
+			<li>In the menu, go to Project > Properties > Java Build Path</li>
+			<li>Choose the libraries tab and Add Jars...</li>
+			<li>Select all the jar files in the utilities/lib directory</li>
+			<li>Switch to the Source tab and remove utilities/src</li>
+			<li>Add folder utilties/src/java</li>
+		</ul>
+		<li>In the Java perspective, hilight the metacat project you checked out.</li>
+		<ul>
+			<li>In the menu, go to Project > Properties > Java Build Path</li>
+			<li>Choose the libraries tab and Add Jars...</li>
+			<li>Select all the jar files in the metacat/lib directory EXCEPT the 
+			    utilities.jar if it exists.</li>
+			<li>Select all the jar files in the metacat/lib/lsid_lib directory</li>
+			<li>Select all the jar files in the metacat/lib/oaipmh directory</li>
+			<li>Select all the jar files in the metacat/lib/spatial/geoserver/WEB-INF/lib directory</li>
+			<li>Choose to Add External Jars and select all the jar files in /usr/local/tomcat/lib</li>
+			<li>Switch to the Projects tab and add the utilities project.</li>
+		</ul>
+		<li>These settings should remove all but the most persistant error markers in
+		the code.</li>
+	</ul>
+	</p>
+	
+	<p><div class="header3">Build Metacat</div>
+	<p>A full description of how to build Metacat is beyond the scope of this document, however
+	you should be able to do all Ant tasks from within eclipse.</p>
+	<ul>
+		<li>In Eclipse choose Window > Show View > Ant</li>
+		<li>You should see an Ant window pop up on the right.</li>
+		<li>In the Metacat project, select the build.xml file and drag it to 
+			the Ant window.</li>
+		<li>All Ant tasks should now be runnable from this window</li>
+	</ul>
+	</p>
+
+	<p><div class="header3">Set up Tomcat in Eclipse:</div>
+	<ul>
+		<li>Get tomcat eclipse plugin at: 
+		    <a target="_blank" href="http://www.eclipsetotale.com/tomcatPlugin.html">Tomcat Plugin Site</a></li>
+		<li>Extract zip: <code>sudo unzip tomcatPluginV321.zip</code></li>
+		<li>move resulting dir into Eclipse plugins directory: <br>
+			<code>&nbsp;&nbsp;&nbsp;&nbsp;sudo mv com.sysdeo.eclipse.tomcat_3.2.1 /usr/locale/eclipse/plugins</code></li>
+		<li>Restart Eclipse. You should see some Tomcat icons in the toolbar.</li>
+		<li>In Eclipse go to Window > Preferences > Tomcat </li>
+		<li>Set Tomcat version to correct value (6 recommended)</li>
+		<li>Set tomcat home to directory where you just installed tomcat 
+		   (<code>/usr/local/tomcat</code> if you used my instructions).</li>  
+		<li>Under "Advanced", add Metacat and Utilities projects to Tomcat classpath</li>
+		<li>You can now start and stop Tomcat using the Tomcat menu or toolbar items.
+			The application output will show up in the console tab in Eclipse.  Note
+			that there is also now a Debug perspective.  You can perform the standard
+			debugger actions on your running Metcat instance via this perspective.</li>
+	</ul>
+	</p>   
+    
+    <p><div class="header3">Advanced Operations:</div><p>
+    <p>There are many more advanced operations that can be performed from within
+    Eclipse, including running individual classes, regular expression searching, 
+    jumping to implementation source and more.  Please refer to 
+    <a target="_blank" href="http://www.eclipse.org/documentation/">Eclipse Documentation</a>
+    for more information.</p> 
+    
+  <br>
+  <a href="./metacat-dev-hardware.html">Back</a> | <a href="./index.html">Home</a> | 
+  <a href="./building-metacat.html">Next</a>
+  </ul>
+
+</BODY>
+</HTML>

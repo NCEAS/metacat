@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jsp:root xmlns:jsp="http://java.sun.com/JSP/Page" version="2.0">
+    
+    <jsp:directive.page contentType="text/html;charset=UTF-8"/>
+    <jsp:directive.page import="com.oreilly.servlet.multipart.MultipartParser"/>
+    <jsp:directive.page import="edu.ucsb.nceas.metacat.properties.PropertyService"/>
+    <jsp:directive.page import="java.io.*"/>
+    <jsp:directive.page import="javax.servlet.*"/>
+    <jsp:directive.page import="javax.servlet.http.*"/>
+    <jsp:directive.page import="edu.ucsb.nceas.metacat.clientview.ClientViewHelper"/>
+    
+    <jsp:declaration>
+        private String                                      message, newUrl, contentType;
+        private ClientViewHelper                            clientHelper;
+        private MultipartParser                             multipartParser;
+        private int                                         sizeLimit;
+    </jsp:declaration>
+    
+    <jsp:scriptlet>
+        clientHelper = ClientViewHelper.clientViewHelperInstance(request);
+
+        contentType = request.getContentType();
+        message = "";
+        if (contentType != null &amp;&amp; (contentType.indexOf("multipart/form-data") > -1)) {
+            //*** Process request here if a file update.
+            //*** Init the MultipartParser.
+            sizeLimit = (new Integer(PropertyService.getProperty("replication.datafilesizelimit"))).intValue();
+            multipartParser = new MultipartParser(request, sizeLimit * 1024 * 1024);
+            message = clientHelper.handleFileUpdate(multipartParser);
+        } else {
+            message = clientHelper.clientRequest(request, response);
+        }
+        newUrl = clientHelper.makeRedirectUrl();
+        if (newUrl != null) {
+            response.setContentType("text/html;charset=UTF-8");
+            response.sendRedirect("../../" + newUrl);
+        }
+        
+        System.out.println("ClientViewHelper.jspx: " + message);
+    </jsp:scriptlet>
+</jsp:root>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<query queryId="test.1.1" system="http://knb.ecoinformatics.org">
+	<namespace prefix="eml">eml://ecoinformatics.org/eml-2.1.0</namespace>
+	<title>%</title>
+	<condition operator="LIKE" concept="title">%</condition>
+</query>

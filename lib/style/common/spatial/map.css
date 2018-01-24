@@ -1,0 +1,19 @@
+body {
+	background-color: white;
+}
+
+#map {
+	width: 760px;
+	height: 380px;
+	border: 1px solid #cccccc;
+}
+
+.olControlNavToolbar .spatialQueryItemActive {
+	background-image: url("metacat-query-on.png");
+	background-repeat: no-repeat;
+}
+
+.olControlNavToolbar .spatialQueryItemInactive {
+	background-image: url("metacat-query-off.png");
+	background-repeat: no-repeat;
+}

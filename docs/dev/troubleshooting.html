@@ -1,0 +1,131 @@
+<!-- 
+  *   '$RCSfile$'
+  *     Purpose: web page describing the installation of Metacat
+  *   Copyright: 2008 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *     Authors: Chad Berkley
+  *
+  *    '$Author: daigle $'
+  *    '$Date: 2008-11-19 16:48:24 -0800 (Wed, 19 Nov 2008) $'
+  *    '$Revision: 4597 $'
+  *
+  *
+  -->
+  
+<!DOCTYPE html PUBLIC "-//W3C//DTD html 4.0//EN">
+<html>
+
+<head>
+  <title>Troubleshooting Metacat</title>
+  <link rel="stylesheet" type="text/css" href="../user/common.css">
+  <link rel="stylesheet" type="text/css" href="./default.css">
+</head>
+
+<body>
+
+  <table width="100%">
+    <tr>
+      <td class="tablehead" colspan="2"><p class="label">Troubleshooting Metacat</p></td>
+      <td class="tablehead" colspan="2" align="right">
+        <a href="./testing-metacat.html">Back</a> | <a href="./index.html">Home</a> | 
+        <!-- a href="put next page here" -->Next<!-- /a -->
+      </td>
+    </tr>
+  </table>
+
+<div class="header1">Table of Contents</div>
+<div class="toc">
+  <div class="toc1"><a href="#BuildIssues">Build Issues</a></div>
+    <div class="toc2"><a href="#HttpServletExceptions">Ant BUILD FAILED : Multiple HttpServlet Exceptions</a></div> 
+  <div class="toc1"><a href="#InstallationIssues">Installation Issues</a></div>
+  <div class="toc1"><a href="#StartupIssues">Startup Issues</a></div>
+    <div class="toc2"><a href="#Jdk14Logger">Metacat doesn't start and Jdk14Logger exception</a></div> 
+  <div class="toc1"><a href="#ConfigurationIssues">Configuration Issues</a></div>
+   <div class="toc2"><a href="#DbUpdateIssue">Database Update Fails (not a connectivity issue)</a></div>
+  <div class="toc1"><a href="#GeneralApplicationIssues">General Application Issues</a></div>
+    <div class="toc2"><a href="#MapDisplayIssue">Maps will not display</a></div>
+  <div class="toc1"><a href="#UnitTestingIssues">Unit Testing Issues</a></div>
+    <div class="toc2"><a href="#503ServiceTemporarilyUnavailable">Mutliple Tests Fail : 503 Service Temporarily Unavailable</a></div>
+</div> 
+
+<a name="BuildIssues"></a><div class="header1">Build Issues</div>
+  <a name="HttpServletExceptions"></a><div class="header2">Ant BUILD FAILED : Multiple HttpSevlet Exceptions</div>
+    <p>During an Ant build of Metacat, you will see many HttpServletRequest, HttpServletResponse and
+    other errors.  The compiler will complain that it cannot find a symbol, for example:</p>
+      <div class="code">
+      [javac] /home/daigle/workspace/metacat/build/src/edu/ucsb/nceas/metacat/MetaCatServlet.java:506: cannot find symbol<br>
+      [javac] symbol  : class HttpServletResponse<br>
+      [javac] location: class edu.ucsb.nceas.metacat.MetaCatServlet<br>
+      [javac] &nbsp;&nbsp;&nbsp;&nbsp;HttpServletResponse response) throws ServletException, IOException {<br>
+      [javac] &nbsp;&nbsp;&nbsp;&nbsp;^<br>
+      </div>
+      
+    <p>This is usually caused by the build not being able to find native Tomcat libraries. edit your
+    build.properties file in  
+      
+<a name="InstallationIssues"></a><div class="header1">Installation Issues</div>
+ 
+<a name="StartupIssues"></a><div class="header1">Startup Issues</div> 
+	<a name="Jdk14Logger"></a><div class="header2">Metacat doesn't start and Jdk14Logger exception</div>
+	<p>The symptoms are that the metacat service will not show up at all, even though Tomcat 
+      is serving, and the following error shows up in the tomcat log (catalina.log):</p>
+      
+      <div class="code">org.apache.commons.logging.LogConfigurationException: User-specified log
+      class 'org.apache.commons.logging.impl.Jdk14Logger' cannot be found or is
+      not useable </div>
+      
+      <p>This message typically occurs in the tomcat log (catalina.log) 
+      when Tomcat has been installed on an Ubuntu/Debian system using apt-get install.  
+      And the application is started using:
+        
+        <div class="code">/etc/init.d/tomcat6 start</div>  
+        
+      <p>The problem is that the standard startup scripts reference the 
+      common java service, jsvc.  Metacat will not run under jsvc.  The solutions are:
+      <ul>
+      <li>Download the <a href="http://knb.ecoinformatics.org/software/download.html">Metacat binary install package</a>
+       and replace your /etc/init.d/tomcat6 startup script with the one provided in the
+       package.</li>
+      <li>Run Tomcat from the Tomcat binary directory: <tomcat_home>/bin/startup.sh and 
+      <tomcat_home>/bin/shutdown.sh</li>
+      </ul>
+      </p>
+<a name="ConfigurationIssues"></a><div class="header1">Configuration Issues</div>
+  <a name="DbUpdateIssue"></a><div class="header2">Database Update Fails (not a connectivity issue)</div>
+    <p>There are a number of reasons why the database update utility might fail during 
+    configuration.  You will need to determine if the error returned indicates a connectivity issue
+    or some issue with the database schema/data.  If it is the latter, the first step in 
+    troubleshooting the issue is to run the db scripts manually and analyze the output.</p> 
+    
+    <p>The configuration utility will report which scripts it tried to run.  To 
+    run these scripts, refer to 
+    <a href="../user/run-db-scripts.html">how to run database scripts</a></p>
+    
+    <p>If the answer is not obvious, further troubleshooting may require a database 
+    administrator.</p>
+    
+<a name="GeneralApplicationIssues"></a><div class="header1">General Application Issues</div> 
+  <a name="MapDisplayIssue"></a><div class="header2">Maps will not display</div>
+    <p>There are two known reasons why maps might not display in a web browser.</p> 
+    <ul>
+    <li>Sarfari Browser - the safari browser is not supported by the map libraries.  You will
+        need to switch to a different browser.</li>
+    <li>Firefox Browser with the Firebug plugin - Firebug is a plugin that allows a developer
+        to easily view and troubleshoot web page layouts.  Unfortunately, this plugin can
+        keep the maps from displaying.  There is no plan by the third party map display
+        developers to address this issue.  You will need to disable Firebug in your 
+        browser.</li>
+    </ul>
+    
+<a name="UnitTestingIssues"></a><div class="header1">Unit Testing Issues</div>
+  <a name="503ServiceTemporarilyUnavailable"></a><div class="header2">Mutliple Tests Fail : 503 Service Temporarily Unavailable</div>
+    <p>When running "ant test", multiple tests fail.  The output files have the error: </p>
+      <div class="code">503 Service Temporarily Unavailable</div>
+    <p>This typically means your Metacat server is not running.</p>
+    
+    <br>
+    
+    <a href="./testing-metacat.html">Back</a> | <a href="./index.html">Home</a> | 
+    <!--a href="add next file here when one exists" -->Next<!-- /a -->
+  </body>
+</html>

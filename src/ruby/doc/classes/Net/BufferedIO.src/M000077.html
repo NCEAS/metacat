@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>rbuf_fill (Net::BufferedIO)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/metacat.rb, line 28</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">rbuf_fill</span>
+    <span class="ruby-identifier">timeout</span>(<span class="ruby-ivar">@read_timeout</span>) {
+      <span class="ruby-comment cmt">#changed from 1024</span>
+      <span class="ruby-ivar">@rbuf</span> <span class="ruby-operator">&lt;&lt;</span> <span class="ruby-ivar">@io</span>.<span class="ruby-identifier">sysread</span>(<span class="ruby-value">32768</span>)
+    }
+  <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

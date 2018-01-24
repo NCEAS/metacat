@@ -1,0 +1,66 @@
+Metacat Turnkey Installation
+Token Replacement
+Michael Daigle
+April 2, 2008
+
+The basic approach for token replacement has been to use metacat.properties as the central point of configuration for the entire Metacat product.  This is possible for all but a few skin specific values that will live in <skin>.properties files.  At this point, I've just been working on using various approaches to replacing ANT tokens from all files.  
+
+Note that the metacat.properties file still uses ANT tokens.  Once all the tokens have been replaced everywhere but metacat.properties and the product is tested and stable, the next step will be to explore possibilities for configuring metacat.properties and <skin>.properties files.  This will be done in conjunction with phase I of the Metacat Turnkey Installation project, which is the creation of a WAR file installation of the product.
+
+SKINS
+
+I've made all the token replacements to the skins directories with the exception of Perl changes and the first* skins which Ben is working on.  Shaun is working on Perl now and will hand that off me when it reaches a logical stopping point.  I will coordinate with Ben on the first* skins to bring them up to speed.
+The following categories of changes were made to skins:
+
+   * style/common/common-settings.jsp - global configuration values are 
+     retrieved here using java MetaCatUtil class.
+   * jsp files - all other jsp files include common-settings.jsp for
+     configuration values.  In the process, the *_SEARCH_METACAT_POST_FIELDS
+     variable definitions were removed from individual skins.  If needed, an
+     additional post field might be appended to the fields defined in 
+     common-settings.jsp.  An example is: skins/default/settings.jsp.  
+     Also, all calls to insert*() java scripts now pass the
+     CONTEXT_URL as a parameter (see .js section).
+   * <skin>.xml - these are used by DBTransform.java to do drive xslt tranforms.
+     The tokens were removed in the publicid targets that give a full url to the
+     skins directory.  DBTransform.java knows (thanks to Ben) to prepend the
+     server name to those values if it does not already exist.
+   * *.xsl - all configuration values were made available during in 
+     DBTransform.java using MetaCatUtil.  Tokens were replaced with {$variable} 
+     syntax. Also, all calls to insert*() java scripts now pass the $contextURL
+     as a parameter (see .js section).
+   * *.html - all html files in the skins directories were replaced with jsp 
+     files.  All references to those html files were changed to jsp.
+   * .js files - tokens that referenced the fully qualified skins url were
+     replaced with style/skins.  The js functions in style/common/branding.js 
+     had already been updated to accept a serverContextUrl parameter, which
+     would be appended to the skins path if provided.  (see the jsp and xsl
+     sections for changes to the js calls).   
+   * .css - fully qualified references to images were changed to be relative paths.
+
+I spent quite a bit of time testing my changes to skins, including setting each skin to the default style, viewing the skin by specifying it in the url, searching for documents, and viewing documents by various methods.  I think if we put it on the dev server and a few people had a chance to stress it, any existing issues could be fixed fairly quickly.
+
+JAVA FILES
+I changed a few java files.  Some of these changes were just addressing issues I found while testing.
+
+   * src/.../DBTransform.java - I made the httpServer and servletURL values
+     available during tranform.  I followed the pattern that was already in place
+     for the contextURL value.
+   * src/.../DBQuery.java - I put a try/catch around the section that tries to get
+     the qformat value from params hashTable.  Currently, if qformat does not 
+     exist, an exception gets thrown and shown on the browser.  I catch the
+     exception, log an error, and allow the process to continue.  The system
+     recognizes that qformat is not set and sends a more human readable error to
+     the browser.
+   * src/.../MetaCatUtil.java - I added a check to see if getOption() returns a
+     value.  If not, a warning is written to the log.
+   * src/.../upgrade_db_to_1_5.java - replaced ANT tokens with values retrieved
+     from MetaCatUtil.
+   * test/.../*Test.java - replaced ANT tokens with values retrieved from
+     MetaCatUtil.
+
+All of the changes above, with the exception of upgrade_db_to_1_5.java and *Test.java were either done directly to support token replacement in skins, or were to address issues found during testing.  As such, those were tested. 
+
+DOC HTML FILES
+
+In all the html files under the metacat/docs directory that referenced @docrooturl@, I replaced the token with ?./?.  This has been tested.

@@ -1,0 +1,191 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<bean id="xpath_system_metadata_064" class="java.util.ArrayList">
+		<constructor-arg>
+			<list>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="id" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/identifier/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="objectformat" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/fmtid/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="size" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/size/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="checksum" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/checksum/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="submitter" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/submitter/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="checksumAlgorithm" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/checksum/@algorithm" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="rightsholder" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/rightsHolder/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="rep_allowed" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replicationPolicy/@replicationAllowed" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="n_replicas" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replicationPolicy/@numberReplicas" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="pref_rep_mn" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replicationPolicy/preferredMemberNode/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+				<!--  -->
+					<constructor-arg name="name" value="blocked_rep_mn" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replicationPolicy/blockedMemberNode/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="obsoletes" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/obsoletes/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="obsoletedby" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/obsoletedBy/text()" />
+				</bean>
+				<!--<bean class="org.dataone.cn.indexer.parser.SolrFieldResourceMap"> -->
+				<!--<constructor-arg name="name" value="resourcemap"/> -->
+				<!--<constructor-arg name="xpath" value="/d064:systemMetadata/objectFormat/fmtid/text()"/> -->
+				<!--<constructor-arg name="resourceMapXpath" value="//cito:isDocumentedBy/@rdf:resource"/> -->
+				<!--<constructor-arg name="multivalue" value="false"/> -->
+				<!--<constructor-arg name="xmlNamespaceConfig" ref="xmlNamespaceResource"/> -->
+				<!--<property name="resourceValueMatch" value="http://www.openarchives.org/ore/terms"/> -->
+				<!--</bean> -->
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="dateuploaded" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/dateUploaded/text()" />
+					<property name="converter" ref="dateConverter" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="datemodified" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/dateSysMetadataModified/text()" />
+					<property name="converter" ref="dateConverter" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="datasource" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/originMemberNode/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="auth_mn" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/authoritativeMemberNode/text()" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="replica_mn" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replica/replicaMemberNode/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="replica_verified" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/replica/replicaVerified/text()" />
+					<property name="multivalue" value="true" />
+					<property name="converter" ref="dateConverter" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="readPermission" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/accessPolicy/allow[permission= 'read']/subject/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="writePermission" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/accessPolicy/allow[permission= 'write']/subject/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="changePermission" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/accessPolicy/allow[permission= 'changePermission']/subject/text()" />
+					<property name="multivalue" value="true" />
+				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+        <!--  -->
+					<constructor-arg name="name" value="isPublic" />
+					<constructor-arg name="xpath"
+						value="/d064:systemMetadata/accessPolicy/allow[permission= 'read']/subject[text()='public']/text()" />
+					<property name="multivalue" value="true" />
+					<property name="converter" ref="booleanPublicConverter" />
+				</bean>
+
+        <bean class="org.dataone.cn.indexer.parser.WebUrlSolrField">
+        <!--  -->
+          <constructor-arg name="name" value="web_url" />
+          <constructor-arg name="xpath"
+            value="/d064:systemMetadata/identifier/text()" />
+          <constructor-arg name="nodesXPath" value="//replica[replicationStatus/text()='completed']/replicaMemberNode/text()" />
+          <property name="nodeRegistryService" ref="nodeRegistryService" />
+          <property name="onlyReferenceCNs" value="true" />
+          <property name="multivalue" value="true" />
+        </bean>
+        <bean class="org.dataone.cn.indexer.parser.WebUrlSolrField">
+        <!--  -->
+          <constructor-arg name="name" value="data_url" />
+          <constructor-arg name="xpath"
+            value="/d064:systemMetadata/identifier/text()" />
+          <constructor-arg name="nodesXPath" value="//replica[replicationStatus/text()='completed']/replicaMemberNode/text()" />
+          <property name="nodeRegistryService" ref="nodeRegistryService" />
+          <property name="onlyReferenceCNs" value="false" />
+          <property name="multivalue" value="false" />
+        </bean>
+      
+			</list>
+		</constructor-arg>
+	</bean>
+
+</beans>

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<pathquery version="1.2">
+  <querytitle>Untitled-Search-1</querytitle>
+  <returndoctype>eml://ecoinformatics.org//eml-2.0.0</returndoctype>
+  <returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN</returndoctype>
+  <returndoctype>-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN</returndoctype>
+  <returndoctype>-//NCEAS//eml-dataset-2.0//EN</returndoctype>
+  <returndoctype>-//NCEAS//resource//EN</returndoctype>
+  <returnfield>dataset/title</returnfield>
+  <returnfield>originator/individualName/surName</returnfield>
+  <returnfield>keyword</returnfield>
+  <returnfield>/eml/@packageId</returnfield>
+  <returnfield>/eml/dataset/access/@authSystem</returnfield>
+  <returnfield>/eml/dataset/access/@order</returnfield>
+  <querygroup operator="INTERSECT">
+    <querygroup operator="UNION">
+      <querygroup operator="UNION">
+        <queryterm searchmode="contains" casesensitive="false">
+          <value>Jones</value>
+        </queryterm>
+      </querygroup>
+    </querygroup>
+  </querygroup>
+</pathquery>

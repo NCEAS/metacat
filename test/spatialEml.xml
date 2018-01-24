@@ -1,0 +1,124 @@
+<?xml version="1.0"?><eml:eml xmlns:eml="eml://ecoinformatics.org/eml-2.0.0" xmlns:stmml="http://www.xml-cml.org/schema/stmml" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ds="eml://ecoinformatics.org/dataset-2.0.0" packageId="nrs.558.1" system="knb" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.0.0 eml.xsd" scope="system"><!-- Person who filled in the catalog entry form:  Phillip Hoos --><!-- Form filled out at Thu Jan 13 23:25:37 2005 GMT -->
+
+
+<dataset scope="document">
+<alternateIdentifier system="Landels-Hill Big Creek Reserve">Barnacle Surveys</alternateIdentifier>
+<title> Intertidal Barnacle Study </title>
+<creator scope="document">
+<organizationName>Landels-Hill Big Creek Reserve</organizationName>
+</creator>
+<creator scope="document">
+<organizationName>University of California Natural Reserve System</organizationName>
+</creator>
+<creator scope="document">
+<individualName>
+<givenName> Pete </givenName>
+<surName>raimondi</surName>
+</individualName>
+<organizationName> UC Santa Cruz(Long Marine Laboratories)/PISCO </organizationName>
+<address scope="document">
+<deliveryPoint> Center for Ocean Health 100 Shaffer Rd.</deliveryPoint>
+<city>Santa Cruz</city>
+<administrativeArea>CA</administrativeArea>
+<postalCode>95060 </postalCode>
+</address>
+<phone phonetype="voice"> </phone>
+<phone phonetype="Fax"> </phone>
+<electronicMailAddress> raimondi@biology.ucsc.edu </electronicMailAddress>
+</creator>
+<metadataProvider scope="document">
+<individualName>
+<givenName> Phillip</givenName>
+<surName>Hoos</surName>
+</individualName>
+</metadataProvider>
+<abstract>
+<para> Barnacle populations were surveyed along 5 intertidal zones from Pigeon Pt. to Cambria Rock. Data was collected on barnacle reproduction, survivorship and recruitment. </para>
+</abstract>
+<keywordSet>
+<keyword> marine</keyword>
+<keywordThesaurus></keywordThesaurus>
+</keywordSet>
+<additionalInfo>
+<para>      This study is only one component of a much broader investigation of intertidal dynamics. For more detailed information please go to above mentioned website addresses.</para>
+</additionalInfo>
+<intellectualRights>
+<para>no restrictions</para>
+<para> </para>
+</intellectualRights>
+<distribution scope="document">
+<online>
+<url function="download">http://www.mbnms-simon.org/sections/rockyShores/projects.php?sec=rs</url>
+</online>
+</distribution>
+<distribution scope="document">
+<offline>
+<mediumName> Digital   http://www.piscoweb.org/research/community/index.html   </mediumName>
+</offline>
+</distribution>
+<coverage scope="document"><temporalCoverage scope="document">
+<rangeOfDates>
+<beginDate>
+<calendarDate>1999-01-01</calendarDate>
+</beginDate>
+<endDate>
+<calendarDate>2004-01-01</calendarDate>
+</endDate>
+</rangeOfDates>
+</temporalCoverage>
+<geographicCoverage scope="document">
+<geographicDescription> Pigeon Pt.(Marin county)-Cambria Rock(San Luis Obispo </geographicDescription>
+<boundingCoordinates>
+<westBoundingCoordinate>-121.5833
+</westBoundingCoordinate>
+<eastBoundingCoordinate>-121.5833
+</eastBoundingCoordinate>
+<northBoundingCoordinate>30.0667
+</northBoundingCoordinate>
+<southBoundingCoordinate>30.0667
+</southBoundingCoordinate>
+</boundingCoordinates>
+</geographicCoverage>
+</coverage><contact scope="document">
+<individualName>
+<givenName> Pete </givenName>
+<surName>Raimondi</surName>
+</individualName>
+<organizationName> UC Santa Cruz/ PISCO </organizationName>
+<address scope="document">
+<deliveryPoint> Center for Ocean Health 100 Shaffer Rd. </deliveryPoint>
+<city>Santa Cruz</city>
+<administrativeArea>CA</administrativeArea>
+<postalCode>95060</postalCode>
+</address>
+<phone phonetype="voice"> (831) 459-5674 </phone>
+<phone phonetype="Fax"> (831) 459-3383 </phone>
+<electronicMailAddress>raimondi@biology.ucsc.edu</electronicMailAddress>
+</contact>
+<methods><methodStep><description><section>
+<para> To understand intertidal dynamics of barnacles </para>
+</section></description></methodStep>
+<sampling><studyExtent><description>
+<para>none</para>
+</description></studyExtent>
+<samplingDescription>
+<para> </para>
+</samplingDescription>
+</sampling>
+</methods>
+<access authSystem="knb" order="denyFirst" scope="document">
+<allow>
+<principal>uid=nrsadmin,o=NCEAS,dc=ecoinformatics,dc=org</principal>
+<permission>all</permission>
+</allow>
+<allow>
+<principal>uid=mstromberg,o=UCNRS,dc=ecoinformatics,dc=org</principal>
+<permission>all</permission>
+</allow>
+<allow>
+<principal>public</principal>
+<permission>read</permission>
+</allow>
+</access>
+</dataset>
+</eml:eml>

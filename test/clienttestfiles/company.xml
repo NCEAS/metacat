@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<company xmlns="http://www.company.org"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://www.company.org @contextUrl@/test/company.xsd">
+        <worker>
+                <name>Dan Smith</name>
+                <workID>123-45-6789</workID>
+        </worker>
+        <product>
+                <item>
+		  <itemName>cell phone</itemName>
+                  <serialNumber>123456789</serialNumber>
+                </item>
+        </product>
+</company>
+

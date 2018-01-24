@@ -1,0 +1,663 @@
+
+	<!-- CONTENT SECTION
+    ======================================================================= -->
+	<article id="RegistryEntryReview">
+		<div class="container">
+		
+			<div class="row-fluid">
+				<h2>Review your entry</h2>
+				<p class="lead">
+					Please review the information that you've entered. To make changes, click on the edit button <a href="#buttons">at the bottom of the page</a>.
+				</p>
+			</div>
+			
+			<div class="row-fluid">
+
+<table class="intro">
+<tr><td align="left">
+<a name="BasicInformation"></a>
+<h4>Basic Information</h4>
+</p>
+<p><span class="text-info">First Name:</span>        [%providerGivenName%]
+</p>
+<p><span class="text-info">Last Name:</span>         [%providerSurName%]
+</p>
+<p><span class="text-info">Data Set Title:</span>     [%title%]
+</p>
+
+
+
+[% IF cfg == 'nceas' %]
+    [% FOREACH group = wg %]
+      <p><span class="text-info">NCEAS Project:</span>  [%group%] </p>
+    [% END %]
+    
+[% ELSE %]
+    [% IF cfg == 'esa' %]
+      <p><span class="text-info">Organization Name:</span>  [%site%]</p>
+    [% ELSE %]
+      <p><span class="text-info">[% config.site | ucfirst %] Name:</span>  [%site%]</p>
+    [% END %]
+[% END %]
+
+<hr class="rule">
+<a name="DataSetOriginator"></a>
+<h4>Principal Data Set Owner</h4>
+
+<p><span class="text-info">First Name:</span>        [%origNamefirst0%]
+</p>
+
+<p><span class="text-info">Last Name:</span>         [%origNamelast0%]
+</p>
+
+<p><span class="text-info">Organization Name:</span> [%origNameOrg%]
+</p>
+
+<p><span class="text-info">E-Mail:</span>            [%origEmail%]
+</p>
+
+<p><span class="text-info">Phone:</span>             [%origPhone%]
+</p>
+
+<p><span class="text-info">FAX:</span>               [%origFAX%]
+</p>
+
+<p><span class="text-info">Street Information:</span> 
+                                                    [%origDelivery%]
+</p>
+
+<p><span class="text-info">City:</span>              [%origCity%]
+</p>
+
+<p><span class="text-info">State:</span>             [%origState%]
+</p>
+
+<p><span class="text-info">Other State/Province:</span>       [%origStateOther%]
+</p>
+
+<p><span class="text-info">Postal Code:</span>               [%origZIP%]
+</p>
+
+<p><span class="text-info">Country:</span>               [%origCountry%]
+</p>
+
+<hr class="rule">
+<a name="AdditionalOriginators"></a>
+<h4>Associated Parties</h4> 
+
+    [% numAO = 0 %]
+    [% IF aoCount > 0 %]
+        [% numAO = aoCount %]
+    [% END %]
+
+<table cellspacing="0" border="0" width="760">
+    <tr> 
+      <td width="21%" valign="TOP"> 
+        <span class="text-info">First Name</span>
+      </td>
+      <td width="21%" valign="TOP"> 
+        <span class="text-info">Last Name</span>
+      </td>
+      <td width="58%" valign="TOP"> 
+        <span class="text-info">Role</span>
+      </td>
+    </tr>
+    [% cnt = 1 %]
+    [% WHILE cnt <= numAO %]
+     [% SET origNamefirst = "origNamefirst${cnt}" %]
+     [% SET origNamelast = "origNamelast${cnt}" %]
+     [% SET origRole = "origRole${cnt}" %]
+     <tr> 
+      <td width="21%" valign="TOP"> 
+        [% $origNamefirst %]
+      </td>
+      <td width="21%" valign="TOP"> 
+        [% $origNamelast %]
+      </td>
+      <td width="58%" valign="TOP"> 
+	[% $origRole %]
+      </td>
+     </tr>
+     [% cnt = cnt + 1 %]
+     [% END %]    
+</table>
+
+<hr class="rule">
+<a name="DataSetAbstract"></a>
+<h4>Data Set Abstract</h4>
+<p>
+[%abstract%]
+</p>
+ [% IF modules.keyword == 'true' %]
+<hr class="rule">
+<a name="KeywordInformation"></a>
+<h4>Keyword Information</h4> 
+
+    [% numKey = 0 %]
+    [% IF keyCount > 1 %]
+        [% numKey = keyCount %]
+    [% END %]
+
+<table cellspacing="0" border="0" width="760">
+    <tr> 
+      <td width="21%" align="left" valign="TOP"> 
+        <span class="text-info">Keyword</span>
+      </td>
+      <td width="21%" align="left" valign="TOP"> 
+        <span class="text-info">Keyword Type</span>
+      </td>
+      <td width="58%" align="left" valign="TOP"> 
+        <span class="text-info">Keyword Thesaurus</span>
+      </td>
+    </tr>
+    [% cnt = 1 %]
+    [% WHILE cnt <= numKey %]
+     [% SET key = "keyword${cnt}" %]
+     [% SET keyType = "kwType${cnt}" %]
+     [% SET keyTh = "kwTh${cnt}" %]
+     <tr> 
+      <td width="21%" align="left" valign="TOP"> 
+        [% $key %]
+      </td>
+      <td width="21%" align="left" valign="TOP"> 
+        [% $keyType %]
+      </td>
+      <td width="58%" align="left" valign="TOP"> 
+	[% $keyTh %]
+      </td>
+     </tr>
+     [% cnt = cnt + 1 %]
+     [% END %]
+</table>
+[% END %]
+  
+[% IF modules.temporal == 'true' %]
+<hr class="rule">
+<a name="TemporalCoverageOfData"></a>
+<h4>Temporal Coverage of Data</h4> 
+
+<p><span class="text-info">Start Date:</span> [%beginningYear%]&nbsp;[%beginningMonth%]&nbsp;[%beginningDay%]
+</p>
+
+<p><span class="text-info">Stop Date:</span>    [%endingYear%]&nbsp;[%endingMonth%]&nbsp;[%endingDay%]
+</p>
+[% END %]
+
+[% IF modules.spatial == 'true' %]
+<hr class="rule">
+<a name="SpatialCoverageOfData"></a>
+<h4>Spatial Coverage of Data</h4> 
+
+
+<table cellspacing="0" border="0" width="760">
+    <tr>
+      <td valign="TOP" colspan="4"> 
+        <p><span class="text-info">Geographic Description:</span> [%geogdesc%]</p>
+      </td>
+    </tr>
+    <tr> 
+      <td valign="TOP" colspan="4"> 
+        <p><span class="text-info">Coordinates (in Degrees, Minutes and Seconds):</span></p>
+      </td>
+    </tr>
+    
+    <tr> 
+      <td valign="TOP" colspan="4"> 
+        <p><span class="text-info">The first lat/long pair:</span></p>
+      </td>
+    </tr>
+    <tr> 
+      <td width="18%" valign="TOP"> 
+        <p><span class="text-info">&nbsp;Latitude</span></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><span class="text-info">&nbsp;North/South</span></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><span class="text-info">&nbsp;Longitude</span></p>
+      </td>
+      <td width="42%" valign="TOP"> 
+        <p><span class="text-info">&nbsp;West/East</span></p>
+      </td>
+    </tr>
+    <tr> 
+      <td width="18%" valign="TOP"> 
+        <p><font size="-1">
+	[%latDeg1%]&nbsp;[%latMin1%]'&nbsp;[%latSec1%]&quot; 
+        </font></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p> <font size="-1">
+          [%hemisphLat1%]
+	</font></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><font size="-1"> 
+	  [%longDeg1%]&nbsp;[%longMin1%]'&nbsp;[%longSec1%]&quot; 
+        </font></p>
+      </td>
+      <td width="42%" valign="TOP"> 
+        <p> <font size="-1">
+          [%hemisphLong1%]
+        </font></p>
+      </td>
+    </tr>
+    [% IF latDeg2 %]
+    <tr> 
+      <td valign="TOP" colspan="4"> 
+        <p><span class="text-info">The second lat/long pair:</span></p>
+      </td>
+    </tr>
+    <tr> 
+      <td width="18%" valign="TOP"> 
+        <p><span class="text-info">Latitude</span></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><sapn class="text-info">&nbsp;North/South</span></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><span class="text-info">Longitude</span></p>
+      </td>
+      <td width="42%" valign="TOP"> 
+        <p><sapn class="text-info">West/East</span></p>
+      </td>
+    </tr>
+    <tr>
+      <td width="18%" valign="TOP"> 
+        <p><font size="-1">
+	[%latDeg2%]&nbsp;[%latMin2%]'&nbsp;[%latSec2%]&quot;
+        </font></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p> <font size="-1">
+          [%hemisphLat2%]
+	</font></p>
+      </td>
+      <td width="20%" valign="TOP"> 
+        <p><font size="-1"> 
+	  [%longDeg2%]&nbsp;[%longMin2%]'&nbsp;[%longSec2%]&quot; 
+        </font></p>
+      </td>
+      <td width="42%" valign="TOP">
+        <p> <font size="-1">
+          [%hemisphLong2%]
+        </font></p>
+      </td>
+    </tr>
+    [% END %]
+  </table>
+[% END %]
+
+[% IF modules.taxonomic == 'true' %]
+    [% numTaxa = 0 %]
+    [% IF taxaCount > 0 %]
+        [% numTaxa = taxaCount %]
+    [% END %]
+    <hr class="rule">
+    <a name="Taxonomic Coverage"></a>
+    <h4>Taxonomic Coverage of Data</h4>
+    [% cnt = 1 %]
+    [% WHILE cnt <= numTaxa %]
+        [% SET trn = "taxonRankName${cnt}" %]
+        [% SET trv = "taxonRankValue${cnt}" %]
+        <p><span class="text-info">Taxon:</span>  [% $trn %]: [% $trv %]</p>
+        [% cnt = cnt + 1 %]
+     [% END %]
+     <p><span class="text-info">Taxonomic Reference:</span>  [% taxaAuth %]</p>
+[% END %]
+
+[% IF modules.method == 'true' %]
+    <hr class="rule">
+    <a name="Methods"></a>
+    <h4>Data Collection Methods</h4>
+    <p><span class="text-info">Method Title:</span> [%methodTitle%]</p>
+    [% FOREACH para = methodPara %]
+        <p><span class="text-info">Paragraph:</span> [%para%] </p>
+    [% END %]
+    <p><span class="text-info">Extent of Study Description:</span> [%studyExtentDescription%]</p>
+    <p><span class="text-info">Sampling Description:</span> [%samplingDescription%]</p>
+[% END %]
+
+[% IF modules.upload == 'true' && upCount %]
+   <hr class="rule">
+	 <a name="Upload Data"></a>
+	  <h4>Upload Data</h4>
+    
+    [% cnt = 0 %]
+    [% WHILE cnt < upCount %]
+        [% SET fileName = "uploadname_${cnt}" %]
+        [% SET filePerm = "uploadperm_${cnt}" %]
+        [% cnt = cnt + 1 %]
+
+        <p>
+					<span class="text-info">File #[% cnt %]:</span> [% $fileName %], [% $filePerm %] access
+					[% dCount = 0 %]
+					[% IF delCount > 0 %]
+						 [% dCount = delCount %]
+					[% END %]
+					[% cntd = 0 %]
+					[% WHILE cntd < dCount %]
+							[% SET delfile = "deletefile_${cntd}" %]
+							[% IF $delfile == fileName %]
+								<span class="redbold">to be removed</b>	
+							[% END %]
+							[% cntd = cntd + 1 %]
+  				[% END %]   
+				</p>
+    [% END %]
+[% END %]
+<hr class="rule">
+<a name="DataSetContactAddress"></a>
+<h4>Data Set Contact</h4> 
+
+<p><span class="text-info">First Name:</span>        [%origNamefirstContact%]
+</p>
+
+<p><span class="text-info">Last Name:</span>         [%origNamelastContact%]
+</p>
+
+<p><span class="text-info">Organization Name:</span> [%origNameOrgContact%]
+</p>
+
+<p><span class="text-info">E-Mail:</span>            [%origEmailContact%]
+</p>
+
+<p><span class="text-info">Phone:</span>             [%origPhoneContact%]
+</p>
+
+<p><span class="text-info">FAX:</span>               [%origFAXContact%]
+</p>
+
+<p><span class="text-info">Street Information:</span> 
+                                                    [%origDeliveryContact%]
+</p>
+
+<p><span class="text-info">City:</span>              [%origCityContact%]
+</p>
+
+<p><span class="text-info">State:</span>             [%origStateContact%]
+</p>
+
+<p><span class="text-info">Other State/Province:</span>       [%origStateOtherContact%]
+</p>
+
+<p><span class="text-info">Postal Code:</span>               [%origZIPContact%]
+</p>
+
+<p><span class="text-info">Country:</span>           [%origCountryContact%]
+</p>
+
+
+<hr class="rule">
+<a name="DistributionIinformation"></a>
+<h4>Distribution Information</h4> 
+
+<a name=Site-specificCode></a>
+<p><span class="text-info">Data Set Identifier:</span> [%identifier%]
+</p>
+
+<p><span class="text-info">Data Medium:</span>       [%dataMedium%]&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-info">Other Data Medium</span>: [%dataMediumOther%]
+</p>
+
+
+<p><span class="text-info">Usage Constraints:</span>   [%useConstraints%]&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-info">Other Usage Constraints:</span>  [%useConstraintsOther%]
+</p>
+
+
+<p><span class="text-info">URL</span>:               [%url%]
+</p>
+<p><span class="text-info">Additional Information:</span>  [%addComments%]
+</p>
+<hr class="rule">
+
+<form id="confirmForm" action="[% cgiPrefix %]/register-dataset.cgi" method="post">
+  <input type="hidden" name="cfg" value="[% cfg %]">
+  <input type="hidden" name="docid" value="[% docid %]">
+  <input type="hidden" name="stage" value="confirmed">
+  <input type="hidden" name="providerGivenName" value="[%providerGivenName%]">
+  <input type="hidden" name="providerSurName" value="[%providerSurName%]">
+  <input type="hidden" name="site" value="[%site%]">
+  [% IF cfg == 'nceas' %]
+      [% FOREACH group = wg %]
+          <input type="hidden" name="wg" value="[%group%]">
+      [% END %]
+  [% END %]
+  <input type="hidden" name="identifier" value="[%identifier%]">
+  <input type="hidden" name="title" value="[%title%]">
+  <input type="hidden" name="origNamefirst0" value="[%origNamefirst0%]">
+  <input type="hidden" name="origNamelast0" value="[%origNamelast0%]">
+  <input type="hidden" name="origNameOrg" value="[%origNameOrg%]">
+  <input type="hidden" name="origRole0" value="[%origRole0%]">
+  <input type="hidden" name="origDelivery" value="[%origDelivery%]">
+  <input type="hidden" name="origCity" value="[%origCity%]"> 
+  <input type="hidden" name="origState" value="[%origState%]">
+  <input type="hidden" name="origStateOther" value="[%origStateOther%]">
+  <input type="hidden" name="origZIP" value="[%origZIP%]">
+  <input type="hidden" name="origCountry" value="[%origCountry%]">
+  <input type="hidden" name="origPhone" value="[%origPhone%]">
+  <input type="hidden" name="origFAX" value="[%origFAX%]">
+  <input type="hidden" name="origEmail" value="[%origEmail%]">
+  <input type="hidden" name="useOrigAddress" value="[%useOrigAddress%]">
+  <input type="hidden" name="origNamefirstContact" value="[%origNamefirstContact%]">
+  <input type="hidden" name="origNamelastContact" value="[%origNamelastContact%]">
+  <input type="hidden" name="origNameOrgContact" value="[%origNameOrgContact%]">
+  <input type="hidden" name="origDeliveryContact" value="[%origDeliveryContact%]">
+  <input type="hidden" name="origCityContact" value="[%origCityContact%]"> 
+  <input type="hidden" name="origStateContact" value="[%origStateContact%]">
+  <input type="hidden" name="origStateOtherContact" value="[%origStateOtherContact%]">
+  <input type="hidden" name="origZIPContact" value="[%origZIPContact%]">
+  <input type="hidden" name="origCountryContact" value="[%origCountryContact%]">
+  <input type="hidden" name="origPhoneContact" value="[%origPhoneContact%]">
+  <input type="hidden" name="origFAXContact" value="[%origFAXContact%]">
+  <input type="hidden" name="origEmailContact" value="[%origEmailContact%]">
+  <input type="hidden" name="aoCount" value="[%aoCount%]">
+  [% cnt = 1 %]
+  [% WHILE cnt <= numAO %]
+      [% SET origNamefirst = "origNamefirst${cnt}" %]
+      [% SET origNamelast = "origNamelast${cnt}" %]
+      [% SET origRole = "origRole${cnt}" %]
+      <input type="hidden" name="[% origNamefirst %]" value="[% $origNamefirst %]">
+      <input type="hidden" name="[% origNamelast %]" value="[% $origNamelast %]">
+      <input type="hidden" name="[% origRole %]" value="[% $origRole %]">
+      [% cnt = cnt + 1 %]
+  [% END %]
+  <input type="hidden" name="abstract" value="[%abstract%]">
+  <input type="hidden" name="keyCount" value="[%keyCount%]">
+  [% cnt = 1 %]
+  [% WHILE cnt <= numKey %]
+      [% SET kyd = "keyword${cnt}" %]
+      [% SET keyType = "kwType${cnt}" %]
+      [% SET keyTh = "kwTh${cnt}" %]
+      <input type="hidden" name="[% kyd %]" value="[% $kyd %]">
+      <input type="hidden" name="[% keyType %]" value="[% $keyType %]">
+      <input type="hidden" name="[% keyTh %]" value="[% $keyTh %]">
+      [% cnt = cnt + 1 %]
+  [% END %]
+  <input type="hidden" name="addComments" value="[%addComments%]">
+  <input type="hidden" name="useConstraints" value="[%useConstraints%]">
+  <input type="hidden" name="useConstraintsOther" value="[%useConstraintsOther%]">
+  <input type="hidden" name="url" value="[%url%]">
+  <input type="hidden" name="dataMedium" value="[%dataMedium%]">
+  <input type="hidden" name="dataMediumOther" value="[%dataMediumOther%]">
+  <input type="hidden" name="beginningYear" value="[%beginningYear%]">
+  <input type="hidden" name="beginningMonth" value="[%beginningMonth%]">
+  <input type="hidden" name="beginningDay" value="[%beginningDay%]">
+  <input type="hidden" name="endingYear" value="[%endingYear%]">
+  <input type="hidden" name="endingMonth" value="[%endingMonth%]">
+  <input type="hidden" name="endingDay" value="[%endingDay%]">
+  <input type="hidden" name="geogdesc" value="[%geogdesc%]">
+  <input type="hidden" name="useSiteCoord" value="[%useSiteCoord%]">
+  <input type="hidden" name="latDeg1" value="[% latDeg1 %]">
+  <input type="hidden" name="latMin1" value="[%latMin1%]">
+  <input type="hidden" name="latSec1" value="[%latSec1%]">
+  <input type="hidden" name="hemisphLat1" value="[%hemisphLat1%]">	
+  <input type="hidden" name="longDeg1" value="[% longDeg1 %]">
+  <input type="hidden" name="longMin1" value="[%longMin1%]">
+  <input type="hidden" name="longSec1" value="[%longSec1%]">
+  <input type="hidden" name="hemisphLong1" value="[%hemisphLong1%]">
+  <input type="hidden" name="latDeg2" value="[%latDeg2%]">
+  <input type="hidden" name="latMin2" value="[%latMin2%]">
+  <input type="hidden" name="latSec2" value="[%latSec2%]">
+  <input type="hidden" name="hemisphLat2" value="[%hemisphLat2%]">	
+  <input type="hidden" name="longDeg2" value="[%longDeg2%]">
+  <input type="hidden" name="longMin2" value="[%longMin2%]">
+  <input type="hidden" name="longSec2" value="[%longSec2%]">
+  <input type="hidden" name="hemisphLong2" value="[%hemisphLong2%]">
+  <input type="hidden" name="taxaCount" value="[%taxaCount%]">
+  <input type="hidden" name="userLoggedIn" value="[%userLoggedIn%]">
+  [% cnt = 1 %]
+  [% WHILE cnt <= numTaxa %]
+      [% SET trn = "taxonRankName${cnt}" %]
+      [% SET trv = "taxonRankValue${cnt}" %]
+      <input type="hidden" name="[% trn %]" value="[% $trn %]">
+      <input type="hidden" name="[% trv %]" value="[% $trv %]">
+      [% cnt = cnt + 1 %]
+  [% END %]
+  <input type="hidden" name="taxaAuth" value="[%taxaAuth%]">
+
+  <input type="hidden" name="methodTitle" value="[%methodTitle%]">
+  [% FOREACH para = methodPara %]
+      <input type="hidden" name="methodPara" value="[%para%]">
+  [% END %]
+  <input type="hidden" name="studyExtentDescription" value="[%studyExtentDescription%]">
+  <input type="hidden" name="samplingDescription" value="[%samplingDescription%]">
+  <input type="hidden" name="upCount" value="[%upCount%]">
+  <input type="hidden" name="delCount" value="[% delCount %]">
+  [% dCount = 0 %]
+  [% IF delCount > 0 %]
+     [% dCount = delCount %]
+  [% END %]
+  [% cnt = 0 %]
+  [% WHILE cnt < dCount %]
+ 		  [% SET delfile = "deletefile_${cnt}" %]
+      <input type="hidden" name="[% delfile %]" value="[% $delfile %]">
+			<input type="hidden" name="deletefile" value="[% $delfile %]">
+			[% cnt = cnt + 1 %]
+	[% END %]		
+
+  [% fCount = 0 %]
+  [% IF upCount > 0 %]
+      [% fCount = upCount %]
+  [% END %]
+
+  [% cnt = 0 %]
+  [% WHILE cnt < fCount %]
+      [% SET fileSum = "upload_${cnt}" %]
+      [% SET fileName = "uploadname_${cnt}" %]
+      [% SET fileType = "uploadtype_${cnt}" %] 
+      [% SET filePerm = "uploadperm_${cnt}" %]
+
+      [% IF fileSum %]
+        <input type="hidden" name="[% fileSum %]" value="[% $fileSum %]">
+        <input type="hidden" name="[% fileName %]" value="[% $fileName %]">
+        <input type="hidden" name="[% fileType %]" value="[% $fileType %]">
+        <input type="hidden" name="[% filePerm %]" value="[% $filePerm %]">
+      [% END %]
+      [% cnt = cnt + 1 %]
+  [% END %]
+  
+  	<!-- form submission -->
+	<a name="buttons"></a>
+	<p><span class="text-info">Is the information above correct?</span></p> 
+	<input id="dataCorrect" type="button" class="btn" value="     Yes, submit    " name="dataCorrect">
+	<input id="dataWrongButton" type="button" class="btn" value="No, go back to editing">
+	<input id="dataWrong" name="dataWrong" type="hidden" class="btn" value="TBD" >
+
+</form>
+
+</td><tr></table>
+
+[% IF userLoggedIn != 'true' %]
+
+			<div class="row-fluid">
+				<div class="span6 pagination-left">
+					<h2>Login</h2>
+					<p class="lead">
+						<em>NOTE:</em> You must enter your username and password. 
+					</p>
+					<p>	
+						This is for the protection of your metadata. 
+						The username and password will prevent any unauthorized person from
+						modifying your metadata.
+					</p>
+  
+					<form method="post" action="[% cgiPrefix %]/register-dataset.cgi" onsubmit="return submitform(this);" >
+						<input type="hidden" name="stage" value="login"> 
+						<input type="hidden" name="username" value=""> 
+						<input type="hidden" name="cfg" value="[%cfg%]"> 
+					
+						<div>
+							<div class="row-fluid">
+								<div class="span2 text-left">Username</div>
+								<div class="span4 text-left"><input name="uid" type="text" value=""></div>
+							</div>
+							<div class="row-fluid">
+								<div class="span2 text-left">Organization</div>
+								<div class="span4 text-left"><select name="organization">
+										<option value="" selected>&#8212; choose one &#8212;</option>
+										<option value="NCEAS">NCEAS</option>
+										<option value="LTER">LTER</option>
+										<option value="KU">KU</option>
+										<option value="OBFS">OBFS</option>
+										<option value="OSUSB">OSUSB</option>
+										<option value="PARC">PARC</option>
+										<option value="PISCO">PISCO</option>
+										<option value="SAEON">SAEON</option>
+										<option value="SANParks">SANParks</option>
+										<option value="SDSC">SDSC</option>
+										<option value="UCNRS">UCNRS</option>
+										<option value="unaffiliated">unaffiliated</option>
+								</select></div>
+							</div>
+							<div class="row-fluid">
+								<div class="span2 text-left">Password</div>
+								<div class="span4 text-left"><input name="password" type="password" maxlength="50"
+									value=""></div>
+							</div>
+							<div class="row-fluid">
+								<div class="offset2 span4 text-left">
+									<input type="submit" class="btn" name="loginAction" value="Login">
+								</div>
+							</div>
+						</div>
+						
+					</form>
+				</div>
+				
+				<div class="span6 pagination-left">
+					
+					<div class="row-fluid">
+						<div class="span6 text-left">
+							<p>Don't have an account yet?</p>
+						</div>
+						<div class="span6 text-left">
+							<a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]">
+								<i class="icon-user"></i>
+								Create a new account
+							</a>
+						</div>
+					</div>
+					
+					<div class="row-fluid">
+						<div class="span6 text-left">
+							<p>Forgot your password?</p>
+						</div>
+						<div class="span6 text-left">							
+							<a href="[% cgiPrefix %]/ldapweb.cgi?cfg=[%cfg%]&amp;stage=resetpass">
+								<i class="icon-key"></i>
+								Reset your password
+							</a>
+						</div>
+					</div>
+						
+				</div>
+				
+			</div>
+
+[% END %]
+
+			</div>
+
+		</div>
+	</article>
+	

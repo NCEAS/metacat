@@ -1,0 +1,81 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<bean id="dryad.abstract" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="abstract" />
+		<constructor-arg name="xpath"
+		  value="//dcterms:description[1]/text()" />
+		<property name="multivalue" value="false" />
+	</bean>
+
+	<bean id="dryad.author" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="author" />
+		<constructor-arg name="xpath"
+		  value="//dcterms:creator[1]/text()" />
+		<property name="multivalue" value="false" />
+	</bean>
+	
+	<bean id="dryad.keywords" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="keywords" />
+		<constructor-arg name="xpath"
+			value="//dcterms:subject/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="dryad.pubDate" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="pubDate" />
+		<constructor-arg name="xpath" value="//dcterms:dateSubmitted/text()" />
+		<property name="multivalue" value="false" />
+		<property name="converter" ref="dateConverter" />
+	</bean>
+	
+ 	<bean id="dryad.site" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="site" />
+		<constructor-arg name="xpath"
+		  value="//dcterms:spatial/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+		
+	<bean id="dryad.title" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="title" />
+		<constructor-arg name="xpath"
+		  value="//dcterms:title[1]/text()" />
+		<property name="multivalue" value="false" />
+	</bean>
+ 
+ 	<bean id="dryad.scientificName" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="scientificName" />
+		<constructor-arg name="xpath"
+		  value="//dwc:scientificName/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+
+	<bean id="dryad.fileID" class="org.dataone.cn.indexer.parser.ResolveSolrField">
+		<constructor-arg name="name" value="fileID" />
+	</bean>
+	
+	<bean id="dryad.origin" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="origin" />
+		<constructor-arg name="xpath" value='//dcterms:creator/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="dryad.investigator" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="investigator" />
+		<constructor-arg name="xpath" value='//dcterms:creator/text()' />
+		<property name="multivalue" value="true" />
+		<property name="dedupe" value="true" />
+	</bean>
+	
+	<bean id="dryad.fullText" class="org.dataone.cn.indexer.parser.FullTextSolrField">
+		<constructor-arg name="name" value="text" />
+		<constructor-arg name="xpath"
+			value="//*/text()" />
+		<property name="multivalue" value="false" />
+		<property name="combineNodes" value="true"/>
+		<property name="dedupe" value="true"/>
+	</bean>
+	
+</beans>

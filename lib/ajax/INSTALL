@@ -1,0 +1,48 @@
+Author: Chad Berkley
+Date: 3/5/2007
+
+This file covers deploying the gwt created ajax code and servlet to a non-google
+version of tomcat.  This allows for the installation of the servlet(s) along 
+side a normal metacat installation.  This file assumes you've already done 
+the steps highlighted in the README file.
+
+1) Create a servlet on your tomcat instance called "rpc".  This is a simple 
+servlet that just runs the google remote procedure call (rpc) services.  Use 
+the web.xml file from the ./tomcat/webapps/ROOT/WEB-INF directory.  You'll 
+also need to copy all of the gwt jar files from your gwt installation as well 
+as all of the jar files in ./lib.  Use the gwt-user.jar and gwt-dev.jar from 
+metacat/lib.  If you use the ones from the gwt distro, tomcat won't load them
+due to the presence of javax.servlet.Servlet.
+
+2) copy ./src/org/kepler/web/service/KeplerServiceServlet.java to 
+metacat/src/org/kepler/web/service/ and update the KeplerServiceServlet.java 
+Edit the file with the correct url to your metacat servlet (line 6 in the code).  
+Make sure the moduleRelativeURL exactly matches the url that will be browsed
+to!  I.E. Don't use "localhost" if you intend to browse to an actual machine
+name.  This confuses the RPC and will cause problems.  
+
+3) Copy the lib/gwt-*.jar files to metacat/lib.  Note this may cause some 
+problems with jsp compilation.
+
+4) run 'ant package' (from the ajax dir) and copy the newly created 
+kepler-web.jar file to metacat/lib/.  Make sure you updated the hard coded
+servlet paths in the java code before doing this.
+
+5) run 'ant install' from your metacat directory
+
+6) make sure tomcat restarts
+
+7) run ./KeplerClient-compile and copy the contents of the www directory 
+to some web accessible location, then browse to the KeplerClient.html file 
+and the javascript should run.  
+
+--------------------------------
+If this doesn't work for some reason, keep in mind the main things you need.  
+They are:
+* the rpc servlet
+* the KeplerServiceServlet servlet.  In the web.xml file, I have called this 
+  'gwt' so the address will be: http://server:8080/servletpath/gwt
+* the compiled javascript (ajax) code
+* hard coded server/servlet paths correctly changed
+* all jar files accessible to tomcat
+

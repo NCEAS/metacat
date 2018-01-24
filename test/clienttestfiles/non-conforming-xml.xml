@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+<ord:order xmlns:ord="http://example.org/ord"
+   xmlns:prod="http://example.org/prod"
+   xmlns:xs="http://www.w3.org/2001/XMLSchema"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   targetNamespace="http://example.org/ord"
+   xsi:schemaLocation="http://example.org/prod @contextUrl@/test/chapter05prod.xsd
+                       http://example.org/ord @contextUrl@/test/chapter05ord.xsd">
+
+
+  <dataset>
+    <title>Sample dataset Description</title>
+    <creator id="23445" scope="document">
+      <individualName>
+        <surName>Smith</surName>
+      </individualName>
+    </creator>
+    <creator id="23446" scope="document">
+      <individualName>
+        <surName>Smith</surName>
+      </individualName>
+    </creator>
+    <additionalInfo><para>My comments go here.</para></additionalInfo>
+    <intellectualRights><section><para>Anyone can use it.</para></section>
+    </intellectualRights>
+
+    <distribution>
+      <online>
+      <connectionDefinition scope="document">
+        <schemeName system="CAP">sde</schemeName>
+        <description><para>The SDE scheme used at CAP LTER</para></description>
+        <parameterDefinition>
+          <name>hostname</name>
+          <definition>The host</definition>
+          <defaultValue>mohave.asu.edu</defaultValue>
+        </parameterDefinition>
+        <parameterDefinition>
+          <name>databaseName</name>
+          <definition>The name of the database or catalog</definition>
+        </parameterDefinition>
+        <parameterDefinition>
+          <name>owner</name>
+          <definition>The owner catalog</definition>
+        <defaultValue>dbo</defaultValue>
+        </parameterDefinition>
+      </connectionDefinition>
+      </online>
+    </distribution>
+
+    <purpose><para>Provide data to the whole world.</para></purpose>
+    <contact>
+      <individualName>
+        <surName>Johnson</surName>
+      </individualName>
+    </contact>
+    <contact>
+      <references>23445</references>
+    </contact>
+  </dataset>
+</ord:order>

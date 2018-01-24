@@ -1,0 +1,111 @@
+#
+# control-services.pl -- Monitor a listed set of services to be sure
+#             they are running.  If not running, modify the DNS system
+#             to remove them from the lookup for that service
+#
+#  '$RCSfile$'
+#  Copyright: 2005 Regents of the University of California 
+#
+#   '$Author$'
+#     '$Date$'
+# '$Revision$' 
+#
+#  This program is free software; you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation; either version 2 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software
+#  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+#
+
+Welcome to the control-services.pl program.
+
+This program is designed to run as a script under the Hobbit system monitoring
+program (http://hobbitmon.sourceforge.net/).  When Hobbit is configured 
+properly, this script will be called to make changes to the DNS services that
+are registered in your DNS server.  The changes are accomplished using 
+Dynamic DNS (DDNS).  The system is intended to help manage a set of services
+that are running on several hosts in round-robin DNS fashion and to remove
+inaccessible hosts when they are detected as failed, and restore them when 
+they recover.
+
+Configuration consists of:
+  1) Install and configure Hobbit (see http://hobbitmon.sourceforge.net)
+  2) Install and configure BIND for DDNS (see below)
+  3) Install this script (see below)
+
+3) Setting up BIND for DDNS
+-----------------------------
+
+You need to configure BIND to accept signed dynamic updates for your zone.  
+
+    a) Create a key using dnssec-keygen.
+
+        % dnssec-keygen  -b 256 -n HOST -a HMAC-MD5 example
+
+        This will create 2 key files in different formats
+
+    b) Add the key to your named.conf file in a block (copy it from either 
+       of the two generated key files):
+
+        key "examplekey" {
+            algorithm       hmac-md5;
+            secret "0QI/OEYtZA5aI6rpMTwrodfMpg1xxCaDHdR/tvI9Lgc=";
+        };
+
+    c) For each zone that you want to enable updates, add this key to
+       your 'allow-update' and 'allow-transfer' blocks:
+    
+       zone "example.com" {
+           type master;
+           file "/var/named/example.com.zone"
+           allow-update ( key examplekey; };
+           allow-transfer { key examplekey; };
+       }
+
+    d) Reload named to reload your configuration (killall -HUP named).
+
+3) Install the control-services.pl script
+-----------------------------------------
+Prerequisites:
+
+    The following Perl Modules are required:
+        Net::DNS
+        LWP::UserAgent
+        HTTP::Request
+        HTTP::Response
+        URI::URL
+    These modules are available through CPAN, and are most easily gotten using
+    the CPAN shell (as root, "perl -MCPAN -e shell").
+
+Installation:
+  1) copy the file to a commonly accessible location (typically /usr/local/bin)
+  2) change ownership to the web-server user
+  3) copy the configuration file to /etc and customize for your situation
+     -- set the key name and value from your DDNS server
+     -- set domain and other parameters properly
+  4) change ownership of the config file to the web-server user
+  5) restrict access to the config file to only the web server user
+  6) Create the log file directory, writable by the hobbit user
+  7) Place alert rules in the hobbit/server/etc/hobbit-alerts.cfg file that
+     use the script.  See the hobbit-alerts.cfg man page for details. An
+     example rule might be:
+
+     HOST=ldap.example.com SERVICE=ldap RECOVERED
+          SCRIPT /usr/local/bin/control-services.pl ldap FORMAT=SCRIPT REPEAT=1
+
+
+IMPORTANT NOTE
+----------------
+Make sure that the configuration file is only readable by the webserver user
+and writable by root. The config file contains the key to allow updates
+to your DNS server, so be sure the config file is secure.
+
+Enjoy!

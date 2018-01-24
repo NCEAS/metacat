@@ -1,0 +1,16 @@
+<dataStore>
+  <id>DataStoreInfoImpl--731c5119:12da04a4210:-7ffa</id>
+  <name>borders</name>
+  <type>Shapefile</type>
+  <enabled>true</enabled>
+  <workspace>
+    <id>WorkspaceInfoImpl--731c5119:12da04a4210:-8000</id>
+  </workspace>
+  <connectionParameters>
+    <entry key="memory mapped buffer">true</entry>
+    <entry key="create spatial index">true</entry>
+    <entry key="charset">ISO-8859-1</entry>
+    <entry key="url">file:data/world_borders/world_borders.shp</entry>
+    <entry key="namespace">http://ecoinformatics.org/world_borders</entry>
+  </connectionParameters>
+</dataStore>

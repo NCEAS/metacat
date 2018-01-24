@@ -1,0 +1,60 @@
+<?xml version="1.0"?>
+
+<metadataConfig>
+	<group>
+		<index>1</index>
+		<name>Organizational Level Values</name>
+		<comment>
+			Select the organizations for which you have admin rights, and update
+			the configuration information if necessary.
+		</comment>
+		<description>Server Configuration Values.</description>
+	</group>
+
+	<config>
+		<key>organization.name</key>
+		<label>Organization Name</label>
+		<group>1</group>
+		<index>1</index>
+		<description>The display name of organization</description>
+		<helpFile>docs/metacat-properties.html#ldap.org</helpFile>
+	</config>
+	
+	<config>
+		<key>organization.org</key>
+		<label>LDAP Organization</label>
+		<group>1</group>
+		<index>2</index>
+		<description>LDAP Organization</description>
+		<helpFile>docs/metacat-properties.html#ldap.org</helpFile>
+	</config>
+	
+	<config>
+		<key>organization.base</key>
+		<label>LDAP Base</label>
+		<group>1</group>
+		<index>3</index>
+		<description>LDAP Base.</description>
+		<helpFile>docs/metacat-properties.html#organization.base</helpFile>
+	</config>
+	
+	<config>
+		<key>organization.user</key>
+		<label>LDAP User Name</label>
+		<group>1</group>
+		<index>4</index>
+		<description>LDAP User Name</description>
+		<helpFile>docs/metacat-properties.html#ldap.user</helpFile>
+	</config>
+
+	<config>
+		<key>organization.password</key>
+		<label>LDAP Password</label>
+		<group>1</group>
+		<fieldType>password</fieldType>
+		<index>5</index>
+		<description>LDAP Password</description>
+		<helpFile>docs/metacat-properties.html#ldap.passwd</helpFile>
+	</config>
+
+</metadataConfig>

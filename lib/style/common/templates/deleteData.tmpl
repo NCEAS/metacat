@@ -1,0 +1,89 @@
+<!--
+  *  '$RCSfile$'
+  *    Copyright: 2000 Regents of the University of California and the
+  *               National Center for Ecological Analysis and Synthesis
+  *  For Details: http://www.nceas.ucsb.edu/
+  *
+  *   '$Author$'
+  *     '$Date$'
+  * 
+  * This program is free software; you can redistribute it and/or modify
+  * it under the terms of the GNU General Public License as published by
+  * the Free Software Foundation; either version 2 of the License, or
+  * (at your option) any later version.
+  *
+  * This program is distributed in the hope that it will be useful,
+  * but WITHOUT ANY WARRANTY; without even the implied warranty of
+  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  * GNU General Public License for more details.
+  *
+  * You should have received a copy of the GNU General Public License
+  * along with this program; if not, write to the Free Software
+  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+-->
+
+[% INCLUDE $templates.header %]
+
+<table class="intro" cellpadding="3" cellspacing="0">
+<tr><td align="left"><span class="regtext">You have requested deletion of a data set description entered in the [% config.abbrev %] Data Registry Form. 
+Please enter your username, organization, and password to delete this document.</span><p>&nbsp;</p>
+
+<form action="[% cgiPrefix %]/register-dataset.cgi" method="post">
+  <input type="hidden" name="cfg" value="[% cfg %]">
+  <input type="hidden" name="docid" value="[% docid %]">
+  <input type="hidden" name="stage" value="delete_confirm"> 
+    <table cellspacing="0" border="0" cellpadding="9" width="350" align="left">
+        <tr class="sectbody">
+	  <td>
+	    <font size="-1"><b>
+	      Username: 
+	    </b></font></td>
+         <td>
+	    <input type="TEXT" name="username">
+	  </td></tr>
+	<tr class="sectbody">
+	  <td>
+	    <font size="-1"><b> 	
+	      Organization: 
+	    </b></font></td>
+	  <td>
+	    <select name="organization">
+                <option value="NCEAS">NCEAS</option>
+                <option value="KU">KU</option>
+                <option value="LTER">LTER</option>
+                <option value="OBFS">OBFS</option>
+                <option value="OSUSB">OSUSB</option>
+                <option value="PARC">PARC</option>
+                <option value="PISCO">PISCO</option>
+                <option value="SDSC">SDSC</option>
+                <option value="UCNRS">UCNRS</option>
+                <option value="unaffiliated">unaffiliated</option>
+	    </select></td></tr>
+	<tr class="sectbody">
+	  <td>
+	    <font size="-1"><b> 	
+	      Password: 
+	    </b></font>
+          </td>
+	  <td>
+	    <input type="PASSWORD" name="password">
+	  </td></tr>
+      </table>
+</td></tr></table>
+<p>
+<hr>
+</p>
+<table class="intro" cellspacing="0" border="0" cellpadding="9">
+  <tr> 
+    <td> 
+      <font size="-1"><b>Are you sure you want to delete this document?</b></font> 
+      <p> 
+        <input type="SUBMIT" value="Delete document" name="deleteData">
+        <input type="SUBMIT" value="   Cancel  " name="cancelData">
+      </p>
+    </td>
+  </tr>
+</table>
+</form>
+<p></p>
+[% INCLUDE $templates.footer %]

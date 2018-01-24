@@ -1,0 +1,10 @@
+#The referral to LTER's subtree
+dn: o=LTER,dc=ecoinformatics,dc=org
+objectclass: top
+objectclass: organization
+objectClass: referral
+objectclass: extensibleObject
+o: LTER
+description: referral to LTER's KNB subtree
+ref: ldap://alpha.nceas.ucsb.edu/o=LTER,dc=ecoinformatics,dc=org
+

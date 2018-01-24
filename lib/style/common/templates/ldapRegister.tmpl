@@ -1,0 +1,198 @@
+    [% SWITCH stage %]
+    [% CASE 'register' %]
+    
+    
+    <h3>Register for the KNB</h3>
+    
+    <table class="intro" cellpadding="3" cellspacing="0">   
+       <tr><td align="left">
+       <span class="regtext">
+       Fill out the form below to register for the KNB. 
+       By registering, you will be assigned a user account that allows you to store your
+       own data as part of the KNB and to collaborate with other research 
+       scientists through the KNB.</td></tr>
+	<tr><td align="left">
+		<strong>Note: </strong>To create an account affiliated with an organization such as OBFS, UCNRS, KU, LTER, UVM, NCEAS, OSUSB, SDSC or NAPIER contact tech support. 
+		Emails are: tech_support@lternet.edu for LTER, infomgr@ucnrs.org for UCNRS, judithk@sanparks.org for SANParks and SAEON and knb-help@nceas.ucsb.edu for other organizations.</td></tr>
+       <tr><td align="left"><span class="label">Required fields are denoted by an asterisk (*).</td></tr>
+       
+    </table>
+    <p>&nbsp;</p>
+    
+    [% fieldType = 'text' %]
+    [% CASE 'registerconfirmed' %]
+    
+    
+      <h3>Confirm registration information</h3>
+    
+    <table class="intro" cellpadding="3" cellspacing="0">
+      <tr><td align="left"><span class="regtext">If you have confirmed that the accounts listed above do not 
+    represent you, you can continue with the registration process 
+    using the data you provided, summarized below:   </td></tr></table>
+    
+    [% fieldType = 'hidden' %]
+    [% END %]
+    <p class="label text-error">[% errorMessage %]<p>
+    <p>
+    <script type="text/javascript" language="JavaScript1.2">
+    
+    <!--
+      document.loginForm.givenName.focus();
+      document.loginForm.givenName.select();
+
+      if(window.document.captureEvents != null)
+      {
+        window.document.captureEvents(Event.KEYPRESS);
+        window.document.onKeyPress = doSubmit;
+      }
+
+      function doSubmit(event)
+      {
+        var key;
+        if(document.all) // IE
+          key = String.fromCharCode(window.events.keyCode);
+        else
+          key = String.fromCharCode(event.which);
+
+        if(key == "\r" || key == "\n")
+          document.loginForm.submit();
+      }
+    // -->
+    </script>
+
+    <form name="loginForm" action="[% cgiurl %]" method="post">
+      <input type="hidden" name="stage" value="[% stage %]"/>
+      <input type="hidden" name="cfg" value="[% cfg %]"/>
+      <table hspace="20" border="0">
+        <tr>
+          <td align="left" class="label">
+            *First Name:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.givenName %]
+            [% END %]
+            <input name="givenName" type="[% fieldType %]" 
+                   value="[% allParams.givenName %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Last Name:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.sn %]
+            [% END %]
+            <input name="sn" type="[% fieldType %]" value="[% allParams.sn %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Organization:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.o %]
+            <input name="o" type="[% fieldType %]" 
+                   value="[% allParams.o %]"/>
+            [% ELSE %]
+            <select name="o">
+                  <option value="unaffiliated">unaffiliated</option>
+            </select>
+            [% END %]
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            Telephone:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.telephoneNumber %]
+            [% END %]
+            <input name="telephoneNumber" type="[% fieldType %]" 
+                   value="[% allParams.telephoneNumber %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *E-mail:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.mail %]
+            [% END %]
+            <input name="mail" type="[% fieldType %]" 
+                   value="[% allParams.mail %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            Title:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.title %]
+            [% END %]
+            <input name="title" type="[% fieldType %]" 
+                   value="[% allParams.title %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Username:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            [% allParams.uid %]
+            [% END %]
+            <input name="uid" type="[% fieldType %]" 
+                   value="[% allParams.uid %]"/>
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Password:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            <input name="userPassword" type="[% fieldType %]"
+                   value="[% allParams.userPassword %]"/>
+            NOT DISPLAYED
+            [% ELSE %]
+            <input name="userPassword" type="password"
+                   value="[% allParams.userPassword %]"/>
+            [% END %]
+          </td>
+        </tr>
+        <tr>
+          <td align="left" class="label">
+            *Confirm Password:
+          </td>
+          <td align="right">
+            [% IF stage == 'registerconfirmed' %]
+            <input name="userPassword2" type="[% fieldType %]"
+                   value="[% allParams.userPassword2 %]"/>
+            NOT DISPLAYED
+            [% ELSE %]
+            <input name="userPassword2" type="password"
+                   value="[% allParams.userPassword2 %]"/>
+            [% END %]
+          </td>
+        </tr>
+        <tr>
+          <td>
+          </td>
+          <td align="right">
+    [% SWITCH stage %]
+    [% CASE 'register' %]
+            <input name="action" type="submit" value="Register"/>
+    [% CASE 'registerconfirmed' %]
+            <input name="action" type="submit" value="Continue"/>
+    [% END %]
+          </td>
+        </tr>
+      </table>
+    </form>
+

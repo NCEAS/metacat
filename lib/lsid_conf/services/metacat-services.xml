@@ -1,0 +1,23 @@
+ <deployment-descriptor xmlns="http://www.ibm.com/LSID/Standard/rsdl">
+                        <maps>
+                                <map name="metacat-main">
+                                        <pattern auth="@LSID_AUTHORITY_STRING@" ns="*" />
+                                </map>
+				<map name="metacat-rdf">
+					<pattern auth="@LSID_AUTHORITY_STRING@" ns="predicates" />
+					<pattern auth="@LSID_AUTHORITY_STRING@" ns="types" />
+				</map>
+                        </maps>
+                        <services>
+                                <service name="METACAT">
+                                        <components>
+						<auth map="metacat-rdf" type="asdl" location="java-resource">/edu/ucsb/nceas/metacat/lsid/mdasdl.xml</auth>
+						<meta map="metacat-rdf" type="msdl" location="java-resource">/edu/ucsb/nceas/metacat/lsid/preds.xml</meta>
+                                                <auth map="metacat-main" type="class">edu.ucsb.nceas.metacat.lsid.LSIDAuthorityMain</auth>
+                                                <meta map="metacat-main" type="class">edu.ucsb.nceas.metacat.lsid.LSIDAuthorityMetaData</meta>
+                                                <data map="metacat-main" type="class">edu.ucsb.nceas.metacat.lsid.LSIDAuthorityData</data>
+                                        </components>
+                                </service>
+                        </services>
+                </deployment-descriptor>
+

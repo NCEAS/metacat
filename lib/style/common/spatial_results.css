@@ -1,0 +1,45 @@
+#query_results {
+    width: 70%;
+}
+
+.mc_doc { margin: 9px 3px; }
+.odd { background-color: #e6e6e6; }
+.even { background-color: #ccc; }
+
+.mc_doc a,
+.mc_doc a:visited {
+    /* docid */
+    color: #05F;
+    border: 1px solid #bcbcbc;
+    background-color: #fff;
+    padding: 5px 15px;
+    font-weight: bold;
+    font-size: 13pt;
+    text-decoration: none;
+}
+.mc_doc a:visited {
+    background-color: #efefef;
+    color: #7AA4FF;
+}
+.mc_doc a:hover {
+    border-color: #05f;
+    background-color: #B8CFFF;
+    color: #05f;
+}
+
+.mc_doc i {
+    /* creator */
+    padding-left: 10px;
+    color: #666;
+    font-size: 10pt;
+}
+
+blockquote {
+    /* abstract */
+    margin: 0px;
+    padding: 1px 3px 9px 18px;
+    color: #333;
+    font-size: 11pt;
+}
+
+

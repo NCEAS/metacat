@@ -1,0 +1,353 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+  <title>Class: Metacat</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <meta http-equiv="Content-Script-Type" content="text/javascript" />
+  <link rel="stylesheet" href=".././rdoc-style.css" type="text/css" media="screen" />
+  <script type="text/javascript">
+  // <![CDATA[
+
+  function popupCode( url ) {
+    window.open(url, "Code", "resizable=yes,scrollbars=yes,toolbar=no,status=no,height=150,width=400")
+  }
+
+  function toggleCode( id ) {
+    if ( document.getElementById )
+      elem = document.getElementById( id );
+    else if ( document.all )
+      elem = eval( "document.all." + id );
+    else
+      return false;
+
+    elemStyle = elem.style;
+    
+    if ( elemStyle.display != "block" ) {
+      elemStyle.display = "block"
+    } else {
+      elemStyle.display = "none"
+    }
+
+    return true;
+  }
+  
+  // Make codeblocks hidden by default
+  document.writeln( "<style type=\"text/css\">div.method-source-code { display: none }</style>" )
+  
+  // ]]>
+  </script>
+
+</head>
+<body>
+
+
+
+    <div id="classHeader">
+        <table class="header-table">
+        <tr class="top-aligned-row">
+          <td><strong>Class</strong></td>
+          <td class="class-name-in-header">Metacat</td>
+        </tr>
+        <tr class="top-aligned-row">
+            <td><strong>In:</strong></td>
+            <td>
+                <a href="../files/lib/metacat_rb.html">
+                lib/metacat.rb
+                </a>
+        <br />
+            </td>
+        </tr>
+
+        <tr class="top-aligned-row">
+            <td><strong>Parent:</strong></td>
+            <td>
+                Object
+            </td>
+        </tr>
+        </table>
+    </div>
+  <!-- banner header -->
+
+  <div id="bodyContent">
+
+
+
+  <div id="contextContent">
+
+    <div id="description">
+      <h1><a href="Metacat.html">Metacat</a> Client Library</h1>
+<h2>What is it</h2>
+<p>
+A client for the <a href="Metacat.html">Metacat</a> data catalog. For a
+description of <a href="Metacat.html">Metacat</a>, see <a
+href="http://knb.ecoinformatics.org/software/metacat">knb.ecoinformatics.org/software/metacat</a>
+For now, this client does not implement all features of the API. Rather, it
+focuses on querying and returning <a href="Eml.html">Eml</a> metadata
+objects from either pathqueries or docid&#8217;s. Should you find yourself
+using methods other than find() very often, you may be veering from the
+original intent.
+</p>
+<h2>Examples</h2>
+<h3>Read metadata for a public document</h3>
+<pre>
+  require 'lib/metacat.rb'
+  metacat = Metacat.new('http://data.piscoweb.org/catalog/metacat')
+  eml = metacat.find(:docid =&gt; 'pisco.10.4')
+  puts eml.docid
+  =&gt; 'pisco.10.4'
+</pre>
+<h3>Log into <a href="Metacat.html">Metacat</a> and read <a href="Eml.html">Eml</a> metadata. Then logout</h3>
+<pre>
+  username = 'uid=cburt,o=PISCO,dc=ecoinformatic,dc=org'
+  password = *****
+  Metacat.new('http://data.piscoweb.org/catalog/metacat', username, password) do |metacat|
+    eml = metacat.find(:docid =&gt; 'pisco.10.3')
+    start, end = eml.temporal_coverage
+    puts &quot;start: #{start}, end: #{end}&quot;
+  end
+</pre>
+<h3>Search for oceanographic data</h3>
+<pre>
+  metacat = Metacat.new('http://data.piscoweb.org/catalog/metacat')
+  pathquery = '...' # see example at http://knb.ecoinformatics.org/software/metacat/metacatquery.html
+  docs = metacat.find(:squery =&gt; pathquery)
+  docs.each { |eml| puts eml.docid }
+</pre>
+<h3>Find and write a data_table to local disk</h3>
+<pre>
+  Metacat.new('http://data.piscoweb.org/catalog/metacat', username, password) do |metacat|
+    file = File.new('tmp', 'w+')
+    # using a block you can avoid loading the whole file into memory!
+    metacat.read('data_table.1.1') do |fragment|
+      file.write(fragment)
+    end
+    file.close
+  end
+</pre>
+
+    </div>
+
+
+   </div>
+
+    <div id="method-list">
+      <h3 class="section-bar">Methods</h3>
+
+      <div class="name-list">
+      <a href="#M000072">find</a>&nbsp;&nbsp;
+      <a href="#M000071">logged_in?</a>&nbsp;&nbsp;
+      <a href="#M000073">login</a>&nbsp;&nbsp;
+      <a href="#M000074">logout</a>&nbsp;&nbsp;
+      <a href="#M000070">new</a>&nbsp;&nbsp;
+      <a href="#M000075">read</a>&nbsp;&nbsp;
+      <a href="#M000076">squery</a>&nbsp;&nbsp;
+      </div>
+    </div>
+
+  </div>
+
+
+    <!-- if includes -->
+
+    <div id="section">
+
+
+
+
+
+      
+
+
+    <!-- if method_list -->
+    <div id="methods">
+      <h3 class="section-bar">Public Class methods</h3>
+
+      <div id="method-M000070" class="method-detail">
+        <a name="M000070"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000070.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000070.html');return false;">
+          <span class="method-name">new</span><span class="method-args">(path_to_metacat, options = {}) {|self| ...}</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <h3 class="section-bar">Public Instance methods</h3>
+
+      <div id="method-M000072" class="method-detail">
+        <a name="M000072"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000072.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000072.html');return false;">
+          <span class="method-name">find</span><span class="method-args">(args)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Returns either an array of <a href="Eml.html">Eml</a> documents(or nil) if
+:squery is passed or a single <a href="Eml.html">Eml</a> document(or nil)
+if passed :docid. This function <em>will</em> <em>not</em> return a data
+table, only <a href="Eml.html">Eml</a> objects.
+</p>
+<p>
+If you need to retrieve a data table or other document, use read()
+</p>
+<p>
+Examples:
+</p>
+<pre>
+  Metacat.find(:docid =&gt; 'cbs_10.1')
+  Metacat.find(:squery =&gt; xml_path_query)
+</pre>
+        </div>
+      </div>
+
+      <div id="method-M000071" class="method-detail">
+        <a name="M000071"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000071.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000071.html');return false;">
+          <span class="method-name">logged_in?</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Check if the metacat instance has a session cookie
+</p>
+        </div>
+      </div>
+
+      <div id="method-M000073" class="method-detail">
+        <a name="M000073"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000073.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000073.html');return false;">
+          <span class="method-name">login</span><span class="method-args">(username, password)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Logs into metacat using ldap authentication. Usernames are complex, such as
+&#8216;uid=cburt,o=PISCO,dc=ecoinformatics,dc=org&#8217;
+</p>
+<p>
+Raises <a href="MetacatPermissionDenied.html">MetacatPermissionDenied</a>
+exception on fail
+</p>
+<p>
+Example
+</p>
+<pre>
+  metacat.login('uid=cburt,o=PISCO,dc=ecoinformatics,dc=org', '******')
+  =&gt; true
+</pre>
+        </div>
+      </div>
+
+      <div id="method-M000074" class="method-detail">
+        <a name="M000074"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000074.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000074.html');return false;">
+          <span class="method-name">logout</span><span class="method-args">()</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+        </div>
+      </div>
+
+      <div id="method-M000075" class="method-detail">
+        <a name="M000075"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000075.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000075.html');return false;">
+          <span class="method-name">read</span><span class="method-args">(docid, options = {}) {|xml or data_table fragment| ...}</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Reads a specified document from metacat. If xml is found, a REXML::Document
+will be returned
+</p>
+<p>
+When reading text data tables, it should be noted that loading the entire
+large file can consume an enormous amount of memory. To avoid this, read
+can be passed a &amp;block. The block will recieve fragments of the file as
+it comes in.
+</p>
+<p>
+Examples: Reading an EML document
+</p>
+<pre>
+  metacat.read('eml_doc.1.1')
+  =&gt; &lt;REXML::Document &gt;
+</pre>
+<p>
+Writing a data table to disk
+</p>
+<pre>
+  file = File.new('tmp', 'w+')
+  metacat.read('data_table.1.1') do |fragment|
+    file.write(fragment)
+  end
+  file.close
+</pre>
+<p>
+Reading an entire data table into memory
+</p>
+<pre>
+  data_table = metacat.read('data_table.1.1')
+</pre>
+        </div>
+      </div>
+
+      <div id="method-M000076" class="method-detail">
+        <a name="M000076"></a>
+
+        <div class="method-heading">
+          <a href="Metacat.src/M000076.html" target="Code" class="method-signature"
+            onclick="popupCode('Metacat.src/M000076.html');return false;">
+          <span class="method-name">squery</span><span class="method-args">(squery)</span>
+          </a>
+        </div>
+      
+        <div class="method-description">
+          <p>
+Uses the metacat pathquery search and returns the xml response as a string.
+For query format information, see <a
+href="http://knb.ecoinformatics.org/software/metacat/metacatquery.html">knb.ecoinformatics.org/software/metacat/metacatquery.html</a>
+</p>
+        </div>
+      </div>
+
+
+    </div>
+
+
+  </div>
+
+
+<div id="validator-badges">
+  <p><small><a href="http://validator.w3.org/check/referer">[Validate]</a></small></p>
+</div>
+
+</body>
+</html>

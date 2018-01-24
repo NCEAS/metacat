@@ -1,0 +1,11 @@
+Package: metacat
+Version: @metacatVersion@@metacatRC@
+Section: base
+Priority: optional
+Architecture: all
+Depends: sun-java6-jdk, apache2, libapache2-mod-jk, tomcat6, postgresql
+Maintainer: Matt Jones <jones@nceas.ucsb.edu>
+Description: Metacat is a metadata cataloging system.
+  Metacat is a flexible metadata database. It utilizes XML as a 
+  common syntax for representing the large number of metadata 
+  content standards that are relevant to ecology.

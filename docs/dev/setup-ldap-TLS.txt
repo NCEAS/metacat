@@ -1,0 +1,65 @@
+In ldap server host:
+1. In /etc/ldap/slapd.conf (or /etc/openldap/slapd.conf) file, remove the comment symbols of two lines:
+   TLSCertificateFile /var/lib/ldap/cert/cacert.pem
+   TLSCertificateKeyFile /var/lib/ldap/cert/privkey.pem
+
+2. In /var/lib/ldap/cert directory (which should be as same as the TLSCertificateKeyFile dir in slapd.conf file), generate private key:
+   openssl genrsa -out privkey.pem 1024
+
+3. In /var/lig/ldap/cert directory, generate self-signed certificate:
+   openssl req -new -x509 -days 900  -key privkey.pem -out cacert.pem
+ 
+   The example to set up a certificate:
+   Country Name (2 letter code) [GB]:US
+   State or Province Name (full name) [Berkshire]:California
+   Locality Name (eg, city) [Newbury]:Santa Barbara
+   Organization Name (eg, company) [My Company Ltd]:UCSB
+   Organizational Unit Name (eg, section) []:NCEAS
+   Common Name (eg, your name or your server's hostname) []:dev.nceas.ucsb.edu
+   (Note: don't put port number here)
+   Email Address []:tao@nceas.ucsb.edu
+
+   Note: the country name, state name (full name) and host name should be correct ones.
+
+4. Restart ldap server.
+
+For java client, e.g, Metacat:
+
+1. Copy the certificate file - cacert.pem from server host to $JAVA_HOME/jre/lib/security directory 
+   in client host which can be different to the server host.
+   Note: the $JAVA_HOME is the java home under which Metacat is running. 
+
+2. In $JAVA_HOME/jre/lib/security directory, import the certificate into key store:
+   keytool -import -alias knp-ldap -file cacert.pem -keystore cacerts
+
+3. Restart tomcat.
+
+
+For other client, e.g, ldapsearch:
+
+1. In client host (which can be different to ldap server host), modify the ldap.conf in /etc/lodap 
+   (or /etc/openldap) directory by adding:
+   TLS_REQCERT try
+   TLS_CACERT /usr/share/ssl/ldapcerts/cacert.pem
+
+2. Copy the certificate file - cacert.pem from server host to  /usr/share/ssl/ldapcerts/ in client host.
+
+3. Make a test search:
+   ldapsearch -x -h ldap.ecoinformatics.org -b dc=ecoinformatics,dc=org -LLL -ZZ uid=tao dn
+   and you will see something like:
+
+   dn: uid=tao,o=NCEAS,dc=ecoinformatics,dc=org
+
+   dn: uid=tao,ou=Account,dc=ecoinformatics,dc=org
+
+   # refldap://directory.piscoweb.org/ou=people,dc=piscoweb,dc=org??sub
+
+   # refldap://ldap.ecoinformatics.org/ou=people,o=ucnrs.org??sub
+
+   # refldap://ldap.lternet.edu/o=LTER,dc=ecoinformatics,dc=org??sub
+
+   # refldap://directory.piscoweb.org/ou=groups,dc=piscoweb,dc=org??sub
+
+   # refldap://dataknp.sanparks.org/o=SANParks,dc=ecoinformatics,dc=org??sub
+
+

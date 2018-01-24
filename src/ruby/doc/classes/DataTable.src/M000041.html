@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+<!DOCTYPE html 
+     PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html>
+<head>
+  <title>read (DataTable)</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+  <link rel="stylesheet" href="../.././rdoc-style.css" type="text/css" media="screen" />
+</head>
+<body class="standalone-code">
+  <pre><span class="ruby-comment cmt"># File lib/data_table.rb, line 140</span>
+  <span class="ruby-keyword kw">def</span> <span class="ruby-identifier">read</span>
+    <span class="ruby-keyword kw">if</span>(<span class="ruby-identifier">location</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp re">/ecogrid/</span>)
+      <span class="ruby-comment cmt">#we need to pull out the docid and do a read on metacat</span>
+      <span class="ruby-comment cmt">#get self.location, and pull out the string after the last &quot;/&quot;</span>
+      <span class="ruby-identifier">uri</span> = <span class="ruby-constant">URI</span>.<span class="ruby-identifier">parse</span>(<span class="ruby-constant">PATH_TO_METACAT</span>)
+      <span class="ruby-identifier">uri</span>.<span class="ruby-identifier">query</span> = <span class="ruby-node">&quot;action=read&amp;qformat=xml&amp;docid=#{docid}&quot;</span>
+      <span class="ruby-comment cmt"># Use Net:HTTP first to get the content_type</span>
+      <span class="ruby-identifier">http</span> = <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">HTTP</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">uri</span>.<span class="ruby-identifier">host</span>, <span class="ruby-identifier">uri</span>.<span class="ruby-identifier">port</span>)
+      <span class="ruby-identifier">http</span>.<span class="ruby-identifier">request_get</span>(<span class="ruby-identifier">uri</span>.<span class="ruby-identifier">to_s</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">response</span><span class="ruby-operator">|</span>
+        <span class="ruby-keyword kw">if</span>(<span class="ruby-identifier">response</span>.<span class="ruby-identifier">content_type</span> <span class="ruby-operator">==</span> <span class="ruby-value str">'text/xml'</span>)
+          <span class="ruby-comment cmt"># error message</span>
+          <span class="ruby-identifier">doc</span> = <span class="ruby-constant">REXML</span><span class="ruby-operator">::</span><span class="ruby-constant">Document</span>.<span class="ruby-identifier">new</span>(<span class="ruby-identifier">response</span>.<span class="ruby-identifier">read_body</span>)
+          <span class="ruby-keyword kw">if</span>(<span class="ruby-identifier">doc</span>.<span class="ruby-identifier">root</span>.<span class="ruby-identifier">name</span> <span class="ruby-operator">==</span> <span class="ruby-value str">'error'</span>)
+            <span class="ruby-identifier">raise</span> <span class="ruby-identifier">doc</span>.<span class="ruby-identifier">root</span>.<span class="ruby-identifier">text</span>
+          <span class="ruby-keyword kw">else</span>
+            <span class="ruby-identifier">raise</span> <span class="ruby-node">&quot;Unrecognized response from metacat at #{PATH_TO_METACAT}&quot;</span>
+          <span class="ruby-keyword kw">end</span>
+        <span class="ruby-keyword kw">elsif</span>(<span class="ruby-identifier">response</span>.<span class="ruby-identifier">content_type</span> <span class="ruby-operator">==</span> <span class="ruby-value str">'text/plain'</span>)
+          <span class="ruby-identifier">response</span>.<span class="ruby-identifier">read_body</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span>
+            <span class="ruby-keyword kw">yield</span> <span class="ruby-identifier">f</span>
+          <span class="ruby-keyword kw">end</span>
+        <span class="ruby-keyword kw">else</span>
+          <span class="ruby-identifier">raise</span> <span class="ruby-node">&quot;Unrecognized content type \&quot;#{response.content_type}\&quot; &quot;</span> <span class="ruby-operator">+</span>
+                <span class="ruby-node">&quot;from metacat at #{PATH_TO_METACAT}&quot;</span>
+        <span class="ruby-keyword kw">end</span>
+      <span class="ruby-keyword kw">end</span>
+    <span class="ruby-keyword kw">elsif</span>(<span class="ruby-identifier">location</span> <span class="ruby-operator">=~</span> <span class="ruby-regexp re">/http/</span>)
+      <span class="ruby-identifier">uri</span> = <span class="ruby-constant">URI</span>.<span class="ruby-identifier">parse</span>(<span class="ruby-identifier">location</span>)
+      <span class="ruby-identifier">http</span> = <span class="ruby-constant">Net</span><span class="ruby-operator">::</span><span class="ruby-constant">HTTP</span>.<span class="ruby-identifier">start</span>(<span class="ruby-identifier">uri</span>.<span class="ruby-identifier">host</span>, <span class="ruby-identifier">uri</span>.<span class="ruby-identifier">port</span>)
+      <span class="ruby-identifier">http</span>.<span class="ruby-identifier">request_get</span>(<span class="ruby-identifier">uri</span>.<span class="ruby-identifier">to_s</span>) <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">response</span><span class="ruby-operator">|</span>
+        <span class="ruby-identifier">response</span>.<span class="ruby-identifier">read_body</span> <span class="ruby-keyword kw">do</span> <span class="ruby-operator">|</span><span class="ruby-identifier">f</span><span class="ruby-operator">|</span>
+          <span class="ruby-keyword kw">yield</span> <span class="ruby-identifier">f</span>
+        <span class="ruby-keyword kw">end</span>
+      <span class="ruby-keyword kw">end</span>
+    <span class="ruby-keyword kw">else</span>
+      <span class="ruby-identifier">raise</span> <span class="ruby-value str">'Unknown location for dataTable'</span>
+    <span class="ruby-keyword kw">end</span>
+  <span class="ruby-keyword kw">end</span></pre>
+</body>
+</html>

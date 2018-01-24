@@ -1,0 +1,10 @@
+The diagrams presented in this directory represent an early, high-level attempt to describe the spatial functionality of metacat. Though the overall concpets are similar, the implementation details are considerably different:
+
+- Vector data is stored on the filesystem as shapefiles in order to avoid having a postgres/postgis dependency
+- Geoserver acts as the map renderer and sends only images to the web client (not GML)
+- The diagram does not accurately portray the spatial caching mechanism that is essentially the interface between geoserver and metacat.
+- Complex spatial objects (ie GML features) can not currently be cached (only bounding coordinates)
+
+
+
+

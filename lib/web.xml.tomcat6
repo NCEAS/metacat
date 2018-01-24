@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+   xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+   version="2.5">
+
+ <display-name>Metacat</display-name>
+
+    <context-param>
+      <param-name>jones</param-name>
+      <param-value>jones@nceas.ucsb.edu</param-value>
+    </context-param>
+    
+    <context-param>
+      <param-name>configFileName</param-name>
+      <param-value>metacat.properties</param-value>
+    </context-param>
+
+  <!-- D1 filters -->
+  <filter>
+    <filter-name>D1URLFilter</filter-name>
+    <filter-class>edu.ucsb.nceas.metacat.restservice.D1URLFilter</filter-class>
+  </filter>
+  
+  <filter-mapping>
+    <filter-name>D1URLFilter</filter-name>
+    <url-pattern>/d1/*</url-pattern>
+    <dispatcher>REQUEST</dispatcher>
+  </filter-mapping>
+
+    <servlet>
+      <servlet-name>metacat</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.MetaCatServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>2</load-on-startup>
+    </servlet>
+    
+    <servlet>
+      <servlet-name>MetacatAdmin</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.admin.MetacatAdminServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+    
+     <servlet>
+      <servlet-name>replication</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.replication.ReplicationServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>HarvesterRegistrationLogin</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.harvesterClient.HarvesterRegistrationLogin</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+      <servlet-name>HarvesterRegistration</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.harvesterClient.HarvesterRegistration</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <servlet>
+        <servlet-name>AdvancedSearchServlet</servlet-name>
+        <servlet-class>edu.ucsb.nceas.metacat.advancedsearch.AdvancedSearchServlet</servlet-class>
+        <load-on-startup>3</load-on-startup>
+    </servlet>
+
+    <!--
+    <servlet>
+      <servlet-name>HarvesterServlet</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.harvesterClient.HarvesterServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+    -->
+    
+    <!--
+    <servlet>
+      <servlet-name>DataProvider</servlet-name>
+      <description>Processes OAI verbs for Metacat OAI-PMH Data Provider (MODP)
+      </description>
+      <servlet-class>edu.ucsb.nceas.metacat.oaipmh.provider.server.OAIHandler</servlet-class>
+      <load-on-startup>4</load-on-startup>
+    </servlet>
+    -->
+
+<servlet>
+      <servlet-name>AxisServlet</servlet-name>
+      <servlet-class>
+          org.apache.axis.transport.http.AxisServlet
+      </servlet-class>
+      <load-on-startup>3</load-on-startup>
+    </servlet>
+
+  <servlet>
+    <servlet-name>AdminServlet</servlet-name>
+    <servlet-class>
+        org.apache.axis.transport.http.AdminServlet
+    </servlet-class>
+    <load-on-startup>100</load-on-startup>
+  </servlet>
+
+  <servlet>
+    <servlet-name>SOAPMonitorService</servlet-name>
+    <servlet-class>
+        org.apache.axis.monitor.SOAPMonitorService
+    </servlet-class>
+    <init-param>
+      <param-name>SOAPMonitorPort</param-name>
+      <param-value>5001</param-value>
+    </init-param>
+    <load-on-startup>100</load-on-startup>
+  </servlet>
+    
+	<!-- CN REST Servlet -->
+    <servlet>
+      <servlet-name>CNRestServlet</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.CNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>15</load-on-startup>
+    </servlet>
+    
+    <!-- MN REST Servlet -->
+    <servlet>
+      <servlet-name>MNRestServlet</servlet-name>
+      <servlet-class>edu.ucsb.nceas.metacat.restservice.MNRestServlet</servlet-class>
+      <init-param>
+        <param-name>debug</param-name>
+        <param-value>1</param-value>
+      </init-param>
+      <init-param>
+        <param-name>listings</param-name>
+        <param-value>true</param-value>
+      </init-param>
+      <load-on-startup>20</load-on-startup>
+    </servlet>
+  
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/metacat</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/metacat/*</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>metacat</servlet-name>
+        <url-pattern>/servlet/metacat</url-pattern>
+    </servlet-mapping>
+
+        
+    <servlet-mapping>
+        <servlet-name>MetacatAdmin</servlet-name>
+        <url-pattern>/admin</url-pattern>
+    </servlet-mapping>
+    
+    <servlet-mapping>
+        <servlet-name>replication</servlet-name>
+        <url-pattern>/replication</url-pattern>
+    </servlet-mapping> 
+   
+    <servlet-mapping>
+        <servlet-name>replication</servlet-name>
+        <url-pattern>/servlet/replication</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>HarvesterRegistrationLogin</servlet-name>
+        <url-pattern>/harvesterRegistrationLogin</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>HarvesterRegistration</servlet-name>
+        <url-pattern>/harvesterRegistration</url-pattern>
+    </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>AdvancedSearchServlet</servlet-name>
+        <url-pattern>/advancedSearchServlet</url-pattern>
+    </servlet-mapping>
+     
+    <servlet-mapping>
+    <servlet-name>AxisServlet</servlet-name>
+    <url-pattern>/servlet/AxisServlet</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>AxisServlet</servlet-name>
+    <url-pattern>*.jws</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>AxisServlet</servlet-name>
+    <url-pattern>/services/*</url-pattern>
+  </servlet-mapping>
+
+  <servlet-mapping>
+    <servlet-name>SOAPMonitorService</servlet-name>
+    <url-pattern>/SOAPMonitor</url-pattern>
+  </servlet-mapping>
+
+
+	<!-- CN REST services -->
+	<servlet-mapping>
+		<servlet-name>CNRestServlet</servlet-name>
+		<url-pattern>/d1/cn/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>CNRestServlet</servlet-name>
+		<url-pattern>/d1/cn/v1/*</url-pattern>
+	</servlet-mapping>	
+	
+	<!-- MN REST services -->
+	<servlet-mapping>
+		<servlet-name>MNRestServlet</servlet-name>
+		<url-pattern>/d1/mn/*</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>MNRestServlet</servlet-name>
+		<url-pattern>/d1/mn/v1/*</url-pattern>
+	</servlet-mapping>
+	
+ <!-- uncomment this if you want the admin servlet -->
+  <servlet-mapping>
+    <servlet-name>AdminServlet</servlet-name>
+    <url-pattern>/servlet/AdminServlet</url-pattern>
+  </servlet-mapping>
+
+  <!-- 
+   <servlet-mapping>
+    <servlet-name>DataProvider</servlet-name>
+    <url-pattern>/dataProvider</url-pattern>
+  </servlet-mapping>
+  -->
+  
+	<!-- begin MyProxy portal delegation section -->
+	<servlet>
+        <servlet-name>startRequest</servlet-name>
+        <servlet-class>edu.ucsb.nceas.metacat.portal.StartRequest</servlet-class>
+        <load-on-startup>0</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>startRequest</servlet-name>
+        <url-pattern>/startRequest</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>ready</servlet-name>
+        <servlet-class>edu.ucsb.nceas.metacat.portal.SuccessServlet</servlet-class>
+        <load-on-startup>0</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>ready</servlet-name>
+        <url-pattern>/ready</url-pattern>
+    </servlet-mapping>
+    
+    <servlet>
+        <servlet-name>error</servlet-name>
+        <servlet-class>edu.ucsb.nceas.metacat.portal.FailureServlet</servlet-class>
+        <load-on-startup>0</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>error</servlet-name>
+        <url-pattern>/error</url-pattern>
+    </servlet-mapping>
+      
+    <session-config>
+      <session-timeout>30000</session-timeout>
+    </session-config>
+    
+    <listener>
+        <listener-class>edu.uiuc.ncsa.myproxy.oa4mp.client.loader.ClientBootstrapper</listener-class>
+    </listener>
+
+	<!-- TODO: make relative path if possible -->
+	<context-param>
+        <param-name>oa4mp:client.config.file</param-name>
+        <param-value>/WEB-INF/oa4mp_client.xml</param-value>
+    </context-param>
+    
+    <!-- end MyProxy section -->
+    
+   <!-- currently the W3C havent settled on a media type for WSDL;
+    http://www.w3.org/TR/2003/WD-wsdl12-20030303/#ietf-draft
+    for now we go with the basic 'it's XML' response -->
+  <mime-mapping>
+    <extension>wsdl</extension>
+     <mime-type>text/xml</mime-type>
+  </mime-mapping>
+  
+  <mime-mapping>
+    <extension>xsd</extension>
+    <mime-type>text/xml</mime-type>
+  </mime-mapping>
+  
+  <mime-mapping>
+   <extension>xsl</extension>
+   <mime-type>text/xml</mime-type>
+  </mime-mapping>
+		      
+  <welcome-file-list>
+    <welcome-file>index.jsp</welcome-file>
+    <welcome-file>index.html</welcome-file>
+  </welcome-file-list>
+
+<security-constraint>
+	<web-resource-collection>
+		<web-resource-name>PROPERTIES</web-resource-name>
+		<url-pattern>*.properties</url-pattern>
+	</web-resource-collection>
+	<auth-constraint/>
+</security-constraint>
+
+</web-app>

@@ -1,0 +1,27 @@
+<pathquery version="1.2">
+<querytitle>Untitled-Search-2</querytitle>
+  <returndoctype>eml://ecoinformatics.org/eml-2.0.0</returndoctype>
+  <returnfield>dataset/title</returnfield>
+  <returnfield>individualName/surName</returnfield>
+  <returnfield>entityName</returnfield>
+  <querygroup operator="INTERSECT">
+    <queryterm searchmode="contains" casesensitive="false">
+          <value>land</value>
+          <pathexpr>dataset/title</pathexpr>
+    </queryterm>
+    <querygroup operator="UNION">
+       <queryterm searchmode="contains" casesensitive="false">
+          <value>http://%</value>
+        <pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr>
+       </queryterm>
+       <queryterm searchmode="contains" casesensitive="false">
+          <value>ecogrid://%</value>
+        <pathexpr>dataset/dataTable/physical/distribution/online/url</pathexpr>
+       </queryterm>
+         <queryterm searchmode="contains" casesensitive="false">
+          <value>srb://%</value>
+     <pathexpr>dataset/spatialRaster/physical/distribution/online/url</pathexpr>
+       </queryterm>
+    </querygroup>
+  </querygroup>
+</pathquery>
