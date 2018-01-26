@@ -1,42 +1,35 @@
-#
-#  '$RCSfile$'
-#   '$Author$'
-# '$Revision$'
-#     '$Date$'
-#
-
-Metacat: XML Metadata and Data Management System
-------------------------------------------------                      
+# Metacat: XML Metadata and Data Management System
 
 Version: 2.8.6 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
-                           http://bugzilla.ecoinformatics.org
+                           http://github.com/NCEAS/metacat
 
-Contributors: Matt Jones (jones@nceas.ucsb.edu)
-              Chad Berkley (berkley@nceas.ucsb.edu)
-              Jing Tao (tao@nceas.ucsb.edu)
-              Jivka Bojilova (bojilova@nceas.ucsb.edu)
-              Dan Higgins (higgins@nceas.ucsb.edu)
-              Saurabh Garg (sgarg@nceas.ucsb.edu)
-              Duane Costa (dcosta@lternet.edu)
-              Veronique Connolly (connolly@nceas.ucsb.edu)
-              Chris Jones (cjones@msi.ucsb.edu)
-              John Harris (harris@nceas.ucsb.edu)
-              Callie Bowdish (bowdish@ecoinformatics.org)
-              Will Tyburczy (tyburczy@ecoinformatics.org)
-              Matthew Perry (perry@nceas.ucsb.edu)
-              Chad Burt (underbluewaters@gmail.com)
-              Ben Leinfelder (leinfelder@nceas.ucsb.edu)
-              Chris Barteau (barteau@nceas.ucsb.edu)
-              Shaun Walbridge (walbridge@nceas.ucsb.edu)
-              Michael Daigle (daigle@nceas.ucsb.edu) 
-              Lauren Walker (walker@nceas.ucsb.edu) 
+Contributors:
+- Matt Jones (jones@nceas.ucsb.edu)
+- Chad Berkley (berkley@nceas.ucsb.edu)
+- Jing Tao (tao@nceas.ucsb.edu)
+- Jivka Bojilova (bojilova@nceas.ucsb.edu)
+- Dan Higgins (higgins@nceas.ucsb.edu)
+- Saurabh Garg (sgarg@nceas.ucsb.edu)
+- Duane Costa (dcosta@lternet.edu)
+- Veronique Connolly (connolly@nceas.ucsb.edu)
+- Chris Jones (cjones@msi.ucsb.edu)
+- John Harris (harris@nceas.ucsb.edu)
+- Callie Bowdish (bowdish@ecoinformatics.org)
+- Will Tyburczy (tyburczy@ecoinformatics.org)
+- Matthew Perry (perry@nceas.ucsb.edu)
+- Chad Burt (underbluewaters@gmail.com)
+- Ben Leinfelder (leinfelder@nceas.ucsb.edu)
+- Chris Barteau (barteau@nceas.ucsb.edu)
+- Shaun Walbridge (walbridge@nceas.ucsb.edu)
+- Michael Daigle (daigle@nceas.ucsb.edu)
+- Lauren Walker (walker@nceas.ucsb.edu)
 
 Patch contributors:
-              Andrea Chadden (chadden@nceas.ucsb.edu)
-              Johnoel Ancheta (johnoel@hawaii.edu)
-              Owen Jones (owen.jones@imperial.ac.uk)
+- Andrea Chadden (chadden@nceas.ucsb.edu)
+- Johnoel Ancheta (johnoel@hawaii.edu)
+- Owen Jones (owen.jones@imperial.ac.uk)
 
 Metacat is a flexible database storage system for XML formatted
 documents and associated binary files. Metacat models the structure of the
@@ -45,17 +38,17 @@ schemas. Metacat supports several databases on the back-end, including Oracle,
 PostgreSQL and SQL Server (limited).  The server supports XML document
 storage, retrieval, query, validation, and transformation (using the XSLT
 stylesheet language).  In addition, there is a mechanism for replicating the
-database to other metacat instances for backup and load balancing purposes.
+database to other Metacat instances for backup and load balancing purposes.
 Metacat currently uses an LDAP database for authenticating users, but was
-written to accomodate other authentication services as well.
+written to accommodate other authentication services as well.
 
-Installation
-------------
+## Installation
 See the file "docs/install.html" for detailed instructions
 for your OS.
 
+## Release Notes
 
-Release Notes for 2.8.6:
+### Release Notes for 2.8.6:
 New features and bugs fixed in this release:
 * D1ResourceHandler.serializeException should not log all exceptions returned as errors.
 * Invalidly formatted dates in listObjects fromDate / toDate parameters do not result in InvalidRequest
@@ -70,23 +63,20 @@ New features and bugs fixed in this release:
 * Remove redundant alternate identifier form in register-dataset.cgi template
 
 
-Release Notes for 2.8.5:
-------------------------
+### Release Notes for 2.8.5:
 New bugs fixed in this release:
 *	Some DataONE service packages not being reported
 * Support for XSL transform of iso19115 metadata format
 
 
-Release Notes for 2.8.4:
-------------------------
+### Release Notes for 2.8.4:
 New bugs fixed in this release:
 * LDAP-based group authorization is failing
 * Display the dc:source field from DCX metadata documents in the stylesheet
 * MN.Delete should continue even though it can't find the local file
 
 
-Release Notes for 2.8.3:
-------------------------
+### Release Notes for 2.8.3:
 New bugs fixed in this release:
 * MNodeService.replicate() is failing
 * MN.publish method fails because of the mismatched checksum
@@ -95,8 +85,7 @@ New bugs fixed in this release:
 * MN.publish method can't generate a new ore document when the metadata is published
 
 
-Release Notes for 2.8.2:
-------------------------
+### Release Notes for 2.8.2:
 New bugs fixed in this release:
 * The listObjects method fails if there is pid with a white space in the list
 * EML SAX parser will not check if the user has the all permission on data objects (described by the eml object) when the parser is called by DataONE API
@@ -105,8 +94,7 @@ New bugs fixed in this release:
 * Metacat-index RDF/XML subprocessor not populating prov_hasDerivations field
 
 
-Release Notes for 2.8.1:
-------------------------
+### Release Notes for 2.8.1:
 New features and bugs fixed in this release:
 * Register schema files for the format id FGDC-STD-100.1-1999
 * ReIndexing a document lost some prov information in the new generated solr doc
@@ -122,8 +110,7 @@ New features and bugs fixed in this release:
 * Action reindexall should be asynchronized
 
 
-Release Notes for 2.8.0:
-------------------------
+### Release Notes for 2.8.0:
 New features and bugs fixed in this release:
 * Modify Metacat code according to the change of dataone library migrating from JibX to JAXB
 * Upgrade Solr to 3.6.2 to fix searching issues
@@ -131,12 +118,11 @@ New features and bugs fixed in this release:
 * Improve error message for: User tried to update an access module when they dont have ‘ALL’ permission!"
 
 
-Release Notes for 2.7.2:
-------------------------
+### Release Notes for 2.7.2:
 New features and bugs fixed in this release:
 * Legacy Metacat "shortcut" url does not work if revision is omitted
 * Migrate metacat build to use EML git repo
-* All links on the registry page should open up in a new tab 
+* All links on the registry page should open up in a new tab
 * Metadata/data objects which have obsoletedBy field ignore the resource map index
 * Metacat creates an Invalid Content-Disposition value for some filenames
 * External links in the registry should open in new tab
@@ -147,14 +133,12 @@ New features and bugs fixed in this release:
 * Disable the feature of downloading external schemas for unregistered namespaces
 * Metacat-index picks up the changes in log4j.properteis without restarting tomcat
 
-Release Notes for 2.7.1:
-------------------------
+### Release Notes for 2.7.1:
 * Fixed several bugs on the data registry form
 * Support the onedcx schema
   - Fixed several onedcx stylesheet issues
 
-Relese Notes for 2.7.0:
-------------------------
+### Release Notes for 2.7.0:
 * Use different format ids to identity variants of the schema with same namespace
 * Add EML 2.1.1 to Darwin Core supporting for OAI-PMH provider  
 * Bugs fixed include:
@@ -162,39 +146,33 @@ Relese Notes for 2.7.0:
   - The InputStream (parameter) in the CN/MN.create and MN.update method is not closed(7005)
   - Use the AutoCloseClientInputStream class in the d1_libclient_java in Metacat replication(7004)
 
-Release Notes for 2.6.0:
-------------------------
+### Release Notes for 2.6.0:
 This release supports token-based authentication in the data registry
 as well as:
 * MetacatUI 1.11.0
 
-Release Notes for 2.5.1:
-------------------------
+### Release Notes for 2.5.1:
 This a minor release that improves:
 * Authentication token handling for the DataONE API
 
-Release Notes for 2.5.0:
-------------------------
+### Release Notes for 2.5.0:
 This major release adds DataONE V2 API support
 as well as:
 * MetacatUI 1.8.1
 * Data registry bug fixes
 
-Release Notes for 2.4.3:
-------------------------
+### Release Notes for 2.4.3:
 This release includes:
 * Support for large file uploads
 * Recording User-Agent when logging requests
 
-Release Notes for 2.4.2:
-------------------------
+### Release Notes for 2.4.2:
 This release includes:
 * Updates to improve character encoding handling
 * Updated SOLR index and UI to use geohashes for map rendering
 * Note: this is the last release of Metacat that will support Java 6
 
-Release Notes for 2.4.1:
-------------------------
+### Release Notes for 2.4.1:
 This is a patch release that addresses the following:
 * Allows LDAP authentication using aliased referrals
 * Re-indexes previous document revisions in SOLR when
@@ -202,8 +180,7 @@ new revisions are added on update
 * Allows authentication in SANParks skin
 * Enables OpenLayer.js mapping plug-in over https
 
-Release Notes for 2.4.0:
-------------------------
+### Release Notes for 2.4.0:
 These release adds a new default file-based authentication mechanism
 that allows administrators to more easily deploy Metacat without a
 LDAP server.
@@ -214,69 +191,59 @@ Other enhancements include:
 * Indexing support document read/download events
 * Improved package download structure and file naming conventions
 
-Release Notes for 2.3.1:
-------------------------
+### Release Notes for 2.3.1:
 This is a minor patch release to fix an issue that arises when
 Metacat is operating as a DataONE Coordinating Node.
 * See: https://projects.ecoinformatics.org/ecoinfo/issues/6315
 * Updated MetacatUI with support for spatial query criteria
 * Updated account/identity management script
 
-Release Notes for 2.3.0:
-------------------------
-This release adds solr indexing features to metacat-index 
+### Release Notes for 2.3.0:
+This release adds solr indexing features to metacat-index
 for querying and sorting by authors and taxonomic coverage.
 Also includes:
 * Control over the log level from the SOLR libraries using Metacat's
 log4j file.
-* access_log DB indexes for better log reporting performance 
+* access_log DB indexes for better log reporting performance
 via the DataONE API
 * Provide 'reindexall' action instead of 'reindex' without a 'pid' parameter.
 
 
-Release Notes for 2.2.1:
-------------------------
+### Release Notes for 2.2.1:
 This is a critical patch release of Metacat that includes addresses
 a bug in file stream handling. It is recommended for all Metacat deployments.
 
-Release Notes for 2.2.0:
-------------------------
-This is a major release of Metacat that includes a new customizable UI and 
+### Release Notes for 2.2.0:
+This is a major release of Metacat that includes a new customizable UI and
 improved LDAP account management features
 
-Release Notes for 2.1.1:
-------------------------
+### Release Notes for 2.1.1:
 This is a minor patch release of Metacat that addresses
 a bug in DOI publishing.
 
-Release Notes for 2.1.0:
-------------------------
+### Release Notes for 2.1.0:
 This is a major release of Metacat that includes a SOLR-based search feature
 * Optional SOLR search index
 * Client certificate delegation (using a service provider like CILogon)
 
-Release Notes for 2.0.8:
-------------------------
+### Release Notes for 2.0.8:
 This is a patch release for Metacat
 * Enforce DataONE prohibition on whitespace in identifiers
 * Use unique filenames for Registry data uploads
 
-Release Notes for 2.0.7:
-------------------------
+### Release Notes for 2.0.7:
 This is a patch release for Metacat replication
 * Replication SQL performance enhancement
 * Comply with DataONE schema for SystemMetadata.submitter
 
-Release Notes for 2.0.6:
-------------------------
+### Release Notes for 2.0.6:
 This patch release focuses on Metacat support for DataONE-enabled Morpho clients
 * MN.generateIdentifier() support for UUID and DOI
 * DOI registration support using EZID service
 * Pathquery support for specifying multiple document owners
 
 
-Release Notes for 2.0.5:
-------------------------
+### Release Notes for 2.0.5:
 This patch release focuses on Metacat support for Oracle
 *SystemMetadata table names have been shortened to comply with Oracle limits.
 *SANParks/SAEON spatial zip file download fixed
@@ -284,39 +251,34 @@ This patch release focuses on Metacat support for Oracle
 *Hazelcast 2.x upgrade
 *Correct handling for deleted and archived objects for both Metacat and DataONE APIs
 
-Release Notes for 2.0.4:
-------------------------
+### Release Notes for 2.0.4:
 This patch release focuses on Metacat-Metacat replication.
 *Allows Metacat to stream replication update information between servers to avoid connection timeout issues
 *Allows Metacat replication when source host does not provide SystemMetadata (DataONE)
 *Fixes an access control issue that could allow search results to include protected documents
 
-Release Notes for 2.0.3:
-------------------------
+### Release Notes for 2.0.3:
 This is another critical patch release of Metacat 2.0.
 *Addresses a bug that prevented Metacat replication from completing (timeout error)
 *Uses more efficient SystemMetadata synchronization using shared Hazelcast map
 
-Release Notes for 2.0.2:
-------------------------
+### Release Notes for 2.0.2:
 This is a critical patch release of Metacat 2.0.
 *Addresses a bug that prevented updates to DataONE identified datapackages (e.g., using DOIs)
 *Addresses a bug that prevented the use of the Metacat API 'getaccesscontrol' action
 *Updates the Foresite ORE library to correctly serialize resource map documents
 
-Release Notes for 2.0.1:
-------------------------
+### Release Notes for 2.0.1:
 This is a minor patch release of Metacat 2.0. Please see the previous release notes for complete information.
 *Addresses an identifier issue during ORE generation for DataONE services
 *Increases compatibility with older EML content and the Xalan XSLT processor
 *Removes XSLT 2.0 support (Saxon)
 
-Release Notes for 2.0.0:
-------------------------
+### Release Notes for 2.0.0:
 This major release includes support for DataONE.
 *The DataONE v1.0.0 Member Node service APIs are now the preferred method for communicating with Metacat
 *The existing EcoGrid and Metacat Servlet APIs are deprecated but still available.
-*EML-embedded access control rules using permOrder="denyFirst" are no longer supported (https://redmine.dataone.org/issues/2614) 
+*EML-embedded access control rules using permOrder="denyFirst" are no longer supported (https://redmine.dataone.org/issues/2614)
 *Replication now utilizes client certificates to establish SSL connections between replication source and target servers
 *Access control rules now apply to objects on a per-revision basis rather than per-docid
 *Bugs fixed include:
@@ -328,28 +290,24 @@ This major release includes support for DataONE.
 -Character encoding of XML now respected (internationalization) (2495, 4083, 3815)
 
 
-Release Notes for 1.9.5:
-------------------------
+### Release Notes for 1.9.5:
 This release fixes those bugs:
 *Metacat could not download the included schemas in an external schema file during inserting.
-*Workflow scheduler could not work since the metadata standard of kepler kar file was changed. 
+*Workflow scheduler could not work since the metadata standard of kepler kar file was changed.
 *Earthgrid could not transform the Earthgrid query with concept "/" to the Metacat path query correctly.
 *Document access rules are now preserved when documents are archived during the 'delete' action.
 
-Release Notes for 1.9.4:
-------------------------
+### Release Notes for 1.9.4:
 This release fixes bugs in the FGDC data package upload and download interface utilized
 by the SANParks and SAEON skins.
 
-Release Notes for 1.9.3:
-------------------------
+### Release Notes for 1.9.3:
 This release fixes a harvester bug that prevented the EML harvester from processing
 harvest lists.
 The Kepler skin has been updated to support KarXML 2.1.
 Ecogrid query services now support multiple namespace searches.
 
-Release Notes for 1.9.2:
-------------------------
+### Release Notes for 1.9.2:
 This release primarily holds the addition of the Threshold of Potential
 Concern workflow functionality (TPC).  The following issues were addressed:
 
@@ -380,35 +338,33 @@ Concern workflow functionality (TPC).  The following issues were addressed:
 * Handle writing a text node > 4000 characters to the db. (Bug 4708)
 * Metacat should run against Tomcat 6 (Bug 4716)
 
-Release Notes for 1.9.1:
-------------------------
+### Release Notes for 1.9.1:
 The 1.9.1 release holds the bug fixes found after releasing 1.9.0 beta.  
-These bugs were primarily replication issues.  There is no difference 
-in functionality between 1.9.0 and 1.9.1 
+These bugs were primarily replication issues.  There is no difference
+in functionality between 1.9.0 and 1.9.1
 
-Release Notes for 1.9.0:
-------------------------
-This release focuses on simplifying the Metacat installation process by 
+### Release Notes for 1.9.0:
+This release focuses on simplifying the Metacat installation process by
 creating a binary (war) installation.  The need to build the application
 on the server has been removed (although the option is still available).
 In order to facilitate this method of installation, a few major modifications
 were made to the code:
 
-  -- Ant token replacement was removed for all non-build variables in the 
+  -- Ant token replacement was removed for all non-build variables in the
      application (most of this was already done in 1.8.1).
 
   -- The Metacat properties confguration was moved into the application
      itself.
 
-  -- Database schema version detection and install/upgrade utilities were 
+  -- Database schema version detection and install/upgrade utilities were
      added to the application.
 
 Also, this release includes several enhancements:
   -- it supports the new EML 2.1.0 version.  
 
-  -- Documents are now stored on the local filesystem as well as in the 
+  -- Documents are now stored on the local filesystem as well as in the
      database in order to preserve document integrity.
-     
+
   -- Metacat verifies new schemas when they are added.
 
   -- Additional access is propegated with documents during replication.
@@ -447,20 +403,19 @@ The enhancements/bugs addressed are:
 * Allow for different authentication services in metacat configuration (Bug 3680)
 * Tag utilities module and have metacat check out that tag (Bug 3685)
 
-Release Notes for 1.8.1:
-------------------------
-This release focuses on bug fixes. In this release, the problem that Metacat 1.8.0 and previous 
+### Release Notes for 1.8.1:
+This release focuses on bug fixes. In this release, the problem that Metacat 1.8.0 and previous
 versions use illegitimate EML 2.0.1 schemas is addressed: first, Metacat 1.8.1 comes with
-legitimate EML 2.0.1 schemas; second, existing invalid EML 2.0.1 documents will be 
-automatically fixed while maintaining their package ID during the Metacat 1.8.1 upgrading process. 
+legitimate EML 2.0.1 schemas; second, existing invalid EML 2.0.1 documents will be
+automatically fixed while maintaining their package ID during the Metacat 1.8.1 upgrading process.
 Details please see:
 http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3239
 http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3241
 
-Note: after upgrading the Metacat to version 1.8.1, some replication issues may be seen, e.g., the 
+Note: after upgrading the Metacat to version 1.8.1, some replication issues may be seen, e.g., the
 EML 2.0.1 documents from Metacat 1.8.0 or ealier verions may be rejected since Metacat 1.8.1 uses
 different EML 2.0.1 schemas (see bug 3239). If this is case, Metacat administrators should notify
-their counterparts to upgrade previous version Metacats to 1.8.1. 
+their counterparts to upgrade previous version Metacats to 1.8.1.
 
 The fixed bugs include:
 
@@ -487,22 +442,21 @@ The fixed bugs include:
 *Inline Data does not work correctly without the <pre> tag (Bug 3088)
 *Include FGDC metadata in KNB and NCEAS skin search results (Bug 3146)
 
-Release Notes for 1.8.0:
-------------------------
-This release focuses on improving query performance.  Both the selection 
+### Release Notes for 1.8.0:
+This release focuses on improving query performance.  Both the selection
 and access control queries were rewritten to execute efficiently.
-To improve search performance, a query caching mechanism was introduced. 
+To improve search performance, a query caching mechanism was introduced.
 Cached queries are currently supported only for public users.
 
 New Features:
-* Data registries now support uploading of data objects along with data 
+* Data registries now support uploading of data objects along with data
   packages (Bug 1982)
-  
+
 Bug Fixes:
 * Metacat Performace: Rewrite the xml_nodes queries (Bug 2155)
 * Metacat Performace: Rewrite the xml_access part of the query (Bug 2557)
 * Query cache mechanism (Bug 2905)
-* Metacat Performance: updates from Morpho of data packages are taking 
+* Metacat Performance: updates from Morpho of data packages are taking
    longer than five minutes (Bug 2805)
 * Metacat Performance: Optimize Postgres and Tomcat (Bug 2157)
 * Metacat Performace: Upgrading hardware setup (Bug 2175)
@@ -512,21 +466,20 @@ Bug Fixes:
 * I.E. display fixes on default skin (Bug 2579)
 * Web Address links fixed (Bug 2147)
 * NCEAS skin redesigned to use IFRAME-less layout, match new website.
-* Spatial query:  data packages must be fully contained by the selection 
+* Spatial query:  data packages must be fully contained by the selection
   bounding box in order to appear in the search results (Bugs 2972, 2732).
 * FGDC support: upload, delete, update, access control, and download
   (Bugs 2807, 2925, 2926, 2929, 2030).
 Compatibility Notices:
-* Tomcat 3 and 4 are no longer tested or supported. Users are 
+* Tomcat 3 and 4 are no longer tested or supported. Users are
   highly encouraged to upgrade to Tomcat 5.5
 
-Release Notes for 1.7.0:
-------------------------
-This release features only a few minor changes to the core Metacat engine. 
+### Release Notes for 1.7.0:
+This release features only a few minor changes to the core Metacat engine.
 The major focus of this release is the addition of the spatial functionality.
 The geographic coverage of metadata documents can now be cached in a GIS-
 accessible format and published via web mapping services and an online
-interactive map. 
+interactive map.
 
 New Features:
 * Three new open source libraries have been integrated with Metacat:
@@ -541,46 +494,45 @@ New Features:
                 (http://docs.codehaus.org/display/MAP/Home)
 * Spatial Caching/Indexing mechanism; documents with geographic
   coverages will be added to the spatial cache.
-* Spatial Query action in metacat servlet. 
-* Interactive Web map to visualize and query the spatial 
+* Spatial Query action in metacat servlet.
+* Interactive Web map to visualize and query the spatial
   distribution of metadata documents.
 * Experimental python, ruby and php client libraries to interface with metacat.
 * Preliminary process in place for web based configuration of metacat.
 
 Compatibility Notices:
-* Tomcat 3 and 4 are no longer tested or supported. Users are 
+* Tomcat 3 and 4 are no longer tested or supported. Users are
   highly encouraged to upgrade to Tomcat 5.5
 
 Bug Fixes:
-* Metacat administrators are able to modify and delete documents 
+* Metacat administrators are able to modify and delete documents
   created by other users.
 * Fixed problems with indexing XML attributes, see bug 2469
 
 
-Release Notes for 1.6.0:
-------------------------
+### Release Notes for 1.6.0:
 
-This release comes with more performance improvements, initial support for 
-LSIDs (Life Sciences Identifiers) and FGDC standard, more controls for 
+This release comes with more performance improvements, initial support for
+LSIDs (Life Sciences Identifiers) and FGDC standard, more controls for
 Metacat administrators and bug fixes. Below is the list of bug fixes and
 performance improvements.
 
-Bug Fixes: 
-* Improved the indexing algorithm. Earlier indexing failed for some documents 
-  randomly and used to take a lot of time to complete for others. The 
+Bug Fixes:
+* Improved the indexing algorithm. Earlier indexing failed for some documents
+  randomly and used to take a lot of time to complete for others. The
   code for indexing was changed to take care of both these problems.
-* Earlier, xmlns prefix was used to determine the namespace of the document. 
-  Now schemaLocation is used instead xmlns prefix to determine the namespace 
-  of the document as that is a better indicator of document type. 
-* INSTR was used in some SQL statements and it is not supported by Postgres. 
+* Earlier, xmlns prefix was used to determine the namespace of the document.
+  Now schemaLocation is used instead xmlns prefix to determine the namespace
+  of the document as that is a better indicator of document type.
+* INSTR was used in some SQL statements and it is not supported by Postgres.
   So SQL statements were modified so that INSTR is not used.
 * Replication was changed to include replication of deleted documents also.
-* Fixed bug in squery which didnt allow use of not-contains 
+* Fixed bug in squery which didnt allow use of not-contains
 
 New Features:
 * Added FGDC schema and XSLT so that Metacat can handle FGDC standard
-* Added support for LSID. This includes modifying the stylesheets to 
-  display the LSIDs, modifying the build to include a new target 
+* Added support for LSID. This includes modifying the stylesheets to
+  display the LSIDs, modifying the build to include a new target
   'install-ldap'.
 * Added following access control levels to Metacat:
     1. Administrators - users who can do the following:
@@ -591,24 +543,23 @@ New Features:
        e. check the logs
     2. allowedUsers - User who are allowed to submit
     3. deniedUsers - Users not allowed to submit
-* Added a new skin for Ecological Society of America. 
-* Created an Advanced search servlet which can be used from the web. 
-* Various connections have been modified to be secure. e.g. connection between 
+* Added a new skin for Ecological Society of America.
+* Created an Advanced search servlet which can be used from the web.
+* Various connections have been modified to be secure. e.g. connection between
 ldaps is made secure now, replication is done over secure channels.  
 
 Performance:
-* Reduced size of xml_nodes by creating a new table for holding nodes from 
-  deleted documents and old revisions of the documents. 
-* Provided a new variable in metacat.properties where more frequently searched 
-  for paths can be specified. Seperate indexes are created for these paths 
+* Reduced size of xml_nodes by creating a new table for holding nodes from
+  deleted documents and old revisions of the documents.
+* Provided a new variable in metacat.properties where more frequently searched
+  for paths can be specified. Seperate indexes are created for these paths
   - so that search is faster.
-* Included log4j for logging and debuging to prevent wasting of time in printing log statements. 
+* Included log4j for logging and debuging to prevent wasting of time in printing log statements.
 
-Release Notes for 1.5.0:
-------------------------
+### Release Notes for 1.5.0:
 
 This release comes with performace improvement, user interface enhancements,
-and bug fixes. Below is the list of bug fixes and performance improvements. 
+and bug fixes. Below is the list of bug fixes and performance improvements.
 
 Bug Fixes:
 * Modify property values of harvester registration servlets to match the
@@ -648,14 +599,14 @@ Bug Fixes:
   an eml201 document was inserted. This is fixed now so that "packagetype"
   in xml-relation table points to eml201 namespace. (Bug 1979)
 * System_id in xml_catalog pointed to http://knb.ecoinformatics.org/knb/
-  earlier. Fixed such that it points to the locally installed metacat url. 
+  earlier. Fixed such that it points to the locally installed metacat url.
   (Bug 1986)
-* Changes to the Query subsystem fix bugs that prevented attributes from 
-  being expressed solely in the xpath query statement and the returnfield 
-  values. For instance, a query URL may now include search strings like 
+* Changes to the Query subsystem fix bugs that prevented attributes from
+  being expressed solely in the xpath query statement and the returnfield
+  values. For instance, a query URL may now include search strings like
   '@packageId=sbclter%25' and return strings like 'returnfield=@packageId'.
-  Previously, the attribute had to be appended to an element: 
-  '/eml/@packageId=sbclter%25'. These fixes change DBQuery.java, 
+  Previously, the attribute had to be appended to an element:
+  '/eml/@packageId=sbclter%25'. These fixes change DBQuery.java,
   QuerySpecification.java, and QueryTerm.java (Bug 2052)
 * Search query failed in case of Oracle if number of documents in the result
   were more than 1000. This has been fixed. (Bug 2000)
@@ -678,7 +629,7 @@ Enhancements:
      3a) Use xml_index and xml_nodes table to generate the string descibing
          the document including the returnfields requested in the search
   4) Add all the strings from step 3a to send back the resultant
-     document. Here a decent amount of time was being taken by step 3a. 
+     document. Here a decent amount of time was being taken by step 3a.
   The algorithm is now modified by addition of two tables xml_queryresult and
   xml_returnfields and a user defined parameter xml_returnfield_count. The
   new algorithm works as follows:
@@ -733,8 +684,7 @@ Details of all changes can be found in the bug database here:
 http://bugzilla.ecoinformatics.org/buglist.cgi?product=Metacat&target_milestone=1.5
 
 
-Release Notes for 1.4.0:
-------------------------
+### Release Notes for 1.4.0:
 
 This is a major release, and is the first to introduce many new features to
 Metacat.  Some of the major new features in this version of Metacat include:
@@ -746,14 +696,14 @@ Metacat.  Some of the major new features in this version of Metacat include:
   to be more easily customized to fit into site needs.  The skin is based on
   a flexible mix of XSLT, CSS, and Javascript.
 * Added a web-based metadata entry form for submitting limited EML documents
-  as part of a data registry.  The GUI for the registry is customizable and 
+  as part of a data registry.  The GUI for the registry is customizable and
   is integrated with the 'skins' system for the main metacat interface.  The
-  registry subsystem is written in Perl, and can simultaneously be used to 
+  registry subsystem is written in Perl, and can simultaneously be used to
   present multiple 'registry' interfaces.
-* A new 'client API' has been developed and implemented in Java and in Perl 
+* A new 'client API' has been developed and implemented in Java and in Perl
   so that metacat functions can be accessed from any program in those
   languages.  The client API supports the major metacat servlet actions,
-  including login(), logout(), query(), insert(), update(), delete(), and 
+  including login(), logout(), query(), insert(), update(), delete(), and
   upload(). See the Metacat Tour for details.
 * Added a new 'getlog' action that produces a usage history for all major
   events.  So now an XML report can be generated for document reads, inserts,
@@ -763,30 +713,28 @@ Metacat.  Some of the major new features in this version of Metacat include:
 * The configuration file for metacat (metacat.properties) has been moved out
   of the jar file and into the WEB-INF directory, allowing far easier changes
   to the configuration parameters.
-* Results in default web interface are sorted by title in the XSLT 
+* Results in default web interface are sorted by title in the XSLT
   (configurable)
 * Many bugs were fixed.
 
 Details of all changes can be found in the bug database here:
 http://bugzilla.ecoinformatics.org/buglist.cgi?product=Metacat&target_milestone=1.4
 
-Release Notes for 1.3.1:
-------------------------
+### Release Notes for 1.3.1:
 
-This is a simple interim bug fix. No major functionality changes. Bugs fixed 
+This is a simple interim bug fix. No major functionality changes. Bugs fixed
 include:
- 1) Metacat 1.3.0 doesn't work in Java 1.3 because a subtle API differnce in 
-    Java 1.3 and Java 1.4. Currently, Metacat 1.3.1 will work in both Java 1.3 
+ 1) Metacat 1.3.0 doesn't work in Java 1.3 because a subtle API differnce in
+    Java 1.3 and Java 1.4. Currently, Metacat 1.3.1 will work in both Java 1.3
     and Java 1.4.
  2) Distribution package size was reduced.
 
 
-Release Notes for 1.3.0
-------------------------
+### Release Notes for 1.3.0
 
 In 1.3.0 release, the structure of the xml_access table was changed and a new
-table, xml_accesssubtree was added. If you try to update a previously 
-installed Metacat, you should run a script file to updated the table structure 
+table, xml_accesssubtree was added. If you try to update a previously
+installed Metacat, you should run a script file to updated the table structure
 before installation.
 For Oracle user: At the SQLPLUS prompt type the following -
 @src/reviseformetacat13.sql
@@ -799,9 +747,9 @@ schema in xml_catalog table.
 
 If you are a new Metacat user, this step is unneeded.
 
-Note: 1) We recommend to use Tomcat 4 and JAVA 1.4 to run Metacat. Otherwise, 
+Note: 1) We recommend to use Tomcat 4 and JAVA 1.4 to run Metacat. Otherwise,
          it will cause potential replication issues.
-      2) Delete the xercesImpl.jar and xmlParserAPIs.jar files 
+      2) Delete the xercesImpl.jar and xmlParserAPIs.jar files
          which are in $CATALINA_HOME/common/endorsed. They are old version and
          don't support XML schema validation.
 
@@ -812,7 +760,7 @@ New Features in 1.3.0
   2) Support other xml document base on namespace/schema.
   3) Support query for attribute value
   4) Assign MIME type to data file base on metadata when user try to read it.
-  5) Owner can assign access rules to a document which does not have access 
+  5) Owner can assign access rules to a document which does not have access
      document to apply it.
   6) Support exporting single file, not only whole package
   7) Resupport Microsoft SQL Server.
@@ -822,11 +770,10 @@ Fixes in 1.3.0:
   2) Couldn't create access control during delta T replication.
   3) Eorr will be written to a seperated log file if some documents
      were failed in replication.
-  4) Decrease the time to create access rules during insert or update 
+  4) Decrease the time to create access rules during insert or update
      a package.
-     
-Documentation
--------------
+
+## Documentation
 See the docs directory for detailed documentation and installation
 instructions.
 
@@ -838,15 +785,13 @@ the Knowledge Network for Biocomplexity (KNB):
 Contributions to this work are welcome.  Please see the above web site
 for details on how to contribute.
 
-Major Known Bugs or Feature Requests (see http://bugzilla.ecoinformatics.org)
------------------------------------------------------------------------------
+## Major Known Bugs or Feature Requests (see http://bugzilla.ecoinformatics.org)
 If you discover a bug please report it, either by email (above) or by using
 our bug tracking system (http://bugzilla.ecoinformatics.org). There is a
 list of currently unimplemented features in Bugzilla that we are working on
 for the next release.
 
-Legalese
---------
+## Legalese
 This software is copyrighted by The Regents of the University of California
 and the National Center for Ecological Analysis and Synthesis
 and licensed under the GNU GPL; see the 'LICENSE' file for
@@ -854,11 +799,11 @@ details.
 
 This material is based upon work supported by the
 National Science Foundation under Grant No. DEB99-80154, DBI99-04777, and
-0225676 for SEEK.  Any opinions, findings and conclusions or recomendations 
-expressed in this material are those of the author(s) and do not necessarily 
+0225676 for SEEK.  Any opinions, findings and conclusions or recomendations
+expressed in this material are those of the author(s) and do not necessarily
 reflect the views of the National Science Foundation (NSF).
 
-This software is partially supported by a grant from the Andrew W. 
+This software is partially supported by a grant from the Andrew W.
 Mellon Foundation.
 
 This product includes software developed by the Apache Software
@@ -870,5 +815,5 @@ package is copyright and owned by Jason Hunter. See the cos-license.html file
 for details of the license.  Licensor retains title to and ownership of the
 Software and all enhancements, modifications, and updates to the Software.
 
-This software includes the JDBC driver for PostgreSQL.  See the 
+This software includes the JDBC driver for PostgreSQL.  See the
 postgresql-license.txt file for details.
