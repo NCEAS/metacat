@@ -78,10 +78,10 @@ as well as various classes of corrupt or bad data.  All tests should pass before
 a `DEV` branch is merged to master, and all tests should pass before the `master`
 branch is merged to `releases` and tagged for a release.
 
-**Continuous integration**. Metacat is build upon every commit through the Jenkins
+**Continuous integration**. Metacat is built upon every commit through the Jenkins
 system for [continuous integration at DataONE](https://purl.dataone.org/integration).  
-Both the `releases` and `master` branch are built
-and tested, and the current development branch is built as well.
+Both the `releases` and `master` branch are built and tested, and the current 
+development branch is built as well.
 
 ## Code style
 
@@ -95,8 +95,8 @@ does not follow the conventions, strive to reformat that code module in a single
 isolated code commit before starting other code changes.
 
 **Javadoc**. All Java code should be fully documented with JavaDoc comments.  Special
-attention should be paid to documentation of the public API for classes.  documentation
-should strive to explain both what the code does, but also why it does it in a particular
+attention should be paid to documentation of the public API for classes.  Documentation
+should explain both what the code does, but also why it does it in a particular
 way when appropriate.  Class and method documentation should be written to provide
 sufficient context for people that are not intimately familiar with the rest of the code.
 Class-level documentation often is strengthened through explaining the role of the
