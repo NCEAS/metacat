@@ -245,57 +245,57 @@ This patch release focuses on Metacat support for DataONE-enabled Morpho clients
 
 ### Release Notes for 2.0.5:
 This patch release focuses on Metacat support for Oracle
-*SystemMetadata table names have been shortened to comply with Oracle limits.
-*SANParks/SAEON spatial zip file download fixed
-*Pathquery performance fix
-*Hazelcast 2.x upgrade
-*Correct handling for deleted and archived objects for both Metacat and DataONE APIs
+* SystemMetadata table names have been shortened to comply with Oracle limits.
+* SANParks/SAEON spatial zip file download fixed
+* Pathquery performance fix
+* Hazelcast 2.x upgrade
+* Correct handling for deleted and archived objects for both Metacat and DataONE APIs
 
 ### Release Notes for 2.0.4:
 This patch release focuses on Metacat-Metacat replication.
-*Allows Metacat to stream replication update information between servers to avoid connection timeout issues
-*Allows Metacat replication when source host does not provide SystemMetadata (DataONE)
-*Fixes an access control issue that could allow search results to include protected documents
+* Allows Metacat to stream replication update information between servers to avoid connection timeout issues
+* Allows Metacat replication when source host does not provide SystemMetadata (DataONE)
+* Fixes an access control issue that could allow search results to include protected documents
 
 ### Release Notes for 2.0.3:
 This is another critical patch release of Metacat 2.0.
-*Addresses a bug that prevented Metacat replication from completing (timeout error)
-*Uses more efficient SystemMetadata synchronization using shared Hazelcast map
+* Addresses a bug that prevented Metacat replication from completing (timeout error)
+* Uses more efficient SystemMetadata synchronization using shared Hazelcast map
 
 ### Release Notes for 2.0.2:
 This is a critical patch release of Metacat 2.0.
-*Addresses a bug that prevented updates to DataONE identified datapackages (e.g., using DOIs)
-*Addresses a bug that prevented the use of the Metacat API 'getaccesscontrol' action
-*Updates the Foresite ORE library to correctly serialize resource map documents
+* Addresses a bug that prevented updates to DataONE identified datapackages (e.g., using DOIs)
+* Addresses a bug that prevented the use of the Metacat API 'getaccesscontrol' action
+* Updates the Foresite ORE library to correctly serialize resource map documents
 
 ### Release Notes for 2.0.1:
 This is a minor patch release of Metacat 2.0. Please see the previous release notes for complete information.
-*Addresses an identifier issue during ORE generation for DataONE services
-*Increases compatibility with older EML content and the Xalan XSLT processor
-*Removes XSLT 2.0 support (Saxon)
+* Addresses an identifier issue during ORE generation for DataONE services
+* Increases compatibility with older EML content and the Xalan XSLT processor
+* Removes XSLT 2.0 support (Saxon)
 
 ### Release Notes for 2.0.0:
 This major release includes support for DataONE.
-*The DataONE v1.0.0 Member Node service APIs are now the preferred method for communicating with Metacat
-*The existing EcoGrid and Metacat Servlet APIs are deprecated but still available.
-*EML-embedded access control rules using permOrder="denyFirst" are no longer supported (https://redmine.dataone.org/issues/2614)
-*Replication now utilizes client certificates to establish SSL connections between replication source and target servers
-*Access control rules now apply to objects on a per-revision basis rather than per-docid
-*Bugs fixed include:
--SANParks skin/TPC (5561, 5530, 5533, 5542, 5543, 5544, 5551, 5563, 5566, 5567, 5569, 5353)
--Registry (5114, 5244)
--Replication (4907, 5537, 5536, 5534, 5520, 5519, 3296)
--Spatial cache regeneration can be skipped during reconfiguration/redeployment/upgrade (3811)
--Pathquery support for temporal search criteria (2084)
--Character encoding of XML now respected (internationalization) (2495, 4083, 3815)
+* The DataONE v1.0.0 Member Node service APIs are now the preferred method for communicating with Metacat
+* The existing EcoGrid and Metacat Servlet APIs are deprecated but still available.
+* EML-embedded access control rules using permOrder="denyFirst" are no longer supported (https://redmine.dataone.org/issues/2614)
+* Replication now utilizes client certificates to establish SSL connections between replication source and target servers
+* Access control rules now apply to objects on a per-revision basis rather than per-docid
+* Bugs fixed include:
+    - SANParks skin/TPC (5561, 5530, 5533, 5542, 5543, 5544, 5551, 5563, 5566, 5567, 5569, 5353)
+    - Registry (5114, 5244)
+    - Replication (4907, 5537, 5536, 5534, 5520, 5519, 3296)
+    - Spatial cache regeneration can be skipped during reconfiguration/redeployment/upgrade (3811)
+    - Pathquery support for temporal search criteria (2084)
+    - Character encoding of XML now respected (internationalization) (2495, 4083, 3815)
 
 
 ### Release Notes for 1.9.5:
 This release fixes those bugs:
-*Metacat could not download the included schemas in an external schema file during inserting.
-*Workflow scheduler could not work since the metadata standard of kepler kar file was changed.
-*Earthgrid could not transform the Earthgrid query with concept "/" to the Metacat path query correctly.
-*Document access rules are now preserved when documents are archived during the 'delete' action.
+* Metacat could not download the included schemas in an external schema file during inserting.
+* Workflow scheduler could not work since the metadata standard of kepler kar file was changed.
+* Earthgrid could not transform the Earthgrid query with concept "/" to the Metacat path query correctly.
+* Document access rules are now preserved when documents are archived during the 'delete' action.
 
 ### Release Notes for 1.9.4:
 This release fixes bugs in the FGDC data package upload and download interface utilized
@@ -304,8 +304,8 @@ by the SANParks and SAEON skins.
 ### Release Notes for 1.9.3:
 This release fixes a harvester bug that prevented the EML harvester from processing
 harvest lists.
-The Kepler skin has been updated to support KarXML 2.1.
-Ecogrid query services now support multiple namespace searches.
+- The Kepler skin has been updated to support KarXML 2.1.
+- Ecogrid query services now support multiple namespace searches.
 
 ### Release Notes for 1.9.2:
 This release primarily holds the addition of the Threshold of Potential
@@ -350,24 +350,15 @@ on the server has been removed (although the option is still available).
 In order to facilitate this method of installation, a few major modifications
 were made to the code:
 
-  -- Ant token replacement was removed for all non-build variables in the
-     application (most of this was already done in 1.8.1).
-
-  -- The Metacat properties confguration was moved into the application
-     itself.
-
-  -- Database schema version detection and install/upgrade utilities were
-     added to the application.
+- Ant token replacement was removed for all non-build variables in the application (most of this was already done in 1.8.1).
+- The Metacat properties confguration was moved into the application itself.
+- Database schema version detection and install/upgrade utilities were added to the application.
 
 Also, this release includes several enhancements:
-  -- it supports the new EML 2.1.0 version.  
-
-  -- Documents are now stored on the local filesystem as well as in the
-     database in order to preserve document integrity.
-
-  -- Metacat verifies new schemas when they are added.
-
-  -- Additional access is propegated with documents during replication.
+- it supports the new EML 2.1.0 version.  
+- Documents are now stored on the local filesystem as well as in the database in order to preserve document integrity.
+- Metacat verifies new schemas when they are added.
+- Additional access is propegated with documents during replication.
 
 High priority bugs were addressed in this release as well.
 
@@ -409,8 +400,8 @@ versions use illegitimate EML 2.0.1 schemas is addressed: first, Metacat 1.8.1 c
 legitimate EML 2.0.1 schemas; second, existing invalid EML 2.0.1 documents will be
 automatically fixed while maintaining their package ID during the Metacat 1.8.1 upgrading process.
 Details please see:
-http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3239
-http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3241
+- http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3239
+- http://bugzilla.ecoinformatics.org/show_bug.cgi?id=3241
 
 Note: after upgrading the Metacat to version 1.8.1, some replication issues may be seen, e.g., the
 EML 2.0.1 documents from Metacat 1.8.0 or ealier verions may be rejected since Metacat 1.8.1 uses
@@ -419,28 +410,28 @@ their counterparts to upgrade previous version Metacats to 1.8.1.
 
 The fixed bugs include:
 
-*Character set (charset) problem when filling out form (Bug2797)
-*Charset bug: > "less than" symbol does not display correctly (Bug2517)
-*Metacat performance issue in Sanparks skin (Bug 3174)
-*Metacat using illegitimate versions of EML schema (Bug 3239)
-*Update older invalidated eml201 document in Metacat (Bug 3241)
-*Verify existing token changes to skins (Bug 3176)
-*The edit feature in the NCEAS Data Repoistory does not work (Bug 2644)
-*Expose permission options for registry uploads (Bug 3014)
-*ESA registry doesn't have LTER in login dropdown menu (Bug 2647)
-*Data Catalog Map is slow when selecting (Bug2732)
-*Only one attribute per element returned with pathquery results(Bug 2999)
-*The field "skinconfigs" in the MetacatUtil class is public (Bug 3057)
-*Generalize the reading of skin.configs in DBTransform (Bug3058)
-*The query example in metacatquery.html document need to be changed (Bug3137)
-*Add upload method into Metacat tour (Bug 3139)
-*Query resultset doesn't show component name in kepler skin (Bug 3178)
-*Add fields used in Morpho search to the default indexPaths property (Bug 3259)
-*Private data cannot be downloaded from metadata display page (xsl) (Bug 3263)
-*An error message happen during the metacat start up (Bug 3279)
-*Replication: Timed replication failures occur twice instead of once (Bug 3304)
-*Inline Data does not work correctly without the <pre> tag (Bug 3088)
-*Include FGDC metadata in KNB and NCEAS skin search results (Bug 3146)
+* Character set (charset) problem when filling out form (Bug2797)
+* Charset bug: > "less than" symbol does not display correctly (Bug2517)
+* Metacat performance issue in Sanparks skin (Bug 3174)
+* Metacat using illegitimate versions of EML schema (Bug 3239)
+* Update older invalidated eml201 document in Metacat (Bug 3241)
+* Verify existing token changes to skins (Bug 3176)
+* The edit feature in the NCEAS Data Repoistory does not work (Bug 2644)
+* Expose permission options for registry uploads (Bug 3014)
+* ESA registry doesn't have LTER in login dropdown menu (Bug 2647)
+* Data Catalog Map is slow when selecting (Bug2732)
+* Only one attribute per element returned with pathquery results(Bug 2999)
+* The field "skinconfigs" in the MetacatUtil class is public (Bug 3057)
+* Generalize the reading of skin.configs in DBTransform (Bug3058)
+* The query example in metacatquery.html document need to be changed (Bug3137)
+* Add upload method into Metacat tour (Bug 3139)
+* Query resultset doesn't show component name in kepler skin (Bug 3178)
+* Add fields used in Morpho search to the default indexPaths property (Bug 3259)
+* Private data cannot be downloaded from metadata display page (xsl) (Bug 3263)
+* An error message happen during the metacat start up (Bug 3279)
+* Replication: Timed replication failures occur twice instead of once (Bug 3304)
+* Inline Data does not work correctly without the `pre` tag (Bug 3088)
+* Include FGDC metadata in KNB and NCEAS skin search results (Bug 3146)
 
 ### Release Notes for 1.8.0:
 This release focuses on improving query performance.  Both the selection
@@ -457,7 +448,7 @@ Bug Fixes:
 * Metacat Performace: Rewrite the xml_access part of the query (Bug 2557)
 * Query cache mechanism (Bug 2905)
 * Metacat Performance: updates from Morpho of data packages are taking
-   longer than five minutes (Bug 2805)
+  longer than five minutes (Bug 2805)
 * Metacat Performance: Optimize Postgres and Tomcat (Bug 2157)
 * Metacat Performace: Upgrading hardware setup (Bug 2175)
 * Metacat Performace: Add/drop indices on key columns (Bug 2153)
@@ -553,7 +544,7 @@ Performance:
   deleted documents and old revisions of the documents.
 * Provided a new variable in metacat.properties where more frequently searched
   for paths can be specified. Seperate indexes are created for these paths
-  - so that search is faster.
+  so that search is faster.
 * Included log4j for logging and debuging to prevent wasting of time in printing log statements.
 
 ### Release Notes for 1.5.0:
@@ -577,8 +568,8 @@ Bug Fixes:
   request from search results page,  the successful delete button leading
   to a blank screen and the old ACL overwritten by the registry.
   (Bugs 1307, 1310, 1322, 1344, 1551)
-* Changed the code to support insertion of following characters: ', `,
-  charcters in the Numeric Character Reference format (&#xyz;) and
+* Changed the code to support insertion of following characters: single quote, backtick,
+  characters in the Numeric Character Reference format (&#xyz;) and
   characters like µ. Characters like µ will be converted to and stored in
   Numeric Character Reference format(&#xyz;). They will also be returned
   in Numeric Character Reference and it is upto the client to convert them
@@ -618,42 +609,34 @@ Enhancements:
   various other skins. Improvements done based on suggestions from Mark
   Stromberg, Laura Downey and others. Improvements also done in resultset.xsl,
   the default skin and ldap templates. (Bug 1948)
-* Coded added such that administrator can delete documents irrespective of
+* Code added such that administrator can delete documents irrespective of
   who the document belongs to.
-* Performance impovement done in searching of datasets. A part of the search
+* Performance improvement done in searching of datasets. A part of the search
   time was taken up because of generation of resultset after the search had be
   done. So this was the sequence of events in earlier metacat
-  1) Search for the given text
-  2) A list of docids generated
-  3) For each of the docids
-     3a) Use xml_index and xml_nodes table to generate the string descibing
-         the document including the returnfields requested in the search
-  4) Add all the strings from step 3a to send back the resultant
+  1. Search for the given text
+  2. A list of docids generated
+  3. For each of the docids
+     3a) Use xml_index and xml_nodes table to generate the string describing the document including the returnfields requested in the search
+  4. Add all the strings from step 3a to send back the resultant
      document. Here a decent amount of time was being taken by step 3a.
   The algorithm is now modified by addition of two tables xml_queryresult and
   xml_returnfields and a user defined parameter xml_returnfield_count. The
   new algorithm works as follows:
-  1) Search for the given text
-  2) A list of docids is generated
-  3) For the given set of return fields generate a unique string and check
+  1. Search for the given text
+  2. A list of docids is generated
+  3. For the given set of return fields generate a unique string and check
      if that string exists in xml_returnfields
-     3a) If string does not exist in xml_returnfield, then enter a new
-         record usage_count as 1 and returnfield_string as the unique string
-         generated above.
+     3a) If string does not exist in xml_returnfield, then enter a new record usage_count as 1 and returnfield_string as the unique string generated above.
      3b) Else if the string exists, increment usage_count
-  4) Given the docids from step 2 and the id of the returnfield record from
+  4. Given the docids from step 2 and the id of the returnfield record from
      step 3, query for any docids that already exist in xml_queryresult.
      For the docids that do exist, get the queryresult_string.
-  5) For rest of the docids from step2 which were not found in step 4, do
+  5. For rest of the docids from step2 which were not found in step 4, do
      the following for each of the documents:
-     5a) Use xml_index and xml_nodes table to generate the string descibing
-         the document including the returnfields requested in the search
-     5b) If usage_count of the record from step is more than
-         xml_returnfield_count set in metacat.properties, then store the
-         string in xml_queryresult as a record which has the returnfield_id
-         representing the set of returnfields, docid representing the
-         document and the string as queryresult_string.
-  6) Add all the strings from step 4 and step 5a to send back the resultant
+     5a) Use xml_index and xml_nodes table to generate the string descibing the document including the returnfields requested in the search
+     5b) If usage_count of the record from step is more than xml_returnfield_count set in metacat.properties, then store the string in xml_queryresult as a record which has the returnfield_id representing the set of returnfields, docid representing the document and the string as queryresult_string.
+  6. Add all the strings from step 4 and step 5a to send back the resultant
      document
   So the results from step 3a in previous algorithm are effectively cached
   and hence same computation is not done again and again for each search.
@@ -662,7 +645,7 @@ Enhancements:
   the entries for that document in xml_queryresult table are deleted. This
   works fine because those entries will be generated and cached again the
   next time the document is part of a search is requested.
-* Performance impovement done for % search.
+* Performance improvement done for % search.
 * Following new functions added to metacat client API: a method to set access
   on an xml document and a method to get newest version for a given document.
 * Implement a new HarvesterServlet for running Harvester as a servlet. This
@@ -724,10 +707,10 @@ http://bugzilla.ecoinformatics.org/buglist.cgi?product=Metacat&target_milestone=
 
 This is a simple interim bug fix. No major functionality changes. Bugs fixed
 include:
- 1) Metacat 1.3.0 doesn't work in Java 1.3 because a subtle API differnce in
+* Metacat 1.3.0 doesn't work in Java 1.3 because a subtle API differnce in
     Java 1.3 and Java 1.4. Currently, Metacat 1.3.1 will work in both Java 1.3
     and Java 1.4.
- 2) Distribution package size was reduced.
+* Distribution package size was reduced.
 
 
 ### Release Notes for 1.3.0
