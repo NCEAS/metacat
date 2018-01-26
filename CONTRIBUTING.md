@@ -17,7 +17,7 @@ bug reports, documentation, graphics, and many others.  You might consider contr
 Metacat is an open source project, and we welcome full
 participation in the project.  Contributions are reviewed and suggestions are
 made to increase the value of Metacat to the community.  We strive to
-incorporate code, documentation, and other useful contributions quickly And
+incorporate code, documentation, and other useful contributions quickly and
 efficiently while maintaining a high-quality repository software product.
 
 ## Pull Requests
