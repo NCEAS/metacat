@@ -123,7 +123,7 @@ public class XMLSchemaService extends BaseService {
 	/**
 	 * refresh the persistant values in this service.
 	 */
-	public void doRefresh() throws ServiceException {
+	public synchronized void doRefresh() throws ServiceException {
 	    logMetacat.debug("XMLService.doRefresh - refreshing the schema service.");
 		try {
 			populateRegisteredSchemaList();

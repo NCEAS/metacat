@@ -1268,7 +1268,10 @@ public class MNResourceHandler extends D1ResourceHandler {
             String filename = sm.getFileName();
             // then fallback to using id and extension
             if (filename == null) {
-	            String extension = objectFormat.getExtension();
+	            String extension = null;
+	            if(objectFormat != null) {
+	                extension = objectFormat.getExtension();
+	            }
 	            if (extension == null) {
 	            	extension = ObjectFormatInfo.instance().getExtension(sm.getFormatId().getValue());
 	            }
@@ -1312,8 +1315,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                     }
                     catch(Exception e)
                     {  //if we can't parse it, just don't use the fromDate param
-                        logMetacat.warn("Could not parse fromDate: " + value[0]);
-                        startTime = null;
+                        logMetacat.warn("Could not parse fromDate: " + value[0], e);
+                        throw new InvalidRequest("1540", "Could not parse fromDate: " + value[0]+" since "+e.getMessage());
+                        //startTime = null;
                     }
                 }
                 else if(name.equals("toDate") && value != null)
@@ -1324,8 +1328,9 @@ public class MNResourceHandler extends D1ResourceHandler {
                     }
                     catch(Exception e)
                     {  //if we can't parse it, just don't use the toDate param
-                        logMetacat.warn("Could not parse toDate: " + value[0]);
-                        endTime = null;
+                        logMetacat.warn("Could not parse toDate: " + value[0], e);
+                        throw new InvalidRequest("1540", "Could not parse toDate: " + value[0]+" since "+e.getMessage());
+                        //endTime = null;
                     }
                 }
                 else if(name.equals("formatId") && value != null) 

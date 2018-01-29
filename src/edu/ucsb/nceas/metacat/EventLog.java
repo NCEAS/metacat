@@ -288,7 +288,7 @@ public class EventLog
         			fullDocid = DocumentUtil.appendRev(fullDocid);
         		} catch (Exception e) {
 					// just warn about this
-        			logMetacat.warn("Could not check docid for revision: " + fullDocid, e);
+        			logMetacat.debug("Could not check docid for revision: " + fullDocid, e);
 				}
         		paramValues.add(fullDocid);
         	}

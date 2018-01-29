@@ -1314,16 +1314,18 @@ public class CNResourceHandler extends D1ResourceHandler {
                     startTime = DateTimeMarshaller.deserializeDateToUTC(value);
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the startTime param
-                    logMetacat.warn("Could not parse fromDate: " + value);
-                    startTime = null;
+                    logMetacat.warn("Could not parse fromDate: " + value, e);
+                    throw new InvalidRequest("1540", "Could not parse fromDate: " + value+" since "+e.getMessage());
+                    //startTime = null;
                 }
             } else if (name.equals("toDate") && value != null) {
                 try {
                     endTime = DateTimeMarshaller.deserializeDateToUTC(value);
                 } catch (Exception e) {
                     // if we can't parse it, just don't use the endTime param
-                    logMetacat.warn("Could not parse toDate: " + value);
-                    endTime = null;
+                    logMetacat.warn("Could not parse toDate: " + value, e);
+                    throw new InvalidRequest("1540", "Could not parse toDate: " + value+" since "+e.getMessage());
+                    //endTime = null;
                 }
             } else if (name.equals("formatId") && value != null) {
             	formatId = new ObjectFormatIdentifier();
