@@ -171,7 +171,9 @@
                     *Verification Code:
                 </td>
                 <td align="right">
-                	<div id="captchaArea">
+                  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+                  <div class="g-recaptcha" data-sitekey="[% recaptchaPublicKey %]"></div>
+                  <!--	<div id="captchaArea">
                             <a href="javascript:;" onclick="showRecaptcha('captchaArea');">Show Code</a>
                     </div>
                     <script type="text/javascript" src="https://www.google.com/recaptcha/api/js/recaptcha_ajax.js"></script>
@@ -183,7 +185,7 @@
 	                            return false;
 	                    }
 	                    showRecaptcha('captchaArea');
-                    </script>
+                    </script>-->
                 </td>
             </tr>
         [% END %]

@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="METACATUI_1_14_7" />
+	<property name="metacatui-tag" value="METACATUI_1_14_14" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
@@ -793,8 +793,11 @@
 			<include name="server-config.wsdd"/>
 			</webinf>
 			</war -->
-		<copy file="${ecogrid-dir}/build/${metacat.context}.war"
-			todir="${dist.dir}" overwrite="true" />
+		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
+		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war" excludes="WEB-INF/lib/log4j-1.2.8.jar"/>
+	   </jar>
+		<copy file="${ecogrid-dir}/build/${metacat.context}-new.war"
+			tofile="${dist.dir}/${metacat.context}.war" overwrite="true" />
 
 
 	</target>
@@ -1156,6 +1159,8 @@
 					<exclude name="**/MockObjectPathMap.class" />
 					<exclude name="**/HzObjectPathMapTest$1.class" />
 					<exclude name="**/HzObjectPathMapTest$2.class" />
+					<exclude name="**/MultiThreadClientIT.class" />
+					<exclude name="**/MultiThreadClientIT$1.class" />
 				</fileset>
 			</batchtest>
 		</junit>
