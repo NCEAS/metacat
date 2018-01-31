@@ -25,6 +25,8 @@ Contributors:
 - Shaun Walbridge (walbridge@nceas.ucsb.edu)
 - Michael Daigle (daigle@nceas.ucsb.edu)
 - Lauren Walker (walker@nceas.ucsb.edu)
+- Peter Slaughter (slaughter@nceas.ucsb.edu)
+- Rob Nahf (rnahf@epscor.unm.edu) 
 
 Patch contributors:
 - Andrea Chadden (chadden@nceas.ucsb.edu)
