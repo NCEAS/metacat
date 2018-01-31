@@ -1,11 +1,21 @@
-# Metacat: XML Metadata and Data Management System
+# Metacat: Data Preservation and Discovery System
 
 Version: 2.8.6 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
 
-Contributors:
+Metacat is repository software for preserving data and metadata
+(documentation about data) that helps scientists find, understand and
+effectively use data sets they manage or that have been created by
+others. Hundreds of thousands of data sets are currently documented in
+a standardized way and stored in Metacat systems, providing the
+scientific community with a broad range of science data that can be
+easily searched, compared, merged, or used in other ways because the
+data are well and consistently described.
+
+## Contributors
+
 - Matt Jones (jones@nceas.ucsb.edu)
 - Chad Berkley (berkley@nceas.ucsb.edu)
 - Jing Tao (tao@nceas.ucsb.edu)
@@ -28,25 +38,32 @@ Contributors:
 - Peter Slaughter (slaughter@nceas.ucsb.edu)
 - Rob Nahf (rnahf@epscor.unm.edu) 
 
-Patch contributors:
+### Patch contributors
 - Andrea Chadden (chadden@nceas.ucsb.edu)
 - Johnoel Ancheta (johnoel@hawaii.edu)
 - Owen Jones (owen.jones@imperial.ac.uk)
 
-Metacat is a flexible database storage system for XML formatted
-documents and associated binary files. Metacat models the structure of the
-XML document, therefore allowing storage of XML documents with arbitrary
-schemas. Metacat supports several databases on the back-end, including Oracle,
-PostgreSQL and SQL Server (limited).  The server supports XML document
-storage, retrieval, query, validation, and transformation (using the XSLT
-stylesheet language).  In addition, there is a mechanism for replicating the
-database to other Metacat instances for backup and load balancing purposes.
-Metacat currently uses an LDAP database for authenticating users, but was
-written to accommodate other authentication services as well.
-
 ## Installation
 See the file "docs/install.html" for detailed instructions
 for your OS.
+
+## Documentation
+See the docs directory for detailed documentation and installation
+instructions.
+
+Details of the Metacat architecture can be found on the website for
+the Knowledge Network for Biocomplexity (KNB):
+
+  http://knb.ecoinformatics.org/software/metacat/
+
+Contributions to this work are welcome.  Please see the above web site
+for details on how to contribute.
+
+## Major Known Bugs or Feature Requests (see http://github.com/NCEAS/metacat/issues)
+If you discover a bug please report it, either by email (above) or by using
+our bug tracking system (http://github.com/NCEAS/metacat/issues). There is a
+list of currently unimplemented issues that we are working on
+for the next release.
 
 ## Release Notes
 
@@ -757,24 +774,6 @@ Fixes in 1.3.0:
      were failed in replication.
   4) Decrease the time to create access rules during insert or update
      a package.
-
-## Documentation
-See the docs directory for detailed documentation and installation
-instructions.
-
-Details of the Metacat architecture can be found on the website for
-the Knowledge Network for Biocomplexity (KNB):
-
-  http://knb.ecoinformatics.org/software/metacat/
-
-Contributions to this work are welcome.  Please see the above web site
-for details on how to contribute.
-
-## Major Known Bugs or Feature Requests (see http://bugzilla.ecoinformatics.org)
-If you discover a bug please report it, either by email (above) or by using
-our bug tracking system (http://bugzilla.ecoinformatics.org). There is a
-list of currently unimplemented features in Bugzilla that we are working on
-for the next release.
 
 ## Legalese
 This software is copyrighted by The Regents of the University of California
