@@ -5,6 +5,7 @@
 - [Types of contributions](#types-of-contributions)
 - [Pull Requests](#pull-requests)
 - [Development Workflow](#development-workflow)
+- [Release process](#release-process)
 - [Testing](#testing)
 - [Code style](#code-style)
 - [Contributor license agreement](#contributor-license-agreement)
@@ -73,6 +74,25 @@ ensure that the development branch stays up to date with other features that hav
 been tested and are awaiting release.  Thus, each `DEV*` branch represents an opportunity
 for integration testing of the set of features intended to work together for a
 particular release.
+
+## Release process
+
+The release process starts with integration testing in a DEV* branch. Once all
+changes that are desired in a release are merged into the DEV branch, we run
+the full set of tests on a clean checkout of the DEV branch.
+
+Second, create a pull request to merge those changes from the `metacat/DEV*` branch
+to the `metacat/master` branch.  This pull request should be done from the DEV*
+branch within the Metacat repository in order to make it simple for others to
+review the changes, and to maintain a record of the development branch commits.
+This pull request will be reviewed by another developer, and, after issues and
+feedback have been resolved, the pull request can be merged into master.  This
+cycle can be repeated multiple times until all features have been tested and
+merged into master.  At this point, if all features for the planned release
+have been merged to master, then the master branch can be merged to the
+`releases` branch, and tagged with the new release tag for that release. At
+this point, the tip of the `releases` branch will reflect the new release and
+the master branch is ready for work on the next release.
 
 ## Testing
 
