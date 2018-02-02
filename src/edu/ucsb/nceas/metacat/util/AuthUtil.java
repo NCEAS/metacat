@@ -476,21 +476,22 @@ public class AuthUtil {
 		}
 
 		// Check that the user is authenticated as an administrator account
-		for (String accessString : accessList) {
+		for (String accessString : accessList)  {
+		     // is a user dn
+            if (username != null && username.equals(accessString)) {
+                logMetacat.debug("AuthUtil.onAccessList - user "+username +" is in the access list.");
+                return true;
+            }
 			// check the given admin dn is a group dn...
-			if (groups != null && accessString.startsWith("cn=")) {
+			if (groups != null) {
 				// is a group dn
 				for (int j = 0; j < groups.length; j++) {
 					if (groups[j] != null && groups[j].equals(accessString)) {
+					    logMetacat.debug("AuthUtil.onAccessList - user "+username +" has a grouup which is in the access list.");
 						return true;
 					}
 				}
-			} else {
-				// is a user dn
-				if (username != null && username.equals(accessString)) {
-					return true;
-				}
-			}
+			} 
 		}
 		return false;
 	}
