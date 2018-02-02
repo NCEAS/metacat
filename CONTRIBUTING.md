@@ -50,39 +50,43 @@ Development is managed through the git repository at https://github.com/NCEAS/me
 - the current release version, if the HEAD of `master` still matches the HEAD of `releases`. For example, `2.8.5`.
 - the planned next release number with a `beta` designator or release candidate `rc` designator appended as appropriate.  For example, `2.8.6-beta1` or `2.9.0-rc1`.
 
-**releases**. Releases are merged from the `master` branch to the `releases` branch, and the resulting commit is tagged with the release tag (e.g., `METACAT_2_4_0`). The tip of the `releases` branch always reflects the most recent release of the software.
+**releases**. Releases are merged from the `master` branch to the `releases` branch, and the resulting commit is tagged with the release tag (e.g., `2.4.0`). The tip of the `releases` branch always reflects the most recent release of the software.
 
-**DEV**. Development takes place on a series of development branches.  While there is some
+**dev**. Development takes place on a series of development branches.  While there is some
 flexibility in how many development and feature branches are made, we typically
-create one `DEV_X_Y` branch for integrated development and testing of the set of features
-targeting a particular release.  Much of the development happens directly on these *DEV*
+create one `dev-x.y` branch for integrated development and testing of the set of features
+targeting a particular release.  Much of the development happens directly on these *dev*
 branches, but when needed a separate feature branch can be created to isolate development
 on a specific set of capabilities, especially if it may be disruptive to other developers
-working on the main DEV* branch.
+working on the main dev-* branch.
 
-![](docs/dev/images/nceas-dev-flow-full.png)
-
-**FEATURE**. Feature branches should be named with a prefix of the DEV branch
+**feature**. Feature branches should be named with a prefix of the `dev` branch
 that they are targeting,
 and should include a short descriptive label reflecting their purpose.  For example,
-`DEV_2_9_indexing` might be a new feature being developed independently but intended to be merged into the `DEV_2_9` branch. If a feature is being developed for an uncertain future
-release, the branch should be prefixed with `FEATURE_` and contain a descriptive label.
-For example, a `FEATURE_globus_auth` might target some unknown future release.
+`dev-2.9-indexing` might be a new feature being developed independently but intended to be merged into the `dev-2.9` branch. If a feature is being developed for an uncertain future
+release, the branch should be prefixed with `feature-` and contain a descriptive label.
+For example, a `feature-globus_auth` might target some unknown future release.
 
 All development branches should be frequently merged with changes from `master` to
 ensure that the development branch stays up to date with other features that have
-been tested and are awaiting release.  Thus, each `DEV*` branch represents an opportunity
+been tested and are awaiting release.  Thus, each `dev-*` branch represents an opportunity
 for integration testing of the set of features intended to work together for a
 particular release.
 
+### Development flow overview
+![](docs/dev/images/nceas-dev-flow-full.png)
+
+### Development flow for a single release
+![](docs/dev/images/nceas-single-release-flow.png)
+
 ## Release process
 
-The release process starts with integration testing in a DEV* branch. Once all
-changes that are desired in a release are merged into the DEV branch, we run
-the full set of tests on a clean checkout of the DEV branch.
+The release process starts with integration testing in a `dev*` branch. Once all
+changes that are desired in a release are merged into the `dev` branch, we run
+the full set of tests on a clean checkout of the `dev` branch.
 
-Second, create a pull request to merge those changes from the `metacat/DEV*` branch
-to the `metacat/master` branch.  This pull request should be done from the DEV*
+Second, create a pull request to merge those changes from the `metacat/dev-*` branch
+to the `metacat/master` branch.  This pull request should be done from the `dev*`
 branch within the Metacat repository in order to make it simple for others to
 review the changes, and to maintain a record of the development branch commits.
 This pull request will be reviewed by another developer, and, after issues and
@@ -102,7 +106,7 @@ Any new code developed should include a robust set of unit tests for each public
 method, as well as integration tests from new feature sets.  Tests should fully
 exercise the feature to ensure that it responds correctly to both good data inputs
 as well as various classes of corrupt or bad data.  All tests should pass before
-a `DEV` branch is merged to master, and all tests should pass before the `master`
+a `dev` branch is merged to master, and all tests should pass before the `master`
 branch is merged to `releases` and tagged for a release.
 
 **Continuous integration**. Metacat is built upon every commit through the Jenkins
