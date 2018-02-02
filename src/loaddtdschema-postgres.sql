@@ -176,5 +176,26 @@ INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, sy
 INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, system_id) VALUES ('NoNamespaceSchema', 'FGDC-STD-001-1998', 'http://www.fgdc.gov/metadata/fgdc-std-001-1998.xsd', '/schema/fgdc-std-001-1998/fgdc-std-001-1998.xsd');
 INSERT INTO xml_catalog (entry_type, format_id, no_namespace_schema_location, system_id) VALUES ('NoNamespaceSchema', 'FGDC-STD-001.1-1999', 'https://water.usgs.gov/GIS/metadata/usgswrd/fgdc-std-001-1998.xsd', '/schema/fgdc-bdp/fgdc-std-001.1-1999.xsd');
 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.isotc211.org/2005/gmd', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gmd.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gmd');
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.isotc211.org/2005/gss', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gss.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gss');
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.isotc211.org/2005/gsr', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gsr.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gsr');
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.isotc211.org/2005/gts', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gts.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gts');
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.isotc211.org/2005/gco', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gco.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.isotc211.org/2005/gco');
+    
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.w3.org/1999/xlink', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/xlinks.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.w3.org/1999/xlink');
+    
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://www.opengis.net/gml', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gml.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.opengis.net/gml');
+
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.8.5',1,CURRENT_DATE);
+  VALUES ('2.8.6',1,CURRENT_DATE);

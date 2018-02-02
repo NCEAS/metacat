@@ -1912,7 +1912,7 @@ public class MetacatHandler {
         			}
                     
                   } catch ( McdbDocNotFoundException dnfe ) {
-                    logMetacat.error(
+                    logMetacat.warn(
                       "There was a problem finding the localId " +
                       newdocid + "The error was: " + dnfe.getMessage());
                     throw dnfe;

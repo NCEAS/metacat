@@ -29,92 +29,114 @@
   * module of the Ecological Metadata Language (EML) into an HTML format
   * suitable for rendering with modern web browsers.
 -->
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+<xsl:stylesheet 
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+    <xsl:output method="html" 
+        encoding="UTF-8" 
+        doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN" 
+        doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd" 
+        indent="yes" />
+    
+    <xsl:template name="text">
+        <xsl:apply-templates />
+    </xsl:template>
 
-  <xsl:output method="html" encoding="UTF-8"
-    doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
-    doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-    indent="yes" />  
-
-<!-- This module is for text module in eml2 document. It is a table and self contained-->
-
-  <xsl:template name="text">
-        <xsl:param name="textfirstColStyle" />
-        <xsl:param name="textsecondColStyle" />
-        <xsl:if test="(section and normalize-space(section)!='') or (para and normalize-space(para)!='') or (.!='')">
-          <xsl:apply-templates mode="text">
-            <xsl:with-param name="textfirstColStyle" select="$textfirstColStyle"/>
-            <xsl:with-param name="textsecondColStyle" select="$textsecondColStyle" />
-          </xsl:apply-templates>
-      </xsl:if>
-  </xsl:template>
-
-
-  <!-- *********************************************************************** -->
-  <!-- Template for section-->
-   <xsl:template match="section" mode="text">
-      <xsl:if test="normalize-space(.)!=''">
-      	<div class="sectionText">
-        <xsl:if test="title and normalize-space(title)!=''">
-              <h4 class="bold"><xsl:value-of select="title"/></h4>
-        </xsl:if>
-        <xsl:if test="para and normalize-space(para)!=''">
-              <xsl:apply-templates select="para" mode="lowlevel"/>
-         </xsl:if>
-         <xsl:if test="section and normalize-space(section)!=''">
-              <xsl:apply-templates select="section" mode="lowlevel"/>
-        </xsl:if>
+    <xsl:template match="section">
+        <div class="sectionText">
+            <xsl:apply-templates />
         </div>
-      </xsl:if>
-  </xsl:template>
+    </xsl:template>
 
-  <!-- Section template for low level. Cteate a nested table and second column -->
-  <xsl:template match="section" mode="lowlevel">
-     <div class="section">
-      <xsl:if test="title and normalize-space(title)!=''">
-        <h4 class="bold"><xsl:value-of select="title"/></h4>
-      </xsl:if>
-      <xsl:if test="para and normalize-space(para)!=''">
-        <xsl:apply-templates select="para" mode="lowlevel"/>
-      </xsl:if>
-      <xsl:if test="section and normalize-space(section)!=''">
-        <xsl:apply-templates select="section" mode="lowlevel"/>
-      </xsl:if>
-     </div>
-  </xsl:template>
+    <xsl:template match="para">
+        <p>
+            <xsl:apply-templates />
+        </p>
+    </xsl:template>
 
-  <!-- para template for text mode-->
-   <xsl:template match="para" mode="text">
-    	<xsl:param name="textfirstColStyle"/>
-    	<div class="para">
-   			<xsl:apply-templates mode="lowlevel"/>
-   		</div>	
-  </xsl:template>
+    <!-- This template dynamically decides on h4-h6 depending on how deeply nested its parent section element is in the
+    document. -->
+    <xsl:template match="title">
+        <xsl:choose>
+            <xsl:when test="count(ancestor::section) > 2">
+                <b>
+                    <xsl:apply-templates />
+                </b>
+            </xsl:when>
+            <xsl:when test="count(ancestor::section) > 1">
+                <h6>
+                    <xsl:apply-templates />
+                </h6>
+            </xsl:when>
+            <xsl:otherwise>
+                <h5>
+                    <xsl:apply-templates />
+                </h5>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
 
-  <!-- para template without table structure. It does actually transfer.
-       Currently, only get the text and it need more revision-->
-  <xsl:template match="para" mode="lowlevel">
-      <xsl:if test="normalize-space(./text()) = ''">
-      	<xsl:apply-templates mode="lowlevel"/>
-      </xsl:if>
-      <p>
-      	<xsl:call-template name="i18n">
-   			<xsl:with-param name="i18nElement" select="."/>
-   		</xsl:call-template>
-      </p>
-  </xsl:template>
-  
-  <!-- match any translation values -->
-  <xsl:template match="value" mode="lowlevel">
-      <span class="translation">
-		<!-- the primary value -->
-		<xsl:if test="./text() != ''">
-			<xsl:if test="./@xml:lang != ''">
-				(<xsl:value-of select="./@xml:lang"/>)
-			</xsl:if>
-			<xsl:value-of select="./text()"/>
-		</xsl:if>
-      </span>
-  </xsl:template>
+    <xsl:template match="orderedlist">
+        <ol>
+            <xsl:apply-templates />
+        </ol>
+    </xsl:template>
 
+    <xsl:template match="itemizedlist">
+        <ul>
+            <xsl:apply-templates />
+        </ul>
+    </xsl:template>
+
+    <xsl:template match="listitem">
+        <li>
+            <xsl:apply-templates />
+        </li>
+    </xsl:template>
+
+    <xsl:template match="emphasis">
+        <em>
+            <xsl:apply-templates />
+        </em>
+    </xsl:template>
+
+    <xsl:template match="literalLayout">
+        <pre>
+            <xsl:apply-templates />
+        </pre>
+    </xsl:template>
+
+    <!-- Note: This template doesn't fully support ulink in that a single ulink can have multiple citetitle's and
+    translations and this template only uses the first citetitle and disregards internationalization details.-->
+    <xsl:template match="ulink">
+        <xsl:element name="a">
+            <xsl:attribute name="href">
+                <xsl:value-of select="./@url" />
+            </xsl:attribute>
+            <xsl:attribute name="target">_default</xsl:attribute>
+            <xsl:apply-templates />
+        </xsl:element>
+    </xsl:template>
+
+    <xsl:template match="superscript">
+        <sup>
+            <xsl:apply-templates />
+        </sup>
+    </xsl:template>
+
+    <xsl:template match="subscript">
+        <sub>
+            <xsl:apply-templates />
+        </sub>
+    </xsl:template>
+
+    <xsl:template match="value">
+        <xsl:if test="./text() != ''">
+            <p class="translation">
+                <xsl:if test="./@xml:lang != ''">
+                    (<xsl:value-of select="./@xml:lang"/>)
+                </xsl:if>
+                <xsl:value-of select="./text()"/>
+            </p>
+        </xsl:if>
+    </xsl:template>
 </xsl:stylesheet>
