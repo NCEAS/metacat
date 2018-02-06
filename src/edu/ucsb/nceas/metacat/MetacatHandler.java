@@ -1686,7 +1686,7 @@ public class MetacatHandler {
                              this.ERROR +
                              "User '" + 
                              user + 
-                             "' not allowed to insert and update" +
+                             "' is not allowed to insert and update" +
                              this.ERRORCLOSE;
                 if(out != null)
                 {
@@ -2987,7 +2987,7 @@ public class MetacatHandler {
                              this.ERROR +
                              "User '" + 
                              username + 
-                             "' not allowed to upload data" +
+                             "' is not allowed to upload data" +
                              this.ERRORCLOSE;
                 if(out != null)
                 {
