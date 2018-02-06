@@ -2949,11 +2949,68 @@ public class MetacatHandler {
         String action = null;
         File tempFile = null;
         
+        // Get the out stream
+        try {
+            out = response.getWriter();
+        } catch (IOException ioe2) {
+            logMetacat.error("MetacatHandler.handleMultipartForm - " +
+                             "Fatal Error: couldn't get response " + 
+                             "output stream.");
+            ioe2.printStackTrace(System.out);
+            return;
+        }
+        
         // Parse the multipart form, and save the parameters in a Hashtable and
         // save the FileParts in a hashtable
         
         Hashtable<String,String[]> params = new Hashtable<String,String[]>();
         Hashtable<String,String> fileList = new Hashtable<String,String>();
+        
+        // Get the session information
+        String username = "public";
+        String password = null;
+        String[] groupnames = null;
+        String sess_id = null;
+        
+        // be aware of session expiration on every request
+        SessionData sessionData = RequestUtil.getSessionData(request);
+        
+        if (sessionData != null) {
+            username = sessionData.getUserName();
+            password = sessionData.getPassword();
+            groupnames = sessionData.getGroupNames();
+            sess_id = sessionData.getId();
+        }
+        try {
+            if (!AuthUtil.canInsertOrUpdate(username, groupnames)) {
+                String msg = this.PROLOG +
+                             this.ERROR +
+                             "User '" + 
+                             username + 
+                             "' not allowed to upload data" +
+                             this.ERRORCLOSE;
+                if(out != null)
+                {
+                  out.println(msg);
+                }
+                
+                logMetacat.error("MetacatHandler.handleMultipartForm - " + 
+                                 "User '" + 
+                                 username + 
+                                 "' not allowed to upload");
+                out.close();
+                return;
+            }
+        } catch (Exception e) {
+            out.println("<?xml version=\"1.0\"?>");
+            out.println("<error>");
+            out.println("Error: problem to determine if the user can upload data objects: " + e.getMessage());
+            out.println("</error>");
+            out.close();
+            return;
+        }
+       
+        
         int sizeLimit = 1000;
         String tmpDir = "/tmp";
         try {
@@ -3018,12 +3075,6 @@ public class MetacatHandler {
                 }
             }
         } catch (Exception ioe) {
-            try {
-                out = response.getWriter();
-            } catch (IOException ioe2) {
-                logMetacat.fatal("MetacatHandler.handleMultipartForm - " +
-                		         "Fatal Error: couldn't get response output stream.");
-            }
             out.println("<?xml version=\"1.0\"?>");
             out.println("<error>");
             out.println("Error: problem reading multipart data: " + ioe.getMessage());
@@ -3032,32 +3083,8 @@ public class MetacatHandler {
             return;
         }
         
-        // Get the session information
-        String username = "public";
-        String password = null;
-        String[] groupnames = null;
-        String sess_id = null;
-        
-        // be aware of session expiration on every request
-		SessionData sessionData = RequestUtil.getSessionData(request);
-		
-		if (sessionData != null) {
-			username = sessionData.getUserName();
-			password = sessionData.getPassword();
-			groupnames = sessionData.getGroupNames();
-			sess_id = sessionData.getId();
-		}
-                
-        // Get the out stream
-        try {
-            out = response.getWriter();
-        } catch (IOException ioe2) {
-            logMetacat.error("MetacatHandler.handleMultipartForm - " +
-            		         "Fatal Error: couldn't get response " + 
-            		         "output stream.");
-            ioe2.printStackTrace(System.out);
-        }
-        
+       
+
         if (action.equals("upload")) {
             if (username != null && !username.equals("public")) {
                 handleUploadAction(request, out, params, fileList, username,
