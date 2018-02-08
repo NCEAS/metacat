@@ -591,7 +591,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
 			Replica replica = new Replica();
 			NodeReference replicaMemberNode = new NodeReference();
-			replicaMemberNode.setValue("testNode");
+			replicaMemberNode.setValue(MockCNode.getTestMN().getIdentifier().getValue());
 			replica.setReplicationStatus(ReplicationStatus.REQUESTED);
 			replica.setReplicaMemberNode(replicaMemberNode);
 			replica.setReplicaVerified(Calendar.getInstance().getTime());
@@ -662,7 +662,10 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 			
             
 			//Test the success of setReplicationStatus by a register mn subject
-			Session mnSession = getMNSessionFromCN();
+            //Session mnSession = getMNSessionFromCN();
+			Subject mnSubject = MockCNode.getTestMN().getSubject(0);
+            Session mnSession = new Session();
+            mnSession.setSubject(mnSubject);
 			status = ReplicationStatus.COMPLETED;
 			result = CNodeService.getInstance(request).setReplicationStatus(mnSession, guid, replicaMemberNode, status, failure);
 			sysmeta = CNodeService.getInstance(request).getSystemMetadata(session, guid);
