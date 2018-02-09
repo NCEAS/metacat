@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:systemMetadata xmlns:ns2="http://ns.dataone.org/service/types/v1" xmlns:ns3="http://ns.dataone.org/service/types/v2.0">
+  <serialVersion>1</serialVersion>
+  <identifier>tao.223.1</identifier>
+  <formatId>http://www.isotc211.org/2005/gmd-pangaea</formatId>
+  <size>15045</size>
+  <checksum algorithm="MD5">36512a7df5d4f9232dbeb0a7c6f629ac</checksum>
+  <submitter>CN=Monica Ihli A139616,O=Google,C=US,DC=cilogon,DC=org</submitter>
+  <rightsHolder>CN=Monica Ihli A139616,O=Google,C=US,DC=cilogon,DC=org</rightsHolder>
+  <accessPolicy>
+    <allow>
+      <subject>public</subject>
+      <permission>read</permission>
+    </allow>
+  </accessPolicy>
+  <replicationPolicy replicationAllowed="false"/>
+  <archived>false</archived>
+  <dateUploaded>2017-08-05T11:52:43.000+00:00</dateUploaded>
+  <dateSysMetadataModified>2017-11-17T15:19:24.541+00:00</dateSysMetadataModified>
+  <originMemberNode>urn:node:METACAT_TEST</originMemberNode>
+  <authoritativeMemberNode>urn:node:METACAT_TEST</authoritativeMemberNode>
+</ns3:systemMetadata>

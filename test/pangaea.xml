@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ns0:MD_Metadata id="de.pangaea.dataset878263" xmlns:ns0="http://www.isotc211.org/2005/gmd" xmlns:ns2="http://www.isotc211.org/2005/gco" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.isotc211.org/2005/gmd http://www.isotc211.org/2005/gmd/gmd.xsd">
+	<ns0:fileIdentifier>
+		<ns2:CharacterString>de.pangaea.dataset878263</ns2:CharacterString>
+	</ns0:fileIdentifier>
+	<ns0:contact>
+		<ns0:CI_ResponsibleParty>
+			<ns0:organisationName>
+				<ns2:CharacterString>PANGAEA</ns2:CharacterString>
+			</ns0:organisationName>
+			<ns0:contactInfo>
+				<ns0:CI_Contact>
+					<ns0:address>
+						<ns0:CI_Address>
+							<ns0:electronicMailAddress>
+								<ns2:CharacterString>info@pangaea.de</ns2:CharacterString>
+							</ns0:electronicMailAddress>
+						</ns0:CI_Address>
+					</ns0:address>
+					<ns0:onlineResource>
+						<ns0:CI_OnlineResource>
+							<ns0:linkage>
+								<ns0:URL>http://www.pangaea.de/</ns0:URL>
+							</ns0:linkage>
+							<ns0:function>
+								<ns0:CI_OnLineFunctionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode_information">information</ns0:CI_OnLineFunctionCode>
+							</ns0:function>
+						</ns0:CI_OnlineResource>
+					</ns0:onlineResource>
+				</ns0:CI_Contact>
+			</ns0:contactInfo>
+			<ns0:role>
+				<ns0:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode_pointOfContact">pointOfContact</ns0:CI_RoleCode>
+			</ns0:role>
+		</ns0:CI_ResponsibleParty>
+	</ns0:contact>
+	<ns0:dateStamp>
+		<ns2:DateTime>2017-08-05T11:52:43Z</ns2:DateTime>
+	</ns0:dateStamp>
+	<ns0:dataSetURI>
+		<ns2:CharacterString>https://doi.pangaea.de/10.1594/PANGAEA.878263</ns2:CharacterString>
+	</ns0:dataSetURI>
+	<ns0:identificationInfo>
+		<ns0:MD_DataIdentification>
+			<ns0:citation>
+				<ns0:CI_Citation>
+					<ns0:title>
+						<ns2:CharacterString>Modeling the biogeography of pelagic diatoms of the Southern Ocean, links to model results and images</ns2:CharacterString>
+					</ns0:title>
+					<ns0:date>
+						<ns0:CI_Date>
+							<ns0:date>
+								<ns2:DateTime>2017-07-26T10:15:22</ns2:DateTime>
+							</ns0:date>
+							<ns0:dateType>
+								<ns0:CI_DateTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode_publication">publication</ns0:CI_DateTypeCode>
+							</ns0:dateType>
+						</ns0:CI_Date>
+					</ns0:date>
+					<ns0:identifier>
+						<ns0:MD_Identifier>
+							<ns0:code>
+								<ns2:CharacterString>https://doi.org/10.1594/PANGAEA.878263</ns2:CharacterString>
+							</ns0:code>
+						</ns0:MD_Identifier>
+					</ns0:identifier>
+					<ns0:citedResponsibleParty>
+						<ns0:CI_ResponsibleParty id="dataset.author52394">
+							<ns0:individualName>
+								<ns2:CharacterString>Pinkernell, Stefan</ns2:CharacterString>
+							</ns0:individualName>
+							<ns0:contactInfo>
+								<ns0:CI_Contact>
+									<ns0:address>
+										<ns0:CI_Address>
+											<ns0:electronicMailAddress>
+												<ns2:CharacterString>stefan.pinkernell@awi.de</ns2:CharacterString>
+											</ns0:electronicMailAddress>
+										</ns0:CI_Address>
+									</ns0:address>
+								</ns0:CI_Contact>
+							</ns0:contactInfo>
+							<ns0:role>
+								<ns0:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode_author">author</ns0:CI_RoleCode>
+							</ns0:role>
+						</ns0:CI_ResponsibleParty>
+					</ns0:citedResponsibleParty>
+					<ns0:citedResponsibleParty>
+						<ns0:CI_ResponsibleParty>
+							<ns0:organisationName>
+								<ns2:CharacterString>PANGAEA</ns2:CharacterString>
+							</ns0:organisationName>
+							<ns0:contactInfo>
+								<ns0:CI_Contact>
+									<ns0:address>
+										<ns0:CI_Address>
+											<ns0:electronicMailAddress>
+												<ns2:CharacterString>info@pangaea.de</ns2:CharacterString>
+											</ns0:electronicMailAddress>
+										</ns0:CI_Address>
+									</ns0:address>
+									<ns0:onlineResource>
+										<ns0:CI_OnlineResource>
+											<ns0:linkage>
+												<ns0:URL>http://www.pangaea.de/</ns0:URL>
+											</ns0:linkage>
+											<ns0:function>
+												<ns0:CI_OnLineFunctionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode_information">information</ns0:CI_OnLineFunctionCode>
+											</ns0:function>
+										</ns0:CI_OnlineResource>
+									</ns0:onlineResource>
+								</ns0:CI_Contact>
+							</ns0:contactInfo>
+							<ns0:role>
+								<ns0:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode_publisher">publisher</ns0:CI_RoleCode>
+							</ns0:role>
+						</ns0:CI_ResponsibleParty>
+					</ns0:citedResponsibleParty>
+					<ns0:presentationForm>
+						<ns0:CI_PresentationFormCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_PresentationFormCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_PresentationFormCode_tableDigital">tableDigital</ns0:CI_PresentationFormCode>
+					</ns0:presentationForm>
+					<ns0:otherCitationDetails>
+						<ns2:CharacterString>Supplement to: Pinkernell, Stefan (2017): Modeling the biogeography of pelagic diatoms of the Southern Ocean. PhD Thesis, University of Rostock, Germany</ns2:CharacterString>
+					</ns0:otherCitationDetails>
+				</ns0:CI_Citation>
+			</ns0:citation>
+			<ns0:abstract>
+				<ns2:CharacterString>Species distribution models (SDM) are a widely used and well established method for biogeographical research on terrestrial organisms. Though already used for decades, experience with marine species is scarce especially for protists. More and more observation data, sometimes even aggregated over centuries, become available also for the marine world, which together with high quality environmental data form a promising base for marine SDMs. In contrast to these SDMs, typical biogeographical studies of diatoms only considered observation data from a few transects. 
+Species distribution methods were evaluated for marine pelagic diatoms in the Southern Ocean at the example of F. kerguelensis. Based on the experience with these models, SDMs for further species are built to study biogeographical patterns. The anthropogenic impact of climate change on these species is assessed by model projections on future scenarios for the end of this century. 
+Besides observation data from public data repositories such as GBIF, data from the Hustedt diatom collection was used. The models presented here rely on so called presence only observation data. For this simple data type Maxent has been proven to be a good modeling method. 
+SDM seems a suitable modeling method to study biogeography of marine pelagic diatoms in the Southern Ocean. Models of decent quality could be build, despite partly poor data. Future projections indicate a moderate decrease of the suitable areas towards the end of the century for most of the species.</ns2:CharacterString>
+			</ns0:abstract>
+			<ns0:status>
+				<ns0:MD_ProgressCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ProgressCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ProgressCode_completed">completed</ns0:MD_ProgressCode>
+			</ns0:status>
+			<ns0:descriptiveKeywords>
+				<ns0:MD_Keywords>
+					<ns0:keyword>
+						<ns2:CharacterString>Content</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>File content</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>File size</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>NetCDF</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>URL file</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>URL raw</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>Uniform resource locator/link to file</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:keyword>
+						<ns2:CharacterString>Uniform resource locator/link to raw data file</ns2:CharacterString>
+					</ns0:keyword>
+					<ns0:type>
+						<ns0:MD_KeywordTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_KeywordTypeCode_theme">theme</ns0:MD_KeywordTypeCode>
+					</ns0:type>
+					<ns0:thesaurusName>
+						<ns0:CI_Citation>
+							<ns0:title>
+								<ns2:CharacterString>PANGAEA Keyword List</ns2:CharacterString>
+							</ns0:title>
+							<ns0:date>
+								<ns0:CI_Date>
+									<ns0:date>
+										<ns2:Date>1995-01-01</ns2:Date>
+									</ns0:date>
+									<ns0:dateType>
+										<ns0:CI_DateTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_DateTypeCode_creation">creation</ns0:CI_DateTypeCode>
+									</ns0:dateType>
+								</ns0:CI_Date>
+							</ns0:date>
+							<ns0:citedResponsibleParty>
+								<ns0:CI_ResponsibleParty>
+									<ns0:organisationName>
+										<ns2:CharacterString>PANGAEA</ns2:CharacterString>
+									</ns0:organisationName>
+									<ns0:contactInfo>
+										<ns0:CI_Contact>
+											<ns0:address>
+												<ns0:CI_Address>
+													<ns0:electronicMailAddress>
+														<ns2:CharacterString>info@pangaea.de</ns2:CharacterString>
+													</ns0:electronicMailAddress>
+												</ns0:CI_Address>
+											</ns0:address>
+											<ns0:onlineResource>
+												<ns0:CI_OnlineResource>
+													<ns0:linkage>
+														<ns0:URL>http://www.pangaea.de/</ns0:URL>
+													</ns0:linkage>
+													<ns0:function>
+														<ns0:CI_OnLineFunctionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode_information">information</ns0:CI_OnLineFunctionCode>
+													</ns0:function>
+												</ns0:CI_OnlineResource>
+											</ns0:onlineResource>
+										</ns0:CI_Contact>
+									</ns0:contactInfo>
+									<ns0:role>
+										<ns0:CI_RoleCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_RoleCode_pointOfContact">pointOfContact</ns0:CI_RoleCode>
+									</ns0:role>
+								</ns0:CI_ResponsibleParty>
+							</ns0:citedResponsibleParty>
+						</ns0:CI_Citation>
+					</ns0:thesaurusName>
+				</ns0:MD_Keywords>
+			</ns0:descriptiveKeywords>
+			<ns0:resourceConstraints>
+				<ns0:MD_LegalConstraints>
+					<ns0:accessConstraints>
+						<ns0:MD_RestrictionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_RestrictionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_RestrictionCode_copyright">copyright</ns0:MD_RestrictionCode>
+					</ns0:accessConstraints>
+					<ns0:useConstraints>
+						<ns0:MD_RestrictionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_RestrictionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_RestrictionCode_copyright">copyright</ns0:MD_RestrictionCode>
+					</ns0:useConstraints>
+					<ns0:otherConstraints>
+						<ns2:CharacterString>CC-BY: Creative Commons Attribution 3.0 Unported</ns2:CharacterString>
+					</ns0:otherConstraints>
+				</ns0:MD_LegalConstraints>
+			</ns0:resourceConstraints>
+			<ns0:spatialRepresentationType>
+				<ns0:MD_SpatialRepresentationTypeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_SpatialRepresentationTypeCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_SpatialRepresentationTypeCode_textTable">textTable</ns0:MD_SpatialRepresentationTypeCode>
+			</ns0:spatialRepresentationType>
+			<ns0:language>
+				<ns0:LanguageCode codeList="http://www.isotc211.org/2005/resources/Codelist/ML_gmxCodelists.xml#LanguageCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/ML_gmxCodelists.xml#LanguageCode_eng">eng</ns0:LanguageCode>
+			</ns0:language>
+			<ns0:topicCategory>
+				<ns0:MD_TopicCategoryCode>geoscientificInformation</ns0:MD_TopicCategoryCode>
+			</ns0:topicCategory>
+		</ns0:MD_DataIdentification>
+	</ns0:identificationInfo>
+	<ns0:distributionInfo>
+		<ns0:MD_Distribution>
+			<ns0:distributionFormat>
+				<ns0:MD_Format>
+					<ns0:name>
+						<ns2:CharacterString>application/zip</ns2:CharacterString>
+					</ns0:name>
+					<ns0:version>
+						<ns2:CharacterString>unknown</ns2:CharacterString>
+					</ns0:version>
+				</ns0:MD_Format>
+			</ns0:distributionFormat>
+			<ns0:transferOptions>
+				<ns0:MD_DigitalTransferOptions>
+					<ns0:onLine>
+						<ns0:CI_OnlineResource>
+							<ns0:linkage>
+								<ns0:URL>https://doi.pangaea.de/10.1594/PANGAEA.878263?format=zip</ns0:URL>
+							</ns0:linkage>
+							<ns0:function>
+								<ns0:CI_OnLineFunctionCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#CI_OnLineFunctionCode_download">download</ns0:CI_OnLineFunctionCode>
+							</ns0:function>
+						</ns0:CI_OnlineResource>
+					</ns0:onLine>
+				</ns0:MD_DigitalTransferOptions>
+			</ns0:transferOptions>
+		</ns0:MD_Distribution>
+	</ns0:distributionInfo>
+	<ns0:dataQualityInfo>
+		<ns0:DQ_DataQuality>
+			<ns0:scope>
+				<ns0:DQ_Scope>
+					<ns0:level>
+						<ns0:MD_ScopeCode codeList="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ScopeCode" codeListValue="http://www.isotc211.org/2005/resources/Codelist/gmxCodelists.xml#MD_ScopeCode_dataset">dataset</ns0:MD_ScopeCode>
+					</ns0:level>
+				</ns0:DQ_Scope>
+			</ns0:scope>
+			<ns0:lineage>
+				<ns0:LI_Lineage>
+					<ns0:statement>
+						<ns2:CharacterString>The data set was checked for completeness, correctness, and consistency of metainformation. Validity of used methods was checked and - if applicable - precision and range of data.</ns2:CharacterString>
+					</ns0:statement>
+				</ns0:LI_Lineage>
+			</ns0:lineage>
+		</ns0:DQ_DataQuality>
+	</ns0:dataQualityInfo>
+</ns0:MD_Metadata>

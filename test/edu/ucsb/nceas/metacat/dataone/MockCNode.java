@@ -57,6 +57,7 @@ public class MockCNode extends MultipartCNode {
     
     public final static String V1MNNODEID= "urn:node:test_MN-v1";
     public final static String V2MNNODEID= "urn:node:test_MN-v2";
+    public final static String TESTNODEID= "urn:node:test_MN-12346";
 
     /**
      * See superclass for documentation
@@ -82,7 +83,7 @@ public class MockCNode extends MultipartCNode {
 		Node node = new Node();
 		node.setIdentifier(getNodeId());
 		Subject subject = new Subject();
-		subject.setValue("cn=" + getNodeId() + ",dc=dataone,dc=org");
+		subject.setValue("cn=" + getNodeId().getValue() + ",dc=dataone,dc=org");
 		node.addSubject(subject );
 		node.setType(getNodeType());
 		return node;
@@ -161,13 +162,13 @@ public class MockCNode extends MultipartCNode {
     /*
      * Create a test mn in this env.
      */
-    private Node getTestMN() {
+    public static Node getTestMN() {
         Node node = new Node();
         NodeReference nodeRef = new NodeReference();
-        nodeRef.setValue("urn:node:test_MN-12346");
+        nodeRef.setValue(TESTNODEID);
         node.setIdentifier(nodeRef);
         Subject subject = new Subject();
-        subject.setValue("cn=" + getNodeId() + ",dc=dataone,dc=org");
+        subject.setValue("cn=" + TESTNODEID + ",dc=dataone,dc=org");
         node.addSubject(subject );
         node.setType(NodeType.MN);
         return node;
