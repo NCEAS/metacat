@@ -497,21 +497,21 @@ public class AuthUtil {
 	}
 	
 	/**
-     * Convert a delimited string list to a Vector
-     * @param list  the list of delimited vectors
+     * Convert a delimited string to a Vector by splitting on a particular character
+     * @param text  the text to be split into components
      * @param delimiter  the string to specify the delimiter
      * @param escapeChar  the string to escape a delimiter.
-     * @return a vector holding the vales. An empty vector will be return if list is null or empty.
+     * @return a vector holding the values. An empty vector will be returned if the text is null or empty.
      */
-    public static Vector<String> split(String list, String delimiter, String escapeChar) {
+    public static Vector<String> split(String text, String delimiter, String escapeChar) {
         Vector<String> results = new Vector<String>();
-        logMetacat.debug("AuthUtil.split -the list is "+delimiter);
-        logMetacat.debug("AuthUtil.split - the delimiter is "+delimiter);
-        logMetacat.debug("AuthUtil.split -the escapeChar is "+ escapeChar);
-        if(list != null && list.length()>0 && delimiter != null && escapeChar != null) {
+        //logMetacat.debug("AuthUtil.split -the text is "+text);
+        //logMetacat.debug("AuthUtil.split - the delimiter is "+delimiter);
+        //logMetacat.debug("AuthUtil.split -the escapeChar is "+ escapeChar);
+        if(text != null && text.length()>0 && delimiter != null && escapeChar != null) {
             String regex = "(?<!" + Pattern.quote(escapeChar) + ")" + Pattern.quote(delimiter);
             logMetacat.debug("AuthUtil.split - The regex is "+regex);
-            String[] strArray = list.split(regex);
+            String[] strArray = text.split(regex);
             if(strArray != null) {
                 for(int i=0; i<strArray.length; i++) {
                     logMetacat.debug("AuthUtil.split - the splitted original value "+strArray[i]);
