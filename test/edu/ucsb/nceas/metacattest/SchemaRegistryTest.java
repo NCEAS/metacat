@@ -64,7 +64,7 @@ public class SchemaRegistryTest extends MCTestCase {
 	static {
 		try {
 			metacatUrl = PropertyService.getProperty("test.metacatUrl");
-			metacatDeployDir = PropertyService.getProperty("test.metacatDeployDir");
+			metacatDeployDir = PropertyService.getProperty("application.deployDir");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 		} catch (PropertyNotFoundException pnfe) {
