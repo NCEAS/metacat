@@ -57,13 +57,11 @@ import junit.framework.TestSuite;
  * A JUnit test for testing the indexing routines for XML Paths
  */
 public class BuildIndexTest extends MCTestCase {
-	private static String metacatUrl;
 	private static String username;
 	private static String password;
 	static {
 		try {
 			PropertyService.getInstance();
-			metacatUrl = PropertyService.getProperty("test.metacatUrl");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 		} catch (PropertyNotFoundException pnfe) {
@@ -100,12 +98,9 @@ public class BuildIndexTest extends MCTestCase {
 			DatabaseService.getInstance();
 //			PropertyService.getInstance("build/tests");
 			PropertyService.getInstance();
-			metacatUrl = PropertyService.getProperty("test.metacatUrl");
 		} catch (ServiceException se) {
 			fail(se.getMessage());
-		} catch (PropertyNotFoundException pnfe) {
-			fail(pnfe.getMessage());
-		}
+		} 
 
 		try {
 			FileReader fr = new FileReader(testfile);

@@ -58,13 +58,11 @@ import junit.framework.TestSuite;
  */
 public class SchemaRegistryTest extends MCTestCase {
 
-	private static String metacatUrl;
 	private static String metacatDeployDir;
 	private static String username;
 	private static String password;
 	static {
 		try {
-			metacatUrl = PropertyService.getProperty("test.metacatUrl");
 			metacatDeployDir = PropertyService.getProperty("application.deployDir");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");

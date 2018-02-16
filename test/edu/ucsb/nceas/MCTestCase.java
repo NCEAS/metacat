@@ -57,6 +57,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
@@ -117,7 +118,8 @@ public class MCTestCase
 		    String printDebugString = PropertyService.getProperty("test.printdebug");
 		    printDebug = Boolean.parseBoolean(printDebugString);
 
-		    metacatUrl = PropertyService.getProperty("test.metacatUrl");
+		    metacatUrl = SystemUtil.getServletURL();
+		    //System.out.println("The metacat url (servlet) is ==================== "+metacatUrl);
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 			anotheruser = PropertyService.getProperty("test.mcAnotherUser");
