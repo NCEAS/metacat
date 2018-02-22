@@ -111,6 +111,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -509,6 +510,9 @@ public abstract class D1NodeService {
               removeSystemMetaAndIdentifier(pid);
               throw e;
           } catch (InvalidSystemMetadata e) {
+              removeSystemMetaAndIdentifier(pid);
+              throw e;
+          } catch (NotAuthorized e) {
               removeSystemMetaAndIdentifier(pid);
               throw e;
           } catch (Exception e) {
@@ -1578,10 +1582,11 @@ public abstract class D1NodeService {
    * @param pid
    * @param sessionData
    * @throws ServiceFailure
+ * @throws NotAuthorized 
    * @returns localId of the data object inserted
    */
   public String insertDataObject(InputStream object, Identifier pid, 
-          Session session, Checksum checksum) throws ServiceFailure, InvalidSystemMetadata {
+          Session session, Checksum checksum) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
       
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
@@ -1598,7 +1603,23 @@ public abstract class D1NodeService {
 			}
     	}
     }
-  
+    
+    //if the user and groups are in the white list (allowed submitters) of the metacat configuration
+    boolean inWhitelist = false;
+    try {
+        inWhitelist = AuthUtil.canInsertOrUpdate(username, groupnames);
+    } catch (Exception e) {
+        ServiceFailure sf = new ServiceFailure("1190", "Could not determinte if the user is allowed to upload data objects to this Metacat:" + e.getMessage());
+        logMetacat.error("D1NodeService.insertDataObject Could not determinte if the user is allowed to upload data objects to this Metacat: - "+e.getMessage(), e);
+        throw sf;
+    }
+    if(!inWhitelist) {
+        logMetacat.error("D1NodeService.insertDataObject - The provided identity "+username+" does not have " +
+                "permission to WRITE to the Node.");
+        throw new NotAuthorized("1100", "The provided identity "+username+" does not have " +
+                "permission to WRITE to the Node.");
+    }
+    
     // generate pid/localId pair for object
     logMetacat.debug("Generating a pid/localId mapping");
     IdentifierManager im = IdentifierManager.getInstance();

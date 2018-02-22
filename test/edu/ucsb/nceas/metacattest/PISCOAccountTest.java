@@ -68,8 +68,8 @@ public class PISCOAccountTest extends MetaCatServletTest{
         double number = 0;
        
         TestSuite suite = new TestSuite();
-        suite.addTest(new PISCOAccountTest("testPiscoReferralLogin"));
-        suite.addTest(new PISCOAccountTest("testPiscoReferralLoginFail"));
+        //suite.addTest(new PISCOAccountTest("testPiscoReferralLogin"));
+        //suite.addTest(new PISCOAccountTest("testPiscoReferralLoginFail"));
         return suite;
     }
     

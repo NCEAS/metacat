@@ -70,9 +70,9 @@ public class LTERAccountTest extends MetaCatServletTest{
         double number = 0;
        
         TestSuite suite = new TestSuite();
-        suite.addTest(new LTERAccountTest("testGetPrincipals"));
-        suite.addTest(new LTERAccountTest("testLterReferralLogin"));
-        suite.addTest(new LTERAccountTest("testLterReferralLoginFail"));
+        //suite.addTest(new LTERAccountTest("testGetPrincipals"));
+        //suite.addTest(new LTERAccountTest("testLterReferralLogin"));
+        //suite.addTest(new LTERAccountTest("testLterReferralLoginFail"));
         return suite;
     }
     
