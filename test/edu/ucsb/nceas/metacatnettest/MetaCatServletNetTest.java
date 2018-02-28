@@ -62,18 +62,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * A JUnit test for testing Step class processing
  */
 public class MetaCatServletNetTest extends MCTestCase {
-	static {
-		try {		
-			metacatUrl = PropertyService.getProperty("test.metacatUrl");
-		} catch (PropertyNotFoundException pnfe) {
-			System.err.println("could not find metacat URL in MetacatServletNetTest: "
-					+ pnfe.getMessage());
-		} catch (Exception e) {
-			System.err.println("Exception in initialize option in MetacatServletNetTest: "
-					+ e.getMessage());
-		}
-	}
-
+	
 	private String serialNumber;
 	private static String sessionId;
 

@@ -44,6 +44,7 @@ import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.client.rest.MetacatRest;
 import edu.ucsb.nceas.metacat.client.rest.MetacatRestClient;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -57,7 +58,8 @@ public class MetacatRestClientTest extends MCTestCase{
 	protected static String contextUrl;
 	static {
 		try {
-		    contextUrl = PropertyService.getProperty("test.contextUrl");
+		    contextUrl = SystemUtil.getContextURL();
+		    //System.out.println("The conext url is =========================="+contextUrl);
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 			anotheruser = PropertyService.getProperty("test.mcAnotherUser");

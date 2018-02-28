@@ -19,6 +19,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.junit.Test;
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 public class MultiThreadClientIT extends MCTestCase {
     //need to configure this.
@@ -30,9 +31,10 @@ public class MultiThreadClientIT extends MCTestCase {
     private static String mnURL = null;
     static {
         try {
-            mnURL = PropertyService.getProperty("test.contextUrl")+"/d1/mn";
+            mnURL = SystemUtil.getContextURL()+"/d1/mn";
+            //System.out.println("============================the member node url is "+mnURL);
         } catch (Exception e) {
-            log.error("MultiThreadClientIT - can't find the test.contexturl from the metacat.porperties file.", e);
+            log.error("MultiThreadClientIT - can't find the contexturl from the metacat.porperties file.", e);
         }
     }
     
