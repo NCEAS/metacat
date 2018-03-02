@@ -25,4 +25,6 @@ RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 8080
-CMD ["catalina.sh", "run"]
+EXPOSE 8009
+EXPOSE 8443
+CMD ["catalina.sh","start"]

@@ -163,5 +163,6 @@ if [ "$1" = 'catalina.sh' ]; then
 
 fi
 
-exec "$@"
+#exec "$@"
+exec tail -f /usr/local/tomcat/logs/catalina.out
 
