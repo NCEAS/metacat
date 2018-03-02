@@ -21,6 +21,66 @@ if [ "$1" = 'catalina.sh' ]; then
         unzip  $METACAT_WAR -d $METACAT_DIR
     fi
 
+    #Make sure all default directories are available
+    mkdir -p /var/metacat/data \
+        /var/metacat/inline-data \
+        /var/metacat/documents \
+        /var/metacat/temporary \
+        /var/metacat/logs \
+
+
+    # Initialize the solr home directory
+    if [ ! -d /var/metacat/solr-home ];
+    then
+        mkdir -p /var/metacat/solr-home
+
+        # Copy the default solr conf files
+        SOLR_CONF_DEFAULT_LOCATION=./webapps/metacat-index/WEB-INF/classes/solr-home/
+        SOLR_CONF_LOCATION=/var/metacat/solr-home
+        SOLR_CONF_FILES=`find ${SOLR_CONF_DEFAULT_LOCATION}`
+        for f in ${SOLR_CONF_FILES[@]};
+        do
+            NEW_FILE=${f#*${SOLR_CONF_DEFAULT_LOCATION}}
+            if [ "$NEW_FILE" != "" ];
+            then
+                NEW_DIR=$(dirname $NEW_FILE)
+                if [ ! -f $SOLR_CONF_LOCATION/$NEW_FILE ] && [ -f $f ];
+                then
+                    echo "Copying Solr configuraiton file: $SOLR_CONF_LOCATION/$NEW_FILE"
+                    mkdir -p $SOLR_CONF_LOCATION/$NEW_DIR
+                    cp $f $SOLR_CONF_LOCATION/$NEW_FILE
+                fi
+            fi
+        done
+    fi
+
+    # Set up application properties
+    DEFAULT_PROPERTIES_FILE=${METACAT_DIR}/WEB-INF/metacat.properties
+    APP_PROPERTIES_FILE=${APP_PROPERTIES_FILE:-/app.properties}
+    if [ -s $APP_PROPERTIES_FILE ];
+    then
+		while read line
+		do
+    		eval echo "$line" >> ${APP_PROPERTIES_FILE}.sub
+		done < "$APP_PROPERTIES_FILE"
+		cat ${APP_PROPERTIES_FILE}.sub
+        apply_config.py ${APP_PROPERTIES_FILE}.sub $DEFAULT_PROPERTIES_FILE
+
+        echo
+        echo '**********************************************************'
+        echo "Merged $APP_PROPERTIES_FILE with "
+        echo 'default metacat.properties'
+        echo '***********************************************************'
+        echo
+    elif [ "$APP_PROPERTIES_FILE" != "/config/app.properties" ];
+    then
+
+        echo "ERROR: The application properties file ($APP_PROPERTIES_FILE) was empty"
+        echo "   or does not exist. Please check the $APP_PROPERTIES_FILE is"
+        echo "   exists in the container filesystem."
+        exit -2
+    fi
+
     # If there is an admin/password set and it does not exist in the passwords file
     # set it
     if [ ! -z "$ADMIN" ];
@@ -57,6 +117,50 @@ if [ "$1" = 'catalina.sh' ]; then
 
         fi
     fi
+
+    # Start tomcat
+    $@ > /dev/null 2>&1
+
+    # Give time for tomcat to start
+    echo
+    echo '**************************************'
+    echo "Waiting for Tomcat to start before"
+    echo "checking upgrade/initialization status"
+    echo '**************************************'
+    echo
+    sleep 5
+
+
+    # Login to Metacat Admin and start a session (cookie.txt)
+    curl -X POST \
+        --data "loginAction=Login&configureType=login&processForm=true&password=${ADMINPASS}&username=${ADMIN}" \
+        --cookie-jar ./cookie.txt http://localhost:8080/${METACAT_APP_CONTEXT}/admin > login_result.txt 2>&1
+
+    #[ $(grep "You must log in" login_result.txt| wc -l) -eq 0 ] || (echo "Administrator not logged in!!" && exit -4)
+
+    ## If the DB needs to be updated run the migration scripts
+    DB_CONFIGURED=`grep "configureType=database" login_result.txt | wc -l`
+    if [ $DB_CONFIGURED -ne 0 ];
+    then
+
+        # Run the database initialization to create or upgrade tables
+        # /${METACAT_APP_CONTEXT}/admin?configureType=database must have an authenticated session, then run
+        curl -X POST --cookie ./cookie.txt \
+            --data "configureType=database&processForm=true" \
+            http://localhost:8080/${METACAT_APP_CONTEXT}/admin > /dev/null 2>&1
+
+        # Validate the database should be configured
+        curl -X POST --cookie ./cookie.txt \
+            --data "configureType=configure&processForm=false" \
+            http://localhost:8080/${METACAT_APP_CONTEXT}/admin > /dev/null 2>&1
+
+        echo
+        echo '***********************************'
+        echo "Upgraded/Initialized the metacat DB"
+        echo '***********************************'
+        echo
+    fi
+
 
 fi
 

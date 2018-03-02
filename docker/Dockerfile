@@ -5,7 +5,6 @@ ARG METACAT_VERSION=2.8.7
 ENV METACAT_APP_CONTEXT=metacat
 
 ADD metacat-bin-${METACAT_VERSION}.tar.gz /tmp
-COPY config /config
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         vim \
@@ -14,6 +13,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war /usr/local/tomcat/webapps
 
 RUN mkdir -p /var/metacat
+
+COPY apply_config.py /usr/local/bin/
+RUN ln -s usr/local/bin/apply_config.py / # backwards compat
+
+COPY app.properties /app.properties
 
 ENV PATH /usr/local/bin:$PATH
 COPY docker-entrypoint.sh /usr/local/bin/
