@@ -63,7 +63,6 @@ if [ "$1" = 'catalina.sh' ]; then
 		do
     		eval echo "$line" >> ${APP_PROPERTIES_FILE}.sub
 		done < "$APP_PROPERTIES_FILE"
-		cat ${APP_PROPERTIES_FILE}.sub
         apply_config.py ${APP_PROPERTIES_FILE}.sub $DEFAULT_PROPERTIES_FILE
 
         echo
