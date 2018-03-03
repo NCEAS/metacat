@@ -17,6 +17,9 @@ RUN mkdir -p /var/metacat
 COPY apply_config.py /usr/local/bin/
 RUN ln -s usr/local/bin/apply_config.py / # backwards compat
 
+COPY apply_context.py /usr/local/bin/
+RUN ln -s usr/local/bin/apply_context.py / # backwards compat
+
 COPY app.properties /app.properties
 
 ENV PATH /usr/local/bin:$PATH
