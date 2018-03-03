@@ -31,7 +31,7 @@ Each metacat release will also have a version of the image pushed to
 
 This example will start and link a postgres database, a secure apache web server
 with Let's Encrypt certificates installed, and a Metacat instance. The
-`docker-compose.yml` file in the docker directory shows how these three
+`docker-compose.yaml` file in the docker directory shows how these three
 containers are composed to create a functioning Metacat application, but other
 arrangements are possible.  Configuration is through the included environment
 file `metacat.env`, which must be configured with defaults for your environment.
@@ -73,7 +73,7 @@ file `metacat.env`, which must be configured with defaults for your environment.
     # The context directory for the metacat servlet
     METACAT_APP_CONTEXT=metacat
 
-The `docker-compose.yml` file incorporates these environment variables directly into the
+The `docker-compose.yaml` file incorporates these environment variables directly into the
 containers that are launched; alternatively, you can use any of the mechanisms that Docker
 supports to inject environment into the container.
 
