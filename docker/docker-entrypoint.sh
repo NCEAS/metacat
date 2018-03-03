@@ -15,13 +15,26 @@ if [ "$1" = 'catalina.sh' ]; then
       unzip webapps/metacat-index.war -d webapps/metacat-index
     fi
 
+    # Check the context
+    if [ "${METACAT_WAR}" != "${METACAT_DEFAULT_WAR}" ] &&
+       [ -f $METACAT_DEFAULT_WAR ];
+    then
+        # Move the application to match the context
+        echo "Changing context to ${METACAT_APP_CONTEXT}"
+        mv $METACAT_DEFAULT_WAR $METACAT_WAR
+
+    fi
+
     # Expand the WAR file
     if [ ! -d $METACAT_DIR ];
     then
         unzip  $METACAT_WAR -d $METACAT_DIR
     fi
 
-    #Make sure all default directories are available
+    # change the context in the web.xml file
+    apply_context.py $METACAT_DIR/WEB-INF/web.xml metacat ${METACAT_APP_CONTEXT}
+
+    # Make sure all default directories are available
     mkdir -p /var/metacat/data \
         /var/metacat/inline-data \
         /var/metacat/documents \
@@ -59,10 +72,10 @@ if [ "$1" = 'catalina.sh' ]; then
     APP_PROPERTIES_FILE=${APP_PROPERTIES_FILE:-/app.properties}
     if [ -s $APP_PROPERTIES_FILE ];
     then
-		while read line
-		do
-    		eval echo "$line" >> ${APP_PROPERTIES_FILE}.sub
-		done < "$APP_PROPERTIES_FILE"
+        while read line
+        do
+            eval echo "$line" >> ${APP_PROPERTIES_FILE}.sub
+        done < "$APP_PROPERTIES_FILE"
         apply_config.py ${APP_PROPERTIES_FILE}.sub $DEFAULT_PROPERTIES_FILE
 
         echo
@@ -163,6 +176,5 @@ if [ "$1" = 'catalina.sh' ]; then
 
 fi
 
-#exec "$@"
 exec tail -f /usr/local/tomcat/logs/catalina.out
 
