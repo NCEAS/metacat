@@ -1,0 +1,27 @@
+version: '2'
+services:
+  proxy:
+    image: sashee/letsencrypt-proxy-docker
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - angular
+    networks:
+      - proxy
+    environment:
+      # Set your host
+      #- HOST=<yourhost>
+      - PORT=80
+      # Set your email
+      #- EMAIL=<your email>
+      # Turn on production mode
+      #- MODE=PRODUCTION
+    links:
+      - angular:proxied
+  angular:
+    image: thanhson1085/angular-admin-seed
+    networks:
+      - proxy
+networks:
+  proxy:
