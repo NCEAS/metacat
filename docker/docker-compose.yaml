@@ -1,0 +1,60 @@
+version: '2'
+
+networks:
+  mcnet:
+    driver: bridge
+
+volumes:
+  pgdata:
+    driver: local
+  webdata:
+    driver: local
+  lecerts:
+    driver: local
+
+services:
+  proxy:
+    hostname: apache
+    image: apache-le-proxy:0.1.2
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - lecerts:/etc/letsencrypt
+    depends_on:
+      - webapp
+    networks:
+      - mcnet
+    env_file:
+      - metacat.env
+    links:
+      - webapp:proxied
+  webapp:
+    hostname: metacat
+    image: metacat:2.8.7
+    depends_on:
+      - postgres
+    networks:
+      - mcnet
+    ports:
+      - '8080:8080'
+      - '8009:8009'
+    volumes:
+      - webdata:/var/metacat
+    env_file:
+      - metacat.env
+    links:
+      - postgres
+  postgres:
+    hostname: postgres
+    image: postgres
+    networks:
+      - mcnet
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/pgdata
+    env_file:
+      - metacat.env
+    environment:
+      PGDATA: '/pgdata'
