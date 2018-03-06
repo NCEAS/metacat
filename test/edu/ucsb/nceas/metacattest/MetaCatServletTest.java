@@ -47,19 +47,10 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * A JUnit test for testing Step class processing
  */
 public class MetaCatServletTest extends MCTestCase {
-	private static String metacatURL;
 	private MetacatClient metacat = null;
 	private String serialNumber;
 
-	/* Initialize properties */
-	static {
-		try {
-			metacatURL = PropertyService.getProperty("test.metacatUrl");
-		} catch (PropertyNotFoundException pnfe) {
-			System.err.println("Could not get property in static block: "
-					+ pnfe.getMessage());
-		}
-	}
+
 
 	/**
 	 * Constructor to build the test
@@ -87,7 +78,7 @@ public class MetaCatServletTest extends MCTestCase {
 	 */
 	public void setUp() {
 		try {
-			metacat = (MetacatClient) MetacatFactory.createMetacatConnection(metacatURL);
+			metacat = (MetacatClient) MetacatFactory.createMetacatConnection(metacatUrl);
 		} catch (MetacatInaccessibleException e) {
 			fail("Could not initialize MetacatClient: " + e.getMessage());
 			e.printStackTrace();

@@ -54,14 +54,12 @@ import java.io.File;
 public class OnlineDataAccessTest
     extends MCTestCase {
 
-    private static String metacatUrl;
     private static String username;
 	private static String password;
 	private static String anotheruser;
 	private static String anotherpassword;
 	static {
 		try {
-		    metacatUrl = PropertyService.getProperty("test.metacatUrl");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 			anotheruser = PropertyService.getProperty("test.mcAnotherUser");

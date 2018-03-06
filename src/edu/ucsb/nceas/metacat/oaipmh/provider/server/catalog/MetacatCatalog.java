@@ -137,7 +137,8 @@ public class MetacatCatalog extends AbstractCatalog {
         metacatURL = SystemUtil.getServletURL();
       }
       else {
-        metacatURL = properties.getProperty("test.metacatUrl");
+        //metacatURL = properties.getProperty("test.metacatUrl");
+        metacatURL = SystemUtil.getServletURL();
       }
       
       logger.warn("metacatURL: " + metacatURL);
