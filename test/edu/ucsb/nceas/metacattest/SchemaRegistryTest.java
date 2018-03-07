@@ -46,6 +46,7 @@ import edu.ucsb.nceas.metacat.client.MetacatException;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.UtilException;
@@ -57,14 +58,12 @@ import junit.framework.TestSuite;
  */
 public class SchemaRegistryTest extends MCTestCase {
 
-	private static String metacatUrl;
 	private static String metacatDeployDir;
 	private static String username;
 	private static String password;
 	static {
 		try {
-			metacatUrl = PropertyService.getProperty("test.metacatUrl");
-			metacatDeployDir = PropertyService.getProperty("test.metacatDeployDir");
+			metacatDeployDir = PropertyService.getProperty("application.deployDir");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 		} catch (PropertyNotFoundException pnfe) {
@@ -768,7 +767,7 @@ public class SchemaRegistryTest extends MCTestCase {
 	 * @param documentLocation
 	 *            the path of the document to read.
 	 * @return a string holding the contents of the document with the contextUrl
-	 *         token replaced by the test.contextUrl property
+	 *         token replaced by the context url
 	 */
 	private String getTestDocument(String documentLocation) throws IOException,
 			PropertyNotFoundException {
@@ -779,7 +778,8 @@ public class SchemaRegistryTest extends MCTestCase {
 			throw new IOException("Error reading file to string: " +  ue.getMessage());
 		}
 
-		String contextUrl = PropertyService.getProperty("test.contextUrl");
+		String contextUrl = SystemUtil.getContextURL();
+		//System.out.println("The context url is ========================"+contextUrl);
 		testDocument = testDocument.replaceAll("@contextUrl@", contextUrl);
 
 		return testDocument;
