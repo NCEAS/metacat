@@ -153,6 +153,16 @@ public class XMLSchemaService extends BaseService {
 	}
 	
 	/**
+	 * Gets the registered schema list without the name space. This list 
+	 * holds schemas without the name space that exist in the xml_catalog table 
+	 * that also have associated files in the schema directory.
+	 * @return a list of XMLNoNamespaceSchema objects
+	 */
+	public Vector<XMLNoNamespaceSchema> getRegisteredNoNamespaceSchemaList() {
+	    return registeredNoNamespaceSchemaList;
+	}
+	
+	/**
 	 * Gets the name space and location string. This is a convenience method.
 	 * The string will have space delimited namespaces and locations that are
 	 * held in the registered schema list. This is the old way Metacat worked.
@@ -413,7 +423,7 @@ public class XMLSchemaService extends BaseService {
 		boolean firstRowWithoutFormatid = true;
 		boolean firstRowWithFormatid = true;
 		nameSpaceAndLocationStringWithoutFormatId = "";
-		
+		formatId_NamespaceLocationHash = new Hashtable<String, String>();
 		for (XMLSchema xmlSchema : registeredSchemaList) {
 		    String formatId = xmlSchema.getFormatId();
 		    if( formatId == null ||formatId.trim().equals("")) {
