@@ -198,4 +198,4 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
     SELECT 'Schema', 'http://www.opengis.net/gml', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gml.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.opengis.net/gml');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.8.7',1,CURRENT_DATE);
+  VALUES ('2.9.0',1,CURRENT_DATE);
