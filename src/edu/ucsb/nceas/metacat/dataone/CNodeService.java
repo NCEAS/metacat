@@ -1827,6 +1827,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       try {
           lock = HazelcastService.getInstance().getLock(pid.getValue());
           lock.lock();
+          objectExists(pid);
           // are we allowed?
           boolean isAllowed = false;
           isAllowed = isAdminAuthorized(session);
