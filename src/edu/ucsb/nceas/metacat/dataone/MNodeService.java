@@ -771,6 +771,8 @@ public class MNodeService extends D1NodeService
                             sysmeta.getIdentifier().getValue()                    +
                             "\n" + "\tSource NodeReference ="                     +
                             sourceNode.getValue());
+        } else {
+            throw new InvalidRequest("2153", "The provided session or systemmetdata or sourceNode should NOT be null.");
         }
         boolean result = false;
         String nodeIdStr = null;

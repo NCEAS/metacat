@@ -1820,6 +1820,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       if (!isValidIdentifier(pid)) {
           throw new InvalidRequest("4891", "The provided identifier is invalid.");
       }
+      if (session == null) {
+          throw new InvalidToken("4894", "Session is required to WRITE to the Node.");
+      }
       logMetacat.debug("CN.create -start to create the object with pid "+pid.getValue());
       // The lock to be used for this identifier
       Lock lock = null;
