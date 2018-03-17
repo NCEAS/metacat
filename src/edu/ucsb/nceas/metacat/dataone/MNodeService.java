@@ -634,10 +634,12 @@ public class MNodeService extends D1NodeService
         if (session == null) {
           throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
         }
+        
         // verify the pid is valid format
         if (!isValidIdentifier(pid)) {
             throw new InvalidRequest("1102", "The provided identifier is invalid.");
         }
+        objectExists(pid);
         // set the submitter to match the certificate
         sysmeta.setSubmitter(session.getSubject());
         // set the originating node
@@ -689,9 +691,9 @@ public class MNodeService extends D1NodeService
             if (idExists) {
                     throw new InvalidSystemMetadata("1180", 
                               "The series identifier " + sid.getValue() +
-                              " is already used by another object and" +
+                              " is already used by another object and " +
                               "therefore can not be used for this object. Clients should choose" +
-                              "a new identifier that is unique and retry the operation or " +
+                              " a new identifier that is unique and retry the operation or " +
                               "use CN.reserveIdentifier() to reserve one.");
                 
             }
@@ -700,6 +702,20 @@ public class MNodeService extends D1NodeService
                 throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
             }
         }
+        
+        boolean allowed = false;
+        try {
+          allowed = isAuthorized(session, pid, Permission.WRITE);
+                
+        } catch (NotFound e) {
+          // The identifier doesn't exist, writing should be fine.
+          allowed = true;
+        }
+        
+        if(!allowed) {
+            throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
+        }
+        logMetacat.debug("Allowed to create: " + pid.getValue());
 
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
@@ -755,6 +771,8 @@ public class MNodeService extends D1NodeService
                             sysmeta.getIdentifier().getValue()                    +
                             "\n" + "\tSource NodeReference ="                     +
                             sourceNode.getValue());
+        } else {
+            throw new InvalidRequest("2153", "The provided session or systemmetdata or sourceNode should NOT be null.");
         }
         boolean result = false;
         String nodeIdStr = null;
@@ -785,7 +803,13 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("2152", msg);
             
         }
-
+       
+        // only allow cns call this method
+        boolean  allowed = isCNAdmin(session);
+        if(!allowed) {
+            throw new NotAuthorized("2152", "The client is not a coordinate node. Only a coordinate node is allowed to call the replicate method : ");
+        }
+        logMetacat.debug("Allowed to replicate: " + pid.getValue());
 
         // get the local node id
         try {
@@ -913,6 +937,7 @@ public class MNodeService extends D1NodeService
                 if ( localId == null ) {
                     // TODO: this will fail if we already "know" about the identifier
                     // FIXME: see https://redmine.dataone.org/issues/2572
+                    objectExists(pid);
                     retPid = super.create(session, pid, object, sysmeta);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
