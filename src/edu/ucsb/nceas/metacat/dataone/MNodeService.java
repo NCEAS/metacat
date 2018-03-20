@@ -217,6 +217,7 @@ public class MNodeService extends D1NodeService
     
     // shared executor
     private static ExecutorService executor = null;
+    private boolean needSync = true;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -246,6 +247,13 @@ public class MNodeService extends D1NodeService
         
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
+
+        try {
+            needSync = (new Boolean(PropertyService.getProperty("dataone.nodeSynchronize"))).booleanValue();
+        } catch (PropertyNotFoundException e) {
+            // TODO Auto-generated catch block
+            logMetacat.warn("MNodeService.constructor : can't find the property to indicate if the memeber node need to be synchronized. It will use the default value - true.");
+        }
     }
 
     /**
@@ -2794,7 +2802,8 @@ public class MNodeService extends D1NodeService
           HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
       }
       
-      if(success) {
+      if(success && needSync) {
+          logMetacat.debug("MNodeService.updateSystemMetadata - the cn needs to be notified that the system metadata of object " +pid.getValue()+" has been changed ");
           this.cn = D1Client.getCN();
           //TODO
           //notify the cns the synchornize the new system metadata.
