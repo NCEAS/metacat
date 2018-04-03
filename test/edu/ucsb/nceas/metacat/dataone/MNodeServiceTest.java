@@ -911,7 +911,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
   public void testReplicate() {
       printTestHeader("testReplicate");
       try {
-        Session session = getTestSession();
+        Session session = getCNSession();
         Identifier guid = new Identifier();
         guid.setValue("testReplicate." + System.currentTimeMillis());
         System.out.println("======================the id need to be replicated is "+guid.getValue());
