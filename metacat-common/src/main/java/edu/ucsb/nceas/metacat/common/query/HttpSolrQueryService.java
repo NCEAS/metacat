@@ -40,7 +40,7 @@ import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrServerException;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.params.SolrParams;
@@ -52,6 +52,7 @@ import org.apache.solr.schema.TextField;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.w3c.dom.Attr;
@@ -82,13 +83,13 @@ public class HttpSolrQueryService extends SolrQueryService {
     private static final String TRUE = "true";
     
     private String solrServerBaseURL = null;
-    private CommonsHttpSolrServer httpSolrServer = null;
+    private HttpSolrClient httpSolrServer = null;
     private static Log log = LogFactory.getLog(HttpSolrQueryService.class);
     /**
      * Constructor
      * @param httpSolrServer
      */
-    public HttpSolrQueryService(CommonsHttpSolrServer httpSolrServer) {
+    public HttpSolrQueryService(HttpSolrClient httpSolrServer) {
         if(httpSolrServer == null) {
             throw new NullPointerException("HttpSolrQueryService.constructor - The httpSolrServer parameter can't be null");
         }
@@ -132,8 +133,8 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @throws NotFound 
      * @throws Exception
      */
-    public  InputStream query(SolrParams query, Set<Subject>subjects) throws IOException, NotFound {
-        boolean xmlFormat = false;
+    public  InputStream query(SolrParams query, Set<Subject>subjects) throws IOException, NotFound, UnsupportedType, SolrServerException {
+        /*boolean xmlFormat = false;
         String queryString = ClientUtils.toQueryString(query, xmlFormat);
         log.info("==========HttpSolrQueryService.query - the query string after transforming from the SolrParams to the string "+queryString);
         StringBuffer accessFilter = generateAccessFilterParamsString(subjects);
@@ -152,7 +153,21 @@ public class HttpSolrQueryService extends SolrQueryService {
         queryString = solrServerBaseURL+SELECTIONPHASE+queryString;
         log.info("==========HttpSolrQueryService.query - the final url for querying the solr http server is "+queryString);
         URL url = new URL(queryString);    
-        return url.openStream();
+        return url.openStream();*/
+        InputStream inputStream = null;
+        String wt = query.get(WT);
+        query = appendAccessFilterParams(query, subjects);
+        SolrQueryResponseTransformer solrTransformer = new SolrQueryResponseTransformer(null);
+        // handle normal and skin-based queries
+        if (isSupportedWT(wt)) {
+            // just handle as normal solr query
+            //reload the core before query. Only after reloading the core, the query result can reflect the change made in metacat-index module.
+            QueryResponse response = httpSolrServer.query(query);
+            inputStream = solrTransformer.transformResults(query, response, wt);
+        } else {
+            throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type "+wt+" in the solr query is not supported");
+        }
+        return inputStream;
         //throw new NotImplemented("0000", "HttpSolrQueryService - the method of  query(SolrParams query, Set<Subject>subjects) is not for the HttpSolrQueryService. We donot need to implemente it");
     }
     

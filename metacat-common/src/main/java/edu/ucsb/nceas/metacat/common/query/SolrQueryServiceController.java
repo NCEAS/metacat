@@ -27,11 +27,12 @@ import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.solr.client.solrj.SolrServer;
+
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.schema.IndexSchema;
@@ -61,7 +62,7 @@ public class SolrQueryServiceController {
      * Private consctructor
      */
     private SolrQueryServiceController() throws UnsupportedType, ParserConfigurationException, IOException, SAXException, NotFound {
-        SolrServer solrServer = SolrServerFactory.createSolrServer();
+        SolrClient solrServer = SolrServerFactory.createSolrServer();
         if(solrServer instanceof EmbeddedSolrServer) {
             isEmbeddedSolrServer = true;
             EmbeddedSolrServer embeddedServer = (EmbeddedSolrServer) solrServer;
@@ -70,7 +71,7 @@ public class SolrQueryServiceController {
             embeddedQueryService = new EmbeddedSolrQueryService(embeddedServer, coreContainer, collectionName);
         } else {
             isEmbeddedSolrServer = false;
-            CommonsHttpSolrServer httpServer = (CommonsHttpSolrServer)solrServer;
+            HttpSolrClient httpServer = (HttpSolrClient)solrServer;
             httpQueryService = new HttpSolrQueryService(httpServer);
         }
     }

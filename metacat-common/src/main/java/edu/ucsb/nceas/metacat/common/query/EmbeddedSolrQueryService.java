@@ -84,7 +84,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
         if(solrCore == null) {
             throw new NotFound("0000","EmbeddedSolrQueryService.constructor - There is no SolrCore named "+collectionName+".");
         }
-        schema = solrCore.getSchema();
+        schema = solrCore.getLatestSchema();
         fieldMap = schema.getFields();
     }
     /**

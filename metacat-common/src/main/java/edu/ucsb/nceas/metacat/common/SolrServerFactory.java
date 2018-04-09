@@ -25,9 +25,9 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.core.CoreContainer;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.UnsupportedType;
@@ -63,17 +63,17 @@ public class SolrServerFactory {
 	
 	private static CoreContainer coreContainer = null;
 	private static String collectionName = null;
-	private static SolrServer solrServer = null;
+	private static SolrClient solrServer = null;
 	//private static String solrServerBaseURL = null;
 
-	public static SolrServer createSolrServer() throws ParserConfigurationException, IOException, SAXException, UnsupportedType   {
+	public static SolrClient createSolrServer() throws ParserConfigurationException, IOException, SAXException, UnsupportedType   {
 	    if(solrServer == null) {
 	        String className = Settings.getConfiguration().getString(SOLR_SERVER_CLASSNAME_PROPERTY_NAME);
 	        if (className != null && className.equals(EMBEDDEDSERVERCLASS)) {
 	            generateEmbeddedServer();
 	        } else if (className != null && className.equals(HTTPSERVERCLASS)) {
 	            String solrServerBaseURL = Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
-	            solrServer = new CommonsHttpSolrServer(solrServerBaseURL);
+	            solrServer = new HttpSolrClient.Builder(solrServerBaseURL).build();
 	        } else {
 	            throw new UnsupportedType("0000","SolrServerFactory.createSolrServer - MetacatIndex doesn't support this solr server type: "+className);
 	        }
@@ -86,8 +86,8 @@ public class SolrServerFactory {
         log.info("The configured solr home from properties is " + solrHomeDir);
         String configFileName = Settings.getConfiguration().getString(SOLR_CONFIG_FILE_NAME_PROPERTY_NAME);
         File configFile = new File(solrHomeDir, configFileName);
-        coreContainer = new CoreContainer(solrHomeDir, configFile);
-        coreContainer.load(solrHomeDir, configFile);
+        coreContainer = new CoreContainer(solrHomeDir);
+        coreContainer.load();
         collectionName = getCollectionName();
         solrServer = new EmbeddedSolrServer(coreContainer, collectionName);
 	}
