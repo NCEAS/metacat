@@ -28,7 +28,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.log4j.PropertyConfigurator;
 import org.apache.commons.logging.LogFactory;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.springframework.context.ApplicationContext;
@@ -152,7 +152,7 @@ public class ApplicationController implements Runnable {
         solrIndexes = (List<SolrIndex>) context.getBean(SOLRINDEXES);
         
         // use factory to create the correct impl
-    	SolrServer solrServer = null;
+    	SolrClient solrServer = null;
 		try {
 			solrServer = SolrServerFactory.createSolrServer();
 		} catch (Exception e) {
