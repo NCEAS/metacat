@@ -2270,7 +2270,8 @@ public abstract class D1NodeService {
 
           try {
               // archive the document
-              DocumentImpl.delete(localId, null, null, null, false);
+              boolean ignoreRev = false;
+              DocumentImpl.delete(localId, ignoreRev, null, null, null, false);
               if(log) {
                    try {
                       EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
