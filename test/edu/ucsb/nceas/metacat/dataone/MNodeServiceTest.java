@@ -590,6 +590,57 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
           assertTrue(result.getArchived());
           System.out.println("the identifier is ==================="+pid.getValue());
+          
+          //test to archive an obsoleted object
+          Identifier guid1 = new Identifier();
+          guid1.setValue("testArchive." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
+          sysmeta.setArchived(false);
+          MNodeService.getInstance(request).create(session, guid1, object, sysmeta);
+          
+          Identifier guid2 = new Identifier();
+          guid2.setValue("testArchive2." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata newSysMeta = createSystemMetadata(guid2, session.getSubject(), object);
+          newSysMeta.setObsoletes(guid1);
+          newSysMeta.setArchived(false);
+          MNodeService.getInstance(request).update(session, guid1, object, guid2, newSysMeta);
+          System.out.println("The object "+guid1.getValue()+" has been updated by the object "+guid2.getValue());
+          MNodeService.getInstance(request).archive(session, guid1);
+          SystemMetadata sys1= MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+          assertTrue(sys1.getIdentifier().equals(guid1));
+          assertTrue(sys1.getArchived() == true);
+          SystemMetadata sys2= MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+          assertTrue(sys2.getIdentifier().equals(guid2));
+          assertTrue(sys2.getArchived() == false);
+          
+          
+          //test to archive an obsoleted object again (by use the updateSystemMetadata methdo)
+          Identifier guid3 = new Identifier();
+          guid3.setValue("testArchive3." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(guid3, session.getSubject(), object);
+          sysmeta.setArchived(false);
+          MNodeService.getInstance(request).create(session, guid3, object, sysmeta);
+          
+          Identifier guid4 = new Identifier();
+          guid4.setValue("testArchive4." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          newSysMeta = createSystemMetadata(guid4, session.getSubject(), object);
+          newSysMeta.setObsoletes(guid3);
+          newSysMeta.setArchived(false);
+          MNodeService.getInstance(request).update(session, guid3, object, guid4, newSysMeta);
+          System.out.println("The object "+guid3.getValue()+" has been updated by the object "+guid4.getValue());
+          SystemMetadata sysFromServer = MNodeService.getInstance(request).getSystemMetadata(session, guid3);
+          sysFromServer.setArchived(true);
+          MNodeService.getInstance(request).updateSystemMetadata(session, guid3, sysFromServer);
+          SystemMetadata sys3= MNodeService.getInstance(request).getSystemMetadata(session, guid3);
+          assertTrue(sys3.getIdentifier().equals(guid3));
+          assertTrue(sys3.getArchived() == true);
+          SystemMetadata sys4= MNodeService.getInstance(request).getSystemMetadata(session, guid4);
+          assertTrue(sys4.getIdentifier().equals(guid4));
+          assertTrue(sys4.getArchived() == false);
   }
 
   /**
