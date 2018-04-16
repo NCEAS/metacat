@@ -78,8 +78,8 @@
   <lib dir="${solr.install.dir:../../../..}/contrib/clustering/lib/" regex=".*\.jar" />
   <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-clustering-\d.*\.jar" />
 
-  <lib dir="/Users/tao/Downloads/solr-7.3.0/contrib/langid/lib/" regex=".*\.jar" />
-  <lib dir="/Users/tao/Downloads/solr-7.3.0/dist/" regex="solr-langid-\d.*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/contrib/langid/lib/" regex=".*\.jar" />
+  <lib dir="${solr.install.dir:../../../..}/dist/" regex="solr-langid-\d.*\.jar" />
 
   <lib dir="${solr.install.dir:../../../..}/contrib/velocity/lib" regex=".*\.jar" />
   <!-- browse-resources must come before solr-velocity JAR in order to override localized resources -->
