@@ -119,6 +119,7 @@
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-langid</artifactId>
             <version>7.3.0</version>
+            <scope>runtime</scope>
         </dependency>
 	</dependencies>
 	<build>
