@@ -881,5 +881,6 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    <fieldType name="pdates" class="solr.DatePointField" docValues="true" multiValued="true"/>
    <fieldType name="plongs" class="solr.LongPointField" docValues="true" multiValued="true"/>
    <fieldType name="pdoubles" class="solr.DoublePointField" docValues="true" multiValued="true"/>
+   <field name="language" type="string" indexed="true" stored="true"/>
 </schema>
 
