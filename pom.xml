@@ -39,6 +39,12 @@
 			<groupId>edu.ucsb.nceas</groupId>
 			<artifactId>utilities</artifactId>
 			<version>2.0.0</version>
+			<exclusions>
+			     <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<dependency>
 			<groupId>org.ecoinformatics.eml</groupId>
@@ -108,7 +114,11 @@
 		        	<groupId>org.jibx</groupId>
 					<artifactId>maven-jibx-plugin</artifactId>
 		        </exclusion>
-			</exclusions>
+                 <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
     	<dependency>
             <groupId>edu.ucsb.nceas.metacat.common</groupId>
@@ -220,12 +230,22 @@
 					<groupId>com.hp.hpl.jena</groupId>
 					<artifactId>jena</artifactId>
 				</exclusion>
+                 <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
 			</exclusions>
 		</dependency>
 		<dependency>
 			<groupId>edu.ucsb.nceas</groupId>
 			<artifactId>ezid</artifactId>
 			<version>1.0.1</version>
+			<exclusions>
+                 <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpclient</artifactId>
+                </exclusion>
+            </exclusions>
 		</dependency>
 		<!-- geotools -->
 		<dependency>
