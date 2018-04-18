@@ -68,6 +68,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
      * @throws NotFound 
      */
     public EmbeddedSolrQueryService(EmbeddedSolrServer solrServer, CoreContainer coreContainer, String collectionName) throws NotFound {
+        //System.out.println("+++++++++++++++++++++++++++++++++++= created embededsolrqueryservice.");
         if(solrServer == null) {
             throw new NullPointerException("EmbeddedSolrQueryService.constructor - the EmbeddedSolrServer parameter can't be null.");
         }
@@ -121,7 +122,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
         if (isSupportedWT(wt)) {
             // just handle as normal solr query
             //reload the core before query. Only after reloading the core, the query result can reflect the change made in metacat-index module.
-            coreContainer.reload(collectionName);
+            coreContainer.load();
             QueryResponse response = solrServer.query(query);
             inputStream = solrTransformer.transformResults(query, response, wt);
         } else {

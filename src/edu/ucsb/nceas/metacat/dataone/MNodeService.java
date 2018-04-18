@@ -2001,6 +2001,7 @@ public class MNodeService extends D1NodeService
                 return MetacatSolrIndex.getInstance().query(query, subjects);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
+                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             } 
 		}
