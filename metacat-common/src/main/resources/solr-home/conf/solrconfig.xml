@@ -1148,6 +1148,8 @@
 
        See http://wiki.apache.org/solr/GuessingFieldTypes
     -->
+   <schemaFactory class="ClassicIndexSchemaFactory" />  
+  
   <updateRequestProcessorChain name="files-update-processor">
     <!-- UUIDUpdateProcessorFactory will generate an id if none is present in the incoming document -->
     <processor class="solr.UUIDUpdateProcessorFactory" />
@@ -1180,7 +1182,7 @@
         <str>yyyy-MM-dd</str>
       </arr>
     </processor>
-    <processor class="solr.AddSchemaFieldsUpdateProcessorFactory">
+    <!--<processor class="solr.AddSchemaFieldsUpdateProcessorFactory">
       <str name="defaultFieldType">strings</str>
       <lst name="typeMapping">
         <str name="valueClass">java.lang.Boolean</str>
@@ -1199,7 +1201,7 @@
         <str name="valueClass">java.lang.Number</str>
         <str name="fieldType">pdoubles</str>
       </lst>
-    </processor>
+    </processor>-->
 
 
     <processor class="org.apache.solr.update.processor.LangDetectLanguageIdentifierUpdateProcessorFactory">
