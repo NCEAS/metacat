@@ -186,15 +186,18 @@
                         </div>
                     </div>
                 </div>
-                <!-- Data Set Contact(s) -->
-                <div class="control-group">
-                    <label class="control-label">Data Set Contacts</label>
-                    <div class="controls">
-                        <div class="controls-well">
-                            <xsl:apply-templates select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact" />
+                <!-- Data Set Contact(s) 
+                     Optional, repeatable -->
+                <xsl:if test="/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact">
+                    <div class="control-group">
+                        <label class="control-label">Data Set Contacts</label>
+                        <div class="controls">
+                            <div class="controls-well">
+                                <xsl:apply-templates select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact" />
+                            </div>
                         </div>
                     </div>
-                </div>
+                </xsl:if>
                 <!-- Cited responsible parties-->
                 <div class="control-group">
                     <label class="control-label">Responsible Parties</label>
