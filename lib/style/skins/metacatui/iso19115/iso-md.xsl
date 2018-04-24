@@ -135,15 +135,15 @@
             </thead>
             <tbody>
                 <xsl:for-each select="$contentInfo/gmd:MD_CoverageDescription | $contentInfo/gmd:MI_CoverageDescription">
-                        <tr>
-                            <td><xsl:value-of select="./gmd:attributeDescription/gco:RecordType/text()" /></td>
-                            <td>
-                                <xsl:for-each select="./gmd:dimension">
-                                    <!-- Optional, either MD_RangeDimension or MD_Band or MI_Band -->
-                                    <xsl:apply-templates />
-                                </xsl:for-each>
-                            </td>
-                        </tr>
+                    <tr>
+                        <td><xsl:value-of select="./gmd:attributeDescription/gco:RecordType/text()" /></td>
+                        <td>
+                            <xsl:for-each select="./gmd:dimension">
+                                <!-- Optional, either MD_RangeDimension or MD_Band or MI_Band -->
+                                <xsl:apply-templates />
+                            </xsl:for-each>
+                        </td>
+                    </tr>
                 </xsl:for-each>
             </tbody>
         </table>
