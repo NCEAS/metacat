@@ -216,7 +216,7 @@
             <div class="control-group entity">
                 <h4>Attributes</h4>
                 <xsl:call-template name="MD_contentInfo">
-                    <xsl:with-param name="contentInfo" select="./gmd:contentInfo">
+                    <xsl:with-param name="contentInfo" select="./gmd:contentInfo" />
                 </xsl:call-template>
             </div>
             <xsl:if test=".//gmd:metadataConstraints">
