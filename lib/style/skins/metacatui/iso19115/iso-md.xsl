@@ -148,29 +148,35 @@
             </tbody>
         </table>
     </xsl:template>
-    <!-- Either contains sequenceIdentifier or descriptor or both -->
     <xsl:template match="gmd:MD_RangeDimension">
+        <!-- Either contains sequenceIdentifier or descriptor or both -->
+        <!-- No units -->
         <xsl:apply-templates select="./gmd:sequenceIdentifier/*/text()" />
         <xsl:apply-templates select="./gmd:descriptor/*/text()" />
     </xsl:template>
     <xsl:template match="gmd:MD_Band">
+        <!-- Has units -->
         <xsl:value-of select="./gmd:descriptor/*/text()" />
         <xsl:apply-templates select="./gmd:units" />
     </xsl:template>
     <xsl:template match="gmd:MI_Band">
+        <!--  Has units -->
         <xsl:value-of select="./gmd:descriptor/*/text()" />
         <xsl:apply-templates select="./gmd:units" />
     </xsl:template>
     <xsl:template match="gmd:units">
-        <xsl:choose>
-            <!--  Prefer gml:name over gml:identifier if gml:name is present -->
-            <xsl:when test="/*/gml:name">
-                <xsl:value-of select="./*/gml:name/text()" />
-            </xsl:when>
-            <xsl:otherwise>
-                <xsl:value-of select="./*/gml:identifier/text()" />
-            </xsl:otherwise>
-        </xsl:choose>
+        <xsl:variable name="unit">
+            <xsl:choose>
+                <!--  Prefer gml:name over gml:identifier if gml:name is present -->
+                <xsl:when test="/*/gml:name">
+                    <xsl:value-of select="./*/gml:name/text()" />
+                </xsl:when>
+                <xsl:otherwise>
+                    <xsl:value-of select="./*/gml:identifier/text()" />
+                </xsl:otherwise>
+            </xsl:choose>
+        </xsl:variable>
+        <xsl:value-of select="concat(' (', $unit, ')')" />
     </xsl:template>
     <xsl:template match="gml:BaseUnit">
     </xsl:template>
