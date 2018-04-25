@@ -88,13 +88,18 @@ public class HttpSolrQueryService extends SolrQueryService {
     /**
      * Constructor
      * @param httpSolrServer
+     * @throws SAXException 
+     * @throws IOException 
+     * @throws ParserConfigurationException 
+     * @throws MalformedURLException 
      */
-    public HttpSolrQueryService(HttpSolrClient httpSolrServer) {
+    public HttpSolrQueryService(HttpSolrClient httpSolrServer) throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         if(httpSolrServer == null) {
             throw new NullPointerException("HttpSolrQueryService.constructor - The httpSolrServer parameter can't be null");
         }
         this.httpSolrServer = httpSolrServer;
         this.solrServerBaseURL = httpSolrServer.getBaseURL();
+        getIndexSchemaFieldFromServer();
     }
     
     /**
@@ -217,9 +222,10 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @throws SAXException
      */
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
-        //System.out.println("get filed map from server (downloading files) ==========================");
+        log.debug("get filed map from server (downloading files) ==========================");
         SolrConfig config = new SolrConfig("dataone", new InputSource(getSolrConfig())); 
         schema = new IndexSchema(config, "dataone", new InputSource(lookupSchema()));
+        log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++"+schema);
         fieldMap = schema.getFields();
     }
     
