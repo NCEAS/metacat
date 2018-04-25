@@ -794,7 +794,10 @@
 			</webinf>
 			</war -->
 		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
-		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war" excludes="WEB-INF/lib/log4j-1.2.8.jar"/>
+		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war">
+		         <exclude name="WEB-INF/lib/log4j-1.2.8.jar"/>
+		    	     <exclude name="WEB-INF/classes/log4j.properties"/>
+		     </zipfileset>
 	   </jar>
 		<copy file="${ecogrid-dir}/build/${metacat.context}-new.war"
 			tofile="${dist.dir}/${metacat.context}.war" overwrite="true" />
