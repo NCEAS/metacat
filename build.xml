@@ -886,6 +886,9 @@
 			webxml="${build.war}/web.xml">
 			<fileset dir="${war.context}" />
 			<lib dir="${war.lib}" />
+			<classes dir="${war.classes}">
+				<exclude name="log4j.properties"/>
+		    </classes>
 			<webinf dir="${war.webinf}" />
 		</war>
 	</target>
@@ -895,6 +898,7 @@
 		description="Prepare files for creating a web archive (WAR)">
 
 		<property name="war.lib" value="${build.war}/lib" />
+		<property name="war.classes" value="${build.war}/classes" />
 		<property name="war.webinf" value="${build.war}/WEB-INF" />
 		<property name="war.context"
 			value="${build.war}/${metacat.context}" />
@@ -907,6 +911,7 @@
 		<property name="war.context.templates"
 			value="${war.context}${style-common-relpath}/templates" />
 		<mkdir dir="${war.lib}" />
+		<mkdir dir="${war.classes}" />
 		<mkdir dir="${war.webinf}" />
 		<mkdir dir="${war.context}" />
 		<mkdir dir="${war.webinf.sql}" />
@@ -952,6 +957,12 @@
 				<include name="skin.configs/**" />
 			</fileset>
 		</copy>
+		<copy todir="${war.classes}" filtering="yes">
+		            <fileset dir="metacat-common/src/main/resources/solr-home/conf">
+		                <exclude name="schema.xml" />
+		            	    <exclude name="solrconfig.xml" />
+		            </fileset>
+		        </copy>
 		<copy file="lib/log4j.properties" todir="${war.webinf}"
 			filtering="yes" /> 
 		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
