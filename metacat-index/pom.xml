@@ -107,7 +107,28 @@
                                 <filtering>true</filtering>
                             </resource>
                         </resources>              
-                    </configuration>            
+                    </configuration> 
+                 </execution>
+                 <execution>
+                    <id>copy-resources-2</id>
+                    <!-- here the phase you need -->
+                    <phase>validate</phase>
+                    <goals>
+                        <goal>copy-resources</goal>
+                    </goals>
+                    <configuration>
+                        <outputDirectory>target/classes</outputDirectory>
+                        <resources>          
+                            <resource>
+                                <directory>../metacat-common/src/main/resources/solr-home/conf</directory>
+                                <excludes>
+                                    <exclude>schema.xml</exclude>
+                                    <exclude>solrconfig.xml</exclude>
+                                </excludes>
+                                <filtering>true</filtering>
+                            </resource>
+                        </resources>              
+                    </configuration> 
                  </execution>
                 </executions>
             </plugin>
