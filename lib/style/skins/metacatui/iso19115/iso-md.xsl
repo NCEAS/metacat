@@ -188,4 +188,87 @@
         <xsl:value-of select="./*/gml:identifier/text()" />
         <xsl:value-of select="./*/gml:name/text()" />
     </xsl:template>
+    <!-- gmd:MD_Distribution 
+        - gmd:distributionFormat, 0-inf ( just grab gmd:MD_Format/gmd:name for each)
+        - gmd:distributor/gmd:MD_Distributor... hold off on this for now?
+        - gmd:transferOptions 0-inf / 
+            gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()
+            and
+            gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:function/gmd:URL/gmd:CI_OnLineFunctionCode/text()
+    -->
+    <xsl:template match="gmd:MD_Distribution">
+        <table class="table table-bordered table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>URL</th>
+                    <th>Format</th>
+                </tr>
+            </thead>
+            <tbody>
+                <xsl:for-each select="./gmd:distributionFormat/gmd:MD_Format/gmd:name">
+                    <tr>
+                        <!-- Here I pop back up to the gmd:MD_Distribution to grab the 
+                        linkage. I'm doing this because the format and linkage aren't 
+                        connected in ISO but I'm choosing to assume the first name pairs
+                        with the first linkage.
+                        
+                        Also note the use of position() to grab the nth URL for the
+                        nth format. -->
+                        <td>
+                            <xsl:variable name="url" select="../../../gmd:transferOptions[position()]/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()" />
+                            <xsl:element name="a">
+                                <xsl:attribute name="href">
+                                    <xsl:value-of select="$url" />
+                                </xsl:attribute>
+                                <xsl:value-of select="$url" />
+                            </xsl:element>
+                        </td>
+                        <td><xsl:value-of select="./gco:CharacterString/text()" /></td>
+                    </tr>
+                </xsl:for-each>
+            </tbody>
+        </table>
+    </xsl:template>
+    <xsl:template match="gmd:MD_Distributor">
+                <table class="table table-bordered table-hover table-striped">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Protocol</th>
+                    <th>Application</th>
+                    <th>Address</th>
+                </tr>
+            </thead>
+            <tbody>
+                <xsl:for-each select="./gmd:distributorTransferOptions/gmd:MD_DigitalTransferOptions">
+                    <xsl:variable name="url">
+                        <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()" />
+                    </xsl:variable>
+                    <tr>
+                        <td>
+                            <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text()" />
+                        </td>
+                        <td>
+                            <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:description/gco:CharacterString/text()" />
+                        </td>
+                        <td>
+                            <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:protocol/gco:CharacterString/text()" />
+                        </td>
+                        <td>
+                            <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:applicationProfile/gco:CharacterString/text()" />
+                        </td>
+                        <td>
+                            <xsl:element name="a">
+                                <xsl:attribute name="href">
+                                    <xsl:value-of select="$url" />
+                                </xsl:attribute>
+                                <xsl:value-of select="$url" />
+                            </xsl:element>
+                        </td>
+                    </tr>
+                </xsl:for-each>
+            </tbody>
+        </table>
+    </xsl:template>
 </xsl:stylesheet>

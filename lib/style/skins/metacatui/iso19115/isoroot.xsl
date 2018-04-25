@@ -14,6 +14,26 @@
     <xsl:template match="*[local-name()='MD_Metadata'] | *[local-name()='MI_Metadata']">
         <form class="form-horizontal">
             <div class="control-group entity">
+                <!-- distributionInfo is kind tricky: You have to go pretty deep
+                     to find out if there's actually any useful information. 
+                     Here I'm making a choice to look for at least one format 
+                     with a name to check whether we should show this section at
+                     all. 
+                     
+                     Also, the distribution format isn't tied explicitly to 
+                     the transfer options so I've made a decision to assume that
+                     the first format is for the first transfer option and so on
+                     -->
+                <!-- PANGAEA's way of doing gmd:distributionInfo -->
+                <xsl:if test="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name">
+                    <h4>Distribution</h4>
+                    <xsl:apply-templates select="./gmd:distributionInfo/gmd:MD_Distribution" />
+                </xsl:if>
+                <!-- NCEI's way of doing gmd:distributionInfo -->
+                <xsl:if test="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributor/gmd:MD_Distributor/gmd:distributorTransferOptions">
+                    <h4>Alternate Data Access</h4>
+                    <xsl:apply-templates select="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributor" />
+                </xsl:if>
                 <h4>General</h4>
                 <!-- fileIdentifier 0:1 -->
                 <xsl:if test="./gmd:fileIdentifier and normalize-space(./gmd:fileIdentifier/text())!=''">
