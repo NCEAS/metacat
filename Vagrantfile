@@ -6,6 +6,7 @@ Vagrant.configure("2") do |config|
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y apache2 \
+                       libapache2-mod-jk \
                        openjdk-7-jdk \
                        postgresql \
                        postgresql-contrib \
@@ -49,6 +50,11 @@ Vagrant.configure("2") do |config|
     cd /var/lib/tomcat7/webapps/metacat/WEB-INF/scripts/bash
     PASS=`python3 -c "import bcrypt; print(bcrypt.hashpw('password', bcrypt.gensalt()))"`
     sudo bash ./authFileManager.sh useradd -h $PASS -dn "admin@localhost"
+
+    # Copy in AJP setup
+    sudo cp /metacat/vagrant/workers.properties /etc/apache2/
+    sudo cp /metacat/vagrant/jk.conf /etc/apache2/mods-available/
+    sudo service apache2 restart
 
     # Link in the folder(s) we want
     # TODO: Set this up so it runs automatically
