@@ -31,7 +31,7 @@
                 </xsl:if>
                 <!-- NCEI's way of doing gmd:distributionInfo -->
                 <xsl:if test="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributor/gmd:MD_Distributor/gmd:distributorTransferOptions">
-                    <h4>Alternate Data Access</h4>
+                    <h4>Alternate Data Access <i class="icon-cloud-download"></i></h4>
                     <xsl:apply-templates select="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributor" />
                 </xsl:if>
                 <h4>General</h4>
