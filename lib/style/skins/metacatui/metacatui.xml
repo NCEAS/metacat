@@ -35,6 +35,11 @@
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
   </doctype>
 
+  <!-- Pangaea-variant ISO 19115 metadata -->
+  <doctype publicid="http://www.isotc211.org/2005/gmd-pangaea">
+    <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
+  </doctype>
+
   <doctype publicid="-//NCEAS//login//EN">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui-login.xsl</target>
   </doctype>

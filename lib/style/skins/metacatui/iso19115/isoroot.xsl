@@ -63,7 +63,7 @@
                 <!-- TODO: hierarchyLevelName 0:∞ -->
                 <!-- Alternate identifier(s) 0:∞-->
                 <!-- gmd:identifier is an optional part of the CI_Citation element -->
-                <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:identifier">
+                <xsl:for-each select="./gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:identifier">
                     <xsl:if test="normalize-space(.//gmd:code/gco:CharacterString/text())!=''">
                         <div class="control-group">
                             <label class="control-label">Cited Identifier</label>
@@ -93,7 +93,7 @@
                 </xsl:for-each>
                 
                 <!-- Abstract 0:∞  Only shown if the abstract has content -->
-                <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:abstract">
+                <xsl:for-each select="./gmd:identificationInfo/*/gmd:abstract">
                     <xsl:if test="normalize-space(./gco:CharacterString/text()) != ''">
                         <div class="control-group">
                             <label class="control-label">Abstract</label>
@@ -106,7 +106,7 @@
                     </xsl:if>
                 </xsl:for-each>
                 <!-- Purpose 0:∞ -->
-                <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:purpose">
+                <xsl:for-each select="./gmd:identificationInfo/*/gmd:purpose">
                     <xsl:if test="normalize-space(./gco:CharacterString/text()) != ''">
                         <div class="control-group">
                             <label class="control-label">Purpose</label>
@@ -119,7 +119,7 @@
                     </xsl:if>
                 </xsl:for-each>
                 <!-- Publication date -->
-                <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:date">
+                <xsl:for-each select="./gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date">
                     <xsl:if test="./gmd:CI_Date/gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication'">
                         <div class="control-group">
                             <label class="control-label">Publication Date</label>
@@ -180,12 +180,12 @@
                 Each <gmd:descriptiveKeywords> block should have one or more keywords in it
                 with one thesaurus. So we render keywords from the same thesaurus together.
                 -->
-                <xsl:if test="//gmd:descriptiveKeywords">
+                <xsl:if test=".//gmd:descriptiveKeywords">
                     <div class="control-group">
                         <label class="control-label">Descriptive Keywords</label>
                         <div class="controls">
                             <div class="controls-well">
-                                <xsl:for-each select="//gmd:descriptiveKeywords">
+                                <xsl:for-each select=".//gmd:descriptiveKeywords">
                                     <xsl:apply-templates />
                                 </xsl:for-each>
                             </div>
@@ -195,7 +195,7 @@
             </div>
             <div class="control-group entity">
                 <h4>People and Associated Parties</h4>
-                <!-- Metadata Contact(s) 1:inf -->
+                <!-- Metadata Contact(s) (required, 1:inf) -->
                 <div class="control-group">
                     <label class="control-label">Metadata Contacts</label>
                     <div class="controls">
@@ -206,30 +206,32 @@
                         </div>
                     </div>
                 </div>
-                <!-- Data Set Contact(s) 
-                     Optional, repeatable -->
-                <xsl:if test="/gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact">
+                <!-- Data Set Contact(s) (optional, 0-inf) -->
+                <xsl:if test=".//gmd:pointOfContact">
                     <div class="control-group">
                         <label class="control-label">Data Set Contacts</label>
                         <div class="controls">
                             <div class="controls-well">
-                                <xsl:apply-templates select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:pointOfContact" />
+                                <xsl:apply-templates select=".//gmd:pointOfContact" />
                             </div>
                         </div>
                     </div>
                 </xsl:if>
-                <!-- Cited responsible parties-->
-                <div class="control-group">
-                    <label class="control-label">Responsible Parties</label>
-                    <div class="controls">
-                        <div class="controls-well">
-                            <xsl:apply-templates select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty" />
+
+                <!-- Cited responsible parties (optional, 0-inf) -->
+                <xsl:if test="./gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty">
+                    <div class="control-group">
+                        <label class="control-label">Responsible Parties</label>
+                        <div class="controls">
+                            <div class="controls-well">
+                                <xsl:apply-templates select="./gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty" />
+                            </div>
                         </div>
                     </div>
-                </div>
+                </xsl:if>
             </div>
             <!-- Extent (geographic, temporal, vertical) -->
-            <xsl:for-each select="./gmd:identificationInfo/gmd:MD_DataIdentification/gmd:extent">
+            <xsl:for-each select="./gmd:identificationInfo/*/gmd:extent">
                 <xsl:apply-templates />
             </xsl:for-each>
             <!-- gmd:MD_contentInfo (atributes) table -->
@@ -241,6 +243,9 @@
                     </xsl:call-template>
                 </div>
             </xsl:if>
+
+            <!--- Constraints -->
+            <!--- Metadata Constraints -->
             <xsl:if test=".//gmd:metadataConstraints">
                 <div class="control-group entity">
                     <h4>Metadata Constraints</h4>
@@ -249,6 +254,7 @@
                     </xsl:for-each>
                 </div>
             </xsl:if>
+            <!--- Resource Constraints -->
             <xsl:if test=".//gmd:resourceConstraints">
                 <div class="control-group entity">
                     <h4>Resource Constraints</h4>
@@ -257,6 +263,7 @@
                     </xsl:for-each>
                 </div>
             </xsl:if>
+            <!--- Supplemental Information -->
             <xsl:if test=".//gmd:supplementalInformation">
                 <div class="control-group entity">
                     <h4>Supplemental Information</h4>
