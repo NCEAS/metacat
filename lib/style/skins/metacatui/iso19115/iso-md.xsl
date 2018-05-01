@@ -220,6 +220,7 @@
                                 <xsl:attribute name="href">
                                     <xsl:value-of select="$url" />
                                 </xsl:attribute>
+                                <xsl:attribute name="target">_blank</xsl:attribute>
                                 <xsl:value-of select="$url" />
                             </xsl:element>
                         </td>
@@ -238,6 +239,7 @@
                     <th>Protocol</th>
                     <th>Application</th>
                     <th>Address</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -263,7 +265,17 @@
                                 <xsl:attribute name="href">
                                     <xsl:value-of select="$url" />
                                 </xsl:attribute>
+                                <xsl:attribute name="target">_blank</xsl:attribute>
                                 <xsl:value-of select="$url" />
+                            </xsl:element>
+                        </td>
+                        <td>
+                            <xsl:element name="button">
+                                <xsl:attribute name="class">btn btn-small copy</xsl:attribute>
+                                <xsl:attribute name="data-clipboard-text">
+                                    <xsl:value-of select="$url" />
+                                </xsl:attribute>
+                                Copy
                             </xsl:element>
                         </td>
                     </tr>
