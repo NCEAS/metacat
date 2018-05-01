@@ -191,7 +191,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 		<field name="investigator" 		type="string" 	indexed="true" stored="true" multiValued="true"/>
 		<field name="investigatorText" 	type="text_general" 	indexed="true" stored="false" multiValued="true"/>
         <field name="ogcUrl" 			type="text_general" 	indexed="false" stored="true"/>
-
+        <field name="sku"         type="text_en_splitting_tight" indexed="true" stored="true"/>
         <field name="identifier" 		type="text_general" indexed="true" stored="true"/>
         <field name="LTERSite"	 		type="string" 	indexed="true" stored="true"/>
         <field name="origin" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
@@ -269,6 +269,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 
         <!-- Provenance-based fields -->
         <field name="prov_wasDerivedFrom"         type="string" indexed="true" stored="true" multiValued="true" />
+        <field name="prov_wasGeneratedBy"         type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_wasInformedBy"          type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_used"                   type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_generated"              type="string" indexed="true" stored="true" multiValued="true" />
@@ -404,7 +405,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         or to add multiple fields to the same field for easier/faster searching.  -->
 
     <copyField source="id" dest="identifier"/>
-
+    <copyField source="id" dest="sku"/>
     <copyField source="title" dest="titlestr"/>
 
     <copyField source="origin" dest="originText"/>
