@@ -1,8 +1,11 @@
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/trusty64"
+  
   config.vm.network "forwarded_port", guest: 80, host: 8080
-  config.vm.network "forwarded_port", guest: 8080, host: 8888
+  
   config.vm.synced_folder "./", "/metacat"
+  config.vm.synced_folder "../metacatui/src", "/var/www/metacatui"
+
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
     apt-get install -y apache2 \
@@ -12,6 +15,11 @@ Vagrant.configure("2") do |config|
                        postgresql-contrib \
                        python3-bcrypt \
                        tomcat7
+
+    # Add sunec.jar to work around an issue with verifying the CN's cert
+    # This makes it so we can use the DataONE API against Metacat
+    sudo cp /metacat/vagrant/sunec.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/
+    sudo service tomcat7 restart
 
     # Set up Apache2
     sudo a2enmod proxy
@@ -43,7 +51,7 @@ Vagrant.configure("2") do |config|
     # Wait for metacat.properties to be created
     echo "Waiting for Tomcat to unpack the metacat.war"
     while [ ! -f "/var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties" ]; do echo $(ls /var/lib/tomcat7/webapps/); sleep 5; done
-    # TODO: Disabled for now as I debug issues with authentication
+    # TODO: Finish this so setup is fully automatic
     # python3 /metacat/vagrant/apply_config.py /metacat/vagrant/app.properties /var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties
 
     # Set up an admin user
@@ -55,9 +63,7 @@ Vagrant.configure("2") do |config|
     sudo cp /metacat/vagrant/workers.properties /etc/apache2/
     sudo cp /metacat/vagrant/jk.conf /etc/apache2/mods-available/
     sudo service apache2 restart
-
-    # Link in the folder(s) we want
-    # TODO: Set this up so it runs automatically
-    # sudo ln -f -s /metacat/lib/style/skins/metacatui /var/lib/tomcat7/webapps/metacat/style/skins/metacatui
+    sudo cp /metacat/vagrant/server.xml /var/lib/tomcat7/conf/server.xml
+    sudo service tomcat7 restart
   SHELL
 end
