@@ -24,6 +24,11 @@ Vagrant.configure("2") do |config|
     # Add sunec.jar to work around an issue with verifying the CN's cert
     # This makes it so we can use the DataONE API against Metacat
     sudo cp /metacat/vagrant/sunec.jar /usr/lib/jvm/java-7-openjdk-amd64/jre/lib/ext/
+
+    # Copy in AJP setup
+    sudo cp /metacat/vagrant/workers.properties /etc/apache2/
+    sudo cp /metacat/vagrant/jk.conf /etc/apache2/mods-available/
+    sudo cp /metacat/vagrant/server.xml /var/lib/tomcat7/conf/server.xml
     sudo service tomcat7 restart
 
     # Set up Apache2
@@ -56,19 +61,11 @@ Vagrant.configure("2") do |config|
     # Wait for metacat.properties to be created
     echo "Waiting for Tomcat to unpack the metacat.war"
     while [ ! -f "/var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties" ]; do echo $(ls /var/lib/tomcat7/webapps/); sleep 5; done
-    # TODO: Finish this so setup is fully automatic
-    # python3 /metacat/vagrant/apply_config.py /metacat/vagrant/app.properties /var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties
+    python3 /metacat/vagrant/apply_config.py /metacat/vagrant/app.properties /var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties
 
     # Set up an admin user
     cd /var/lib/tomcat7/webapps/metacat/WEB-INF/scripts/bash
     PASS=`python3 -c "import bcrypt; print(bcrypt.hashpw('password', bcrypt.gensalt()))"`
     sudo bash ./authFileManager.sh useradd -h $PASS -dn "admin@localhost"
-
-    # Copy in AJP setup
-    sudo cp /metacat/vagrant/workers.properties /etc/apache2/
-    sudo cp /metacat/vagrant/jk.conf /etc/apache2/mods-available/
-    sudo service apache2 restart
-    sudo cp /metacat/vagrant/server.xml /var/lib/tomcat7/conf/server.xml
-    sudo service tomcat7 restart
   SHELL
 end
