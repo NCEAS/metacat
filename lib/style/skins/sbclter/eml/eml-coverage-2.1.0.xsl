@@ -200,7 +200,7 @@
   <xsl:template match="boundingAltitudes">
 
       <tr><td class="{$firstColStyle}">
-        Mimimum Altitude:</td><td class="{$secondColStyle}">
+        Minimum Altitude:</td><td class="{$secondColStyle}">
         <xsl:apply-templates select="altitudeMinimum"/></td></tr>
       <tr><td class="{$firstColStyle}">
         Maximum Altitude:</td><td class="{$secondColStyle}">
