@@ -38,7 +38,7 @@
 <%@ include file="./header-section.jsp"%>
 
 <div class="document">
-	<h2>EZID for DOI Configuration</h2>
+	<h2>SOLR Service Configuration</h2>
 	
 	<p>
 		Configure the HTTP SOLR service to generate search indexes for objects
@@ -74,10 +74,10 @@
                     <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.homeDir')"></i>
         </div>
          <div class="form-row">
-                    <div class="textinput-label"><label for="solr.os.user" title="OS User Running SOLR Service">OS User Running SOLR Service</label></div>
+                    <div class="textinput-label"><label for="solr.os.user" title="OS User Running SOLR">OS User Running SOLR</label></div>
                     <input class="textinput" id="solr.os.user" 
                            name="solr.os.user"                                                                         
-                           value="<%= request.getAttribute("solr.homeDir") %>"/> 
+                           value="<%= request.getAttribute("solr.os.user") %>"/> 
                     <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.os.user')"></i>
         </div>
 		<div class="buttons-wrapper">

@@ -190,7 +190,7 @@
             if (propsConfigured != null && propsConfigured) {
     %>
                 
-            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solserver"><i class="icon-cogs"></i> Configure Now</a> </td>            
+            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Configure Now</a> </td>            
                 
     <%
             } else {

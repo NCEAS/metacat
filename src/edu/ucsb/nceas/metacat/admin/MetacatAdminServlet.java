@@ -196,6 +196,10 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process replication config
                 EZIDAdmin.getInstance().configureEZID(request, response);
                 return; 
+			} else if (action.equals("solrserver")) {
+                // process replication config
+                SolrAdmin.getInstance().configureSolr(request, response);
+                return; 
 			} else {
 				String errorMessage = "MetacatAdminServlet.handleGetOrPost - Invalid action in configuration request: " + action;
 				logMetacat.error(errorMessage);
