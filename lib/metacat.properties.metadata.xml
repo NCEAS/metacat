@@ -12,24 +12,29 @@
 		<description>Server Configuration Values.</description>
 	</group>
 	<group>
-		<index>3</index>
+        <index>3</index>
+        <name>SOLR Configuration</name>
+        <description>SOLR Configuration Values.</description>
+    </group>
+	<group>
+		<index>4</index>
 		<name>Application Configuration</name>
 		<description>Application Configuration Values.</description>
 	</group>
 	<group>
-		<index>4</index>
+		<index>5</index>
 		<name>Data Manager Configuration</name>
 		<description>Data Manager Configuration Values.</description>
 	</group>
 	<group>
-		<index>5</index>
+		<index>6</index>
 		<name>Handler Plugin Configuration</name>
 		<description>Register Handler Plugin extensions</description>
 	</group>
 	
 	<!-- hidden section for backup convenience -->	
 	<group>
-		<index>6</index>
+		<index>7</index>
 		<name> </name>
 		<description> </description>
 	</group>
@@ -193,9 +198,76 @@
 	</config>
 	
 	<config>
+        <key>solr.baseURL</key>
+        <label>SOLR BaseURL</label>
+        <group>3</group>
+        <index>1</index>
+        <description>
+            The base URL of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-baseURL</helpFile>
+    </config>
+    
+   <!-- <config>
+        <key>solr.adminUser</key>
+        <label>SOLR Admin User</label>
+        <group>3</group>
+        <index>2</index>
+        <description>
+            The admin user of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-adminUser</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.password</key>
+        <label>Password</label>
+        <group>3</group>
+        <index>3</index>
+        <description>
+            The password of the admin user of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-password</helpFile>
+    </config> -->
+    
+    <config>
+        <key>solr.coreName</key>
+        <label>SOLR Core Name</label>
+        <group>3</group>
+        <index>4</index>
+        <description>
+            The name of the core storing Metacat SOLR index
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.homeDir</key>
+        <label>SOLR Home Directory</label>
+        <group>3</group>
+        <index>5</index>
+        <description>
+            The directory to hold the SOLR core
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.osUser</key>
+        <label>OS SOLR User  </label>
+        <group>3</group>
+        <index>6</index>
+        <description>
+            The operating system user who runs the SOLR service
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-osUser</helpFile>
+    </config>
+	
+	
+	<config>
 		<key>auth.allowedSubmitters</key>
 		<label>Allowed Submitters</label>
-		<group>3</group>
+		<group>4</group>
 		<index>1</index>
 		<description>Allowed Submitters</description>
 		<helpFile>docs/metacat-properties.html#auth-allowedSubmitters</helpFile>
@@ -204,7 +276,7 @@
 	<config>
 		<key>auth.deniedSubmitters</key>
 		<label>Denied Submitters</label>
-		<group>3</group>
+		<group>4</group>
 		<index>2</index>
 		<description>Denied Submitters</description>
 		<helpFile>docs/metacat-properties.html#auth-deniedSubmitters</helpFile>
@@ -213,7 +285,7 @@
 	<config>
 		<key>application.context</key>
 		<label>Metacat Context</label>
-		<group>3</group>
+		<group>4</group>
 		<index>3</index>
 		<description>
 			Name of the context under which Metacat will run. This is
@@ -225,7 +297,7 @@
 	<config>
 		<key>application.knbSiteURL</key>
 		<label>KNB Site URL</label>
-		<group>3</group>
+		<group>4</group>
 		<index>4</index>
 		<description>
 			Location of KNB website. Usually left as
@@ -237,7 +309,7 @@
 	<config>
 		<key>application.datafilepath</key>
 		<label>Data File Path</label>
-		<group>3</group>
+		<group>4</group>
 		<index>5</index>
 		<description>
 			Where to store data. This should be some location outside
@@ -249,7 +321,7 @@
 	<config>
 		<key>application.inlinedatafilepath</key>
 		<label>Inline Data File Path</label>
-		<group>3</group>
+		<group>4</group>
 		<index>6</index>
 		<description>
 			Where to store inline data. This should be some location
@@ -261,7 +333,7 @@
 	<config>
 		<key>application.documentfilepath</key>
 		<label>Document File Path</label>
-		<group>3</group>
+		<group>4</group>
 		<index>7</index>
 		<description>
 			Where to store metadata documents. This should be some location
@@ -273,7 +345,7 @@
 	<config>
 		<key>application.tempDir</key>
 		<label>Temporary File Path</label>
-		<group>3</group>
+		<group>4</group>
 		<index>8</index>
 		<description>
 			Where to store temporary documents. This is primarily used by
@@ -287,7 +359,7 @@
 	<config>
 		<key>replication.logdir</key>
 		<label>Replication Log Directory</label>
-		<group>3</group>
+		<group>4</group>
 		<index>9</index>
 		<description>
 			The directory where replication log should be located.
@@ -298,7 +370,7 @@
 	<config>
 		<key>index.context</key>
 		<label>Index Context</label>
-		<group>3</group>
+		<group>4</group>
 		<index>10</index>
 		<description>
 			The context name for the deployed Metacat index webapp.
@@ -306,7 +378,7 @@
 		<helpFile>docs/metacat-properties.html#index-context</helpFile>
 	</config>
 	
-	<config>
+	<!-- <config>
 		<key>solr.homeDir</key>
 		<label>SOLR Home directory</label>
 		<group>3</group>
@@ -315,13 +387,13 @@
 			The directory where replication log should be located.
 		</description>
 		<helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
-	</config>
+	</config> -->
 	
 	<config>
 		<key>ui.context</key>
 		<label>UI Context</label>
-		<group>3</group>
-		<index>12</index>
+		<group>4</group>
+		<index>11</index>
 		<description>
 			The context name for the deployed Metacat UI webapp.
 		</description>
@@ -332,7 +404,7 @@
 	<config>
 		<key>datamanager.server</key>
 		<label>Database Server</label>
-		<group>4</group>
+		<group>5</group>
 		<index>1</index>
 		<description>
 			Host or IP of database server
@@ -343,7 +415,7 @@
 	<config>
 		<key>datamanager.database</key>
 		<label>Database Name</label>
-		<group>4</group>
+		<group>5</group>
 		<index>2</index>
 		<description>
 			Name of the data manager database
@@ -354,7 +426,7 @@
 	<config>
 		<key>datamanager.user</key>
 		<label>Database Username</label>
-		<group>4</group>
+		<group>5</group>
 		<index>3</index>
 		<description>
 			Name of database user to own all tables.
@@ -365,7 +437,7 @@
 	<config>
 		<key>datamanager.password</key>
 		<label>Database Password</label>
-		<group>4</group>
+		<group>5</group>
 		<index>4</index>
 		<fieldType>password</fieldType>
 		<description>Password for database user.</description>
@@ -377,7 +449,7 @@
 	<config>
 		<key>plugin.handlers</key>
 		<label>Plugin class name[s]</label>
-		<group>5</group>
+		<group>6</group>
 		<index>1</index>
 		<description>Comma-separated list of fully-qualified class names that implement MetacatHandlerPlugin interface</description>
 		<helpFile>docs/metacat-properties.html#plugin-handlers</helpFile>
@@ -387,7 +459,7 @@
 	<config>
 		<key>D1Client.CN_URL</key>
 		<label>Coordinating Node URL</label>
-		<group>6</group>
+		<group>7</group>
 		<index>1</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -396,7 +468,7 @@
 	<config>
 		<key>dataone.nodeName</key>
 		<label>Node Name</label>
-		<group>6</group>
+		<group>7</group>
 		<index>2</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -405,7 +477,7 @@
 	<config>
 		<key>dataone.nodeDescription</key>
 		<label>Node Description</label>
-		<group>6</group>
+		<group>7</group>
 		<index>3</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -414,7 +486,7 @@
 	<config>
 		<key>dataone.nodeId</key>
 		<label>Node Identifier</label>
-		<group>6</group>
+		<group>7</group>
 		<index>4</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -423,7 +495,7 @@
 	<config>
 		<key>dataone.subject</key>
 		<label>Node Subject</label>
-		<group>6</group>
+		<group>7</group>
 		<index>5</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -432,7 +504,7 @@
 	<config>
 	    <key>dataone.nodeSynchronize</key>
 	    <label>Synchronize?</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>6</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -441,7 +513,7 @@
 	<config>
 	    <key>dataone.nodeReplicate</key>
 	    <label>Replicate?</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>7</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -450,7 +522,7 @@
 	<config>
 	    <key>D1Client.certificate.file</key>
 	    <label>Certificate file</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>8</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -459,7 +531,7 @@
 	<config>
 	    <key>dataone.ore.generated</key>
 	    <label>Have the ORE maps been generated?</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>9</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -468,7 +540,7 @@
 	<config>
 	    <key>dataone.systemmetadata.generated</key>
 	    <label>Has System Metadata been generated?</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>10</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -477,7 +549,7 @@
 	<config>
 	    <key>dataone.mn.services.enabled</key>
 	    <label>Have D1 MN services been enabled</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>11</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -486,7 +558,7 @@
 	<config>
 	    <key>dataone.mn.registration.submitted</key>
 	    <label>Has the MN registration been submitted</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>12</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -495,7 +567,7 @@
 	<config>
 	    <key>D1Client.resourcesDir</key>
 	    <label>Configurable DataONE Resources Directory</label>
-	    <group>6</group>
+	    <group>7</group>
 	    <index>13</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -504,7 +576,7 @@
 	<config>
 		<key>dataone.contactSubject</key>
 		<label>Contact Subject</label>
-		<group>6</group>
+		<group>7</group>
 		<index>14</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -515,7 +587,7 @@
 	<config>
         <key>guid.ezid.enabled</key>
         <label>Enable EZID Service</label>
-        <group>6</group>
+        <group>7</group>
         <index>15</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -524,7 +596,7 @@
     <config>
         <key>guid.ezid.username</key>
         <label>User Name</label>
-        <group>6</group>
+        <group>7</group>
         <index>16</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -533,7 +605,7 @@
     <config>
         <key>guid.ezid.baseurl</key>
         <label>Service Base URL</label>
-        <group>6</group>
+        <group>7</group>
         <index>17</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -542,7 +614,7 @@
     <config>
         <key>guid.ezid.doishoulder.1</key>
         <label>DOI Shouder</label>
-        <group>6</group>
+        <group>7</group>
         <index>18</index>
         <fieldType>hidden</fieldType>
         <description> </description>
