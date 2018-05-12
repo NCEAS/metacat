@@ -1,6 +1,6 @@
 <%@ page language="java" %>
-<%@ page import="java.util.Set,java.util.Map,java.util.Vector,edu.ucsb.nceas.utilities.PropertiesMetaData" %>
-<%@ page import="edu.ucsb.nceas.utilities.MetaDataGroup,edu.ucsb.nceas.utilities.MetaDataProperty" %>
+<%@ page import="edu.ucsb.nceas.metacat.admin.SolrAdmin" %>
+
 <% 
 /**
  *  '$RCSfile$'
@@ -27,7 +27,16 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 %>
-
+<%
+    String solrHomeValueInProp = (String)request.getAttribute("solrHomeValueInProp");     
+    Boolean solrHomeExist  = (Boolean)request.getAttribute("solrHomeExist");
+    String solrCoreName = (String)request.getAttribute("solrCore");
+    String solrHomeForGivenCore = null;
+    if(request.getAttribute("solrHomeForGivenCore") != null ) {
+       solrHomeForGivenCore = (String)request.getAttribute("solrHomeForGivenCore");
+    }
+    String action = (String)request.getAttribute("action");
+%>
 <html>
 <head>
 
@@ -39,7 +48,10 @@
 
 <div class="document">
 	<h2>SOLR Service Configuration</h2>
-	
+	<div class="alert alert-warning">
+	Please keep your SOLR server running while configure it.
+	Please make sure the Tomcat user has the permission to create the instance directory <%= solrHomeValueInProp %> if it is a new installation.
+	</div>
 	<p>
 		Configure the HTTP SOLR service to generate search indexes for objects
 	</p>
@@ -52,34 +64,16 @@
 	                                        onsubmit="return submitForm(this);">
 	
 		<h3>HTTP SOLR server Configuration</h3>
-		<div class="form-row">
-                    <div class="textinput-label"><label for="solr.baseURL" title="SOLR Base URL">Base URL</label></div>
-                    <input class="textinput" id="solr.baseURL" 
-                           name="solr.baseURL"                                                                         
-                           value="<%= request.getAttribute("solr.baseURL") %>"/> 
-                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.baseURL')"></i>
-        </div>
-        <div class="form-row">
-                    <div class="textinput-label"><label for="solr.coreName" title="Core Name">Core Name</label></div>
-                    <input class="textinput" id="solr.coreName" 
-                           name="solr.coreName"                                                                         
-                           value="<%= request.getAttribute("solr.coreName") %>"/> 
-                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.coreName')"></i>
-        </div>
-        <div class="form-row">
-                    <div class="textinput-label"><label for="solr.homeDir" title="Instance Directory">Instance Directory</label></div>
-                    <input class="textinput" id="solr.homeDir" 
-                           name="solr.homeDir"                                                                         
-                           value="<%= request.getAttribute("solr.homeDir") %>"/> 
-                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.homeDir')"></i>
-        </div>
-         <div class="form-row">
-                    <div class="textinput-label"><label for="solr.os.user" title="OS User Running SOLR">OS User Running SOLR</label></div>
-                    <input class="textinput" id="solr.os.user" 
-                           name="solr.os.user"                                                                         
-                           value="<%= request.getAttribute("solr.os.user") %>"/> 
-                    <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#solr.os.user')"></i>
-        </div>
+		<%
+		  if(action.equals(SolrAdmin.CREATE)) {
+		%>
+		   <div>
+		   The SOLR core - <%= solrCoreName %> with instance directory <%= solrHomeValueInProp %> will be created.  
+		   </div> 
+		<%
+		  }
+		%>
+		
 		<div class="buttons-wrapper">
 			<input type="hidden" name="processForm" value="true"/>
 			<input class=button type="submit" value="Update"/>

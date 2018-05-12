@@ -55,7 +55,7 @@ public class SolrServerFactory {
     public static final String SOLR_CONFIG_FILE_NAME_PROPERTY_NAME = "solr.configFileName";
     public static final String SOLR_COLLECTION_NAME_PROPERTY_NAME = "solr.collectionName";
     public static final String SOLR_SERVER_CLASSNAME_PROPERTY_NAME = "solr.server.classname";
-    public static final String SOLR_ENPOINT_PROPERTY_NAME = "solr.endpoint";
+    public static final String SOLR_ENPOINT_PROPERTY_NAME = "solr.baseURL";
     private static final String EMBEDDEDSERVERCLASS = "org.apache.solr.client.solrj.embedded.EmbeddedSolrServer";
     private static final String HTTPSERVERCLASS = "org.apache.solr.client.solrj.impl.CommonsHttpSolrServer";
 
