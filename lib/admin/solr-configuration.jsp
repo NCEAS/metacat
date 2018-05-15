@@ -48,13 +48,17 @@
 
 <div class="document">
 	<h2>SOLR Service Configuration</h2>
+	<p>
+        Configure the HTTP SOLR service to generate search indexes for objects
+    </p>
 	<div class="alert alert-warning">
 	Please keep your SOLR server running while configure it.
-	Please make sure the Tomcat user has the permission to create the instance directory <%= solrHomeValueInProp %> if it is a new installation.
 	</div>
-	<p>
-		Configure the HTTP SOLR service to generate search indexes for objects
-	</p>
+	<div class="alert alert-warning">
+    Please make sure the Tomcat user has the permission to create the instance directory <%= solrHomeValueInProp %> if it is a new installation.
+    </div>
+	
+	
 	<!-- MCD TODO add geoserver instructions page -->
 	<br clear="right"/>
 	
@@ -63,23 +67,22 @@
 	<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
 	                                        onsubmit="return submitForm(this);">
 	
-		<h3>HTTP SOLR server Configuration</h3>
+		<!-- <h3>HTTP SOLR server Configuration</h3> -->
 		<%
 		  if(action.equals(SolrAdmin.CREATE)) {
 		%>
-		   <div>
-		   The SOLR core - <%= solrCoreName %> with instance directory <%= solrHomeValueInProp %> will be created.  
-		   </div> 
+		  
+		   <h3>The SOLR core - <%= solrCoreName %> with instance directory <%= solrHomeValueInProp %> will be created.<h3>
+		   <div class="buttons-wrapper">
+            <input class=button type="button" value="Create" onClick="forward('./admin?configureType=solrserver&processForm=true&action=create')">
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
+            <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
+        </div>
 		<%
 		  }
 		%>
 		
-		<div class="buttons-wrapper">
-			<input type="hidden" name="processForm" value="true"/>
-			<input class=button type="submit" value="Update"/>
-			<!--<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solr&bypass=true&processForm=true')"> -->
-			<input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
-		</div>
+		
 	</form>
 </div>
 

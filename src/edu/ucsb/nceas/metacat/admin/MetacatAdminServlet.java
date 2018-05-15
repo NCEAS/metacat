@@ -93,7 +93,7 @@ public class MetacatAdminServlet extends HttpServlet {
 	private void handleGetOrPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
 		String action = request.getParameter("configureType");
-		logMetacat.debug("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
+		logMetacat.info("MetacatAdminServlet.handleGetOrPost - Processing admin action: " + action);
 		Vector<String> processingMessage = new Vector<String>();
 		Vector<String> processingErrors = new Vector<String>();
 
@@ -146,6 +146,8 @@ public class MetacatAdminServlet extends HttpServlet {
 			    		PropertyService.getProperty("configutil.dataoneConfigured"));
 			    request.setAttribute("ezidConfigured", 
                         PropertyService.getProperty("configutil.ezidConfigured"));
+			    request.setAttribute("solrserverConfigured", 
+                        PropertyService.getProperty("configutil.solrserverConfigured"));
 			    request.setAttribute("metcatServletInitialized", MetaCatServlet.isFullyInitialized());
 			    if (PropertyService.arePropertiesConfigured()) {
 					request.setAttribute("databaseVersion", 

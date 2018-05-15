@@ -55,6 +55,7 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
 
 /**
@@ -82,7 +83,7 @@ public class SolrAdmin extends MetacatAdmin {
     // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
     public static final String REGISTERANDUPDATEWITHWARN = "RegisterAndUpdateWithWarn";
     //7. Skip - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
-	public static final String SKIP = "skip";
+	public static final String KEEP = "KEEP";
     //8. Update - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is a schema update indication
 	public static final String UPDATE = "update";
 	public static final String UNKNOWN = "Unkown";
@@ -134,7 +135,7 @@ public class SolrAdmin extends MetacatAdmin {
 			// The servlet configuration parameters have not been set, or there
 			// were form errors on the last attempt to configure, so redirect to
 			// the web form for configuring metacat
-            System.out.println("----------------------- in the if statment");
+            // This branch will show the initial solr admin page.
 			try {
 				// get the current configuration values
 			    String baseURL = PropertyService.getProperty("solr.baseURL");
@@ -163,6 +164,9 @@ public class SolrAdmin extends MetacatAdmin {
                 }
                 
                 boolean updateSchema = false;//it may change base on the metacat.properties file.
+                logMetacat.info("SolrAmdin.confgureSolr -the solr-home on the properties is "+solrHomePath +" and doe it exist? "+solrHomeExists);
+                logMetacat.info("SolrAmdin.confgureSolr - the instance directory for the core "+coreName +" is "+solrHomeForGivenCore+" If it is null, this means the core doesn't exit.");
+                logMetacat.info("SolrAmdin.confgureSolr - in this upgrade/installation, do we need to update the schema file?"+updateSchema);
                 if(solrHomeForGivenCore == null && !solrHomeExists) {
                     //action 1 - create (no core and no solr home)
                     request.setAttribute(ACTION, CREATE);
@@ -185,8 +189,8 @@ public class SolrAdmin extends MetacatAdmin {
                     // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
                     request.setAttribute(ACTION, REGISTERANDUPDATEWITHWARN);
                 } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath) && solrHomeExists && !updateSchema) {
-                    //action 7. Skip - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
-                    request.setAttribute(ACTION, SKIP);
+                    //action 7. Keep - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
+                    request.setAttribute(ACTION, KEEP);
                 } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath) && solrHomeExists && updateSchema) {
                     //action 8. Update - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is a schema update indication
                     request.setAttribute(ACTION, UPDATE);
@@ -255,11 +259,7 @@ public class SolrAdmin extends MetacatAdmin {
 		
 		} else {
 			// The configuration form is being submitted and needs to be
-			// processed, setting the properties in the configuration file
-			// then restart metacat
-		    System.out.println("----------------------- in the else statment");
-			// The configuration form is being submitted and needs to be
-			// processed.
+			// processed. This branch handles the action which users choose.
 			Vector<String> validationErrors = new Vector<String>();
 			Vector<String> processingErrors = new Vector<String>();
 			Vector<String> processingSuccess = new Vector<String>();
@@ -270,20 +270,16 @@ public class SolrAdmin extends MetacatAdmin {
 				// there is no other easy way to go back to the configure form
 				// and preserve their entries.
 				validationErrors.addAll(validateOptions(request));
+				String action = request.getParameter(ACTION);
+				logMetacat.info("SolrAdmin.configureSolr - the action which users choose is "+action);
+				if(action != null && action.equals(CREATE)) {
+				   createSolrHome();
+				   registerSolrCore();
+				}
 				
-				  String baseURL = PropertyService.getProperty("solr.baseURL");
-	              //String username = PropertyService.getProperty("solr.admin.user");
-	              //String password = PropertyService.getProperty("solr.password");
-	              String coreName = PropertyService.getProperty("solr.coreName");
-	              String solrHome = PropertyService.getProperty("solr.homeDir");
-	              String osUser =  PropertyService.getProperty("solr.os.user");
-				//if (username == null || password == null) {
-					//validationErrors.add("User Name and Password cannot be null");
-			
 				//}
-			}  catch (GeneralPropertyException gpe) {
-				String errorMessage = "SolrAdmin.configureSolr - Problem getting or setting property while "
-						+ "processing system properties page: " + gpe.getMessage();
+			}  catch (Exception gpe) {
+				String errorMessage = "SolrAdmin.configureSolr - Problem processing the solr setting since " + gpe.getMessage();
 				logMetacat.error(errorMessage);
 				processingErrors.add(errorMessage);
 			}
@@ -342,7 +338,7 @@ public class SolrAdmin extends MetacatAdmin {
 	 * @throws SAXException
 	 * @throws SolrServerException
 	 */
-	public String getInstanceDir(String coreName) throws UnsupportedType, ParserConfigurationException, IOException, SAXException, SolrServerException {
+	private String getInstanceDir(String coreName) throws UnsupportedType, ParserConfigurationException, IOException, SAXException, SolrServerException {
 	    String instanceDir = null;
 	    SolrClient client = SolrServerFactory.createSolrServer();
 	    CoreAdminRequest adminRequest = new CoreAdminRequest();
@@ -360,4 +356,63 @@ public class SolrAdmin extends MetacatAdmin {
 	 }
 	
 	
+	/**
+	 * Create the solr home when it is necessary
+	 * @throws PropertyNotFoundException 
+	 */
+	private void createSolrHome() throws Exception  {
+	   // Try to create and initialize the solr-home directory if necessary.
+            String solrHomePath = PropertyService.getProperty("solr.homeDir");
+            String indexContext = PropertyService.getProperty("index.context");
+            boolean solrHomeExists = new File(solrHomePath).exists();
+            if (!solrHomeExists) {
+                try {
+                    String metacatWebInf = ServiceService.getRealConfigDir();
+                    String metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext + "/WEB-INF/classes/solr-home";
+                    // only attempt to copy if we have the source directory to copy from
+                    File sourceDir = new File(metacatIndexSolrHome);
+                    if (sourceDir.exists()) {
+                        FileUtil.createDirectory(solrHomePath);
+                        OrFileFilter fileFilter = new OrFileFilter();
+                        fileFilter.addFileFilter(DirectoryFileFilter.DIRECTORY);
+                        fileFilter.addFileFilter(new WildcardFileFilter("*"));
+                        FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
+                    } else {
+                        String errorString = "SolrAdmin.createSolrHome - the source director : " + sourceDir+" which should contain the original solr configuration doesn't exist";
+                        logMetacat.error(errorString);
+                        throw new Exception(errorString);
+                    }
+                } catch (Exception ue) {    
+                    String errorString = "SolrAdmin.createSolrHome - Could not initialize directory: " + solrHomePath +
+                            " : " + ue.getMessage();
+                    logMetacat.error(errorString);
+                    throw new Exception(errorString);
+                }
+            } else {
+                // check it
+                if (!FileUtil.isDirectory(solrHomePath)) {
+                    String errorString = "SolrAdmin.createSolrHome - existing SOLR home is not a directory: " + solrHomePath;
+                    logMetacat.error(errorString);
+                    throw new Exception(errorString);
+                } 
+            }
+	}
+	
+	/**
+	 * Register the given core on the solr server
+	 * @throws Exception
+	 */
+	 private void registerSolrCore() throws Exception{
+	     String coreName = PropertyService.getProperty("solr.coreName");
+         String instanceDir = PropertyService.getProperty("solr.homeDir");
+	     try {
+	         SolrClient client = SolrServerFactory.createSolrServer();
+	         CoreAdminRequest adminRequest = new CoreAdminRequest();
+	         adminRequest.createCore(coreName, instanceDir, client);
+	     } catch (Exception e) {
+	         String error = "SolrAdmin.registerSolrCore - Couldn't register the solr core - "+ coreName +" with the instance directory - "+ instanceDir +" since "+e.getMessage();
+	         logMetacat.error(error, e);
+	          throw new Exception(error);
+	     }
+     }
 }

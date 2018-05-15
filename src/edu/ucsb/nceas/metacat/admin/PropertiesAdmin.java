@@ -262,38 +262,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 					validationErrors.add(errorString);
 				}
 				
-				// Try to create and initialize the solr-home directory if necessary.
-				String solrHomePath = PropertyService.getProperty("solr.homeDir");
 				String indexContext = PropertyService.getProperty("index.context");
-				boolean solrHomeExists = new File(solrHomePath).exists();
-				if (!solrHomeExists) {
-					try {
-						String metacatWebInf = ServiceService.getRealConfigDir();
-						String metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext + "/WEB-INF/classes/solr-home";
-						// only attempt to copy if we have the source directory to copy from
-						File sourceDir = new File(metacatIndexSolrHome);
-						if (sourceDir.exists()) {
-							FileUtil.createDirectory(solrHomePath);
-							OrFileFilter fileFilter = new OrFileFilter();
-							fileFilter.addFileFilter(DirectoryFileFilter.DIRECTORY);
-							fileFilter.addFileFilter(new WildcardFileFilter("*"));
-							FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
-						}
-					} catch (Exception ue) {	
-						String errorString = "PropertiesAdmin.configureProperties - Could not initialize directory: " + solrHomePath +
-								" : " + ue.getMessage();
-						logMetacat.error(errorString);
-						validationErrors.add(errorString);
-					}
-				} else {
-					// check it
-					if (!FileUtil.isDirectory(solrHomePath)) {
-						String errorString = "PropertiesAdmin.configureProperties - SOLR home is not a directory: " + solrHomePath;
-						logMetacat.error(errorString);
-						validationErrors.add(errorString);
-					}
-				}
-				
 				//modify some params of the index context
 				this.modifyIndexContextParams(indexContext);
 				
