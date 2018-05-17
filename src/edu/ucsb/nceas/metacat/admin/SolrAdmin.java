@@ -321,6 +321,7 @@ public class SolrAdmin extends MetacatAdmin {
                             //user choose to use the new solr home.
                             if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
                                 createSolrHome();
+                                registerSolrCore();
                             } else if (action.equals(REGISTERWITHWARN)) {
                                 registerSolrCore();
                             } else if (action.equals(REGISTERANDUPDATEWITHWARN)) {

@@ -137,7 +137,7 @@
             <input type="hidden" name="configureType" value="solrserver"/>
             <input type="hidden" name="processForm" value="true"/>
             <input type="hidden" name="<%= SolrAdmin.CURRENTCOREINSTANCEDIR %>" value="<%= solrHomeForGivenCore %>"/>
-            <input type="hidden" name="action" value="<% action %>"/>
+            <input type="hidden" name="action" value="<%= action %>"/>
             <input class=button type="submit" value="Create/Register">
             <!--<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
