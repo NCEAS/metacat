@@ -32,6 +32,7 @@ Vagrant.configure("2") do |config|
     sudo service tomcat7 restart
 
     # Set up Apache2
+    sudo a2enmod headers
     sudo a2enmod proxy
     sudo a2enmod proxy_http
     sudo cp /metacat/vagrant/metacat.conf /etc/apache2/sites-available/
