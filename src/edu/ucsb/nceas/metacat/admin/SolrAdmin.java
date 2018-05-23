@@ -93,6 +93,10 @@ public class SolrAdmin extends MetacatAdmin {
 	
 	public static final String CONFIRMEDSOLRHOME = "confirmed-solr-home";
 	public static final String CURRENTCOREINSTANCEDIR = "core-current-instance-dir";
+	
+	public static final String NEWSOLRCOREORNOT = "newSolrCoreOrNot";
+	public static final String NEWSOLRCORE = "newSolrCore";
+	public static final String EXISTINGCORE = "existingCore";
 
 	/**
 	 * private constructor since this is a singleton
