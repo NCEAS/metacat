@@ -120,18 +120,23 @@
           if(action.equals(SolrAdmin.REGISTERANDUPDATEWITHWARN) || action.equals(SolrAdmin.CREATEORUPDATEWITHWARN) || action.equals(SolrAdmin.CREATEWITHWARN) || action.equals(SolrAdmin.REGISTERWITHWARN)) {
         %>
         <div class="block">
-        The SOLR core - &quot;<%= solrCoreName %>&quot;does exist. However, its current home directory &quot;<%= solrCoreName %>&quot; is different to &quot;<%= solrHomeValueInProp %>&quot;  which you specified on the properties admin page.
+        The SOLR core - &quot;<%= solrCoreName %>&quot; does exist. However, its current home directory &quot;<%= solrCoreName %>&quot; is different to &quot;<%= solrHomeValueInProp %>&quot;  which you specified on the properties admin page.
         </div>
         <div>
-        Please confirm which one will be the SOLR home you really want.
+        Please choose either to use its current SOLR home directory or a different core name.
         </div>
-        <div class="block">
-            <input class="checkradio" type="radio" name="<%= SolrAdmin.CONFIRMEDSOLRHOME %>" id="home" value="<%= solrHomeValueInProp %>" />
-            <label class="checkradio-label" > Use the directory  &quot;<%= solrHomeValueInProp %>&quot; specified on the property admin page.</label>
+        <div class="radio-wrapper">
+            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.EXISTINGCORE %>" value="<%= SolrAdmin.EXISTINGCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', 'solr.coreName')"/>
+            <label class="checkradio-label" > Use the current SOLR home directory &quot;<%= solrHomeForGivenCore %>&quot; associated with the core &quot;<%= solrCoreName %>&quot;</label>
+            <div style="clear:both"></div>
         </div>
-        <div class="block">
-            <input class="checkradio" type="radio" name="<%= SolrAdmin.CONFIRMEDSOLRHOME %>" id="home" value="<%= solrHomeForGivenCore %>" />
-            <label class="checkradio-label" > Use the current directory &quot;<%= solrHomeForGivenCore %>&quot; associated with the core</label>
+         <div class="radio-wrapper">
+            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.NEWSOLRCORE %>" value="<%= SolrAdmin.NEWSOLRCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', 'solr.coreName')"/>
+            <label class="checkradio-label" > Use a new core with the directory  &quot;<%= solrHomeValueInProp %>&quot; specified on the property admin page</label>
+            <div style="clear:both"></div>
+        </div>
+         <div class="form-row">
+                    <input class="hiddenabletextinput"  id="solr.coreName" name="solr.coreName" placeholder="Name of New Core  "/> 
         </div>
         <div class="buttons-wrapper">
             <input type="hidden" name="configureType" value="solrserver"/>
