@@ -126,22 +126,23 @@
         Please choose either to use its current SOLR home directory or a different core name.
         </div>
         <div class="radio-wrapper">
-            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.EXISTINGCORE %>" value="<%= SolrAdmin.EXISTINGCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', 'solr.coreName')"/>
+            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.EXISTINGCORE %>" value="<%= SolrAdmin.EXISTINGCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', '<%= SolrAdmin.NEWSOLCORENAME %>)"/>
             <label class="checkradio-label" > Use the current SOLR home directory &quot;<%= solrHomeForGivenCore %>&quot; associated with the core &quot;<%= solrCoreName %>&quot;</label>
             <div style="clear:both"></div>
         </div>
          <div class="radio-wrapper">
-            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.NEWSOLRCORE %>" value="<%= SolrAdmin.NEWSOLRCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', 'solr.coreName')"/>
+            <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.NEWSOLRCORE %>" value="<%= SolrAdmin.NEWSOLRCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', '<%= SolrAdmin.NEWSOLCORENAME %>')"/>
             <label class="checkradio-label" > Use a new core with the directory  &quot;<%= solrHomeValueInProp %>&quot; specified on the property admin page</label>
             <div style="clear:both"></div>
         </div>
          <div class="form-row">
-                    <input class="hiddenabletextinput"  id="solr.coreName" name="solr.coreName" placeholder="Name of New Core  "/> 
+                    <input class="hiddenabletextinput"  id="<%= SolrAdmin.NEWSOLCORENAME %>" name="<%= SolrAdmin.NEWSOLCORENAME %>" placeholder="Name of New Core  "/> 
         </div>
         <div class="buttons-wrapper">
             <input type="hidden" name="configureType" value="solrserver"/>
             <input type="hidden" name="processForm" value="true"/>
             <input type="hidden" name="<%= SolrAdmin.CURRENTCOREINSTANCEDIR %>" value="<%= solrHomeForGivenCore %>"/>
+            <input type="hidden" name="<%= SolrAdmin.SOLRCORENAME %>" value="<%= solrCoreName %>"/>
             <input type="hidden" name="action" value="<%= action %>"/>
             <input class=button type="submit" value="Create/Register">
             <!--<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->

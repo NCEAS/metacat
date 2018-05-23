@@ -71,32 +71,30 @@ public class SolrAdmin extends MetacatAdmin {
 	public static final String REGISTER = "register";
 	//3. RegisterWithUpdate - core doesn't exist, but the solr-home directory does exist with schema update indication.
     public static final String REGISTERANDUPDATE = "registerAndUpdate";
-    //4. CreateWithWarning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home doesn't exist. 
-	// Ask users if they really want to register the existing core with a new solr-home or keep the original one. If keeping the original one, no update will need.
+    //4. CreateWithWarning - core does exist, but its instance directory is different to the solr-home in the properties file and the solr home doesn't exist. 
+	// Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, no update will need.
 	public static final String CREATEWITHWARN = "createWithWarn";
-	//4.1 CreateOrUpdateWithWarning - core does exist, but its the instance directory is different to the solr-home in the properties file and solr home doesn't exist.
-	//Ask users if they really want to register the existing core with a new solr-home or keep the original one. If keeping the original one, a schema update will need
+	//4.1 CreateOrUpdateWithWarning - core does exist, but its the instance directory is different to the solr-home in the properties file and the solr home doesn't exist.
+	//Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
 	public static final String CREATEORUPDATEWITHWARN = "createOrUpdateWithWarn";
-	//5. RegisterWithWarning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and no schema update. 
-    // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+	//5. RegisterWithWarning - core does exist, but its instance directory is different to the solr-home in the properties file and the solr home does exist and no schema update. 
+    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, nothing will be done.
     public static final String REGISTERWITHWARN = "RegisterWithWarn";
      //6. RegisterAndUpdateWithWarning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and needing schema update. 
-    // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
     public static final String REGISTERANDUPDATEWITHWARN = "RegisterAndUpdateWithWarn";
     //7. Skip - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
 	public static final String KEEP = "KEEP";
     //8. Update - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is a schema update indication
 	public static final String UPDATE = "update";
 	public static final String UNKNOWN = "Unkown";
-	
 	public static final String ACTION = "action";
-	
-	public static final String CONFIRMEDSOLRHOME = "confirmed-solr-home";
 	public static final String CURRENTCOREINSTANCEDIR = "core-current-instance-dir";
-	
 	public static final String NEWSOLRCOREORNOT = "newSolrCoreOrNot";
 	public static final String NEWSOLRCORE = "newSolrCore";
 	public static final String EXISTINGCORE = "existingCore";
+	public static final String SOLRCORENAME = "solrCoreName";
+	public static final String NEWSOLCORENAME = "newSolrCoreName";
 
 	/**
 	 * private constructor since this is a singleton
@@ -152,7 +150,13 @@ public class SolrAdmin extends MetacatAdmin {
 				String coreName = PropertyService.getProperty("solr.coreName");
 				String solrHomePath = PropertyService.getProperty("solr.homeDir");
 				String osUser =  PropertyService.getProperty("solr.osUser");
-			
+				if(coreName == null || coreName.trim().equals("")) {
+				    throw new AdminException("The slor core name shouldn't be null or blank. Please go back to the Metacat Global Properties admin page to configure again.");
+				}
+				
+				if(solrHomePath == null || solrHomePath.trim().equals("")) {
+				    throw new AdminException("The slor home path shouldn't be null or blank. Please go back to the Metacat Global Properties admin page to configure again.");
+				}
 				
 				boolean solrHomeExists = new File(solrHomePath).exists();
                 if (solrHomeExists) {
@@ -186,19 +190,19 @@ public class SolrAdmin extends MetacatAdmin {
                     request.setAttribute(ACTION, REGISTERANDUPDATE);
                 } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath) && !solrHomeExists && !updateSchema) {
                    //action 4. createWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file, and solr home doesn't exist. 
-                    // Ask users if they really want to register the existing core with a new solr-home or keep the original one. If keeping the original one, no update will need.
+                   // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, no update will need.
                     request.setAttribute(ACTION, CREATEWITHWARN);
                 } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath) && !solrHomeExists && updateSchema) {
                     //4.1 CreateOrUpdateWithWarning - core does exist, but its the instance directory is different to the solr-home in the properties file and solr home doesn't exist.
-                    //Ask users if they really want to register the existing core with a new solr-home or keep the original one. If keeping the original one, a schema update will need
+                    //Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
                     request.setAttribute(ACTION, CREATEORUPDATEWITHWARN);
                 } else if (solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath) && solrHomeExists && !updateSchema) {
                   //action 5. RegisterWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and no schema update. 
-                   // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+                 // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, nothing will be done.
                     request.setAttribute(ACTION, REGISTERWITHWARN);
                 } else if(solrHomeForGivenCore != null && !solrHomeForGivenCore.equals(solrHomePath) && solrHomeExists && updateSchema) {
                     //action 6. RegisterAndUpdateWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and needing schema update. 
-                    // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+                    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
                     request.setAttribute(ACTION, REGISTERANDUPDATEWITHWARN);
                 } else if (solrHomeForGivenCore != null && solrHomeForGivenCore.equals(solrHomePath) && solrHomeExists && !updateSchema) {
                     //action 7. Keep - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
@@ -297,46 +301,69 @@ public class SolrAdmin extends MetacatAdmin {
 				    updateSolrSchema();
 				} else if (action != null && (action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN) || action.equals(REGISTERWITHWARN) || action.equals(REGISTERANDUPDATEWITHWARN))) {
                     //action 4. createWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file, and solr home doesn't exist. 
-                    // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+				    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, no update will need.
 				    //4.1 CreateOrUpdateWithWarning - core does exist, but its the instance directory is different to the solr-home in the properties file and solr home doesn't exist.
-                    //Ask users if they really want to register the existing core with a new solr-home or keep the original one. If keeping the original one, a schema update will need
+				    //Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
 				    //action 5. RegisterWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and no schema update. 
-	                // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
+				    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, nothing will be done.
 				    //action 6. RegisterAndUpdateWithWarnning - core does exist, but its instance directory is different to the solr-home in the properties file and solr home does exist and needing schema update. 
-                    // Ask users if they really want to register the existing core with a new solr-home or just skip configuration.
-				    String confirmedSolrHome = request.getParameter(CONFIRMEDSOLRHOME); 
-				    logMetacat.info("SolrAdmin.configureSolr - the confirmed the solr home is "+confirmedSolrHome);
-	                String coreCurrentInstanceDir = request.getParameter(CURRENTCOREINSTANCEDIR);
-	                logMetacat.info("SolrAdmin.configureSolr - the current solr instance directory of the core is "+coreCurrentInstanceDir);
-				    if (confirmedSolrHome != null && coreCurrentInstanceDir != null) {
-                        if(confirmedSolrHome.equals(coreCurrentInstanceDir)) {
-                            //user choose to use the current instance dir. So we need to reset solr home
-                            PropertyService.setPropertyNoPersist("solr.homeDir", confirmedSolrHome);
-                            // persist them all
-                            PropertyService.persistProperties();
-                            PropertyService.syncToSettings();
-                            // save a backup in case the form has errors, we reload from these
-                            PropertyService.persistMainBackupProperties();
-                            if(action.equals(CREATEORUPDATEWITHWARN) || action.equals(REGISTERANDUPDATEWITHWARN)) {
-                              //we also need to update the schema
-                                updateSolrSchema();
-                            }
-                        } else {
-                            //user choose to use the new solr home.
-                            if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
-                                createSolrHome();
-                                registerSolrCore();
-                            } else if (action.equals(REGISTERWITHWARN)) {
-                                registerSolrCore();
-                            } else if (action.equals(REGISTERANDUPDATEWITHWARN)) {
-                                registerSolrCore();
-                                updateSolrSchema();
-                            }
-                            
-                        }
-                    } else {
-                        throw new AdminException("User doesn't confirm the solr home property or the core's current directory is null.");
-                    }  
+				    // Ask users to choose a new core name associating with the new solr-home or keep the original one. If keeping the original one, a schema update will need
+				    String userChoice =  request.getParameter(NEWSOLRCOREORNOT);
+				    logMetacat.info("SolrAdmin.configureSolr - the user's choice is "+userChoice);
+	                if(userChoice != null && userChoice.equals(NEWSOLRCORE)) {
+	                    //users choose to use a new core name to associate the solr-home
+	                    String newCoreName = request.getParameter(NEWSOLCORENAME);
+	                    logMetacat.info("SolrAdmin.configureSolr - the new solr core name users chose is "+newCoreName);
+	                    if ( newCoreName == null || newCoreName.trim().equals("")) {
+	                        //users chose a null as the name.
+	                        String error = "The new core name shouldn't be null or blank";
+                            processingErrors.add(error);
+	                    } else {
+	                        String instanceDirForNewCore = getInstanceDir(newCoreName);
+	                        if(instanceDirForNewCore != null) {
+	                            //the new core still exists! we need to ask user to choose again.
+	                            String error = "The new core name "+newCoreName+" is used by another core. Please choose another name";
+	                            processingErrors.add(error);
+	                        } else {
+	                            //change the solr.coreName in the metacat.poperties
+	                            PropertyService.setPropertyNoPersist("solr.coreName", newCoreName);
+	                            // persist them all
+	                            PropertyService.persistProperties();
+	                            PropertyService.syncToSettings();
+	                            // save a backup in case the form has errors, we reload from these
+	                            PropertyService.persistMainBackupProperties();
+	                            if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
+	                                createSolrHome();
+	                                registerSolrCore();
+	                            } else if (action.equals(REGISTERWITHWARN)) {
+	                                registerSolrCore();
+	                            } else if (action.equals(REGISTERANDUPDATEWITHWARN)) {
+	                                registerSolrCore();
+	                                updateSolrSchema();
+	                            }
+	                        }
+	                    }
+	                } else if (userChoice != null && userChoice.equals(EXISTINGCORE)) {
+	                    //users choose to keep the core name but use its current instance directory as the solr-home
+	                    //we need to change the solr.homeDir in metacat.properties
+	                    String currentSolrInstanceDir = request.getParameter(CURRENTCOREINSTANCEDIR);
+	                    logMetacat.info("SolrAdmin.configureSolr - the current solr instance directory is "+currentSolrInstanceDir);
+	                    PropertyService.setPropertyNoPersist("solr.homeDir", currentSolrInstanceDir);
+                        // persist them all
+                        PropertyService.persistProperties();
+                        PropertyService.syncToSettings();
+                        // save a backup in case the form has errors, we reload from these
+                        PropertyService.persistMainBackupProperties();
+	                    //String currentCoreName = request.getParameter(SOLRCORENAME);
+	                    //logMetacat.info("SolrAdmin.configureSolr - the current solr core name is "+currentCoreName);
+                        if(action.equals(CREATEORUPDATEWITHWARN) || action.equals(REGISTERANDUPDATEWITHWARN)) {
+                            //we also need to update the schema
+                              updateSolrSchema();
+                          }
+	                    
+	                } else {
+	                    throw new AdminException("User's choice "+userChoice+" can't be understood.");
+	                }
 				} else if (action != null && action.equals(KEEP)) {
 				  //action 7. Keep - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
 				   //do nothing
