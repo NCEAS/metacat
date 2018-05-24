@@ -58,21 +58,31 @@ public class SolrServerFactory {
     public static final String SOLR_ENPOINT_PROPERTY_NAME = "solr.baseURL";
     private static final String EMBEDDEDSERVERCLASS = "org.apache.solr.client.solrj.embedded.EmbeddedSolrServer";
     private static final String HTTPSERVERCLASS = "org.apache.solr.client.solrj.impl.CommonsHttpSolrServer";
+    private static final String CORENAME_PROPERTY_NAME = "solr.coreName";
+    private static final String SLASH = "/";
 
 	public static Log log = LogFactory.getLog(SolrServerFactory.class);
 	
 	private static CoreContainer coreContainer = null;
 	private static String collectionName = null;
 	private static SolrClient solrServer = null;
+	private static SolrClient solrAdminClient = null;//only for the http solr server.
 	//private static String solrServerBaseURL = null;
 
-	public static SolrClient createSolrServer() throws ParserConfigurationException, IOException, SAXException, UnsupportedType   {
+	public static SolrClient createSolrServer() throws ParserConfigurationException, IOException, SAXException, UnsupportedType {
 	    if(solrServer == null) {
 	        String className = Settings.getConfiguration().getString(SOLR_SERVER_CLASSNAME_PROPERTY_NAME);
 	        if (className != null && className.equals(EMBEDDEDSERVERCLASS)) {
 	            generateEmbeddedServer();
 	        } else if (className != null && className.equals(HTTPSERVERCLASS)) {
 	            String solrServerBaseURL = Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
+	            String coreName = Settings.getConfiguration().getString(CORENAME_PROPERTY_NAME);
+	            if (solrServerBaseURL != null && solrServerBaseURL.endsWith(SLASH)) {
+	                solrServerBaseURL = solrServerBaseURL+coreName;
+	            } else {
+	                solrServerBaseURL = solrServerBaseURL+SLASH+coreName;
+	            }
+	            log.info("SolrServerFactory.createSolrServer - the final solr server base url is "+solrServerBaseURL);
 	            solrServer = new HttpSolrClient.Builder(solrServerBaseURL).build();
 	        } else {
 	            throw new UnsupportedType("0000","SolrServerFactory.createSolrServer - MetacatIndex doesn't support this solr server type: "+className);
@@ -80,6 +90,31 @@ public class SolrServerFactory {
 	    }
         return solrServer;
 	}
+	
+	
+	/**
+	 * Create a solr admin client. It is only for the http solr server. It only has the base solr url without the core name.
+	 * @return a solr admin client. The null will be returned if it is an embedded solr server.
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 * @throws UnsupportedType
+	 */
+	public static SolrClient createSolrAdminClient() throws ParserConfigurationException, IOException, SAXException, UnsupportedType {
+        if(solrAdminClient == null) {
+            String className = Settings.getConfiguration().getString(SOLR_SERVER_CLASSNAME_PROPERTY_NAME);
+            if (className != null && className.equals(EMBEDDEDSERVERCLASS)) {
+                solrAdminClient = null;
+            } else if (className != null && className.equals(HTTPSERVERCLASS)) {
+                String solrServerBaseURL = Settings.getConfiguration().getString(SOLR_ENPOINT_PROPERTY_NAME);
+                log.info("SolrServerFactory.createSolrServer - the final solr server base url is "+solrServerBaseURL);
+                solrAdminClient = new HttpSolrClient.Builder(solrServerBaseURL).build();
+            } else {
+                throw new UnsupportedType("0000","SolrServerFactory.createSolrServer - MetacatIndex doesn't support this solr server type: "+className);
+            }
+        }
+        return solrAdminClient;
+    }
 	
 	private static void generateEmbeddedServer() throws ParserConfigurationException, IOException, SAXException  {
 	    String solrHomeDir = Settings.getConfiguration().getString(SOLR_HOME_PROPERTY_NAME);

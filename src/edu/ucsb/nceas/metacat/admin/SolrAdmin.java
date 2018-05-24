@@ -437,7 +437,7 @@ public class SolrAdmin extends MetacatAdmin {
 	 */
 	private String getInstanceDir(String coreName) throws UnsupportedType, ParserConfigurationException, IOException, SAXException, SolrServerException {
 	    String instanceDir = null;
-	    SolrClient client = SolrServerFactory.createSolrServer();
+	    SolrClient client = SolrServerFactory.createSolrAdminClient();
 	    CoreAdminRequest adminRequest = new CoreAdminRequest();
 	    CoreStatus status = adminRequest.getCoreStatus(coreName, client);
 	    if(status != null) {
@@ -503,7 +503,7 @@ public class SolrAdmin extends MetacatAdmin {
 	     String coreName = PropertyService.getProperty("solr.coreName");
          String instanceDir = PropertyService.getProperty("solr.homeDir");
 	     try {
-	         SolrClient client = SolrServerFactory.createSolrServer();
+	         SolrClient client = SolrServerFactory.createSolrAdminClient();
 	         CoreAdminRequest adminRequest = new CoreAdminRequest();
 	         adminRequest.createCore(coreName, instanceDir, client);
 	     } catch (Exception e) {
