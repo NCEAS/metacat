@@ -46,6 +46,8 @@ import org.apache.solr.client.solrj.request.CoreStatus;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.xml.sax.SAXException;
 
+import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
+import edu.ucsb.nceas.metacat.admin.upgrade.solr.SolrSchemaModificationException;
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -95,12 +97,15 @@ public class SolrAdmin extends MetacatAdmin {
 	public static final String EXISTINGCORE = "existingCore";
 	public static final String SOLRCORENAME = "solrCoreName";
 	public static final String NEWSOLCORENAME = "newSolrCoreName";
+	
+	private SolrSchemaModificationException solrSchemaException = null;
+	private Vector<String> updateClassList = null;
 
 	/**
 	 * private constructor since this is a singleton
 	 */
 	private SolrAdmin() throws AdminException {
-
+	    updateClassList = DBAdmin.getInstance().getSolrUpdateClasses();
 	}
 
 	/**
@@ -175,7 +180,10 @@ public class SolrAdmin extends MetacatAdmin {
                     request.setAttribute("solrHomeForGivenCore", solrHomeForGivenCore);
                 }
                 
-                boolean updateSchema = false;//it may change base on the metacat.properties file.
+                boolean updateSchema = false;
+                if(updateClassList != null && updateClassList.size() > 0) {
+                    updateSchema = true;
+                }
                 logMetacat.info("SolrAmdin.confgureSolr -the solr-home on the properties is "+solrHomePath +" and doe it exist? "+solrHomeExists);
                 logMetacat.info("SolrAmdin.confgureSolr - the instance directory for the core "+coreName +" is "+solrHomeForGivenCore+" If it is null, this means the core doesn't exit.");
                 logMetacat.info("SolrAmdin.confgureSolr - in this upgrade/installation, do we need to update the schema file?"+updateSchema);
@@ -388,17 +396,29 @@ public class SolrAdmin extends MetacatAdmin {
 					RequestUtil.setRequestErrors(request, processingErrors);
 					RequestUtil.forwardRequest(request, response, "/admin", null);
 				} else {
-					// Now that the options have been set, change the
-					// 'propertiesConfigured' option to 'true'
-					PropertyService.setProperty("configutil.solrserverConfigured",
-							PropertyService.CONFIGURED);
-					
-					// Reload the main metacat configuration page
-					processingSuccess.add("Solr server was successfully configured");
-					RequestUtil.clearRequestMessages(request);
-					RequestUtil.setRequestSuccess(request, processingSuccess);
-					RequestUtil.forwardRequest(request, response, 
-							"/admin?configureType=configure&processForm=false", null);
+				    
+				    if(solrSchemaException != null) {
+	                    //Show the warning message
+	                    Vector<String> errorVector = new Vector<String>();
+	                    errorVector.add(solrSchemaException.getMessage());
+	                    RequestUtil.clearRequestMessages(request);
+	                    //request.setAttribute("supportEmail", supportEmail);
+	                    RequestUtil.setRequestErrors(request, errorVector);
+	                    RequestUtil.forwardRequest(request, response,
+	                                    "/admin/solr-schema-warn.jsp", null);
+				    } else {
+        					// Now that the options have been set, change the
+        					// 'propertiesConfigured' option to 'true'
+        					PropertyService.setProperty("configutil.solrserverConfigured",
+        							PropertyService.CONFIGURED);
+        					
+        					// Reload the main metacat configuration page
+        					processingSuccess.add("Solr server was successfully configured");
+        					RequestUtil.clearRequestMessages(request);
+        					RequestUtil.setRequestSuccess(request, processingSuccess);
+        					RequestUtil.forwardRequest(request, response, 
+        							"/admin?configureType=configure&processForm=false", null);
+				    }
 				}
 			} catch (MetacatUtilException mue) {
 				throw new AdminException("SolrAdmin.configureSolr - utility problem while processing solr services "
@@ -513,7 +533,27 @@ public class SolrAdmin extends MetacatAdmin {
 	     }
      }
 	 
-	 private void updateSolrSchema() {
-	     
+	 /**
+	  * It runs the update java classes.
+	  * @throws AdminException
+	  */
+	 private void updateSolrSchema() throws AdminException {
+	     if(updateClassList != null) {
+	         for (String className : updateClassList) {
+	             UpgradeUtilityInterface utility = null;
+	             try {
+	                 utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
+	                 utility.upgrade();
+	             } catch (SolrSchemaModificationException e) {
+	                 //don't throw the exception and continue 
+	                 solrSchemaException = e;
+	                 continue;
+	             } catch (Exception e) {
+	                 throw new AdminException("Solr.upgradeSolrSchema - error getting utility class: " 
+	                         + className + ". Error message: "
+	                         + e.getMessage());
+	             }
+	         }
+	     }
 	 }
 }
