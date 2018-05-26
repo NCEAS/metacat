@@ -187,10 +187,18 @@
             <td class="unconfigured-tag">unconfigured </td>  
             <td class="property-title"> SORL Server Configuration </td>   
     <%
-            if (propsConfigured != null && propsConfigured) {
+            System.out.println("the dbconfigure value is "+dbConfigured);
+            if (propsConfigured != null && propsConfigured ) {
+                 if ( (dbConfigured != null && dbConfigured) || (metacatVersion != null && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
     %>
-                
-            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Configure Now</a> </td>            
+                    <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Configure Now</a> </td> 
+    <%           
+                } else {
+     %>
+                  <td class="configure-link inactive"> Configure Database Installation/Upgrade First </td>
+     <%           
+                }
+     %>      
                 
     <%
             } else {
