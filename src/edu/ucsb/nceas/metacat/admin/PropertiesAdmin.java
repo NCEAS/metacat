@@ -262,6 +262,21 @@ public class PropertiesAdmin extends MetacatAdmin {
 					validationErrors.add(errorString);
 				}
 				
+				//make sure the solrHome is not old version of Lucene
+				String solrHomePath = PropertyService.getProperty("solr.homeDir");
+				boolean isOldVersion = false;
+				try {
+				    SolrVersionChecker checker = new SolrVersionChecker();
+				    isOldVersion = checker.isVersion_3_4(solrHomePath);
+				} catch (Exception e) {
+				    logMetacat.warn("PropertiesAdmin.confgureProperties - we can't determine if the given directory is a old version of solr  since "+e.getMessage()+". But we consider it is not an old version.");
+				}
+				
+				if(isOldVersion) {
+				    validationErrors.add("The solr home you chose exists with an old version of SOLR. Please choose a new SOLR home!");
+				}
+				
+				
 				String indexContext = PropertyService.getProperty("index.context");
 				//modify some params of the index context
 				this.modifyIndexContextParams(indexContext);
