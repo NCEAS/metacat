@@ -28,6 +28,18 @@ package edu.ucsb.nceas.metacat.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.FileSystem;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.UserPrincipal;
+import java.nio.file.attribute.UserPrincipalLookupService;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
 
 import javax.servlet.http.HttpServletRequest;
@@ -52,11 +64,13 @@ import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.SortedProperties;
+import edu.ucsb.nceas.utilities.UtilException;
 
 /**
  * Control the display of the Solr configuration page and the processing
@@ -476,11 +490,15 @@ public class SolrAdmin extends MetacatAdmin {
 	/**
 	 * Create the solr home when it is necessary
 	 * @throws PropertyNotFoundException 
+	 * @throws IOException 
+	 * @throws ServiceException 
+	 * @throws UtilException 
 	 */
-	private void createSolrHome() throws Exception  {
+	private void createSolrHome() throws PropertyNotFoundException, IOException, ServiceException, UtilException {
 	   // Try to create and initialize the solr-home directory if necessary.
             String solrHomePath = PropertyService.getProperty("solr.homeDir");
             String indexContext = PropertyService.getProperty("index.context");
+            String solrUser = PropertyService.getProperty("solr.osUser");
             boolean solrHomeExists = new File(solrHomePath).exists();
             if (!solrHomeExists) {
                 try {
@@ -494,23 +512,77 @@ public class SolrAdmin extends MetacatAdmin {
                         fileFilter.addFileFilter(DirectoryFileFilter.DIRECTORY);
                         fileFilter.addFileFilter(new WildcardFileFilter("*"));
                         FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
+                        //The solr home directory will be owned by the solr user, but the tomcat group has the permission to write
+                        Path solrHomePathObj = Paths.get(solrHomePath);
+                        Set<PosixFilePermission> perms = new HashSet<>();
+                        perms.add(PosixFilePermission.OWNER_READ);
+                        perms.add(PosixFilePermission.OWNER_WRITE);
+                        perms.add(PosixFilePermission.OWNER_EXECUTE);
+                        perms.add(PosixFilePermission.GROUP_READ);
+                        perms.add(PosixFilePermission.GROUP_WRITE);
+                        perms.add(PosixFilePermission.GROUP_EXECUTE);
+                        perms.add(PosixFilePermission.OTHERS_READ);
+                        perms.add(PosixFilePermission.OTHERS_EXECUTE);
+                        try {
+                            Files.setPosixFilePermissions(solrHomePathObj, perms);
+                        } catch (Exception e) {
+                            String errorString = "SolrAdmin.createSolrHome - the os doesn't support to give the group the write permission on the solr home directory -" +solrHomePath+"  Please manually do this action";
+                            logMetacat.error(errorString, e);
+                            throw new UnsupportedOperationException(errorString);
+                        }
+                        //change the owner to solr
+                        try {
+                            FileSystem fileSystem = solrHomePathObj.getFileSystem();
+                            UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
+                            final UserPrincipal userPrincipal = service.lookupPrincipalByName(solrUser);
+                            //change the onwership recursively
+                            Files.walkFileTree(solrHomePathObj, new SimpleFileVisitor<Path>() {
+                                @Override
+                                public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                                    Files.setOwner(file, userPrincipal);
+                                    return FileVisitResult.CONTINUE;
+                                }
+                                @Override
+                                public FileVisitResult postVisitDirectory(Path dir, IOException e)
+                                    throws IOException {
+                                    Files.setOwner(dir, userPrincipal);
+                                    return FileVisitResult.CONTINUE;
+                                }
+                            });
+                            
+                        } catch (Exception e) {
+                            String errorString = "SolrAdmin.createSolrHome - Metacat can't change the owner of the solr home directory -"+solrHomePath+
+                                                " entirely to the solr user - "+solrUser+". Please manually do this action";
+                            logMetacat.error(errorString, e);
+                            throw new UnsupportedOperationException(errorString);
+                        }
                     } else {
                         String errorString = "SolrAdmin.createSolrHome - the source director : " + sourceDir+" which should contain the original solr configuration doesn't exist";
                         logMetacat.error(errorString);
-                        throw new Exception(errorString);
+                        throw new IOException(errorString);
                     }
-                } catch (Exception ue) {    
+                } catch (IOException ue) {    
                     String errorString = "SolrAdmin.createSolrHome - Could not initialize directory: " + solrHomePath +
                             " : " + ue.getMessage();
                     logMetacat.error(errorString);
-                    throw new Exception(errorString);
-                }
+                    throw new IOException(errorString);
+                } catch (ServiceException e) {
+                    String errorString = "SolrAdmin.createSolrHome - Could not initialize directory: " + solrHomePath +
+                            " : " + e.getMessage();
+                    logMetacat.error(errorString);
+                    throw new ServiceException(errorString);
+                } catch (UtilException e) {
+                    String errorString = "SolrAdmin.createSolrHome - Could not initialize directory: " + solrHomePath +
+                            " : " + e.getMessage();
+                    logMetacat.error(errorString);
+                    throw new UtilException(errorString);
+                } 
             } else {
                 // check it
                 if (!FileUtil.isDirectory(solrHomePath)) {
                     String errorString = "SolrAdmin.createSolrHome - existing SOLR home is not a directory: " + solrHomePath;
                     logMetacat.error(errorString);
-                    throw new Exception(errorString);
+                    throw new IOException(errorString);
                 } 
             }
 	}
