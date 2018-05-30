@@ -48,8 +48,6 @@
 	<h2>SOLR Service Configuration</h2>
 	
 	<p><%@ include file="page-message-section.jsp"%></p>
-    <p><div class="alert alert-error">
-        Note: after configuring Metacat and restarting Tomcat, you have to issue a 'reindexall' action as an administrator to rebuild the Solr index.</div></p>
 	<input class="button" type="button" value="Okay" onClick="forward('./admin?configureType=configure&processForm=false')"> 
 	
 </div>

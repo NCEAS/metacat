@@ -152,6 +152,7 @@ public class SolrAdmin extends MetacatAdmin {
 	public void configureSolr(HttpServletRequest request,
 			HttpServletResponse response) throws AdminException {
 
+	    UnsupportedOperationException unspportedOperExcepiton = null;
 		String processForm = request.getParameter("processForm");
 		String bypass = request.getParameter("bypass");
 		String formErrors = (String) request.getAttribute("formErrors");
@@ -312,8 +313,12 @@ public class SolrAdmin extends MetacatAdmin {
 				logMetacat.info("SolrAdmin.configureSolr - the action which users choose is "+action);
 				if(action != null && action.equals(CREATE)) {
 				    //action 1 - create (no core and no solr home)
-				   createSolrHome();
-				   registerSolrCore();
+				    try {
+				        createSolrHome();
+				    }  catch (UnsupportedOperationException usoe) {
+		                unspportedOperExcepiton = usoe;
+				    }
+				    registerSolrCore();
 				} else if (action != null && action.equals(REGISTER)) {
 				    //action 2 - register (no core but having solr home and no schema update)
 				    registerSolrCore();
@@ -355,7 +360,11 @@ public class SolrAdmin extends MetacatAdmin {
 	                            // save a backup in case the form has errors, we reload from these
 	                            PropertyService.persistMainBackupProperties();
 	                            if(action.equals(CREATEWITHWARN) || action.equals(CREATEORUPDATEWITHWARN)) {
-	                                createSolrHome();
+	                                try {
+	                                    createSolrHome();
+	                                }  catch (UnsupportedOperationException usoe) {
+	                                    unspportedOperExcepiton = usoe;
+	                                }
 	                                registerSolrCore();
 	                            } else if (action.equals(REGISTERWITHWARN)) {
 	                                registerSolrCore();
@@ -410,7 +419,10 @@ public class SolrAdmin extends MetacatAdmin {
 					RequestUtil.setRequestErrors(request, processingErrors);
 					RequestUtil.forwardRequest(request, response, "/admin", null);
 				} else {
-				    
+				    // Now that the options have been set, change the
+                    // 'propertiesConfigured' option to 'true'
+                    PropertyService.setProperty("configutil.solrserverConfigured",
+                            PropertyService.CONFIGURED);
 				    if(solrSchemaException != null) {
 	                    //Show the warning message
 	                    Vector<String> errorVector = new Vector<String>();
@@ -420,12 +432,17 @@ public class SolrAdmin extends MetacatAdmin {
 	                    RequestUtil.setRequestErrors(request, errorVector);
 	                    RequestUtil.forwardRequest(request, response,
 	                                    "/admin/solr-schema-warn.jsp", null);
+				    } else if ( unspportedOperExcepiton != null) {
+	                        //Show the warning message
+	                        Vector<String> errorVector = new Vector<String>();
+	                        errorVector.add(unspportedOperExcepiton.getMessage());
+	                        RequestUtil.clearRequestMessages(request);
+	                        //request.setAttribute("supportEmail", supportEmail);
+	                        RequestUtil.setRequestErrors(request, errorVector);
+	                        RequestUtil.forwardRequest(request, response,
+	                                        "/admin/solr-warn.jsp", null);
+	                    
 				    } else {
-        					// Now that the options have been set, change the
-        					// 'propertiesConfigured' option to 'true'
-        					PropertyService.setProperty("configutil.solrserverConfigured",
-        							PropertyService.CONFIGURED);
-        					
         					// Reload the main metacat configuration page
         					processingSuccess.add("Solr server was successfully configured");
         					RequestUtil.clearRequestMessages(request);
@@ -495,7 +512,7 @@ public class SolrAdmin extends MetacatAdmin {
 	 * @throws UtilException 
 	 */
 	private void createSolrHome() throws PropertyNotFoundException, IOException, ServiceException, UtilException {
-	   // Try to create and initialize the solr-home directory if necessary.
+	        // Try to create and initialize the solr-home directory if necessary.
             String solrHomePath = PropertyService.getProperty("solr.homeDir");
             String indexContext = PropertyService.getProperty("index.context");
             String solrUser = PropertyService.getProperty("solr.osUser");
@@ -535,7 +552,7 @@ public class SolrAdmin extends MetacatAdmin {
                             FileSystem fileSystem = solrHomePathObj.getFileSystem();
                             UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
                             final UserPrincipal userPrincipal = service.lookupPrincipalByName(solrUser);
-                            //change the onwership recursively
+                            //change the ownership recursively
                             Files.walkFileTree(solrHomePathObj, new SimpleFileVisitor<Path>() {
                                 @Override
                                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
