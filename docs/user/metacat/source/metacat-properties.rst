@@ -45,6 +45,20 @@ Metacat Server Properties
 |                           |                                                                                          |                        |
 |                           | Default Value: 443                                                                       |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-internalName:  |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.internalName       | The internal network host name used to access Metacat. It bypasses the network interface | localhost              |
+|                           | to access Metacat. The host name should not include the protocol prefix (http://).       |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: localhost                                                                 |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-internalPort:  |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.internalPort       | The network port used to access Metacat for the internal server name.                    | 80                     |
+|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: 80                                                                        |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
 
 Application Properties
 ----------------------
