@@ -759,43 +759,6 @@ public class AccessControlList extends DefaultHandler
     }
   }
 
-  /* Get SystemID for @publicID from Metacat DB Catalog. */
-  private String getSystemID(String publicID) throws SQLException, PropertyNotFoundException {
-
-		String systemID = "";
-		PreparedStatement pstmt = null;
-		DBConnection conn = null;
-		int serialNumber = -1;
-
-		try {
-			//check out DBConnection
-			conn = DBConnectionPool.getDBConnection("AccessControlList.getSystemID");
-			serialNumber = conn.getCheckOutSerialNumber();
-
-			pstmt = conn.prepareStatement("SELECT system_id FROM xml_catalog "
-					+ "WHERE entry_type = 'DTD' " + "AND public_id = ?");
-			pstmt.setString(1, publicID);
-			pstmt.execute();
-			ResultSet rs = pstmt.getResultSet();
-			boolean hasRow = rs.next();
-			if (hasRow) {
-				systemID = rs.getString(1);
-				// system id may not have server url on front.  Add it if not.
-				if (!systemID.startsWith("http://")) {
-					systemID = SystemUtil.getContextURL() + systemID;
-				}
-			}
-
-			return systemID;
-		}//try
-		finally {
-			try {
-				pstmt.close();
-			} finally {
-				DBConnectionPool.returnDBConnection(conn, serialNumber);
-			}
-		}//finally
-	}
   
   /**
    * SAX Handler that receives notification of comments in the DTD
