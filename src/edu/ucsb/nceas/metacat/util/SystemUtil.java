@@ -277,7 +277,7 @@ public class SystemUtil {
 	                throw new Exception("The local server "+internalURL+" is not accessible since the http reponse code is "+connection.getResponseCode());
 	            }
 	        } catch (Exception e) {
-	            logMetacat.error("SystemUtil.getInternalServerURL - Metacat can't access the local url"+internalURL +" and it will use the exteranl url");
+	            logMetacat.warn("SystemUtil.getInternalServerURL - Metacat can't access the local url - "+internalURL +" and it will use the exteranl url since "+e.getMessage(), e);
 	            internalURLReplacedByExternal = true;
 	            internalURL = getServerURL();
 	        }
