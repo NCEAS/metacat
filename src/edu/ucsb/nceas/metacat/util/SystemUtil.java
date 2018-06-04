@@ -255,7 +255,7 @@ public class SystemUtil {
 	 * @return  the url of the internal Metacat context
 	 * @throws PropertyNotFoundException
 	 */
-	public static String getInternalConextURL() throws PropertyNotFoundException {
+	public static String getInternalContextURL() throws PropertyNotFoundException {
 	    return getInternalServerURL() + "/"
                 + PropertyService.getProperty("application.context");
 	}

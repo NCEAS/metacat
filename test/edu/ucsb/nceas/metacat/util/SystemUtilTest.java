@@ -89,7 +89,7 @@ public class SystemUtilTest extends MCTestCase {
        if(!SystemUtil.isInternalURLReplacedByExternal()) {
            assertTrue(internalURL.equals("http://localhost:80"));
        }
-       String contextURL = SystemUtil.getInternalConextURL();
+       String contextURL = SystemUtil.getInternalContextURL();
        System.out.println("========================= the context url is "+contextURL);
        if(!SystemUtil.isInternalURLReplacedByExternal()) {
            assertTrue(contextURL.equals("http://localhost:80"+"/"+PropertyService.getProperty("application.context")));
