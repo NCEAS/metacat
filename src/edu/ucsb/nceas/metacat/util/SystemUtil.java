@@ -271,7 +271,7 @@ public class SystemUtil {
 	        internalURL = getInternalServerFromProp();
 	        try {
 	            //if the internalURL doesn't work, it will fall back to the external url.
-	            URL internal = new URL(internalURL+"/"+ PropertyService.getProperty("application.context")); // we will try metacat conect url
+	            URL internal = new URL(internalURL); // we will try to connect the server url
 	            HttpURLConnection connection = (HttpURLConnection)internal.openConnection();
 	            if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
 	                throw new Exception("The local server "+internalURL+" is not accessible since the http reponse code is "+connection.getResponseCode());
