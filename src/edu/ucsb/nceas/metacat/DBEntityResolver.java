@@ -373,7 +373,7 @@ public class DBEntityResolver implements EntityResolver
 	 * 
 	 * @systemId to Metacat file system
 	 */
-	private String uploadDTD(String systemId) throws SAXException {
+	/*private String uploadDTD(String systemId) throws SAXException {
 		String dtdPath = null;
 		String dtdURL = null;
 		try {
@@ -442,13 +442,13 @@ public class DBEntityResolver implements EntityResolver
 
 		// String dtdURL = "http://dev.nceas.ucsb.edu/bojilova/dtd/";
 		return dtdURL + filename;
-	}
+	}*/
 
 
   /**
 	 * Upload new DTD located at outside URL to Metacat file system
 	 */
-	private String uploadDTDFromURL(InputStream istream, String systemId)
+	/*private String uploadDTDFromURL(InputStream istream, String systemId)
 			throws SAXException {
 		String dtdPath = null;
 		String dtdURL = null;
@@ -523,7 +523,7 @@ public class DBEntityResolver implements EntityResolver
 
 		//String dtdURL = "http://dev.nceas.ucsb.edu/bojilova/dtd/";
 		return dtdURL + filename;
-	}
+	}*/
 
 	/**
 	 * Check URL Connection for @systemId, and return an InputStream
