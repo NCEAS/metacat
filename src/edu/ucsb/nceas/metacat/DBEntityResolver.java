@@ -250,7 +250,7 @@ public class DBEntityResolver implements EntityResolver
    * Look at db XML Catalog to get System ID (if any) for @doctype.
    * Return null if there are no System ID found for @doctype
    */
-  public static String getDTDSystemID( String doctype )
+  private static String getDTDSystemID( String doctype )
                  throws SAXException
   {
     String systemid = null;
@@ -276,7 +276,7 @@ public class DBEntityResolver implements EntityResolver
         systemid = rs.getString(1);
         // system id may not have server url on front.  Add it if not.
         if (!systemid.startsWith("http://")) {
-        	systemid = SystemUtil.getContextURL() + systemid;
+        	systemid = SystemUtil.getInternalContextURL() + systemid;
         }
       }
       //pstmt.close();
@@ -317,7 +317,7 @@ public class DBEntityResolver implements EntityResolver
    * Register new DTD identified by @systemId in Metacat XML Catalog
    * . make a reference with @systemId for @doctype in Metacat DB
    */
-  private void registerDTD ( String doctype, String systemId )
+  /*private void registerDTD ( String doctype, String systemId )
                  throws SAXException
   {
 	  String existingSystemId = getDTDSystemID(doctype);
@@ -366,7 +366,7 @@ public class DBEntityResolver implements EntityResolver
       //DBConnectionPool.returnDBConnection(conn, serialNumber);
     }//finally
 
-  }
+  }*/
 
   /**
 	 * Upload new DTD text identified by
