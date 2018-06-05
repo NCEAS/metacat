@@ -76,7 +76,7 @@ public class AccessControlList extends DefaultHandler
   private DBConnection connection;
   private String parserName;
   private Stack elementStack;
-  private String server;
+  //private String server;
   private String sep;
  
   private boolean	processingDTD;
@@ -137,7 +137,7 @@ public class AccessControlList extends DefaultHandler
                   throws SAXException, IOException, McdbException, PropertyNotFoundException
   {
 		String parserName = PropertyService.getProperty("xml.saxparser");
-		this.server = SystemUtil.getSecureServerURL();
+		//this.server = SystemUtil.getSecureServerURL();
 		this.sep = PropertyService.getProperty("document.accNumSeparator");
 
 		this.connection = conn;
