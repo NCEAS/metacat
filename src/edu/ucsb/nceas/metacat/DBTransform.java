@@ -282,7 +282,7 @@ public class DBTransform {
    * @param sourcetype the document type of the source
    * @param targettype the document type of the target
    */
-  public String getStyleSystemId(String qformat, String sourcetype,
+  private String getStyleSystemId(String qformat, String sourcetype,
                 String targettype) {
     String systemId = null;
 
