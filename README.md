@@ -77,6 +77,7 @@ New features and bugs fixed in this release:
 * Run MDQ suite on insert/update
 * MN.updateSystemmetadata shouldn't call CN.synchronize if the synchronize is off on the MN
 * Metacat is double-decoding incoming urls on the CNs
+* Upgrade the version of MetacatUI to 1.14.15
 
 
 ### Release Notes for 2.8.7:
