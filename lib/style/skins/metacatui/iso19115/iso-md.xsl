@@ -245,7 +245,7 @@
             <tbody>
                 <xsl:for-each select="./gmd:distributorTransferOptions/gmd:MD_DigitalTransferOptions">
                     <xsl:variable name="url">
-                        <xsl:value-of select="./gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()" />
+                        <xsl:value-of select="normalize-space(./gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text())" />
                     </xsl:variable>
                     <tr>
                         <td>
