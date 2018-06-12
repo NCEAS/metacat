@@ -38,6 +38,7 @@ import org.apache.log4j.Logger;
 
 import com.sun.net.ssl.HttpsURLConnection;
 
+import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -55,6 +56,7 @@ public class SystemUtil {
 //	private static String METACAT_WEB_SERVLET = "metacatweb";
 	private static int OS_CLASS = 0;
 	private static boolean firstTimeTryInternalURL = true;
+	private static boolean firstTryInternalURLAfterFullInit = true;
 	private static String internalURL = null;
 	private static boolean internalURLReplacedByExternal = false;
 	
@@ -267,9 +269,10 @@ public class SystemUtil {
 	 */
 	public static String getInternalServerURL() throws PropertyNotFoundException {
 	    if(firstTimeTryInternalURL) {
+	        //System.out.println("in the first time try !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
 	        firstTimeTryInternalURL = false;
 	        internalURL = getInternalServerFromProp();
-	        try {
+	        /*try {
 	            //if the internalURL doesn't work, it will fall back to the external url.
 	            URL internal = new URL(internalURL); // we will try to connect the server url
 	            HttpURLConnection connection = (HttpURLConnection)internal.openConnection();
@@ -280,7 +283,23 @@ public class SystemUtil {
 	            logMetacat.warn("SystemUtil.getInternalServerURL - Metacat can't access the local url - "+internalURL +" and it will use the exteranl url since "+e.getMessage(), e);
 	            internalURLReplacedByExternal = true;
 	            internalURL = getServerURL();
-	        }
+	        }*/
+	    } else if(firstTryInternalURLAfterFullInit && MetaCatServlet.isFullyInitialized()) {
+	        //System.out.println("in the first time try when the server is fully intialized===========================================");
+	        firstTryInternalURLAfterFullInit = false;
+	        internalURL = getInternalServerFromProp();
+            try {
+                //if the internalURL doesn't work, it will fall back to the external url.
+                URL internal = new URL(internalURL+"/"+PropertyService.getProperty("application.context")); // we will try to connect the context url
+                HttpURLConnection connection = (HttpURLConnection)internal.openConnection();
+                if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("The local server "+internalURL+"/"+PropertyService.getProperty("application.context")+" is not accessible since the http reponse code is "+connection.getResponseCode());
+                }
+            } catch (Exception e) {
+                logMetacat.warn("SystemUtil.getInternalServerURL - Metacat can't access the local url - "+internalURL +"/"+PropertyService.getProperty("application.context")+" and it will use the exteranl url since "+e.getMessage(), e);
+                internalURLReplacedByExternal = true;
+                internalURL = getServerURL();
+            }
 	    }
 	    logMetacat.debug("SystemUtil.getInternalServerURL - the final internal url is "+internalURL);
 	    return internalURL;
