@@ -235,7 +235,7 @@
                 <xsl:apply-templates />
             </xsl:for-each>
             <!-- gmd:MD_contentInfo (atributes) table -->
-            <xsl:if test="./gmd:contentInfo">
+            <xsl:if test="./gmd:contentInfo/gmd:MD_CoverageDescription | ./gmd:contentInfo/gmd:MI_CoverageDescription">
                 <div class="control-group entity">
                     <h4>Attributes</h4>
                     <xsl:call-template name="MD_contentInfo">

@@ -79,6 +79,7 @@ New features and bugs fixed in this release:
 * Metacat is double-decoding incoming urls on the CNs
 * Upgrade the version of MetacatUI to 1.14.15
 * Fixed improperly formatted Alternate Data Access URLs
+* Fixed a bug causing ISO19115 documents to render with empty Attributes tables
 
 
 ### Release Notes for 2.8.7:
