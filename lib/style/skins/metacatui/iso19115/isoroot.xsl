@@ -76,9 +76,7 @@
                                     <xsl:choose>
                                         <xsl:when test="starts-with($code, 'http')">
                                             <xsl:element name="a">
-                                                <xsl:attribute name="href">
-                                                    <xsl:value-of select="$code" />
-                                                </xsl:attribute>
+                                                <xsl:attribute name="href"><xsl:value-of select="$code" /></xsl:attribute>
                                                 <xsl:value-of select="$code" />
                                             </xsl:element>
                                         </xsl:when>
