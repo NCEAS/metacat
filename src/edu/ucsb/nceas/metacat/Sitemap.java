@@ -204,10 +204,8 @@ public class Sitemap extends TimerTask {
      */
     private void writeSitemapHeader(Writer sitemap) throws IOException {
         sitemap.write(PROLOG);
-        String header = "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n" +
-                "xmlns:sm=\"http://www.sitemaps.org/schemas/sitemap/0.9\"\n" +
-                "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
-                "xsi:schemaLocation=\"http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd\">\n";
+        String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+            "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">";
         
         sitemap.write(header);
         sitemap.flush();
