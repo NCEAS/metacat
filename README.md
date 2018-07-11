@@ -80,6 +80,7 @@ New features and bugs fixed in this release:
 * Upgrade the version of MetacatUI to 1.14.15
 * Fixed improperly formatted Alternate Data Access URLs
 * Fixed a bug causing ISO19115 documents to render with empty Attributes tables
+* Support the formatID : http://datacite.org/schema/kernel-3.0 and http://datacite.org/schema/kernel-3.1
 
 
 ### Release Notes for 2.8.7:
