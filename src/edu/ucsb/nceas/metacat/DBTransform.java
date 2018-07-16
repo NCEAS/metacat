@@ -73,7 +73,7 @@ public class DBTransform {
   private String contextURL = null;
   private String servletURL = null;
   private String userManagementURL = null;
-  private String internalConextURL = null; //used to locate the xsl files.
+  private String internalContextURL = null; //used to locate the xsl files.
   
   /**
    * construct a DBTransform instance.
@@ -94,7 +94,7 @@ public class DBTransform {
     contextURL = SystemUtil.getContextURL();
     servletURL = SystemUtil.getServletURL();
     userManagementURL = PropertyService.getProperty("auth.userManagementUrl");
-    internalConextURL = SystemUtil.getInternalContextURL();
+    internalContextURL = SystemUtil.getInternalContextURL();
   }
 
   /**
@@ -357,7 +357,7 @@ public class DBTransform {
     //Check if the systemId is relative path, add a postfix - the contextULR to systemID. 
     if (systemId != null && !systemId.startsWith("http"))
     {
-    	systemId = internalConextURL+systemId;
+    	systemId = internalContextURL+systemId;
     }
     // Return the system ID for this particular source document type
     logMetacat.info("DBTransform.getStyleSystemId - style system id is: " + systemId);
