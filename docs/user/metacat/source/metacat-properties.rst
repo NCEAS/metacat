@@ -47,8 +47,10 @@ Metacat Server Properties
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
 | .. _server-internalName:  |                                                                                          |                        |
 |                           |                                                                                          |                        |
-| server.internalName       | The internal network host name used to access Metacat. It bypasses the network interface | localhost              |
-|                           | to access Metacat. The host name should not include the protocol prefix (http://).       |                        |
+| server.internalName       | The internal network host name used to access Metacat. It is used to improve performance | localhost              |
+|                           | since it bypasses the external network interface to directly access files, e.g. schema   |                        |
+|                           | and style sheet files located within Metacat itself. The host name should not include    |                        |
+|                           | the protocol prefix (http://).                                                           |                        |
 |                           |                                                                                          |                        |
 |                           | Default Value: localhost                                                                 |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
