@@ -151,7 +151,7 @@ public class SchemaLocationResolver
     //System.out.println("the parent schema new url in metacat ============="+parentSchemaNewURLInMetacat);
     if(externalBaseURL != null)
     {
-      InputStream in = DBEntityResolver.checkURLConnection(SystemUtil.getContextURL()+parentSchemaNewURLInMetacat);
+      InputStream in = DBEntityResolver.checkURLConnection(SystemUtil.getInternalContextURL()+parentSchemaNewURLInMetacat);
       XMLSchemaParser parser = new XMLSchemaParser(in);
       parser.parse();
       Vector<String> includedSchemaPaths = parser.getIncludedSchemaFilePathes();

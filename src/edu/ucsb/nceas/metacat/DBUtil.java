@@ -195,7 +195,7 @@ public class DBUtil {
         systemID = rs.getString(1);
         // system id may not have server url on front.  Add it if not.
         if (!systemID.startsWith("http://")) {
-        	systemID = SystemUtil.getContextURL() + systemID;
+        	systemID = SystemUtil.getInternalContextURL() + systemID;
         }
       } else {
         throw new SQLException("DBUtil.readDTDSchema - Non-registered doctype: " + doctype);

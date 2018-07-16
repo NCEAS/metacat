@@ -91,7 +91,7 @@ public class PropertyServiceTest extends MCTestCase {
      *   successfully.  If PropertyNotFoundException is thrown, the test case fails.
      *   Also, if the value returned is null, the test case fails.  Strictly speaking,
      *   it is not a failure for getProperty to return null, but we know that 
-     *   'test.metacatURL' should have a value.
+     *   'test.mcUser' should have a value.
      *2. read a single property from the main properties that shouldn't exist
      *   Expect a PropertyNotFoundException here.  If the exception is not thrown,
      *   the test case fails.
@@ -127,13 +127,13 @@ public class PropertyServiceTest extends MCTestCase {
 	        //====1 read a single property from the properties file that should exist
         	debug("Test 1: read a single property from the properties file that should exist");
 	        try {
-	        	String metacatURL = PropertyService.getProperty("test.metacatUrl");
-	        	if (metacatURL == null || metacatURL.equals("")) {
-	        		fail("Test 1: Reading property 'test.metacatURL' returned no value.");
+	        	String user = PropertyService.getProperty("test.mcUser");
+	        	if (user == null || user.equals("")) {
+	        		fail("Test 1: Reading property 'test.mcUser' returned no value.");
 	        	}
-	        	debug("Test 1: read property 'test.metacatURL': " + metacatURL);
+	        	debug("Test 1: read property 'test.mcUser': " + user);
 	        } catch (PropertyNotFoundException pnfe) {
-	        	fail("Test 1: Could not read property 'test.metacatURL' : " + pnfe.getMessage());
+	        	fail("Test 1: Could not read property 'test.mcUser' : " + pnfe.getMessage());
 	        }
 	        
 	        //====2 read a single property from the main properties  that shouldn't exist

@@ -26,7 +26,7 @@ public class OrcidService {
 	private static Logger logMetacat = Logger.getLogger(OrcidService.class);
 	
     //private static final String REST_URL = "http://pub.sandbox.orcid.org/v1.1/search/orcid-bio";
-    private static final String REST_URL = "http://pub.orcid.org/v1.1/search/orcid-bio";
+    private static final String REST_URL = "https://pub.orcid.org/v2.0/search";
 
     
     /**

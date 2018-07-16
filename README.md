@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.8.7 Release
+Version: 2.9.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,22 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.9.0:
+New features and bugs fixed in this release:
+* Specify internal calls to Metacat on localhost or internal domain name
+* Upgrade to the 2.0 API to access the ORCID service
+* Remove the duplicated authorization code on D1NodeService.create and CNodeService.create method
+* XMLSchemaService progressively builds massively long string by calling doRefresh
+* Simplify the configuration of the metacat.properties file when users run junit tests
+* Run MDQ suite on insert/update
+* MN.updateSystemmetadata shouldn't call CN.synchronize if the synchronize is off on the MN
+* Metacat is double-decoding incoming urls on the CNs
+* Upgrade the version of MetacatUI to 1.14.15
+* Fixed improperly formatted Alternate Data Access URLs
+* Fixed a bug causing ISO19115 documents to render with empty Attributes tables
+* Support the formatID : http://datacite.org/schema/kernel-3.0 and http://datacite.org/schema/kernel-3.1
+
 
 ### Release Notes for 2.8.7:
 Bugs fixed in this release:

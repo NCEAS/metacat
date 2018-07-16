@@ -45,6 +45,22 @@ Metacat Server Properties
 |                           |                                                                                          |                        |
 |                           | Default Value: 443                                                                       |                        |
 +---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-internalName:  |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.internalName       | The internal network host name used to access Metacat. It is used to improve performance | localhost              |
+|                           | since it bypasses the external network interface to directly access files, e.g. schema   |                        |
+|                           | and style sheet files located within Metacat itself. The host name should not include    |                        |
+|                           | the protocol prefix (http://).                                                           |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: localhost                                                                 |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
+| .. _server-internalPort:  |                                                                                          |                        |
+|                           |                                                                                          |                        |
+| server.internalPort       | The network port used to access Metacat for the internal server name.                    | 80                     |
+|                           | This is usually 80 if Apache Web server is running, and 8080 if Tomcat is running alone. |                        |
+|                           |                                                                                          |                        |
+|                           | Default Value: 80                                                                        |                        |
++---------------------------+------------------------------------------------------------------------------------------+------------------------+
 
 Application Properties
 ----------------------

@@ -252,6 +252,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     private InputStream getSolrConfig() throws MalformedURLException, IOException {
         String solrConfigAppendix = Settings.getConfiguration().getString(SOLR_CONFIG_URLAPPENDIX);
         String configURL = solrServerBaseURL+solrConfigAppendix;
+        log.info("HttpSolrQueryService.getSolrConfig - the url of getting the solr configure file is "+configURL);
         return (new URL(configURL)).openStream();
     }
     /*
@@ -260,6 +261,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     private InputStream lookupSchema() throws MalformedURLException, IOException {
         String schemaURLAppendix = Settings.getConfiguration().getString(SOLR_SCHEMA_URLAPPENDIX);
         String schemaURL = solrServerBaseURL+schemaURLAppendix;
+        log.info("HttpSolrQueryService.lookupSchema - the url of getting the solr configure file is "+schemaURL);
         return (new URL(schemaURL)).openStream();
     }
     

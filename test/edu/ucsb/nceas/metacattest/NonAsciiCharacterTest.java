@@ -55,7 +55,6 @@ public class NonAsciiCharacterTest
 
 	static {
 		try {
-		    metacatUrl = PropertyService.getProperty("test.metacatUrl");
 			username = PropertyService.getProperty("test.mcUser");
 			password = PropertyService.getProperty("test.mcPassword");
 			anotheruser = PropertyService.getProperty("test.mcAnotherUser");

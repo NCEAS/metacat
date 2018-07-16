@@ -217,6 +217,7 @@ public class MNodeService extends D1NodeService
     
     // shared executor
     private static ExecutorService executor = null;
+    private boolean needSync = true;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -246,6 +247,13 @@ public class MNodeService extends D1NodeService
         
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
+
+        try {
+            needSync = (new Boolean(PropertyService.getProperty("dataone.nodeSynchronize"))).booleanValue();
+        } catch (PropertyNotFoundException e) {
+            // TODO Auto-generated catch block
+            logMetacat.warn("MNodeService.constructor : can't find the property to indicate if the memeber node need to be synchronized. It will use the default value - true.");
+        }
     }
 
     /**
@@ -634,10 +642,12 @@ public class MNodeService extends D1NodeService
         if (session == null) {
           throw new InvalidToken("1110", "Session is required to WRITE to the Node.");
         }
+        
         // verify the pid is valid format
         if (!isValidIdentifier(pid)) {
             throw new InvalidRequest("1102", "The provided identifier is invalid.");
         }
+        objectExists(pid);
         // set the submitter to match the certificate
         sysmeta.setSubmitter(session.getSubject());
         // set the originating node
@@ -689,9 +699,9 @@ public class MNodeService extends D1NodeService
             if (idExists) {
                     throw new InvalidSystemMetadata("1180", 
                               "The series identifier " + sid.getValue() +
-                              " is already used by another object and" +
+                              " is already used by another object and " +
                               "therefore can not be used for this object. Clients should choose" +
-                              "a new identifier that is unique and retry the operation or " +
+                              " a new identifier that is unique and retry the operation or " +
                               "use CN.reserveIdentifier() to reserve one.");
                 
             }
@@ -700,6 +710,20 @@ public class MNodeService extends D1NodeService
                 throw new InvalidSystemMetadata("1180", "The series id "+sid.getValue()+" in the system metadata shouldn't have the same value of the pid.");
             }
         }
+        
+        boolean allowed = false;
+        try {
+          allowed = isAuthorized(session, pid, Permission.WRITE);
+                
+        } catch (NotFound e) {
+          // The identifier doesn't exist, writing should be fine.
+          allowed = true;
+        }
+        
+        if(!allowed) {
+            throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
+        }
+        logMetacat.debug("Allowed to create: " + pid.getValue());
 
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
@@ -755,6 +779,8 @@ public class MNodeService extends D1NodeService
                             sysmeta.getIdentifier().getValue()                    +
                             "\n" + "\tSource NodeReference ="                     +
                             sourceNode.getValue());
+        } else {
+            throw new InvalidRequest("2153", "The provided session or systemmetdata or sourceNode should NOT be null.");
         }
         boolean result = false;
         String nodeIdStr = null;
@@ -785,7 +811,13 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("2152", msg);
             
         }
-
+       
+        // only allow cns call this method
+        boolean  allowed = isCNAdmin(session);
+        if(!allowed) {
+            throw new NotAuthorized("2152", "The client is not a coordinate node. Only a coordinate node is allowed to call the replicate method : ");
+        }
+        logMetacat.debug("Allowed to replicate: " + pid.getValue());
 
         // get the local node id
         try {
@@ -913,6 +945,7 @@ public class MNodeService extends D1NodeService
                 if ( localId == null ) {
                     // TODO: this will fail if we already "know" about the identifier
                     // FIXME: see https://redmine.dataone.org/issues/2572
+                    objectExists(pid);
                     retPid = super.create(session, pid, object, sysmeta);
                     result = (retPid.getValue().equals(pid.getValue()));
                 }
@@ -2769,7 +2802,8 @@ public class MNodeService extends D1NodeService
           HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
       }
       
-      if(success) {
+      if(success && needSync) {
+          logMetacat.debug("MNodeService.updateSystemMetadata - the cn needs to be notified that the system metadata of object " +pid.getValue()+" has been changed ");
           this.cn = D1Client.getCN();
           //TODO
           //notify the cns the synchornize the new system metadata.

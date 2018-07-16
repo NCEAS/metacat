@@ -381,7 +381,6 @@ public abstract class D1NodeService {
 
     Identifier resultPid = null;
     String localId = null;
-    boolean allowed = false;
     
     // check for null session
     if (session == null) {
@@ -417,49 +416,8 @@ public abstract class D1NodeService {
     } 
     
 
-    logMetacat.debug("Checking if identifier exists: " + pid.getValue());
-    // Check that the identifier does not already exist
-    boolean idExists = false;
+    // save the sysmeta
     try {
-        idExists = IdentifierManager.getInstance().identifierExists(pid.getValue());
-    } catch (SQLException e) {
-        throw new ServiceFailure("1190", 
-                                "The requested identifier " + pid.getValue() +
-                                " couldn't be determined if it is unique since : "+e.getMessage());
-    }
-    if (idExists) {
-	    	throw new IdentifierNotUnique("1120", 
-			          "The requested identifier " + pid.getValue() +
-			          " is already used by another object and" +
-			          "therefore can not be used for this object. Clients should choose" +
-			          "a new identifier that is unique and retry the operation or " +
-			          "use CN.reserveIdentifier() to reserve one.");
-    	
-    }
-    
-    
-    // TODO: this probably needs to be refined more
-    try {
-      allowed = isAuthorized(session, pid, Permission.WRITE);
-            
-    } catch (NotFound e) {
-      // The identifier doesn't exist, writing should be fine.
-      allowed = true;
-    }
-    
-    if(!allowed) {
-        throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
-    }
- 
-    	
-    // we have the go ahead
-    //if ( allowed ) {
-     
-      
-        logMetacat.debug("Allowed to insert: " + pid.getValue());
-
-        // save the sysmeta
-        try {
             // lock and unlock of the pid happens in the subclass
             HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
         
@@ -536,10 +494,7 @@ public abstract class D1NodeService {
         removeSystemMetaAndIdentifier(pid);
         throw new ServiceFailure("1190", "The Node is unable to create the object. "+pid.getValue() + " since "+e.getMessage());
     }
-   
-    
-    
-  
+
     
     try {
         // submit for indexing
@@ -553,6 +508,39 @@ public abstract class D1NodeService {
     logMetacat.info("create() complete for object: " + pid.getValue());
 
     return resultPid;
+  }
+  
+  
+  /**
+   * Determine if an object with the given identifier already exists or not.
+   * @param pid  the id will be checked.
+   * @throws ServiceFailure if the system can't fulfill the check process
+   * @throws IdentifierNotUnique if the object with the identifier does exist
+   */
+  protected static void objectExists(Identifier pid ) throws ServiceFailure, IdentifierNotUnique{
+      // Check that the identifier does not already exist
+      boolean idExists = false;
+      if (pid == null) {
+          throw new IdentifierNotUnique("1120", 
+                  "The requested identifier can't be null.");
+      }
+      logMetacat.debug("Checking if identifier exists: " + pid.getValue());
+      try {
+          idExists = IdentifierManager.getInstance().identifierExists(pid.getValue());
+      } catch (SQLException e) {
+          throw new ServiceFailure("1190", 
+                                  "The requested identifier " + pid.getValue() +
+                                  " couldn't be determined if it is unique since : "+e.getMessage());
+      }
+      if (idExists) {
+              throw new IdentifierNotUnique("1120", 
+                        "The requested identifier " + pid.getValue() +
+                        " is already used by another object and " +
+                        " therefore can not be used for this object. Clients should choose" +
+                        "a new identifier that is unique and retry the operation or " +
+                        "use CN.reserveIdentifier() to reserve one.");
+          
+      }
   }
   
   /*
@@ -2019,14 +2007,14 @@ public abstract class D1NodeService {
 	private void checkOneTimeSettableSysmMetaFields(SystemMetadata orgMeta, SystemMetadata newMeta) throws InvalidRequest {
 	    if(orgMeta.getObsoletedBy() != null ) {
 	        if(newMeta.getObsoletedBy() == null || !orgMeta.getObsoletedBy().equals(newMeta.getObsoletedBy())) {
-	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletedBy field in the system metadata of the object "
-	                    + orgMeta.getIdentifier().getValue() +". This is illegal since the obsoletedBy filed is set, you can't change it again.");
+	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletedBy field in the System Metadata of the Object " +
+	                    orgMeta.getIdentifier().getValue() + ". This is illegal since the obsoletedBy field is already set and cannot be changed once set.");
 	        }
         }
 	    if(orgMeta.getObsoletes() != null) {
 	        if(newMeta.getObsoletes() == null || !orgMeta.getObsoletes().equals(newMeta.getObsoletes())) {
-	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletes field in the system metadata of the object"+
-	               orgMeta.getIdentifier().getValue()+". This is illegal since the obsoletes filed is set, you can't change it again.");
+	            throw new InvalidRequest("4869", "The request is trying to reset the obsoletes field in the System Metadata of the Object " +
+	               orgMeta.getIdentifier().getValue() + ". This is illegal since the obsoletes field is already set and cannot be changed once set.");
 	        }
 	    }
 	}
@@ -2282,7 +2270,8 @@ public abstract class D1NodeService {
 
           try {
               // archive the document
-              DocumentImpl.delete(localId, null, null, null, false);
+              boolean ignoreRev = false;
+              DocumentImpl.delete(localId, ignoreRev, null, null, null, false);
               if(log) {
                    try {
                       EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, Event.DELETE.xmlValue());
