@@ -6,10 +6,9 @@ Vagrant.configure("2") do |config|
     v.cpus = 2
   end
 
-  config.vm.network "forwarded_port", guest: 80, host: 8080
-  
-  config.vm.synced_folder "./", "/metacat"
-  config.vm.synced_folder "../metacatui/src", "/var/www/metacatui"
+  # Uncomment me to access Metacat from your Host machine
+  # config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.synced_folder ".", "/metacat", type: "rsync", rsync__exclude: ".git/"
 
   config.vm.provision "shell", inline: <<-SHELL
     apt-get update
