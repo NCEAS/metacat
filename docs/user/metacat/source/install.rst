@@ -250,7 +250,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
 
       <VirtualHost XXX.XXX.XXX.XXX:80> 
         DocumentRoot /var/www 
-        ServerName dev.nceas.ucsb.edu 
+        ServerName dev.nceas.ucsb.edu
+        ## Allow CORS requests from all origins to use cookies
+        #SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+        #Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+        Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
+        Header set Access-Control-Allow-Credentials "true"
         ErrorLog /var/log/httpd/error_log 
         CustomLog /var/log/httpd/access_log common 
         ScriptAlias /cgi-bin/ "/var/www/cgi-bin/" 
@@ -288,7 +294,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
       workers.tomcat_home -  set to the Tomcat install directory. 
       workers.java_home - set to the Java install directory. 
 
-  5. Restart Apache to bring in changes by typing:
+  5. Enable the Apache Mod HEADERS:
+
+    ::
+
+     sudo a2enmod headers
+
+  6. Restart Apache to bring in changes by typing:
 
     ::
 
