@@ -7,7 +7,7 @@ Vagrant.configure("2") do |config|
   end
 
   # Uncomment me to access Metacat from your Host machine
-  # config.vm.network "forwarded_port", guest: 8080, host: 8080
+  config.vm.network "forwarded_port", guest: 8080, host: 8080
   config.vm.synced_folder ".", "/metacat", type: "rsync", rsync__exclude: ".git/"
 
   config.vm.provision "shell", inline: <<-SHELL
@@ -18,7 +18,9 @@ Vagrant.configure("2") do |config|
                        postgresql \
                        postgresql-contrib \
                        python3-bcrypt \
-                       tomcat7
+                       tomcat7 \
+                       ant \
+                       maven
 
     # Add sunec.jar to work around an issue with verifying the CN's cert
     # This makes it so we can use the DataONE API against Metacat
