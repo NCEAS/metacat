@@ -606,7 +606,7 @@
   </xsl:template>
   
 	<xsl:template name="datasetentity">
-		<xsl:if test="dataTable or spatialRaster or spatialVector or storedProcedures or view or otherEntity">
+		<xsl:if test="dataTable or spatialRaster or spatialVector or storedProcedure or view or otherEntity">
 			<h4>
 				<xsl:text>Data Table, Image, and Other Data Details</xsl:text>
 			</h4>
