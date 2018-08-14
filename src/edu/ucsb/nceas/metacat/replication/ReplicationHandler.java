@@ -64,6 +64,7 @@ import edu.ucsb.nceas.metacat.DocumentImplWrapper;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.SchemaLocationResolver;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlForSingleFile;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
@@ -134,6 +135,13 @@ public class ReplicationHandler extends TimerTask
       if (serverList==null||serverList.isEmpty())
       {
         return;
+      }
+      //if it is read-only, we should not run the update
+      ReadOnlyChecker checker = new ReadOnlyChecker();
+      boolean readOnly = checker.isReadOnly();
+      if(readOnly) {
+          logReplication.info("ReplicationService.run() - this Metacat is on the read-only mode and the time replication is disabled.");
+          return;
       }
       updateCatalog();
       update();
