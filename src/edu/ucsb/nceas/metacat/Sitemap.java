@@ -38,6 +38,7 @@ import java.util.Date;
 import java.util.TimerTask;
 
 import org.apache.log4j.Logger;
+import org.apache.commons.lang.StringEscapeUtils;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -51,7 +52,17 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * of the site in order to facilitate indexing of the metacat site by search
  * engines.
  * 
+ * Some notes:
+ * 
+ * - A sitemap index is generated regardless of the number of URLs present
+ * - All non-obsoleted metadata objects are included in the sitemap(s). See the
+ *   SQL query below for specifics on this.
+ * - URLs for the location of the sitemaps and the entries themselves are 
+ *   controlled by the 'sitemap.location.base' and  'sitemap.entry.base' 
+ *   properties which can be full URLs or absolute paths
+ * 
  * @author Matt Jones
+ * @author Bryce Mecum
  */
 public class Sitemap extends TimerTask {
 	
@@ -62,16 +73,17 @@ public class Sitemap extends TimerTask {
      * 
      * @param directory
      *            the location to store sitemap files
-     * @param urlRoot
-     *            the base URL for constructing sitemap URLs
-     * @param skin
-     *            the format skin to be used in URLs
+     * @param locationBase
+     *            the base URL for constructing sitemap location URLs
+     * @param entryBase
+     *             the base URL for constructing sitemap entry URLs
+     * 
      */
-    public Sitemap(File directory, String urlRoot, String skin) {
+    public Sitemap(File directory, String locationBase, String entryBase) {
         super();
         this.directory = directory;
-        this.urlRoot = urlRoot;
-        this.skin = skin;
+        this.locationBase = locationBase;
+        this.entryBase = entryBase;
     }
 
     /**
@@ -96,34 +108,41 @@ public class Sitemap extends TimerTask {
      * {context}/sitemaps, but you will need to expose them at {context}/ for
      * them to be trusted by Google.  See the Sitemaps.org documentation for
      * details.
-     * 
-     * @param directory
-     *            an existing File directory in which to write the sitemaps
-     * @param urlRoot
-     *            the base URL to use in constructing document URLs
-     * @param skin
-     *            the name of the skin to be used in formatting metacat
-     *            documents
      */
     public void generateSitemaps() {
 
-        logMetacat.info("Running the Sitemap task.");
+        logMetacat.info("Running the Sitemap task. Directory is " + directory + " and locationBase is " + locationBase +".");
 
         // Test if the passed in File is a directory
         if (directory.isDirectory()) {
             // Query xml_documents to get list of documents
             StringBuffer query = new StringBuffer();
             // TODO: make the doctype configurable in the query
+
+            // query should return return a list of non-obsoleted metadata PIDs
+            // whether a PID is obsoleted is determined by its sysmeta.obsoleted_by field being NULL or not
+            // whether a PID is metadata is whether its sysmeta.formatID is in the xml_catalog.public_id
+
+
             String sql =
-            	"SELECT xml_documents.docid, xml_documents.rev " +
-            	"FROM xml_documents, xml_access, identifier " +
-                "WHERE xml_documents.doctype LIKE 'eml:%' " + 
-                "AND xml_documents.docid = identifier.docid " +
-                "AND xml_documents.rev = identifier.rev " +
-                "AND identifier.guid = xml_access.guid " +
-                "AND xml_access.principal_name = 'public' " +
-                "AND xml_access.perm_type = 'allow' " +
-                "order by docid, rev";
+            "SELECT identifier.guid as pid " +
+            "FROM identifier " +
+            "LEFT JOIN systemmetadata on identifier.guid = systemmetadata.guid " +
+            "LEFT JOIN xml_access on identifier.guid = xml_access.guid " +
+            "WHERE systemmetadata.object_format in (select public_id from xml_catalog where public_id is not NULL) AND systemmetadata.obsoleted_by is NULL AND xml_access.principal_name = 'public' AND xml_access.perm_type = 'allow' " +
+            "ORDER BY systemmetadata.date_uploaded DESC;";
+
+            // String sql =
+            // 	"SELECT xml_documents.docid, xml_documents.rev " +
+            // 	"FROM xml_documents, xml_access, identifier " +
+            //     "WHERE xml_documents.doctype LIKE 'eml:%' " + 
+            //     "AND xml_documents.docid = identifier.docid " +
+            //     "AND xml_documents.rev = identifier.rev " +
+            //     "AND identifier.guid = xml_access.guid " +
+            //     "AND xml_access.principal_name = 'public' " +
+            //     "AND xml_access.perm_type = 'allow' " +
+            //     "order by docid, rev";
+            
             query.append(sql);
 
             DBConnection dbConn = null;
@@ -165,10 +184,7 @@ public class Sitemap extends TimerTask {
                         writeSitemapHeader(sitemap);
                     }
 
-                    String separator = PropertyService.getProperty("document.accNumSeparator");
-                    String docid = rs.getString(1) + separator
-                            + rs.getString(2);
-                    writeSitemapEntry(sitemap, docid);
+                    writeSitemapEntry(sitemap, rs.getString(1));
                     counter++;
                 }
                 stmt.close();
@@ -180,9 +196,6 @@ public class Sitemap extends TimerTask {
             } catch (IOException ioe) {
                 logMetacat.warn("Could not open or write to the sitemap file."
                         + ioe.getMessage());
-            } catch (PropertyNotFoundException pnfe) {
-                logMetacat.warn("Could not retrieve the account number separator."
-                        + pnfe.getMessage());
             } finally {
                 // Return database connection to the pool
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
@@ -204,8 +217,7 @@ public class Sitemap extends TimerTask {
      */
     private void writeSitemapHeader(Writer sitemap) throws IOException {
         sitemap.write(PROLOG);
-        String header = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-            "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">";
+        String header = "<urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n";
         
         sitemap.write(header);
         sitemap.flush();
@@ -217,36 +229,26 @@ public class Sitemap extends TimerTask {
      * 
      * @param sitemap
      *            the Writer to use for writing the URL
-     * @param docid
+     * @param pid
      *            the identifier to be written in the URL
-     * @param urlRoot
-     *            the base URL to be used in constructing a URL
-     * @param skin
-     *            the name of the skin to be used in constructing a URL
      * @throws IOException
      *             if there is a problem writing to the Writer
      */
-    private void writeSitemapEntry(Writer sitemap, String docid)
+    private void writeSitemapEntry(Writer sitemap, String pid)
             throws IOException {
-        if (sitemap != null && docid != null && urlRoot != null) {
+        if (sitemap != null && pid != null && entryBase != null) {
             StringBuffer url = new StringBuffer();
-            url.append(urlRoot);
-            if (!urlRoot.endsWith("/")) {
+            url.append(entryBase);
+
+            if (!entryBase.endsWith("/")) {
                 url.append("/");
             }
-            url.append(docid);
-            if (skin != null) {
-                url.append("/");
-                url.append(skin);
-            }
-            sitemap.write("<url><loc>");
+
+            url.append(StringEscapeUtils.escapeHtml(pid));
+            
+            sitemap.write("\t<url>\n\t\t<loc>");
             sitemap.write(url.toString());
-            sitemap.write("</loc>");
-            // <lastmod>2005-01-01</lastmod>
-            // <changefreq>monthly</changefreq>
-            // <priority>0.8</priority>
-            sitemap.write("</url>");
-            sitemap.write("\n");
+            sitemap.write("</loc>\n\t</url>\n");
             sitemap.flush();
         }
     }
@@ -321,10 +323,10 @@ public class Sitemap extends TimerTask {
      */
     private void writeSitemapIndexEntry(Writer sitemapIndex, String filename)
             throws IOException {
-        if (sitemapIndex != null && filename != null && urlRoot != null) {
+        if (sitemapIndex != null && filename != null && locationBase != null) {
             StringBuffer url = new StringBuffer();
-            url.append(urlRoot);
-            if (!urlRoot.endsWith("/")) {
+            url.append(locationBase);
+            if (!locationBase.endsWith("/")) {
                 url.append("/");
             }
             url.append(filename);
@@ -345,20 +347,20 @@ public class Sitemap extends TimerTask {
     /** The directory in which sitemaps are written. */
     private File directory;
 
-    /** The root url for constructing sitemap URLs. */
-    private String urlRoot;
+    /** The root url for constructing sitemap location URLs. */
+    private String locationBase;
 
-    /** The name of the format skin to be used in sitemap URLs. */
-    private String skin;
+    /** The root url for constructing sitemap entry URLs. */
+    private String entryBase;
 
     /** Maximum number of URLs to write to a single sitemap file */
-    static final int MAX_URLS_IN_FILE = 25000; // 50,000 according to Google
+    static final int MAX_URLS_IN_FILE = 50000; // 50,000 according to Google
 
     /** The root name to be used in naming sitemap files. */
-    static final String fileRoot = "metacat";
+    static final String fileRoot = "sitemap";
     
     /** The name to give to the sitemap index file */
-    static final String indexFilename = "metacatSitemapIndex.xml";
+    static final String indexFilename = "sitemap_index.xml";
 
     /** A String constant containing the XML prolog to be written in files. */
     static final String PROLOG = "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n";

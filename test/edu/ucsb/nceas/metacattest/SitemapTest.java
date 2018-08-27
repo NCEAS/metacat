@@ -105,9 +105,9 @@ public class SitemapTest extends MCTestCase {
 			FileUtil.createDirectory(directoryName);
 
 			File directory = new File(directoryName);
-			String urlRoot = "http://foo.example.com/ctx/metacat";
-			String skin = "testskin";
-			Sitemap smap = new Sitemap(directory, urlRoot, skin);
+			String locationBase = "http://foo.example.com/ctx/metacat";
+			String entryBase = "http://foo.example.com/ctx/metacat";
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
 			smap.generateSitemaps();
 			
 			File sitemap1 = new File(directory, "metacat1.xml");
