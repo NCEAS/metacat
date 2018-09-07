@@ -52,14 +52,25 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * of the site in order to facilitate indexing of the metacat site by search
  * engines.
  * 
- * Some notes:
+ * Which objects are included?
  * 
+ * - Only documents with public read permission are included
+ * - Only documents with object_formats in the xml_catalog table are included
+ * - All non-obsoleted metadata objects are included in the sitemap(s)
+ * 
+ * Other notes:
+ * 
+ * - The sitemaps this class generates are intended to be served another
+ *   application such as MetacatUI
  * - A sitemap index is generated regardless of the number of URLs present
- * - All non-obsoleted metadata objects are included in the sitemap(s). See the
- *   SQL query below for specifics on this.
  * - URLs for the location of the sitemaps and the entries themselves are 
  *   controlled by the 'sitemap.location.base' and  'sitemap.entry.base' 
- *   properties which can be full URLs or absolute paths
+ *   properties which can be full URLs or absolute paths.
+ * 
+ *   - sitemap.location.base controls first part of the URLs in the sitemap 
+ *     index
+ *   - sitemap.entry.base controls the first part of the URLs in the sitemap
+ *     files themselves
  * 
  * @author Matt Jones
  * @author Bryce Mecum
@@ -105,9 +116,10 @@ public class Sitemap extends TimerTask {
      * The sitemap index can be registered with search index providers such as
      * Google, but beware that it needs to be accessible in a location above the
      * mount point for the service URLs.  By default the files are placed in 
-     * {context}/sitemaps, but you will need to expose them at {context}/ for
-     * them to be trusted by Google.  See the Sitemaps.org documentation for
-     * details.
+     * {context}/sitemaps, but you will need to expose them at a location 
+     * matching what's set in the sitemap.location.base and sitemap.entry.base
+     * properties in order to be trusted by Google.  See the Sitemaps.org 
+     * documentation for details.
      */
     public void generateSitemaps() {
 
@@ -117,13 +129,12 @@ public class Sitemap extends TimerTask {
         if (directory.isDirectory()) {
             // Query xml_documents to get list of documents
             StringBuffer query = new StringBuffer();
-            // TODO: make the doctype configurable in the query
 
-            // query should return return a list of non-obsoleted metadata PIDs
-            // whether a PID is obsoleted is determined by its sysmeta.obsoleted_by field being NULL or not
-            // whether a PID is metadata is whether its sysmeta.formatID is in the xml_catalog.public_id
-
-
+            /** Query for documents that are:
+             * - Metadata (their object_format is in the xml_catalog)
+             * - Latest/head versions (their obsoleted_by field is NULL)
+             * - Publicly readable (their access policy has a public + read perm)
+             */
             String sql =
             "SELECT identifier.guid as pid " +
             "FROM identifier " +
@@ -131,17 +142,6 @@ public class Sitemap extends TimerTask {
             "LEFT JOIN xml_access on identifier.guid = xml_access.guid " +
             "WHERE systemmetadata.object_format in (select public_id from xml_catalog where public_id is not NULL) AND systemmetadata.obsoleted_by is NULL AND xml_access.principal_name = 'public' AND xml_access.perm_type = 'allow' " +
             "ORDER BY systemmetadata.date_uploaded DESC;";
-
-            // String sql =
-            // 	"SELECT xml_documents.docid, xml_documents.rev " +
-            // 	"FROM xml_documents, xml_access, identifier " +
-            //     "WHERE xml_documents.doctype LIKE 'eml:%' " + 
-            //     "AND xml_documents.docid = identifier.docid " +
-            //     "AND xml_documents.rev = identifier.rev " +
-            //     "AND identifier.guid = xml_access.guid " +
-            //     "AND xml_access.principal_name = 'public' " +
-            //     "AND xml_access.perm_type = 'allow' " +
-            //     "order by docid, rev";
             
             query.append(sql);
 
