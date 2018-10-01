@@ -2435,19 +2435,22 @@ public abstract class D1NodeService {
   protected Identifier getPIDForSID(Identifier sid, String serviceFailureCode) throws ServiceFailure {
       Identifier id = null;
       String serviceFailureMessage = "The PID "+" couldn't be identified for the sid " + sid.getValue();
-      try {
-          //determine if the given pid is a sid or not.
-          if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
-              try {
-                  //set the header pid for the sid if the identifier is a sid.
-                  id = IdentifierManager.getInstance().getHeadPID(sid);
-              } catch (SQLException sqle) {
-                  throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+      // first to try if we can find the given identifier in the system metadata map. If it is in the map (meaning this is not sid), null will be returned.
+      if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) { 
+          try {
+                  //determine if the given pid is a sid or not.
+                  if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
+                  try {
+                      //set the header pid for the sid if the identifier is a sid.
+                      id = IdentifierManager.getInstance().getHeadPID(sid);
+                  } catch (SQLException sqle) {
+                      throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+                  }
+                  
               }
-              
+          } catch (SQLException e) {
+              throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
           }
-      } catch (SQLException e) {
-          throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
       }
       return id;
   }
