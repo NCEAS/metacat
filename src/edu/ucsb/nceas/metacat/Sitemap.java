@@ -136,15 +136,27 @@ public class Sitemap extends TimerTask {
              * - Latest/head versions (their obsoleted_by field is NULL)
              * - Publicly readable (their access policy has a public + read perm)
              */
-            String sql =
+
+            // We use a subquery to filter documents based upon whether they use
+            // a format ID in the xml_catalog table
+            String metadata_formats = 
+            "SELECT public_id from xml_catalog " + 
+            "WHERE public_id is not NULL";
+
+            String entries =
             "SELECT identifier.guid as pid " +
             "FROM identifier " +
             "LEFT JOIN systemmetadata on identifier.guid = systemmetadata.guid " +
             "LEFT JOIN xml_access on identifier.guid = xml_access.guid " +
-            "WHERE systemmetadata.object_format in (select public_id from xml_catalog where public_id is not NULL) AND systemmetadata.obsoleted_by is NULL AND xml_access.principal_name = 'public' AND xml_access.perm_type = 'allow' " +
-            "ORDER BY systemmetadata.date_uploaded DESC;";
+            "WHERE " +
+              "systemmetadata.object_format in (" + metadata_formats + ") AND " +
+              "systemmetadata.obsoleted_by is NULL AND " + 
+              "systemmetadata.archived = FALSE AND " + 
+              "xml_access.principal_name = 'public' AND " + 
+              "xml_access.perm_type = 'allow' " +
+            "ORDER BY systemmetadata.date_uploaded ASC;";
             
-            query.append(sql);
+            query.append(entries);
 
             DBConnection dbConn = null;
             int serialNumber = -1;
