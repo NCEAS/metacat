@@ -36,6 +36,7 @@ import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimerTask;
+import java.net.URLEncoder;
 
 import org.apache.log4j.Logger;
 import org.apache.commons.lang.StringEscapeUtils;
@@ -244,7 +245,10 @@ public class Sitemap extends TimerTask {
                 url.append("/");
             }
 
-            url.append(StringEscapeUtils.escapeHtml(pid));
+            // URL-encode _and_ XML escape the PID.
+            url.append(StringEscapeUtils.escapeXml(
+                URLEncoder.encode(pid, "UTF-8"))
+            );
             
             sitemap.write("\t<url>\n\t\t<loc>");
             sitemap.write(url.toString());
