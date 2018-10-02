@@ -262,9 +262,9 @@ public class Sitemap extends TimerTask {
                 URLEncoder.encode(pid, "UTF-8"))
             );
             
-            sitemap.write("\t<url>\n\t\t<loc>");
+            sitemap.write("  <url><loc>");
             sitemap.write(url.toString());
-            sitemap.write("</loc>\n\t</url>\n");
+            sitemap.write("</loc></url>\n");
             sitemap.flush();
         }
     }
@@ -346,14 +346,13 @@ public class Sitemap extends TimerTask {
                 url.append("/");
             }
             url.append(filename);
-            sitemapIndex.write("<sitemap><loc>");
+            sitemapIndex.write("  <sitemap>\n    <loc>\n      ");
             sitemapIndex.write(url.toString());
-            sitemapIndex.write("</loc>");
+            sitemapIndex.write("\n    </loc>\n");
             Date now = new Date();
             SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
-            sitemapIndex.write("<lastmod>"+ fmt.format(now) +"</lastmod>");
-            sitemapIndex.write("</sitemap>");
-            sitemapIndex.write("\n");
+            sitemapIndex.write("    <lastmod>"+ fmt.format(now) +"</lastmod>\n");
+            sitemapIndex.write("  </sitemap>\n");
             sitemapIndex.flush();
         }
     }
