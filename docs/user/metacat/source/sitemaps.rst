@@ -11,15 +11,41 @@ documents in the repository that meet these criteria:
 - Is publicly readable
 - Is metadata
 - Is the newest version in a version chain
+- Is not archived
 
 However, you must register the sitemaps with the search engine before it will 
 take effect.
 
-
 Configuration
 -------------
 
-When sitemaps are generated, 
+Metacat's sitemaps functionality is controlled by three properties in 
+metacat.properties.
+
+######## Sitemap section              #########################################
+# Sitemap Interval (in milliseconds) between rebuilding the sitemap
+sitemap.interval=86400000
+# Base part of the URLs for the location of the sitemap files themselves. 
+# Either full URL or absolute path. Trailing slash optional.
+sitemap.location.base=/metacatui
+# Base part of the URLs for the location entries in the sitemaps which should
+# be the base URL of the dataset landing page.
+# Either full URL or absolute path. Trailing slash optional.
+sitemap.entry.base=/metacatui/view
+
+
+- ``sitemap.interval``: Controls the interval, in milliseconds, between 
+  rebuilding the sitemap index and sitemap files.
+- ``sitemap.location.base``: Controls the URL pattern used in the 
+  ``sitemap_index.xml`` file. You can use either a full URL 
+  (e.g., ``https://example.com/some_path``) or a URL relative to your server 
+  (e.g., ``/some_path``). This is different than the ``sitemap.entry.base`` 
+  property (see directly below).
+- ``sitemap.entry.base``: Controls the URL pattern used for the entires in the
+  individual sitemap files (e.g., ``sitemap1.xml``). You can use either a full 
+  URL (e.g., ``https://example.com/some_path``) or a URL relative to your 
+  server (e.g., ``/some_path``).
+
 Creating a Sitemap
 ------------------
 
@@ -27,11 +53,15 @@ Metacat automatically generates a sitemap file for all public documents in
 the repository on a daily basis. The sitemap file(s) must be available via 
 the Web on your server, and must be registered with Google before they take 
 effect. For information on the sitemap protocol, please refer to the Google 
-page on using the sitemap protocol. You can view Metacat's sitemap files at:: 
+page on using the sitemap protocol. You can view Metacat's sitemap files at::
 
   <your_web_context>/sitemaps
 
-The directory contains one or more XML files named::
+The directory contains an index file:
+
+  sitemap_index.xml
+  
+and one or more sitemap XML files named::
 
   sitemap<X>.xml
 
