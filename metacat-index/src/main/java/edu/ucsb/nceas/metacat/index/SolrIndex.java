@@ -586,9 +586,9 @@ public class SolrIndex {
         log.debug("SolrIndex.update - trying to update(insert or remove) solr index of object "+pid.getValue());
         String objectPath = null;
         try {
-            if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
-                objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-            }
+            //if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
+            objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
+            //}
             update(pid, systemMetadata, objectPath);
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
@@ -628,15 +628,15 @@ public class SolrIndex {
             return;
         }
         boolean isArchive = systemMetadata.getArchived() != null && systemMetadata.getArchived();
-        if(isArchive ) {
+        /*if(isArchive ) {
             //delete the index for the archived objects
             remove(pid.getValue(), systemMetadata);
             log.info("SolrIndex.update============================= archive the idex for the identifier "+pid.getValue());
-        } else {
+        } else {*/
             //generate index for either add or update.
             insert(pid, systemMetadata, objectPath);
             log.info("SolrIndex.update============================= insert index for the identifier "+pid.getValue());
-        }
+        //}
     }
     
    
