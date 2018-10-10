@@ -2127,6 +2127,11 @@ public class MNodeService extends D1NodeService
 				List<Identifier> dataIdentifiers = sciMetaMap.get(originalIdentifier);
 					
 				// reconstruct the ORE with the new identifiers
+				//the original identifier can be in the data object list, we should replace it if does exist.
+                if(dataIdentifiers.contains(originalIdentifier)) {
+                    dataIdentifiers.remove(originalIdentifier);
+                    dataIdentifiers.add(newIdentifier);
+                }
 				sciMetaMap.remove(originalIdentifier);
 				sciMetaMap.put(newIdentifier, dataIdentifiers);
 				
