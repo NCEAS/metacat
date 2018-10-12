@@ -173,6 +173,20 @@ public class MetacatSolrIndex {
     }
 
    
+    /**
+     * Submit a deleting-index task
+     * @param pid the pid's solr document will be deleted.
+     */
+    public void submitDeleteTask(Identifier pid, SystemMetadata sysMeta) {
+        IndexTask task = new IndexTask();
+        task.setSystemMetadata(sysMeta);
+        task.SetIsDeleteing(true);
+        if(pid != null) {
+            log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid "+pid.getValue()+" into the index queue on hazelcast service.");
+            HazelcastService.getInstance().getIndexQueue().put(pid, task);
+            log.info("MetacatSolrIndex.submitDeleteTask - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+        }
+    }
     
     public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
     	IndexTask task = new IndexTask();

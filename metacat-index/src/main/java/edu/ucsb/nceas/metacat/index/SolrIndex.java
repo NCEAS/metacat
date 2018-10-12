@@ -663,6 +663,28 @@ public class SolrIndex {
             return false;
         }
     }
+    
+    /**
+     * Remove the solr index associated with specified pid
+     * @param pid  the pid whose solr index will be removed
+     * @param sysmeta  the system metadata of the given pid
+     * @throws Exception
+     */
+    public void remove(Identifier pid, SystemMetadata sysmeta) {
+        if(pid != null && sysmeta != null) {
+            try {
+                log.debug("SorIndex.remove - start to remove the solr index for the pid "+pid.getValue());
+                remove(pid.getValue(), sysmeta);
+                log.debug("SorIndex.remove - finished to remove the solr index for the pid "+pid.getValue());
+                EventlogFactory.createIndexEventLog().remove(pid);
+            } catch (Exception e) {
+                String error = "SolrIndex.remove - could not remove the solr index for the object "+pid.getValue()+" since " + e.getMessage();
+                writeEventLog(sysmeta, pid, error);
+                log.error(error, e);
+            }
+            
+        }
+    }
     /**
      * Remove the indexed associated with specified pid.
      * @param pid  the pid which the indexes are associated with
