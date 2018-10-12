@@ -373,6 +373,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public void run() {
     
         try {
+            log.info("IndexGenerator.run - start to run the index generator timer--------------------------------");
             Date since = EventlogFactory.createIndexEventLog().getLastProcessDate();
             index(since);
         } catch (InvalidRequest e) {

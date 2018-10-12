@@ -57,7 +57,9 @@ public class ApplicationController implements Runnable {
     private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
     private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static long period = DEFAULTINTERVAL;
+    private static final long DEFAULT_DELAY_FIRSTTIME = 86400000;
     Log log = LogFactory.getLog(ApplicationController.class);
+    private static long firstTimedelay= DEFAULT_DELAY_FIRSTTIME;
     
     
     /**
@@ -141,6 +143,12 @@ public class ApplicationController implements Runnable {
             PropertyConfigurator.configureAndWatch(log4jPropFile);
         }
         
+        try {
+            firstTimedelay = Settings.getConfiguration().getLong("index.regenerate.firsttime.delay");
+        } catch (Exception e){
+            log.warn("IndexGenerator.construtor - failed to get the delay time for the first run "+e.getMessage()+" and we will use the default one - 86400000.");
+            firstTimedelay= DEFAULT_DELAY_FIRSTTIME;
+        }
     }
     
     /**
@@ -214,7 +222,8 @@ public class ApplicationController implements Runnable {
             //indexThread.start();
             Timer indexTimer = new Timer();
             //indexTimer.scheduleAtFixedRate(generator, Calendar.getInstance().getTime(), period);
-            indexTimer.schedule(generator, 60000, period);
+            log.debug("ApplicationController.startIndexGenerate - the delay for the thread to reindex the failed objects is =============="+firstTimedelay+" and the period is "+period);
+            indexTimer.schedule(generator, firstTimedelay, period);
         }
         
     }
