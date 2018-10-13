@@ -42,6 +42,7 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -81,8 +82,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
     public static final String WAITIMEPOPERTYNAME = "index.regenerate.start.waitingtime";
     public static final String MAXATTEMPTSPROPERTYNAME = "index.regenerate.start.maxattempts";
     
-    
-    private SolrIndex solrIndex = null;
     //private SystemMetadataEventListener systemMetadataListener = null;
     private IMap<Identifier, SystemMetadata> systemMetadataMap;
     private IMap<Identifier, String> objectPathMap;
@@ -90,15 +89,28 @@ public class IndexGeneratorTimerTask extends TimerTask {
     private Log log = LogFactory.getLog(IndexGeneratorTimerTask.class);
     //private MNode mNode = null;
     private static List<String> resourceMapNamespaces = null;
+    private boolean needReindexFailedEvent =true; //if this task need to reindex the previously failed index task
+    private boolean needReindexSinceLastProcessDate = false; //objects whose modified date is younger than the last process date
     
     /**
      * Constructor
      * @param solrIndex
      * @param systemMetadataListener
      */
-    public IndexGeneratorTimerTask(SolrIndex solrIndex) {
-        this.solrIndex = solrIndex;
+    public IndexGeneratorTimerTask() {
         resourceMapNamespaces = ResourceMapNamespaces.getNamespaces();
+        try {
+            needReindexFailedEvent = Settings.getConfiguration().getBoolean("index.regenerate.failedObject");
+        } catch (Exception e) {
+            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.failedObject can't be got since "+e.getMessage()+" and we will set it to true as default.");
+            needReindexFailedEvent = true;
+        }
+        try {
+            needReindexSinceLastProcessDate = Settings.getConfiguration().getBoolean("index.regenerate.sincelastProcessDate");
+        } catch (Exception e) {
+            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.sincelastProcessDate can't be got since "+e.getMessage()+" and we will set it to false as default.");
+            needReindexSinceLastProcessDate = false;
+        }
         //this.systemMetadataListener = systemMetadataListener;
         //this.mNode = new MNode(buildMNBaseURL());
       
@@ -248,30 +260,6 @@ public class IndexGeneratorTimerTask extends TimerTask {
         }*/
         
         
-        //add the failedPids 
-        List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
-        List<String> failedOtherIds = new ArrayList<String>();
-        List<String> failedResourceMapIds = new ArrayList<String>();
-        if(failedEvents != null) {
-            for(IndexEvent event : failedEvents) {
-            	String id = event.getIdentifier().getValue();
-                SystemMetadata sysmeta = getSystemMetadata(id);
-                if(sysmeta != null) {
-                    ObjectFormatIdentifier formatId =sysmeta.getFormatId();
-                    if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
-                        failedResourceMapIds.add(id);
-                    } else {
-                        failedOtherIds.add(id);
-                    }
-                }
-            }
-        }
-        //indexFailedIds(failedOtherIds);
-        //indexFailedIds(failedResourceMapIds);
-        
-        index(failedOtherIds);
-        index(failedResourceMapIds);
-        
         /*if(!failedOtherIds.isEmpty()) {
             failedOtherIds.addAll(otherMetacatIds);
         } else {
@@ -303,6 +291,46 @@ public class IndexGeneratorTimerTask extends TimerTask {
         
     }
     
+    /**
+     * Reindex the failed index tasks stored in the index_event table
+     * @throws ClassNotFoundException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws IndexEventLogException
+     * @throws ServiceFailure 
+     * @throws FileNotFoundException 
+     */
+    private void reIndexFailedTasks() throws ClassNotFoundException, InstantiationException, IllegalAccessException, IndexEventLogException, FileNotFoundException, ServiceFailure {
+        initSystemMetadataMap();
+        initObjectPathMap();
+        initIndexQueue();
+        //add the failedPids 
+        List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
+        List<String> failedOtherIds = new ArrayList<String>();
+        List<String> failedResourceMapIds = new ArrayList<String>();
+        if(failedEvents != null) {
+            for(IndexEvent event : failedEvents) {
+                String id = event.getIdentifier().getValue();
+                if(event.getAction().compareTo(Event.DELETE) == 0) {
+                    //this is a delete event
+                    deleteIndex(id);
+                } else {
+                    SystemMetadata sysmeta = getSystemMetadata(id);
+                    if(sysmeta != null) {
+                        ObjectFormatIdentifier formatId =sysmeta.getFormatId();
+                        if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
+                            failedResourceMapIds.add(id);
+                        } else {
+                            failedOtherIds.add(id);
+                        }
+                    }
+                }
+            }
+        }
+        index(failedOtherIds);
+        index(failedResourceMapIds);
+    }
+    
     /*
      * Write the docids which will be indexed into a file. 
      */
@@ -331,15 +359,40 @@ public class IndexGeneratorTimerTask extends TimerTask {
         }
     }*/
     /*
-     * Doing index
+     * Put the ids into the index queue
      */
     private void index(List<String> metacatIds) {
         if(metacatIds != null) {
             for(String metacatId : metacatIds) {
                 if(metacatId != null) {
-                     generateIndex(metacatId);
+                     SystemMetadata sysmeta = getSystemMetadata(metacatId);
+                     Identifier pid = new Identifier();
+                     pid.setValue(metacatId);
+                     IndexTask task = new IndexTask();
+                     task.setSystemMetadata(sysmeta);
+                     indexQueue.put(pid, task);
+                     log.info("IndexGenerator.index - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+
                 }
             }
+        }
+    }
+    
+    /**
+     * Put a delete index task into the index queue
+     * @param id
+     */
+    private void deleteIndex(String id) {
+        if(id != null) {
+            IndexTask task = new IndexTask();
+            SystemMetadata sysmeta = getSystemMetadata(id);
+            task.setSystemMetadata(sysmeta);
+            task.SetIsDeleteing(true);
+            Identifier pid = new Identifier();
+            pid.setValue(id);
+            indexQueue.put(pid, task);
+            log.info("IndexGenerator.deleteIndex - put the task which deletes pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+           
         }
     }
     
@@ -374,8 +427,15 @@ public class IndexGeneratorTimerTask extends TimerTask {
     
         try {
             log.info("IndexGenerator.run - start to run the index generator timer--------------------------------");
-            Date since = EventlogFactory.createIndexEventLog().getLastProcessDate();
-            index(since);
+            if(needReindexFailedEvent) {
+                log.info("IndexGenerator.run - start to reindex previous failed index tasks--------------------------------");
+                reIndexFailedTasks();
+            }
+            if(needReindexSinceLastProcessDate) {
+                log.info("IndexGenerator.run - start to index objects whose modified date is younger than the last process date--------------------------------");
+                Date since = EventlogFactory.createIndexEventLog().getLastProcessDate();
+                index(since);
+            }
         } catch (InvalidRequest e) {
             // TODO Auto-generated catch block
             //e.printStackTrace();
@@ -574,14 +634,14 @@ public class IndexGeneratorTimerTask extends TimerTask {
     /*
      * Generate index for the id.
      */
-    private void generateIndex(String id)  {
+    /*private void generateIndex(String id)  {
         //if id is null and sysmeta will be null. If sysmeta is null, it will be caught in solrIndex.update
         SystemMetadata sysmeta = getSystemMetadata(id);
         Identifier pid = new Identifier();
         pid.setValue(id);
         solrIndex.update(pid, sysmeta);
  
-    }
+    }*/
     
     /*
      * Remove the solr index for the list of ids

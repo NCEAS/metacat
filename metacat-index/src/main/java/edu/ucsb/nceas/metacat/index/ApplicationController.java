@@ -215,9 +215,8 @@ public class ApplicationController implements Runnable {
      */
     private void startIndexGenerator() {
         if(period > 0) {
-            SolrIndex index = solrIndexes.get(FIRST);
             //SystemMetadataEventListener listener = sysmetaListeners.get(FIRST);
-            IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask(index);
+            IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
             //Thread indexThread = new Thread(generator);
             //indexThread.start();
             Timer indexTimer = new Timer();
