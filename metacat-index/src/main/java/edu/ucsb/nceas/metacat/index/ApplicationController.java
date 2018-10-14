@@ -20,7 +20,12 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.text.DateFormat;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Timer;
 
@@ -57,9 +62,8 @@ public class ApplicationController implements Runnable {
     private static int waitingTime = IndexGeneratorTimerTask.WAITTIME;
     private static int maxAttempts = IndexGeneratorTimerTask.MAXWAITNUMBER;
     private static long period = DEFAULTINTERVAL;
-    private static final long DEFAULT_DELAY_FIRSTTIME = 86400000;
     Log log = LogFactory.getLog(ApplicationController.class);
-    private static long firstTimedelay= DEFAULT_DELAY_FIRSTTIME;
+    private static Date timeOfFirstRun = null;
     
     
     /**
@@ -144,11 +148,50 @@ public class ApplicationController implements Runnable {
         }
         
         try {
-            firstTimedelay = Settings.getConfiguration().getLong("index.regenerate.firsttime.delay");
+            String timeStrOfFirstRun = Settings.getConfiguration().getString("index.regenerate.firsttime");
+            determineTimeOfFirstRunRegeneratingThread(timeStrOfFirstRun);
         } catch (Exception e){
-            log.warn("IndexGenerator.construtor - failed to get the delay time for the first run "+e.getMessage()+" and we will use the default one - 86400000.");
-            firstTimedelay= DEFAULT_DELAY_FIRSTTIME;
+            log.warn("IndexGenerator.construtor - failed to get the time for the first run "+e.getMessage()+" and we will use the default one - 11:50 PM.");
+            try {
+                determineTimeOfFirstRunRegeneratingThread("11:50 PM");
+            } catch (Exception ee) {
+                Date now = new Date();
+                timeOfFirstRun = new Date(now.getTime()+20*60*1000);
+                log.info("ApplicationController.initializeSharedConfiguration - the ultimate time to run the regnerate index thread first time is "+timeOfFirstRun.toString());
+            }
+            
         }
+    }
+    
+    /**
+     * Determine the time to run the regenerating thread first. 
+     * If the given time already passed or only be less than 2 seconds to pass, we need to set the timeOfFirstRun to be 24 hours latter (the second day)
+     * @param givenTime the given time to run. The format should like 10:00 PM
+     */
+    private void determineTimeOfFirstRunRegeneratingThread(String givenTime) throws ParseException {
+        DateFormat format = DateFormat.getTimeInstance(DateFormat.SHORT);
+        Date givenDate = format.parse(givenTime); //since it is short time, so the date will be 1/1/1970
+        log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The time (given) to first time run the thread is "+givenDate.toString());
+        Calendar date = new GregorianCalendar();
+        date.setTime(givenDate);
+        int hour = date.get(Calendar.HOUR_OF_DAY);
+        log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The given hour is "+hour);
+        int minute = date.get(Calendar.MINUTE);
+        log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The given minutes is "+minute);
+        //set the hour and minute to today
+        Calendar today = new GregorianCalendar();
+        today.set(Calendar.HOUR_OF_DAY, hour);
+        today.set(Calendar.MINUTE, minute);
+        timeOfFirstRun = today.getTime();
+        log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The time (after transforming to today) to first time run the thread is "+timeOfFirstRun.toString());
+        Date now = new Date();
+        if((timeOfFirstRun.getTime() - now.getTime()) <2000) {
+            //if the given time already passed or only be less than 2 seconds to pass, we need to set the timeOfFirstRun to be 24 hours latter (the second day)
+            log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The time (after transforming to today) to first time run the thread "+timeOfFirstRun.toString()+" passed and we will delay it 24 hours");
+            timeOfFirstRun = new Date(timeOfFirstRun.getTime()+24*3600*1000);
+            //timeOfFirstRun = new Date(timeOfFirstRun.getTime()+2*3600*1000);
+        }
+        log.info("ApplicationController.determineTimeOfFirstRunRegeneratingThread - The final time of the first time running the thread is "+timeOfFirstRun.toString());
     }
     
     /**
@@ -221,8 +264,8 @@ public class ApplicationController implements Runnable {
             //indexThread.start();
             Timer indexTimer = new Timer();
             //indexTimer.scheduleAtFixedRate(generator, Calendar.getInstance().getTime(), period);
-            log.debug("ApplicationController.startIndexGenerate - the delay for the thread to reindex the failed objects is =============="+firstTimedelay+" and the period is "+period);
-            indexTimer.schedule(generator, firstTimedelay, period);
+            log.debug("ApplicationController.startIndexGenerate - the first time for runing the thread to reindex the failed objects is =============="+timeOfFirstRun.toString()+" and the period is "+period);
+            indexTimer.schedule(generator, timeOfFirstRun, period);
         }
         
     }
