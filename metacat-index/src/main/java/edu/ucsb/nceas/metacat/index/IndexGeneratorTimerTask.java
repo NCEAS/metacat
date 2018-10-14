@@ -91,6 +91,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
     private static List<String> resourceMapNamespaces = null;
     private boolean needReindexFailedEvent =true; //if this task need to reindex the previously failed index task
     private boolean needReindexSinceLastProcessDate = false; //objects whose modified date is younger than the last process date
+    private long maxAgeOfFailedIndexTask = 864000000; // 10 days
     
     /**
      * Constructor
@@ -111,6 +112,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
             log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.sincelastProcessDate can't be got since "+e.getMessage()+" and we will set it to false as default.");
             needReindexSinceLastProcessDate = false;
         }
+        maxAgeOfFailedIndexTask = Settings.getConfiguration().getLong("index.regenerate.failedTask.max.age", 864000000);
         //this.systemMetadataListener = systemMetadataListener;
         //this.mNode = new MNode(buildMNBaseURL());
       
@@ -306,28 +308,43 @@ public class IndexGeneratorTimerTask extends TimerTask {
         initIndexQueue();
         //add the failedPids 
         List<IndexEvent> failedEvents = EventlogFactory.createIndexEventLog().getEvents(null, null, null, null);
-        List<String> failedOtherIds = new ArrayList<String>();
+        //List<String> failedOtherIds = new ArrayList<String>();
         List<String> failedResourceMapIds = new ArrayList<String>();
         if(failedEvents != null) {
             for(IndexEvent event : failedEvents) {
-                String id = event.getIdentifier().getValue();
-                if(event.getAction().compareTo(Event.DELETE) == 0) {
-                    //this is a delete event
-                    deleteIndex(id);
-                } else {
-                    SystemMetadata sysmeta = getSystemMetadata(id);
-                    if(sysmeta != null) {
-                        ObjectFormatIdentifier formatId =sysmeta.getFormatId();
-                        if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
-                            failedResourceMapIds.add(id);
-                        } else {
-                            failedOtherIds.add(id);
+                if(event != null && event.getIdentifier() != null) {
+                    String id = event.getIdentifier().getValue();
+                    Date now = new Date();
+                    //if the event is too old, we will ignore it.
+                    if(event.getDate() == null || (event.getDate() != null && ((now.getTime() - event.getDate().getTime()) <= maxAgeOfFailedIndexTask))) {
+                        try {
+                            if(event.getAction().compareTo(Event.DELETE) == 0) {
+                                //this is a delete event
+                                deleteIndex(id);
+                            } else {
+                                SystemMetadata sysmeta = getSystemMetadata(id);
+                                if(sysmeta != null) {
+                                    ObjectFormatIdentifier formatId =sysmeta.getFormatId();
+                                    if(formatId != null && formatId.getValue() != null && resourceMapNamespaces != null && isResourceMap(formatId)) {
+                                        failedResourceMapIds.add(id);
+                                    } else {
+                                        //failedOtherIds.add(id);
+                                        submitIndex(id);
+                                    }
+                                } else {
+                                    log.info("IndexGenerate.reIndexFAiledTasks - we wouldn't submit the reindex task for the pid "+id+" since there is no system metadata associate it");
+                                }
+                            }
+                        } catch (Exception e) {
+                            log.warn("IndexGenerate.reIndexFAiledTasks - failed to submit the reindex task for the pid "+id+" since "+e.getMessage());
                         }
+                    } else {
+                        log.info("IndexGenerate.reIndexFAiledTasks - we wouldn't submit the reindex task for the pid "+id+" since it is too old.");
                     }
                 }
             }
         }
-        index(failedOtherIds);
+        //index(failedOtherIds);
         index(failedResourceMapIds);
     }
     
@@ -364,18 +381,29 @@ public class IndexGeneratorTimerTask extends TimerTask {
     private void index(List<String> metacatIds) {
         if(metacatIds != null) {
             for(String metacatId : metacatIds) {
-                if(metacatId != null) {
-                     SystemMetadata sysmeta = getSystemMetadata(metacatId);
-                     Identifier pid = new Identifier();
-                     pid.setValue(metacatId);
-                     IndexTask task = new IndexTask();
-                     task.setSystemMetadata(sysmeta);
-                     indexQueue.put(pid, task);
-                     log.info("IndexGenerator.index - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
-
+                try {
+                    submitIndex(metacatId);
+                } catch (Exception e) {
+                    log.warn("IndexGeneratorTimeTask.index - can't submit the index task for the id "+metacatId +" since "+e.getMessage());
                 }
             }
         }
+    }
+    
+    /**
+     * Submit the index task to the queue for the given id
+     * @param id the id will be submitted
+     */
+    private void submitIndex(String id) {
+        if(id != null) {
+            SystemMetadata sysmeta = getSystemMetadata(id);
+            Identifier pid = new Identifier();
+            pid.setValue(id);
+            IndexTask task = new IndexTask();
+            task.setSystemMetadata(sysmeta);
+            indexQueue.put(pid, task);
+            log.info("IndexGenerator.index - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+       }
     }
     
     /**
