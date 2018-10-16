@@ -453,6 +453,11 @@ public class SolrIndex {
     	try {
 			// copy the original values already indexed for this document	
 	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
+        if(ApplicationController.getQueryParaName() != null && !ApplicationController.getQueryParaName().trim().equals("") && 
+                ApplicationController.getQueryParaValue() != null && !ApplicationController.getQueryParaValue().trim().equals("")) {
+            query.set(ApplicationController.getQueryParaName(), ApplicationController.getQueryParaValue());
+        }
+	    	log.info("SolrIndex.insertFields - The query to get the original solr doc is ~~~~~~~~~~~~~~~=================="+query.toString());
 	    	QueryResponse res = solrServer.query(query);
 	    	SolrDoc doc = new SolrDoc();
 	    	

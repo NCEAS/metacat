@@ -64,6 +64,8 @@ public class ApplicationController implements Runnable {
     private static long period = DEFAULTINTERVAL;
     Log log = LogFactory.getLog(ApplicationController.class);
     private static Date timeOfFirstRun = null;
+    private static String queryParaName = null;
+    private static String queryParaValue = null;
     
     
     /**
@@ -161,6 +163,8 @@ public class ApplicationController implements Runnable {
             }
             
         }
+        queryParaName = Settings.getConfiguration().getString("solr.query.appned.name");
+        queryParaValue = Settings.getConfiguration().getString("solr.query.append.value");
     }
     
     /**
@@ -314,5 +318,21 @@ public class ApplicationController implements Runnable {
             log.error("Application.run "+e.getMessage());
         }
         
+    }
+    
+    /**
+     * Get the name of the query parameter
+     * @return the name of the query parameter
+     */
+    public static String getQueryParaName() {
+        return queryParaName;
+    }
+    
+    /**
+     * Get the query parameter value
+     * @return the value of the query parameter
+     */
+    public static String getQueryParaValue() {
+        return queryParaValue;
     }
 }
