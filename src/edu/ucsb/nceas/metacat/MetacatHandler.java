@@ -78,6 +78,7 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
@@ -90,6 +91,7 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.cart.CartManager;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
+import edu.ucsb.nceas.metacat.common.resourcemap.ResourceMapNamespaces;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
@@ -2859,24 +2861,40 @@ public class MetacatHandler {
                        public void run() {
                            List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
                            Iterator<String> it = allIdentifiers.iterator();
+                           List<Identifier> resourceMapIds = new ArrayList<Identifier> ();
                            while (it.hasNext()) {
                                String id = it.next();
-                               Identifier identifier = new Identifier();
-                               identifier.setValue(id);
-                               SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                               if (sysMeta != null) {
-                                   
-                                   // submit for indexing
-                                   Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                                   try {
-                                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
-                                   } catch (Exception e) {
-                                       System.out.println("we can't submit the id "+id+" to the index queue since "+e.getMessage());
-                                   }
-                                   //results.append("<pid>" + id + "</pid>\n");
-                                   System.out.println("queued SystemMetadata for index on pid: " + id);
+                               try { 
+                                   Identifier identifier = new Identifier();
+                                   identifier.setValue(id);
+                                   SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                                   if (sysMeta != null) {
+                                       // submit for indexing
+                                       ObjectFormatIdentifier formatId = sysMeta.getFormatId();
+                                       if(ResourceMapNamespaces.isResourceMap(formatId)) {
+                                           resourceMapIds.add(identifier);
+                                       } else {
+                                           Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                                           MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                                           //System.out.println("queued non-resourceMap systemMetadata for index on pid: " + id);
+                                       }
+                                   } 
+                               }catch (Exception e) {
+                                   System.out.println("we can't submit the id "+id+" to the index queue since "+e.getMessage());
                                }
-                               
+                           }
+                           //queue the resourceMap objects
+                           for (Identifier identifier : resourceMapIds) {
+                               try { 
+                                   SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                                   if (sysMeta != null) {
+                                           Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                                           MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                                           //System.out.println("queued resourceMap systemMetadata for index on pid: " + identifier.getValue());
+                                   } 
+                               }catch (Exception e) {
+                                   System.out.println("we can't submit the id "+identifier.getValue()+" to the index queue since "+e.getMessage());
+                               }
                            }
                        }
                     };
