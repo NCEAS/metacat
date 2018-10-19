@@ -64,8 +64,8 @@ public class ApplicationController implements Runnable {
     private static long period = DEFAULTINTERVAL;
     Log log = LogFactory.getLog(ApplicationController.class);
     private static Date timeOfFirstRun = null;
-    private static String queryParaName = null;
-    private static String queryParaValue = null;
+    private static String queryIncludeArchivedParaName = null;
+    private static String queryIncludeArchivedParaValue = null;
     
     
     /**
@@ -163,8 +163,8 @@ public class ApplicationController implements Runnable {
             }
             
         }
-        queryParaName = Settings.getConfiguration().getString("solr.query.appned.name");
-        queryParaValue = Settings.getConfiguration().getString("solr.query.append.value");
+        queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.appned.include.archived.name");
+        queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.incldue.archived.value");
     }
     
     /**
@@ -321,18 +321,18 @@ public class ApplicationController implements Runnable {
     }
     
     /**
-     * Get the name of the query parameter
+     * Get the name of the query parameter for including archived objects
      * @return the name of the query parameter
      */
-    public static String getQueryParaName() {
-        return queryParaName;
+    public static String getIncludeArchivedQueryParaName() {
+        return queryIncludeArchivedParaName;
     }
     
     /**
-     * Get the query parameter value
+     * Get the query parameter value for including archived objects
      * @return the value of the query parameter
      */
-    public static String getQueryParaValue() {
-        return queryParaValue;
+    public static String getIncludeArchivedQueryParaValue() {
+        return queryIncludeArchivedParaValue;
     }
 }

@@ -35,6 +35,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.servlet.SolrRequestParsers;
 import org.dataone.cn.indexer.XmlDocumentUtility;
@@ -55,6 +56,7 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
+import edu.ucsb.nceas.metacat.index.ApplicationController;
 import edu.ucsb.nceas.metacat.index.SolrIndex;
 
 
@@ -152,7 +154,8 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
 	    int targetIndex = 0;
 		SolrDoc doc = null;
 		String query = QUERY + "\"" + id + "\"";
-	    List<SolrDoc> list = getDocumentsByQuery(query);
+		boolean ignoreArchivedObjecst = false;
+	    List<SolrDoc> list = getDocumentsByQuery(query, ignoreArchivedObjecst);
 	    if(list != null && !list.isEmpty()) {
 	        doc = list.get(targetIndex);
 	    }
@@ -174,13 +177,15 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
 	public static List<SolrDoc> getDocumentsByResourceMap(String resourceMapId) throws MalformedURLException, 
 	            UnsupportedType, NotFound, SolrServerException, ParserConfigurationException, IOException, SAXException {
 	    String query = QUERY2 + "\"" + resourceMapId + "\"";
-	    return getDocumentsByQuery(query);
+	    boolean ignoreArchivedObjecst = false;
+	    return getDocumentsByQuery(query, ignoreArchivedObjecst);
 	}
 	
 	/**
 	 * Get a list of slor docs which match the query.
 	 * @param query - a string of a query
-	 * @return
+	 * @param ignoreArchivedObjects - if the returned objects includes the archived objects. True means excluding them; false mean including
+	 * @return a list of SolrDocs matching the query
 	 * @throws SolrServerException
 	 * @throws MalformedURLException
 	 * @throws UnsupportedType
@@ -189,11 +194,28 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
 	 * @throws IOException
 	 * @throws SAXException
 	 */
-	public static List<SolrDoc> getDocumentsByQuery(String query) throws SolrServerException, MalformedURLException, UnsupportedType, 
+	public static List<SolrDoc> getDocumentsByQuery(String query, boolean ignoreArdhivedObjects) throws SolrServerException, MalformedURLException, UnsupportedType, 
 	                                                                NotFound, ParserConfigurationException, IOException, SAXException {
 	    List<SolrDoc> docs = new ArrayList<SolrDoc>();
 	    if (solrServer != null && query != null && !query.trim().equals("")) {
             SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
+            if(!ignoreArdhivedObjects) {
+                if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                        ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+                    //query.set(ApplicationController.getQueryParaName(), ApplicationController.getQueryParaValue());
+                    NamedList<String> appendIncludingArchiveList = new NamedList<String>();
+                    appendIncludingArchiveList.add(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
+                    //System.out.println("The name list was added+++++++++++++++++++++++++=");
+                    SolrParams appendIncludingArchive = SolrParams.toSolrParams(appendIncludingArchiveList);
+                    solrParams = SolrParams.wrapAppended(appendIncludingArchive, solrParams);
+                }
+            }
+            /*NamedList list = solrParams.toNamedList();
+            for(int i=0; i<list.size(); i++) {
+                String name = list.getName(i);
+                Object value = list.getVal(i);
+                System.out.println("=========================the property name is "+name+" with value "+value.toString()+" or "+value+" at index "+i);
+            }*/
             QueryResponse qr = solrServer.query(solrParams);
             if (qr != null && qr.getResults() != null) {
                 for(int i=0; i<qr.getResults().size(); i++) {

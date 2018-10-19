@@ -453,9 +453,9 @@ public class SolrIndex {
     	try {
 			// copy the original values already indexed for this document	
 	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
-        if(ApplicationController.getQueryParaName() != null && !ApplicationController.getQueryParaName().trim().equals("") && 
-                ApplicationController.getQueryParaValue() != null && !ApplicationController.getQueryParaValue().trim().equals("")) {
-            query.set(ApplicationController.getQueryParaName(), ApplicationController.getQueryParaValue());
+        if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+            query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
         }
 	    	log.info("SolrIndex.insertFields - The query to get the original solr doc is ~~~~~~~~~~~~~~~=================="+query.toString());
 	    	QueryResponse res = solrServer.query(query);
@@ -1118,6 +1118,10 @@ public class SolrIndex {
     public List<String> getSolrIds() throws SolrServerException {
         List<String> list = new ArrayList<String>();
         SolrQuery query = new SolrQuery(IDQUERY); 
+        if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+            query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
+        }
         query.setRows(Integer.MAX_VALUE); 
         query.setFields(ID); 
         QueryResponse response = solrServer.query(query); 
