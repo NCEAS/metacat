@@ -325,6 +325,9 @@ public class ApplicationController implements Runnable {
      * @return the name of the query parameter
      */
     public static String getIncludeArchivedQueryParaName() {
+        if(queryIncludeArchivedParaName == null) {
+            queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.appned.include.archived.name");
+        }
         return queryIncludeArchivedParaName;
     }
     
@@ -333,6 +336,9 @@ public class ApplicationController implements Runnable {
      * @return the value of the query parameter
      */
     public static String getIncludeArchivedQueryParaValue() {
+        if(queryIncludeArchivedParaValue == null) {
+            queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.incldue.archived.value");
+        }
         return queryIncludeArchivedParaValue;
     }
 }
