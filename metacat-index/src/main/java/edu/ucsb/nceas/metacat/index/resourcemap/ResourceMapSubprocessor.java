@@ -48,7 +48,9 @@ import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dspace.foresite.OREParserException;
 import org.w3c.dom.Document;
@@ -57,6 +59,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.index.ApplicationController;
+import edu.ucsb.nceas.metacat.index.DistributedMapsFactory;
 import edu.ucsb.nceas.metacat.index.SolrIndex;
 
 
@@ -82,10 +85,13 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     @Override
     public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs,
     InputStream is) throws IOException, EncoderException, SAXException,
-    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException {
+    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException, ServiceFailure{
         SolrDoc resourceMapDoc = docs.get(identifier);
-        Document doc = XmlDocumentUtility.generateXmlDocument(is);
-		List<SolrDoc> processedDocs = processResourceMap(resourceMapDoc, doc );
+        //Document doc = XmlDocumentUtility.generateXmlDocument(is);
+        Identifier id = new Identifier();
+        id.setValue(identifier);
+        String resourcMapPath = DistributedMapsFactory.getObjectPathMap().get(id);
+		List<SolrDoc> processedDocs = processResourceMap(resourceMapDoc, resourcMapPath);
         Map<String, SolrDoc> processedDocsMap = new HashMap<String, SolrDoc>();
         for (SolrDoc processedDoc : processedDocs) {
             processedDocsMap.put(processedDoc.getIdentifier(), processedDoc);
@@ -93,10 +99,11 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
         return processedDocsMap;
     }
 
-    private List<SolrDoc> processResourceMap(SolrDoc indexDocument, Document resourceMapDocument)
+    private List<SolrDoc> processResourceMap(SolrDoc indexDocument, String resourcMapPath)
                     throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException{
         //ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
-        ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourceMapDocument);
+        IndexVisibilityHazelcastImplWithArchivedObj indexVisitility = new IndexVisibilityHazelcastImplWithArchivedObj();
+        ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourcMapPath, indexVisitility);
         List<String> documentIds = resourceMap.getAllDocumentIDs();//this list includes the resourceMap id itself.
         //List<SolrDoc> updateDocuments = getHttpService().getDocuments(getSolrQueryUri(), documentIds);
         List<SolrDoc> updateDocuments = getSolrDocs(resourceMap.getIdentifier(), documentIds);
