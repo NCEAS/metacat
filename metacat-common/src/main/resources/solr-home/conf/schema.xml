@@ -218,6 +218,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 		<field name="formatType"		type="string"	indexed="true"	stored="true"	multiValued="false"/>
         <field name="size"            	type="slong"     indexed="true" stored="true" multiValued="false"/>
         <field name="checksum"        	type="string"   indexed="false" stored="true" multiValued="false"/>
+        <field name="archived"        type="boolean"  indexed="true" stored="true" multiValued="false"/>
         <field name="checksumAlgorithm" type="string" indexed="false" stored="true"/>
         <field name="dateUploaded"    type="date"     indexed="true" stored="true" multiValued="false"/>
         <field name="dateModified"    type="date"     indexed="true" stored="true" multiValued="false"/>

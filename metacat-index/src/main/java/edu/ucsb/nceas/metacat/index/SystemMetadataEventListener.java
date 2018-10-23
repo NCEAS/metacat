@@ -143,7 +143,12 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		}
 		
 		if (systemMetadata != null) {
-		    solrIndex.update(pid, systemMetadata);
+		    if(task.isDeleting()) {
+		        solrIndex.remove(pid, systemMetadata);
+		    } else {
+		        solrIndex.update(pid, systemMetadata);
+		    }
+		    
 			
 		}
 		if (fields != null) {
