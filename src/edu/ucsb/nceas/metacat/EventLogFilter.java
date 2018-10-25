@@ -74,16 +74,21 @@ public class EventLogFilter {
      */
     public boolean filter(EventLogData logData) {
         boolean filteredOut = false;//default value is to log
-        String ipAddress = logData.getIpAddress();
-        if(ipAddress != null && !ipAddress.trim().equals("") && blackIPList != null && !blackIPList.isEmpty() && blackIPList.contains(ipAddress)) {
-            filteredOut = true;
-        }
-        if(!filteredOut) {
-            //If the ip address is the black list, we will ignore the subject comparison; otherwise we will try to compare the subject
-            String subject = logData.getPrincipal();
-            if(subject != null && !subject.trim().equals("") && blackSubjectList != null && !blackSubjectList.isEmpty() && blackSubjectList.contains(subject)) {
+        if(logData != null) {
+            String ipAddress = logData.getIpAddress();
+            if(ipAddress != null && !ipAddress.trim().equals("") && blackIPList != null && !blackIPList.isEmpty() && blackIPList.contains(ipAddress)) {
                 filteredOut = true;
             }
+            if(!filteredOut) {
+                //If the ip address is the black list, we will ignore the subject comparison; otherwise we will try to compare the subject
+                String subject = logData.getPrincipal();
+                if(subject != null && !subject.trim().equals("") && blackSubjectList != null && !blackSubjectList.isEmpty() && blackSubjectList.contains(subject)) {
+                    filteredOut = true;
+                }
+            }
+        } else {
+            logMetacat.warn("EventLogFilter.filter - the logData object is null. So we filter it out");
+            filteredOut=true;
         }
         return filteredOut;
     }

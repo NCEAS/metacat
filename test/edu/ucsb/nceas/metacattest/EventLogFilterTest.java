@@ -129,6 +129,8 @@ public class EventLogFilterTest extends MCTestCase {
         assertTrue(filter.filter(data));
         data = new EventLogData(ipList[2], userAgent, principals[1], docList[2], eventList[2]);
         assertTrue(!filter.filter(data));
+        data = null;
+        assertTrue(filter.filter(data));
     }
 
 }
