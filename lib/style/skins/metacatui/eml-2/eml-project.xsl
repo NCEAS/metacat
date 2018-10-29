@@ -75,7 +75,7 @@
 	   <div class="control-group">
 	     <label class="control-label projectTitle">Title:</label>
 	   	 <div class="controls controls-well">
-		   <xsl:value-of select="../title" />
+		   <xsl:value-of select="./text()" />
 	   	 </div>
 	   </div>
      </xsl:for-each>
