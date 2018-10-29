@@ -91,13 +91,6 @@
 
 				<xsl:call-template name="party" />
 
-				<xsl:for-each select="role">
-					<label class="control-label projectRole">Role:</label>
-					<div class="controls controls-well">
-						<xsl:value-of select="." />
-					</div>
-				</xsl:for-each>
-
 			</xsl:for-each>
 		</div>
 	</div>
