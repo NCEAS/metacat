@@ -313,7 +313,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			
 			// use EML to test
 			// TODO: include an ORE to really exercise it
-			String emlFile = "test/tao.14563.1.xml";
+			String emlFile = "test/eml-multiple-creators.xml";
 			InputStream content = null;
 			try {
 				content = new FileInputStream(emlFile);
@@ -345,7 +345,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				} while (metadata == null && count < 10);
 	            
 	            assertNotNull(metadata);
-	            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+	            String title = metadata.get(DataCiteProfile.TITLE.toString());
+	            String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+	            assertTrue(title.equals("Test EML package - public-readable from morpho"));
+	            assertTrue(creators.equals("onlySurName,National Center for Ecological Analysis and Synthesis,John Smith,Wendy King,University of California Santa Barbara"));
 	            content.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();

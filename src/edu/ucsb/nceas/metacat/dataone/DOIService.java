@@ -28,6 +28,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -51,6 +52,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.util.Constants;
 import org.ecoinformatics.datamanager.parser.DataPackage;
+import org.ecoinformatics.datamanager.parser.Party;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
@@ -154,15 +156,21 @@ public class DOIService {
 			String identifier = sysMeta.getIdentifier().getValue();
 			
 			// only continue if this DOI is in our configured shoulder
-			if (identifier.startsWith(shoulder)) {
+			if (shoulder != null && !shoulder.trim().equals("") && identifier.startsWith(shoulder)) {
 				
 				// enter metadata about this identifier
 				HashMap<String, String> metadata = new HashMap<String, String>();
-				
+				DataPackage emlPackage = null;
+	            try {
+	                emlPackage = getEMLPackage(sysMeta);
+	            } catch (Exception e) {
+	                logMetacat.warn("DOIService.registerDOI");
+	                // ignore
+	            }
 				// title 
 				String title = ErcMissingValueCode.UNKNOWN.toString();
 				try {
-					title = lookupTitle(sysMeta);
+					title = lookupTitle(emlPackage);
 				} catch (Exception e) {
 					e.printStackTrace();
 					// ignore
@@ -171,7 +179,7 @@ public class DOIService {
 				// creator
 				String creator = sysMeta.getRightsHolder().getValue();
 				try {
-					creator = lookupCreator(sysMeta.getRightsHolder());
+					creator = lookupCreator(sysMeta.getRightsHolder(), emlPackage);
 				} catch (Exception e) {
 					// ignore and use default
 				}
@@ -284,6 +292,28 @@ public class DOIService {
 	}
 	
 	/**
+     * Get a parsed eml2 data package if it is an eml 2 document
+     * @param sysMeta
+     * @return null if it is not an eml document.
+     * @throws Exception
+     */
+    private DataPackage getEMLPackage(SystemMetadata sysMeta) throws Exception{
+        DataPackage dataPackage = null;
+        if (sysMeta.getFormatId().getValue().startsWith("eml://")) {
+            DataPackageParserInterface parser = new Eml200DataPackageParser();
+            // for using the MN API as the MN itself
+            MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
+            Session session = new Session();
+            Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
+            session.setSubject(subject);
+            InputStream emlStream = MNodeService.getInstance(request).get(session, sysMeta.getIdentifier());
+            parser.parse(emlStream);
+            dataPackage = parser.getDataPackage();
+        }
+        return dataPackage;
+    }
+	
+	/**
 	 * Locates an appropriate title for the object identified by the given SystemMetadata.
 	 * Different types of objects will be handled differently for titles:
 	 * 1. EML formats - parsed by the Datamanager library to find dataset title 
@@ -293,21 +323,15 @@ public class DOIService {
 	 * @return appropriate title if known, or the missing value code
 	 * @throws Exception
 	 */
-	private String lookupTitle(SystemMetadata sysMeta) throws Exception {
-		String title = ErcMissingValueCode.UNKNOWN.toString();
-		if (sysMeta.getFormatId().getValue().startsWith("eml://")) {
-			DataPackageParserInterface parser = new Eml200DataPackageParser();
-			// for using the MN API as the MN itself
-			MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-			Session session = new Session();
-	        Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
-	        session.setSubject(subject);
-			InputStream emlStream = MNodeService.getInstance(request).get(session, sysMeta.getIdentifier());
-			parser.parse(emlStream);
-			DataPackage dataPackage = parser.getDataPackage();
-			title = dataPackage.getTitle();
-		}
-		return title;
+	private String lookupTitle(DataPackage emlPackage) throws Exception {
+	    String title = "";
+        if (emlPackage != null) {
+            title = emlPackage.getTitle();
+        }
+        if(title == null || title.trim().equals("")) {
+            title = ErcMissingValueCode.UNKNOWN.toString();
+        }
+        return title;
 	}
 	
 	private String lookupResourceType(SystemMetadata sysMeta) {
@@ -336,25 +360,71 @@ public class DOIService {
 	 * @throws NotFound
 	 * @throws InvalidToken
 	 */
-	private String lookupCreator(Subject subject) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
-		// default to given DN
-		String fullName = subject.getValue();
-		
-		SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
-		if (subjectInfo != null && subjectInfo.getPersonList() != null) {
-			for (Person p: subjectInfo.getPersonList()) {
-				if (p.getSubject().equals(subject)) {
-					fullName = p.getFamilyName();
-					if (p.getGivenNameList() != null && p.getGivenNameList().size() > 0) {
-						fullName = fullName + ", " + p.getGivenName(0);
-					}
-					break;
-				}
-			}
-		}
-		
-		return fullName;
-		
+	private String lookupCreator(Subject subject, DataPackage emlPackage) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
+	    String creators = "";
+        if(emlPackage == null) {
+            SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+            if (subjectInfo != null && subjectInfo.getPersonList() != null) {
+                for (Person p: subjectInfo.getPersonList()) {
+                    if (p.getSubject().equals(subject)) {
+                        if (p.getGivenNameList() != null && p.getGivenNameList().size() > 0) {
+                            creators = p.getGivenName(0)+" ";
+                        }
+                        if(p.getFamilyName() != null) {
+                            creators = creators+p.getFamilyName();
+                        }
+                        break;
+                    }
+                }
+            }
+        } else {
+            //this is an eml document
+            //System.out.println(" this is an eml document =========================================");
+            List<Party> parties = emlPackage.getCreators();
+            boolean first = true;
+            for(Party party : parties) {
+                //System.out.println(" have parties ====");
+                String organization = party.getOrganization();
+                if(organization == null || organization.trim().equals("")) {
+                    //person name
+                    List<String> givenNames = party.getGivenNames();
+                    //System.out.println("the given names ============== "+givenNames);
+                    String surName = party.getSurName();
+                    //System.out.println("the surname ============== "+surName);
+                    String fullName = "";
+                    if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null) {
+                        fullName = givenNames.get(0)+ " ";
+                    }
+                    if(surName != null) {
+                        fullName = fullName+surName;
+                    }
+                    //System.out.println("the full name ============== "+fullName);
+                    if(!fullName.trim().equals("")) {
+                            if(first) {
+                                creators = fullName;
+                                first = false;
+                            } else {
+                                creators = creators+","+fullName;
+                            }
+                    }
+                } else {
+                    //organization name
+                    //System.out.println("the organziation name ============== "+organization);
+                    if(first) {
+                        creators = organization;
+                        first = false;
+                    } else {
+                        creators = creators+","+organization;
+                    }
+                }
+            }
+        }
+        if(creators == null || creators.trim().equals("")) {
+            // default to given DN
+            creators = subject.getValue();
+        }
+        logMetacat.info("DOI.lookupCreators - the creator string is "+creators);
+        return creators;
 	}
 	
 }
