@@ -1877,6 +1877,12 @@ public abstract class D1NodeService {
                   checkSidInModifyingSystemMetadata(sysmeta, "4956", "4868");
               }
           }
+          if(sysmeta.getFormatId() == null) {
+              throw new InvalidRequest("4869", "The formatId field is requried and shouldn't be null on the new system metadata of the object "+sysmeta.getIdentifier().getValue());
+          }
+          if(sysmeta.getRightsHolder() == null) {
+              throw new InvalidRequest("4869", "The rightsHolder field is requried and shouldn't be null on the new system metadata of the object "+sysmeta.getIdentifier().getValue());
+          }
           checkModifiedImmutableFields(currentSysmeta, sysmeta);
           checkOneTimeSettableSysmMetaFields(currentSysmeta, sysmeta);
           if(currentSysmeta.getObsoletes() == null && sysmeta.getObsoletes() != null) {
@@ -1964,7 +1970,11 @@ public abstract class D1NodeService {
                         "different to the orginal one "+orgMeta.getChecksum().getValue());
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getChecksum().getValue());
+	        } else if (orgMeta.getChecksum() != null && newMeta.getChecksum() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum is null and it is "+
+                        "different to the orginal one "+orgMeta.getChecksum().getValue());
 	        }
+	        
 	        if(orgMeta.getSubmitter() != null) {
 	            logMetacat.debug("in the checkModifiedImmutableFields method and orgMeta.getSubmitter is not null and the orginal submiter is "+orgMeta.getSubmitter().getValue());
 	        }
@@ -1975,25 +1985,32 @@ public abstract class D1NodeService {
 	        if(orgMeta.getSubmitter() != null && newMeta.getSubmitter() != null && !orgMeta.getSubmitter().equals(newMeta.getSubmitter())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter "+newMeta.getSubmitter().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getSubmitter().getValue());
+	        } else if (orgMeta.getSubmitter() != null && newMeta.getSubmitter() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter is null and it is "+
+                        "different to the orginal one "+orgMeta.getSubmitter().getValue());
 	        }
 	        
 	        if(orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() != null && orgMeta.getDateUploaded().getTime() != newMeta.getDateUploaded().getTime()) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded "+newMeta.getDateUploaded()+" is "+
+                        "different to the orginal one "+orgMeta.getDateUploaded());
+	        } else if (orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded is null and it is "+
                         "different to the orginal one "+orgMeta.getDateUploaded());
 	        }
 	        
 	        if(orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() != null && !orgMeta.getOriginMemberNode().equals(newMeta.getOriginMemberNode())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node  "+newMeta.getOriginMemberNode().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
-	        }
-	        
-	        if (orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() == null ) {
+	        } else if (orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() == null ) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node is null and it "+" is "+
                         "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
 	        }
 	        
 	        if(orgMeta.getSeriesId() != null && newMeta.getSeriesId() != null && !orgMeta.getSeriesId().equals(newMeta.getSeriesId())) {
                 throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id  "+newMeta.getSeriesId().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getSeriesId().getValue());
+            } else if (orgMeta.getSeriesId() != null && newMeta.getSeriesId() == null) {
+                throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id is null and it is "+
                         "different to the orginal one "+orgMeta.getSeriesId().getValue());
             }
 	        
