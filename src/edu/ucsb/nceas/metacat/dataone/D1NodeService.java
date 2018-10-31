@@ -1822,10 +1822,9 @@ public abstract class D1NodeService {
       Lock lock = null;
      
       // verify that guid == SystemMetadata.getIdentifier()
-      logMetacat.debug("Comparing guid|sysmeta_guid: " + pid.getValue() + 
-          "|" + sysmeta.getIdentifier().getValue());
-      
-      if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
+      if(sysmeta.getIdentifier() == null) {
+          throw new InvalidRequest("4863", "The identifier in the system metadata shouldn't be null");
+      } else if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
           throw new InvalidRequest("4863", 
               "The identifier in method call (" + pid.getValue() + 
               ") does not match identifier in system metadata (" +
@@ -1837,8 +1836,8 @@ public abstract class D1NodeService {
       //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
       logMetacat.debug("The current dateUploaded is ============"+currentSysmeta.getDateUploaded());
       logMetacat.debug("the dateUploaded in the new system metadata is "+sysmeta.getDateUploaded());
-      logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
-      logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
+      //logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
+      //logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
           //do we need throw an exception?
           logMetacat.warn("D1NodeService.updateSystemMetadata: Currently there is no system metadata in this node associated with the pid "+pid.getValue());
@@ -2034,6 +2033,14 @@ public abstract class D1NodeService {
 	               orgMeta.getIdentifier().getValue() + ". This is illegal since the obsoletes field is already set and cannot be changed once set.");
 	        }
 	    }
+	    
+	    /*if(orgMeta.getArchived() != null) {
+	        if(newMeta.getArchived() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to set the archvied field to null which doesn't match the current value "+orgMeta.getArchived());
+	        } else if (newMeta.getArchived() == false && orgMeta.getArchived() == true) {
+	            throw new InvalidRequest("4869", "The request is trying to set the archvied field to false whose current value is true. Metacat doesn't allow this.");
+	        }
+	    }*/
 	}
 	
 	

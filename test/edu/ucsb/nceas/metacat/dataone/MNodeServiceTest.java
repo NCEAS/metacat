@@ -192,7 +192,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletesChain"));
     
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
-    
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
+
     return suite;
     
   }
@@ -688,6 +689,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       } catch (Exception ee) {
           assertTrue( ee instanceof InvalidRequest);
       }
+      
       
       //update the authoritative node on the existing pid (newPid)
       SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
@@ -2959,5 +2961,212 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
        
    
+    }
+    
+    public void testUpdateSystemMetadataImmutableFields() throws Exception {
+        Date date = new Date();
+        Thread.sleep(1000);
+        String str = "object1";
+        //insert a test document
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        Identifier sid = new Identifier();
+        sid.setValue(generateDocumentId());
+        sysmeta.setSeriesId(sid);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        Thread.sleep(1000);
+        
+        //check identifier
+        Identifier newId = new Identifier();
+        newId.setValue("newValue123456newValuedfdfasdfasdfasdfcbsrtddf");
+        metadata.setIdentifier(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata which has new identifier");
+       } catch (InvalidRequest e)  {
+           //System.out.println("Error 1- "+e.getMessage());
+           assertTrue("The update system metadata should fail since the identifier was changed on the system metadata.", e.getMessage().contains(newId.getValue()));
+       }
+
+        metadata.setIdentifier(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose identifier is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the identifier is null on the system metadata", e.getMessage().contains("shouldn't be null"));
+       }
+        metadata.setIdentifier(guid);//reset back the identifier
+        
+        ObjectFormatIdentifier formatId = metadata.getFormatId();
+        metadata.setFormatId(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose format id is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the format id is null on the system metadata", e.getMessage().contains("The formatId field "));
+       }
+        
+        metadata.setFormatId(formatId);//reset the format id
+        
+        Subject rightsHolder = metadata.getRightsHolder();
+        metadata.setRightsHolder(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose rights holder is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the righs holder  is null on the system metadata", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        //change to a new rightsHolder
+        Subject newRightsHolder = new Subject();
+        newRightsHolder.setValue("newSubject");
+        metadata.setRightsHolder(newRightsHolder);
+        
+        BigInteger size = metadata.getSize();
+        BigInteger newSize = new BigInteger("4");
+        metadata.setSize(newSize);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its size was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+       
+        metadata.setSize(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its size null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setSize(size); //reset it back
+        
+        Checksum check = metadata.getChecksum();
+        Checksum newCheck = new Checksum();
+        newCheck.setValue("12345");
+        metadata.setChecksum(newCheck);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its checksum was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+       
+        metadata.setChecksum(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its checksum is null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setChecksum(check);
+        
+        Subject submitter = metadata.getSubmitter();
+        metadata.setSubmitter(newRightsHolder);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its submitter was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        metadata.setSubmitter(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its submitter is null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setSubmitter(submitter);
+        
+       Date uploadDate = metadata.getDateUploaded();
+       metadata.setDateUploaded(new Date());
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its upload date was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setDateUploaded(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its upload date is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       
+       metadata.setDateUploaded(uploadDate);
+       
+       NodeReference node = metadata.getOriginMemberNode();
+       NodeReference newNode = new NodeReference();
+       newNode.setValue("newNode");
+       metadata.setOriginMemberNode(newNode);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its original node was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setOriginMemberNode(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its original node is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setOriginMemberNode(node);
+       
+       Identifier newSid = new Identifier();
+       newSid.setValue("newSid123adfadffadfieredfesllkiju898765");
+       metadata.setSeriesId(newSid);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its series id was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setSeriesId(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its series id is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       
+       metadata.setSeriesId(sid);
+       
+       metadata.setArchived(true);
+       AccessPolicy policy = new AccessPolicy();
+       AccessRule allow = new AccessRule();
+       allow.addPermission(Permission.CHANGE_PERMISSION);
+       allow.addSubject(rightsHolder);
+       policy.addAllow(allow);
+       metadata.setAccessPolicy(policy);
+       //successfully update system metadata when the rights holder and access policy were changed
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+       
+       /*metadata.setArchived(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since we can't set archvied to be null when original value is true");
+      } catch (InvalidRequest e)  {
+         assertTrue("The update system metadata should fail since the archived can't be set null when original value is true", e.getMessage().contains("archvied field"));
+      }
+      
+       metadata.setArchived(false);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since we can't set archvied to be false when original value is true");
+      } catch (InvalidRequest e)  {
+         assertTrue("The update system metadata should fail since the archived can't be set false when original value is true", e.getMessage().contains("archvied field"));
+      }*/
     }
 }
