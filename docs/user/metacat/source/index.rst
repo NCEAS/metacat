@@ -95,7 +95,6 @@ Contents
    oaipmh
    event-logging
    sitemaps
-   readonly
    metacat-properties
    development
 
