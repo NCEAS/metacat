@@ -31,6 +31,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.utilities.IOUtil;
@@ -3168,5 +3169,39 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       } catch (InvalidRequest e)  {
          assertTrue("The update system metadata should fail since the archived can't be set false when original value is true", e.getMessage().contains("archvied field"));
       }*/
+    }
+    
+    public void testQueryOfArchivedObjects() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(30000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        MNodeService.getInstance(request).archive(session, guid);
+        SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        Thread.sleep(30000);
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(!resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        query = "q=id:"+guid.getValue()+"&archived=archived:true";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">true</bool>"));
+        
     }
 }
