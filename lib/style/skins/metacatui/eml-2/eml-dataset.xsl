@@ -576,6 +576,7 @@
   </xsl:template>
 
   <xsl:template name="datasetmethod">
+     <h4><xsl:text>Methods &amp; Sampling</xsl:text></h4>
      <xsl:for-each select=".">
         <xsl:call-template name="method">
           <xsl:with-param name="methodfirstColStyle" select="$firstColStyle"/>
