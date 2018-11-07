@@ -194,6 +194,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
+    suite.addTest(new MNodeServiceTest("testUpdateAuthoritativeMN"));
 
     return suite;
     
@@ -701,19 +702,29 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       newMN.setValue("urn:node:river1");
       newSysMeta.setAuthoritativeMemberNode(newMN);
       newSysMeta.setArchived(false);
-      MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+      try {
+          MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+      }  catch (InvalidRequest ee) {
+          assertTrue(ee.getMessage().contains("urn:node:river1"));
+      }
+      
       try {
           updatedPid = 
                  MNodeService.getInstance(request).update(session, newPid, object, newPid2, newSysMeta2);
           fail("update an object on non-authoritatvie node should get anexception");
      } catch (Exception ee) {
-         assertTrue( ee instanceof NotAuthorized);
+         assertTrue( ee instanceof InvalidRequest);
      }
      //cn can succeed even though it updates an object on the non-authoritative node.
      Session cnSession = getCNSession();
-     updatedPid = 
-             MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
-     assertEquals(updatedPid.getValue(), newPid2.getValue());
+     try {
+         updatedPid = 
+                 MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
+         fail("updating an object's authoritatvie node should get anexception");
+       //assertEquals(updatedPid.getValue(), newPid2.getValue());
+     } catch (InvalidRequest ee) {
+         //assertTrue(ee.getMessage().contains(newPid.getValue()));
+     }
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
@@ -3169,6 +3180,67 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       } catch (InvalidRequest e)  {
          assertTrue("The update system metadata should fail since the archived can't be set false when original value is true", e.getMessage().contains("archvied field"));
       }*/
+    }
+    
+    public void testUpdateAuthoritativeMN() throws Exception {
+        String str1 = "object1";
+        Date date = new Date();
+        Thread.sleep(2000);
+        //insert test documents with a series id
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        String sid1= "sid."+System.nanoTime();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(sid1);
+        System.out.println("the first sid is "+seriesId.getValue());
+        sysmeta.setSeriesId(seriesId);
+        sysmeta.setArchived(false);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(metadata.getIdentifier().equals(guid));
+        assertTrue(metadata.getArchived().equals(false));
+        System.out.println("the checksum from request is "+metadata.getChecksum().getValue());
+        assertTrue(metadata.getSize().equals(sysmeta.getSize()));
+        System.out.println("the identifier is "+guid.getValue());
+        
+        System.out.println("the identifier is ----------------------- "+guid.getValue());
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
+        SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+        assertTrue(metadata2.getIdentifier().equals(guid));
+        assertTrue(metadata2.getSeriesId().equals(seriesId));
+        assertTrue(metadata2.getArchived().equals(false));
+        NodeReference oldValue = metadata2.getAuthoritativeMemberNode();
+        
+        NodeReference newNode = new NodeReference();
+        newNode.setValue("newNode");
+        metadata2.setAuthoritativeMemberNode(newNode);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+            fail("The updateSystemMeta should fail since it tried to update the authoritative member node");
+        } catch (InvalidRequest e) {
+            assertTrue(e.getMessage().contains(newNode.getValue()));
+        } catch (NotAuthorized ee) {
+            
+        }
+        metadata2.setAuthoritativeMemberNode(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+            fail("The updateSystemMeta should fail since it tried to update the authoritative member node");
+        } catch (InvalidRequest e) {
+           
+        }  catch (NotAuthorized ee) {
+            
+        }
+        metadata2.setAuthoritativeMemberNode(oldValue);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+        SystemMetadata metadata3 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+        assertTrue(metadata3.getIdentifier().equals(guid));
+        assertTrue(metadata3.getSeriesId().equals(seriesId));
+
     }
     
     public void testQueryOfArchivedObjects() throws Exception {

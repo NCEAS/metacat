@@ -2800,6 +2800,18 @@ public class MNodeService extends D1NodeService
                       ". It doesn't match our current system metadata modification date in the member node - "+currentModiDate.toString()+
                       ". Please check if you have got the newest version of the system metadata before the modification.");
           }
+          //check the if client change the authoritative member node.
+          if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() != null && 
+                  !currentSysmeta.getAuthoritativeMemberNode().equals(sysmeta.getAuthoritativeMemberNode())) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is "+sysmeta.getAuthoritativeMemberNode().getValue()+
+                      ". They don't match. Clients don't have the permission to change it.");
+          } else if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() == null) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is null. They don't match. Clients don't have the permission to change it.");
+          }
+          else if(currentSysmeta.getAuthoritativeMemberNode() == null && sysmeta.getAuthoritativeMemberNode() != null ) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is null but the value on the new system metadata is not null. They don't match. Clients don't have the permission to change it.");
+          }
+                  
           boolean needUpdateModificationDate = true;
           boolean fromCN = false;
           success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
