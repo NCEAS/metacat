@@ -198,7 +198,7 @@
   <xsl:template match="boundingAltitudes">
 
       <div class="control-group">
-		<label class="control-label">Mimimum Altitude</label>
+		<label class="control-label">Minimum Altitude</label>
 		<div class="controls">
         	<xsl:apply-templates select="altitudeMinimum"/>
         </div>

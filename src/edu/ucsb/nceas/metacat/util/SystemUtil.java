@@ -26,6 +26,8 @@
 
 package edu.ucsb.nceas.metacat.util;
 
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.Vector;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -34,6 +36,9 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.log4j.Logger;
 
+import com.sun.net.ssl.HttpsURLConnection;
+
+import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -50,6 +55,10 @@ public class SystemUtil {
 	private static String METACAT_SERVLET = "metacat";
 //	private static String METACAT_WEB_SERVLET = "metacatweb";
 	private static int OS_CLASS = 0;
+	private static boolean firstTimeTryInternalURL = true;
+	private static boolean firstTryInternalURLAfterFullInit = true;
+	private static String internalURL = null;
+	private static boolean internalURLReplacedByExternal = false;
 	
 	// Class of OS.  If we need more granularity, we should create a version
 	// list and access it separately.
@@ -241,6 +250,81 @@ public class SystemUtil {
 	 */
 	public static String getServletURL() throws PropertyNotFoundException {
 		return getContextURL() + "/" + METACAT_SERVLET;
+	}
+	
+	/**
+	 * Get the internal context url. If the internal server url is not accessible, it falls back to the external context url.
+	 * @return  the url of the internal Metacat context
+	 * @throws PropertyNotFoundException
+	 */
+	public static String getInternalContextURL() throws PropertyNotFoundException {
+	    return getInternalServerURL() + "/"
+                + PropertyService.getProperty("application.context");
+	}
+	
+	/**
+	 * Get the internal server URL. If the internal server url is not accessible, it falls back to the external url
+	 * @return  the url of the internal server
+	 * @throws PropertyNotFoundException
+	 */
+	public static String getInternalServerURL() throws PropertyNotFoundException {
+	    if(firstTimeTryInternalURL) {
+	        //System.out.println("in the first time try !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1");
+	        firstTimeTryInternalURL = false;
+	        internalURL = getInternalServerFromProp();
+	        /*try {
+	            //if the internalURL doesn't work, it will fall back to the external url.
+	            URL internal = new URL(internalURL); // we will try to connect the server url
+	            HttpURLConnection connection = (HttpURLConnection)internal.openConnection();
+	            if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+	                throw new Exception("The local server "+internalURL+" is not accessible since the http reponse code is "+connection.getResponseCode());
+	            }
+	        } catch (Exception e) {
+	            logMetacat.warn("SystemUtil.getInternalServerURL - Metacat can't access the local url - "+internalURL +" and it will use the exteranl url since "+e.getMessage(), e);
+	            internalURLReplacedByExternal = true;
+	            internalURL = getServerURL();
+	        }*/
+	    } else if(firstTryInternalURLAfterFullInit && MetaCatServlet.isFullyInitialized()) {
+	        //System.out.println("in the first time try when the server is fully intialized===========================================");
+	        firstTryInternalURLAfterFullInit = false;
+	        internalURL = getInternalServerFromProp();
+            try {
+                //if the internalURL doesn't work, it will fall back to the external url.
+                URL internal = new URL(internalURL+"/"+PropertyService.getProperty("application.context")); // we will try to connect the context url
+                HttpURLConnection connection = (HttpURLConnection)internal.openConnection();
+                if(connection.getResponseCode() != HttpURLConnection.HTTP_OK) {
+                    throw new Exception("The local server "+internalURL+"/"+PropertyService.getProperty("application.context")+" is not accessible since the http reponse code is "+connection.getResponseCode());
+                }
+            } catch (Exception e) {
+                logMetacat.warn("SystemUtil.getInternalServerURL - Metacat can't access the local url - "+internalURL +"/"+PropertyService.getProperty("application.context")+" and it will use the exteranl url since "+e.getMessage(), e);
+                internalURLReplacedByExternal = true;
+                internalURL = getServerURL();
+            }
+	    }
+	    logMetacat.debug("SystemUtil.getInternalServerURL - the final internal url is "+internalURL);
+	    return internalURL;
+	    
+	}
+	
+	/**
+	 * Check if the internal url has been replaced by external url.
+	 * @return true if the url has been replaced; otherwise false;
+	 */
+	public static boolean isInternalURLReplacedByExternal() {
+	    return internalURLReplacedByExternal;
+	}
+	
+	/**
+	 * Get the internal (local) server url from the metacat.properties file.
+	 * @return server url starting "http"
+	 * @throws PropertyNotFoundException
+	 */
+	private static String getInternalServerFromProp() throws PropertyNotFoundException {
+        String serverURL = "http://";
+        serverURL += PropertyService.getProperty("server.internalName");
+        serverURL += ":" + PropertyService.getProperty("server.internalPort");
+        logMetacat.debug("SystemUtil.getInternalServerFromProp - the internal url from metacat.properties is "+serverURL);
+        return serverURL;
 	}
 	
 //	/**

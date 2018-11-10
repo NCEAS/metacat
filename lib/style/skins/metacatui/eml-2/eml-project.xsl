@@ -75,7 +75,7 @@
 	   <div class="control-group">
 	     <label class="control-label projectTitle">Title:</label>
 	   	 <div class="controls controls-well">
-		   <xsl:value-of select="../title" />
+		   <xsl:value-of select="./text()" />
 	   	 </div>
 	   </div>
      </xsl:for-each>
@@ -90,13 +90,6 @@
 			<xsl:for-each select="personnel">
 
 				<xsl:call-template name="party" />
-
-				<xsl:for-each select="role">
-					<label class="control-label projectRole">Role:</label>
-					<div class="controls controls-well">
-						<xsl:value-of select="." />
-					</div>
-				</xsl:for-each>
 
 			</xsl:for-each>
 		</div>

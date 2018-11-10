@@ -176,13 +176,13 @@ public class SolrQueryServiceController {
      * @param id
      * @return true if the server has at lease one solr doc; false otherwise.
      */
-    public boolean hasSolrDoc(Identifier id) throws ParserConfigurationException, SolrServerException, IOException, SAXException{
+    /*public boolean hasSolrDoc(Identifier id) throws ParserConfigurationException, SolrServerException, IOException, SAXException{
     	 if(isEmbeddedSolrServer) {
              return embeddedQueryService.hasSolrDoc(id);
          } else{
              return httpQueryService.hasSolrDoc(id);
          }
-    }
+    }*/
 
     
 }

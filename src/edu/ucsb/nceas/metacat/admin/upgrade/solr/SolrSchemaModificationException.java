@@ -36,7 +36,7 @@ public class SolrSchemaModificationException extends AdminException {
      * Constructor
      * @param error  the eror message.
      */
-    SolrSchemaModificationException(String error) {
+    public SolrSchemaModificationException(String error) {
         super(error);
     }
 }

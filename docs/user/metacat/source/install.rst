@@ -59,8 +59,10 @@ instructions for each step are in the next section.
 4. Download Metacat from the `Metacat Download Page`_ and extract the archive
 5. ``sudo mkdir /var/metacat; sudo chown -R <tomcat_user> /var/metacat``
 6. ``sudo cp <metacat_package_dir>/metacat.war <tomcat_app_dir>``
-7. ``sudo /etc/init.d/tomcat7 restart``
-8. Configure Metacat through the Web interface
+7. ``sudo cp <metacat_package_dir>/metacat-index.war <tomcat_app_dir>``
+8. ``sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>``
+9. ``sudo /etc/init.d/tomcat7 restart``
+10. Configure Metacat through the Web interface
 
 .. _Metacat Download Page: http://knb.ecoinformatics.org/software/metacat/
 
@@ -78,7 +80,7 @@ Instructions for all three options are discussed below. Note that downloading
 the installer (described in the next section) is the simplest way to get
 started. 
 
-Download the Metacat Installer
+Download the Metacat Installer (Highly Recommended)
 ..............................
 Downloading the Metacat Installer is the simplest way to get started with the
 application. To download the installer: 
@@ -127,39 +129,26 @@ Note that you do not need to create the WAR file directly because the Ant
 build-file has an "install" target that will build and deploy the WAR for you. 
 
 
-Check Out Metacat Source Code from SVN (for Developers)
+Check Out Metacat Source Code from GitHub (for Developers)
 .......................................................
 
-.. sidebar:: Installing an SVN Client:
+.. sidebar:: Installing an Git Client:
 
-    If you have not already installed Subversion and you are running Ubuntu/Debian,
-    you can get the SVN client by typing:
+    If you have not already installed Git and you are running Ubuntu/Debian,
+    you can get the Git client by typing:
     
     ::
 
-        sudo apt-get install subversion
+        sudo apt-get install git
 
-    Otherwise, you can get the SVN client from The Subversion homepage
-    (http://subversion.tigris.org/).
-    
-If you wish to work with the most recent Metacat code, or you'd like to extend
-the Metacat code yourself, you may wish to check out the Metacat source code
-from SVN. You will need a Subversion (SVN) client installed and configured on
-your system (see the end of this section for information about obtaining an SVN
-client). 
-
-To check out the code from SVN, go to the directory where you would like the
+To clone the repository from GitHub, go to the directory where you would like the
 code to live and type::
 
-  svn co https://code.ecoinformatics.org/code/metacat/tags/METACAT_<rev> metacat
+  git clone https://github.com/nceas/metacat metacat
 
-Where ``<rev>`` is the version of the code you want to check out (like 2_0_0). 
+The entire Metacat repository will be cloned to your local machine and the current branch is the master branch which is constantly maintained in a state ready for release. Detailed information about the code contribution please see:
 
-To check out the head, type::
-
-  svn co https://code.ecoinformatics.org/code/metacat/trunk metacat
-
-You should see a list of files as they check out.
+https://github.com/NCEAS/metacat/blob/master/CONTRIBUTING.md
 
 Note that you do not need to create the WAR file directly because the Ant
 build-file has an "install" target that will build and deploy the WAR for you. 
@@ -261,7 +250,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
 
       <VirtualHost XXX.XXX.XXX.XXX:80> 
         DocumentRoot /var/www 
-        ServerName dev.nceas.ucsb.edu 
+        ServerName dev.nceas.ucsb.edu
+        ## Allow CORS requests from all origins to use cookies
+        #SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+        #Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+        Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
+        Header set Access-Control-Allow-Credentials "true"
         ErrorLog /var/log/httpd/error_log 
         CustomLog /var/log/httpd/access_log common 
         ScriptAlias /cgi-bin/ "/var/www/cgi-bin/" 
@@ -282,6 +277,8 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
         JkMount /metacat/* ajp13 
         JkMount /metacat/metacat ajp13 
         JkUnMount /metacat/cgi-bin/* ajp13 
+        JkMount /metacatui ajp13 
+        JkMount /metacatui/* ajp13 
         JkMount /*.jsp ajp13 
       </VirtualHost> 
 
@@ -297,7 +294,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
       workers.tomcat_home -  set to the Tomcat install directory. 
       workers.java_home - set to the Java install directory. 
 
-  5. Restart Apache to bring in changes by typing:
+  5. Enable the Apache Mod HEADERS:
+
+    ::
+
+     sudo a2enmod headers
+
+  6. Restart Apache to bring in changes by typing:
 
     ::
 
@@ -499,11 +502,13 @@ To install a new Metacat servlet:
     sudo chown -R <tomcat_user> /var/metacat
 
 
-3.  Install the Metacat WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat7/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
+3.  Install the Metacat, Metacat-index and MetacatUI WAR in the Tomcat web-application directory. For instructions on downloading the Metacat WAR, please see Downloading Metacat.  Typically, Tomcat will look for its application files (WAR files) in the <tomcat_home>/webapps directory (e.g., /usr/share/tomcat7/webapps). Your instance of Tomcat may be configured to look in a different directory. We will refer to the Tomcat application directory as <tomcat_app_dir>.  NOTE: The name of the WAR file (e.g., metacat.war) provides the application context, which appears in the URL of the Metacat (e.g., http://yourserver.com/metacat/). To change the context, simply change the name of the WAR file to the desired name before copying it.  To install the Metacat WAR:
 
   ::
 
     sudo cp <metacat_package_dir>/metacat.war <tomcat_app_dir>
+    sudo cp <metacat_package_dir>/metacat-index.war <tomcat_app_dir>
+    sudo cp <metacat_package_dir>/metacatui.war <tomcat_app_dir>
 
 
 4. Restart Tomcat. Log in as the user that runs your Tomcat server (often "tomcat") and type:  

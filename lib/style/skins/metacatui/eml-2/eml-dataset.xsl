@@ -576,6 +576,7 @@
   </xsl:template>
 
   <xsl:template name="datasetmethod">
+     <h4><xsl:text>Methods &amp; Sampling</xsl:text></h4>
      <xsl:for-each select=".">
         <xsl:call-template name="method">
           <xsl:with-param name="methodfirstColStyle" select="$firstColStyle"/>
@@ -606,7 +607,7 @@
   </xsl:template>
   
 	<xsl:template name="datasetentity">
-		<xsl:if test="dataTable or spatialRaster or spatialVector or storedProcedures or view or otherEntity">
+		<xsl:if test="dataTable or spatialRaster or spatialVector or storedProcedure or view or otherEntity">
 			<h4>
 				<xsl:text>Data Table, Image, and Other Data Details</xsl:text>
 			</h4>
@@ -617,145 +618,68 @@
 			
 		<xsl:choose>
 			<xsl:when test="$displaymodule!='printall'">
-				<xsl:for-each select="dataTable">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">dataTable</xsl:with-param>
-						<xsl:with-param name="showtype">Data Table</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
-				</xsl:for-each>
-				<xsl:for-each select="spatialRaster">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">spatialRaster</xsl:with-param>
-						<xsl:with-param name="showtype">Spatial Raster</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
-				</xsl:for-each>
-				<xsl:for-each select="spatialVector">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">spatialVector</xsl:with-param>
-						<xsl:with-param name="showtype">Spatial Vector</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
-				</xsl:for-each>
-				<xsl:for-each select="storedProcedure">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">storedProcedure</xsl:with-param>
-						<xsl:with-param name="showtype">Stored Procedure</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
-				</xsl:for-each>
-				<xsl:for-each select="view">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">view</xsl:with-param>
-						<xsl:with-param name="showtype">View</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
-				</xsl:for-each>
-				<xsl:for-each select="otherEntity">
-					<xsl:call-template name="entityurl">
-						<xsl:with-param name="type">otherEntity</xsl:with-param>
-						<xsl:with-param name="showtype">Other Data</xsl:with-param>
-						<xsl:with-param name="index" select="position()" />
-					</xsl:call-template>
+					<xsl:for-each select="dataTable | spatialRaster | spatialVector | storedProcedure | view | otherEntity">
+				<xsl:call-template name="entityurl">
+					<xsl:with-param name="type"><xsl:value-of select="local-name()" /></xsl:with-param>
+					<xsl:with-param name="showtype">
+						<xsl:choose>
+							<xsl:when test="local-name()='dataTable'">
+								<xsl:text>Data Table</xsl:text>
+							</xsl:when>
+							<xsl:when test="local-name()='spatialRaster'">
+								<xsl:text>Spatial Raster</xsl:text>
+							</xsl:when>
+							<xsl:when test="local-name()='spatialVector'">
+								<xsl:text>Spatial Vector</xsl:text>
+							</xsl:when>
+							<xsl:when test="local-name()='storedProcedures'">
+								<xsl:text>Stored Procedure</xsl:text>
+							</xsl:when>
+							<xsl:when test="local-name()='view'">
+								<xsl:text>View</xsl:text>
+							</xsl:when>
+							<xsl:when test="local-name()='otherEntity'">
+								<xsl:text>Other Entity</xsl:text>
+							</xsl:when>
+						</xsl:choose>
+					</xsl:with-param>
+					<xsl:with-param name="index" select="position()" />
+				</xsl:call-template>
 				</xsl:for-each>
 			</xsl:when>
 			<xsl:otherwise>
-				<xsl:for-each select="dataTable">
+				<xsl:for-each select="dataTable | spatialRaster | spatialVector | storedProcedure | view | otherEntity">
 					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
 						<div class="control-group entity">
 							<div class="controls controls-well entitydetails">
 								<label class="control-label">
-									<xsl:text>Data Table</xsl:text>
+									<xsl:choose>
+										<xsl:when test="local-name()='dataTable'">
+											<xsl:text>Data Table</xsl:text>
+										</xsl:when>
+										<xsl:when test="local-name()='spatialRaster'">
+											<xsl:text>Spatial Raster</xsl:text>
+										</xsl:when>
+										<xsl:when test="local-name()='spatialVector'">
+											<xsl:text>Spatial Vector</xsl:text>
+										</xsl:when>
+										<xsl:when test="local-name()='storedProcedures'">
+											<xsl:text>Stored Procedure</xsl:text>
+										</xsl:when>
+										<xsl:when test="local-name()='view'">
+											<xsl:text>View</xsl:text>
+										</xsl:when>
+										<xsl:when test="local-name()='otherEntity'">
+											<xsl:text>Other Entity</xsl:text>
+										</xsl:when>
+									</xsl:choose>
 								</label>
 								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">dataTable</xsl:with-param>
+									<xsl:with-param name="entitytype"><xsl:value-of select="local-name()" /></xsl:with-param>
 									<xsl:with-param name="entityindex" select="$currentNode" />
 								</xsl:call-template>
 							</div>
 						</div>
-					</xsl:for-each>
-				</xsl:for-each>
-				<xsl:for-each select="spatialRaster">
-					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
-						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
-								<label class="control-label">
-									<xsl:text>Spatial Raster</xsl:text>
-								</label>
-								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">spatialRaster</xsl:with-param>
-									<xsl:with-param name="entityindex" select="$currentNode" />
-								</xsl:call-template>
-							</div>
-						</div>
-					</xsl:for-each>
-				</xsl:for-each>
-				<xsl:for-each select="spatialVector">
-					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
-						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
-								<label class="control-label">
-									<xsl:text>Spatial Vector</xsl:text>
-								</label>
-								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">spatialVector</xsl:with-param>
-									<xsl:with-param name="entityindex" select="$currentNode" />
-								</xsl:call-template>
-							</div>
-						</div>
-					</xsl:for-each>
-				</xsl:for-each>
-				<xsl:for-each select="storedProcedure">
-					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
-						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
-								<label class="control-label">
-									<xsl:text>Stored Procedure</xsl:text>
-								</label>
-								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">storedProcedure</xsl:with-param>
-									<xsl:with-param name="entityindex" select="$currentNode" />
-								</xsl:call-template>
-							</div>
-						</div>
-					</xsl:for-each>
-				</xsl:for-each>
-				<xsl:for-each select="view">
-					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
-						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
-								<label class="control-label">
-									<xsl:text>View</xsl:text>
-								</label>
-								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">view</xsl:with-param>
-									<xsl:with-param name="entityindex" select="$currentNode" />
-								</xsl:call-template>
-							</div>
-						</div>
-					</xsl:for-each>
-				</xsl:for-each>
-				<xsl:for-each select="otherEntity">
-					<xsl:variable name="currentNode" select="position()" />
-					<xsl:for-each select="../.">
-						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
-								<label class="control-label">
-									<xsl:text>Other Entity</xsl:text>
-								</label>
-								<xsl:call-template name="chooseentity">
-									<xsl:with-param name="entitytype">otherEntity</xsl:with-param>
-									<xsl:with-param name="entityindex" select="$currentNode" />
-								</xsl:call-template>
-							</div>
-						</div>
-					</xsl:for-each>
 				</xsl:for-each>
 			</xsl:otherwise>
 		</xsl:choose>

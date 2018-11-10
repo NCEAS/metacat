@@ -109,10 +109,16 @@ import_names('FORM');
 
 # Must have a config to use Metacat
 my $skinName = "";
+# the skinDisplayName is used to prevent the cross-site scripting attack.
+my $skinDisplayName="";
 if ($FORM::cfg) {
     $skinName = $FORM::cfg;
+    $skinDisplayName=$skinName;
+    $skinDisplayName=~s/[^A-Za-z0-9 ]*//g;
 } elsif ($ARGV[0]) {
     $skinName = $ARGV[0];
+    $skinDisplayName=$skinName;
+    $skinDisplayName=~s/[^A-Za-z0-9 ]*//g;
 } else {
     debug("No configuration set.");
     print "Content-type: text/html\n\n";
@@ -125,7 +131,7 @@ if (!($metacatUrl)) {
     debug("No Metacat.");
     print "Content-type: text/html\n\n";
     'Registry Error: Metacat is not initialized! Make sure' .
-        ' MetacatUrl is set correctly in ' .  $skinName . '.properties';
+        ' MetacatUrl is set correctly in ' .  $skinDisplayName . '.properties';
     exit();
 }
 
@@ -135,9 +141,10 @@ if (!($skinName)) {
     push(@errorMessages, $error);
 } else {
     my $skinProps = "$skinsDir/$skinName/$skinName.properties";
+    my $skinDisplayProps = "$skinsDir/$skinDisplayName/$skinDisplayName.properties";
     unless (open (SKIN_PROPERTIES, $skinProps)) {
         print "Content-type: text/html\n\n";
-        print "Unable to locate skin properties at $skinProps.  Is this path correct?";
+        print "Unable to locate skin properties at $skinDisplayProps.  Is this path correct?";
         exit(0);
     }
     $skinProperties->load(*SKIN_PROPERTIES);
@@ -295,8 +302,8 @@ if(!@validDisplayOrgList) {
      $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
     print "Content-type: text/html\n\n";
     print "The value of property ldap.templates.organizationList in " 
-     . $skinName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
-     . $skinName . ".properties file) is invalid. Please send the information to ". $contact;
+     . $skinDisplayName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
+     . $skinDisplayName . ".properties file) is invalid. Please send the information to ". $contact;
     exit(0);
 }
 

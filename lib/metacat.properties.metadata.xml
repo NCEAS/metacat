@@ -180,6 +180,29 @@
 		</description>
 		<helpFile>docs/metacat-properties.html#server-httpSSLPort</helpFile>
 	</config>
+  
+  <config>
+    <key>server.internalName</key>
+    <label>Server Internal Name</label>
+    <group>2</group>
+    <index>4</index>
+    <description>
+      Local name of the server. Usually it is localhost. 
+    </description>
+    <helpFile>docs/metacat-properties.html#server-internalName</helpFile>
+  </config>
+
+  <config>
+    <key>server.internalPort</key>
+    <label>Internal Port</label>
+    <group>2</group>
+    <index>5</index>
+    <description>
+      Internal port where Metacat will be available when the server local name is used.
+    </description>
+    <helpFile>docs/metacat-properties.html#server-internalPort</helpFile>
+  </config>
+
 	
 	<config>
 		<key>application.deployDir</key>

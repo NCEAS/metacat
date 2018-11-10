@@ -31,6 +31,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.util.HashMap;
 
 import junit.framework.Test;
@@ -313,7 +314,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			
 			// use EML to test
 			// TODO: include an ORE to really exercise it
-			String emlFile = "test/tao.14563.1.xml";
+			String emlFile = "test/eml-multiple-creators.xml";
 			InputStream content = null;
 			try {
 				content = new FileInputStream(emlFile);
@@ -345,7 +346,20 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				} while (metadata == null && count < 10);
 	            
 	            assertNotNull(metadata);
-	            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+	            String title = metadata.get(DataCiteProfile.TITLE.toString());
+	            String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+	            assertTrue(title.equals("Test EML package - public-readable from morpho"));
+	            assertTrue(creators.equals("onlySurName,National Center for Ecological Analysis and Synthesis,John Smith,Wendy King,University of California Santa Barbara"));
+	            String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                //System.out.println("publisher =======is"+publisher);
+                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+                String year = sdf.format(sysmeta.getDateUploaded());
+                assertTrue(year.equals(publishingYear));
+                //System.out.println("publishing year =======is"+publishingYear);
+                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
+                //System.out.println("resource type =======is"+resourceType);
+                assertTrue(resourceType.equals("Dataset/metadata"));
 	            content.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();

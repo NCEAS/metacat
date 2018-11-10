@@ -217,6 +217,7 @@ public class MNodeService extends D1NodeService
     
     // shared executor
     private static ExecutorService executor = null;
+    private boolean needSync = true;
 
     static {
         // use a shared executor service with nThreads == one less than available processors
@@ -246,6 +247,13 @@ public class MNodeService extends D1NodeService
         
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
+
+        try {
+            needSync = (new Boolean(PropertyService.getProperty("dataone.nodeSynchronize"))).booleanValue();
+        } catch (PropertyNotFoundException e) {
+            // TODO Auto-generated catch block
+            logMetacat.warn("MNodeService.constructor : can't find the property to indicate if the memeber node need to be synchronized. It will use the default value - true.");
+        }
     }
 
     /**
@@ -2119,6 +2127,11 @@ public class MNodeService extends D1NodeService
 				List<Identifier> dataIdentifiers = sciMetaMap.get(originalIdentifier);
 					
 				// reconstruct the ORE with the new identifiers
+				//the original identifier can be in the data object list, we should replace it if does exist.
+                if(dataIdentifiers.contains(originalIdentifier)) {
+                    dataIdentifiers.remove(originalIdentifier);
+                    dataIdentifiers.add(newIdentifier);
+                }
 				sciMetaMap.remove(originalIdentifier);
 				sciMetaMap.put(newIdentifier, dataIdentifiers);
 				
@@ -2787,6 +2800,18 @@ public class MNodeService extends D1NodeService
                       ". It doesn't match our current system metadata modification date in the member node - "+currentModiDate.toString()+
                       ". Please check if you have got the newest version of the system metadata before the modification.");
           }
+          //check the if client change the authoritative member node.
+          if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() != null && 
+                  !currentSysmeta.getAuthoritativeMemberNode().equals(sysmeta.getAuthoritativeMemberNode())) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is "+sysmeta.getAuthoritativeMemberNode().getValue()+
+                      ". They don't match. Clients don't have the permission to change it.");
+          } else if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() == null) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is null. They don't match. Clients don't have the permission to change it.");
+          }
+          else if(currentSysmeta.getAuthoritativeMemberNode() == null && sysmeta.getAuthoritativeMemberNode() != null ) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is null but the value on the new system metadata is not null. They don't match. Clients don't have the permission to change it.");
+          }
+                  
           boolean needUpdateModificationDate = true;
           boolean fromCN = false;
           success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
@@ -2794,7 +2819,8 @@ public class MNodeService extends D1NodeService
           HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
       }
       
-      if(success) {
+      if(success && needSync) {
+          logMetacat.debug("MNodeService.updateSystemMetadata - the cn needs to be notified that the system metadata of object " +pid.getValue()+" has been changed ");
           this.cn = D1Client.getCN();
           //TODO
           //notify the cns the synchornize the new system metadata.

@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="METACATUI_1_14_14" />
+	<property name="metacatui-tag" value="1.14.15" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
@@ -120,7 +120,7 @@
 	
 	<!-- Determine if ecogrid should be installed-->
 	<condition property="enable.ecogrid">
-		<equals arg1="${install.ecogrid}" arg2="true" />
+		<equals arg1="${install.ecogrid}" arg2="false" />
 	</condition>
 
 	<!-- Determine if perl should be built-->
@@ -439,18 +439,6 @@
 				</not>
 			</or>
 		</condition>
-
-	<!--	<condition property="ecogrid.required">
-			<or>
-				<not>
-					<available file="${ecogrid-dir}/build.properties" />
-				</not>
-				<not>
-					<available
-						file="${ecogrid-dir}/buildfiles/metacatImpl.xml" />
-				</not>
-			</or>
-		</condition> -->
 		
 		<property name="init.called" value="true" />
 
@@ -771,7 +759,7 @@
 		<echo>Dev install completed at ${NOW}</echo>
 	</target>
 
-	<target name="build-metacat" depends="install-ecogrid, install-spatial, dist-metacat-index, dist-metacat-ui"
+	<target name="build-metacat" depends="war, install-spatial, dist-metacat-index, dist-metacat-ui"
 		description="Build Metacat">
 	</target>
 
@@ -788,11 +776,6 @@
 			<property name="target" value="${ecogrid-target-name}" />
 			<property name="metacat.dir" value="${basedir}"/>
 		</ant>
-		<!-- war destfile="${ecogrid-dir}/build/${metacat.context}.war" update="true">
-			<webinf dir="${ecogrid-dir}/lib">
-			<include name="server-config.wsdd"/>
-			</webinf>
-			</war -->
 		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
 		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war" excludes="WEB-INF/lib/log4j-1.2.8.jar"/>
 	   </jar>
@@ -808,22 +791,6 @@
 			<export srcUrl="${svn.ecogridUrl}" force="true"
 				destPath="${ecogrid-dir}" />
 		</svn>
-	</target>
-
-	<!-- target name="deploy-ecogrid" depends="clean-ecogrid-server-config-wsdd" if="enable.ecogrid" description="Automately generate wsdd for ecogrid service">
-		<ant antfile="build.xml" dir="${ecogrid-dir}" target ="deploy" inheritall="false">
-		<property name="context" value="${metacat.context}"/>
-		<property name="target" value="${ecogrid-target-name}"/>
-		<property name="metacat.dir" value="."/>
-		<property name="hostname" value="${ecogrid.hostname}"/>
-		<property name="port" value="${config.port}"/>
-		</ant>
-		</target -->
-
-	<target name="clean-ecogrid-server-config-wsdd" depends="init"
-		description="Automately generate wsdd for ecogrid service">
-		<delete
-			file="${app.deploy.dir}/${metacat.context}/WEB-INF/server-config.wsdd" />
 	</target>
 
 	<target name="install-skin" depends="init"
@@ -1420,14 +1387,6 @@
 		<copy todir="${ver.src}">
 			<fileset dir="./src" />
 		</copy>
-		
-
-		<!--<mkdir dir="${ecogrid-dist-dir}" />
-		<copy todir="${ecogrid-dist-dir}">
-			<fileset dir="${ecogrid-dir}" excludes="**/CVS*" />
-		</copy>-->
-
-
 		<delete file="./${name}-src-${release}.zip" />
 		<zip zipfile="./${name}-src-${release}.zip"
 			basedir="${dist.dir}" excludes="metacat*.tar.gz,metacat*.zip" />
