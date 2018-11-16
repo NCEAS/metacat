@@ -352,6 +352,11 @@ public class DOIService {
 	 * Calls the configured CN to determine this information.
 	 * If the person is not registered with the CN identity service, 
 	 * a NotFound exception will be raised as expected from the service.
+	 * 
+	 * According to https://ezid.cdlib.org/doc/apidoc.html#profile-datacite
+	 * Each name may be a corporate, institutional, or personal name. In personal names list family name before given name, as in:
+     * Shakespeare, William
+     * Separate multiple names with ";".
 	 * @param subject
 	 * @return fullName if found
 	 * @throws ServiceFailure
@@ -362,16 +367,20 @@ public class DOIService {
 	 */
 	private String lookupCreator(Subject subject, DataPackage emlPackage) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
 	    String creators = "";
+	    String delimiter =";";
+        String nameSep =",";
         if(emlPackage == null) {
             SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
             if (subjectInfo != null && subjectInfo.getPersonList() != null) {
                 for (Person p: subjectInfo.getPersonList()) {
                     if (p.getSubject().equals(subject)) {
-                        if (p.getGivenNameList() != null && p.getGivenNameList().size() > 0) {
-                            creators = p.getGivenName(0)+" ";
-                        }
                         if(p.getFamilyName() != null) {
-                            creators = creators+p.getFamilyName();
+                            creators = p.getFamilyName();
+                            if (p.getGivenNameList() != null && p.getGivenNameList().size() > 0) {
+                                creators = creators+nameSep+p.getGivenName(0);
+                            }
+                        } else if (p.getGivenNameList() != null && p.getGivenNameList().size() > 0) {
+                            creators = p.getGivenName(0);
                         }
                         break;
                     }
@@ -392,19 +401,23 @@ public class DOIService {
                     String surName = party.getSurName();
                     //System.out.println("the surname ============== "+surName);
                     String fullName = "";
-                    if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null) {
-                        fullName = givenNames.get(0)+ " ";
-                    }
-                    if(surName != null) {
-                        fullName = fullName+surName;
-                    }
+                    if(surName != null && !surName.trim().equals("")) {
+                        fullName = surName;
+                        if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null && !givenNames.get(0).trim().equals("")) {
+                            fullName = fullName +nameSep+givenNames.get(0);
+                        }
+                        
+                    } else if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null && !givenNames.get(0).trim().equals("")) {
+                        fullName = givenNames.get(0);
+                    } 
+                    
                     //System.out.println("the full name ============== "+fullName);
                     if(!fullName.trim().equals("")) {
                             if(first) {
                                 creators = fullName;
                                 first = false;
                             } else {
-                                creators = creators+","+fullName;
+                                creators = creators+delimiter+fullName;
                             }
                     }
                 } else {
@@ -414,7 +427,7 @@ public class DOIService {
                         creators = organization;
                         first = false;
                     } else {
-                        creators = creators+","+organization;
+                        creators = creators+delimiter+organization;
                     }
                 }
             }
@@ -423,7 +436,7 @@ public class DOIService {
             // default to given DN
             creators = subject.getValue();
         }
-        logMetacat.info("DOI.lookupCreators - the creator string is "+creators);
+        logMetacat.debug("DOI.lookupCreators - the creator string is "+creators);
         return creators;
 	}
 	

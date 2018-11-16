@@ -289,7 +289,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
-			
+			String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+			assertTrue(creators.equals("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Unexpected error: " + e.getMessage());
@@ -349,7 +350,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            String title = metadata.get(DataCiteProfile.TITLE.toString());
 	            String creators = metadata.get(DataCiteProfile.CREATOR.toString());
 	            assertTrue(title.equals("Test EML package - public-readable from morpho"));
-	            assertTrue(creators.equals("onlySurName,National Center for Ecological Analysis and Synthesis,John Smith,Wendy King,University of California Santa Barbara"));
+	            assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith,John;King,Wendy;University of California Santa Barbara"));
 	            String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
                 //System.out.println("publisher =======is"+publisher);
                 String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
