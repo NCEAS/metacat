@@ -1449,10 +1449,19 @@ public abstract class D1NodeService {
    * @return
    */
   public static boolean isValidIdentifier(Identifier pid) {
-	  if (pid != null && pid.getValue() != null && pid.getValue().length() > 0) {
-		  return !pid.getValue().matches(".*\\s+.*");
-	  } 
-	  return false;
+	  boolean valid = true;
+      if(pid != null && pid.getValue() != null && pid.getValue().length() > 0) {
+          for (int i=0; i<pid.getValue().length(); i++) {
+              char ch = pid.getValue().charAt(i);
+              if(Character.isWhitespace(ch)) {
+                  valid =false;
+                  break;
+              }
+          }
+      } else {
+          valid = false;
+      }
+      return valid;
   }
   
   

@@ -87,6 +87,8 @@ public class D1NodeServiceTest extends MCTestCase {
         TestSuite suite = new TestSuite();
         suite.addTest(new D1NodeServiceTest("initialize"));
         suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
+        suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
+        
         return suite;
     }
     
@@ -173,6 +175,61 @@ public class D1NodeServiceTest extends MCTestCase {
 	       };
 	       D1Client.setNodeLocator(nodeLocator );
 	   }
+	
+	/**
+	 * Test the isValidIdentifier method
+	 * @throws Exception
+	 */
+	public void testIsValidIdentifier() throws Exception {
+	    Identifier pid = null;
+	    assertTrue(!D1NodeService.isValidIdentifier(pid));
+	    pid = new Identifier();
+	    assertTrue(!D1NodeService.isValidIdentifier(pid));
+	    pid.setValue("");
+	    assertTrue(!D1NodeService.isValidIdentifier(pid));
+	    pid.setValue(" ");
+	    assertTrue(!D1NodeService.isValidIdentifier(pid));
+	    pid.setValue("\nasfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\tfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as fd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("asfd ");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("  asfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("asfd\r");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("\fasfd\r");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\u000Bfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\u001Cfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\u001Dfd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\u001Efd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("as\u001Ffd");
+        assertTrue(!D1NodeService.isValidIdentifier(pid));
+        pid.setValue("`1234567890-=~!@#$%^&*()_+[]{}|\\:;,./<>?\"'");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("ess-dive-aa6e33480c133b0-20181019T234605514");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("doi:10.3334/CDIAC/ATG.DB1001");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("{00053F3B-7552-444F-8F57-6670756212BA}");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("urn:uuid:8009cc13-08d5-4bb2-ad9a-dc0f5dbfbcd0");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("ark:/90135/q1f769jn/2/mrt-eml.xml");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("https://doi.org/10.5061/dryad.k6gf1tf/15?ver=2018-09-18T03:54:10.492+00:00");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+        pid.setValue("p1312.ds2636_20181109_0300");
+        assertTrue(D1NodeService.isValidIdentifier(pid));
+	}
 	
 	/**
 	 * constructs a "fake" session with a test subject
