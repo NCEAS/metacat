@@ -195,7 +195,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
     suite.addTest(new MNodeServiceTest("testUpdateAuthoritativeMN"));
-
+    suite.addTest(new MNodeServiceTest("testInvalidIds"));
     return suite;
     
   }
@@ -3275,5 +3275,60 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">true</bool>"));
         
+    }
+    
+    public void testInvalidIds() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCreate.\t" + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("MNodeService should reject identifier with a whitespace");
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        guid.setValue("testCreate. " + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+         sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("MNodeService should reject identifier with a whitespace");
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        guid.setValue("testCreate." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        Identifier newPid = new Identifier();
+        newPid.setValue("testUpdate. " + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        try {
+            Identifier updatedPid = 
+                    MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            fail("MNodeService should reject identifier with a whitespace");        
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        newPid.setValue("testUpdate.\f" + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        try {
+            Identifier updatedPid = 
+                    MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            fail("MNodeService should reject identifier with a whitespace");        
+        } catch (InvalidRequest e) {
+            
+        }
+        
+       
+      
     }
 }

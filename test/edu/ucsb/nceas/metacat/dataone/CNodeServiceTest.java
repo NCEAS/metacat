@@ -125,6 +125,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testListViews"));
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
 		suite.addTest(new CNodeServiceTest("testArchive"));
+		suite.addTest(new CNodeServiceTest("testInvalidIds"));
 		
 		return suite;
 	}
@@ -1708,4 +1709,28 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       return session;
   }
   
+  public void testInvalidIds() throws Exception {
+      Session session = getTestSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testCreate.\n" + System.currentTimeMillis());
+      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      try {
+          CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          fail("MNodeService should reject identifier with a whitespace");
+      } catch (InvalidRequest e) {
+          
+      }
+      
+      guid.setValue("testCreate. " + System.currentTimeMillis());
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+       sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      try {
+          CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          fail("MNodeService should reject identifier with a whitespace");
+      } catch (InvalidRequest e) {
+          
+      }
+      
+  }
 }
