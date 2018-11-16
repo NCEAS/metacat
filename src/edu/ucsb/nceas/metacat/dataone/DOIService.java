@@ -368,7 +368,7 @@ public class DOIService {
 	private String lookupCreator(Subject subject, DataPackage emlPackage) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
 	    String creators = "";
 	    String delimiter =";";
-        String nameSep =",";
+        String nameSep =", ";
         if(emlPackage == null) {
             SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
             if (subjectInfo != null && subjectInfo.getPersonList() != null) {
