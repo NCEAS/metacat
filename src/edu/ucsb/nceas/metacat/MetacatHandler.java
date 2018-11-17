@@ -391,8 +391,8 @@ public class MetacatHandler {
                     + " which has username" + session.getAttribute("username")
                     + " into hash in login method");
             try {
-                System.out.println("registering session with id " + id);
-                System.out.println("username: " + (String) session.getAttribute("username"));
+                //System.out.println("registering session with id " + id);
+                //System.out.println("username: " + (String) session.getAttribute("username"));
                 SessionService.getInstance().registerSession(id, 
                         (String) session.getAttribute("username"), 
                         (String[]) session.getAttribute("groupnames"), 
