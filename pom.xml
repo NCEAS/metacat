@@ -309,11 +309,11 @@
 			<artifactId>quartz</artifactId>
 			<version>1.7.2</version>
 		</dependency>
-		<dependency>
+		<!--<dependency>
 			<groupId>org.apache.axis</groupId>
 			<artifactId>axis</artifactId>
 			<version>1.4</version>
-		</dependency>
+		</dependency>-->
 		<dependency>
 			<groupId>javax.xml</groupId>
 			<artifactId>jaxrpc-api</artifactId>
