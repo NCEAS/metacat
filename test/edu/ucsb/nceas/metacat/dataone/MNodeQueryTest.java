@@ -143,6 +143,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeQueryTest("initialize"));
     suite.addTest(new MNodeQueryTest("testQueryOfArchivedObjects"));
+    suite.addTest(new MNodeQueryTest("testPackage"));
     
     return suite;
     
@@ -198,6 +199,74 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">true</bool>"));
         
+    }
+    
+    /***
+     * Test the indexing a package (the resource map, meta data and data files)
+     * @throws Exception
+     */
+    public void testPackage() throws Exception {
+        //insert data
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testPackage-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //insert metadata
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testPackage-metadata." + System.currentTimeMillis());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        
+        Thread.sleep(30000);
+        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+        List<Identifier> dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid2, dataIds);
+        Identifier resourceMapId = new Identifier();
+        // use the local id, not the guid in case we have DOIs for them already
+        resourceMapId.setValue("testPackage-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+resourceMapId.getValue());
+        ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
+        String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        
+        Thread.sleep(60000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains(guid2.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains(guid.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        query = "q=id:"+resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
     }
 
 }
