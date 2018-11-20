@@ -241,6 +241,9 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
         InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
         SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
         
         Thread.sleep(60000);
