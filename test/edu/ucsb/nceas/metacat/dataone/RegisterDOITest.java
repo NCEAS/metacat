@@ -695,5 +695,60 @@ public class RegisterDOITest extends D1NodeServiceTest {
         } catch (InvalidRequest e) {
             assertTrue(e.getMessage().contains(publishedIdentifier.getValue()));
         }
+        
+        //test the doi on sid field
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdateAccessPolicyOnDOIObject." + System.currentTimeMillis());
+        System.out.println("The identifier is "+guid.getValue());
+        Identifier sid = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        System.out.println("The doi on the sid is "+sid.getValue());
+        content = new FileInputStream(emlFile);
+        sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        sysmeta.setSeriesId(sid);
+        content = new FileInputStream(emlFile);
+        pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        content.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        //It should succeed to add a new access policy to the system metadata
+        subject = new Subject();
+        subject.setValue(user);
+        rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        access = meta.getAccessPolicy();
+        access.addAllow(rule);
+        meta.setAccessPolicy(access);
+        success = MNodeService.getInstance(request).updateSystemMetadata(session, guid, meta);
+        assertTrue("The update should be successful since we don't restrict the access rules.", success);
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        access = meta.getAccessPolicy();
+        boolean found = false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equals(user)) {
+               found = true;
+                break;
+            }
+        }
+        assertTrue("We should find the user "+user+" on the access rules.", found);
+        
+        //It should fail to remove the allow rules for the public user.
+        newAccess = new AccessPolicy();
+        for (AccessRule item : access.getAllowList()) {
+            //don't allow the access rules for the user public
+            if(item != null && item.getSubject(0) != null && !item.getSubject(0).getValue().equals("public")) {
+               newAccess.addAllow(item);
+            }
+        }
+        meta.setAccessPolicy(newAccess);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, meta);
+            fail("We shouldn't get here since removing public-read access rules for a DOI object should fail.");
+        } catch (InvalidRequest e) {
+            assertTrue(e.getMessage().contains(guid.getValue()));
+            assertTrue(e.getMessage().contains(sid.getValue()));
+        }
     }
 }
