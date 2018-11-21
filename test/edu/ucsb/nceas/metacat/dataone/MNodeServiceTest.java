@@ -1786,6 +1786,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			bagFile.delete();
 			
 			// test the ORE lookup
+			Thread.sleep(10000);
 			List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(metadataId, true);
 			assertTrue(oreIds.contains(resourceMapId));
 

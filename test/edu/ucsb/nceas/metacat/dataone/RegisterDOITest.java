@@ -40,7 +40,11 @@ import junit.framework.TestSuite;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -101,6 +105,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testPublishDOI"));
 		// test DOIs in the create method
 		suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
+		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
 
 		return suite;
 
@@ -627,6 +632,68 @@ public class RegisterDOITest extends D1NodeServiceTest {
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test change the access policy on an DOI object
+     * @throws Exception
+     */
+    public void testUpdateAccessPolicyOnDOIObject() throws Exception {
+        printTestHeader("testUpdateAccessPolicyOnDOIObject");
+        String user = "uid=test,o=nceas";
+        //create an doi object
+        String scheme = "DOI";
+        Session session = getTestSession();   
+        String emlFile = "test/eml-multiple-creators.xml";
+        InputStream content = null;
+        Identifier publishedIdentifier = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(publishedIdentifier, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, publishedIdentifier, content, sysmeta);
+        content.close();
+        assertEquals(publishedIdentifier.getValue(), pid.getValue());
+        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, publishedIdentifier);
+        //It should succeed to add a new access policy to the system metadata
+        Subject subject = new Subject();
+        subject.setValue(user);
+        AccessRule rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        AccessPolicy access = meta.getAccessPolicy();
+        access.addAllow(rule);
+        meta.setAccessPolicy(access);
+        boolean success = MNodeService.getInstance(request).updateSystemMetadata(session, publishedIdentifier, meta);
+        assertTrue("The update should be successful since we don't restrict the access rules.", success);
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, publishedIdentifier);
+        access = meta.getAccessPolicy();
+        boolean find = false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equals(user)) {
+                find = true;
+                break;
+            }
+        }
+        assertTrue("We should find the user "+user+" on the access rules.", find);
+        
+        //It should fail to remove the allow rules for the public user.
+        AccessPolicy newAccess = new AccessPolicy();
+        for (AccessRule item : access.getAllowList()) {
+            //don't allow the access rules for the user public
+            if(item != null && item.getSubject(0) != null && !item.getSubject(0).getValue().equals("public")) {
+               newAccess.addAllow(item);
+            }
+        }
+        meta.setAccessPolicy(newAccess);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, publishedIdentifier, meta);
+            fail("We shouldn't get here since removing public-read access rules for a DOI object should fail.");
+        } catch (InvalidRequest e) {
+            assertTrue(e.getMessage().contains(publishedIdentifier.getValue()));
         }
     }
 }
