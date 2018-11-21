@@ -152,109 +152,143 @@ public class DOIService {
 				
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
-			
+		    boolean identifierIsDOI = false;
+		    boolean sidIsDOI = false;
 			String identifier = sysMeta.getIdentifier().getValue();
+			String sid = null;
+			if(sysMeta.getSeriesId() != null) {
+			    sid = sysMeta.getSeriesId().getValue();
+			}
+            
+			// determine if this DOI identifier is in our configured shoulder
+			if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
+			    identifierIsDOI = true;
+			}
+			// determine if this DOI sid is in our configured shoulder
+            if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
+                sidIsDOI = true;
+            }
 			
-			// only continue if this DOI is in our configured shoulder
-			if (shoulder != null && !shoulder.trim().equals("") && identifier.startsWith(shoulder)) {
-				
-				// enter metadata about this identifier
-				HashMap<String, String> metadata = new HashMap<String, String>();
-				DataPackage emlPackage = null;
+            // only continue if this DOI identifier or sid is in our configured shoulder
+			if(identifierIsDOI || sidIsDOI) {
+			    //title and creator will be shared on both identifier and sid
+			    DataPackage emlPackage = null;
 	            try {
 	                emlPackage = getEMLPackage(sysMeta);
 	            } catch (Exception e) {
 	                logMetacat.warn("DOIService.registerDOI");
 	                // ignore
 	            }
-				// title 
-				String title = ErcMissingValueCode.UNKNOWN.toString();
-				try {
-					title = lookupTitle(emlPackage);
-				} catch (Exception e) {
-					e.printStackTrace();
-					// ignore
-				}
-				
-				// creator
-				String creator = sysMeta.getRightsHolder().getValue();
-				try {
-					creator = lookupCreator(sysMeta.getRightsHolder(), emlPackage);
-				} catch (Exception e) {
-					// ignore and use default
-				}
-				
-				// publisher
-				String publisher = ErcMissingValueCode.UNKNOWN.toString();
-				Node node = MNodeService.getInstance(null).getCapabilities();
-				publisher = node.getName();
-				
-				// publication year
-				SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-				String year = sdf.format(sysMeta.getDateUploaded());
-				
-				// type
-				String resourceType = lookupResourceType(sysMeta);
-				
-				// format
-				String format = sysMeta.getFormatId().getValue();
-				
-				//size
-				String size = sysMeta.getSize().toString();
-				
-				// target (URL)
-				String target = node.getBaseURL() + "/v1/object/" + identifier;
-				String uriTemplate = null;
-				String uriTemplateKey = "guid.ezid.uritemplate.data";
-				ObjectFormat objectFormat = null;
-				try {
-					objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-				} catch (BaseException e1) {
-					logMetacat.warn("Could not check format type for: " + sysMeta.getFormatId());
-				}
-				if (objectFormat != null && objectFormat.getFormatType().equals("METADATA")) {
-					uriTemplateKey = "guid.ezid.uritemplate.metadata";
-				}
-				try {
-					uriTemplate = PropertyService.getProperty(uriTemplateKey);
-					target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
-				} catch (PropertyNotFoundException e) {
-					logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
-				}
-				
-				// status and export fields for public/protected data
-				String status = InternalProfileValues.UNAVAILABLE.toString();
-				String export = InternalProfileValues.NO.toString();
-				Subject publicSubject = new Subject();
-				publicSubject.setValue(Constants.SUBJECT_PUBLIC);
-				if (AuthUtils.isAuthorized(Arrays.asList(new Subject[] {publicSubject}), Permission.READ, sysMeta)) {
-					status = InternalProfileValues.PUBLIC.toString();
-					export = InternalProfileValues.YES.toString();
-				}
-				
-				// set the datacite metadata fields
-				metadata.put(DataCiteProfile.TITLE.toString(), title);
-				metadata.put(DataCiteProfile.CREATOR.toString(), creator);
-				metadata.put(DataCiteProfile.PUBLISHER.toString(), publisher);
-				metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), year);
-				metadata.put(DataCiteProfile.RESOURCE_TYPE.toString(), resourceType);
-				metadata.put(DataCiteProfile.FORMAT.toString(), format);
-				metadata.put(DataCiteProfile.SIZE.toString(), size);
-				metadata.put(InternalProfile.TARGET.toString(), target);
-				metadata.put(InternalProfile.STATUS.toString(), status);
-				metadata.put(InternalProfile.EXPORT.toString(), export);
-	
-				// make sure we have a current login
-				this.refreshLogin();
-				
-				// set using the API
-				ezid.createOrUpdate(identifier, metadata);
-				
+	            // title 
+	            String title = ErcMissingValueCode.UNKNOWN.toString();
+	            try {
+	                title = lookupTitle(emlPackage);
+	            } catch (Exception e) {
+	                e.printStackTrace();
+	                // ignore
+	            }
+	            
+	            // creator
+	            String creator = sysMeta.getRightsHolder().getValue();
+	            try {
+	                creator = lookupCreator(sysMeta.getRightsHolder(), emlPackage);
+	            } catch (Exception e) {
+	                // ignore and use default
+	            }
+	            // finish the other part for the identifier if it is an DOI
+	            if(identifierIsDOI) {
+	                registerDOI(identifier, title, sysMeta, creator);
+	            }
+	            // finish the other part for the sid if it is an DOI
+	            if(sidIsDOI) {
+	                registerDOI(sid, title, sysMeta, creator);
+	            }
 			}
 			
 		}
 		
 		return true;
+	}
+	
+	/**
+	 * Register the metadata for the given identifier. The given identifier can be an SID.
+	 * @param identifier  the given identifier will be registered with the metadata
+	 * @param title  the title will be in the metadata
+	 * @param sysMeta  the system metadata associates with the given id 
+	 * @param creators  the creator will be in the metadata
+	 * @throws ServiceFailure 
+	 * @throws NotImplemented 
+	 * @throws EZIDException 
+	 * @throws InterruptedException 
+	 */
+	private void registerDOI(String identifier, String title, SystemMetadata sysMeta, String creator ) throws NotImplemented, ServiceFailure, EZIDException, InterruptedException {
+	    // enter metadata about this identifier
+        HashMap<String, String> metadata = new HashMap<String, String>();
+	    // publisher
+        String publisher = ErcMissingValueCode.UNKNOWN.toString();
+        Node node = MNodeService.getInstance(null).getCapabilities();
+        publisher = node.getName();
+        
+        // publication year
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+        String year = sdf.format(sysMeta.getDateUploaded());
+        
+        // type
+        String resourceType = lookupResourceType(sysMeta);
+        
+        // format
+        String format = sysMeta.getFormatId().getValue();
+        
+        //size
+        String size = sysMeta.getSize().toString();
+        
+        // target (URL)
+        String target = node.getBaseURL() + "/v1/object/" + identifier;
+        String uriTemplate = null;
+        String uriTemplateKey = "guid.ezid.uritemplate.data";
+        ObjectFormat objectFormat = null;
+        try {
+            objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
+        } catch (BaseException e1) {
+            logMetacat.warn("Could not check format type for: " + sysMeta.getFormatId());
+        }
+        if (objectFormat != null && objectFormat.getFormatType().equals("METADATA")) {
+            uriTemplateKey = "guid.ezid.uritemplate.metadata";
+        }
+        try {
+            uriTemplate = PropertyService.getProperty(uriTemplateKey);
+            target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
+        }
+        
+        // status and export fields for public/protected data
+        String status = InternalProfileValues.UNAVAILABLE.toString();
+        String export = InternalProfileValues.NO.toString();
+        Subject publicSubject = new Subject();
+        publicSubject.setValue(Constants.SUBJECT_PUBLIC);
+        if (AuthUtils.isAuthorized(Arrays.asList(new Subject[] {publicSubject}), Permission.READ, sysMeta)) {
+            status = InternalProfileValues.PUBLIC.toString();
+            export = InternalProfileValues.YES.toString();
+        }
+        
+        // set the datacite metadata fields
+        metadata.put(DataCiteProfile.TITLE.toString(), title);
+        metadata.put(DataCiteProfile.CREATOR.toString(), creator);
+        metadata.put(DataCiteProfile.PUBLISHER.toString(), publisher);
+        metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), year);
+        metadata.put(DataCiteProfile.RESOURCE_TYPE.toString(), resourceType);
+        metadata.put(DataCiteProfile.FORMAT.toString(), format);
+        metadata.put(DataCiteProfile.SIZE.toString(), size);
+        metadata.put(InternalProfile.TARGET.toString(), target);
+        metadata.put(InternalProfile.STATUS.toString(), status);
+        metadata.put(InternalProfile.EXPORT.toString(), export);
+
+        // make sure we have a current login
+        this.refreshLogin();
+        
+        // set using the API
+        ezid.createOrUpdate(identifier, metadata);
 	}
 
 	/**

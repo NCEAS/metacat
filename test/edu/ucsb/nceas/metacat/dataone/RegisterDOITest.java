@@ -97,9 +97,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testCreateDOI"));
 		suite.addTest(new RegisterDOITest("testMintAndCreateDOI"));
 		suite.addTest(new RegisterDOITest("testMintAndCreateForEML"));
-		
 		// publish
 		suite.addTest(new RegisterDOITest("testPublishDOI"));
+		// test DOIs in the create method
+		suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
 
 		return suite;
 
@@ -375,4 +376,257 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			fail("Unexpected error: " + e.getMessage());
 		}
 	}
+	
+	
+	/**
+     * Test the cases that an DOI is in the SID field.
+     */
+    public void tesCreateDOIinSid() {
+        printTestHeader("tesCreateDOIinSid");
+        String scheme = "DOI";
+        try {
+            // get ezid config properties
+            String ezidUsername = PropertyService.getProperty("guid.ezid.username");
+            String ezidPassword = PropertyService.getProperty("guid.ezid.password");
+            String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+            Session session = getTestSession();   
+            String emlFile = "test/eml-multiple-creators.xml";
+            InputStream content = null;
+            //Test the case that the identifier is a doi but no sid.
+            try {
+                Identifier publishedIdentifier = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+                System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
+                content = new FileInputStream(emlFile);
+                SystemMetadata sysmeta = createSystemMetadata(publishedIdentifier, session.getSubject(), content);
+                content.close();
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+                content = new FileInputStream(emlFile);
+                Identifier pid = MNodeService.getInstance(request).create(session, publishedIdentifier, content, sysmeta);
+                content.close();
+                assertEquals(publishedIdentifier.getValue(), pid.getValue());
+                // check for the metadata explicitly, using ezid service
+                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+                ezid.login(ezidUsername, ezidPassword);
+                int count = 0;
+                HashMap<String, String> metadata = null;
+                do {
+                    try {
+                        metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata == null && count < 10);
+                
+                assertNotNull(metadata);
+                String title = metadata.get(DataCiteProfile.TITLE.toString());
+                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+                assertTrue(title.equals("Test EML package - public-readable from morpho"));
+                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
+                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                //System.out.println("publisher =======is"+publisher);
+                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+                String year = sdf.format(sysmeta.getDateUploaded());
+                assertTrue(year.equals(publishingYear));
+                //System.out.println("publishing year =======is"+publishingYear);
+                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
+                //System.out.println("resource type =======is"+resourceType);
+                assertTrue(resourceType.equals("Dataset/metadata"));
+                content.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                fail(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(content);
+            }
+            
+            
+            //Test the case that the identifier is non-doi but the sid is an doi 
+            try {
+                Identifier guid = new Identifier();
+                guid.setValue("tesCreateDOIinSid." + System.currentTimeMillis());
+                System.out.println("The identifier is "+guid.getValue());
+                Identifier publishedIdentifier = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+                System.out.println("The doi on the SID field is "+publishedIdentifier.getValue());
+                content = new FileInputStream(emlFile);
+                SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+                content.close();
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+                sysmeta.setSeriesId(publishedIdentifier);
+                content = new FileInputStream(emlFile);
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                content.close();
+                assertEquals(guid.getValue(), pid.getValue());
+                // check for the metadata explicitly, using ezid service
+                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+                ezid.login(ezidUsername, ezidPassword);
+                int count = 0;
+                HashMap<String, String> metadata = null;
+                do {
+                    try {
+                        metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata == null && count < 10);
+                
+                assertNotNull(metadata);
+                String title = metadata.get(DataCiteProfile.TITLE.toString());
+                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+                assertTrue(title.equals("Test EML package - public-readable from morpho"));
+                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
+                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                //System.out.println("publisher =======is"+publisher);
+                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+                String year = sdf.format(sysmeta.getDateUploaded());
+                assertTrue(year.equals(publishingYear));
+                //System.out.println("publishing year =======is"+publishingYear);
+                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
+                //System.out.println("resource type =======is"+resourceType);
+                assertTrue(resourceType.equals("Dataset/metadata"));
+                content.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                fail(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(content);
+            }
+            
+            //Test the case that both identifier and sid are dois 
+            try {
+                Identifier publishedIdentifier = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+                System.out.println("The doi in the identifier field is "+publishedIdentifier.getValue());
+                Identifier doiSid = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+                System.out.println("The doi in the sid field is "+doiSid.getValue());
+                content = new FileInputStream(emlFile);
+                SystemMetadata sysmeta = createSystemMetadata(publishedIdentifier, session.getSubject(), content);
+                content.close();
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+                sysmeta.setSeriesId(doiSid);
+                content = new FileInputStream(emlFile);
+                Identifier pid = MNodeService.getInstance(request).create(session, publishedIdentifier, content, sysmeta);
+                content.close();
+                assertEquals(publishedIdentifier.getValue(), pid.getValue());
+                // check for the metadata explicitly, using ezid service
+                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+                ezid.login(ezidUsername, ezidPassword);
+                int count = 0;
+                //query the identifier
+                HashMap<String, String> metadata = null;
+                do {
+                    try {
+                        metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata == null && count < 10);
+                
+                assertNotNull(metadata);
+                String title = metadata.get(DataCiteProfile.TITLE.toString());
+                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
+                assertTrue(title.equals("Test EML package - public-readable from morpho"));
+                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
+                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                //System.out.println("publisher =======is"+publisher);
+                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+                String year = sdf.format(sysmeta.getDateUploaded());
+                assertTrue(year.equals(publishingYear));
+                //System.out.println("publishing year =======is"+publishingYear);
+                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
+                //System.out.println("resource type =======is"+resourceType);
+                assertTrue(resourceType.equals("Dataset/metadata"));
+                
+                //query the sid
+                HashMap<String, String> metadata2 = null;
+                do {
+                    try {
+                        metadata2 = ezid.getMetadata(doiSid.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata2 == null && count < 10);
+                
+                assertNotNull(metadata2);
+                String title2 = metadata2.get(DataCiteProfile.TITLE.toString());
+                String creators2 = metadata2.get(DataCiteProfile.CREATOR.toString());
+                assertTrue(title2.equals("Test EML package - public-readable from morpho"));
+                assertTrue(creators2.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
+                String publisher2 = metadata2.get(DataCiteProfile.PUBLISHER.toString());
+                //System.out.println("publisher =======is"+publisher);
+                String publishingYear2 = metadata2.get(DataCiteProfile.PUBLICATION_YEAR.toString());
+                SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy");
+                String year2 = sdf2.format(sysmeta.getDateUploaded());
+                assertTrue(year2.equals(publishingYear2));
+                //System.out.println("publishing year =======is"+publishingYear);
+                String resourceType2 = metadata2.get(DataCiteProfile.RESOURCE_TYPE.toString());
+                //System.out.println("resource type =======is"+resourceType);
+                assertTrue(resourceType2.equals("Dataset/metadata"));
+                content.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                fail(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(content);
+            }
+
+            //Test the case that either identifier or sid is a doi
+            try {
+                Identifier guid = new Identifier();
+                guid.setValue("tesCreateDOIinSid." + System.currentTimeMillis());
+                System.out.println("The identifier (non-doi) is "+guid.getValue());
+                Identifier sid = new Identifier();
+                sid.setValue("tesCreateDOIinSid-2." + System.currentTimeMillis());
+                System.out.println("The sid field (non-doi) is "+sid.getValue());
+                content = new FileInputStream(emlFile);
+                SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+                content.close();
+                sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+                sysmeta.setSeriesId(sid);
+                content = new FileInputStream(emlFile);
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+                content.close();
+                assertEquals(guid.getValue(), pid.getValue());
+                // check for the metadata explicitly, using ezid service
+                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+                ezid.login(ezidUsername, ezidPassword);
+                int count = 0;
+                HashMap<String, String> metadata = null;
+                do {
+                    try {
+                        metadata = ezid.getMetadata(guid.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata == null && count < 10);
+                System.out.println("the metadata is "+metadata);
+                assertNull(metadata);
+                do {
+                    try {
+                        metadata = ezid.getMetadata(sid.getValue());
+                    } catch (Exception e) {
+                        Thread.sleep(1000);
+                    }
+                    count++;
+                } while (metadata == null && count < 10);
+                assertNull(metadata);
+                content.close();
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+                fail(e.getMessage());
+            } finally {
+                IOUtils.closeQuietly(content);
+            }
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
 }
