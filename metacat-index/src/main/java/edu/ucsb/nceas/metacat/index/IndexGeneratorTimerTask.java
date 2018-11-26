@@ -90,7 +90,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
     //private MNode mNode = null;
     private static List<String> resourceMapNamespaces = null;
     private boolean needReindexFailedEvent =true; //if this task need to reindex the previously failed index task
-    private boolean needReindexSinceLastProcessDate = false; //objects whose modified date is younger than the last process date
+    private boolean needReindexSinceLastProcessDate = true; //objects whose modified date is younger than the last process date
     private long maxAgeOfFailedIndexTask = 864000000; // 10 days
     
     /**
@@ -109,8 +109,8 @@ public class IndexGeneratorTimerTask extends TimerTask {
         try {
             needReindexSinceLastProcessDate = Settings.getConfiguration().getBoolean("index.regenerate.sincelastProcessDate");
         } catch (Exception e) {
-            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.sincelastProcessDate can't be got since "+e.getMessage()+" and we will set it to false as default.");
-            needReindexSinceLastProcessDate = false;
+            log.warn("IndexGeneratorTimeTask.constructor - the value of property - index.regenerate.sincelastProcessDate can't be got since "+e.getMessage()+" and we will set it to true as default.");
+            needReindexSinceLastProcessDate = true;
         }
         maxAgeOfFailedIndexTask = Settings.getConfiguration().getLong("index.regenerate.failedTask.max.age", 864000000);
         //this.systemMetadataListener = systemMetadataListener;
