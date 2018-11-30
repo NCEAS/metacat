@@ -80,22 +80,13 @@ authenticated. Both certificate-based (DataONE API) and JSESSIONID-based (Metaca
 authentication are simultaneously supported.
 
 
-Regenerating the index from scratch
------------------------------------
+Regenerating the index
+----------------------
 When the SOLR index has been drastically modified, a complete regeneration of the 
 index may be necessary. In order to accomplish this:
 
-Step-by-step instructions:
-
-1. Entirely remove the solr-home directory
-2. Step through the Metacat admin interface main properties screen, specifying the solr-home directory you wish to use
-3. Restart the webapp container (Tomcat).
-
-Content can also be submitted for index regeneration by using the the Metacat API:
-
 1. Login as the Metacat administrator
-2. Navigate to: <host>/<metacat_context>/metacat?action=reindex[&pid={pid}]
-3. If the pid parameter is omitted, all objects in Metacat will be submitted for reindexing.
+2. Navigate to: <host>/<metacat_context>/metacat?action=reindexall
 
 
 
