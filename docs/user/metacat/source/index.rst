@@ -23,6 +23,8 @@ community with a broad range of science data that--because the data are well and
 consistently described--can be easily searched, compared, merged, or used 
 in other ways.  
 
+Note: If you upgrade your Metacat to the version 2.10.0 or newer, you need to re-index the solr server. The instruction can be found on the regenerating the index part.
+
 - Download Metacat
 
     - Binary Distribution (A war file installation)
