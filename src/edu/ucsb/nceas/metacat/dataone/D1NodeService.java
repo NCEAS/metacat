@@ -54,6 +54,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -1189,18 +1190,8 @@ public abstract class D1NodeService {
   }
   
   
-  /*
-   * Determine if a user has the permission to perform the specified permission.
-   * 1. Owner can have any permission.
-   * 2. Access table allow the user has the permission
-   */
-  public static boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound, ServiceFailure, NotImplemented, InvalidRequest, InvalidToken, NotAuthorized {
-      boolean allowed = false;
-      // permissions are hierarchical
-      List<Permission> expandedPermissions = null;
-      // get the subject[s] from the session
-      //defer to the shared util for recursively compiling the subjects   
-      Set<Subject> subjects = AuthUtils.authorizedClientSubjects(userSession);
+    public static boolean userHasPermission(Session userSession, Identifier pid, Permission permission ) throws NotFound, ServiceFailure, NotImplemented, InvalidRequest, InvalidToken, NotAuthorized {
+      boolean isAllowed = false;
           
       // get the system metadata
       String pidStr = pid.getValue();
@@ -1223,7 +1214,7 @@ public abstract class D1NodeService {
           try {
               localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
             
-           } catch (Exception e) {
+          } catch (Exception e) {
               logMetacat.warn("Couldn't find the local id for the pid "+pidStr);
           }
           
@@ -1233,55 +1224,30 @@ public abstract class D1NodeService {
               error = error + ". "+DELETEDMESSAGE;
           }
           throw new NotFound("1800", error);
-      }
-          
-      // do we own it?
-      for (Subject s: subjects) {
-        logMetacat.debug("Comparing the rights holder in the system metadata\t" + 
-                         systemMetadata.getRightsHolder().getValue() +
-                         " \tagainst one of the client's subject \t" + s.getValue());
-          //includedSubjects.append(s.getValue() + "; ");
-          allowed = systemMetadata.getRightsHolder().equals(s);
-          if (allowed) {
-              return allowed;
-          } else {
-              //check if the rightHolder is a group name. If it is, any member of the group can be considered a the right holder.
-              allowed = expandRightsHolder(systemMetadata.getRightsHolder(), s);
-              if(allowed) {
-                  return allowed;
-              }
-          }
-      }    
+      } 
       
-      // otherwise check the access rules
-      try {
-          List<AccessRule> allows = systemMetadata.getAccessPolicy().getAllowList();
-          search: // label break
-          for (AccessRule accessRule: allows) {
-            for (Subject s: subjects) {
-              logMetacat.debug("Checking allow access rule for subject: " + s.getValue());
-              if (accessRule.getSubjectList().contains(s)) {
-                  logMetacat.debug("Access rule contains subject: " + s.getValue());
-                  for (Permission p: accessRule.getPermissionList()) {
-                      logMetacat.debug("Checking permission: " + p.xmlValue());
-                      expandedPermissions = expandPermissions(p);
-                      allowed = expandedPermissions.contains(permission);
-                      if (allowed) {
-                          logMetacat.info("Permission granted: " + p.xmlValue() + " to " + s.getValue());
-                          break search; //label break
-                      }
-                  }
-                  
-              }
-            }
-          }
-      } catch (Exception e) {
-          // catch all for errors - safe side should be to deny the access
-          logMetacat.error("Problem checking authorization - defaulting to deny", e);
-          allowed = false;
-        
+      // get the subject[s] from the session
+      //defer to the shared util for recursively compiling the subjects   
+      Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(userSession);
+            
+      if (AuthUtils.isAuthorized(sessionSubjects, permission, systemMetadata)) {
+    	  	isAllowed = true;
       }
-      return allowed;
+      
+      else {
+    	  
+    	  	for (Subject s : sessionSubjects) {
+    	  		if (s.getValue().equalsIgnoreCase("public")) 
+    	  			continue;
+    	  		
+    	  		if (expandRightsHolder(systemMetadata.getRightsHolder(), s)) {  // expensive call to listSubjects
+    	  			isAllowed = true;
+    	  			break;
+    	  		}
+    	  	}
+      }
+      
+      return isAllowed;
   }
   
   
@@ -2467,7 +2433,7 @@ public abstract class D1NodeService {
    */
   protected Identifier getPIDForSID(Identifier sid, String serviceFailureCode) throws ServiceFailure {
       Identifier id = null;
-      String serviceFailureMessage = "The PID "+" couldn't be identified for the sid " + sid.getValue();
+      String serviceFailureMessage = "The PID couldn't be identified for the sid " + sid.getValue();
       // first to try if we can find the given identifier in the system metadata map. If it is in the map (meaning this is not sid), null will be returned.
       if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) { 
           try {
@@ -2487,6 +2453,7 @@ public abstract class D1NodeService {
       }
       return id;
   }
+ 
 
   /*
    * Determine if the sid is legitimate in CN.create and CN.registerSystemMetadata methods. It also is used as a part of rules of the updateSystemMetadata method. Here are the rules:
