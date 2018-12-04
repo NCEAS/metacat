@@ -94,6 +94,7 @@ import org.dataone.service.mn.tier4.v2.MNReplication;
 import org.dataone.service.mn.v2.MNPackage;
 import org.dataone.service.mn.v2.MNQuery;
 import org.dataone.service.mn.v2.MNView;
+import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
@@ -2127,6 +2128,11 @@ public class MNodeService extends D1NodeService
 				List<Identifier> dataIdentifiers = sciMetaMap.get(originalIdentifier);
 					
 				// reconstruct the ORE with the new identifiers
+				//the original identifier can be in the data object list, we should replace it if does exist.
+                if(dataIdentifiers.contains(originalIdentifier)) {
+                    dataIdentifiers.remove(originalIdentifier);
+                    dataIdentifiers.add(newIdentifier);
+                }
 				sciMetaMap.remove(originalIdentifier);
 				sciMetaMap.put(newIdentifier, dataIdentifiers);
 				
@@ -2795,6 +2801,18 @@ public class MNodeService extends D1NodeService
                       ". It doesn't match our current system metadata modification date in the member node - "+currentModiDate.toString()+
                       ". Please check if you have got the newest version of the system metadata before the modification.");
           }
+          //check the if client change the authoritative member node.
+          if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() != null && 
+                  !currentSysmeta.getAuthoritativeMemberNode().equals(sysmeta.getAuthoritativeMemberNode())) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is "+sysmeta.getAuthoritativeMemberNode().getValue()+
+                      ". They don't match. Clients don't have the permission to change it.");
+          } else if (currentSysmeta.getAuthoritativeMemberNode() != null && sysmeta.getAuthoritativeMemberNode() == null) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is "+currentSysmeta.getAuthoritativeMemberNode().getValue()+" but the value on the new system metadata is null. They don't match. Clients don't have the permission to change it.");
+          }
+          else if(currentSysmeta.getAuthoritativeMemberNode() == null && sysmeta.getAuthoritativeMemberNode() != null ) {
+              throw new InvalidRequest("4869", "Current authoriativeMemberNode is null but the value on the new system metadata is not null. They don't match. Clients don't have the permission to change it.");
+          }
+          checkAddRestrictiveAccessOnDOI(sysmeta);
           boolean needUpdateModificationDate = true;
           boolean fromCN = false;
           success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
@@ -2857,6 +2875,56 @@ public class MNodeService extends D1NodeService
       }
       return success;
     }
+	
+	/**
+	 * Check if the new system meta data removed the public-readable access rule for an DOI object ( DOI can be in the identifier or sid fields)
+	 * @param newSysMeta
+	 * @throws InvalidRequest
+	 */
+	private void checkAddRestrictiveAccessOnDOI(SystemMetadata newSysMeta)  throws InvalidRequest {
+	    String doi ="doi:";
+	    boolean identifierIsDOI = false;
+        boolean sidIsDOI = false;
+        if(newSysMeta.getIdentifier() == null) {
+            throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the identifier shouldn't be null in the new version system metadata ");
+        }
+        String identifier = newSysMeta.getIdentifier().getValue();
+        String sid = null;
+        if(newSysMeta.getSeriesId() != null) {
+            sid = newSysMeta.getSeriesId().getValue();
+        }
+        // determine if this identifier is an DOI
+        if (identifier != null && identifier.startsWith(doi)) {
+            identifierIsDOI = true;
+        }
+        // determine if this sid is an DOI
+        if (sid != null && sid.startsWith(doi)) {
+            sidIsDOI = true;
+        }
+        if(identifierIsDOI || sidIsDOI) {
+            Subject publicUser = new Subject();
+            publicUser.setValue("public");
+            AccessPolicy access = newSysMeta.getAccessPolicy();
+            if(access == null) {
+                throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+            } else {
+                boolean found = false;
+                if (access.getAllowList() != null) {
+                    for (AccessRule item : access.getAllowList()) {
+                        if(item.getSubjectList() != null && item.getSubjectList().contains(publicUser)) {
+                            if (item.getPermissionList() != null && item.getPermissionList().contains(Permission.READ)) {
+                                found = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                if(!found) {
+                    throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+                }
+            }
+        }
+	}
 	
 	/*
      * Determine if the current node is the authoritative node for the given pid.

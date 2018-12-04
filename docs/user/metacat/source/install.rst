@@ -184,7 +184,7 @@ If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website a
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat 6 or 7 into the directory of your choice.
+We recommend that you install Tomcat 6 or 7 or 8 into the directory of your choice. The newer versions are preferred.
 Included with the Metacat download is a Tomcat-friendly start-up script that
 should be installed as well.
 
@@ -250,7 +250,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
 
       <VirtualHost XXX.XXX.XXX.XXX:80> 
         DocumentRoot /var/www 
-        ServerName dev.nceas.ucsb.edu 
+        ServerName dev.nceas.ucsb.edu
+        ## Allow CORS requests from all origins to use cookies
+        #SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+        #Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+        Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
+        Header set Access-Control-Allow-Credentials "true"
         ErrorLog /var/log/httpd/error_log 
         CustomLog /var/log/httpd/access_log common 
         ScriptAlias /cgi-bin/ "/var/www/cgi-bin/" 
@@ -288,7 +294,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
       workers.tomcat_home -  set to the Tomcat install directory. 
       workers.java_home - set to the Java install directory. 
 
-  5. Restart Apache to bring in changes by typing:
+  5. Enable the Apache Mod HEADERS:
+
+    ::
+
+     sudo a2enmod headers
+
+  6. Restart Apache to bring in changes by typing:
 
     ::
 
@@ -349,7 +361,7 @@ these helper files will be in one of two locations:
 
 PostgreSQL Database
 ...................
-Currently Metacat only supports PostgreSQL_. To install and configure PostgreSQL_:
+Currently Metacat only supports PostgreSQL_. You can choose the release versions of PostgreSQL 8, 9, 10 or 11. The newer versions are preferred. To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
 

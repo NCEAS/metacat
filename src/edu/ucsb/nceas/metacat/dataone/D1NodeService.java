@@ -1449,10 +1449,19 @@ public abstract class D1NodeService {
    * @return
    */
   public static boolean isValidIdentifier(Identifier pid) {
-	  if (pid != null && pid.getValue() != null && pid.getValue().length() > 0) {
-		  return !pid.getValue().matches(".*\\s+.*");
-	  } 
-	  return false;
+	  boolean valid = true;
+      if(pid != null && pid.getValue() != null && pid.getValue().length() > 0) {
+          for (int i=0; i<pid.getValue().length(); i++) {
+              char ch = pid.getValue().charAt(i);
+              if(Character.isWhitespace(ch)) {
+                  valid =false;
+                  break;
+              }
+          }
+      } else {
+          valid = false;
+      }
+      return valid;
   }
   
   
@@ -1822,10 +1831,9 @@ public abstract class D1NodeService {
       Lock lock = null;
      
       // verify that guid == SystemMetadata.getIdentifier()
-      logMetacat.debug("Comparing guid|sysmeta_guid: " + pid.getValue() + 
-          "|" + sysmeta.getIdentifier().getValue());
-      
-      if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
+      if(sysmeta.getIdentifier() == null) {
+          throw new InvalidRequest("4863", "The identifier in the system metadata shouldn't be null");
+      } else if (!pid.getValue().equals(sysmeta.getIdentifier().getValue())) {
           throw new InvalidRequest("4863", 
               "The identifier in method call (" + pid.getValue() + 
               ") does not match identifier in system metadata (" +
@@ -1837,8 +1845,8 @@ public abstract class D1NodeService {
       //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
       logMetacat.debug("The current dateUploaded is ============"+currentSysmeta.getDateUploaded());
       logMetacat.debug("the dateUploaded in the new system metadata is "+sysmeta.getDateUploaded());
-      logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
-      logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
+      //logMetacat.debug("The current dateUploaded is (by time) ============"+currentSysmeta.getDateUploaded().getTime());
+      //logMetacat.debug("the dateUploaded in the new system metadata is (by time) "+sysmeta.getDateUploaded().getTime());
       if(currentSysmeta == null ) {
           //do we need throw an exception?
           logMetacat.warn("D1NodeService.updateSystemMetadata: Currently there is no system metadata in this node associated with the pid "+pid.getValue());
@@ -1876,6 +1884,12 @@ public abstract class D1NodeService {
                   //It matches the rules of the checkSidInModifyingSystemMetadata
                   checkSidInModifyingSystemMetadata(sysmeta, "4956", "4868");
               }
+          }
+          if(sysmeta.getFormatId() == null) {
+              throw new InvalidRequest("4869", "The formatId field is requried and shouldn't be null on the new system metadata of the object "+sysmeta.getIdentifier().getValue());
+          }
+          if(sysmeta.getRightsHolder() == null) {
+              throw new InvalidRequest("4869", "The rightsHolder field is requried and shouldn't be null on the new system metadata of the object "+sysmeta.getIdentifier().getValue());
           }
           checkModifiedImmutableFields(currentSysmeta, sysmeta);
           checkOneTimeSettableSysmMetaFields(currentSysmeta, sysmeta);
@@ -1964,7 +1978,11 @@ public abstract class D1NodeService {
                         "different to the orginal one "+orgMeta.getChecksum().getValue());
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getChecksum().getValue());
+	        } else if (orgMeta.getChecksum() != null && newMeta.getChecksum() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum is null and it is "+
+                        "different to the orginal one "+orgMeta.getChecksum().getValue());
 	        }
+	        
 	        if(orgMeta.getSubmitter() != null) {
 	            logMetacat.debug("in the checkModifiedImmutableFields method and orgMeta.getSubmitter is not null and the orginal submiter is "+orgMeta.getSubmitter().getValue());
 	        }
@@ -1975,25 +1993,32 @@ public abstract class D1NodeService {
 	        if(orgMeta.getSubmitter() != null && newMeta.getSubmitter() != null && !orgMeta.getSubmitter().equals(newMeta.getSubmitter())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter "+newMeta.getSubmitter().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getSubmitter().getValue());
+	        } else if (orgMeta.getSubmitter() != null && newMeta.getSubmitter() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's submitter is null and it is "+
+                        "different to the orginal one "+orgMeta.getSubmitter().getValue());
 	        }
 	        
 	        if(orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() != null && orgMeta.getDateUploaded().getTime() != newMeta.getDateUploaded().getTime()) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded "+newMeta.getDateUploaded()+" is "+
+                        "different to the orginal one "+orgMeta.getDateUploaded());
+	        } else if (orgMeta.getDateUploaded() != null && newMeta.getDateUploaded() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's date of uploaded is null and it is "+
                         "different to the orginal one "+orgMeta.getDateUploaded());
 	        }
 	        
 	        if(orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() != null && !orgMeta.getOriginMemberNode().equals(newMeta.getOriginMemberNode())) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node  "+newMeta.getOriginMemberNode().getValue()+" is "+
                         "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
-	        }
-	        
-	        if (orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() == null ) {
+	        } else if (orgMeta.getOriginMemberNode() != null && newMeta.getOriginMemberNode() == null ) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's orginal member node is null and it "+" is "+
                         "different to the orginal one "+orgMeta.getOriginMemberNode().getValue());
 	        }
 	        
 	        if(orgMeta.getSeriesId() != null && newMeta.getSeriesId() != null && !orgMeta.getSeriesId().equals(newMeta.getSeriesId())) {
                 throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id  "+newMeta.getSeriesId().getValue()+" is "+
+                        "different to the orginal one "+orgMeta.getSeriesId().getValue());
+            } else if (orgMeta.getSeriesId() != null && newMeta.getSeriesId() == null) {
+                throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's series id is null and it is "+
                         "different to the orginal one "+orgMeta.getSeriesId().getValue());
             }
 	        
@@ -2017,6 +2042,14 @@ public abstract class D1NodeService {
 	               orgMeta.getIdentifier().getValue() + ". This is illegal since the obsoletes field is already set and cannot be changed once set.");
 	        }
 	    }
+	    
+	    /*if(orgMeta.getArchived() != null) {
+	        if(newMeta.getArchived() == null) {
+	            throw new InvalidRequest("4869", "The request is trying to set the archvied field to null which doesn't match the current value "+orgMeta.getArchived());
+	        } else if (newMeta.getArchived() == false && orgMeta.getArchived() == true) {
+	            throw new InvalidRequest("4869", "The request is trying to set the archvied field to false whose current value is true. Metacat doesn't allow this.");
+	        }
+	    }*/
 	}
 	
 	
@@ -2435,19 +2468,22 @@ public abstract class D1NodeService {
   protected Identifier getPIDForSID(Identifier sid, String serviceFailureCode) throws ServiceFailure {
       Identifier id = null;
       String serviceFailureMessage = "The PID "+" couldn't be identified for the sid " + sid.getValue();
-      try {
-          //determine if the given pid is a sid or not.
-          if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
-              try {
-                  //set the header pid for the sid if the identifier is a sid.
-                  id = IdentifierManager.getInstance().getHeadPID(sid);
-              } catch (SQLException sqle) {
-                  throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+      // first to try if we can find the given identifier in the system metadata map. If it is in the map (meaning this is not sid), null will be returned.
+      if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) { 
+          try {
+                  //determine if the given pid is a sid or not.
+                  if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
+                  try {
+                      //set the header pid for the sid if the identifier is a sid.
+                      id = IdentifierManager.getInstance().getHeadPID(sid);
+                  } catch (SQLException sqle) {
+                      throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+                  }
+                  
               }
-              
+          } catch (SQLException e) {
+              throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
           }
-      } catch (SQLException e) {
-          throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
       }
       return id;
   }

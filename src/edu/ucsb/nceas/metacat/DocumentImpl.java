@@ -3685,7 +3685,7 @@ public class DocumentImpl
                 			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
                 			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
                 			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
-                			MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                			MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
                 		} catch (RuntimeException ee) {
                 			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
                 			throw new Exception("DocumentImpl.delete -"+ee.getMessage());

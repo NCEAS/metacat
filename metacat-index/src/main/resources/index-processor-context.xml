@@ -33,6 +33,7 @@
     
     <import resource="application-context-dc-base.xml" />
     <import resource="application-context-dcx.xml" />
+    <import resource="application-context-dc-oai.xml" />
     
     <import resource="application-context-isotc211-base.xml" />
     <import resource="application-context-isotc211.xml" />
@@ -116,6 +117,7 @@
        <ref bean="isotc211Subprocessor" />
        <ref bean="isotc211NoaaSubprocessor" />
        <ref bean="isotc211PangaeaSubprocessor" />
+       <ref bean="dublinCoreOAISubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">

@@ -467,7 +467,6 @@
       <xsl:param name="entityindex"/>
       <xsl:param name="entitytype"/>
      <xsl:if test="$entitytype='dataTable'">
-        <xsl:for-each select="dataTable">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -508,10 +507,8 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
       <xsl:if test="$entitytype='spatialRaster'">
-        <xsl:for-each select="spatialRaster">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -552,10 +549,8 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
       <xsl:if test="$entitytype='spatialVector'">
-        <xsl:for-each select="spatialVector">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -596,10 +591,8 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
       <xsl:if test="$entitytype='storedProcedure'">
-        <xsl:for-each select="storedProcedure">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -640,10 +633,8 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
       <xsl:if test="$entitytype='view'">
-        <xsl:for-each select="view">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -684,10 +675,8 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
       <xsl:if test="$entitytype='otherEntity'">
-        <xsl:for-each select="otherEntity">
             <xsl:if test="position()=$entityindex">
                    <xsl:choose>
                      <xsl:when test="references!=''">
@@ -728,7 +717,6 @@
                    </xsl:otherwise>
                 </xsl:choose>
             </xsl:if>
-        </xsl:for-each>
       </xsl:if>
    </xsl:template>
 
