@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 
 import javax.servlet.http.HttpServletRequest;
@@ -85,6 +86,7 @@ import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.ObjectFormatList;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v2.util.AuthUtils;
 import org.dataone.service.util.TypeMarshaller;
 
 
@@ -489,8 +491,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       // get the node list
       try {
-          cn = D1Client.getCN();
-          nodeList = cn.listNodes().getNodeList();
+          nodeList = getCNNodeList().getNodeList();
           
       } catch (Exception e) { // handle BaseException and other I/O issues
           
@@ -576,37 +577,38 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  boolean allowed = isAdminAuthorized(session);
 	  
 	  String serviceFailureCode = "4972";
-	  Identifier sid = getPIDForSID(pid, serviceFailureCode);
-	  if(sid != null) {
-	        pid = sid;
-	  }
+	  String notFoundCode = "????";
+	  SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
 	  
-	  //check if it is the authoritative member node
-	  if(!allowed) {
-	      allowed = isAuthoritativeMNodeAdmin(session, pid);
-	  }
-	  
-	  //check if the session has the change permission
-	  if(!allowed) {
-	      try {
-	          allowed = userHasPermission(session, pid, Permission.CHANGE_PERMISSION);
-	      } catch (InvalidRequest e) {
-	          throw new InvalidToken("4973","CN.archive method couldn't determine if the client has the change permssion on this pid "+pid.getValue()+ " since "+e.getMessage());
+	  authorization:
+	  {
+	      
+	      if (isSessionAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION)) {
+              allowed = true;
+              break authorization;
+          }
+	      if (isAdminAuthorized(session)) {
+              allowed = true;
+              break authorization;
+          }
+	      if (isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(),null)) {
+	          allowed = true;
+	          break authorization;
+	      }
+	      Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+	      if (this.checkExpandedPermissions(sessionSubjects, sysmeta, Permission.CHANGE_PERMISSION)) {
+	          allowed = true;
+	          break authorization;
 	      }
 	      
-	  }
-	  if (!allowed) {
-		  String msg = "The subject " + session.getSubject().getValue() + 
-				  " doesn't have the change permission to archive the object "+pid.getValue();
-		  logMetacat.warn(msg);
-		  throw new NotAuthorized("4970", msg);
+	      this.prepareAndThrowNotAuthorized(sessionSubjects, sysmeta.getIdentifier(), Permission.CHANGE_PERMISSION, "4970");
 	  }
 	  
       try {
           HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
           logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
-          SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-          D1NodeVersionChecker checker = new D1NodeVersionChecker(sysMeta.getAuthoritativeMemberNode());
+//          SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
           String version = checker.getVersion("MNRead");
           if(version == null) {
               throw new ServiceFailure("4972", "Couldn't determine the MNRead version of the authoritative member node for the pid "+pid.getValue());
@@ -618,7 +620,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               throw new NotImplemented("4974", "The version of the MNRead is "+version+" for the authoritative member node of the object "+pid.getValue()+". We don't support it.");
           }
           boolean needModifyDate = true;
-          archiveCNObjectWithNotificationReplica(session, pid, sysMeta, needModifyDate);
+          archiveCNObjectWithNotificationReplica(session, pid, sysmeta, needModifyDate);
       
       } finally {
           HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
@@ -888,8 +890,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   }
               }
               // are we allowed to do this? only CNs and target MNs are allowed
-              CNode cn = D1Client.getCN();
-              List<Node> nodes = cn.listNodes().getNodeList();
+              List<Node> nodes = getCNNodeList().getNodeList();
               
               // find the node in the node list
               for ( Node node : nodes ) {
@@ -1687,8 +1688,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     
     try {
       // get the target node reference from the nodes list
-      CNode cn = D1Client.getCN();
-      List<Node> nodes = cn.listNodes().getNodeList();
+      List<Node> nodes = getCNNodeList().getNodeList();
       
       if ( nodes != null ) {
         for (Node node : nodes) {
@@ -2205,8 +2205,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       List<Node> nodeList = null;
       
       try {
-          cn = D1Client.getCN();
-          nodeList = cn.listNodes().getNodeList();
+          nodeList = getCNNodeList().getNodeList();
           
       } catch (Exception e) { // handle BaseException and other I/O issues
           

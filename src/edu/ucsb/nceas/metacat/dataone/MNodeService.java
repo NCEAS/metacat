@@ -65,6 +65,7 @@ import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
+import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -125,6 +126,7 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.Synchronization;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v2.TypeFactory;
 import org.dataone.service.types.v1.util.AuthUtils;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
@@ -280,23 +282,20 @@ public class MNodeService extends D1NodeService
         if(isReadOnlyMode()) {
             throw new ServiceFailure("2902", ReadOnlyChecker.DATAONEERROR);
         }
-    	// only admin of  the MN or the CN is allowed a full delete
+        
+      	// only admin of  the MN or the CN is allowed a full delete
         boolean allowed = false;
         allowed = isAdminAuthorized(session);
         
-        String serviceFailureCode = "2902";
-        Identifier sid = getPIDForSID(pid, serviceFailureCode);
-        if(sid != null) {
-            pid = sid;
-        }
-        
-        //check if it is the authoritative member node
-        if(!allowed) {
-            allowed = isAuthoritativeMNodeAdmin(session, pid);
+        if (!allowed) {
+            
+            String serviceFailureCode = "2902";
+            SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode,"????");
+            allowed = isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), null);
         }
         
         if (!allowed) { 
-            throw new NotAuthorized("1320", "The provided identity does not have " + "permission to delete objects on the Node.");
+            throw new NotAuthorized("1320", "The provided identity does not have permission to delete objects on the Node.");
         }
     	
     	// defer to superclass implementation
@@ -1596,14 +1595,12 @@ public class MNodeService extends D1NodeService
         
         SystemMetadata currentLocalSysMeta = null;
         SystemMetadata newSysMeta = null;
-        CNode cn = D1Client.getCN();
-        NodeList nodeList = null;
         Subject callingSubject = null;
         boolean allowed = false;
         
         // are we allowed to call this?
         callingSubject = session.getSubject();
-        nodeList = cn.listNodes();
+        NodeList nodeList = getCNNodeList();
         
         for(Node node : nodeList.getNodeList()) {
             // must be a CN
@@ -2926,8 +2923,13 @@ public class MNodeService extends D1NodeService
         }
 	}
 	
-	/*
+	protected NodeReference getCurrentNodeId() {
+	    return TypeFactory.buildNodeReference(Settings.getConfiguration().getString("dataone.nodeId"));
+	}
+	
+	/**
      * Determine if the current node is the authoritative node for the given pid.
+     * (uses HZsysmeta map)
      */
     protected boolean isAuthoritativeNode(Identifier pid) throws InvalidRequest {
         boolean isAuthoritativeNode = false;
@@ -2938,13 +2940,10 @@ public class MNodeService extends D1NodeService
                 if(node != null) {
                     String nodeValue = node.getValue();
                     logMetacat.debug("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
-                    //System.out.println("The authoritative node for id "+pid.getValue()+" is "+nodeValue);
                     String currentNodeId = Settings.getConfiguration().getString("dataone.nodeId");
                     logMetacat.debug("The node id in metacat.properties is "+currentNodeId);
-                    //System.out.println("The node id in metacat.properties is "+currentNodeId);
                     if(currentNodeId != null && !currentNodeId.trim().equals("") && currentNodeId.equals(nodeValue)) {
                         logMetacat.debug("They are matching, so the authoritative mn of the object "+pid.getValue()+" is the current node");
-                        //System.out.println("They are matching");
                         isAuthoritativeNode = true;
                     }
                 } else {
@@ -2961,45 +2960,44 @@ public class MNodeService extends D1NodeService
     
     /*
      * Rules are:
-     * 1. If the session has an cn object, it is allowed.
-     * 2. If it is not a cn object, the client should have approperate permission and it should also happen on the authorative node.
-     * 3. If it's the authoritative node, the MN Admin Subject is allowed.
+     * 1. If the update is happening on the authoritative MN, either
+     * 1.a.  the session has the appropriate permission vs the systemmetadata or
+     * 1.b.  the session represents the MN Admin Subject
+     * 2. If the session represents the D1 CN, it is allowed.
      */
     private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest, ServiceFailure, NotImplemented, InvalidToken {
         boolean allow = false;
+               
         
-        if( isCNAdmin (session) ) {
-            allow = true;
+        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+        Set<Subject> sessionSubjects = null;
+        if (sysmeta.getAuthoritativeMemberNode().equals(getCurrentNodeId()) 
+                && StringUtils.isNotBlank(sysmeta.getAuthoritativeMemberNode().getValue()))
+        {
             
-        } else {
-            if( isAuthoritativeNode(pid) ) {
-            	
-            	// Check for admin authorization
-            	try {
-					allow = isNodeAdmin(session);
-					
-				} catch (NotImplemented e) {
-					logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
-
-				} catch (ServiceFailure e) {
-					logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
-					
-				}
-            	
-            	// Check for user authorization
-            	if ( !allow ) {
-                    allow = userHasPermission(session, pid, permission);
-                    
-            	}
-                    
-            } else {
-                throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());
-                
+            if (isSessionAuthorized(session, sysmeta, permission))
+                return true;
+            
+            try {
+                allow = isNodeAdmin(session); 
+                return true;
             }
-        }
-        return allow;
+            catch (NotImplemented | ServiceFailure e) {
+                logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
+            }
         
+            sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+            if (this.checkExpandedPermissions(sessionSubjects, sysmeta, permission))
+                return true;
+            
+        }
+        // (outside the above if statement on purpose)
+        if( isCNAdmin (session) )
+            return true;
+
+        throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());        
     }
+    
     
     /**
      * Check if the metacat is in the read-only mode.
