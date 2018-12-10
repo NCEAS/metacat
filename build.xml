@@ -406,7 +406,7 @@
 		<!--<property name="metacatui.git.repository.refname"
 									value="master" />-->
 		<property name="metacatui.build.dir"
-					value="metacatui_build" />
+					value="${build.dir}/metacatui_build" />
 		<property name="metacatui.resources.dir"
 					value="${metacatui.build.dir}/metacatui/src/main/webapp" />
 		
