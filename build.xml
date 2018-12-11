@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="1.14.15" />
+	<property name="metacatui-tag" value="2.4.0" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
@@ -98,21 +98,10 @@
 	</target>
 	
 	<target name="build-metacat-ui" description="Calls the Maven build for metacatUI war" depends="getMetacatUI" unless="build-metacat-ui-called">
-		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
-			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-			<arg value="clean"/>
-		</artifact:mvn>
-		<artifact:mvn pom="${metacatui.build.dir}/metacatui/pom.xml" mavenhome="${maven.home}" fork="true">
-			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
-		   <arg value="package"/>
-		</artifact:mvn>
+		<war destfile="${dist.dir}/${metacatui.war.name}" needxmlfile="false">
+			  <fileset dir="${metacatui.war.resources.dir}" />
+		 </war>
 		<property name="build-metacat-ui-called" value="true"/>
-	</target>
-	
-	<target name="dist-metacat-ui" depends="build-metacat-ui">
-		<copy tofile="${dist.dir}/metacatui.war" >
-			<fileset dir="${metacatui.build.dir}/metacatui/target" includes="*.war"></fileset>
-		</copy>	
 	</target>
     	
 	<taskdef resource="axis-tasks.properties"
@@ -407,8 +396,10 @@
 									value="master" />-->
 		<property name="metacatui.build.dir"
 					value="${build.dir}/metacatui_build" />
-		<property name="metacatui.resources.dir"
-					value="${metacatui.build.dir}/metacatui/src/main/webapp" />
+		<property name="metacatui.war.name"
+		                    value="metacatui.war" />
+		<property name="metacatui.war.resources.dir"
+					value="${metacatui.build.dir}/src" />
 		
 		<!-- load the svn task -->
 		<path id="svn.classpath">
@@ -750,7 +741,7 @@
 		<copy file="${dist.dir}/metacat-index.war"
 					todir="${app.deploy.dir}" />
 		<delete dir="${app.deploy.dir}/metacat-index" />
-		<copy file="${dist.dir}/metacatui.war"
+		<copy file="${dist.dir}/${metacatui.war.name}"
 					todir="${app.deploy.dir}" />
 		<delete dir="${app.deploy.dir}/metacatui" />
 		<tstamp>
@@ -759,7 +750,7 @@
 		<echo>Dev install completed at ${NOW}</echo>
 	</target>
 
-	<target name="build-metacat" depends="war, install-spatial, dist-metacat-index, dist-metacat-ui"
+	<target name="build-metacat" depends="war, install-spatial, dist-metacat-index, build-metacat-ui"
 		description="Build Metacat">
 	</target>
 
