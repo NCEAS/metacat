@@ -802,7 +802,7 @@ public class IdentifierManager {
     /**
      * Determine if an identifier exists already, returning true if so.
      * NOTE: looks in the identifier and system metadata table for a match
-     * (in that order)
+     * (in that order)  Can return true for both PIDs and SIDs. 
      * 
      * @param guid the global identifier to look up
      * @return boolean true if the identifier exists

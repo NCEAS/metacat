@@ -529,28 +529,29 @@ public abstract class D1NodeService {
   
   /**
    * Determine if an object with the given identifier already exists or not.
-   * @param pid  the id will be checked.
+   * (Using IdentityManager.  Works for SID or PID)
+   * @param id -  the ID to be checked.
    * @throws ServiceFailure if the system can't fulfill the check process
    * @throws IdentifierNotUnique if the object with the identifier does exist
    */
-  protected static void objectExists(Identifier pid ) throws ServiceFailure, IdentifierNotUnique{
+  protected static void objectExists(Identifier id ) throws ServiceFailure, IdentifierNotUnique{
       // Check that the identifier does not already exist
       boolean idExists = false;
-      if (pid == null) {
+      if (id == null) {
           throw new IdentifierNotUnique("1120", 
                   "The requested identifier can't be null.");
       }
-      logMetacat.debug("Checking if identifier exists: " + pid.getValue());
+      logMetacat.debug("Checking if identifier exists: " + id.getValue());
       try {
-          idExists = IdentifierManager.getInstance().identifierExists(pid.getValue());
+          idExists = IdentifierManager.getInstance().identifierExists(id.getValue());
       } catch (SQLException e) {
           throw new ServiceFailure("1190", 
-                                  "The requested identifier " + pid.getValue() +
+                                  "The requested identifier " + id.getValue() +
                                   " couldn't be determined if it is unique since : "+e.getMessage());
       }
       if (idExists) {
               throw new IdentifierNotUnique("1120", 
-                        "The requested identifier " + pid.getValue() +
+                        "The requested identifier " + id.getValue() +
                         " is already used by another object and " +
                         " therefore can not be used for this object. Clients should choose" +
                         "a new identifier that is unique and retry the operation or " +
@@ -844,13 +845,6 @@ public abstract class D1NodeService {
            // catch this for later
            originalAuthorizationException = nae;
        }
-       
-           
-       // allow (READ) access to replica MemberNode admins
-       if (!isAuthorized) {  
-           
-       } 
-
        return sysmeta;
     }
      
@@ -1055,7 +1049,7 @@ public abstract class D1NodeService {
   
   /**
    * Determine if the specified session is a CN or not. Return true if it is; otherwise false.
-   * (the implementation calls CN.listNodes
+   * (the implementation calls CN.listNodes)
    */
   protected boolean isCNAdmin (Session session) {
       boolean allowed = false;
@@ -1458,7 +1452,7 @@ public abstract class D1NodeService {
   }
   
   /**
-   * Check fro whitespace in the given pid.
+   * Check for whitespace in the given pid.
    * null pids are also invalid by default
    * @param pid
    * @return

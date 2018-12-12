@@ -208,12 +208,14 @@
 		<taskdef uri="antlib:org.apache.maven.artifact.ant"
 			       resource="org/apache/maven/artifact/ant/antlib.xml"
 			       classpathref="base.classpath" />
-
+<echo>getting to resolve maven dependencies</echo> 
 	   	<!-- Resolve maven dependencies -->
 		<artifact:pom id="metacatPom" file="pom.xml" />
+<echo> done with pom </echo>
 		<artifact:dependencies filesetId="dependency.fileset" pomrefid="metacatPom" usescope="runtime"/>
+<echo> done with filesetId </echo>
 		<artifact:dependencies pathId="dependency.classpath" pomrefid="metacatPom"/>
-	   		   	
+<echo>done with resolving  maven dependencies</echo> 
 	   	<!-- combine base and dependencies for the classpath -->
 	   	<path id="compile.classpath">
 	   		<path refid="base.classpath" />	

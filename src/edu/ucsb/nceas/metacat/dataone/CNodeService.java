@@ -1828,20 +1828,25 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       Lock lock = null;
 
       try {
-          lock = HazelcastService.getInstance().getLock(pid.getValue());
-          lock.lock();
-          objectExists(pid);
+          
+          
           // are we allowed?
           boolean isAllowed = false;
           isAllowed = isAdminAuthorized(session);
           
           // additional check if it is the authoritative node if it is not the admin
-          if(!isAllowed) {
-              isAllowed = isAuthoritativeMNodeAdmin(session, pid);
-          }
+          // How can this work?  If the pid is on the CN, it will fail on the objectExists check
+//          if(!isAllowed) {
+//              isAllowed = isAuthoritativeMNodeAdmin(session, pid);
+//          }
 
           // proceed if we're called by a CN
           if ( isAllowed ) {
+              
+              lock = HazelcastService.getInstance().getLock(pid.getValue());
+              lock.lock();
+              objectExists(pid);
+              
               //check if the series id is legitimate. It uses the same rules of the method registerSystemMetadata
               //checkSidInModifyingSystemMetadata(sysmeta, "4896", "4893");
               Identifier sid = sysmeta.getSeriesId();
