@@ -180,7 +180,7 @@ public class MetacatSolrIndex {
     public void submitDeleteTask(Identifier pid, SystemMetadata sysMeta) {
         IndexTask task = new IndexTask();
         task.setSystemMetadata(sysMeta);
-        task.SetIsDeleteing(true);
+        task.setIsDeleteing(true);
         if(pid != null) {
             log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid "+pid.getValue()+" into the index queue on hazelcast service.");
             HazelcastService.getInstance().getIndexQueue().put(pid, task);

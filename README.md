@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.10.0 Beta Release
+Version: 2.10.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,26 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.10.0:
+After installing this release, you need to issue the "reindexall" command since a new SOLR field has been added.
+New features and bugs fixed in this release:
+* Exclude EcoGrid on Metacat
+* Do not allow restrictive access control change to content with a DOI 
+* MN/CN.updateSystemMetadata doesn't check the field - authoritativeMemberNode
+* Integrate the fixed SeriesIdResolver class which gets SystemMetadata locally
+* EZID metadata registration doesn't seem to work with SIDs
+* Metacat white space pid filter overlooks some cases
+* Update DOI registrations for EML objects with complete metadata
+* Keep archived object solr index but they don't show up at the default search
+* D1NodeService read api methods / getPidForSid bypassing Hz lookup
+* Enable a blacklist configuration for IP addresses and subjects
+* Replace the statement of "System.out.print" by the Log statement on D1URLFilter and D1HttpRequest classes
+* Publish DOI includes old metadata PID in new resource map
+* Support format id - http://www.openarchives.org/OAI/2.0/oai_dc/
+* EML Attribute XSLT re-using anchors in such as way that they're not unique / changing attribute tabs doesn't for some entities
+* Switch ORCID icons in EML XSLTs to be inlined instead of reference to MetacatUI
+
 
 ### Release Notes for 2.9.0:
 New features and bugs fixed in this release:

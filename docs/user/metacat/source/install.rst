@@ -184,7 +184,7 @@ If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website a
 
 Apache Tomcat
 .............
-We recommend that you install Tomcat 6 or 7 into the directory of your choice.
+We recommend that you install Tomcat 6 or 7 or 8 into the directory of your choice. The newer versions are preferred.
 Included with the Metacat download is a Tomcat-friendly start-up script that
 should be installed as well.
 
@@ -361,7 +361,7 @@ these helper files will be in one of two locations:
 
 PostgreSQL Database
 ...................
-Currently Metacat only supports PostgreSQL_. To install and configure PostgreSQL_:
+Currently Metacat only supports PostgreSQL_. You can choose the release versions of PostgreSQL 8, 9, 10 or 11. The newer versions are preferred. To install and configure PostgreSQL_:
 
 1. If you are running Ubuntu_/Debian, get PostgreSQL by typing:
 

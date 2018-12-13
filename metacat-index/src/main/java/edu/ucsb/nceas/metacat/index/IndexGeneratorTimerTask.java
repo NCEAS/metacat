@@ -415,7 +415,7 @@ public class IndexGeneratorTimerTask extends TimerTask {
             IndexTask task = new IndexTask();
             SystemMetadata sysmeta = getSystemMetadata(id);
             task.setSystemMetadata(sysmeta);
-            task.SetIsDeleteing(true);
+            task.setIsDeleteing(true);
             Identifier pid = new Identifier();
             pid.setValue(id);
             indexQueue.put(pid, task);

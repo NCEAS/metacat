@@ -42,7 +42,7 @@ public class IndexTask implements Serializable {
 	 * Set the index task to be a deleting task or not
 	 * @param isDeleteing true if it is a deleting task; otherwise false.
 	 */
-	public void SetIsDeleteing(boolean isDeleteing) {
+	public void setIsDeleteing(boolean isDeleteing) {
 	    this.isDeleteing = isDeleteing;
 	}
 
