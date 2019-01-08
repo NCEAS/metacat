@@ -38,10 +38,12 @@ import org.apache.log4j.Logger;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
+import org.dataone.configuration.Settings;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.util.DateTimeMarshaller;
+
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -83,6 +85,7 @@ public class EventLog
     private Logger logMetacat = Logger.getLogger(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
+    private boolean enableEvenLogIndex= false;
 
 
     /**
@@ -92,6 +95,7 @@ public class EventLog
     private EventLog()
     {
         filter = new EventLogFilter();
+        enableEvenLogIndex = Settings.getConfiguration().getBoolean("index.accessLog.count.enabled", false);
     }
 
     /**
@@ -138,7 +142,9 @@ public class EventLog
     	        pid.setValue(guid);
     	        
     	        // submit for indexing
-    	        MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event), false);
+    	        if(enableEvenLogIndex) {
+    	            MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event), false);
+    	        }
     	        
             } catch (Exception e) {
             	logMetacat.error("Could not update event index information", e);
