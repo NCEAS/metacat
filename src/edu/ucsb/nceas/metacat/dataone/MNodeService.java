@@ -2812,7 +2812,7 @@ public class MNodeService extends D1NodeService
           else if(currentSysmeta.getAuthoritativeMemberNode() == null && sysmeta.getAuthoritativeMemberNode() != null ) {
               throw new InvalidRequest("4869", "Current authoriativeMemberNode is null but the value on the new system metadata is not null. They don't match. Clients don't have the permission to change it.");
           }
-          checkAddRestrictiveAccessOnDOI(sysmeta);
+          checkAddRestrictiveAccessOnDOI(currentSysmeta, sysmeta);
           boolean needUpdateModificationDate = true;
           boolean fromCN = false;
           success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
@@ -2881,7 +2881,7 @@ public class MNodeService extends D1NodeService
 	 * @param newSysMeta
 	 * @throws InvalidRequest
 	 */
-	private void checkAddRestrictiveAccessOnDOI(SystemMetadata newSysMeta)  throws InvalidRequest {
+	private void checkAddRestrictiveAccessOnDOI(SystemMetadata oldSysMeta, SystemMetadata newSysMeta)  throws InvalidRequest {
 	    String doi ="doi:";
 	    boolean identifierIsDOI = false;
         boolean sidIsDOI = false;
@@ -2904,23 +2904,40 @@ public class MNodeService extends D1NodeService
         if(identifierIsDOI || sidIsDOI) {
             Subject publicUser = new Subject();
             publicUser.setValue("public");
-            AccessPolicy access = newSysMeta.getAccessPolicy();
-            if(access == null) {
-                throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
-            } else {
-                boolean found = false;
-                if (access.getAllowList() != null) {
-                    for (AccessRule item : access.getAllowList()) {
+            //We only apply this rule when the old system metadata allow the public user read this object.
+            boolean isOldSysmetaPublicReadable = false;
+            AccessPolicy oldAccess = oldSysMeta.getAccessPolicy();
+            if(oldAccess != null) {
+                if (oldAccess.getAllowList() != null) {
+                    for (AccessRule item : oldAccess.getAllowList()) {
                         if(item.getSubjectList() != null && item.getSubjectList().contains(publicUser)) {
                             if (item.getPermissionList() != null && item.getPermissionList().contains(Permission.READ)) {
-                                found = true;
+                                isOldSysmetaPublicReadable = true;
                                 break;
                             }
                         }
                     }
                 }
-                if(!found) {
+            }
+            if(isOldSysmetaPublicReadable) {
+                AccessPolicy access = newSysMeta.getAccessPolicy();
+                if(access == null) {
                     throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+                } else {
+                    boolean found = false;
+                    if (access.getAllowList() != null) {
+                        for (AccessRule item : access.getAllowList()) {
+                            if(item.getSubjectList() != null && item.getSubjectList().contains(publicUser)) {
+                                if (item.getPermissionList() != null && item.getPermissionList().contains(Permission.READ)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(!found) {
+                        throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+                    }
                 }
             }
         }
