@@ -1957,15 +1957,21 @@ public class MNodeService extends D1NodeService
 	    String user = Constants.SUBJECT_PUBLIC;
         String[] groups= null;
         Set<Subject> subjects = null;
+        boolean isMNadmin= false;
         if (session != null) {
-            user = session.getSubject().getValue();
-            subjects = AuthUtils.authorizedClientSubjects(session);
-            if (subjects != null) {
-                List<String> groupList = new ArrayList<String>();
-                for (Subject subject: subjects) {
-                    groupList.add(subject.getValue());
+            if(isNodeAdmin(session)) {
+                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+                isMNadmin=true;//bypass access rules since it is the admin
+            } else {
+                user = session.getSubject().getValue();
+                subjects = AuthUtils.authorizedClientSubjects(session);
+                if (subjects != null) {
+                    List<String> groupList = new ArrayList<String>();
+                    for (Subject subject: subjects) {
+                        groupList.add(subject.getValue());
+                    }
+                    groups = groupList.toArray(new String[0]);
                 }
-                groups = groupList.toArray(new String[0]);
             }
         } else {
             //add the public user subject to the set 
@@ -1999,7 +2005,7 @@ public class MNodeService extends D1NodeService
 		    logMetacat.info("The query is ==================================== \n"+query);
 		    try {
 		        
-                return MetacatSolrIndex.getInstance().query(query, subjects);
+                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 throw new ServiceFailure("Solr server error", e.getMessage());

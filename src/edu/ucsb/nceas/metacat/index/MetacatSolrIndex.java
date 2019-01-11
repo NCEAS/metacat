@@ -28,6 +28,7 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.sql.SQLException;
+import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -51,6 +52,7 @@ import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.Constants;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DBTransform;
@@ -106,6 +108,7 @@ public class MetacatSolrIndex {
      * Query the solr server
      * @param query  the solr query
      * @param authorizedSubjects the authorized subjects in this query session
+     * @param isMNadmin the indicator of the authorized subjects are the mn admin or not
      * @return the result as the InputStream
      * @throws SolrServerException 
      * @throws ClassNotFoundException 
@@ -117,10 +120,18 @@ public class MetacatSolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    public InputStream query(String query, Set<Subject>authorizedSubjects) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
+    public InputStream query(String query, Set<Subject>authorizedSubjects, boolean isMNadmin) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
     ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
         if(authorizedSubjects == null || authorizedSubjects.isEmpty()) {
-            throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized subjects(even the public user) in this query session.");
+            //throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized subjects(even the public user) in this query session.");
+            Subject subject = new Subject();
+            subject.setValue(Constants.SUBJECT_PUBLIC);
+            authorizedSubjects = new HashSet<Subject>();
+            authorizedSubjects.add(subject);
+        }
+        if(isMNadmin) {
+            authorizedSubjects = null;//bypass the access rule since it is mn admin
+            log.debug("MetacatSolrIndex.query - this is the mn admin object and the query will bypass the access controls rules.");
         }
         InputStream inputStream = null;
         // allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
