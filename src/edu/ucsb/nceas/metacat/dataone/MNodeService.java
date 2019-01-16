@@ -279,27 +279,27 @@ public class MNodeService extends D1NodeService
     public Identifier delete(Session session, Identifier pid) 
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
+        String serviceFailureCode = "2902";
+        String notFoundCode = "2901";
+        String notAuthorizedCode = "2900";
         if(isReadOnlyMode()) {
             throw new ServiceFailure("2902", ReadOnlyChecker.DATAONEERROR);
         }
         
-      	// only admin of  the MN or the CN is allowed a full delete
-        boolean allowed = false;
-        allowed = isAdminAuthorized(session);
-        
-        if (!allowed) {
-            
-            String serviceFailureCode = "2902";
-            SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode,"????");
-            allowed = isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), null);
+        SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode,notFoundCode);
+              
+        try {
+            D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+            authDel.doAuthoritativeMNAuthorization(session, sysmeta);
         }
-        
-        if (!allowed) { 
-            throw new NotAuthorized("1320", "The provided identity does not have permission to delete objects on the Node.");
+        catch (NotAuthorized na) {
+            NotAuthorized na2 = new NotAuthorized(notAuthorizedCode, "The provided identity does not have permission to delete objects on the Node.");
+            na2.initCause(na);
+            throw na2;
         }
     	
-    	// defer to superclass implementation
-        return super.delete(session, pid);
+    	   // defer to superclass implementation
+        return super.delete(session, sysmeta.getIdentifier());
     }
 
     /**
@@ -368,6 +368,7 @@ public class MNodeService extends D1NodeService
         // make sure that the newPid doesn't exists
         boolean idExists = true;
         try {
+            
             idExists = IdentifierManager.getInstance().identifierExists(newPid.getValue());
         } catch (SQLException e) {
             throw new ServiceFailure("1310", 
@@ -423,19 +424,12 @@ public class MNodeService extends D1NodeService
         //allowed = isAuthorized(session, pid, Permission.WRITE);
         //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
         try {
-            allowed = allowUpdating(session, pid, Permission.WRITE);
-        }   catch (NotFound e) {
-            throw new NotFound("1280", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+            D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,null,"1200","1310");
+            authDel.doUpdateAuth(session, sysmeta, Permission.WRITE, this.getCurrentNodeId());
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         } catch(NotAuthorized e) {
             throw new NotAuthorized("1200", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
-        } catch(NotImplemented e) {
-            throw new NotImplemented("1201","Can't determine if the client has the permission to update he object with id "+pid.getValue()+" since "+e.getDescription());
-        } catch(InvalidRequest e) {
-            throw new InvalidRequest("1202", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
-        } catch(InvalidToken e) {
-            throw new InvalidToken("1210", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         }
         
         end =System.currentTimeMillis();
@@ -795,7 +789,8 @@ public class MNodeService extends D1NodeService
 
         // get from the membernode
         // TODO: switch credentials for the server retrieval?
-        this.cn = D1Client.getCN();
+        
+ //       this.cn = D1Client.getCN();
         InputStream object = null;
         Session thisNodeSession = null;
         SystemMetadata localSystemMetadata = null;
@@ -813,10 +808,11 @@ public class MNodeService extends D1NodeService
         }
        
         // only allow cns call this method
-        boolean  allowed = isCNAdmin(session);
-        if(!allowed) {
-            throw new NotAuthorized("2152", "The client is not a coordinate node. Only a coordinate node is allowed to call the replicate method : ");
-        }
+        D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, sysmeta.getIdentifier(), "2152","2151");
+        authDel.doCNOnlyAuthorization(session);
+ 
+        // throw new NotAuthorized("2152", "The client is not a coordinate node. Only a coordinate node is allowed to call the replicate method : ");
+
         logMetacat.debug("Allowed to replicate: " + pid.getValue());
 
         // get the local node id
@@ -1147,11 +1143,11 @@ public class MNodeService extends D1NodeService
      * @throws ServiceFailure
      * @throws NotAuthorized
      * @throws InvalidRequest
-     * @throws NotImplemented
+     * @throws NotImplemented - not thrown by this implementation
      */
     @Override
     public Node getCapabilities() 
-        throws NotImplemented, ServiceFailure {
+        throws ServiceFailure {
 
         String nodeName = null;
         String nodeId = null;
@@ -1390,29 +1386,18 @@ public class MNodeService extends D1NodeService
         throws NotImplemented, ServiceFailure, NotAuthorized {
 
         String localId;
-        Identifier pid;
-        if ( syncFailed.getPid() != null ) {
-            pid = new Identifier();
-            pid.setValue(syncFailed.getPid());
-            boolean allowed;
-            
-            //are we allowed? only CNs
-            try {
-                allowed = isAdminAuthorized(session);
-                if ( !allowed ){
-                    throw new NotAuthorized("2162", 
-                            "Not allowed to call synchronizationFailed() on this node.");
-                }
-            } catch (InvalidToken e) {
-                throw new NotAuthorized("2162", 
-                        "Not allowed to call synchronizationFailed() on this node.");
-
-            }
-            
-        } else {
+        
+        if ( syncFailed.getPid() == null ) {
             throw new ServiceFailure("2161", "The identifier cannot be null.");
-
         }
+        Identifier pid = new Identifier();
+        pid.setValue(syncFailed.getPid());
+        boolean allowed;
+            
+        //are we allowed? only CNs
+        D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "2162","2161");
+        authDel.doCNOnlyAuthorization(session);
+
         
         try {
             localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
@@ -2762,23 +2747,17 @@ public class MNodeService extends D1NodeService
              if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
              }*/
-             if(!allowUpdating(session, pid, Permission.CHANGE_PERMISSION)) {
-                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-             }
-         } catch (NotFound e) {
-             throw new InvalidRequest("4869", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+             D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861","4868");
+             authDel.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
+             
+//             if(!allowUpdating(session, pid, Permission.CHANGE_PERMISSION)) {
+//                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+//             }
          } catch(ServiceFailure e) {
              throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
          } catch(NotAuthorized e) {
              throw new NotAuthorized("4861", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-         } catch(NotImplemented e) {
-             throw new NotImplemented("4866","Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-         } catch(InvalidRequest e) {
-             throw new InvalidRequest("4869", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-         } catch(InvalidToken e) {
-             throw new InvalidToken("4957", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-         }
-         
+         }      
      }
       //update the system metadata locally
       boolean success = false;
@@ -2965,38 +2944,38 @@ public class MNodeService extends D1NodeService
      * 1.b.  the session represents the MN Admin Subject
      * 2. If the session represents the D1 CN, it is allowed.
      */
-    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest, ServiceFailure, NotImplemented, InvalidToken {
-        boolean allow = false;
-               
-        
-        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-        Set<Subject> sessionSubjects = null;
-        if (sysmeta.getAuthoritativeMemberNode().equals(getCurrentNodeId()) 
-                && StringUtils.isNotBlank(sysmeta.getAuthoritativeMemberNode().getValue()))
-        {
-            
-            if (isSessionAuthorized(session, sysmeta, permission))
-                return true;
-            
-            try {
-                allow = isNodeAdmin(session); 
-                return true;
-            }
-            catch (NotImplemented | ServiceFailure e) {
-                logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
-            }
-        
-            sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-            if (this.checkExpandedPermissions(sessionSubjects, sysmeta, permission))
-                return true;
-            
-        }
-        // (outside the above if statement on purpose)
-        if( isCNAdmin (session) )
-            return true;
-
-        throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());        
-    }
+//    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest, ServiceFailure, NotImplemented, InvalidToken {
+//        boolean allow = false;
+//               
+//        
+//        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+//        Set<Subject> sessionSubjects = null;
+//        if (sysmeta.getAuthoritativeMemberNode().equals(getCurrentNodeId()) 
+//                && StringUtils.isNotBlank(sysmeta.getAuthoritativeMemberNode().getValue()))
+//        {
+//            
+//            if (isSessionAuthorized(session, sysmeta, permission))
+//                return true;
+//            
+//            try {
+//                allow = isNodeAdmin(session); 
+//                return true;
+//            }
+//            catch (NotImplemented | ServiceFailure e) {
+//                logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
+//            }
+//        
+//            sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+//            if (this.checkExpandedPermissions(sessionSubjects, sysmeta, permission))
+//                return true;
+//            
+//        }
+//        // (outside the above if statement on purpose)
+//        if( isCNAdmin (session) )
+//            return true;
+//
+//        throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());        
+//    }
     
     
     /**

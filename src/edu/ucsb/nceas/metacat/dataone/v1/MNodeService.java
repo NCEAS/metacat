@@ -106,9 +106,9 @@ public class MNodeService
     	impl.setSession(session);
     }
     
-    public boolean isAdminAuthorized(Session session) throws ServiceFailure, InvalidToken, NotAuthorized, NotImplemented {
-    	return impl.isAdminAuthorized(session);
-    }
+//    public boolean isAdminAuthorized(Session session) throws ServiceFailure, InvalidToken, NotAuthorized, NotImplemented {
+//    	return impl.isAdminAuthorized(session);
+//    }
 
 	@Override
 	public QueryEngineDescription getQueryEngineDescription(String engine)

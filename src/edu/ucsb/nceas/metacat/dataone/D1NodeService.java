@@ -400,7 +400,7 @@ public abstract class D1NodeService {
     
     // check for null session
     if (session == null) {
-    	throw new InvalidToken("4894", "Session is required to WRITE to the Node.");
+        throw new InvalidToken("4894", "Session is required to WRITE to the Node.");
     }
     Subject subject = session.getSubject();
 
@@ -434,14 +434,14 @@ public abstract class D1NodeService {
 
     // save the sysmeta
     try {
-            // lock and unlock of the pid happens in the subclass
-            HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
-        
-        } catch (Exception e) {
-            logMetacat.error("D1Node.create - There was problem to save the system metadata: " + pid.getValue(), e);
-            throw new ServiceFailure("1190", "There was problem to save the system metadata: " + pid.getValue()+" since "+e.getMessage());
-        }
-        boolean isScienceMetadata = false;
+        // lock and unlock of the pid happens in the subclass
+        HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
+
+    } catch (Exception e) {
+        logMetacat.error("D1Node.create - There was problem to save the system metadata: " + pid.getValue(), e);
+        throw new ServiceFailure("1190", "There was problem to save the system metadata: " + pid.getValue()+" since "+e.getMessage());
+    }
+    boolean isScienceMetadata = false;
       // Science metadata (XML) or science data object?
       // TODO: there are cases where certain object formats are science metadata
       // but are not XML (netCDF ...).  Handle this.
@@ -623,9 +623,10 @@ public abstract class D1NodeService {
 
 	  // only admin access to this method
 	  // see https://redmine.dataone.org/issues/2855
-	  if (!isAdminAuthorized(session)) {
-		  throw new NotAuthorized("1460", "Only the CN or admin is allowed to harvest logs from this node");
-	  }
+      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,null, "1460", "1490");
+      authDel.doAdminAuthorization(session);
+          // "Only the CN or admin is allowed to harvest logs from this node";
+	  
     Log log = new Log();
     IdentifierManager im = IdentifierManager.getInstance();
     EventLog el = EventLog.getInstance();
@@ -687,7 +688,7 @@ public abstract class D1NodeService {
    * Return the object identified by the given object identifier
    * 
    * @param session - the Session object containing the credentials for the Subject
-   * @param pid - the object identifier for the given object
+   * @param id - the identifier for the given object
    * 
    * TODO: The D1 Authorization API doesn't provide information on which 
    * authentication system the Subject belongs to, and so it's not possible to
@@ -705,13 +706,16 @@ public abstract class D1NodeService {
 		  throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, 
 		  NotImplemented 
   {
-
+     
       String serviceFailureCode = "1030";
       String notFoundCode = "1020";
-      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
+      
+      Identifier headPID = getPIDForSID(pid, notFoundCode);
+      if (headPID != null)
+          pid = headPID;
+
 
       InputStream inputStream = null; // bytes to be returned
-      handler = new MetacatHandler(new Timer());
       boolean allowed = false;
       String localId; // the metacat docid for the pid
 
@@ -728,7 +732,7 @@ public abstract class D1NodeService {
                   " couldn't be identified at this node since "+e.getMessage());
       }
 
-      // check for authorization
+      // delegate authorization to isAuthorized method
       try {
           allowed = isAuthorized(session, pid, Permission.READ);
       } catch (InvalidRequest e) {
@@ -738,7 +742,7 @@ public abstract class D1NodeService {
       // if the person is authorized, perform the read
       if (allowed) {
           try {
-              inputStream = handler.read(localId);
+              inputStream = MetacatHandler.read(localId);
           } catch (McdbDocNotFoundException de) {
               String error ="";
               if(EventLog.getInstance().isDeleted(localId)) {
@@ -797,58 +801,18 @@ public abstract class D1NodeService {
 
        String serviceFailureCode = "1090";
        String notFoundCode = "1420";
+       String notAuthorizedCode = "[TBD]";
+              
        SystemMetadata sysmeta = getSeriesHead(pid,serviceFailureCode,notFoundCode);
 
-       boolean isAuthorized = false;
+       D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,notAuthorizedCode, serviceFailureCode);
+       authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.READ);
 
-       List<Replica> replicaList = null;
-       NodeReference replicaNodeRef = null;
-       List<Node> nodeListBySubject = null;
-
-       NotAuthorized originalAuthorizationException = null;
-
-
-       // check normal authorization
-       authorization:
-       try {
-           if (isSessionAuthorized(session, sysmeta, Permission.READ)) {
-               isAuthorized = true;
-               break authorization;
-           }
-           
-           if (this.isAdminAuthorized(session)) {
-               isAuthorized = true;
-               break authorization;
-           }
-           
-           NodeList nodelist = this.getCNNodeList();
-           if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist)) {
-               isAuthorized = true;
-               break authorization;
-           }
-           
-           if (this.isReplicaMNodeAdmin(session, sysmeta, nodelist)) {
-               isAuthorized = true;
-               break authorization;
-           }
-           
-           Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-           if (this.checkExpandedPermissions(sessionSubjects, sysmeta, Permission.READ)) {
-               isAuthorized = true;
-               break authorization;
-           }
-           
-           this.prepareAndThrowNotAuthorized(sessionSubjects, pid, Permission.READ, "????");
-               
-           
-       } catch (NotAuthorized nae) {
-           // catch this for later
-           originalAuthorizationException = nae;
-       }
        return sysmeta;
-    }
-     
+      
+   }
    
+ 
    /**
     * determines if the session represents a replicaMN of the given systemMetadata.
     * @param session - the session, uses only the session.subject field
@@ -857,63 +821,63 @@ public abstract class D1NodeService {
     * @return
     * @throws ServiceFailure
     */
-   protected boolean isReplicaMNodeAdmin(Session session, SystemMetadata sysmeta, NodeList nodelist) throws ServiceFailure {
-       
-       boolean isAuthorized = false;
-       try {
-           Subject subject = session == null ? null : session.getSubject();
-           List<Replica> replicaList = sysmeta.getReplicaList();
-           NodeReference replicaNodeRef = null;
-           
-           if  ( replicaList != null && subject != null ) {
-               // get the list of nodes with a matching node subject
-               List<Node> nodeListBySubject = listNodesBySubject(subject, nodelist);
-
-
-               if (nodeListBySubject.size() > 0) {
-                   // compare node ids to replica node ids
-                   outer: 
-                       for (Replica replica : replicaList) {
-                           replicaNodeRef = replica.getReplicaMemberNode();
-
-                           for (Node node : nodeListBySubject) {
-                               if (node.getIdentifier().equals(replicaNodeRef)) {
-                                   // node id via session subject matches a replica node
-                                   isAuthorized = true;
-                                   break outer;
-                               }
-                           }
-                       }
-               }
-           }
-
-           // if we still aren't authorized, then we are done
-//           if (!isAuthorized) {
-//               throw (originalAuthorizationException != null) ? originalAuthorizationException :  
-//                   new NotAuthorized("1400", Permission.READ + " not allowed on " + pid.getValue());
+//   protected boolean isReplicaMNodeAdmin(Session session, SystemMetadata sysmeta, NodeList nodelist) throws ServiceFailure {
+//       
+//       boolean isAuthorized = false;
+//       try {
+//           Subject subject = session == null ? null : session.getSubject();
+//           List<Replica> replicaList = sysmeta.getReplicaList();
+//           NodeReference replicaNodeRef = null;
+//           
+//           if  ( replicaList != null && subject != null ) {
+//               // get the list of nodes with a matching node subject
+//               List<Node> nodeListBySubject = listNodesBySubject(subject, nodelist);
+//
+//
+//               if (nodeListBySubject.size() > 0) {
+//                   // compare node ids to replica node ids
+//                   outer: 
+//                       for (Replica replica : replicaList) {
+//                           replicaNodeRef = replica.getReplicaMemberNode();
+//
+//                           for (Node node : nodeListBySubject) {
+//                               if (node.getIdentifier().equals(replicaNodeRef)) {
+//                                   // node id via session subject matches a replica node
+//                                   isAuthorized = true;
+//                                   break outer;
+//                               }
+//                           }
+//                       }
+//               }
 //           }
-
-       } 
-       catch (ServiceFailure | NotImplemented e) {
-           // Unexpected error contacting the CN via D1Client fromlistNodesBySubject
-           String msg = "Caught an unexpected error while trying "
-                   + "to potentially authorize system metadata access "
-                   + "based on the session subject. The error was "
-                   + e.getMessage();
-           logMetacat.error(msg);
-           if (logMetacat.isDebugEnabled()) {
-               e.printStackTrace();
-
-           }
-           // isAuthorized is still false 
-       }
-       catch (RuntimeException e) {
-           e.printStackTrace();             
-           throw new ServiceFailure("1090", "Unexpected error getting system metadata for: " + 
-                   sysmeta.getIdentifier().getValue()); 
-       } 
-       return isAuthorized;
-   }
+//
+//           // if we still aren't authorized, then we are done
+////           if (!isAuthorized) {
+////               throw (originalAuthorizationException != null) ? originalAuthorizationException :  
+////                   new NotAuthorized("1400", Permission.READ + " not allowed on " + pid.getValue());
+////           }
+//
+//       } 
+//       catch (ServiceFailure | NotImplemented e) {
+//           // Unexpected error contacting the CN via D1Client fromlistNodesBySubject
+//           String msg = "Caught an unexpected error while trying "
+//                   + "to potentially authorize system metadata access "
+//                   + "based on the session subject. The error was "
+//                   + e.getMessage();
+//           logMetacat.error(msg);
+//           if (logMetacat.isDebugEnabled()) {
+//               e.printStackTrace();
+//
+//           }
+//           // isAuthorized is still false 
+//       }
+//       catch (RuntimeException e) {
+//           e.printStackTrace();             
+//           throw new ServiceFailure("1090", "Unexpected error getting system metadata for: " + 
+//                   sysmeta.getIdentifier().getValue()); 
+//       } 
+//       return isAuthorized;
+//   }
     
     /**
      * Test if the specified session represents the authoritative member node for the
@@ -925,27 +889,27 @@ public abstract class D1NodeService {
      * @throws ServiceFailure 
      * @throws NotImplemented 
      */
-    public boolean isAuthoritativeMNodeAdmin(Session session, Identifier pid) {
-
-        if(session == null) {
-            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the session object is null and return false.");
-            return false;
-        }
-        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
-            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the Identifier object is null (not being specified) and return false.");
-            return false;
-        }
-        if (session.getSubject() == null)
-            return false;
-
-
-        //Get the authoritative member node info from the system metadata
-        SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-        if(sysMeta == null) {
-            return false;
-        }
-        return isAuthoritativeMNodeAdmin(session, sysMeta.getAuthoritativeMemberNode(),null);
-    }
+//    public boolean isAuthoritativeMNodeAdmin(Session session, Identifier pid) {
+//
+//        if(session == null) {
+//            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the session object is null and return false.");
+//            return false;
+//        }
+//        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
+//            logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin - the Identifier object is null (not being specified) and return false.");
+//            return false;
+//        }
+//        if (session.getSubject() == null)
+//            return false;
+//
+//
+//        //Get the authoritative member node info from the system metadata
+//        SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+//        if(sysMeta == null) {
+//            return false;
+//        }
+//        return isAuthoritativeMNodeAdmin(session, sysMeta.getAuthoritativeMemberNode(),null);
+//    }
                 
        
     /**
@@ -955,51 +919,51 @@ public abstract class D1NodeService {
      * @param nodelist -optionally pass in the nodelist to save a lookup
      * @return
      */
-    protected boolean isAuthoritativeMNodeAdmin(Session session, NodeReference authoritativeMNode, NodeList nodelist) { 
-        
-        boolean allowed = false;
-
-        if (session == null) 
-            return false;
-        if (authoritativeMNode == null)
-            return false;
-                       
-        try {
-            if (nodelist == null) {
-                nodelist = getCNNodeList();
-            }
-            if(nodelist != null) {
-                Subject sessionSubject = session.getSubject();
-                if (sessionSubject == null) {
-                    return false;
-                }
-                Node node = NodelistUtil.findNode(nodelist, authoritativeMNode);
-                if (node == null) {
-                    return false;
-                }
-
-                List<Subject> nodeSubjects = node.getSubjectList();
-                if(nodeSubjects != null) {
-                    
-                    // check if the session subject is in the node subject list
-                    for (Subject nodeSubject : nodeSubjects) {
-                        logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin(), comparing subjects: " +
-                                nodeSubject.getValue() + " and " + sessionSubject.getValue());
-                        if ( nodeSubject != null && nodeSubject.equals(sessionSubject) ) {
-                            allowed = true; // subject of session == target node subject
-                            break;
-                        }
-                    }              
-                }
-            }
-        } 
-        catch (NotImplemented | ServiceFailure e) {
-            logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't get the member nodes list from the CN since "+e.getDescription()+ 
-                    ". The false value will be returned for the AuthoritativeMNodeAdmin.");
-            return false;
-        }   
-        return allowed;
-    }
+//    protected boolean isAuthoritativeMNodeAdmin(Session session, NodeReference authoritativeMNode, NodeList nodelist) { 
+//        
+//        boolean allowed = false;
+//
+//        if (session == null) 
+//            return false;
+//        if (authoritativeMNode == null)
+//            return false;
+//                       
+//        try {
+//            if (nodelist == null) {
+//                nodelist = getCNNodeList();
+//            }
+//            if(nodelist != null) {
+//                Subject sessionSubject = session.getSubject();
+//                if (sessionSubject == null) {
+//                    return false;
+//                }
+//                Node node = NodelistUtil.findNode(nodelist, authoritativeMNode);
+//                if (node == null) {
+//                    return false;
+//                }
+//
+//                List<Subject> nodeSubjects = node.getSubjectList();
+//                if(nodeSubjects != null) {
+//                    
+//                    // check if the session subject is in the node subject list
+//                    for (Subject nodeSubject : nodeSubjects) {
+//                        logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin(), comparing subjects: " +
+//                                nodeSubject.getValue() + " and " + sessionSubject.getValue());
+//                        if ( nodeSubject != null && nodeSubject.equals(sessionSubject) ) {
+//                            allowed = true; // subject of session == target node subject
+//                            break;
+//                        }
+//                    }              
+//                }
+//            }
+//        } 
+//        catch (NotImplemented | ServiceFailure e) {
+//            logMetacat.error("D1NodeService.isAuthoritativeMNodeAdmin - couldn't get the member nodes list from the CN since "+e.getDescription()+ 
+//                    ". The false value will be returned for the AuthoritativeMNodeAdmin.");
+//            return false;
+//        }   
+//        return allowed;
+//    }
     
     
   /**
@@ -1016,96 +980,96 @@ public abstract class D1NodeService {
    * @throws NotAuthorized
    * @throws NotImplemented
    */
-  public boolean isAdminAuthorized(Session session) 
-      throws ServiceFailure, InvalidToken, NotAuthorized,
-      NotImplemented {
-
-      boolean allowed = false;
-      
-      // must have a session in order to check admin 
-      if (session == null) {
-         logMetacat.debug("In isAdminAuthorized(), session is null ");
-         return false;
-      }
-      
-      logMetacat.debug("In isAdminAuthorized(), checking CN or MN authorization for " +
-           session.getSubject().getValue());
-      
-      // check if this is the node calling itself (MN)
-      try {
-          allowed = isNodeAdmin(session);
-      } catch (Exception e) {
-          logMetacat.warn("We can't determine if the session is a node subject. But we will contiune to check if it is a cn subject.");
-      }
-      
-      
-      // check the CN list
-      if (!allowed) {
-	      allowed = isCNAdmin(session);
-      }
-      
-      return allowed;
-  }
+//  public boolean isAdminAuthorized(Session session) 
+//      throws ServiceFailure, InvalidToken, NotAuthorized,
+//      NotImplemented {
+//
+//      boolean allowed = false;
+//      
+//      // must have a session in order to check admin 
+//      if (session == null) {
+//         logMetacat.debug("In isAdminAuthorized(), session is null ");
+//         return false;
+//      }
+//      
+//      logMetacat.debug("In isAdminAuthorized(), checking CN or MN authorization for " +
+//           session.getSubject().getValue());
+//      
+//      // check if this is the node calling itself (MN)
+//      try {
+//          allowed = isNodeAdmin(session);
+//      } catch (Exception e) {
+//          logMetacat.warn("We can't determine if the session is a node subject. But we will contiune to check if it is a cn subject.");
+//      }
+//      
+//      
+//      // check the CN list
+//      if (!allowed) {
+//	      allowed = isCNAdmin(session);
+//      }
+//      
+//      return allowed;
+//  }
   
   /**
    * Determine if the specified session is a CN or not. Return true if it is; otherwise false.
    * (the implementation calls CN.listNodes)
    */
-  protected boolean isCNAdmin (Session session) {
-      boolean allowed = false;
-
-      logMetacat.debug("D1NodeService.isCNAdmin - the beginning");
-
-      if (session == null || session.getSubject() == null)
-          return false;
-
-      List<Node> nodes = null;
-      try {
-          nodes = getCNNodeList().getNodeList();
-
-          logMetacat.debug("D1NodeService.isCNAdmin - after getting the node list.");         
-          if (nodes == null || nodes.size() == 0)
-              return false;
-      }
-      catch (Throwable e) {
-          logMetacat.warn("Couldn't get the node list from the cn since "+e.getMessage()+". So we can't determine if the subject is a CN.");
-          return false;  
-      }
-
-
-      // find the node in the node list
-      search: 
-          for ( Node node : nodes ) {
-
-              NodeReference nodeReference = node.getIdentifier();
-              if (logMetacat.isDebugEnabled()) {
-                  logMetacat.debug("In isCNAdmin(), a Node reference from the CN node list is: " + nodeReference.getValue());
-              }
-
-              Subject subject = session.getSubject();
-
-              if (node.getType() == NodeType.CN) {
-                  List<Subject> nodeSubjects = node.getSubjectList();
-
-                  // check if the session subject is in the node subject list
-                  for (Subject nodeSubject : nodeSubjects) {
-                      if (logMetacat.isDebugEnabled()) {
-                          logMetacat.debug("In isCNAdmin(), comparing subjects: " +
-                                  nodeSubject.getValue() + " and the user " + subject.getValue());
-                      }
-                      if ( nodeSubject.equals(subject) ) {
-                          allowed = true; // subject of session == target node subject
-                          break search;
-
-                      }
-                  }              
-              }
-          }
-      if (logMetacat.isDebugEnabled()) {
-          logMetacat.debug("D1NodeService.isCNAdmin. Is it a cn admin? "+allowed);
-      }
-      return allowed;
-  }
+//  protected boolean isCNAdmin (Session session) {
+//      boolean allowed = false;
+//
+//      logMetacat.debug("D1NodeService.isCNAdmin - the beginning");
+//
+//      if (session == null || session.getSubject() == null)
+//          return false;
+//
+//      List<Node> nodes = null;
+//      try {
+//          nodes = getCNNodeList().getNodeList();
+//
+//          logMetacat.debug("D1NodeService.isCNAdmin - after getting the node list.");         
+//          if (nodes == null || nodes.size() == 0)
+//              return false;
+//      }
+//      catch (Throwable e) {
+//          logMetacat.warn("Couldn't get the node list from the cn since "+e.getMessage()+". So we can't determine if the subject is a CN.");
+//          return false;  
+//      }
+//
+//
+//      // find the node in the node list
+//      search: 
+//          for ( Node node : nodes ) {
+//
+//              NodeReference nodeReference = node.getIdentifier();
+//              if (logMetacat.isDebugEnabled()) {
+//                  logMetacat.debug("In isCNAdmin(), a Node reference from the CN node list is: " + nodeReference.getValue());
+//              }
+//
+//              Subject subject = session.getSubject();
+//
+//              if (node.getType() == NodeType.CN) {
+//                  List<Subject> nodeSubjects = node.getSubjectList();
+//
+//                  // check if the session subject is in the node subject list
+//                  for (Subject nodeSubject : nodeSubjects) {
+//                      if (logMetacat.isDebugEnabled()) {
+//                          logMetacat.debug("In isCNAdmin(), comparing subjects: " +
+//                                  nodeSubject.getValue() + " and the user " + subject.getValue());
+//                      }
+//                      if ( nodeSubject.equals(subject) ) {
+//                          allowed = true; // subject of session == target node subject
+//                          break search;
+//
+//                      }
+//                  }              
+//              }
+//          }
+//      if (logMetacat.isDebugEnabled()) {
+//          logMetacat.debug("D1NodeService.isCNAdmin. Is it a cn admin? "+allowed);
+//      }
+//      return allowed;
+//  }
   
   /**
    * Test if the user identified by the provided token has administrative authorization 
@@ -1118,41 +1082,41 @@ public abstract class D1NodeService {
    * @throws ServiceFailure 
    * @throws NotImplemented 
    */
-  public boolean isNodeAdmin(Session session) throws NotImplemented, ServiceFailure {
-
-      boolean allowed = false;
-      
-      // must have a session in order to check admin 
-      if (session == null) {
-         logMetacat.debug("In isNodeAdmin(), session is null ");
-         return false;
-      }
-      
-      logMetacat.debug("In isNodeAdmin(), MN authorization for the user " +
-           session.getSubject().getValue());
-      
-      Node node = MNodeService.getInstance(request).getCapabilities();
-      NodeReference nodeReference = node.getIdentifier();
-      logMetacat.debug("In isNodeAdmin(), Node reference is: " + nodeReference.getValue());
-      
-      Subject subject = session.getSubject();
-      
-      if (node.getType() == NodeType.MN) {
-          List<Subject> nodeSubjects = node.getSubjectList();
-          
-          // check if the session subject is in the node subject list
-          for (Subject nodeSubject : nodeSubjects) {
-              logMetacat.debug("In isNodeAdmin(), comparing subjects: " +
-                  nodeSubject.getValue() + " and the user" + subject.getValue());
-              if ( nodeSubject.equals(subject) ) {
-                  allowed = true; // subject of session == this node's subect
-                  break;
-              }
-          }              
-      }
-      logMetacat.debug("In is NodeAdmin method. Is this a node admin? "+allowed);
-      return allowed;
-  }
+//  public boolean isNodeAdmin(Session session) throws NotImplemented, ServiceFailure {
+//
+//      boolean allowed = false;
+//      
+//      // must have a session in order to check admin 
+//      if (session == null) {
+//         logMetacat.debug("In isNodeAdmin(), session is null ");
+//         return false;
+//      }
+//      
+//      logMetacat.debug("In isNodeAdmin(), MN authorization for the user " +
+//           session.getSubject().getValue());
+//      
+//      Node node = MNodeService.getInstance(request).getCapabilities();
+//      NodeReference nodeReference = node.getIdentifier();
+//      logMetacat.debug("In isNodeAdmin(), Node reference is: " + nodeReference.getValue());
+//      
+//      Subject subject = session.getSubject();
+//      
+//      if (node.getType() == NodeType.MN) {
+//          List<Subject> nodeSubjects = node.getSubjectList();
+//          
+//          // check if the session subject is in the node subject list
+//          for (Subject nodeSubject : nodeSubjects) {
+//              logMetacat.debug("In isNodeAdmin(), comparing subjects: " +
+//                  nodeSubject.getValue() + " and the user" + subject.getValue());
+//              if ( nodeSubject.equals(subject) ) {
+//                  allowed = true; // subject of session == this node's subect
+//                  break;
+//              }
+//          }              
+//      }
+//      logMetacat.debug("In is NodeAdmin method. Is this a node admin? "+allowed);
+//      return allowed;
+//  }
   
   /**
    * Test if the user identified by the provided token has authorization 
@@ -1178,39 +1142,25 @@ public abstract class D1NodeService {
    */
   public boolean isAuthorized(Session session, Identifier pid, Permission permission)
     throws ServiceFailure, InvalidToken, NotFound, NotAuthorized,
-    NotImplemented, InvalidRequest {
+    NotImplemented, InvalidRequest 
+  {
   
-    if (permission == null) 
-        throw new InvalidRequest("1761", "Permission was not provided or is invalid");
-    
-    
-    if ( isAdminAuthorized(session) ) 
-        return true;      
-    
-    
-    String serviceFailureCode = "1760";
-    String notFoundCode = "1800";
-    SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
+      if (permission == null) 
+          throw new InvalidRequest("1761", "Permission was not provided or is invalid");
 
-    if (isSessionAuthorized(session, sysmeta, permission)) 
-        return true;
+
+      String serviceFailureCode = "1760";
+      String notFoundCode = "1800";
+      String notAuthorizedCode = "1820";
+      String invalidRequestCode = "1761";
  
-    // the authoritative member node of the pid always has the access as well.
-    if (isAuthoritativeMNodeAdmin(session, pid)) 
-        return true;
-    
-    Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session); 
-    if (this.checkExpandedPermissions(sessionSubjects, sysmeta, permission))
-        return true;
-    
-    // throw instead of returning false
-    this.prepareAndThrowNotAuthorized(sessionSubjects, pid, permission, "1820");
-    
-    return false;
-  }
-    
-    
+      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode, invalidRequestCode);
 
+      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      authDel.doIsAuthorized(session, sysmeta, permission);
+
+      return true;
+  }
   
   
   /**
@@ -1224,23 +1174,23 @@ public abstract class D1NodeService {
    * @throws NotAuthorized 
    * @throws ServiceFailure 
    */
-  protected boolean isSessionAuthorized(Session session, SystemMetadata sysmeta, Permission permission) throws NotAuthorized, ServiceFailure {
-
-//      // the authoritative member node of the pid always has the access to the object
-//      if (allowAuthMNAdmin && isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), null)) {
+//  protected boolean isSessionAuthorized(Session session, SystemMetadata sysmeta, Permission permission) throws NotAuthorized, ServiceFailure {
+//
+////      // the authoritative member node of the pid always has the access to the object
+////      if (allowAuthMNAdmin && isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), null)) {
+////          return true;
+////      }
+//
+//      // get the subject[s] from the session
+//      // defer to the shared util for recursively compiling the subjects   
+//      Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+//      
+//      if (AuthUtils.isAuthorized(sessionSubjects, permission, sysmeta)) {
 //          return true;
 //      }
-
-      // get the subject[s] from the session
-      // defer to the shared util for recursively compiling the subjects   
-      Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-      
-      if (AuthUtils.isAuthorized(sessionSubjects, permission, sysmeta)) {
-          return true;
-      }
-      
-      return false;
-  }
+//      
+//      return false;
+//  }
 
   /**
    * Compare all the session subjects against the expanded subjects (from listSubjects)
@@ -1251,47 +1201,47 @@ public abstract class D1NodeService {
    * @return true or false, depending...
    * @throws ServiceFailure
    */
-  protected boolean checkExpandedPermissions(Set<Subject> sessionSubjects, SystemMetadata sysmeta, Permission permission) throws ServiceFailure {
-          
-      // TODO:  Is getting the subjectInfo of the rightsHolder really necessary? or do we need to fix getSubjectInfo 
-      // so we don't have to go back to the CNIdentity service to resolve ownership.  (This was put in to solve 
-      // nested groups transitivity problems, to the best of my knowledge.)
-      boolean isAllowed = false;
-      try {
-          
-          for (Subject s : sessionSubjects) {
-              if (s.getValue().equalsIgnoreCase("public")) 
-                  continue;
-
-              if (D1NodeService.expandRightsHolder(sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
-                  isAllowed = true;
-                  break;
-              }
-          }          
-      } 
-      catch (NotImplemented | InvalidRequest | InvalidToken e) {
-          ServiceFailure sf = new ServiceFailure("1030", "Exception thrown from expandRightsHolder(): " 
-                  + e.getClass().getCanonicalName() + ":: " + e.getDescription());
-          sf.initCause(e);
-          throw sf; 
-      } 
-      catch (NotAuthorized e) {
-          isAllowed = false;
-      }
-      return isAllowed;
-  }
+//  protected boolean checkExpandedPermissions(Set<Subject> sessionSubjects, SystemMetadata sysmeta, Permission permission) throws ServiceFailure {
+//          
+//      // TODO:  Is getting the subjectInfo of the rightsHolder really necessary? or do we need to fix getSubjectInfo 
+//      // so we don't have to go back to the CNIdentity service to resolve ownership.  (This was put in to solve 
+//      // nested groups transitivity problems, to the best of my knowledge.)
+//      boolean isAllowed = false;
+//      try {
+//          
+//          for (Subject s : sessionSubjects) {
+//              if (s.getValue().equalsIgnoreCase("public")) 
+//                  continue;
+//
+//              if (D1NodeService.expandRightsHolder(sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
+//                  isAllowed = true;
+//                  break;
+//              }
+//          }          
+//      } 
+//      catch (NotImplemented | InvalidRequest | InvalidToken e) {
+//          ServiceFailure sf = new ServiceFailure("1030", "Exception thrown from expandRightsHolder(): " 
+//                  + e.getClass().getCanonicalName() + ":: " + e.getDescription());
+//          sf.initCause(e);
+//          throw sf; 
+//      } 
+//      catch (NotAuthorized e) {
+//          isAllowed = false;
+//      }
+//      return isAllowed;
+//  }
   
   
-  protected void prepareAndThrowNotAuthorized(Set<Subject> sessionSubjects, Identifier pid, Permission permission, String detailCode) throws NotAuthorized {
-
-      StringBuffer includedSubjects = new StringBuffer();
-      for (Subject s: sessionSubjects) {
-          includedSubjects.append(s.getValue() + "; ");
-      } 
-      String msg = permission + " not allowed on " + pid.getValue() + " for subject[s]: " + includedSubjects.toString();
-      logMetacat.warn(msg);
-      throw new NotAuthorized(detailCode, msg);   
-  }
+//  protected void prepareAndThrowNotAuthorized(Set<Subject> sessionSubjects, Identifier pid, Permission permission, String detailCode) throws NotAuthorized {
+//
+//      StringBuffer includedSubjects = new StringBuffer();
+//      for (Subject s: sessionSubjects) {
+//          includedSubjects.append(s.getValue() + "; ");
+//      } 
+//      String msg = permission + " not allowed on " + pid.getValue() + " for subject[s]: " + includedSubjects.toString();
+//      logMetacat.warn(msg);
+//      throw new NotAuthorized(detailCode, msg);   
+//  }
   
     
   /**
@@ -1306,97 +1256,97 @@ public abstract class D1NodeService {
  * @throws InvalidToken 
  * @throws InvalidRequest 
    */
-  public static boolean expandRightsHolder(Subject rightHolder, Subject sessionSubject) throws ServiceFailure, NotImplemented, InvalidRequest, NotAuthorized, InvalidToken {
-      boolean is = false;
-      if(rightHolder != null && sessionSubject != null && rightHolder.getValue() != null && !rightHolder.getValue().trim().equals("") && sessionSubject.getValue() != null && !sessionSubject.getValue().trim().equals("")) {
-          CNode cn = D1Client.getCN();
-          logMetacat.debug("D1NodeService.expandRightHolder - at the start of method: after getting the cn node and cn node is "+cn.getNodeBaseServiceUrl());
-          String query= rightHolder.getValue();
-          int start =0;
-          int count= 200;
-          String status = null;
-          Session session = null;
-          SubjectInfo subjects = cn.listSubjects(session, query, status, start, count);
-
-          while(subjects != null) {
-              logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is not null");
-              List<Group> groups = subjects.getGroupList();
-              is = isInGroups(sessionSubject, rightHolder, groups);
-              if(is) {
-                  //since we find it, return it.
-                  return is;
-              } else {
-                  //decide if we need to try the page query for another trying.
-                  int sizeOfGroups = 0;
-                  if(groups != null) {
-                     sizeOfGroups  = groups.size();
-                  }
-                  List<Person> persons = subjects.getPersonList();
-                  int sizeOfPersons = 0;
-                  if(persons != null) {
-                      sizeOfPersons = persons.size();
-                  }
-                  int totalSize = sizeOfGroups+sizeOfPersons;
-                  //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result is "+totalSize);
-                 //we can't find the target on the first query, maybe query again.
-                  if(totalSize == count) {
-                      start = start+count;
-                      logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result equals the count "+totalSize+" .And we didn't find the target in the this query. So we have to use the page query with the start number "+start);
-                      subjects = cn.listSubjects(session, query, status, start, count);
-                  } else if (totalSize < count){
-                      logMetacat.debug("D1NodeService.expandRightHolder - we are already at the end of the returned restult since the size of returned results "+totalSize+
-                          " is less than the count "+count+". So we have to break the loop and finish the try.");
-                      break;
-                  } else if (totalSize >count) {
-                      logMetacat.warn("D1NodeService.expandRightHolder - Something is wrong on the implementation of the method listSubject since the size of returned results "+totalSize+
-                              " is greater than the count "+count+". So we have to break the loop and finish the try.");
-                      break;
-                  }
-              }
-              
-          } 
-          //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is null");
-          if(!is) {
-              logMetacat.debug("D1NodeService.expandRightHolder - We can NOT find any member in the group "+query+" (if it is a group) matches the user "+sessionSubject.getValue());
-          }
-      } else {
-          logMetacat.debug("D1NodeService.expandRightHolder - We can't determine if the use subject is a member of the right holder group since one of them is null or blank");
-      }
-     
-      return is;
-  }
+//  public static boolean expandRightsHolder(Subject rightHolder, Subject sessionSubject) throws ServiceFailure, NotImplemented, InvalidRequest, NotAuthorized, InvalidToken {
+//      boolean is = false;
+//      if(rightHolder != null && sessionSubject != null && rightHolder.getValue() != null && !rightHolder.getValue().trim().equals("") && sessionSubject.getValue() != null && !sessionSubject.getValue().trim().equals("")) {
+//          CNode cn = D1Client.getCN();
+//          logMetacat.debug("D1NodeService.expandRightHolder - at the start of method: after getting the cn node and cn node is "+cn.getNodeBaseServiceUrl());
+//          String query= rightHolder.getValue();
+//          int start =0;
+//          int count= 200;
+//          String status = null;
+//          Session session = null;
+//          SubjectInfo subjects = cn.listSubjects(session, query, status, start, count);
+//
+//          while(subjects != null) {
+//              logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is not null");
+//              List<Group> groups = subjects.getGroupList();
+//              is = isInGroups(sessionSubject, rightHolder, groups);
+//              if(is) {
+//                  //since we find it, return it.
+//                  return is;
+//              } else {
+//                  //decide if we need to try the page query for another trying.
+//                  int sizeOfGroups = 0;
+//                  if(groups != null) {
+//                     sizeOfGroups  = groups.size();
+//                  }
+//                  List<Person> persons = subjects.getPersonList();
+//                  int sizeOfPersons = 0;
+//                  if(persons != null) {
+//                      sizeOfPersons = persons.size();
+//                  }
+//                  int totalSize = sizeOfGroups+sizeOfPersons;
+//                  //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result is "+totalSize);
+//                 //we can't find the target on the first query, maybe query again.
+//                  if(totalSize == count) {
+//                      start = start+count;
+//                      logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the size of return result equals the count "+totalSize+" .And we didn't find the target in the this query. So we have to use the page query with the start number "+start);
+//                      subjects = cn.listSubjects(session, query, status, start, count);
+//                  } else if (totalSize < count){
+//                      logMetacat.debug("D1NodeService.expandRightHolder - we are already at the end of the returned restult since the size of returned results "+totalSize+
+//                          " is less than the count "+count+". So we have to break the loop and finish the try.");
+//                      break;
+//                  } else if (totalSize >count) {
+//                      logMetacat.warn("D1NodeService.expandRightHolder - Something is wrong on the implementation of the method listSubject since the size of returned results "+totalSize+
+//                              " is greater than the count "+count+". So we have to break the loop and finish the try.");
+//                      break;
+//                  }
+//              }
+//              
+//          } 
+//          //logMetacat.debug("D1NodeService.expandRightHolder - search the subject "+query+" in the cn and the returned result is null");
+//          if(!is) {
+//              logMetacat.debug("D1NodeService.expandRightHolder - We can NOT find any member in the group "+query+" (if it is a group) matches the user "+sessionSubject.getValue());
+//          }
+//      } else {
+//          logMetacat.debug("D1NodeService.expandRightHolder - We can't determine if the use subject is a member of the right holder group since one of them is null or blank");
+//      }
+//     
+//      return is;
+//  }
   
   /*
    * If the given useSession is a member of a group which is in the given list of groups and has the name of righHolder.
    */
-  private static boolean isInGroups(Subject userSession, Subject rightHolder, List<Group> groups) {
-      boolean is = false;
-      if(groups != null) {
-          logMetacat.debug("D1NodeService.isInGroups -  the given groups' (the returned result including groups) size is "+groups.size());
-          for(Group group : groups) {
-              //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
-              if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
-                  logMetacat.debug("D1NodeService.isInGroups - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
-                  List<Subject> members = group.getHasMemberList();
-                  if(members != null ){
-                      logMetacat.debug("D1NodeService.isInGroups - the group "+group.getSubject().getValue()+" in the cn has members");
-                      for(Subject member : members) {
-                          logMetacat.debug("D1NodeService.isInGroups - compare the member "+member.getValue()+" with the user "+userSession.getValue());
-                          if(member.getValue() != null && !member.getValue().trim().equals("") && userSession.getValue() != null && member.getValue().equals(userSession.getValue())) {
-                              logMetacat.debug("D1NodeService.isInGroups - Find it! The member "+member.getValue()+" in the group "+group.getSubject().getValue()+" matches the user "+userSession.getValue());
-                              is = true;
-                              return is;
-                          }
-                      }
-                  }
-                  break;//we found the group but can't find the member matches the user. so break it.
-              }
-          }
-      } else {
-          logMetacat.debug("D1NodeService.isInGroups -  the given group is null (the returned result does NOT have a group");
-      }
-      return is;
-  }
+//  private static boolean isInGroups(Subject userSession, Subject rightHolder, List<Group> groups) {
+//      boolean is = false;
+//      if(groups != null) {
+//          logMetacat.debug("D1NodeService.isInGroups -  the given groups' (the returned result including groups) size is "+groups.size());
+//          for(Group group : groups) {
+//              //logMetacat.debug("D1NodeService.expandRightHolder - group has the subject "+group.getSubject().getValue());
+//              if(group != null && group.getSubject() != null && group.getSubject().equals(rightHolder)) {
+//                  logMetacat.debug("D1NodeService.isInGroups - there is a group in the list having the subjecct "+group.getSubject().getValue()+" which matches the right holder's subject "+rightHolder.getValue());
+//                  List<Subject> members = group.getHasMemberList();
+//                  if(members != null ){
+//                      logMetacat.debug("D1NodeService.isInGroups - the group "+group.getSubject().getValue()+" in the cn has members");
+//                      for(Subject member : members) {
+//                          logMetacat.debug("D1NodeService.isInGroups - compare the member "+member.getValue()+" with the user "+userSession.getValue());
+//                          if(member.getValue() != null && !member.getValue().trim().equals("") && userSession.getValue() != null && member.getValue().equals(userSession.getValue())) {
+//                              logMetacat.debug("D1NodeService.isInGroups - Find it! The member "+member.getValue()+" in the group "+group.getSubject().getValue()+" matches the user "+userSession.getValue());
+//                              is = true;
+//                              return is;
+//                          }
+//                      }
+//                  }
+//                  break;//we found the group but can't find the member matches the user. so break it.
+//              }
+//          }
+//      } else {
+//          logMetacat.debug("D1NodeService.isInGroups -  the given group is null (the returned result does NOT have a group");
+//      }
+//      return is;
+//  }
   /*
    * parse a logEntry and get the relevant field from it
    * 
@@ -2436,6 +2386,8 @@ public abstract class D1NodeService {
   
   /**
    * A utility method for v1 api to check the specified identifier exists as a pid
+   * Uses the IdentifierManager to call the Identifier table directly - this detects
+   * Identifiers for deleted objects (where the SystemMetadata doesn't exist, but the Identifier remains)
    * @param identifier  the specified identifier
    * @param serviceFailureCode  the detail error code for the service failure exception
    * @param noFoundCode  the detail error code for the not found exception
@@ -2498,21 +2450,36 @@ public abstract class D1NodeService {
       return id;
   }
  
-
+  
+  
+  protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode) throws ServiceFailure, NotFound 
+  {
+      try {
+          return getSeriesHead(id,serviceFailureCode, notFoundCode, null);
+      } catch (InvalidRequest e) {
+          ServiceFailure sf = new ServiceFailure(serviceFailureCode,e.getDescription());
+          sf.initCause(e);
+          throw sf;
+      }
+  }
+  
+  
+  
   /**
    * If the id is a PID, returns the SystemMetadata associated with it.  If the id is a SID,
    * returns the SystemMetadata of the series' current head.
    * @param id - either PID or SID
-   * @param detailCodeForBaseException - the detail code to use if an exception is thrown.
+   * @param serviceFailureCode - the detail code to use if ServiceFailure is 
    * @return - a systemMetadata object, never null
    * @throws ServiceFailure 
    * @throws NotFound 
+   * @throws InvalidRequest 
    */
-   protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode) throws ServiceFailure, NotFound {
+   protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode, String invalidRequestCode) throws ServiceFailure, NotFound, InvalidRequest {
 
        SystemMetadata sysmeta = null;
        if (id == null || StringUtils.isAnyBlank(id.getValue())) {
-           throw new ServiceFailure(serviceFailureCode, "The passed-in Identifier cannot be null or blank!!");
+           throw new InvalidRequest(serviceFailureCode, "The passed-in Identifier cannot be null or blank!!");
        }
 
        try {
@@ -2678,22 +2645,15 @@ public abstract class D1NodeService {
       InputStream resultInputStream = null;
       
       String serviceFailureCode = "2831";
-      String notFoundCode = "2831";
-      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
+      String notFoundCode = "2835";
+      String invalidRequestCode = "2833";
+      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
 
       InputStream object = this.get(session, sysmeta.getIdentifier()); 
       
       // authorization is delegated to the get() call, and using the ID 
       //	 from the sysmeta guarantees that it's a PID, and so will
       // avoid duplicating series resolution attempts                      										
-      
-      // TODO: get() and getSystemMetadata() seem to differ in authorization rules
-      // - getSysMetadata also authorizes replicaMNs for READ, whereas get doesn't seem to.
-      // unless the same replica-authorizing code is in MNodeSErvice or CNodeService.
-      // I'm surprised it hasn't come up
-      // TODO: the new authorization does not have the replicaMN authorizing logic yet
-      // so we need to add it.
-      
       
       try {
           // can only transform metadata, really

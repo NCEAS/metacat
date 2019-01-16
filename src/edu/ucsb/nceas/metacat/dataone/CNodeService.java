@@ -273,8 +273,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  	// The lock to be used for this identifier
 		Lock lock = null;
 
+		if(session == null) {
+            throw new NotAuthorized("4882", "Session cannot be null. It is not authorized for deleting the replication metadata of the object "+pid.getValue());
+        } 
 		// get the subject
-		Subject subject = session.getSubject();
+//		Subject subject = session.getSubject();
 
 		// are we allowed to do this?
 		/*boolean isAuthorized = false;
@@ -289,13 +292,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 					+ pid.getValue());
 
 		}*/
-		if(session == null) {
-		    throw new NotAuthorized("4882", "Session cannot be null. It is not authorized for deleting the replication metadata of the object "+pid.getValue());
-		} else {
-		    if(!isCNAdmin(session)) {
-		        throw new NotAuthorized("4882", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for deleting the replication metadata of the object "+pid.getValue());
-		    }
-		}
+		
+		D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,"4882","4884");
+		authDel.doCNOnlyAuthorization(session);
 
 		SystemMetadata systemMetadata = null;
 		try {
@@ -400,41 +399,25 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       // check for a valid session
       if (session == null) {
-        	throw new InvalidToken("4963", "No session has been provided");
-        	
+        	throw new InvalidToken("4963", "No session has been provided");        	
       }
 
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
-          throw new ServiceFailure("4960", "The provided identifier was invalid.");
-          
+          throw new ServiceFailure("4962", "The provided identifier was invalid.");          
       }
       
+      String notAuthorizedCode = "4960";
+      String notFoundCode = "4961";
       String serviceFailureCode = "4962";
-      Identifier sid = getPIDForSID(pid, serviceFailureCode);
-      if(sid != null) {
-          pid = sid;
-      }
+      
+      SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
+      
+      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      authDel.doAuthoritativeMNAuthorization(session, sysmeta);
 
-	  // check that it is CN/admin
-	  boolean allowed = isAdminAuthorized(session);
-	  
-	  // additional check if it is the authoritative node if it is not the admin
-      if(!allowed) {
-          allowed = isAuthoritativeMNodeAdmin(session, pid);
-          
-      }
-	  
-	  if (!allowed) {
-		  String msg = "The subject " + session.getSubject().getValue() + 
-			  " is not allowed to call delete() on a Coordinating Node.";
-		  logMetacat.info(msg);
-		  throw new NotAuthorized("4960", msg);
-		  
-	  }
-	  
+	    
 	  // Don't defer to superclass implementation without a locally registered identifier
-	  SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
       // Check for the existing identifier
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
@@ -442,42 +425,37 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
       } catch (McdbDocNotFoundException e) {
           // This object is not registered in the identifier table. Assume it is of formatType DATA,
-    	  // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
+    	      // and set the archive flag. (i.e. the *object* doesn't exist on the CN)
     	  
           try {
-  			  lock = HazelcastService.getInstance().getLock(pid.getValue());
-  			  lock.lock();
-  			  logMetacat.debug("Locked identifier " + pid.getValue());
+              lock = HazelcastService.getInstance().getLock(pid.getValue());
+              lock.lock();
+              logMetacat.debug("Locked identifier " + pid.getValue());
 
-			  SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-			  if ( sysMeta != null ) {
-				/*sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
+              /*sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
 				sysMeta.setArchived(true);
 				sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
 				HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);*/
-			    //move the systemmetadata object from the map and delete the records in the systemmetadata database table
-	            //since this is cn, we don't need worry about the mn solr index.
-	            HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
-	            HazelcastService.getInstance().getIdentifiers().remove(pid);
-	            String username = session.getSubject().getValue();//just for logging purpose
-                //since data objects were not registered in the identifier table, we use pid as the docid
-                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, pid.getValue(), Event.DELETE.xmlValue());
-				
-			  } else {
-				  throw new ServiceFailure("4962", "Couldn't delete the object " + pid.getValue() +
-					  ". Couldn't obtain the system metadata record.");
-				  
-			  }
-			  
-		  } catch (RuntimeException re) {
-			  throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
-				  ". The error message was: " + re.getMessage());
-			  
-		  } finally {
-			  lock.unlock();
-			  logMetacat.debug("Unlocked identifier " + pid.getValue());
 
-		  }
+              //remove the systemmetadata object from the map and delete the records in the systemmetadata database table
+              //since this is cn, we don't need worry about the mn solr index.
+              HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
+              HazelcastService.getInstance().getIdentifiers().remove(pid);
+              String username = session.getSubject().getValue();//just for logging purpose
+              //since data objects were not registered in the identifier table, we use pid as the docid
+              EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, pid.getValue(), Event.DELETE.xmlValue());
+
+
+
+          } catch (RuntimeException re) {
+              throw new ServiceFailure("4962", "Couldn't delete " + pid.getValue() + 
+                      ". The error message was: " + re.getMessage());
+
+          } finally {
+              lock.unlock();
+              logMetacat.debug("Unlocked identifier " + pid.getValue());
+
+          }
 
           // NOTE: cannot log the delete without localId
 //          EventLog.getInstance().log(request.getRemoteAddr(), 
@@ -502,8 +480,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       }
 
 	  // notify the replicas
-	  if (systemMetadata.getReplicaList() != null) {
-		  for (Replica replica: systemMetadata.getReplicaList()) {
+	  if (sysmeta.getReplicaList() != null) {
+		  for (Replica replica: sysmeta.getReplicaList()) {
 			  NodeReference replicaNode = replica.getReplicaMemberNode();
 			  try {
                   if (nodeList != null) {
@@ -554,60 +532,32 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
   public Identifier archive(Session session, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
-      String localId = null; // The corresponding docid for this pid
-	  Lock lock = null;      // The lock to be used for this identifier
-      CNode cn = null;            // a reference to the CN to get the node list    
-      NodeType nodeType = null;   // the nodeType of the replica node being contacted
-      List<Node> nodeList = null; // the list of nodes in this CN environment
-      
-
       // check for a valid session
       if (session == null) {
-        	throw new InvalidToken("4973", "No session has been provided");
-        	
+        	throw new InvalidToken("4973", "No session has been provided");       	
       }
 
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
-          throw new InvalidToken("4973", "The provided identifier was invalid.");
-          
+          //TODO: should throw a ServiceFailure, tokens indicate problem with the session, not other parameters
+          throw new InvalidToken("4973", "The provided identifier was invalid.");     
       }
 
-	  // check that it is CN/admin
-	  boolean allowed = isAdminAuthorized(session);
-	  
+      
 	  String serviceFailureCode = "4972";
-	  String notFoundCode = "????";
+      String notFoundCode = "4971";
+      String notAuthorizedCode = "4970";
 	  SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
 	  
-	  authorization:
-	  {
-	      
-	      if (isSessionAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION)) {
-              allowed = true;
-              break authorization;
-          }
-	      if (isAdminAuthorized(session)) {
-              allowed = true;
-              break authorization;
-          }
-	      if (isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(),null)) {
-	          allowed = true;
-	          break authorization;
-	      }
-	      Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-	      if (this.checkExpandedPermissions(sessionSubjects, sysmeta, Permission.CHANGE_PERMISSION)) {
-	          allowed = true;
-	          break authorization;
-	      }
-	      
-	      this.prepareAndThrowNotAuthorized(sessionSubjects, sysmeta.getIdentifier(), Permission.CHANGE_PERMISSION, "4970");
-	  }
+	  
+	  D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,notAuthorizedCode,serviceFailureCode);
+	  authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
+	  
 	  
       try {
           HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
           logMetacat.debug("CNodeService.archive - lock the system metadata for "+pid.getValue());
-//          SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+
           D1NodeVersionChecker checker = new D1NodeVersionChecker(sysmeta.getAuthoritativeMemberNode());
           String version = checker.getVersion("MNRead");
           if(version == null) {
@@ -927,8 +877,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               if ( !allowed ) {
                   //check for CN admin access
                   //allowed = isAuthorized(session, pid, Permission.WRITE);
-                  allowed = isCNAdmin(session);
-                  
+                  D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+                  authDel.doCNOnlyAuthorization(session);
+ //                 allowed = isCNAdmin(session);
+                  allowed = true;
               }              
               
               if ( !allowed ) {
@@ -1189,8 +1141,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         if (true)
             throw new NotImplemented("0000", "Implementation underway... Will need testing too...");
         
-        if (!isAdminAuthorized(session))
-            throw new NotAuthorized("0000", "Not authorized to call addFormat()");
+        D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, null, "????", "????");
+        authDel.doCNOnlyAuthorization(session);
+//        if (!isAdminAuthorized(session))
+//            throw new NotAuthorized("0000", "Not authorized to call addFormat()");
 
         String separator = ".";
         try {
@@ -1383,9 +1337,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   "  If you are not logged in, please do so and retry the request.");
       } else {
           //only CN is allwoed
-          if(!isCNAdmin(session)) {
-                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for registering the system metadata of the object "+pid.getValue());
-          }
+          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+          authDel.doCNOnlyAuthorization(session);
+//          if(!isCNAdmin(session)) {
+//                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for registering the system metadata of the object "+pid.getValue());
+//          }
       }
       // the identifier can't be an SID
       try {
@@ -1571,38 +1527,27 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
-          throw new InvalidRequest("4442", "The provided identifier was invalid.");
-          
+          throw new InvalidRequest("4442", "The provided identifier was invalid."); 
       }
 
       // get the subject
       Subject subject = session.getSubject();
       
       String serviceFailureCode = "4490";
-      Identifier sid = getPIDForSID(pid, serviceFailureCode);
-      if(sid != null) {
-          pid = sid;
-      }
-      
-      // are we allowed to do this?
-      if (!isAuthorized(session, pid, Permission.CHANGE_PERMISSION)) {
-          throw new NotAuthorized("4440", "not allowed by "
-                  + subject.getValue() + " on " + pid.getValue());
-          
-      }
-      
-      SystemMetadata systemMetadata = null;
+      String notFoundCode = "4460";
+      String notAuthorizedCode = "4440";
+      String invalidRequestCode = "4442";
+      SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+     
+      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
+
       try {
           lock = HazelcastService.getInstance().getLock(pid.getValue());
           lock.lock();
           logMetacat.debug("Locked identifier " + pid.getValue());
 
           try {
-              systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-              
-              if(systemMetadata == null) {
-                  throw new NotFound("4460", "The object "+pid.getValue()+" doesn't exist in the node.");
-              }
               // does the request have the most current system metadata?
               if ( systemMetadata.getSerialVersion().longValue() != serialVersion ) {
                  String msg = "The requested system metadata version number " + 
@@ -1832,7 +1777,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
           // are we allowed?
           boolean isAllowed = false;
-          isAllowed = isAdminAuthorized(session);
+          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+          authDel.doCNOnlyAuthorization(session);
+//          isAllowed = isAdminAuthorized(session);
+          isAllowed = true;
           
           // additional check if it is the authoritative node if it is not the admin
           // How can this work?  If the pid is on the CN, it will fail on the objectExists check
@@ -1925,32 +1873,25 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       AccessPolicy accessPolicy, long serialVersion) 
       throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, 
       NotImplemented, InvalidRequest, VersionMismatch {
+    
       
-   // do we have a valid pid?
+      // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
-          throw new InvalidRequest("4402", "The provided identifier was invalid.");
-          
+          throw new InvalidRequest("4402", "The provided identifier was invalid."); 
       }
-      
+
       String serviceFailureCode = "4430";
-      Identifier sid = getPIDForSID(pid, serviceFailureCode);
-      if(sid != null) {
-          pid = sid;
-      }
+      String notFoundCode = "4400";
+      String notAuthorizedCode = "4420";
+      String invalidRequestCode = "4402";
+      SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+     
+      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
+      
+      
       // The lock to be used for this identifier
       Lock lock = null;
-      SystemMetadata systemMetadata = null;
-      
-      boolean success = false;
-      
-      // get the subject
-      Subject subject = session.getSubject();
-      
-      // are we allowed to do this?
-      if (!isAuthorized(session, pid, Permission.CHANGE_PERMISSION)) {
-          throw new NotAuthorized("4420", "not allowed by "
-                  + subject.getValue() + " on " + pid.getValue());
-      }
       
       try {
           lock = HazelcastService.getInstance().getLock(pid.getValue());
@@ -2016,12 +1957,9 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           logMetacat.debug("Unlocked identifier " + pid.getValue());
         
       }
-
-    
+   
     // TODO: how do we know if the map was persisted?
-    success = true;
-    
-    return success;
+    return true;
   }
 
   /**
@@ -2055,9 +1993,11 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       if(session == null) {
           throw new NotAuthorized("4851", "Session cannot be null. It is not authorized for updating the replication metadata of the object "+pid.getValue());
       } else {
-          if(!isCNAdmin(session)) {
-              throw new NotAuthorized("4851", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for updating the replication metadata of the object "+pid.getValue());
-        }
+          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4851", "????");
+          authDel.doCNOnlyAuthorization(session);
+//          if(!isCNAdmin(session)) {
+//              throw new NotAuthorized("4851", "The client -"+ session.getSubject().getValue()
+//                   + "is not a CN and is not authorized for updating the replication metadata of the object "+pid.getValue());
       }
       /*try {
 
@@ -2296,9 +2236,12 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                "  If you are not logged in, please do so and retry the request.");
    } else {
          //only CN is allwoed
-         if(!isCNAdmin(session)) {
-               throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-         }
+       D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+       authDel.doCNOnlyAuthorization(session);
+  
+//         if(!isCNAdmin(session)) {
+//               throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+//         }
    }
 
     //update the system metadata locally
