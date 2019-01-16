@@ -55,6 +55,7 @@ import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
@@ -390,5 +391,71 @@ public class D1NodeServiceTest extends MCTestCase {
 	    System.out.println();
 	    System.out.println("*************** " + testName + " ***************");
 	}
- 
+	
+	/*
+	 *Get a user who is in the knb data admin group. It is Lauren Walker.
+	 *It also includes the subject information from the cn.
+	 */
+	protected Session getOneKnbDataAdminsMember() throws Exception {
+	    Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue("http://orcid.org/0000-0003-2192-431X");
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+	}
+	
+	/*
+     *Get the subject of the knb data admin group
+     */
+    protected Subject getKnbDataAdminsGroupSubject() {
+        Subject subject = new Subject();
+        subject.setValue("CN=knb-data-admins,DC=dataone,DC=org");
+        return subject;
+    }
+	
+	/*
+     *Get a user who is in the PISCO-data-managers.
+     *It also includes the subject information from the cn.
+     */
+    protected Session getOnePISCODataManagersMember() throws Exception {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue("CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org");
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+    }
+	
+    /*
+     *Get the subject of the PISCO-data-managers group
+     */
+    protected Subject getPISCODataManagersGroupSubject() {
+        Subject subject = new Subject();
+        subject.setValue("CN=PISCO-data-managers,DC=dataone,DC=org");
+        return subject;
+    }
+	
+    /*
+     * Get a test group project
+     */
+    protected Subject getTestGroupSubject() {
+        Subject subject = new Subject();
+        subject.setValue("CN=my-test-group,DC=dataone,DC=org");
+        return subject;
+    }
+    
+    /*
+     * Get the session with the user public
+     */
+    protected Session getPublicUser() {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(Constants.SUBJECT_PUBLIC);
+        session.setSubject(subject);
+        return session;
+    }
+    
 }
