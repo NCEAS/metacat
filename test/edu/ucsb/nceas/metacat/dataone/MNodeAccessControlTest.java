@@ -39,8 +39,11 @@ import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.SynchronizationFailed;
+import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
 import org.dataone.service.types.v1.Event;
@@ -67,6 +70,12 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
    
     public static final String TEXT = "data";
     public static final String ALGORITHM = "MD5";
+    public static final String KNBAMDINMEMBERSUBJECT = "http://orcid.org/0000-0003-2192-431X";
+    public static final String PISCOMANAGERMEMBERSUBJECT = "CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org";
+    private static final Session nullSession = null;
+    private static final Session publicSession = getPublicUser();
+    private static Session KNBadmin = null;
+    private static Session PISCOManager = null;
     
     /**
      * Constructor
@@ -76,10 +85,11 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         super(name);
     }
     
-    public static Test suite() 
-    {
+    public static Test suite() {
         TestSuite suite = new TestSuite();
         suite.addTest(new MNodeAccessControlTest("initialize"));
+        suite.addTest(new MNodeAccessControlTest("testMethodsWithoutSession"));
+        suite.addTest(new MNodeAccessControlTest("testMethodsWithSession"));
         return suite;
     }
     
@@ -98,18 +108,18 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     public void initialize() {
         printTestHeader("initialize");
         try {
-            Session session =getCNSession();
+            /*Session session =getCNSession();
             System.out.println("==================the cn session is "+session.getSubject().getValue());
-            Session userSession = getOneKnbDataAdminsMember();
+            Session userSession = getOneKnbDataAdminsMemberSession();
             Set<Subject> subjects = AuthUtils.authorizedClientSubjects(userSession);
             for (Subject subject: subjects) {
                 System.out.println("the knb data admin user has this subject "+subject.getValue());
             }
-             userSession = getOnePISCODataManagersMember();
+             userSession = getOnePISCODataManagersMemberSession();
              subjects = AuthUtils.authorizedClientSubjects(userSession);
             for (Subject subject: subjects) {
                 System.out.println("the pisco data manager user has this subject "+subject.getValue());
-            }
+            }*/
             
         } catch (Exception e) {
             e.printStackTrace();
@@ -118,65 +128,183 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     }
     
     /**
-     * A generic test method to determine if the given session can call the describe method to result the expection.  
-     * @param session the session will call the describe method
-     * @param id the identifier will be used to call the describe method
-     * @param expectedResult the expected result for authorization. True will be successful.
+     * Test those methods which don't need sessions.
+     * @throws Exception
      */
-    public void testDescribe(Session session, Identifier id, boolean expectedResult) throws Exception {
-        if(expectedResult) {
-            DescribeResponse reponse =MNodeService.getInstance(request).describe(session,id);
-            ObjectFormatIdentifier format = reponse.getDataONE_ObjectFormatIdentifier();
-            assertTrue(format.getValue().equals("application/octet-stream"));
-        } else {
-            try {
-                DescribeResponse reponse =MNodeService.getInstance(request).describe(session,id);
-                fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-            } catch (NotAuthorized e) {
-                
-            }
-        }
+    public void testMethodsWithoutSession() throws Exception {
+        testGetCapacity();
+        testListObjects();
+        testListViews();
     }
     
     /**
-     * A generic test method to determine if the given session can call the getSystemMetadata method to result the expectation.  
-     * @param session the session will call the getSystemMetadata method
-     * @param id the identifier will be used to call the getSystemMetadata method
-     * @param expectedResult the expected result for authorization. True will be successful.
+     * Test those methods which need sessions.
+     * @throws Exception
      */
-    public void testGetSystemmetadata(Session session, Identifier id, boolean expectedResult) throws Exception {
-        if(expectedResult) {
-            SystemMetadata sysmeta =MNodeService.getInstance(request).getSystemMetadata(session,id);
-            assertTrue(sysmeta.getIdentifier().equals(id));
-        } else {
-            try {
-                SystemMetadata sysmeta =MNodeService.getInstance(request).getSystemMetadata(session,id);
-                fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-            } catch (NotAuthorized e) {
-                
-            }
-        }
+    public void testMethodsWithSession() throws Exception {
+        KNBadmin = getOneKnbDataAdminsMemberSession();
+        PISCOManager = getOnePISCODataManagersMemberSession();
+        //rights holder is a user.
+        Subject rightsHolder = getAnotherSession().getSubject();
+        testMethodsWithGivenHightsHolder(rightsHolder);
     }
     
     /**
-     * A generic test method to determine if the given session can call the get method to result the expectation.  
-     * @param session the session will call the get method
-     * @param id the identifier will be used to call the get method
-     * @param expectedResult the expected result for authorization. True will be successful.
+     * Real methods to test the access control - 
+     * @param rightsHolder
+     * @throws Exception
      */
-    public void testGet(Session session, Identifier id, boolean expectedResult) throws Exception {
+    private void testMethodsWithGivenHightsHolder(Subject rightsHolder) throws Exception {
+        Session rightsHolderSession = new Session();
+        rightsHolderSession.setSubject(rightsHolder);
+        Session submitter = getTestSession();
+       
+        //1. Test generating identifiers (it only checks if session is null)
+        String scheme = "unknow";
+        String fragment = "test-access"+System.currentTimeMillis();
+        testGenerateIdentifier(nullSession, scheme, fragment, false);
+        Identifier id1 = testGenerateIdentifier(publicSession, scheme, fragment, true);
+        
+        //2 Test the create method (it only checks if session is null)
+        InputStream object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(id1, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolder);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(nullSession, id1, sysmeta, object, false);
+        testCreate(submitter, id1, sysmeta, object, true);
+       
+        //3 The object id1 doesn't have any access policy, it can be read by rights holder, cn and mn.
+        testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
+        testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
+        testGetAPI(submitter, id1,sysmeta.getChecksum(),false); //submitter can't read it
+        testGetAPI(publicSession, id1,sysmeta.getChecksum(),false); //public can't read it
+        testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),false); //knb can't read it
+        testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
+        testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+       
+        //4 Test update the system metadata with new access rule (knb group can read it)
+        AccessPolicy policy = new AccessPolicy();
+        AccessRule rule = new AccessRule();
+        rule.addPermission(Permission.READ);
+        rule.addSubject(getKnbDataAdminsGroupSubject());
+        policy.addAllow(rule);
+        sysmeta.setAccessPolicy(policy);
+        testUpdateSystemmetadata(nullSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(submitter, id1, sysmeta, false);
+        testUpdateSystemmetadata(PISCOManager, id1, sysmeta, false);
+        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, false);
+        testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
+        testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        //read it with the access rule - knb group add read it
+        testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
+        testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
+        testGetAPI(submitter, id1,sysmeta.getChecksum(),false); //submitter can't read it
+        testGetAPI(publicSession, id1,sysmeta.getChecksum(),false); //public can't read it
+        testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
+        testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
+        testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+        
+        //5.Test get api when knb group has the write permission and submitter has read permission
+        //set up
+        policy = new AccessPolicy();
+        rule = new AccessRule();
+        rule.addPermission(Permission.WRITE);
+        rule.addSubject(getKnbDataAdminsGroupSubject());
+        policy.addAllow(rule);
+        AccessRule rule2= new AccessRule();
+        rule2.addPermission(Permission.READ);
+        rule2.addSubject(submitter.getSubject());
+        policy.addAllow(rule2);
+        sysmeta.setAccessPolicy(policy);
+        testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
+        //read
+        testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
+        testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
+        testGetAPI(submitter, id1,sysmeta.getChecksum(),true); //submitter can read it
+        testGetAPI(publicSession, id1,sysmeta.getChecksum(),false); //public can't read it
+        testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
+        testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
+        testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+        
+        //6. Test get api when the public and submitter has the read permission and the knb-admin group has write permission
+        //set up
+        AccessRule rule3= new AccessRule();
+        rule3.addPermission(Permission.READ);
+        rule3.addSubject(publicSession.getSubject());
+        policy.addAllow(rule3);
+        sysmeta.setAccessPolicy(policy);
+        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, false);
+        testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
+        //read
+        testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
+        testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
+        testGetAPI(submitter, id1,sysmeta.getChecksum(),true); //submitter can read it
+        testGetAPI(publicSession, id1,sysmeta.getChecksum(),true); //public can read it
+        testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
+        testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),true); //pisco can read it
+        testGetAPI(nullSession, id1,sysmeta.getChecksum(),true); //nullSession can read it
+        
+        //7. Test the updateSystemMetadata (the public and submitter has the read permission and the knb-admin group has write permission)
+        //add a new policy that pisco group and submitter has the change permission
+        AccessRule rule4= new AccessRule();
+        rule4.addPermission(Permission.CHANGE_PERMISSION);
+        rule4.addSubject(getPISCODataManagersGroupSubject());
+        policy.addAllow(rule4);
+        AccessRule rule5= new AccessRule();
+        rule5.addPermission(Permission.CHANGE_PERMISSION);
+        rule5.addSubject(submitter.getSubject());
+        policy.addAllow(rule5);
+        sysmeta.setAccessPolicy(policy);
+        testUpdateSystemmetadata(nullSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(submitter, id1, sysmeta, false);
+        testUpdateSystemmetadata(PISCOManager, id1, sysmeta, false);
+        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, false);
+        testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
+        testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        //now pisco member session and submitter can update systememetadata since they have change permssion
+        testUpdateSystemmetadata(nullSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
+        testUpdateSystemmetadata(submitter, id1, sysmeta, true);
+        testUpdateSystemmetadata(PISCOManager, id1, sysmeta, true);
+        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, false);
+        testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
+        testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        System.out.println("The id is ============================"+id1.getValue());
+        //testGetReplica(getCNSession(), id1, true);
+        
+    }
+    
+   
+    /**
+     * A generic test method to determine if the given session can call the delete method to result the expectation.  
+     * @param session the session will call the isAuthorized method
+     * @param pid the identifier of the object will be applied
+     * @param permission the permission will be checked
+     * @param expectedResult the expected for authorization. True will be successful.
+     * @throws Exception
+     */
+    private void testIsAuthorized(Session session, Identifier pid, Permission permission, boolean expectedResult) throws Exception {
         if(expectedResult) {
-            InputStream out =MNodeService.getInstance(request).get(session,id);
-            assertTrue(IOUtil.getInputStreamAsString(out).equals(TEXT));
-            out.close();
+            boolean result = MNodeService.getInstance(request).isAuthorized(session, pid, permission);
+            assertTrue(result == expectedResult);
         } else {
             try {
-                InputStream out =MNodeService.getInstance(request).get(session,id);
+                boolean result = MNodeService.getInstance(request).isAuthorized(session, pid, permission);
                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
             } catch (NotAuthorized e) {
                 
             }
         }
+        
     }
     
     /**
@@ -186,8 +314,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @param sysmeta the system metadata object will be used at the create method
      * @param expectedResult the expected result for authorization. True will be successful.
      */
-    public Identifier testCreate (Session session, Identifier pid, SystemMetadata sysmeta, boolean expectedResult) throws Exception{
-        InputStream object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+    private Identifier testCreate (Session session, Identifier pid, SystemMetadata sysmeta, InputStream object, boolean expectedResult) throws Exception{
         if(expectedResult) {
             Identifier id = MNodeService.getInstance(request).create(session, pid, object, sysmeta);
             assertTrue(id.equals(pid));
@@ -195,7 +322,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
             try {
                 pid = MNodeService.getInstance(request).create(session, pid, object, sysmeta);
                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-            } catch (NotAuthorized e) {
+            } catch (InvalidToken e) {
                 
             }
         }
@@ -208,7 +335,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @param id the identifier will be used to call the delete method
      * @param expectedResult the expected result for authorization. True will be successful.
      */
-     public void testDelete(Session session, Identifier pid, boolean expectedResult) throws Exception{
+     private void testDelete(Session session, Identifier pid, boolean expectedResult) throws Exception{
          if(expectedResult) {
              Identifier id = MNodeService.getInstance(request).delete(session, pid);
              assertTrue(id.equals(pid));
@@ -222,28 +349,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
          }
      }
      
-     /**
-      * A generic test method to determine if the given session can call the delete method to result the expectation.  
-      * @param session the session will call the isAuthorized method
-      * @param pid the identifier of the object will be applied
-      * @param permission the permission will be checked
-      * @param expectedResult the expected for authorization. True will be successful.
-      * @throws Exception
-      */
-     public void testIsAuthorized(Session session, Identifier pid, Permission permission, boolean expectedResult) throws Exception {
-         if(expectedResult) {
-             boolean result = MNodeService.getInstance(request).isAuthorized(session, pid, permission);
-             assertTrue(result == expectedResult);
-         } else {
-             try {
-                 boolean result = MNodeService.getInstance(request).isAuthorized(session, pid, permission);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-         
-     }
+    
      
      /**
       * A generic test method to determine if the given session can call the updateSystemMetadata method to result the expectation. 
@@ -253,7 +359,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * @param expectedResult
       * @throws Exception
       */
-     public void testUpdateSystemmetadata(Session session, Identifier pid, SystemMetadata newSysmeta, boolean expectedResult) throws Exception {
+     private void testUpdateSystemmetadata(Session session, Identifier pid, SystemMetadata newSysmeta, boolean expectedResult) throws Exception {
          if(expectedResult) {
              boolean result = MNodeService.getInstance(request).updateSystemMetadata(session, pid, newSysmeta);
              assertTrue(result == expectedResult);
@@ -267,28 +373,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
          }
      }
      
-     /**
-      * A generic test method to determine if the given session can call the view method to result the expectation. 
-      * @param session
-      * @param pid
-      * @param theme
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testView(Session session, Identifier pid, String theme, boolean expectedResult) throws Exception {
-         if(expectedResult) {
-             InputStream input = MNodeService.getInstance(request).view(session, theme, pid);
-             assertTrue(IOUtil.getInputStreamAsString(input).equals(TEXT));
-             input.close();
-         } else {
-             try {
-                 InputStream input = MNodeService.getInstance(request).view(session, theme, pid);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
+   
      
      /**
       *  A generic test method to determine if the given session can call the update method to result the expectation. 
@@ -299,7 +384,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * @param expectedResult
       * @throws Exception
       */
-     public void testUpdate(Session session, Identifier pid, SystemMetadata sysmeta, Identifier newPid, boolean expectedResult) throws Exception {
+     private void testUpdate(Session session, Identifier pid, SystemMetadata sysmeta, Identifier newPid, boolean expectedResult) throws Exception {
          InputStream object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
          if(expectedResult) {
              Identifier id = MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
@@ -316,126 +401,13 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      }
      
      /**
-      * A generic test method to determine if the given session can call the getChecksum method to result the expectation. 
-      * @param session
-      * @param pid
-      * @param expectedValue
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testGetChecksum(Session session, Identifier pid, Checksum expectedValue, boolean expectedResult) throws Exception {
-         if(expectedResult) {
-            Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
-            assertTrue(checksum.equals(expectedValue));
-         } else {
-             try {
-                 Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
-     /**
-      * A generic test method to determine if the given session can call the syncFailed method to result the expectation. 
-      * @param session
-      * @param syncFailed
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testSyncFailed(Session session, SynchronizationFailed syncFailed ,boolean expectedResult) throws Exception {
-         if(expectedResult) {
-             boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
-             assertTrue(success);
-         } else {
-             try {
-                 boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
-     /**
-      * A generic test method to determine if the given session can call the getReplica method to result the expectation. 
-      * @param session
-      * @param pid
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testGetReplicat(Session session, Identifier pid ,boolean expectedResult) throws Exception {
-         if(expectedResult) {
-             InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
-             assertTrue(IOUtil.getInputStreamAsString(input).equals(TEXT));
-         } else {
-             try {
-                 InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
-     /**
-      * A generic test method to determine if the given session can call the systemmetadataChanged method to result the expectation.
-      * @param session
-      * @param pid
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testSystemmetadataChanged(Session session, Identifier pid ,boolean expectedResult) throws Exception {
-         Date dateSysMetaLastModified = new Date();
-         long serialVersion =200;
-         if(expectedResult) {
-             MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
-         } else {
-             try {
-                 MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
-     /**
-      * A generic test method to determine if the given session can call the getPackage method to result the expectation.
-      * @param session
-      * @param pid
-      * @param expectedResult
-      * @throws Exception
-      */
-     public void testGetPackage(Session session, Identifier pid ,boolean expectedResult) throws Exception {
-         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
-         formatId.setValue("application/bagit-097");
-         if(expectedResult) {
-             try {
-                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
-                 fail("we should get here since the previous statement should thrown an Invalid exception.");
-             } catch (InvalidRequest e) {
-                 assertTrue(e.getMessage().contains("is not a package"));
-             }
-         } else {
-             try {
-                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
-     /**
       *  A generic test method to determine if the given session can call the archive method to result the expectation.
       * @param session
       * @param pid
       * @param expectedResult
       * @throws Exception
       */
-     public void testArchive(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+     private void testArchive(Session session, Identifier pid ,boolean expectedResult) throws Exception {
          if(expectedResult) {
              Identifier id = MNodeService.getInstance(request).archive(session, pid);
              assertTrue(id.equals(pid));
@@ -456,7 +428,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * @param expectedResult
       * @throws Exception
       */
-     public void testPublish(Session session, Identifier originalIdentifier ,boolean expectedResult) throws Exception {
+     private void testPublish(Session session, Identifier originalIdentifier ,boolean expectedResult) throws Exception {
          if(expectedResult) {
              Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
              assertTrue(id.getValue().contains("doi:"));
@@ -471,12 +443,78 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      }
      
      /**
+      * A generic test method to determine if the given session can call the syncFailed method to result the expectation. 
+      * @param session
+      * @param syncFailed
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testSyncFailed(Session session, SynchronizationFailed syncFailed ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
+             assertTrue(success);
+         } else {
+             try {
+                 boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getReplica method to result the expectation. 
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testGetReplica(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
+             assertTrue(IOUtil.getInputStreamAsString(input).equals(TEXT));
+         } else {
+             try {
+                 InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the systemmetadataChanged method to result the expectation.
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testSystemmetadataChanged(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         Date dateSysMetaLastModified = new Date();
+         long serialVersion =200;
+         if(expectedResult) {
+             MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+         } else {
+             try {
+                 MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+ 
+     
+     /**
       * A generic test method to determine if the given session can call the getLogRecords method to result the expectation. 
       * @param session
       * @param expectedResult
       * @throws Exception
       */
-     public void testGetLogRecords(Session session,boolean expectedResult) throws Exception {
+     private void testGetLogRecords(Session session,boolean expectedResult) throws Exception {
          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
          Date fromDate = sdf.parse("1971-01-01");
          Date toDate = new Date();
@@ -503,7 +541,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * @param expectedResult
       * @throws Exception
       */
-     public Identifier testGenerateIdentifier(Session session,String scheme, String fragment, boolean expectedResult) throws Exception {
+     private Identifier testGenerateIdentifier(Session session,String scheme, String fragment, boolean expectedResult) throws Exception {
          Identifier id  = null;
          if(expectedResult) {
              id= MNodeService.getInstance(request).generateIdentifier(session, scheme, fragment);
@@ -512,7 +550,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
              try {
                  MNodeService.getInstance(request).generateIdentifier(session, scheme, fragment);
                  fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
+             } catch (InvalidToken e) {
                  
              }
          }
@@ -520,10 +558,165 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      }
      
      /**
+      * Test the get api methods (describe, getSystemmetadata, get, view, getPackage, getChecksum)
+      * @param session
+      * @param id
+      * @param expectedSum
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testGetAPI(Session session, Identifier id, Checksum expectedSum, boolean expectedResult) throws Exception {
+         testDescribe(session, id, expectedResult);
+         testGetSystemmetadata(session, id, expectedResult);
+         testGet(session, id, expectedResult);
+         testView(session, id, "metacatui", expectedResult);
+         testGetPackage(session, id, expectedResult);
+         testGetChecksum(session, id, expectedSum, expectedResult);
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the describe method to result the expection.  
+      * @param session the session will call the describe method
+      * @param id the identifier will be used to call the describe method
+      * @param expectedResult the expected result for authorization. True will be successful.
+      */
+     private void testDescribe(Session session, Identifier id, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             DescribeResponse reponse =MNodeService.getInstance(request).describe(session,id);
+             ObjectFormatIdentifier format = reponse.getDataONE_ObjectFormatIdentifier();
+             assertTrue(format.getValue().equals("application/octet-stream"));
+         } else {
+             try {
+                 DescribeResponse reponse =MNodeService.getInstance(request).describe(session,id);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getSystemMetadata method to result the expectation.  
+      * @param session the session will call the getSystemMetadata method
+      * @param id the identifier will be used to call the getSystemMetadata method
+      * @param expectedResult the expected result for authorization. True will be successful.
+      */
+     private void testGetSystemmetadata(Session session, Identifier id, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             SystemMetadata sysmeta =MNodeService.getInstance(request).getSystemMetadata(session,id);
+             assertTrue(sysmeta.getIdentifier().equals(id));
+         } else {
+             try {
+                 SystemMetadata sysmeta =MNodeService.getInstance(request).getSystemMetadata(session,id);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the get method to result the expectation.  
+      * @param session the session will call the get method
+      * @param id the identifier will be used to call the get method
+      * @param expectedResult the expected result for authorization. True will be successful.
+      */
+     private void testGet(Session session, Identifier id, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             InputStream out =MNodeService.getInstance(request).get(session,id);
+             assertTrue(IOUtil.getInputStreamAsString(out).equals(TEXT));
+             out.close();
+         } else {
+             try {
+                 InputStream out =MNodeService.getInstance(request).get(session,id);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getPackage method to result the expectation.
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testGetPackage(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+         formatId.setValue("application/bagit-097");
+         if(expectedResult) {
+             try {
+                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
+                 fail("we should get here since the previous statement should thrown an Invalid exception.");
+             } catch (InvalidRequest e) {
+                 assertTrue(e.getMessage().contains("is not a package"));
+             }
+         } else {
+             try {
+                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getChecksum method to result the expectation. 
+      * @param session
+      * @param pid
+      * @param expectedValue
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testGetChecksum(Session session, Identifier pid, Checksum expectedValue, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+            Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
+            //System.out.println("$$$$$$$$$$$$$$$$$$$$$The chechsum from MN is "+checksum.getValue());
+            //System.out.println("The exprected chechsum is "+expectedValue.getValue());
+            assertTrue(checksum.getValue().equals(expectedValue.getValue()));
+         } else {
+             try {
+                 Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the view method to result the expectation. 
+      * @param session
+      * @param pid
+      * @param theme
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testView(Session session, Identifier pid, String theme, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             InputStream input = MNodeService.getInstance(request).view(session, theme, pid);
+             assertTrue(IOUtil.getInputStreamAsString(input).equals(TEXT));
+             input.close();
+         } else {
+             try {
+                 InputStream input = MNodeService.getInstance(request).view(session, theme, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+
+
+     /**
       * Just test we can get the node capacity since there is not session requirement
       * @throws Exception
       */
-     public void testGetCapacity() throws Exception {
+     private void testGetCapacity() throws Exception {
          Node node = MNodeService.getInstance(request).getCapabilities();
          assertTrue(node.getName().equals(Settings.getConfiguration().getString("dataone.nodeName")));
      }
@@ -534,7 +727,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * So the public user and the node subject should get the same total.
       * @throws Exception
       */
-     public void testListObjects() throws Exception {
+     private void testListObjects() throws Exception {
          Session publicSession =getPublicUser();
          SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
          Date startTime = sdf.parse("1971-01-01");
@@ -556,26 +749,36 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
       * Test the listObjects method. It doesn't need any authorization. 
       * @throws Exception
       */
-     public void testListViews() throws Exception {
+     private void testListViews() throws Exception {
          OptionList publicList = MNodeService.getInstance(request).listViews();
          assertTrue(publicList.sizeOptionList() > 0);
      }
     
-    /*
+    /**
      *Get a user who is in the knb data admin group. It is Lauren Walker.
      *It also includes the subject information from the cn.
      */
-    public static Session getOneKnbDataAdminsMember() throws Exception {
+    public static Session getOneKnbDataAdminsMemberSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
-        subject.setValue("http://orcid.org/0000-0003-2192-431X");
+        subject.setValue(KNBAMDINMEMBERSUBJECT);
         session.setSubject(subject);
         SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
         session.setSubjectInfo(subjectInfo);
         return session;
     }
     
-    /*
+    /**
+     * Get the subject of a user who is in the knb data admin group. It is Lauren Walker.
+     * @return
+     */
+    public static Subject getOneKnbDataAdminsMemberSubject() {
+        Subject subject = new Subject();
+        subject.setValue(KNBAMDINMEMBERSUBJECT);
+        return subject;
+    }
+    
+    /**
      *Get the subject of the knb data admin group
      */
     public static Subject getKnbDataAdminsGroupSubject() {
@@ -584,21 +787,31 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         return subject;
     }
     
-    /*
+    /**
      *Get a user who is in the PISCO-data-managers.
      *It also includes the subject information from the cn.
      */
-    public static Session getOnePISCODataManagersMember() throws Exception {
+    public static Session getOnePISCODataManagersMemberSession() throws Exception {
         Session session = new Session();
         Subject subject = new Subject();
-        subject.setValue("CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org");
+        subject.setValue(PISCOMANAGERMEMBERSUBJECT);
         session.setSubject(subject);
         SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
         session.setSubjectInfo(subjectInfo);
         return session;
     }
     
-    /*
+    /**
+     * Get the subject of a user who is in the PISCO-data-managers group. 
+     * @return
+     */
+    public static Subject getOnePISCODataManagersMemberSubject() throws Exception {
+        Subject subject = new Subject();
+        subject.setValue(PISCOMANAGERMEMBERSUBJECT);
+        return subject;
+    }
+    
+    /**
      *Get the subject of the PISCO-data-managers group
      */
     public static Subject getPISCODataManagersGroupSubject() {
@@ -607,16 +820,9 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         return subject;
     }
     
-    /*
-     * Get a test group project
-     */
-    public static Subject getTestGroupSubject() {
-        Subject subject = new Subject();
-        subject.setValue("CN=my-test-group,DC=dataone,DC=org");
-        return subject;
-    }
+  
     
-    /*
+    /**
      * Get the session with the user public
      */
     public static Session getPublicUser() {
