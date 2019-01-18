@@ -37,8 +37,13 @@ import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
 import org.dataone.client.exception.ClientSideException;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotAuthorized;
+import org.dataone.service.exceptions.SynchronizationFailed;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
+import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -48,6 +53,8 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.AuthUtils;
+import org.dataone.service.types.v2.Log;
+import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.OptionList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
@@ -59,6 +66,7 @@ import junit.framework.TestSuite;
 public class MNodeAccessControlTest extends D1NodeServiceTest {
    
     public static final String TEXT = "data";
+    public static final String ALGORITHM = "MD5";
     
     /**
      * Constructor
@@ -306,6 +314,220 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
 
          }
      }
+     
+     /**
+      * A generic test method to determine if the given session can call the getChecksum method to result the expectation. 
+      * @param session
+      * @param pid
+      * @param expectedValue
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testGetChecksum(Session session, Identifier pid, Checksum expectedValue, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+            Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
+            assertTrue(checksum.equals(expectedValue));
+         } else {
+             try {
+                 Checksum checksum= MNodeService.getInstance(request).getChecksum(session, pid, ALGORITHM);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the syncFailed method to result the expectation. 
+      * @param session
+      * @param syncFailed
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testSyncFailed(Session session, SynchronizationFailed syncFailed ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
+             assertTrue(success);
+         } else {
+             try {
+                 boolean success = MNodeService.getInstance(request).synchronizationFailed(session, syncFailed);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getReplica method to result the expectation. 
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testGetReplicat(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
+             assertTrue(IOUtil.getInputStreamAsString(input).equals(TEXT));
+         } else {
+             try {
+                 InputStream input = MNodeService.getInstance(request).getReplica(session, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the systemmetadataChanged method to result the expectation.
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testSystemmetadataChanged(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         Date dateSysMetaLastModified = new Date();
+         long serialVersion =200;
+         if(expectedResult) {
+             MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+         } else {
+             try {
+                 MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getPackage method to result the expectation.
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testGetPackage(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+         formatId.setValue("application/bagit-097");
+         if(expectedResult) {
+             try {
+                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
+                 fail("we should get here since the previous statement should thrown an Invalid exception.");
+             } catch (InvalidRequest e) {
+                 assertTrue(e.getMessage().contains("is not a package"));
+             }
+         } else {
+             try {
+                 MNodeService.getInstance(request).getPackage(session, formatId, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      *  A generic test method to determine if the given session can call the archive method to result the expectation.
+      * @param session
+      * @param pid
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testArchive(Session session, Identifier pid ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             Identifier id = MNodeService.getInstance(request).archive(session, pid);
+             assertTrue(id.equals(pid));
+         } else {
+             try {
+                 Identifier id = MNodeService.getInstance(request).archive(session, pid);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      *A generic test method to determine if the given session can call the publish method to result the expectation. 
+      * @param session
+      * @param originalIdentifier
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testPublish(Session session, Identifier originalIdentifier ,boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
+             assertTrue(id.getValue().contains("doi:"));
+         } else {
+             try {
+                 Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getLogRecords method to result the expectation. 
+      * @param session
+      * @param expectedResult
+      * @throws Exception
+      */
+     public void testGetLogRecords(Session session,boolean expectedResult) throws Exception {
+         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+         Date fromDate = sdf.parse("1971-01-01");
+         Date toDate = new Date();
+         String event = null;
+         String pidFilter = null;
+         int start = 0;
+         int count = 1;
+         if(expectedResult) {
+             Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
+             assertTrue(log.getCount() > 1);
+         } else {
+             try {
+                 MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the getLogRecords method to result the expectation. 
+      * @param session
+      * @param expectedResult
+      * @throws Exception
+      */
+     public Identifier testGenerateIdentifier(Session session,String scheme, String fragment, boolean expectedResult) throws Exception {
+         Identifier id  = null;
+         if(expectedResult) {
+             id= MNodeService.getInstance(request).generateIdentifier(session, scheme, fragment);
+             assertTrue(id.getValue() != null && !id.getValue().trim().equals(""));
+         } else {
+             try {
+                 MNodeService.getInstance(request).generateIdentifier(session, scheme, fragment);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+         return id;
+     }
+     
+     /**
+      * Just test we can get the node capacity since there is not session requirement
+      * @throws Exception
+      */
+     public void testGetCapacity() throws Exception {
+         Node node = MNodeService.getInstance(request).getCapabilities();
+         assertTrue(node.getName().equals(Settings.getConfiguration().getString("dataone.nodeName")));
+     }
+     
      
      /**
       * Test the listObjects method. It doesn't need any authorization. 
