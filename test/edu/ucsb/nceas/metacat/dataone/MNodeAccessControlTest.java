@@ -182,6 +182,14 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),false); //knb can't read it
         testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
         testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+        testIsAuthorized(getCNSession(), id1, Permission.CHANGE_PERMISSION, true);//cn can read it
+        testIsAuthorized(getMNSession(), id1, Permission.CHANGE_PERMISSION, true);//mn can read it
+        testIsAuthorized(rightsHolderSession, id1, Permission.CHANGE_PERMISSION, true);//rightsholder can read it
+        testIsAuthorized(submitter, id1,Permission.READ,false); //submitter can't read it
+        testIsAuthorized(publicSession, id1, Permission.READ,false); //public can't read it
+        testIsAuthorized(KNBadmin, id1,Permission.READ,false); //knb can't read it
+        testIsAuthorized(PISCOManager, id1,Permission.READ,false); //pisco can't read it
+        testIsAuthorized(nullSession, id1,Permission.READ,false); //nullSession can't read it
        
         //4 Test update the system metadata with new access rule (knb group can read it)
         AccessPolicy policy = new AccessPolicy();
@@ -207,6 +215,11 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
         testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
         testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+        testIsAuthorized(submitter, id1,Permission.READ,false); 
+        testIsAuthorized(publicSession, id1, Permission.READ,false); 
+        testIsAuthorized(KNBadmin, id1,Permission.READ,true); 
+        testIsAuthorized(PISCOManager, id1,Permission.READ,false); 
+        testIsAuthorized(nullSession, id1,Permission.READ,false); 
         
         //5.Test get api when knb group has the write permission and submitter has read permission
         //set up
@@ -230,6 +243,11 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
         testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),false); //pisco can't read it
         testGetAPI(nullSession, id1,sysmeta.getChecksum(),false); //nullSession can't read it
+        testIsAuthorized(submitter, id1,Permission.READ,true); 
+        testIsAuthorized(publicSession, id1, Permission.READ,false); 
+        testIsAuthorized(KNBadmin, id1,Permission.WRITE,true); 
+        testIsAuthorized(PISCOManager, id1,Permission.READ,false); 
+        testIsAuthorized(nullSession, id1,Permission.READ,false); 
         
         //6. Test get api when the public and submitter has the read permission and the knb-admin group has write permission
         //set up
@@ -249,6 +267,11 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
         testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),true); //pisco can read it
         testGetAPI(nullSession, id1,sysmeta.getChecksum(),true); //nullSession can read it
+        testIsAuthorized(submitter, id1,Permission.READ,true); 
+        testIsAuthorized(publicSession, id1, Permission.READ,true); 
+        testIsAuthorized(KNBadmin, id1,Permission.READ,true); 
+        testIsAuthorized(PISCOManager, id1,Permission.READ,true); 
+        testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
         //7. Test the updateSystemMetadata (the public and submitter has the read permission and the knb-admin group has write permission)
         //add a new policy that pisco group and submitter has the change permission
@@ -278,6 +301,13 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        testIsAuthorized(submitter, id1,Permission.READ,true); 
+        testIsAuthorized(publicSession, id1, Permission.READ,true); 
+        testIsAuthorized(KNBadmin, id1,Permission.WRITE,true); 
+        testIsAuthorized(PISCOManager, id1,Permission.CHANGE_PERMISSION,true); 
+        testIsAuthorized(nullSession, id1,Permission.READ,true); 
+        
+        
         System.out.println("The id is ============================"+id1.getValue());
         //testGetReplica(getCNSession(), id1, true);
         
