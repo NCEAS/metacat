@@ -274,7 +274,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
         //7. Test the updateSystemMetadata (the public and submitter has the read permission and the knb-admin group has write permission)
-        //add a new policy that pisco group and submitter has the change permission
+        //add a new policy that pisco group and submitter has the change permission, and third user has the read permission
         AccessRule rule4= new AccessRule();
         rule4.addPermission(Permission.CHANGE_PERMISSION);
         rule4.addSubject(getPISCODataManagersGroupSubject());
@@ -283,6 +283,10 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         rule5.addPermission(Permission.CHANGE_PERMISSION);
         rule5.addSubject(submitter.getSubject());
         policy.addAllow(rule5);
+        AccessRule rule6= new AccessRule();
+        rule6.addPermission(Permission.READ);
+        rule6.addSubject(getThirdUser().getSubject());
+        policy.addAllow(rule6);
         sysmeta.setAccessPolicy(policy);
         testUpdateSystemmetadata(nullSession, id1, sysmeta, false);
         testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
@@ -301,14 +305,48 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
-        testIsAuthorized(submitter, id1,Permission.READ,true); 
+        testIsAuthorized(submitter, id1,Permission.CHANGE_PERMISSION,true); 
+        testIsAuthorized(getThirdUser(), id1,Permission.READ,true); 
         testIsAuthorized(publicSession, id1, Permission.READ,true); 
         testIsAuthorized(KNBadmin, id1,Permission.WRITE,true); 
         testIsAuthorized(PISCOManager, id1,Permission.CHANGE_PERMISSION,true); 
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
+        //8. Test update. Now the access policy for id1 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
+        Identifier id2 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id2);
+        testUpdate(nullSession, id1, sysmeta, id2, false);
+        testUpdate(publicSession, id1, sysmeta, id2, false);
+        testUpdate(getThirdUser(), id1, sysmeta, id2, false);
+        testUpdate(KNBadmin, id1, sysmeta, id2, true);
+        Thread.sleep(100);
+        Identifier id3 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id3);
+        sysmeta.setObsoletes(id2);
+        testUpdate(PISCOManager, id2, sysmeta, id3, true);
+        Thread.sleep(100);
+        Identifier id4 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id4);
+        sysmeta.setObsoletes(id3);
+        testUpdate(rightsHolderSession, id3, sysmeta, id4, true);
+        Thread.sleep(100);
+        Identifier id5 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id5);
+        sysmeta.setObsoletes(id4);
+        testUpdate(getMNSession(), id4, sysmeta, id5, true);
+        Thread.sleep(100);
+        Identifier id6 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id6);
+        sysmeta.setObsoletes(id5);
+        testUpdate(getCNSession(), id5, sysmeta, id6, true);
+        Thread.sleep(100);
+        Identifier id7 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        sysmeta.setIdentifier(id7);
+        sysmeta.setObsoletes(id6);
+        testUpdate(submitter, id6, sysmeta, id7, true);
         
         System.out.println("The id is ============================"+id1.getValue());
+        
         //testGetReplica(getCNSession(), id1, true);
         
     }
@@ -420,13 +458,21 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
              Identifier id = MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
              assertTrue(id.equals(newPid));
          } else {
-             try {
-                 Identifier id = MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
+             if(session == null) {
+                 try {
+                     Identifier id = MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+                     fail("we should get here since the previous statement should thrown an InvalidToken exception.");
+                 } catch (InvalidToken e) {
+                     
+                 }
+             } else {
+                 try {
+                     Identifier id = MNodeService.getInstance(request).update(session, pid, object, newPid, sysmeta);
+                     fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 } catch (NotAuthorized e) {
+                     
+                 }
              }
-
          }
      }
      
@@ -859,6 +905,18 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         Session session = new Session();
         Subject subject = new Subject();
         subject.setValue(Constants.SUBJECT_PUBLIC);
+        session.setSubject(subject);
+        return session;
+    }
+    
+    /**
+     * Get the session for the third user.
+     * @return
+     */
+    public static Session getThirdUser() {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue("cn=test3,o=NCEAS,dc=dataone,dc=org");
         session.setSubject(subject);
         return session;
     }
