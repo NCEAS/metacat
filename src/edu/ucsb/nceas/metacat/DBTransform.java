@@ -36,12 +36,16 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -62,13 +66,40 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 
 /**
  * A Class that transforms XML documents utitlizing XSL style sheets
+ * Building a transformer from the .xsl is expensive, so Templates are used                                            
+ * as an intermediate construct to allow lightweight construction of Transformers.                                     
+ * (Transformers themselves are not thread safe, so can't be reused)   
  */
 public class DBTransform {
 
-
+	static final protected Map<String,Templates> TemplatesMap = new HashMap<>();                                                                      
+	static final protected TransformerFactory transformerFactory = TransformerFactory.newInstance();                                                  
+	                                                                                                                                                    
+	/**                                                                                                                                               
+	 * The method that manages the Templates Map instances that will be used to build                                                                 
+	 * transformers from.                                                                                                                             
+	 * 
+	 * @param xslSystemId - the URL for the stylesheet 
+	 * @param forceRebuild - if true, forces reload of the stylesheet from the system, else use the existing one, if there
+	 * @return
+	 * @throws TransformerConfigurationException
+	 */
+	// NOTE: if changing this method, please note that the DBTransformTest class does not 
+	// directly test this class (because it was proving too difficult for me to properly 
+	// configure this class in a test environment (related to configurating PropertyService)
+	// If you make changes to this method, you will need to duplicate those changes in the test class.
+	protected static synchronized Transformer getTransformer(String xslSystemId, boolean forceRebuild) throws TransformerConfigurationException {     
+		if (forceRebuild || !TemplatesMap.containsKey(xslSystemId) ) {                                                                                
+			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));                                                     
+			TemplatesMap.put(xslSystemId,templates);                                                                                                  
+		}                                                                                                                                             
+		return TemplatesMap.get(xslSystemId).newTransformer();                                                                                        
+	}                                                                                                                                                 
+	                                                                                                                                                    
+	 
   private String 	configDir = null;
   private String	defaultStyle = null;
-  private Logger logMetacat = Logger.getLogger(DBTransform.class);
+  private static Logger logMetacat = Logger.getLogger(DBTransform.class);
   private String httpServer = null;
   private String contextURL = null;
   private String servletURL = null;
@@ -153,16 +184,15 @@ public class DBTransform {
    * It then adds the parameters passed to it via Hashtable param to the Transformer.
    * It then calls the Transformer.transform method.
    */
-  private void doTransform(StreamSource xml, 
+  protected void doTransform(StreamSource xml, 
           StreamResult resultOutput,
           String xslSystemId, 
           Hashtable<String, String[]> param,
           String qformat, 
           String sessionid) 
-          throws Exception {
+          throws PropertyNotFoundException, TransformerException {
       
       SortedProperties skinOptions;
-      TransformerFactory tFactory;
       Transformer transformer;
       String key, value;
       Enumeration<String> en;
@@ -170,9 +200,9 @@ public class DBTransform {
       Map.Entry<String, String> entry;
       
       if (xslSystemId != null) {
-        tFactory = TransformerFactory.newInstance();
-        transformer = tFactory.newTransformer(new StreamSource(xslSystemId));
-        
+    	                                                                                                                                       
+    		transformer = DBTransform.getTransformer(xslSystemId, false);  // false means use the existing factory template              
+    	              
         transformer.setParameter("qformat", qformat);
         logMetacat.info("DBTransform.doTransform - qformat: " + qformat);
         
