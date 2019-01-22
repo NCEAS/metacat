@@ -58,7 +58,6 @@ public class DBTransformTest extends TestCase {
 
 	// TODO:  this needs to be generalized to make this test useful
 	
-    static String BASEDIR = "/Users/rnahf/software/git_checkouts";
 	
 	
     public DBTransformTest(String name) {
@@ -116,7 +115,7 @@ public class DBTransformTest extends TestCase {
 	 */
 	public void testGetUniqueTransformer() throws ClassNotFoundException, PropertyNotFoundException, IOException, SQLException, TransformerException
 	{		
-		String skin = BASEDIR + "/metacat/lib/style/skins/default/default.xml";
+		String skin = "lib/style/skins/default/default.xml";
 
 		Transformer t1 = DBTransformTest.getTransformer(skin, false);
 		Transformer t2 = DBTransformTest.getTransformer(skin, false);
@@ -129,7 +128,7 @@ public class DBTransformTest extends TestCase {
 	 */
 	public void testGetTransformerPerformance() throws Exception {
 		
-		String skin = BASEDIR + "/metacat/lib/style/skins/default/default.xml";
+		String skin = "lib/style/skins/default/default.xml";
 		
 		long t0 = System.nanoTime();
 		Transformer t = transformerFactory.newTransformer(new StreamSource(skin));
@@ -164,8 +163,8 @@ public class DBTransformTest extends TestCase {
 	 */
 	public void testTransformation() throws Exception {
 		
-		String skin = BASEDIR + "/metacat/lib/style/skins/default/default.xml";
-		String doc = BASEDIR + "/metacat/test/eml-sample.xml";
+		String skin = "lib/style/skins/default/default.xml";
+		String doc = "test/eml-sample.xml";
 		
 		long start = System.nanoTime();
 		Transformer t2 = DBTransformTest.getTransformer(skin, false);
