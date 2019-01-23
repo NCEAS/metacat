@@ -89,6 +89,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
@@ -728,12 +729,14 @@ public class MNResourceHandler extends D1ResourceHandler {
         final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
         
         // check authorization before sending to implementation
-        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
-        if (!authorized) {
-        	String msg = "User is not authorized to call systemMetadataChanged";
-            NotAuthorized failure = new NotAuthorized("1331", msg);
-        	throw failure;
-        }
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", "????");
+        authDel.doAdminAuthorization(session);
+//        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
+//        if (!authorized) {
+//        	String msg = "User is not authorized to call systemMetadataChanged";
+//            NotAuthorized failure = new NotAuthorized("1331", msg);
+//        	throw failure;
+//        }
         
         // run it in a thread to avoid connection timeout
         Runnable runner = new Runnable() {
@@ -986,12 +989,15 @@ public class MNResourceHandler extends D1ResourceHandler {
             NotAuthorized failure = new NotAuthorized("2152", msg);
         	throw failure;
         } else {
-        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
-        	if (!allowed) {
-        		String msg = "User is not an admin user";
-                NotAuthorized failure = new NotAuthorized("2152", msg);
-            	throw failure;
-        	}
+            // TODO: should we refactore replicate() in MNodeservice to not replicate, it would avoid a possible second listNodes call...
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
+            authDel.doAdminAuthorization(session);
+//        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
+//        	if (!allowed) {
+//        		String msg = "User is not an admin user";
+//                NotAuthorized failure = new NotAuthorized("2152", msg);
+//            	throw failure;
+//        	}
         }
         
         // parse the systemMetadata

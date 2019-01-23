@@ -135,33 +135,33 @@ public class D1NodeServiceTest extends MCTestCase {
 	       Subject user = new Subject();
 	       
 	       user.setValue("CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org");
-	       assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("uid=foo");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("http://orcid.org/0000-0002-8121-2341");
-	       assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("uid=foo");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
 	       user.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("");
 	       user.setValue("");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       NodeLocator nodeLocator = new NodeLocator() {
 	           @Override
 	           public D1Node getCNode() throws ClientSideException {
