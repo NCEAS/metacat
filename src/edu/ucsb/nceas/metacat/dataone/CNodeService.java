@@ -293,7 +293,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
 		}*/
 		
-		D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,"4882","4884");
+		D1AuthHelper authDel = new D1AuthHelper(request,pid,"4882","4884");
 		authDel.doCNOnlyAuthorization(session);
 
 		SystemMetadata systemMetadata = null;
@@ -413,7 +413,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       
       SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
       
-      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doAuthoritativeMNAuthorization(session, sysmeta);
 
 	    
@@ -504,8 +504,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 				  // all we can really do is log errors and carry on with life
 				  logMetacat.error("Error deleting pid: " +  pid.getValue() + 
 					  " from replica MN: " + replicaNode.getValue(), e);
-			}
-			  
+			  }		  
 		  }
 	  }
 	  
@@ -550,7 +549,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
 	  
 	  
-	  D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,notAuthorizedCode,serviceFailureCode);
+	  D1AuthHelper authDel = new D1AuthHelper(request,pid,notAuthorizedCode,serviceFailureCode);
 	  authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
 	  
 	  
@@ -877,7 +876,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               if ( !allowed ) {
                   //check for CN admin access
                   //allowed = isAuthorized(session, pid, Permission.WRITE);
-                  D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+                  D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
                   authDel.doCNOnlyAuthorization(session);
  //                 allowed = isCNAdmin(session);
                   allowed = true;
@@ -1031,8 +1030,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
             String localId = null;
             try {
                 localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-              
-             } catch (Exception e) {
+
+            } catch (Exception e) {
                 logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
             }
             
@@ -1138,13 +1137,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                 "format type: " + format.getFormatType() );
         
         // FIXME remove:
-        if (true)
+        if (true) {
             throw new NotImplemented("0000", "Implementation underway... Will need testing too...");
-        
-        D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, null, "????", "????");
+        }
+        D1AuthHelper authDel = new D1AuthHelper(request, null, "????", "????");
         authDel.doCNOnlyAuthorization(session);
-//        if (!isAdminAuthorized(session))
+//        if (!isAdminAuthorized(session)) {
 //            throw new NotAuthorized("0000", "Not authorized to call addFormat()");
+//        }
 
         String separator = ".";
         try {
@@ -1337,7 +1337,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                   "  If you are not logged in, please do so and retry the request.");
       } else {
           //only CN is allwoed
-          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+          D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
           authDel.doCNOnlyAuthorization(session);
 //          if(!isCNAdmin(session)) {
 //                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for registering the system metadata of the object "+pid.getValue());
@@ -1416,13 +1416,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       logMetacat.debug("Returning from registerSystemMetadata");
       
       try {
-    	  String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-    	  EventLog.getInstance().log(request.getRemoteAddr(), 
-    	          request.getHeader("User-Agent"), session.getSubject().getValue(), 
-    	          localId, "registerSystemMetadata");
+          String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+          EventLog.getInstance().log(request.getRemoteAddr(), 
+                  request.getHeader("User-Agent"), session.getSubject().getValue(), 
+                  localId, "registerSystemMetadata");
       } catch (McdbDocNotFoundException e) {
-    	  // do nothing, no localId to log with
-    	  logMetacat.warn("Could not log 'registerSystemMetadata' event because no localId was found for pid: " + pid.getValue());
+          // do nothing, no localId to log with
+          logMetacat.warn("Could not log 'registerSystemMetadata' event because no localId was found for pid: " + pid.getValue());
       } catch (SQLException ee) {
           // do nothing, no localId to log with
           logMetacat.warn("Could not log 'registerSystemMetadata' event because the localId couldn't be identified for pid: " + pid.getValue());
@@ -1539,7 +1539,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       String invalidRequestCode = "4442";
       SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
      
-      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
 
       try {
@@ -1707,18 +1707,18 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           String localId = null;
           try {
               localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-            
-           } catch (Exception e) {
+
+          } catch (Exception e) {
               logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
           }
-          
+
           if(localId != null && EventLog.getInstance().isDeleted(localId)) {
               error = DELETEDMESSAGE;
           } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
               error = DELETEDMESSAGE;
           }
           throw new NotFound("4874", "Couldn't find an object identified by " + pid.getValue()+". "+error);
-          
+
       }
 
     } catch (RuntimeException e) {
@@ -1777,7 +1777,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           
           // are we allowed?
           boolean isAllowed = false;
-          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+          D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
           authDel.doCNOnlyAuthorization(session);
 //          isAllowed = isAdminAuthorized(session);
           isAllowed = true;
@@ -1841,10 +1841,10 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           throw new ServiceFailure("4893", msg);
           
       } finally {
-    	  if (lock != null) {
-	          lock.unlock();
-	          logMetacat.debug("Unlocked identifier " + pid.getValue());
-    	  }
+          if (lock != null) {
+              lock.unlock();
+              logMetacat.debug("Unlocked identifier " + pid.getValue());
+          }
       }
     } finally {
         IOUtils.closeQuietly(object);
@@ -1886,7 +1886,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       String invalidRequestCode = "4402";
       SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
      
-      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
       
       
@@ -1993,7 +1993,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       if(session == null) {
           throw new NotAuthorized("4851", "Session cannot be null. It is not authorized for updating the replication metadata of the object "+pid.getValue());
       } else {
-          D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4851", "????");
+          D1AuthHelper authDel = new D1AuthHelper(request, pid, "4851", "????");
           authDel.doCNOnlyAuthorization(session);
 //          if(!isCNAdmin(session)) {
 //              throw new NotAuthorized("4851", "The client -"+ session.getSubject().getValue()
@@ -2052,7 +2052,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                 	  if ( !listedReplica.getReplicationStatus().equals(replicaStatus) && 
                 	       listedReplica.getReplicationStatus().equals(ReplicationStatus.COMPLETED) &&
             		       !replicaStatus.equals(ReplicationStatus.INVALIDATED) ) {
-                	  throw new InvalidRequest("4853", "Status state change from " +
+                	      throw new InvalidRequest("4853", "Status state change from " +
                 			  listedReplica.getReplicationStatus() + " to " +
                 			  replicaStatus.toString() + "is prohibited for identifier " +
                 			  pid.getValue() + " and target node " + 
@@ -2080,8 +2080,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
               
               // inform replica nodes of the change if the status is complete
               if ( replicaStatus.equals(ReplicationStatus.COMPLETED) ) {
-            	  notifyReplicaNodes(systemMetadata);
-            	  
+                  notifyReplicaNodes(systemMetadata);      	  
               }
           } catch (RuntimeException e) {
               logMetacat.info("Unknown RuntimeException thrown: " + e.getCause().getMessage());
@@ -2236,7 +2235,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
                "  If you are not logged in, please do so and retry the request.");
    } else {
          //only CN is allwoed
-       D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "4861", "????");
+       D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
        authDel.doCNOnlyAuthorization(session);
   
 //         if(!isCNAdmin(session)) {

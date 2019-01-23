@@ -79,7 +79,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
-import edu.ucsb.nceas.metacat.dataone.D1AuthorizationDelegate;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
@@ -874,7 +874,7 @@ public class MNResourceHandler extends D1ResourceHandler {
             NotAuthorized failure = new NotAuthorized("2152", msg);
         	throw failure;
         } else {
-            D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, null, "2152", "????");
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
             authDel.doAdminAuthorization(session);
 //        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
 //        	if (!allowed) {

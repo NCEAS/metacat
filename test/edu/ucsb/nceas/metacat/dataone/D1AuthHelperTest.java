@@ -35,7 +35,7 @@ import org.junit.Test;
 
 
 
-public class D1AuthorizationDelegateTest {
+public class D1AuthHelperTest {
 
     static NodeList nl;
     
@@ -86,7 +86,7 @@ public class D1AuthorizationDelegateTest {
         nl.addNode(otherMN);
     }
 
-    D1AuthorizationDelegate authDel;
+    D1AuthHelper authDel;
     Session session;
     Session authMNSession;
     Session otherMNSession;
@@ -97,7 +97,7 @@ public class D1AuthorizationDelegateTest {
     @Before
     public void setUp() throws Exception {
         
-        authDel = new D1AuthorizationDelegate(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
+        authDel = new D1AuthHelper(null,TypeFactory.buildIdentifier("foo"),"1234NA","5678SF");
         
         //build a SystemMetadata object
         sysmeta = TypeFactory.buildMinimalSystemMetadata(

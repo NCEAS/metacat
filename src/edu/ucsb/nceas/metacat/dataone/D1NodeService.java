@@ -623,7 +623,7 @@ public abstract class D1NodeService {
 
 	  // only admin access to this method
 	  // see https://redmine.dataone.org/issues/2855
-      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,null, "1460", "1490");
+      D1AuthHelper authDel = new D1AuthHelper(request,null, "1460", "1490");
       authDel.doAdminAuthorization(session);
           // "Only the CN or admin is allowed to harvest logs from this node";
 	  
@@ -706,7 +706,6 @@ public abstract class D1NodeService {
 		  throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, 
 		  NotImplemented 
   {
-     
       String serviceFailureCode = "1030";
       String notFoundCode = "1020";
       
@@ -805,7 +804,7 @@ public abstract class D1NodeService {
               
        SystemMetadata sysmeta = getSeriesHead(pid,serviceFailureCode,notFoundCode);
 
-       D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request,pid,notAuthorizedCode, serviceFailureCode);
+       D1AuthHelper authDel = new D1AuthHelper(request,pid,notAuthorizedCode, serviceFailureCode);
        authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.READ);
 
        return sysmeta;
@@ -1156,7 +1155,7 @@ public abstract class D1NodeService {
  
       SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode, invalidRequestCode);
 
-      D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, notAuthorizedCode, serviceFailureCode);
+      D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, sysmeta, permission);
 
       return true;
@@ -1547,17 +1546,17 @@ public abstract class D1NodeService {
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
     if (session != null ) {
-    	username = session.getSubject().getValue();
-    	Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
-    	if (otherSubjects != null) {    		
-			groupnames = new String[otherSubjects.size()];
-			int i = 0;
-			Iterator<Subject> iter = otherSubjects.iterator();
-			while (iter.hasNext()) {
-				groupnames[i] = iter.next().getValue();
-				i++;
-			}
-    	}
+        username = session.getSubject().getValue();
+        Set<Subject> otherSubjects = AuthUtils.authorizedClientSubjects(session);
+        if (otherSubjects != null) {    		
+            groupnames = new String[otherSubjects.size()];
+            int i = 0;
+            Iterator<Subject> iter = otherSubjects.iterator();
+            while (iter.hasNext()) {
+                groupnames[i] = iter.next().getValue();
+                i++;
+            }
+        }
     }
     
     //if the user and groups are in the white list (allowed submitters) of the metacat configuration
@@ -1674,8 +1673,7 @@ public abstract class D1NodeService {
         MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
       } catch (Exception e) {
           throw new ServiceFailure("1190", e.getMessage());
-          
-	    }  
+      }  
   }
   
   /**
@@ -2098,16 +2096,16 @@ public abstract class D1NodeService {
   protected static List<Permission> expandPermissions(Permission permission) {
 	  	List<Permission> expandedPermissions = new ArrayList<Permission>();
 	    if (permission.equals(Permission.READ)) {
-	    	expandedPermissions.add(Permission.READ);
+	        expandedPermissions.add(Permission.READ);
 	    }
 	    if (permission.equals(Permission.WRITE)) {
-	    	expandedPermissions.add(Permission.READ);
-	    	expandedPermissions.add(Permission.WRITE);
+	        expandedPermissions.add(Permission.READ);
+	        expandedPermissions.add(Permission.WRITE);
 	    }
 	    if (permission.equals(Permission.CHANGE_PERMISSION)) {
-	    	expandedPermissions.add(Permission.READ);
-	    	expandedPermissions.add(Permission.WRITE);
-	    	expandedPermissions.add(Permission.CHANGE_PERMISSION);
+	        expandedPermissions.add(Permission.READ);
+	        expandedPermissions.add(Permission.WRITE);
+	        expandedPermissions.add(Permission.CHANGE_PERMISSION);
 	    }
 	    return expandedPermissions;
   }
@@ -2410,10 +2408,10 @@ public abstract class D1NodeService {
               if(EventLog.getInstance().isDeleted(localId)) {
                   notFoundMessage=notFoundMessage+" "+DELETEDMESSAGE;
               } 
-            } catch (Exception e) {
+          } catch (Exception e) {
               logMetacat.info("Couldn't determine if the not-found identifier "+identifier.getValue()+" was deleted since "+e.getMessage());
-            }
-            throw new NotFound(noFoundCode, notFoundMessage);
+          }
+          throw new NotFound(noFoundCode, notFoundMessage);
       }
   }
   
@@ -2433,15 +2431,15 @@ public abstract class D1NodeService {
       // first to try if we can find the given identifier in the system metadata map. If it is in the map (meaning this is not sid), null will be returned.
       if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) { 
           try {
-                  //determine if the given pid is a sid or not.
-                  if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
+              //determine if the given pid is a sid or not.
+              if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
                   try {
                       //set the header pid for the sid if the identifier is a sid.
                       id = IdentifierManager.getInstance().getHeadPID(sid);
                   } catch (SQLException sqle) {
                       throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
                   }
-                  
+
               }
           } catch (SQLException e) {
               throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
@@ -2486,8 +2484,8 @@ public abstract class D1NodeService {
            // check first to see if it is a pid 
            try {
                sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(id);
-           }
-           catch (Exception e) {
+               
+           } catch (Exception e) {
                // convert Hazelcast RuntimeException to NotFound
                logMetacat.error("An error occurred while getting system metadata for identifier " +
                        id.getValue() + ". The error message was: " + e.getMessage(), e);
@@ -2495,8 +2493,9 @@ public abstract class D1NodeService {
 
            } 
 
-           if (sysmeta != null) 
+           if (sysmeta != null) {
                return sysmeta;
+           }
 
            // need to check if it is a seriesId
            Identifier headPid = IdentifierManager.getInstance().getHeadPID(id);

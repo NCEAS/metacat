@@ -52,22 +52,23 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
  * 6. session vs. expanded rightsHolder equivalent subjects and groups. (uses API calls to the CN)
  * 
  * 
- * In practice, there are currently only 5 combinations of authorization checks being used.
+ * In practice, there are currently only a handful of combinations of authorization checks being used.
  * These are represented by the public methods in this class.
  * If more combinations are ever required, they should be added as a new public method,
  * and follow the general way the other methods are implemented.
  * 
- * The 5 combinations in use are:
+ * The combinations in use are:
  * 1. CNadmin only
  * 2. Local or AuthoritativeMN only
  * 3. Local MN or CN admin only 
  * 4. "isAuthorized" - all checks except allowing replica nodes
  * 5. "getSystemMetadata" - all checks
+ * 6. "update" authorization - success depends on the local node being the authMN
  * 
  * @author rnahf
  *
  */
-public class D1AuthorizationDelegate {
+public class D1AuthHelper {
 
     private static Logger logMetacat = Logger.getLogger(D1NodeService.class);
     
@@ -92,7 +93,7 @@ public class D1AuthorizationDelegate {
      * @param request
      * @param hzSystemMetadataMap
      */
-    public D1AuthorizationDelegate(HttpServletRequest request, Identifier requestIdentifier, String notAuthorizedCode, String serviceFailureCode) {
+    public D1AuthHelper(HttpServletRequest request, Identifier requestIdentifier, String notAuthorizedCode, String serviceFailureCode) {
         this.request = request;
         this.notAuthorizedCode = notAuthorizedCode;
         this.serviceFailureCode = serviceFailureCode;
@@ -113,14 +114,16 @@ public class D1AuthorizationDelegate {
     {
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
-        if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) 
+        if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) {
             return;
+        }
         // next most efficient step: checks against local node document built via system properties 
         try {
-            if (this.isLocalNodeAdmin(session, null))
+            if (this.isLocalNodeAdmin(session, null)) {
                 return;
-        }
-        catch(ServiceFailure e) {
+            }
+        
+        } catch(ServiceFailure e) {
             exceptions.add(e);
         }
         
@@ -129,19 +132,22 @@ public class D1AuthorizationDelegate {
             NodeList nodelist = this.getCNNodeList();
 
             // these all compare the session to the nodelist in some way
-            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist))
+            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist)) {
                 return;
-            if (this.isCNAdmin(session, nodelist))
+            }
+            if (this.isCNAdmin(session, nodelist)) {
                 return;
-        }
-        catch (ServiceFailure e) {
+            }
+        
+        } catch (ServiceFailure e) {
             exceptions.add(e);
         }
 
         // this makes 1 or more calls to listSubjects, so is the most expensive
         try {
-            if (this.checkExpandedPermissions(session, sysmeta, permission))
+            if (this.checkExpandedPermissions(session, sysmeta, permission)) {
                 return;
+            }
         }
         catch (ServiceFailure e) {
             exceptions.add(e);
@@ -169,16 +175,18 @@ public class D1AuthorizationDelegate {
         List<ServiceFailure> exceptions = new ArrayList<>();
         
         try {
-            if (this.isLocalNodeAdmin(session, null))
+            if (this.isLocalNodeAdmin(session, null)) {
                 return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
 
         try {     
             NodeList nodelist = this.getCNNodeList();
-            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist))
+            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist)) {
                 return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
@@ -211,20 +219,22 @@ public class D1AuthorizationDelegate {
         if (sysmeta.getAuthoritativeMemberNode().equals(localNodeId) 
                 && StringUtils.isNotBlank(sysmeta.getAuthoritativeMemberNode().getValue()))
         {            
-            if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission))
+            if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) {
                 return;
-            
+            }     
             try {
-                if (this.isLocalMNAdmin(session))
+                if (this.isLocalMNAdmin(session)) {
                     return;
+                }
             }
             catch (ServiceFailure e) {
                 exceptions.add(e);
             }
         
             try {
-                if (this.checkExpandedPermissions(session, sysmeta, permission))
+                if (this.checkExpandedPermissions(session, sysmeta, permission)) {
                     return;
+                }
             }
             catch (ServiceFailure e) {
                 exceptions.add(e);
@@ -234,8 +244,9 @@ public class D1AuthorizationDelegate {
         // (outside the above if statement on purpose)
         try {
             NodeList nodelist = this.getCNNodeList();
-            if( this.isCNAdmin(session, nodelist) )
+            if( this.isCNAdmin(session, nodelist) ) {
                 return;
+            }
         }
         catch (ServiceFailure e) {
             exceptions.add(e);
@@ -269,16 +280,18 @@ public class D1AuthorizationDelegate {
         List<ServiceFailure> exceptions = new ArrayList<>();
         
         try {
-            if (this.isLocalNodeAdmin(session, NodeType.CN))
-            return;
+            if (this.isLocalNodeAdmin(session, NodeType.CN)) {
+                return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
          
         try {
             NodeList nodelist = this.getCNNodeList();
-            if (this.isCNAdmin(session, nodelist))
+            if (this.isCNAdmin(session, nodelist)) {
                 return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
@@ -303,16 +316,18 @@ public class D1AuthorizationDelegate {
         List<ServiceFailure> exceptions = new ArrayList<>();
 
         try {
-            if (this.isLocalNodeAdmin(session, null))
+            if (this.isLocalNodeAdmin(session, null)) {
                 return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
 
         try {
             NodeList nodelist = this.getCNNodeList();
-            if (this.isCNAdmin(session, nodelist))
+            if (this.isCNAdmin(session, nodelist)) {
                 return;
+            }
         } catch (ServiceFailure e) {
             exceptions.add(e);
         }
@@ -343,12 +358,14 @@ public class D1AuthorizationDelegate {
     {       
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
-        if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) 
+        if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) {
             return;
+        }
         // next most efficient step: checks against local node document built via system properties 
         try {
-            if (this.isLocalNodeAdmin(session, null))
+            if (this.isLocalNodeAdmin(session, null)) {
                 return;
+            }
         }
         catch(ServiceFailure e) {
             exceptions.add(e);
@@ -359,12 +376,15 @@ public class D1AuthorizationDelegate {
             NodeList nodelist = this.getCNNodeList();
 
             // these all compare the session to the nodelist in some way
-            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist))
+            if (this.isAuthoritativeMNodeAdmin(session, sysmeta.getAuthoritativeMemberNode(), nodelist)) {
                 return;
-            if (this.isCNAdmin(session, nodelist))
+            }
+            if (this.isCNAdmin(session, nodelist)) {
                 return;
-            if (this.isReplicaMNodeAdmin(session, sysmeta, nodelist))
+            }
+            if (this.isReplicaMNodeAdmin(session, sysmeta, nodelist)) {
                 return;
+            }
         }
         catch (ServiceFailure e) {
             exceptions.add(e);
@@ -372,8 +392,9 @@ public class D1AuthorizationDelegate {
 
         // this makes 1 or more calls to listSubjects, so is the most expensive
         try {
-            if (this.checkExpandedPermissions(session, sysmeta, permission))
+            if (this.checkExpandedPermissions(session, sysmeta, permission)) {
                 return;
+            }
         }
         catch (ServiceFailure e) {
             exceptions.add(e);
@@ -428,11 +449,12 @@ public class D1AuthorizationDelegate {
         try {
             Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
             for (Subject s : sessionSubjects) {
-                if (s.getValue().equalsIgnoreCase("public")) 
+                if (s.getValue().equalsIgnoreCase("public"))  {
                     //assume the special subject 'public' isn't up for expansion
                     continue;
+                }
 
-                if (D1AuthorizationDelegate.expandRightsHolder(sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
+                if (D1AuthHelper.expandRightsHolder(sysmeta.getRightsHolder(), s)) {  // expensive call to listSubjects
                     isAllowed = true;
                     break;
                 }
@@ -469,8 +491,9 @@ public class D1AuthorizationDelegate {
         try {
             CNode cn = D1Client.getCN();
         
-        logMetacat.debug("getCNNodeList - got CN instance");
-        return cn.listNodes(); 
+            logMetacat.debug("getCNNodeList - got CN instance");
+            return cn.listNodes(); 
+            
         } catch (NotImplemented e) {
             logMetacat.error("Unexpected Error getting NodeList from getCNNodeList().  Got 'NotImplemented' from the service call!",e);
             throw new ServiceFailure("","Could not get NodeList from the CN. got 'NotImplemented' from the service call!");
@@ -742,12 +765,15 @@ public class D1AuthorizationDelegate {
         
         boolean allowed = false;
 
-        if (session == null) 
+        if (session == null) {
             return false;
-        if (authoritativeMNode == null)
+        }
+        if (authoritativeMNode == null) {
             return false;
-        if (nodelist == null) 
+        }
+        if (nodelist == null) {
             return false;
+        }
         
 
         Subject sessionSubject = session.getSubject();
@@ -786,16 +812,18 @@ public class D1AuthorizationDelegate {
 
         logMetacat.debug("D1NodeService.isCNAdmin - the beginning");
 
-        if (session == null || session.getSubject() == null)
+        if (session == null || session.getSubject() == null) {
             return false;
-
-        if (nodelist == null) 
+        }
+        if (nodelist == null) {
             return false;
+        }
         
         List<Node> nodes = nodelist.getNodeList();
 
-        if (nodes == null || nodes.size() == 0)
+        if (nodes == null || nodes.size() == 0) {
             return false;
+        }
        
         // find the node in the node list
         search: 

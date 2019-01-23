@@ -45,7 +45,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlList;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.dataone.D1AuthorizationDelegate;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -157,7 +157,7 @@ public class PermissionController
 		SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 		isOwner = (sysMeta.getRightsHolder().equals(subject));
 		if(!isOwner) {
-		    isOwner = D1AuthorizationDelegate.expandRightsHolder(sysMeta.getRightsHolder(), subject);
+		    isOwner = D1AuthHelper.expandRightsHolder(sysMeta.getRightsHolder(), subject);
 		}
     } catch (Exception e) {
 		logMetacat.warn("Error checking for DataONE permissions: " + e.getMessage(), e);

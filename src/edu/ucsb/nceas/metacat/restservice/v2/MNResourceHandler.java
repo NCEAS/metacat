@@ -89,7 +89,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
-import edu.ucsb.nceas.metacat.dataone.D1AuthorizationDelegate;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
@@ -729,7 +729,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
         
         // check authorization before sending to implementation
-        D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, pid, "1331", "????");
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", "????");
         authDel.doAdminAuthorization(session);
 //        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
 //        if (!authorized) {
@@ -990,7 +990,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         	throw failure;
         } else {
             // TODO: should we refactore replicate() in MNodeservice to not replicate, it would avoid a possible second listNodes call...
-            D1AuthorizationDelegate authDel = new D1AuthorizationDelegate(request, null, "2152", "????");
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
             authDel.doAdminAuthorization(session);
 //        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
 //        	if (!allowed) {
