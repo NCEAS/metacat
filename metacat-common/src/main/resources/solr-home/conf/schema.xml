@@ -229,8 +229,9 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="numberReplicas"      		type="integer"  indexed="false" stored="true" multiValued="false"/>
         <field name="preferredReplicationMN"   	type="string"   indexed="false" stored="true" multiValued="true"/>
         <field name="blockedReplicationMN"  	type="string"   indexed="false" stored="true" multiValued="true"/>
-        <field name="replicaMN"      		type="string"   indexed="false" stored="true" multiValued="true"/>
-        <field name="replicaVerifiedDate" 	type="date"    indexed="false" stored="true" multiValued="true"/>
+        <field name="replicaMN"      		type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="replicationStatus"     type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="replicaVerifiedDate" 	type="date"    indexed="true" stored="true" multiValued="true"/>
         <field name="datasource"       		type="string"  indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletes"       		type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletedBy"      		type="string"   indexed="true" stored="true" multiValued="false"/>

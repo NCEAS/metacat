@@ -1937,15 +1937,21 @@ public class MNodeService extends D1NodeService
 	    String user = Constants.SUBJECT_PUBLIC;
         String[] groups= null;
         Set<Subject> subjects = null;
+        boolean isMNadmin= false;
         if (session != null) {
-            user = session.getSubject().getValue();
-            subjects = AuthUtils.authorizedClientSubjects(session);
-            if (subjects != null) {
-                List<String> groupList = new ArrayList<String>();
-                for (Subject subject: subjects) {
-                    groupList.add(subject.getValue());
+            if(isNodeAdmin(session)) {
+                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+                isMNadmin=true;//bypass access rules since it is the admin
+            } else {
+                user = session.getSubject().getValue();
+                subjects = AuthUtils.authorizedClientSubjects(session);
+                if (subjects != null) {
+                    List<String> groupList = new ArrayList<String>();
+                    for (Subject subject: subjects) {
+                        groupList.add(subject.getValue());
+                    }
+                    groups = groupList.toArray(new String[0]);
                 }
-                groups = groupList.toArray(new String[0]);
             }
         } else {
             //add the public user subject to the set 
@@ -1979,7 +1985,7 @@ public class MNodeService extends D1NodeService
 		    logMetacat.info("The query is ==================================== \n"+query);
 		    try {
 		        
-                return MetacatSolrIndex.getInstance().query(query, subjects);
+                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 throw new ServiceFailure("Solr server error", e.getMessage());
@@ -2746,6 +2752,7 @@ public class MNodeService extends D1NodeService
              if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
                  throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
              }*/
+
 	              D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861","4868");
 	              authDel.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
 
@@ -2850,13 +2857,14 @@ public class MNodeService extends D1NodeService
 	      }
 	      return success;
 	  }
+
 	
 	/**
 	 * Check if the new system meta data removed the public-readable access rule for an DOI object ( DOI can be in the identifier or sid fields)
 	 * @param newSysMeta
 	 * @throws InvalidRequest
 	 */
-	private void checkAddRestrictiveAccessOnDOI(SystemMetadata newSysMeta)  throws InvalidRequest {
+	private void checkAddRestrictiveAccessOnDOI(SystemMetadata oldSysMeta, SystemMetadata newSysMeta)  throws InvalidRequest {
 	    String doi ="doi:";
 	    boolean identifierIsDOI = false;
         boolean sidIsDOI = false;
@@ -2879,23 +2887,40 @@ public class MNodeService extends D1NodeService
         if(identifierIsDOI || sidIsDOI) {
             Subject publicUser = new Subject();
             publicUser.setValue("public");
-            AccessPolicy access = newSysMeta.getAccessPolicy();
-            if(access == null) {
-                throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
-            } else {
-                boolean found = false;
-                if (access.getAllowList() != null) {
-                    for (AccessRule item : access.getAllowList()) {
+            //We only apply this rule when the old system metadata allow the public user read this object.
+            boolean isOldSysmetaPublicReadable = false;
+            AccessPolicy oldAccess = oldSysMeta.getAccessPolicy();
+            if(oldAccess != null) {
+                if (oldAccess.getAllowList() != null) {
+                    for (AccessRule item : oldAccess.getAllowList()) {
                         if(item.getSubjectList() != null && item.getSubjectList().contains(publicUser)) {
                             if (item.getPermissionList() != null && item.getPermissionList().contains(Permission.READ)) {
-                                found = true;
+                                isOldSysmetaPublicReadable = true;
                                 break;
                             }
                         }
                     }
                 }
-                if(!found) {
+            }
+            if(isOldSysmetaPublicReadable) {
+                AccessPolicy access = newSysMeta.getAccessPolicy();
+                if(access == null) {
                     throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+                } else {
+                    boolean found = false;
+                    if (access.getAllowList() != null) {
+                        for (AccessRule item : access.getAllowList()) {
+                            if(item.getSubjectList() != null && item.getSubjectList().contains(publicUser)) {
+                                if (item.getPermissionList() != null && item.getPermissionList().contains(Permission.READ)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    if(!found) {
+                        throw new InvalidRequest("4869", "In the MN.updateSystemMetadata method, the public-readable access rule shouldn't be removed for an DOI object "+identifier+ " or SID "+sid);
+                    }
                 }
             }
         }

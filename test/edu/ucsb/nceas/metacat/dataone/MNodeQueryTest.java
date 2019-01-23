@@ -145,7 +145,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testQueryOfArchivedObjects"));
     suite.addTest(new MNodeQueryTest("testPackage"));
     suite.addTest(new MNodeQueryTest("testPackageWithSID"));
-    
+    suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPrivateObject"));
+    suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPublicObject"));
     return suite;
     
   }
@@ -400,6 +401,144 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId2.getValue()+"</str>"));
+    }
+    
+    
+    /**
+     * Test if the MN subject can query a private object
+     * @throws Exception
+     */
+    public void testQueryAccessControlAgainstPrivateObject() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setAccessPolicy(new AccessPolicy());
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(30000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        Session anotherSession = getAnotherSession();
+        stream = MNodeService.getInstance(request).query(anotherSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //public session
+        Session publicSession = new Session();
+        Subject subject = new Subject();
+        subject.setValue("public");
+        publicSession.setSubject(subject);
+        stream = MNodeService.getInstance(request).query(publicSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //null session
+        Session nullSession = null;
+        stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //empty session
+        Session emptySession = new Session();
+        stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertFalse(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertFalse(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //MN session
+        Session mnSession = getMNSession();
+        stream = MNodeService.getInstance(request).query(mnSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+    }
+    
+    /**
+     * Test if the MN subject can query a private object
+     * @throws Exception
+     */
+    public void testQueryAccessControlAgainstPublicObject() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdate." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(30000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        Session anotherSession = getAnotherSession();
+        stream = MNodeService.getInstance(request).query(anotherSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //public session
+        Session publicSession = new Session();
+        Subject subject = new Subject();
+        subject.setValue("public");
+        publicSession.setSubject(subject);
+        stream = MNodeService.getInstance(request).query(publicSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //null session
+        Session nullSession = null;
+        stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //empty session
+        Session emptySession = new Session();
+        stream = MNodeService.getInstance(request).query(nullSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //MN session
+        Session mnSession = getMNSession();
+        stream = MNodeService.getInstance(request).query(mnSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
     }
 
 }

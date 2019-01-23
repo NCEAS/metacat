@@ -55,6 +55,7 @@ import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
@@ -390,5 +391,7 @@ public class D1NodeServiceTest extends MCTestCase {
 	    System.out.println();
 	    System.out.println("*************** " + testName + " ***************");
 	}
- 
+	
+	
+    
 }

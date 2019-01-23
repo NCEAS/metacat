@@ -138,6 +138,12 @@
 					<property name="multivalue" value="true" />
 				</bean>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
+                    <constructor-arg name="name" value="replicationStatus" />
+                    <constructor-arg name="xpath"
+                        value="/d200:systemMetadata/replica/replicationStatus/text()" />
+                    <property name="multivalue" value="true" />
+                </bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="replicaVerifiedDate" />
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/replica/replicaVerified/text()" />
