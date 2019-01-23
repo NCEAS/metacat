@@ -644,7 +644,8 @@ public class D1AuthHelper {
        
     /**
      * Checks Metacat properties representing the local Node document for
-     * matching Node.subjects.  The NodeType parameter can be set to limit this authorization if needed.
+     * matching Node.subjects.  The NodeType parameter can be set to limit this 
+     * authorization check if needed.
      * @param session
      * @param nodeType  
      * @return
@@ -754,8 +755,11 @@ public class D1AuthHelper {
 
     
     /**
-     * Compare the session.subject to the authoritativeMN Node.nodeSubjects list of Subjects
+     * Compare the session.subject to the authoritativeMN Node.nodeSubjects list of Subjects.
+     * According the the DataONE documentation, the authoritative member node has all the 
+     * rights of the *rightsHolder*.
      * Any null parameter will result in return of false
+     * 
      * @param session
      * @param authoritativeMNode
      * @param nodelist

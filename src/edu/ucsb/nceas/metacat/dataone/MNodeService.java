@@ -812,7 +812,6 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = new D1AuthHelper(request, sysmeta.getIdentifier(), "2152","2151");
         authDel.doCNOnlyAuthorization(session);
  
-        // throw new NotAuthorized("2152", "The client is not a coordinate node. Only a coordinate node is allowed to call the replicate method : ");
 
         logMetacat.debug("Allowed to replicate: " + pid.getValue());
 
@@ -2936,46 +2935,6 @@ public class MNodeService extends D1NodeService
         }
         return isAuthoritativeNode;
     }
-    
-    /*
-     * Rules are:
-     * 1. If the update is happening on the authoritative MN, either
-     * 1.a.  the session has the appropriate permission vs the systemmetadata or
-     * 1.b.  the session represents the MN Admin Subject
-     * 2. If the session represents the D1 CN, it is allowed.
-     */
-//    private boolean allowUpdating(Session session, Identifier pid, Permission permission) throws NotAuthorized, NotFound, InvalidRequest, ServiceFailure, NotImplemented, InvalidToken {
-//        boolean allow = false;
-//               
-//        
-//        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-//        Set<Subject> sessionSubjects = null;
-//        if (sysmeta.getAuthoritativeMemberNode().equals(getCurrentNodeId()) 
-//                && StringUtils.isNotBlank(sysmeta.getAuthoritativeMemberNode().getValue()))
-//        {
-//            
-//            if (isSessionAuthorized(session, sysmeta, permission))
-//                return true;
-//            
-//            try {
-//                allow = isNodeAdmin(session); 
-//                return true;
-//            }
-//            catch (NotImplemented | ServiceFailure e) {
-//                logMetacat.debug("Failed to authorize the Member Node Admin Subject: " + e.getMessage());
-//            }
-//        
-//            sessionSubjects = AuthUtils.authorizedClientSubjects(session);
-//            if (this.checkExpandedPermissions(sessionSubjects, sysmeta, permission))
-//                return true;
-//            
-//        }
-//        // (outside the above if statement on purpose)
-//        if( isCNAdmin (session) )
-//            return true;
-//
-//        throw new NotAuthorized("4861", "Client can only call the request on the authoritative memember node of the object "+pid.getValue());        
-//    }
     
     
     /**

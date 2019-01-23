@@ -1142,9 +1142,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
         }
         D1AuthHelper authDel = new D1AuthHelper(request, null, "????", "????");
         authDel.doCNOnlyAuthorization(session);
-//        if (!isAdminAuthorized(session)) {
-//            throw new NotAuthorized("0000", "Not authorized to call addFormat()");
-//        }
 
         String separator = ".";
         try {
@@ -1339,9 +1336,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           //only CN is allwoed
           D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
           authDel.doCNOnlyAuthorization(session);
-//          if(!isCNAdmin(session)) {
-//                throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not a CN and is not authorized for registering the system metadata of the object "+pid.getValue());
-//          }
       }
       // the identifier can't be an SID
       try {
@@ -1779,7 +1773,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           boolean isAllowed = false;
           D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
           authDel.doCNOnlyAuthorization(session);
-//          isAllowed = isAdminAuthorized(session);
+
           isAllowed = true;
           
           // additional check if it is the authoritative node if it is not the admin
@@ -1995,9 +1989,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       } else {
           D1AuthHelper authDel = new D1AuthHelper(request, pid, "4851", "????");
           authDel.doCNOnlyAuthorization(session);
-//          if(!isCNAdmin(session)) {
-//              throw new NotAuthorized("4851", "The client -"+ session.getSubject().getValue()
-//                   + "is not a CN and is not authorized for updating the replication metadata of the object "+pid.getValue());
       }
       /*try {
 
@@ -2237,10 +2228,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
          //only CN is allwoed
        D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861", "????");
        authDel.doCNOnlyAuthorization(session);
-  
-//         if(!isCNAdmin(session)) {
-//               throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-//         }
    }
 
     //update the system metadata locally
