@@ -210,6 +210,16 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        
+        testIsAuthorized(nullSession, id1, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(publicSession, id1, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(submitter, id1, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(PISCOManager, id1, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(KNBadmin, id1, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(rightsHolderSession, id1, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getCNSession(), id1, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getMNSession(), id1, Permission.CHANGE_PERMISSION, true);
+        
         //read it with the access rule - knb group add read it
         testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
         testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
@@ -316,9 +326,20 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(PISCOManager, id1,Permission.CHANGE_PERMISSION,true); 
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
-        //8. Test update (needs the write permission). Now the access policy for id1 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
+        //8. Test update (needs the write permission). Now the access policy for id1 is: 
+        //the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
         Identifier id2 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
         sysmeta.setIdentifier(id2);
+        testIsAuthorized(nullSession, id1,Permission.WRITE,false);
+        testIsAuthorized(publicSession, id1, Permission.WRITE,false); 
+        testIsAuthorized(submitter, id1,Permission.WRITE,true); 
+        testIsAuthorized(getThirdUser(), id1,Permission.WRITE,false); 
+        testIsAuthorized(KNBadmin, id1,Permission.WRITE,true); 
+        testIsAuthorized(PISCOManager, id1,Permission.WRITE,true);
+        testIsAuthorized(rightsHolderSession, id1,Permission.WRITE,true);
+        testIsAuthorized(getMNSession(), id1,Permission.WRITE,true); 
+        testIsAuthorized(getCNSession(), id1,Permission.WRITE,true); 
+        
         testUpdate(nullSession, id1, sysmeta, id2, false);
         testUpdate(publicSession, id1, sysmeta, id2, false);
         testUpdate(getThirdUser(), id1, sysmeta, id2, false);
@@ -468,6 +489,14 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         policy2.addAllow(rule6);
         sysmeta.setAccessPolicy(policy2);
         testCreate(submitter, id13, sysmeta, object, true);
+        testIsAuthorized(nullSession, id13, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(publicSession, id13, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(submitter, id13, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(PISCOManager, id13, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(KNBadmin, id13, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(rightsHolderSession, id13, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getCNSession(), id13, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getMNSession(), id13, Permission.CHANGE_PERMISSION, true);
         testArchive(nullSession, id13, false);
         testArchive(publicSession, id13, false);
         testArchive(getThirdUser(), id13, false);
