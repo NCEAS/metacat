@@ -144,9 +144,13 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     public void testMethodsWithSession() throws Exception {
         KNBadmin = getOneKnbDataAdminsMemberSession();
         PISCOManager = getOnePISCODataManagersMemberSession();
-        //rights holder is a user.
+        //rights holder on the system metadata is a user.
         Subject rightsHolder = getAnotherSession().getSubject();
-        testMethodsWithGivenHightsHolder(rightsHolder);
+        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder);
+        //rights holder on the system metadata is a group
+        Subject rightsHolder2 = getOneEssDiveUserMemberSubject();
+        Subject rightsHolderGroupOnSys = getEssDiveUserGroupSubject();
+        testMethodsWithGivenHightsHolder(rightsHolder2, rightsHolderGroupOnSys);
     }
     
     /**
@@ -154,7 +158,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @param rightsHolder
      * @throws Exception
      */
-    private void testMethodsWithGivenHightsHolder(Subject rightsHolder) throws Exception {
+    private void testMethodsWithGivenHightsHolder(Subject rightsHolder, Subject rightsHolderOnSys) throws Exception {
         Session rightsHolderSession = new Session();
         rightsHolderSession.setSubject(rightsHolder);
         Session submitter = getTestSession();
@@ -168,7 +172,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         //2 Test the create method (it only checks if session is null)
         InputStream object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(id1, submitter.getSubject(), object);
-        sysmeta.setRightsHolder(rightsHolder);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
         sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
         testCreate(nullSession, id1, sysmeta, object, false);
         testCreate(submitter, id1, sysmeta, object, true);
@@ -273,7 +277,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(PISCOManager, id1,Permission.READ,true); 
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
-        //7. Test the updateSystemMetadata (the public and submitter has the read permission and the knb-admin group has write permission)
+        //7. Test the updateSystemMetadata (needs change permission) (the public and submitter has the read permission and the knb-admin group has write permission)
         //add a new policy that pisco group and submitter has the change permission, and third user has the read permission
         AccessRule rule4= new AccessRule();
         rule4.addPermission(Permission.CHANGE_PERMISSION);
@@ -312,7 +316,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(PISCOManager, id1,Permission.CHANGE_PERMISSION,true); 
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
-        //8. Test update. Now the access policy for id1 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
+        //8. Test update (needs the write permission). Now the access policy for id1 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
         Identifier id2 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
         sysmeta.setIdentifier(id2);
         testUpdate(nullSession, id1, sysmeta, id2, false);
@@ -345,8 +349,205 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         sysmeta.setObsoletes(id6);
         testUpdate(submitter, id6, sysmeta, id7, true);
         
-        System.out.println("The id is ============================"+id1.getValue());
         
+        //9 test Publish (needs write permission)
+        //Now the access policy for id1- id7 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
+        testPublish(nullSession, id7, false);
+        testPublish(publicSession, id7, false);
+        testPublish(getThirdUser(), id7, false);
+        testPublish(KNBadmin, id7, true);
+        //create a new object for test 
+        Identifier id8 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id8, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id8, sysmeta, object, true);
+        testPublish(nullSession, id8, false);
+        testPublish(publicSession, id8, false);
+        testPublish(getThirdUser(), id8, false);
+        testPublish(submitter, id8, false);
+        testPublish(KNBadmin, id8, false);
+        testPublish(PISCOManager, id8, false);
+        testPublish(rightsHolderSession, id8, true);
+        Identifier id9 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id9, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id9, sysmeta, object, true);
+        testPublish(nullSession, id9, false);
+        testPublish(publicSession, id9, false);
+        testPublish(getThirdUser(), id9, false);
+        testPublish(submitter, id9, false);
+        testPublish(KNBadmin, id9, false);
+        testPublish(PISCOManager, id9, false);
+        testPublish(getMNSession(), id9, true);
+        Identifier id10 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id10, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id10, sysmeta, object, true);
+        testPublish(nullSession, id10, false);
+        testPublish(publicSession, id10, false);
+        testPublish(getThirdUser(), id10, false);
+        testPublish(submitter, id10, false);
+        testPublish(KNBadmin, id10, false);
+        testPublish(PISCOManager, id10, false);
+        testPublish(getCNSession(), id10, true);
+        Identifier id11 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id11, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        AccessPolicy policy2 = new AccessPolicy();
+        AccessRule rule7 = new AccessRule();
+        rule7.addPermission(Permission.CHANGE_PERMISSION);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        sysmeta.setAccessPolicy(policy2);
+        testCreate(submitter, id11, sysmeta, object, true);
+        testPublish(nullSession, id11, false);
+        testPublish(publicSession, id11, false);
+        testPublish(getThirdUser(), id11, false);
+        testPublish(submitter, id11, false);
+        testPublish(PISCOManager, id11, true);
+        
+        //10 test syncFailed (needs mn+cn)
+        SynchronizationFailed failed = new SynchronizationFailed("1100", "description");
+        failed.setPid(id7.getValue());
+        testSyncFailed(nullSession, failed, false);;
+        testSyncFailed(publicSession, failed, false);
+        testSyncFailed(getThirdUser(), failed, false);
+        testSyncFailed(submitter, failed, false);
+        testSyncFailed(KNBadmin, failed, false);
+        testSyncFailed(PISCOManager, failed, false);
+        testSyncFailed(rightsHolderSession, failed, false);
+        testSyncFailed(getMNSession(), failed, true);
+        testSyncFailed(getMNSession(), failed, true);
+        
+        //11 test system metadata change (needs cn)
+        testSystemmetadataChanged(nullSession, id7, false);
+        testSystemmetadataChanged(publicSession, id7, false);
+        testSystemmetadataChanged(getThirdUser(), id7, false);
+        testSystemmetadataChanged(submitter, id7, false);
+        testSystemmetadataChanged(KNBadmin, id7, false);
+        testSystemmetadataChanged(PISCOManager, id7, false);
+        testSystemmetadataChanged(rightsHolderSession, id7, false);
+        testSystemmetadataChanged(getMNSession(), id7, false);
+        testSystemmetadataChanged(getCNSession(), id7, true);
+
+        //12 test archive (needs change permission)
+        Thread.sleep(100);
+        Identifier id12 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id12, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id12, sysmeta, object, true);
+        testArchive(nullSession, id12, false);
+        testArchive(publicSession, id12, false);
+        testArchive(getThirdUser(), id12, false);
+        testArchive(submitter, id12, false);
+        testArchive(KNBadmin, id12, false);
+        testArchive(PISCOManager, id12, false);
+        testArchive(rightsHolderSession, id12, true);
+        Thread.sleep(100);
+        Identifier id13 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id13, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        policy2 = new AccessPolicy();
+        rule7 = new AccessRule();
+        rule7.addPermission(Permission.CHANGE_PERMISSION);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        rule6 = new AccessRule();
+        rule6.addPermission(Permission.WRITE);
+        rule6.addSubject(getKnbDataAdminsGroupSubject());
+        policy2.addAllow(rule6);
+        sysmeta.setAccessPolicy(policy2);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id13, sysmeta, object, true);
+        testArchive(nullSession, id13, false);
+        testArchive(publicSession, id13, false);
+        testArchive(getThirdUser(), id13, false);
+        testArchive(submitter, id13, false);
+        testArchive(KNBadmin, id13, false);
+        testArchive(PISCOManager, id13, true);
+        Thread.sleep(100);
+        Identifier id14 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id14, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        policy2 = new AccessPolicy();
+        rule7 = new AccessRule();
+        rule7.addPermission(Permission.WRITE);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        rule6 = new AccessRule();
+        rule6.addPermission(Permission.WRITE);
+        rule6.addSubject(getKnbDataAdminsGroupSubject());
+        policy2.addAllow(rule6);
+        sysmeta.setAccessPolicy(policy2);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id14, sysmeta, object, true);
+        testArchive(nullSession, id14, false);
+        testArchive(publicSession, id14, false);
+        testArchive(getThirdUser(), id14, false);
+        testArchive(submitter, id14, false);
+        testArchive(KNBadmin, id14, false);
+        testArchive(PISCOManager, id14, false);
+        testArchive(getMNSession(), id14, true);
+        Thread.sleep(100);
+        Identifier id15 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id15, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        policy2 = new AccessPolicy();
+        rule7 = new AccessRule();
+        rule7.addPermission(Permission.WRITE);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        rule6 = new AccessRule();
+        rule6.addPermission(Permission.WRITE);
+        rule6.addSubject(getKnbDataAdminsGroupSubject());
+        policy2.addAllow(rule6);
+        sysmeta.setAccessPolicy(policy2);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id15, sysmeta, object, true);
+        testArchive(nullSession, id15, false);
+        testArchive(publicSession, id15, false);
+        testArchive(getThirdUser(), id15, false);
+        testArchive(submitter, id15, false);
+        testArchive(KNBadmin, id15, false);
+        testArchive(PISCOManager, id15, false);
+        testArchive(getCNSession(), id15, true);
+        
+        //13 test getLogRecord (needs MN+CN)
+        testGetLogRecords(nullSession, false);
+        testGetLogRecords(publicSession, false);
+        testGetLogRecords(getThirdUser(), false);
+        testGetLogRecords(submitter, false);
+        testGetLogRecords(KNBadmin, false);
+        testGetLogRecords(PISCOManager, false);
+        testGetLogRecords(rightsHolderSession, false);
+        testGetLogRecords(getMNSession(), true);
+        testGetLogRecords(getCNSession(), true);
+        
+        //14 test delete (needs mn+cn)
+        testDelete(nullSession, id15, false);
+        testDelete(publicSession, id15, false);
+        testDelete(getThirdUser(), id15, false);
+        testDelete(submitter, id15, false);
+        testDelete(KNBadmin, id15, false);
+        testDelete(PISCOManager, id15, false);
+        testDelete(rightsHolderSession, id15, false);
+        testDelete(getCNSession(), id15, true);
+        testDelete(getMNSession(), id1, true);
+        testDelete(getMNSession(), id2, true);
+        
+        //15 test getReplica (defer to the test on D1Client.getCN().isNodeAuthorized(null, targetNodeSubject, pid)
         //testGetReplica(getCNSession(), id1, true);
         
     }
@@ -509,12 +710,24 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
              Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
              assertTrue(id.getValue().contains("doi:"));
          } else {
-             try {
-                 Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
+             if(session == null) {
+                 try {
+                     Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
+                     fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 } catch (InvalidToken e) {
+                     
+                 } catch (NotAuthorized e) {
+                     
+                 }
+             } else {
+                 try {
+                     Identifier id = MNodeService.getInstance(request).publish(session, originalIdentifier);
+                     fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 } catch (NotAuthorized e) {
+                     
+                 }
              }
+            
          }
      }
      
@@ -571,13 +784,27 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
          Date dateSysMetaLastModified = new Date();
          long serialVersion =200;
          if(expectedResult) {
-             MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
-         } else {
              try {
                  MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
+             } catch (InvalidRequest e) {
+                 assertTrue(e.getMessage().contains("could be found for given PID:"));
+                 assertTrue(e.getMessage().contains(pid.getValue()));
+             }
+         } else {
+             if(session == null ) {
+                 try {
+                     MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                     fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 } catch (InvalidToken e) {
+                     
+                 }
+             } else {
+                 try {
+                     MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                     fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 } catch (NotAuthorized e) {
+                     
+                 }
              }
          }
      }
@@ -600,7 +827,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
          int count = 1;
          if(expectedResult) {
              Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
-             assertTrue(log.getCount() > 1);
+             assertTrue(log.getTotal() > 0);
          } else {
              try {
                  MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
@@ -919,6 +1146,26 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         subject.setValue("cn=test3,o=NCEAS,dc=dataone,dc=org");
         session.setSubject(subject);
         return session;
+    }
+    
+    /**
+     * Get the subject of one member of the ess-dive-user group
+     * @return
+     */
+    public static Subject getOneEssDiveUserMemberSubject() {
+        Subject subject = new Subject();
+        subject.setValue("http://orcid.org/0000-0001-5045-2396");
+        return subject;
+    }
+    
+    /**
+     * Get the subject of the ess-dive-user group
+     * @return
+     */
+    public static Subject getEssDiveUserGroupSubject() {
+        Subject subject = new Subject();
+        subject.setValue("CN=ess-dive-users,DC=dataone,DC=org");
+        return subject;
     }
 
 }
