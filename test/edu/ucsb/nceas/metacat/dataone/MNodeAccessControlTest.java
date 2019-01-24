@@ -467,7 +467,6 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         rule6.addSubject(getKnbDataAdminsGroupSubject());
         policy2.addAllow(rule6);
         sysmeta.setAccessPolicy(policy2);
-        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
         testCreate(submitter, id13, sysmeta, object, true);
         testArchive(nullSession, id13, false);
         testArchive(publicSession, id13, false);
@@ -490,7 +489,6 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         rule6.addSubject(getKnbDataAdminsGroupSubject());
         policy2.addAllow(rule6);
         sysmeta.setAccessPolicy(policy2);
-        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
         testCreate(submitter, id14, sysmeta, object, true);
         testArchive(nullSession, id14, false);
         testArchive(publicSession, id14, false);
@@ -514,7 +512,6 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         rule6.addSubject(getKnbDataAdminsGroupSubject());
         policy2.addAllow(rule6);
         sysmeta.setAccessPolicy(policy2);
-        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
         testCreate(submitter, id15, sysmeta, object, true);
         testArchive(nullSession, id15, false);
         testArchive(publicSession, id15, false);
