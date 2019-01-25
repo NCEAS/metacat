@@ -102,7 +102,10 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
      */
     public void setUp() throws Exception {
         //Use the default CN
-        D1Client.setNodeLocator(null);
+        //D1Client.setNodeLocator(null);
+        super.setUp();
+        // set up the configuration for d1client
+        Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
     }
     
     /**
