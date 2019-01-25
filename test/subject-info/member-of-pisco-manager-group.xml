@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:subjectInfo xmlns:ns2="http://ns.dataone.org/service/types/v1">
+  <person>
+    <subject>CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org</subject>
+    <givenName>Michael</givenName>
+    <familyName>Frenock</familyName>
+    <isMemberOf>CN=PISCO-data-managers,DC=dataone,DC=org</isMemberOf>
+    <equivalentIdentity>CN=data-managers,O=PISCOGROUPS,DC=ecoinformatics,DC=org</equivalentIdentity>
+    <equivalentIdentity>CN=data-managers,OU=groups,DC=piscoweb,DC=org</equivalentIdentity>
+    <equivalentIdentity>UID=frenockm,O=PISCO,DC=ecoinformatics,DC=org</equivalentIdentity>
+    <verified>true</verified>
+  </person>
+  <person>
+    <subject>CN=data-managers,O=PISCOGROUPS,DC=ecoinformatics,DC=org</subject>
+    <givenName>NA</givenName>
+    <familyName>NA</familyName>
+    <email>NA</email>
+  </person>
+  <person>
+    <subject>CN=data-managers,OU=groups,DC=piscoweb,DC=org</subject>
+    <givenName>NA</givenName>
+    <familyName>NA</familyName>
+    <email>NA</email>
+  </person>
+  <person>
+    <subject>UID=frenockm,O=PISCO,DC=ecoinformatics,DC=org</subject>
+    <givenName>NA</givenName>
+    <familyName>NA</familyName>
+    <email>NA</email>
+  </person>
+  <group>
+    <subject>CN=PISCO-data-managers,DC=dataone,DC=org</subject>
+    <groupName>PISCO-data-managers</groupName>
+    <hasMember>CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>CN=Jerod Sapp A6540,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>CN=Tully Rohrer A10402,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <rightsHolder>CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org</rightsHolder>
+  </group>
+</ns2:subjectInfo>

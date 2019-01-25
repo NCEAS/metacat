@@ -150,10 +150,10 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         KNBadmin = MNodeAccessControlTest.getOneKnbDataAdminsMemberSession();
         PISCOManager = MNodeAccessControlTest.getOnePISCODataManagersMemberSession();
         //rights holder on the system metadata is a user.
-        Subject rightsHolder = getAnotherSession().getSubject();
-        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder);
+        Session rightsHolder = getAnotherSession();
+        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder.getSubject());
         //rights holder on the system metadata is a group
-        Subject rightsHolder2 = MNodeAccessControlTest.getOneEssDiveUserMemberSubject();
+        Session rightsHolder2 = MNodeAccessControlTest.getOneEssDiveUserMemberSession();
         Subject rightsHolderGroupOnSys = MNodeAccessControlTest.getEssDiveUserGroupSubject();
         testMethodsWithGivenHightsHolder(rightsHolder2, rightsHolderGroupOnSys);
     }
@@ -163,9 +163,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
      * @param rightsHolder
      * @throws Exception
      */
-    private void testMethodsWithGivenHightsHolder(Subject rightsHolder, Subject rightsHolderOnSys) throws Exception {
-        Session rightsHolderSession = new Session();
-        rightsHolderSession.setSubject(rightsHolder);
+    private void testMethodsWithGivenHightsHolder(Session rightsHolderSession, Subject rightsHolderOnSys) throws Exception {
         Session submitter = getTestSession();
        
         //1. Test generating identifiers (it only checks if session is null)

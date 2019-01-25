@@ -72,6 +72,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     public static final String ALGORITHM = "MD5";
     public static final String KNBAMDINMEMBERSUBJECT = "http://orcid.org/0000-0003-2192-431X";
     public static final String PISCOMANAGERMEMBERSUBJECT = "CN=Michael Frenock A5618,O=Google,C=US,DC=cilogon,DC=org";
+    public static final String ESSDIVEUSERSUBJECT = "http://orcid.org/0000-0001-5045-2396";
     private static final Session nullSession = null;
     private static final Session publicSession = getPublicUser();
     private static Session KNBadmin = null;
@@ -98,7 +99,10 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      */
     public void setUp() throws Exception {
         //Use the default CN
-        D1Client.setNodeLocator(null);
+        //D1Client.setNodeLocator(null);
+        super.setUp();
+        // set up the configuration for d1client
+        Settings.getConfiguration().setProperty("D1Client.cnClassName", MockCNode.class.getName());
     }
     
     /**
@@ -145,10 +149,10 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         KNBadmin = getOneKnbDataAdminsMemberSession();
         PISCOManager = getOnePISCODataManagersMemberSession();
         //rights holder on the system metadata is a user.
-        Subject rightsHolder = getAnotherSession().getSubject();
-        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder);
+        Session rightsHolder = getAnotherSession();
+        testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder.getSubject());
         //rights holder on the system metadata is a group
-        Subject rightsHolder2 = getOneEssDiveUserMemberSubject();
+        Session rightsHolder2 = getOneEssDiveUserMemberSession();
         Subject rightsHolderGroupOnSys = getEssDiveUserGroupSubject();
         testMethodsWithGivenHightsHolder(rightsHolder2, rightsHolderGroupOnSys);
     }
@@ -158,9 +162,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * @param rightsHolder
      * @throws Exception
      */
-    private void testMethodsWithGivenHightsHolder(Subject rightsHolder, Subject rightsHolderOnSys) throws Exception {
-        Session rightsHolderSession = new Session();
-        rightsHolderSession.setSubject(rightsHolder);
+    private void testMethodsWithGivenHightsHolder(Session rightsHolderSession, Subject rightsHolderOnSys) throws Exception {
         Session submitter = getTestSession();
        
         //1. Test generating identifiers (it only checks if session is null)
@@ -813,7 +815,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
              try {
                  MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
              } catch (InvalidRequest e) {
-                 assertTrue(e.getMessage().contains("could be found for given PID:"));
+                 assertTrue(e.getMessage().contains("MockCNode does not contain any records"));
                  assertTrue(e.getMessage().contains(pid.getValue()));
              }
          } else {
@@ -1178,10 +1180,14 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
      * Get the subject of one member of the ess-dive-user group
      * @return
      */
-    public static Subject getOneEssDiveUserMemberSubject() {
+    public static Session getOneEssDiveUserMemberSession() throws Exception {
+        Session session = new Session();
         Subject subject = new Subject();
-        subject.setValue("http://orcid.org/0000-0001-5045-2396");
-        return subject;
+        subject.setValue(ESSDIVEUSERSUBJECT);
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
     }
     
     /**
