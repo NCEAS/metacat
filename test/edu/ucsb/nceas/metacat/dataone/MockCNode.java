@@ -206,7 +206,7 @@ public class MockCNode extends MultipartCNode {
     /*
      * Create a v1 mn in this env
      */
-    private Node getTestV1MN() {
+    public static Node getTestV1MN() {
         Node node = new Node();
         NodeReference nodeRef = new NodeReference();
         nodeRef.setValue(V1MNNODEID);

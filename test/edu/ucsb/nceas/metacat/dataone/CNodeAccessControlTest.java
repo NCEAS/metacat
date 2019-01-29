@@ -30,7 +30,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Set;
 
 import org.dataone.client.D1Node;
@@ -82,6 +84,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
     private static Session KNBadmin = null;
     private static Session PISCOManager = null;
     private NodeReference v1NodeRef = null;
+
     
     /**
      * Constructor
@@ -171,7 +174,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
      * @throws Exception
      */
     private void testMethodsWithGivenHightsHolder(Session rightsHolderSession, Subject rightsHolderOnSys) throws Exception {
-        Session submitter = getTestSession();
+        Session submitter = getThirdSession();
        
         //1. Test generating identifiers (it only checks if session is null. We use the mn service to generate ids since the cnodeservice doesn't implement it.)
         String scheme = "unknow";
@@ -377,24 +380,14 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(getMNSession(), id1,Permission.WRITE,true); 
         testIsAuthorized(getCNSession(), id1,Permission.WRITE,true); 
         
-       
         Thread.sleep(100);
         Identifier id7 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
         object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
         sysmeta = createSystemMetadata(id7, submitter.getSubject(), object);
         sysmeta.setRightsHolder(rightsHolderOnSys);
         testCreate(getCNSession(), id7, sysmeta, object, true);//id7 is a public readable object
-        
-        
-        //9 test Publish (needs write permission)
-        //Now the access policy for id1- id7 is: the public and the third user has the read permission and the knb-admin group has write permission, and submitter and pisco group has the change permission.
-       
-        
-        //10 test syncFailed (needs mn+cn)
-               
-        //11 test system metadata change (needs cn)
-       
-        //12 test archive (needs change permission)
+
+        //9 test archive (needs change permission)
         Thread.sleep(100);
         Identifier id12 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
         object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
@@ -490,7 +483,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testArchive(PISCOManager, id15, false);
         testArchive(getCNSession(), id15, true);
         
-        //13 test getLogRecord (needs MN+CN)
+        //10 test getLogRecord (needs MN+CN)
         testGetLogRecords(nullSession, false);
         testGetLogRecords(publicSession, false);
         testGetLogRecords(MNodeAccessControlTest.getThirdUser(), false);
@@ -501,7 +494,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testGetLogRecords(getMNSession(), true);
         testGetLogRecords(getCNSession(), true);
         
-        //14 test delete (needs mn+cn)
+        //11 test delete (needs mn+cn)
         testDelete(nullSession, id15, false);
         testDelete(publicSession, id15, false);
         testDelete(MNodeAccessControlTest.getThirdUser(), id15, false);
@@ -513,32 +506,230 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testDelete(getMNSession(), id1, true);
         //testDelete(getMNSession(), id2, true);
         
-    }
-    
-   
-    /**
-     * A generic test method to determine if the given session can call the isAuthorized method to result the expectation.  
-     * @param session the session will call the isAuthorized method
-     * @param pid the identifier of the object will be applied
-     * @param permission the permission will be checked
-     * @param expectedResult the expected for authorization. True will be successful.
-     * @throws Exception
-     */
-    private void testIsAuthorized(Session session, Identifier pid, Permission permission, boolean expectedResult) throws Exception {
-        if(expectedResult) {
-            boolean result = CNodeService.getInstance(request).isAuthorized(session, pid, permission);
-            assertTrue(result == expectedResult);
-        } else {
-            try {
-                boolean result = CNodeService.getInstance(request).isAuthorized(session, pid, permission);
-                fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-            } catch (NotAuthorized e) {
-                
-            }
-        }
+        //12 test the registerSystemmetadata method (need the CN subject)
+        Identifier id16 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id16, submitter.getSubject(), object);
+        Replica replica = new Replica();
+        replica.setReplicaMemberNode(v1NodeRef);
+        replica.setReplicationStatus(ReplicationStatus.QUEUED);
+        replica.setReplicaVerified(new Date());
+        sysmeta.addReplica(replica);
+        testRegisterSystemmetadata(nullSession, id16, sysmeta, false);
+        testRegisterSystemmetadata(publicSession, id16, sysmeta,false);
+        testRegisterSystemmetadata(MNodeAccessControlTest.getThirdUser(), id16, sysmeta,false);
+        testRegisterSystemmetadata(submitter, id16, sysmeta,false);
+        testRegisterSystemmetadata(KNBadmin, id16, sysmeta,false);
+        testRegisterSystemmetadata(PISCOManager, id16, sysmeta,false);
+        testRegisterSystemmetadata(rightsHolderSession, id16, sysmeta,false);
+        testRegisterSystemmetadata(getCNSession(), id16, sysmeta,true);
+        testRegisterSystemmetadata(getMNSession(), id16, sysmeta,false);
+        
+        //13 test setReplicationStatus (only CN or target MN)
+        sysmeta =CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id16);
+        Replica currentReplica = sysmeta.getReplica(0);
+        assertTrue(currentReplica.getReplicaMemberNode().getValue().equals(MockCNode.V1MNNODEID));
+        assertTrue(currentReplica.getReplicationStatus().equals(ReplicationStatus.QUEUED));
+        testSetReplicationStatus(nullSession, id16, v1NodeRef, ReplicationStatus.FAILED, false);
+        testSetReplicationStatus(publicSession, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(MNodeAccessControlTest.getThirdUser(), id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(submitter, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(KNBadmin, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(PISCOManager, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(rightsHolderSession, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        testSetReplicationStatus(getMNSession(), id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        Session anotherNode = new Session();
+        anotherNode.setSubject(MockCNode.getTestMN().getSubject(0));
+        testSetReplicationStatus(anotherNode, id16, v1NodeRef,ReplicationStatus.FAILED,false);
+        Session targetMN = new Session();
+        targetMN.setSubject(MockCNode.getTestV1MN().getSubject(0));;
+        testSetReplicationStatus(targetMN, id16, v1NodeRef,ReplicationStatus.INVALIDATED,true);//targetMN succeeds
+        SystemMetadata readSys =CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id16);
+        Replica readReplica = readSys.getReplica(0);
+        assertTrue(readReplica.getReplicaMemberNode().getValue().equals(MockCNode.V1MNNODEID));
+        assertTrue(readReplica.getReplicationStatus().equals(ReplicationStatus.INVALIDATED));
+        testSetReplicationStatus(getCNSession(), id16, v1NodeRef,ReplicationStatus.FAILED, true);//cn succeeds
+        readSys =CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id16);
+        readReplica = readSys.getReplica(0);
+        assertTrue(readReplica.getReplicaMemberNode().getValue().equals(MockCNode.V1MNNODEID));
+        assertTrue(readReplica.getReplicationStatus().equals(ReplicationStatus.FAILED));
+        
+        //14 test updateReplicaMetadata method (need the cn subject)
+        readReplica.setReplicationStatus(ReplicationStatus.COMPLETED);
+        Long serials = readSys.getSerialVersion().longValue();
+        //testUpdateReplicaMetadata(nullSession, id16, readReplica, serials, false);
+        testUpdateReplicaMetadata(publicSession, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(MNodeAccessControlTest.getThirdUser(), id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(submitter, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(KNBadmin, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(PISCOManager, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(rightsHolderSession, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(getMNSession(), id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(anotherNode, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(targetMN, id16, readReplica, serials,false);
+        testUpdateReplicaMetadata(getCNSession(), id16, readReplica, serials,true);
+        readSys =CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id16);
+        readReplica = readSys.getReplica(0);
+        assertTrue(readReplica.getReplicaMemberNode().getValue().equals(MockCNode.V1MNNODEID));
+        assertTrue(readReplica.getReplicationStatus().equals(ReplicationStatus.COMPLETED));
+        
+        //15 test the deleteReplicationMetadata (need the cn subject)
+        serials = readSys.getSerialVersion().longValue();
+        //testDeleteReplicationMetadata(nullSession, id16, v1NodeRef, serials, false);
+        testDeleteReplicationMetadata(publicSession, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(MNodeAccessControlTest.getThirdUser(), id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(submitter, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(KNBadmin, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(PISCOManager, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(rightsHolderSession, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(getMNSession(), id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(anotherNode, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(targetMN, id16, v1NodeRef, serials,false);
+        testDeleteReplicationMetadata(getCNSession(), id16, v1NodeRef, serials,true);
+        readSys =CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id16);
+        assertTrue(readSys.getReplicaList().size()==0);
+        
+        //16 test change access and rights holder (needs change permission)
+        Thread.sleep(10);
+        Identifier id17 = testGenerateIdentifier(publicSession, scheme, fragment, true);
+        InputStream object4 = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        SystemMetadata sysmeta4 = createSystemMetadata(id17, submitter.getSubject(), object4);
+        sysmeta4.setRightsHolder(rightsHolderOnSys);
+        sysmeta4.setAccessPolicy(new AccessPolicy()); //no acess rule
+        sysmeta4.setAuthoritativeMemberNode(v1NodeRef);
+        testCreate(getCNSession(), id17, sysmeta4, object4, true);
+        sysmeta4 = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17);
+        //testSetRightsHolder(nullSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(publicSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(MNodeAccessControlTest.getThirdUser(),id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(submitter,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(KNBadmin,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(PISCOManager,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(rightsHolderSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), true);
+        testSetRightsHolder(getMNSession(),id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), true);
+        testSetRightsHolder(getCNSession(),id17, rightsHolderSession.getSubject(), sysmeta4.getSerialVersion().longValue()+1, true);//change back
+        
+        AccessPolicy policy8 = new AccessPolicy();
+        AccessRule rule8 = new AccessRule();
+        rule8.addPermission(Permission.WRITE);
+        rule8.addSubject(MNodeAccessControlTest.getKnbDataAdminsGroupSubject());
+        policy8.addAllow(rule8);
+        AccessRule rule9= new AccessRule();
+        rule9.addPermission(Permission.READ);
+        rule9.addSubject(submitter.getSubject());
+        policy8.addAllow(rule9);
+        AccessRule rule10= new AccessRule();
+        rule10.addPermission(Permission.CHANGE_PERMISSION);
+        rule10.addSubject(MNodeAccessControlTest.getPISCODataManagersGroupSubject());
+        policy8.addAllow(rule10);
+        long serialVersion = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17).getSerialVersion().longValue();
+        //testSetAccessPolicy(nullSession,id17,  policy8, serialVersion, false);
+        testSetAccessPolicy(publicSession,id17, policy8, serialVersion, false);
+        testSetAccessPolicy(MNodeAccessControlTest.getThirdUser(),id17, policy8, serialVersion, false);
+        testSetAccessPolicy(submitter,id17, policy8, serialVersion, false);
+        testSetAccessPolicy(KNBadmin,id17, policy8, serialVersion, false);
+        testSetAccessPolicy(PISCOManager,id17, policy8, serialVersion, false);
+        testSetAccessPolicy(rightsHolderSession,id17, policy8, serialVersion, true);
+        testSetAccessPolicy(getMNSession(),id17, policy8, serialVersion+1, true);
+        testSetAccessPolicy(getCNSession(),id17, policy8, serialVersion+2, true);//id17 can be read by submitter, written by knb group, changed permission by pisco
+        
+        testIsAuthorized(nullSession, id17, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(publicSession, id17, Permission.READ, false);
+        testIsAuthorized(submitter, id17, Permission.READ, true);
+        testIsAuthorized(submitter, id17, Permission.WRITE, false);
+        testIsAuthorized(PISCOManager, id17, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(KNBadmin, id17, Permission.WRITE, true);
+        testIsAuthorized(KNBadmin, id17, Permission.CHANGE_PERMISSION, false);
+        testIsAuthorized(rightsHolderSession, id17, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getCNSession(), id17, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(getMNSession(), id17, Permission.CHANGE_PERMISSION, true);
+        
+        
+        serialVersion = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17).getSerialVersion().longValue();
+        //testSetRightsHolder(nullSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
+        testSetRightsHolder(publicSession,id17, getTestSession().getSubject(), serialVersion, false);
+        testSetRightsHolder(MNodeAccessControlTest.getThirdUser(),id17, getTestSession().getSubject(), serialVersion, false);
+        testSetRightsHolder(submitter,id17, getTestSession().getSubject(), serialVersion, false);
+        testSetRightsHolder(KNBadmin,id17, getTestSession().getSubject(), serialVersion, false);
+        testSetRightsHolder(rightsHolderSession,id17, getTestSession().getSubject(), serialVersion, true);
+        testSetRightsHolder(PISCOManager,id17, getTestSession().getSubject(), serialVersion+1, true);
+        testSetRightsHolder(getMNSession(),id17, getTestSession().getSubject(), serialVersion+2, true);
+        testSetRightsHolder(getCNSession(),id17, rightsHolderSession.getSubject(), serialVersion+3, true);//change back
+        
+        
+        // 17 test setReplicationPolicy (change permission)
+        ReplicationPolicy repPolicy = new ReplicationPolicy();
+        repPolicy.setNumberReplicas(2);
+        serialVersion = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17).getSerialVersion().longValue();
+        //testSetReplicationPolicy(nullSession,id17, repPolicy, sysmeta4.getSerialVersion().longValue(), false);
+        testSetReplicationPolicy(publicSession,id17, repPolicy, serialVersion, false);
+        testSetReplicationPolicy(MNodeAccessControlTest.getThirdUser(),id17, repPolicy, serialVersion, false);
+        testSetReplicationPolicy(submitter,id17, repPolicy, serialVersion, false);
+        testSetReplicationPolicy(KNBadmin,id17, repPolicy, serialVersion, false);
+        testSetReplicationPolicy(rightsHolderSession,id17, repPolicy, serialVersion, true);
+        testSetReplicationPolicy(PISCOManager,id17, repPolicy, serialVersion+1, true);
+        testSetReplicationPolicy(getMNSession(),id17, repPolicy, serialVersion+2, true);
+        testSetReplicationPolicy(getCNSession(),id17, repPolicy, serialVersion+3, true);
+        
+        //18 test setObsoletedBy (need write permission)
+        serialVersion = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17).getSerialVersion().longValue();
+        //testSetObsoletedBy(nullSession,id17, id16, sysmeta4.getSerialVersion().longValue(), false);
+        testSetObsoletedBy(publicSession,id17, id16, serialVersion, false);
+        testSetObsoletedBy(MNodeAccessControlTest.getThirdUser(),id17, id16, serialVersion, false);
+        testSetObsoletedBy(submitter,id17, id16, serialVersion, false);
+        testSetObsoletedBy(KNBadmin,id17, id16, serialVersion, true);
+        testSetObsoletedBy(rightsHolderSession,id17, id16, serialVersion+1, true);
+        testSetObsoletedBy(PISCOManager,id17, id16, serialVersion+2, true);
+        testSetObsoletedBy(getMNSession(),id17, id16, serialVersion+3, true);
+        testSetObsoletedBy(getCNSession(),id17, id16, serialVersion+4, true);
+        
+        //19 test addFormat (need mn or cn permission) (haven't implemented it)
+        
+        //20 test isNodeAuthorized. Only the node subject works: the target node should be on the cn node list, and the object's system metadata
+        // has a replica with the target's node identifier and the status of the replica is "requested"
+        Thread.sleep(10);
+        Identifier id18 = testGenerateIdentifier(publicSession, scheme, fragment, true);
+        InputStream object5 = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        SystemMetadata sysmeta5 = createSystemMetadata(id18, submitter.getSubject(), object5);
+        sysmeta5.setRightsHolder(rightsHolderOnSys);//public readable
+        testCreate(getCNSession(), id18, sysmeta5, object5, true);//create the object
+        //update the replica information on the the system metadata
+        Replica r1 = new Replica();
+        r1.setReplicaMemberNode(v1NodeRef);
+        r1.setReplicaVerified(new Date());
+        r1.setReplicationStatus(ReplicationStatus.REQUESTED); //this one should work
+        NodeReference testNode = new NodeReference();
+        testNode.setValue(MockCNode.TESTNODEID);
+        Replica r2 = new Replica();
+        r2.setReplicaMemberNode(testNode);
+        r2.setReplicaVerified(new Date());
+        r2.setReplicationStatus(ReplicationStatus.COMPLETED); //this one should NOT work since the status is not requested
+        Subject fakeSubject = new Subject();
+        fakeSubject.setValue("fakeNode");
+        NodeReference fakeNode = new NodeReference();
+        fakeNode.setValue("fakeNode");
+        Replica r3 = new Replica();
+        r3.setReplicaMemberNode(fakeNode);
+        r3.setReplicaVerified(new Date());
+        r3.setReplicationStatus(ReplicationStatus.REQUESTED); //this one should NOT work since the node is not on the cn list even though the status is requested.
+        testUpdateReplicaMetadata(getCNSession(), id18, r1, new Long(1), true);
+        testUpdateReplicaMetadata(getCNSession(), id18, r2, new Long(2), true);
+        testUpdateReplicaMetadata(getCNSession(), id18, r3, new Long(3), true);
+        //testIsNodeAuthorized(null, id18, nullSession.getSubject(), false);
+        testIsNodeAuthorized(null, id18,publicSession.getSubject(), false);
+        testIsNodeAuthorized(null, id18, MNodeAccessControlTest.getThirdUser().getSubject(),false);
+        testIsNodeAuthorized(null, id18, submitter.getSubject(), false);
+        testIsNodeAuthorized(null, id18, KNBadmin.getSubject(), false);
+        testIsNodeAuthorized(null, id18, rightsHolderSession.getSubject(), false);
+        testIsNodeAuthorized(null, id18, PISCOManager.getSubject(), false);
+        testIsNodeAuthorized(null, id18, getMNSession().getSubject(),false);
+        testIsNodeAuthorized(null, id18, getCNSession().getSubject(),false);
+        testIsNodeAuthorized(null, id18, fakeSubject,false);
+        testIsNodeAuthorized(null, id18, MockCNode.getTestMN().getSubject(0),false);
+        testIsNodeAuthorized(null, id18, MockCNode.getTestV1MN().getSubject(0),true);
         
     }
-    
+
     /**
      *A generic test method to determine if the given session can call the isNodeAuthorized method to result the expectation.  
      * @param session
@@ -553,8 +744,10 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
             assertTrue(result == expectedResult);
         } else {
             try {
-                boolean result = CNodeService.getInstance(request).isNodeAuthorized(session, targetNodeSubject, pid);
-                fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                boolean allow = CNodeService.getInstance(request).isNodeAuthorized(session, targetNodeSubject, pid);
+                if (allow) {
+                    fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                } 
             } catch (NotAuthorized e) {
                 
             }
@@ -622,29 +815,6 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
          }
      }
      
-    
-     /**
-      * A generic test method to determine if the given session can call the registerSystemMetadata method to result the expectation. 
-      * @param session
-      * @param pid
-      * @param sysmeta
-      * @param expectedResult
-      * @throws Exception
-      */
-     private void testRegisterSystemmetadata(Session session, Identifier pid, SystemMetadata sysmeta, boolean expectedResult) throws Exception {
-         if(expectedResult) {
-             Identifier id = CNodeService.getInstance(request).registerSystemMetadata(session, pid, sysmeta);
-             assertTrue(id.getValue().equals(pid.getValue()));
-         } else {
-             try {
-                 Identifier id = CNodeService.getInstance(request).registerSystemMetadata(session, pid, sysmeta);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
-             } catch (NotAuthorized e) {
-                 
-             }
-         }
-     }
-     
      /**
       * A generic test method to determine if the given session can call the updateSystemMetadata method to result the expectation. 
       * @param session
@@ -697,23 +867,21 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
          }
      }
      
-     
      /**
-      * A generic test method to determine if the given session can call the deleteReplicationMetadata method  to result the expectation.
+      * A generic test method to determine if the given session can call the registerSystemMetadata method to result the expectation. 
       * @param session
       * @param pid
-      * @param nodeId
-      * @param serialVersion
+      * @param sysmeta
       * @param expectedResult
       * @throws Exception
       */
-     private void testDeleteReplicationMetadata(Session session, Identifier pid, NodeReference nodeId, long serialVersion,  boolean expectedResult) throws Exception {
+     private void testRegisterSystemmetadata(Session session, Identifier pid, SystemMetadata sysmeta, boolean expectedResult) throws Exception {
          if(expectedResult) {
-             boolean success = CNodeService.getInstance(request).deleteReplicationMetadata(session, pid, nodeId, serialVersion);
-             assertTrue(success);
+             Identifier id = CNodeService.getInstance(request).registerSystemMetadata(session, pid, sysmeta);
+             assertTrue(id.getValue().equals(pid.getValue()));
          } else {
              try {
-                 boolean success = CNodeService.getInstance(request).deleteReplicationMetadata(session, pid, nodeId, serialVersion);
+                 Identifier id = CNodeService.getInstance(request).registerSystemMetadata(session, pid, sysmeta);
                  fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
              } catch (NotAuthorized e) {
                  
@@ -729,8 +897,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
       * @param expectedResult
       * @throws Exception
       */
-     private void testSetReplicationStatus(Session session, Identifier pid, NodeReference targetNode, boolean expectedResult) throws Exception {
-         ReplicationStatus status = ReplicationStatus.COMPLETED;
+     private void testSetReplicationStatus(Session session, Identifier pid, NodeReference targetNode,  ReplicationStatus status, boolean expectedResult) throws Exception {
          BaseException failure = null;
          if(expectedResult) {
              boolean success = CNodeService.getInstance(request).setReplicationStatus(session, pid, targetNode, status, failure);
@@ -769,21 +936,21 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
      }
      
      /**
-      * A generic test method to determine if the given session can call the setObsoletedBy method  to result the expectation.  
+      * A generic test method to determine if the given session can call the deleteReplicationMetadata method  to result the expectation.
       * @param session
       * @param pid
-      * @param obsoletedByPid
+      * @param nodeId
       * @param serialVersion
       * @param expectedResult
       * @throws Exception
       */
-     private void testSetObsoletedBy(Session session, Identifier pid, Identifier obsoletedByPid, Long serialVersion,  boolean expectedResult) throws Exception {
+     private void testDeleteReplicationMetadata(Session session, Identifier pid, NodeReference nodeId, long serialVersion,  boolean expectedResult) throws Exception {
          if(expectedResult) {
-             boolean success = CNodeService.getInstance(request).setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
+             boolean success = CNodeService.getInstance(request).deleteReplicationMetadata(session, pid, nodeId, serialVersion);
              assertTrue(success);
          } else {
              try {
-                 boolean success = CNodeService.getInstance(request).setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
+                 boolean success = CNodeService.getInstance(request).deleteReplicationMetadata(session, pid, nodeId, serialVersion);
                  fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
              } catch (NotAuthorized e) {
                  
@@ -863,6 +1030,29 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
      /**
       * A generic test method to determine if the given session can call the setObsoletedBy method  to result the expectation.  
       * @param session
+      * @param pid
+      * @param obsoletedByPid
+      * @param serialVersion
+      * @param expectedResult
+      * @throws Exception
+      */
+     private void testSetObsoletedBy(Session session, Identifier pid, Identifier obsoletedByPid, Long serialVersion,  boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             boolean success = CNodeService.getInstance(request).setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
+             assertTrue(success);
+         } else {
+             try {
+                 boolean success = CNodeService.getInstance(request).setObsoletedBy(session, pid, obsoletedByPid, serialVersion);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+     }
+     
+     /**
+      * A generic test method to determine if the given session can call the setObsoletedBy method  to result the expectation.  
+      * @param session
       * @param formatId
       * @param format
       * @param expectedResult
@@ -882,6 +1072,28 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
          }
      }
      
+     /**
+      * A generic test method to determine if the given session can call the isAuthorized method to result the expectation.  
+      * @param session the session will call the isAuthorized method
+      * @param pid the identifier of the object will be applied
+      * @param permission the permission will be checked
+      * @param expectedResult the expected for authorization. True will be successful.
+      * @throws Exception
+      */
+     private void testIsAuthorized(Session session, Identifier pid, Permission permission, boolean expectedResult) throws Exception {
+         if(expectedResult) {
+             boolean result = CNodeService.getInstance(request).isAuthorized(session, pid, permission);
+             assertTrue(result == expectedResult);
+         } else {
+             try {
+                 boolean result = CNodeService.getInstance(request).isAuthorized(session, pid, permission);
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+             } catch (NotAuthorized e) {
+                 
+             }
+         }
+         
+     }
      
      
  
