@@ -1815,7 +1815,14 @@ public class MNodeService extends D1NodeService
 			// well, certainly not authorized for public read!
 		}
 		if (!isPublic) {
-			sysmeta.getAccessPolicy().addAllow(publicRule);
+		    if(sysmeta.getAccessPolicy() != null) {
+		        sysmeta.getAccessPolicy().addAllow(publicRule);
+		    } else {
+		        AccessPolicy policy = new AccessPolicy();
+		        policy.addAllow(publicRule);
+		        sysmeta.setAccessPolicy(policy);
+		    }
+			
 		}
 		
 		return sysmeta;

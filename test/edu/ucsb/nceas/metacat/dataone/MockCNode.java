@@ -48,6 +48,7 @@ import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.D1Url;
+import org.dataone.service.util.TypeMarshaller;
 
 /**
  * MockCNode mimics a DataONE Coordinating Node, and should be used only for testing
@@ -58,6 +59,9 @@ public class MockCNode extends MultipartCNode {
     public final static String V1MNNODEID= "urn:node:test_MN-v1";
     public final static String V2MNNODEID= "urn:node:test_MN-v2";
     public final static String TESTNODEID= "urn:node:test_MN-12346";
+    private final static String MEMBEROFKNBADMINSUBJECTINFOPATH ="test/subject-info/member-of-knb-admin-group.xml";
+    private final static String MEMBEROFPISCOMANAGERSUBJECTINFOPATH = "test/subject-info/member-of-pisco-manager-group.xml";
+    private final static String MEMBEROFESSDIVEUSERSUBJECTINFOPATH = "test/subject-info/member-of-ess-dive-user.xml";
 
     /**
      * See superclass for documentation
@@ -112,7 +116,7 @@ public class MockCNode extends MultipartCNode {
     @Override
     public SystemMetadata getSystemMetadata(Session session, Identifier pid)
         throws InvalidToken, NotImplemented, ServiceFailure, NotAuthorized, NotFound {
-        throw new NotFound("0000", "MockCNode does not contain any records");
+        throw new NotFound("0000", "MockCNode does not contain any records. So it doesn't have "+pid.getValue());
     }
     
     /**
@@ -130,8 +134,32 @@ public class MockCNode extends MultipartCNode {
     @Override
     public SubjectInfo getSubjectInfo(Session session, Subject subject)
     throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken {
-        
-        return null;
+        SubjectInfo info = null;
+        if (subject != null && subject.getValue().equals(MNodeAccessControlTest.KNBAMDINMEMBERSUBJECT)) {
+            try {
+                info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFKNBADMINSUBJECTINFOPATH);
+            } catch (Exception e) {
+                
+            }
+            return info;
+        } else if (subject != null && subject.getValue().equals(MNodeAccessControlTest.PISCOMANAGERMEMBERSUBJECT)) {
+            try {
+                info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFPISCOMANAGERSUBJECTINFOPATH);
+            } catch (Exception e) {
+                
+            }
+            return info;
+        } else if (subject != null && subject.getValue().equals(MNodeAccessControlTest.ESSDIVEUSERSUBJECT)) {
+            try {
+                info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFESSDIVEUSERSUBJECTINFOPATH);
+            } catch (Exception e) {
+                
+            }
+            return info;
+        } else {
+            return null;
+        }
+       
     }
 
 
@@ -178,7 +206,7 @@ public class MockCNode extends MultipartCNode {
     /*
      * Create a v1 mn in this env
      */
-    private Node getTestV1MN() {
+    public static Node getTestV1MN() {
         Node node = new Node();
         NodeReference nodeRef = new NodeReference();
         nodeRef.setValue(V1MNNODEID);
@@ -259,4 +287,5 @@ public class MockCNode extends MultipartCNode {
                     InvalidRequest, NotFound {
         return true;
     }
+    
 }
