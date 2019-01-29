@@ -599,15 +599,16 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         sysmeta4.setAuthoritativeMemberNode(v1NodeRef);
         testCreate(getCNSession(), id17, sysmeta4, object4, true);
         sysmeta4 = CNodeService.getInstance(request).getSystemMetadata(getCNSession(),id17);
-        //testSetRightsHolder(nullSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(publicSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(MNodeAccessControlTest.getThirdUser(),id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(submitter,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(KNBadmin,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(PISCOManager,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), false);
-        testSetRightsHolder(rightsHolderSession,id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), true);
-        testSetRightsHolder(getMNSession(),id17, getTestSession().getSubject(), sysmeta4.getSerialVersion().longValue(), true);
-        testSetRightsHolder(getCNSession(),id17, rightsHolderSession.getSubject(), sysmeta4.getSerialVersion().longValue()+1, true);//change back
+        long serialVersionNumber = sysmeta4.getSerialVersion().longValue();
+        //testSetRightsHolder(nullSession,id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(publicSession,id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(MNodeAccessControlTest.getThirdUser(),id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(submitter,id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(KNBadmin,id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(PISCOManager,id17, getTestSession().getSubject(), serialVersionNumber, false);
+        testSetRightsHolder(rightsHolderSession,id17, getTestSession().getSubject(), serialVersionNumber, true);
+        testSetRightsHolder(getMNSession(),id17, getTestSession().getSubject(), serialVersionNumber+1, true);
+        testSetRightsHolder(getCNSession(),id17, rightsHolderSession.getSubject(), serialVersionNumber+2, true);//change back
         
         AccessPolicy policy8 = new AccessPolicy();
         AccessRule rule8 = new AccessRule();
