@@ -1946,7 +1946,8 @@ public class MNodeService extends D1NodeService
         Set<Subject> subjects = null;
         boolean isMNadmin= false;
         if (session != null) {
-            if(isNodeAdmin(session)) {
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
+            if(authDel.isLocalMNAdmin(session)) {
                 logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
                 isMNadmin=true;//bypass access rules since it is the admin
             } else {
@@ -2801,7 +2802,7 @@ public class MNodeService extends D1NodeService
 	          else if(currentSysmeta.getAuthoritativeMemberNode() == null && sysmeta.getAuthoritativeMemberNode() != null ) {
 	              throw new InvalidRequest("4869", "Current authoriativeMemberNode is null but the value on the new system metadata is not null. They don't match. Clients don't have the permission to change it.");
 	          }
-	          checkAddRestrictiveAccessOnDOI(sysmeta);
+	          checkAddRestrictiveAccessOnDOI(currentSysmeta, sysmeta);
 	          boolean needUpdateModificationDate = true;
 	          boolean fromCN = false;
 	          success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
