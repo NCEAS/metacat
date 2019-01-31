@@ -2747,32 +2747,7 @@ public class MNodeService extends D1NodeService
 	          //check these against the docs and correct them
 	          throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
 	                  "  If you are not logged in, please do so and retry the request.");
-	      } else {
-	          try {
-	              //Following session can do the change:
-	              //- Authoritative Member Node (we can use isNodeAdmin since we checked isAuthoritativeNode )
-	              //- Owner of object (coved by the userHasPermission method)
-	              //- user subjects with the change permission
-	              //Note: Coordinating Node can not because MN is authoritative
-	              /*if(!isAuthoritativeNode(pid)) {
-                throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
-             }
-             if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
-                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-             }*/
-
-	              D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861","4868");
-	              authDel.doUpdateAuth(session, sysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
-
-	              //             if(!allowUpdating(session, pid, Permission.CHANGE_PERMISSION)) {
-	              //                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
-	              //             }
-	          } catch(ServiceFailure e) {
-	              throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-	          } catch(NotAuthorized e) {
-	              throw new NotAuthorized("4861", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
-	          }      
-	      }
+	      } 
 	      //update the system metadata locally
 	      boolean success = false;
 	      try {
@@ -2781,6 +2756,30 @@ public class MNodeService extends D1NodeService
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
 	          }
+	          try {
+                  //Following session can do the change:
+                  //- Authoritative Member Node (we can use isNodeAdmin since we checked isAuthoritativeNode )
+                  //- Owner of object (coved by the userHasPermission method)
+                  //- user subjects with the change permission
+                  //Note: Coordinating Node can not because MN is authoritative
+                  /*if(!isAuthoritativeNode(pid)) {
+                throw  new InvalidRequest("4863", "Client can only call updateSystemMetadata request on the authoritative memember node.");
+             }
+             if(!isNodeAdmin(session) && !userHasPermission(session, pid, Permission.CHANGE_PERMISSION)) {
+                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+             }*/
+
+                  D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861","4868");
+                  authDel.doUpdateAuth(session, currentSysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
+
+                  //             if(!allowUpdating(session, pid, Permission.CHANGE_PERMISSION)) {
+                  //                 throw new NotAuthorized("4861", "The client -"+ session.getSubject().getValue()+ "is not authorized for updating the system metadata of the object "+pid.getValue());
+                  //             }
+              } catch(ServiceFailure e) {
+                  throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+              } catch(NotAuthorized e) {
+                  throw new NotAuthorized("4861", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+              }      
 	          Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
 	          Date commingModiDate = sysmeta.getDateSysMetadataModified();
 	          if(commingModiDate == null) {
