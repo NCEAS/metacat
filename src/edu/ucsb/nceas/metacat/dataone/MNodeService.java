@@ -290,7 +290,8 @@ public class MNodeService extends D1NodeService
               
         try {
             D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-            authDel.doAuthoritativeMNAuthorization(session, sysmeta);
+            //authDel.doAuthoritativeMNAuthorization(session, sysmeta);
+            authDel.doAdminAuthorization(session);
         }
         catch (NotAuthorized na) {
             NotAuthorized na2 = new NotAuthorized(notAuthorizedCode, "The provided identity does not have permission to delete objects on the Node.");
@@ -424,9 +425,13 @@ public class MNodeService extends D1NodeService
         // does the subject have WRITE ( == update) priveleges on the pid?
         //allowed = isAuthorized(session, pid, Permission.WRITE);
         //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
+        
+        // get the existing system metadata for the object
+        SystemMetadata existingSysMeta = getSystemMetadata(session, pid); //this will check permission too.
         try {
             D1AuthHelper authDel = new D1AuthHelper(request,null,"1200","1310");
-            authDel.doUpdateAuth(session, sysmeta, Permission.WRITE, this.getCurrentNodeId());
+            authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+            allowed = true;
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         } catch(NotAuthorized e) {
@@ -446,8 +451,7 @@ public class MNodeService extends D1NodeService
                 throw new InvalidSystemMetadata("1300", "The identifier provided in obsoletes does not match old Identifier");
             }
 
-            // get the existing system metadata for the object
-            SystemMetadata existingSysMeta = getSystemMetadata(session, pid);
+            
             //System.out.println("the archive is "+existingSysMeta.getArchived());
             //Base on documentation, we can't update an archived object:
             //The update operation MUST fail with Exceptions.InvalidRequest on objects that have the Types.SystemMetadata.archived property set to true.
@@ -1626,6 +1630,7 @@ public class MNodeService extends D1NodeService
             }
             if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
                 try {
+                    this.cn = D1Client.getCN();
                     newSysMeta = cn.getSystemMetadata(null, pid);
                 } catch (NotFound e) {
                     // huh? you just said you had it

@@ -283,7 +283,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetAPI(KNBadmin, id1,sysmeta.getChecksum(),true); //knb can read it
         testGetAPI(PISCOManager, id1,sysmeta.getChecksum(),true); //pisco can read it
         testGetAPI(nullSession, id1,sysmeta.getChecksum(),true); //nullSession can read it
-        testIsAuthorized(submitter, id1,Permission.READ,true); 
+        testIsAuthorized(submitter, id1,Permission.READ,true);
+        testIsAuthorized(submitter, id1,Permission.CHANGE_PERMISSION,false); 
         testIsAuthorized(publicSession, id1, Permission.READ,true); 
         testIsAuthorized(KNBadmin, id1,Permission.READ,true); 
         testIsAuthorized(PISCOManager, id1,Permission.READ,true); 
@@ -446,8 +447,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testSyncFailed(KNBadmin, failed, false);
         testSyncFailed(PISCOManager, failed, false);
         testSyncFailed(rightsHolderSession, failed, false);
-        testSyncFailed(getMNSession(), failed, true);
-        testSyncFailed(getMNSession(), failed, true);
+        testSyncFailed(getMNSession(), failed, false);
+        testSyncFailed(getCNSession(), failed, true);
         
         //11 test system metadata change (needs cn)
         testSystemmetadataChanged(nullSession, id7, false);
@@ -663,7 +664,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
          } else {
              try {
                  boolean result = MNodeService.getInstance(request).updateSystemMetadata(session, pid, newSysmeta);
-                 fail("we should get here since the previous statement should thrown an NotAuthorized exception.");
+                 fail("we should get here since the previous statement should thrown an NotAuthorized exception to pid "+pid.getValue());
              } catch (NotAuthorized e) {
                  
              }
