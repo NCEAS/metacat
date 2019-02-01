@@ -194,12 +194,13 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testCreate(KNBadmin, id1, sysmeta, object, false);
         testCreate(PISCOManager, id1, sysmeta, object, false);
         testCreate(submitter, id1, sysmeta, object, false);
+        testCreate(getMNSession(), id1, sysmeta, object, false);
         testCreate(getCNSession(), id1, sysmeta, object, true);
         //MN can create object id 0 as well. The object is public readable.
         object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
         SystemMetadata sysmeta2 = createSystemMetadata(id0, submitter.getSubject(), object);
         sysmeta2.setRightsHolder(rightsHolderOnSys);
-        testCreate(getMNSession(), id0, sysmeta2, object, true);
+        testCreate(getCNSession(), id0, sysmeta2, object, true);
        
         //3 The object id1 doesn't have any access policy, it can be read by rights holder, cn and mn.
         testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
