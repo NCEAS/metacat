@@ -504,7 +504,7 @@ public class CNodeAccessControlTest extends D1NodeServiceTest {
         testDelete(PISCOManager, id15, false);
         testDelete(rightsHolderSession, id15, false);
         testDelete(getCNSession(), id15, true);
-        testDelete(getMNSession(), id1, true);
+        testDelete(getMNSession(), id1, false);
         //testDelete(getMNSession(), id2, true);
         
         //12 test the registerSystemmetadata method (need the CN subject)

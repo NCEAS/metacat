@@ -414,9 +414,8 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
       
       D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
-      authDel.doAuthoritativeMNAuthorization(session, sysmeta);
+      authDel.doCNOnlyAuthorization(session);
 
-	    
 	  // Don't defer to superclass implementation without a locally registered identifier
       // Check for the existing identifier
       try {
