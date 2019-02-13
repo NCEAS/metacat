@@ -822,7 +822,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           Thread.sleep(3000);
           // use MN admin to delete
-          session = getMNSession();
+          session = getCNSession();
           Identifier deletedPid = CNodeService.getInstance(request).delete(session, pid);
           System.out.println("after deleting");
           assertEquals(pid.getValue(), deletedPid.getValue());
@@ -1316,7 +1316,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           assertTrue(archived.getArchived());
           
           // test delete a series id by v2
-          CNodeService.getInstance(request).delete(mnSession, seriesId2);
+          CNodeService.getInstance(request).delete(session, seriesId2);
           try {
               CNodeService.getInstance(request).get(session, seriesId2);
               fail("we can't reach here since the series id was deleted ");
@@ -1350,7 +1350,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           
           //delete seriesId
-          CNodeService.getInstance(request).delete(mnSession, seriesId);
+          CNodeService.getInstance(request).delete(session, seriesId);
           try {
               CNodeService.getInstance(request).get(session, newPid);
               fail("we can't reach here since the series id was deleted ");
