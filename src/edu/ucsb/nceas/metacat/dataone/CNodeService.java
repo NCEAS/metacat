@@ -410,8 +410,20 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       String notAuthorizedCode = "4960";
       String notFoundCode = "4961";
       String serviceFailureCode = "4962";
+      String invalidTokenCode = "4963";
+      boolean needDeleteInfo = false;
       
-      SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
+      //SystemMetadata sysmeta = getSeriesHead(pid, notFoundCode, serviceFailureCode);
+      Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+      if(HeadOfSid != null) {
+          pid = HeadOfSid;
+      }
+      SystemMetadata sysmeta = null;
+      try {
+          sysmeta =getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode, needDeleteInfo);
+      } catch (InvalidRequest e) {
+          throw new InvalidToken(invalidTokenCode, e.getMessage());
+      }
       
       D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doCNOnlyAuthorization(session);
@@ -420,7 +432,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       // Check for the existing identifier
       try {
           localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-          super.delete(session, pid);
+          super.delete(session.getSubject().getValue(), pid);
           
       } catch (McdbDocNotFoundException e) {
           // This object is not registered in the identifier table. Assume it is of formatType DATA,
@@ -545,9 +557,19 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 	  String serviceFailureCode = "4972";
       String notFoundCode = "4971";
       String notAuthorizedCode = "4970";
-	  SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
-	  
-	  
+      String invalidTokenCode = "4973";
+      boolean needDeleteInfo = false;
+	  //SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode);
+      Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+      if(HeadOfSid != null) {
+          pid = HeadOfSid;
+      }
+      SystemMetadata sysmeta = null;
+      try {
+          sysmeta =getSystemMetadataForPID(pid, serviceFailureCode, invalidTokenCode, notFoundCode, needDeleteInfo);
+      } catch (InvalidRequest e) {
+          throw new InvalidToken(invalidTokenCode, e.getMessage());
+      }
 	  D1AuthHelper authDel = new D1AuthHelper(request,pid,notAuthorizedCode,serviceFailureCode);
 	  authDel.doIsAuthorized(session, sysmeta, Permission.CHANGE_PERMISSION);
 	  
@@ -1530,7 +1552,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       String notFoundCode = "4460";
       String notAuthorizedCode = "4440";
       String invalidRequestCode = "4442";
-      SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+      boolean needDeleteInfo = false;
+      Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+      if(HeadOfSid != null) {
+          pid = HeadOfSid;
+      }
+      SystemMetadata systemMetadata =getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, needDeleteInfo);
+      //SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
      
       D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);
@@ -1877,7 +1905,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       String notFoundCode = "4400";
       String notAuthorizedCode = "4420";
       String invalidRequestCode = "4402";
-      SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+      //SystemMetadata systemMetadata = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+      boolean needDeleteInfo = false;
+      Identifier HeadOfSid = getPIDForSID(pid, serviceFailureCode);
+      if(HeadOfSid != null) {
+          pid = HeadOfSid;
+      }
+      SystemMetadata systemMetadata =getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, needDeleteInfo);
      
       D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, systemMetadata, Permission.CHANGE_PERMISSION);

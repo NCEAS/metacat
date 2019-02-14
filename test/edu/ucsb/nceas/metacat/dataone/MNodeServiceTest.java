@@ -1734,6 +1734,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
 						
 			// save the ORE object
+			Thread.sleep(10000);
 			object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
 			sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
 			sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
@@ -1786,7 +1787,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			bagFile.delete();
 			
 			// test the ORE lookup
-			Thread.sleep(10000);
+			Thread.sleep(30000);
+			System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
 			List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(metadataId, true);
 			assertTrue(oreIds.contains(resourceMapId));
 

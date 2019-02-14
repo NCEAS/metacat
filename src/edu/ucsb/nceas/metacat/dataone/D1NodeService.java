@@ -149,7 +149,7 @@ public abstract class D1NodeService {
   /**
    * out-of-band session object to be used when not passed in as a method parameter
    */
-  protected Session session;
+  protected Session session2;
 
   /**
    * Constructor - used to set the metacatUrl from a subclass extending D1NodeService
@@ -165,7 +165,7 @@ public abstract class D1NodeService {
    * @return
    */
   	public Session getSession() {
-		return session;
+		return session2;
 	}
   	
   	/**
@@ -173,7 +173,7 @@ public abstract class D1NodeService {
   	 * @param session
   	 */
 	public void setSession(Session session) {
-		this.session = session;
+		this.session2 = session;
 	}
 
 	
@@ -243,15 +243,15 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    * @throws InvalidRequest
    */
-  public Identifier delete(Session session, Identifier pid) 
+  public Identifier delete(String username, Identifier pid) 
       throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
       
       String localId = null;
-      if (session == null) {
+      /*if (session == null) {
       	throw new InvalidToken("1330", "No session has been provided");
-      }
+      }*/
       // just for logging purposes
-      String username = session.getSubject().getValue();
+      //String username = session.getSubject().getValue();
 
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
@@ -794,19 +794,29 @@ public abstract class D1NodeService {
    * @throws InvalidRequest
    * @throws NotImplemented
    */
-   public SystemMetadata getSystemMetadata(Session session, Identifier pid)
+   public SystemMetadata getSystemMetadata(Session session, Identifier id)
            throws InvalidToken, ServiceFailure, NotAuthorized, NotFound,
            NotImplemented {
 
        String serviceFailureCode = "1090";
        String notFoundCode = "1420";
        String notAuthorizedCode = "[TBD]";
-              
-       SystemMetadata sysmeta = getSeriesHead(pid,serviceFailureCode,notFoundCode);
-
-       D1AuthHelper authDel = new D1AuthHelper(request,pid,notAuthorizedCode, serviceFailureCode);
+       String invalidTokenCode = "1050";
+       boolean needDeleteInfo = true;
+       
+       Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
+       if(HeadOfSid != null) {
+           id = HeadOfSid;
+       }
+       //SystemMetadata sysmeta = getSeriesHead(pid,serviceFailureCode,notFoundCode);
+       SystemMetadata sysmeta = null;
+       try {
+           sysmeta = getSystemMetadataForPID(id, serviceFailureCode, invalidTokenCode, notFoundCode, needDeleteInfo);
+       } catch (InvalidRequest e) {
+           throw new InvalidToken(invalidTokenCode, e.getMessage());
+       }
+       D1AuthHelper authDel = new D1AuthHelper(request,id,notAuthorizedCode, serviceFailureCode);
        authDel.doGetSysmetaAuthorization(session, sysmeta, Permission.READ);
-
        return sysmeta;
       
    }
@@ -838,7 +848,7 @@ public abstract class D1NodeService {
    * @throws NotImplemented
    * @throws InvalidRequest
    */
-  public boolean isAuthorized(Session session, Identifier pid, Permission permission)
+  public boolean isAuthorized(Session session, Identifier id, Permission permission)
     throws ServiceFailure, InvalidToken, NotFound, NotAuthorized,
     NotImplemented, InvalidRequest 
   {
@@ -851,10 +861,15 @@ public abstract class D1NodeService {
       String notFoundCode = "1800";
       String notAuthorizedCode = "1820";
       String invalidRequestCode = "1761";
- 
-      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode, invalidRequestCode);
+      boolean needDeleteInfo =true;
+      Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
+      if(HeadOfSid != null) {
+          id = HeadOfSid;
+      }
+      //SystemMetadata sysmeta = getSeriesHead(pid,serviceFailureCode,notFoundCode);
+      SystemMetadata sysmeta = getSystemMetadataForPID(id, serviceFailureCode, invalidRequestCode, notFoundCode, needDeleteInfo);
 
-      D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+      D1AuthHelper authDel = new D1AuthHelper(request, id, notAuthorizedCode, serviceFailureCode);
       authDel.doIsAuthorized(session, sysmeta, permission);
 
       return true;
@@ -1963,9 +1978,50 @@ public abstract class D1NodeService {
       return id;
   }
  
+  /**
+   * Get the system metadata for the given PID (not a sid).
+   * @param pid
+   * @param serviceFailureCode
+   * @param invalidRequestCode
+   * @return the system metadata associated with the pid
+   * @throws ServiceFailure
+   * @throws NotFound
+   * @throws InvalidRequest
+   */
+  protected SystemMetadata getSystemMetadataForPID(Identifier pid, String serviceFailureCode, String invalidRequestCode, String notFoundCode, boolean needDeleteInfo) throws ServiceFailure, InvalidRequest, NotFound{
+      SystemMetadata sysmeta = null;
+      if (pid == null || StringUtils.isAnyBlank(pid.getValue())) {
+          throw new InvalidRequest(invalidRequestCode, "The passed-in Identifier cannot be null or blank!!");
+      }
+      try {
+          sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+      } catch (Exception e) {
+          // convert Hazelcast RuntimeException to NotFound
+          logMetacat.error("An error occurred while getting system metadata for identifier " +
+                  pid.getValue() + ". The error message was: " + e.getMessage(), e);
+          throw new ServiceFailure(serviceFailureCode, "Can't get the system metadata for " + pid.getValue()+ " since "+e.getMessage());
+      } 
+      if(sysmeta == null) {
+          String error = "No system metadata could be found for given PID: " + pid.getValue();
+          if (needDeleteInfo) {
+              String localId = null;
+              try {
+                  localId = IdentifierManager.getInstance().getLocalId(pid.getValue());             
+              } catch (Exception e) {
+                  logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+              }
+              if(localId != null && EventLog.getInstance().isDeleted(localId)) {
+                  error = error + ". "+DELETEDMESSAGE;
+              } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+                  error = error + ". "+DELETEDMESSAGE;
+              }
+          }
+          throw new NotFound(notFoundCode, error);
+      }
+      return sysmeta;
+  }
   
-  
-  protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode) throws ServiceFailure, NotFound 
+  /*protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode) throws ServiceFailure, NotFound 
   {
       try {
           return getSeriesHead(id,serviceFailureCode, notFoundCode, null);
@@ -1974,7 +2030,7 @@ public abstract class D1NodeService {
           sf.initCause(e);
           throw sf;
       }
-  }
+  }*/
   
   
   
@@ -1988,7 +2044,7 @@ public abstract class D1NodeService {
    * @throws NotFound 
    * @throws InvalidRequest 
    */
-   protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode, String invalidRequestCode) throws ServiceFailure, NotFound, InvalidRequest {
+   /*protected SystemMetadata getSeriesHead(Identifier id, String serviceFailureCode, String notFoundCode, String invalidRequestCode) throws ServiceFailure, NotFound, InvalidRequest {
 
        SystemMetadata sysmeta = null;
        if (id == null || StringUtils.isAnyBlank(id.getValue())) {
@@ -2046,7 +2102,7 @@ public abstract class D1NodeService {
            + "': " + sqle.getMessage());
        } 
 
-   }
+   }*/
   
   
   /*
@@ -2153,7 +2209,7 @@ public abstract class D1NodeService {
   }
 
   //@Override
-  public InputStream view(Session session, String format, Identifier pid)
+  public InputStream view(Session session, String format, Identifier id)
           throws InvalidToken, ServiceFailure, NotAuthorized, InvalidRequest,
           NotImplemented, NotFound {
       InputStream resultInputStream = null;
@@ -2161,8 +2217,13 @@ public abstract class D1NodeService {
       String serviceFailureCode = "2831";
       String notFoundCode = "2835";
       String invalidRequestCode = "2833";
-      SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
-
+      boolean needDeleteInfo = false;
+      //SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode, notFoundCode,invalidRequestCode);
+      Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
+      if(HeadOfSid != null) {
+          id = HeadOfSid;
+      }
+      SystemMetadata sysmeta = getSystemMetadataForPID(id, serviceFailureCode, invalidRequestCode, notFoundCode, needDeleteInfo);
       InputStream object = this.get(session, sysmeta.getIdentifier()); 
       
       // authorization is delegated to the get() call, and using the ID 
@@ -2184,13 +2245,13 @@ public abstract class D1NodeService {
               Hashtable<String, String[]> params = new Hashtable<String, String[]>();
               String localId = null;
               try {
-                  localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                  localId = IdentifierManager.getInstance().getLocalId(id.getValue());
               } catch (McdbDocNotFoundException e) {
                   throw new NotFound("1020", e.getMessage());
               }
               params.put("qformat", new String[] {format});               
               params.put("docid", new String[] {localId});
-              params.put("pid", new String[] {pid.getValue()});
+              params.put("pid", new String[] {id.getValue()});
               transformer.transformXMLDocument(
                       documentContent , 
                       sourceType, 

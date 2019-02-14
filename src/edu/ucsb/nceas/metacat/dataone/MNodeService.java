@@ -276,20 +276,32 @@ public class MNodeService extends D1NodeService
      * @throws InvalidRequest
      */
     @Override
-    public Identifier delete(Session session, Identifier pid) 
+    public Identifier delete(Session session, Identifier id) 
         throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented {
 
         String serviceFailureCode = "2902";
         String notFoundCode = "2901";
         String notAuthorizedCode = "2900";
+        String invalidTokenCode = "2903";
+        boolean needDeleteInfo = false;
         if(isReadOnlyMode()) {
             throw new ServiceFailure("2902", ReadOnlyChecker.DATAONEERROR);
         }
         
-        SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode,notFoundCode);
-              
+        //SystemMetadata sysmeta = getSeriesHead(pid, serviceFailureCode,notFoundCode);
+        Identifier HeadOfSid = getPIDForSID(id, serviceFailureCode);
+        if(HeadOfSid != null) {
+            id = HeadOfSid;
+        }
+        SystemMetadata sysmeta = null;
         try {
-            D1AuthHelper authDel = new D1AuthHelper(request, pid, notAuthorizedCode, serviceFailureCode);
+            sysmeta =getSystemMetadataForPID(id, serviceFailureCode, invalidTokenCode, notFoundCode, needDeleteInfo);
+        } catch (InvalidRequest e) {
+            throw new InvalidToken(invalidTokenCode, e.getMessage());
+        }
+
+        try {
+            D1AuthHelper authDel = new D1AuthHelper(request, id, notAuthorizedCode, serviceFailureCode);
             //authDel.doAuthoritativeMNAuthorization(session, sysmeta);
             authDel.doAdminAuthorization(session);
         }
@@ -300,7 +312,7 @@ public class MNodeService extends D1NodeService
         }
     	
     	   // defer to superclass implementation
-        return super.delete(session, sysmeta.getIdentifier());
+        return super.delete(session.getSubject().getValue(), id);
     }
 
     /**
