@@ -441,7 +441,7 @@ public class MNodeService extends D1NodeService
         // get the existing system metadata for the object
         String invalidRequestCode = "1202";
         String notFoundCode ="1280";
-        SystemMetadata existingSysMeta = getSystemMetadataForPID(newPid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+        SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
         try {
             D1AuthHelper authDel = new D1AuthHelper(request,null,"1200","1310");
             authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
@@ -1079,6 +1079,14 @@ public class MNodeService extends D1NodeService
         } catch (IOException e) {
             throw new ServiceFailure("1410", "The checksum for the object specified by " + pid.getValue() + "could not be returned due to an internal error: "
                     + e.getMessage());
+        } finally {
+            if(inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (Exception e) {
+                   logMetacat.warn("MNodeService.getChecksum - can't close the input stream which got the object content since "+e.getMessage());
+                }
+            }
         }
 
         if (checksum == null) {
