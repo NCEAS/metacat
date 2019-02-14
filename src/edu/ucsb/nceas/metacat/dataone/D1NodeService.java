@@ -275,7 +275,8 @@ public abstract class D1NodeService {
                 HazelcastService.getInstance().getIdentifiers().remove(pid);
                 sysMeta.setArchived(true);
                 try {
-                    MetacatSolrIndex.getInstance().submit(pid, sysMeta, null, false);
+                    //MetacatSolrIndex.getInstance().submit(pid, sysMeta, null, false);
+                    MetacatSolrIndex.getInstance().submitDeleteTask(pid, sysMeta);
                 } catch (Exception ee ) {
                     logMetacat.warn("D1NodeService.delete - the object with the provided identifier "+pid.getValue()+" was deleted. But the MN solr index can't be deleted.");
                 }
