@@ -95,6 +95,7 @@ public class D1AuthHelper {
      */
     public D1AuthHelper(HttpServletRequest request, Identifier requestIdentifier, String notAuthorizedCode, String serviceFailureCode) {
         this.request = request;
+        this.requestIdentifier = requestIdentifier;
         this.notAuthorizedCode = notAuthorizedCode;
         this.serviceFailureCode = serviceFailureCode;
     }
