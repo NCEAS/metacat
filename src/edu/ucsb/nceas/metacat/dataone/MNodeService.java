@@ -439,7 +439,9 @@ public class MNodeService extends D1NodeService
         //CN having the permission is allowed; user with the write permission and calling on the authoritative node is allowed.
         
         // get the existing system metadata for the object
-        SystemMetadata existingSysMeta = getSystemMetadata(session, pid); //this will check permission too.
+        String invalidRequestCode = "1202";
+        String notFoundCode ="1280";
+        SystemMetadata existingSysMeta = getSystemMetadataForPID(newPid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
         try {
             D1AuthHelper authDel = new D1AuthHelper(request,null,"1200","1310");
             authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
@@ -1071,7 +1073,6 @@ public class MNodeService extends D1NodeService
 
         try {
             checksum = ChecksumUtil.checksum(inputStream, algorithm);
-
         } catch (NoSuchAlgorithmException e) {
             throw new ServiceFailure("1410", "The checksum for the object specified by " + pid.getValue() + "could not be returned due to an internal error: "
                     + e.getMessage());
