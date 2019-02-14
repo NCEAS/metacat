@@ -229,9 +229,9 @@ public abstract class D1NodeService {
   
   /**
    * Deletes an object from the Member Node, where the object is either a 
-   * data object or a science metadata object.
+   * data object or a science metadata object. No access checking.
    * 
-   * @param session - the Session object containing the credentials for the Subject
+   * @param username - the name of the user who calls the method. This is only for logging. 
    * @param pid - The object identifier to be deleted
    * 
    * @return pid - the identifier of the object used for the deletion
@@ -588,7 +588,8 @@ public abstract class D1NodeService {
       sysMeta.setArchived(true);
       sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
       try {
-          MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
+          //MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
+          MetacatSolrIndex.getInstance().submitDeleteTask(sysMeta.getIdentifier(), sysMeta);
       } catch (Exception e) {
           logMetacat.warn("Can't remove the solr index for pid "+sysMeta.getIdentifier().getValue());
       }
