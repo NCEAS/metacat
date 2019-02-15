@@ -2523,7 +2523,7 @@ public class IdentifierManager {
                 // Check if the document exists in xml_revisions table.
                 //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
                 logMetacat.debug("IdentifierManager.existsInIdentifierTable - check if the document "+ pid.getValue() +" exists in the identifier table");
-                pstmt = conn.prepareStatement("SELECT guid FROM xml_revisions WHERE guid = ?");
+                pstmt = conn.prepareStatement("SELECT guid FROM identifier WHERE guid = ?");
                 pstmt.setString(1, pid.getValue());
                 logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - executing SQL: " + pstmt.toString());
                 pstmt.execute();

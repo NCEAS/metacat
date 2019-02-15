@@ -746,9 +746,14 @@ public abstract class D1NodeService {
               inputStream = MetacatHandler.read(localId);
           } catch (McdbDocNotFoundException de) {
               String error ="";
-              if(EventLog.getInstance().isDeleted(localId)) {
-                  error=DELETEDMESSAGE;
+              try {
+                  if(IdentifierManager.getInstance().existsInIdentifierTable(pid)) {
+                      error=DELETEDMESSAGE;
+                  } 
+              } catch(Exception e) {
+                  logMetacat.warn("Can't determine if the pid "+pid.getValue()+" is deleted or not.");
               }
+              
               throw new NotFound("1020", "The object specified by " + 
                       pid.getValue() +
                       " does not exist at this node. "+error);
@@ -763,8 +768,12 @@ public abstract class D1NodeService {
       // if we fail to set the input stream
       if ( inputStream == null ) {
           String error ="";
-          if(EventLog.getInstance().isDeleted(localId)) {
-              error=DELETEDMESSAGE;
+          try {
+              if(IdentifierManager.getInstance().existsInIdentifierTable(pid)) {
+                  error=DELETEDMESSAGE;
+              }
+          } catch (Exception e) {
+              logMetacat.warn("Can't determine if the pid "+pid.getValue()+" is deleted or not.");
           }
           throw new NotFound("1020", "The object specified by " + 
                   pid.getValue() +
@@ -1936,8 +1945,8 @@ public abstract class D1NodeService {
          //the v1 method only handles a pid. so it should throw a not-found exception.
           // check if the pid was deleted.
           try {
-              String localId = IdentifierManager.getInstance().getLocalId(identifier.getValue());
-              if(EventLog.getInstance().isDeleted(localId)) {
+              boolean existsIndentifierTable = IdentifierManager.getInstance().existsInIdentifierTable(identifier);
+              if(existsIndentifierTable) {
                   notFoundMessage=notFoundMessage+" "+DELETEDMESSAGE;
               } 
           } catch (Exception e) {
@@ -2006,15 +2015,13 @@ public abstract class D1NodeService {
       if(sysmeta == null) {
           String error = "No system metadata could be found for given PID: " + pid.getValue();
           if (needDeleteInfo) {
-              String localId = null;
+              boolean existsInIdentifierTable =false;
               try {
-                  localId = IdentifierManager.getInstance().getLocalId(pid.getValue());             
+                  existsInIdentifierTable = IdentifierManager.getInstance().existsInIdentifierTable(pid);             
               } catch (Exception e) {
-                  logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+                  logMetacat.warn("Couldn't determine if the pid "+pid.getValue()+" exists in the identifier table. We assume it doesn't");
               }
-              if(localId != null && EventLog.getInstance().isDeleted(localId)) {
-                  error = error + ". "+DELETEDMESSAGE;
-              } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+              if(existsInIdentifierTable) {
                   error = error + ". "+DELETEDMESSAGE;
               }
           }

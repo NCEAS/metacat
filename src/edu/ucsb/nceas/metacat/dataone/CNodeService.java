@@ -1048,17 +1048,13 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
         if (systemMetadata == null ) {
             String error ="";
-            String localId = null;
+            boolean existsInIdentifierTable = false;
             try {
-                localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-
+                existsInIdentifierTable = IdentifierManager.getInstance().existsInIdentifierTable(pid);
             } catch (Exception e) {
-                logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+                logMetacat.warn("Couldn't determine if the "+pid.getValue()+" is in the identifier table since "+e.getMessage()+". So we assume it is not there.");
             }
-            
-            if(localId != null && EventLog.getInstance().isDeleted(localId)) {
-                error = DELETEDMESSAGE;
-            } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+            if(existsInIdentifierTable) {
                 error = DELETEDMESSAGE;
             }
             throw new NotFound("1420", "Couldn't find an object identified by " + pid.getValue()+". "+error);
@@ -1725,17 +1721,14 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           logMetacat.debug("System metadata for identifier " + pid.getValue() +
           " is null.");
           String error ="";
-          String localId = null;
+          boolean existsInIdentifierTable = false;
           try {
-              localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+              existsInIdentifierTable = IdentifierManager.getInstance().existsInIdentifierTable(pid);
 
           } catch (Exception e) {
-              logMetacat.warn("Couldn't find the local id for the pid "+pid.getValue());
+              logMetacat.warn("Couldn't determine if the "+pid.getValue()+" is in the identifier table since "+e.getMessage()+". So we assume it is not there.");
           }
-
-          if(localId != null && EventLog.getInstance().isDeleted(localId)) {
-              error = DELETEDMESSAGE;
-          } else if (localId == null && EventLog.getInstance().isDeleted(pid.getValue())) {
+          if(existsInIdentifierTable) {
               error = DELETEDMESSAGE;
           }
           throw new NotFound("4874", "Couldn't find an object identified by " + pid.getValue()+". "+error);

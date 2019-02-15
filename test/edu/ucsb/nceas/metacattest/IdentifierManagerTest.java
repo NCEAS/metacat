@@ -96,6 +96,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
+        suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
         
         return suite;
     }
