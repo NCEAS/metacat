@@ -423,7 +423,7 @@ public class D1AuthHelper {
         
         String msg = String.format(
                 "%s not allowed on %s for subject[s]: %s",
-                    permission == null ? "[unspecified permission]" : permission,
+                    permission == null ? "Permission" : permission,
                     pid == null ? null : pid.getValue(),
                     includedSubjects.toString()
                     );
