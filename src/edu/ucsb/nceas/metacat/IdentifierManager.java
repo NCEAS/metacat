@@ -2502,5 +2502,52 @@ public class IdentifierManager {
         logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid "+docid+"."+rev+ " exist in the xml_revision table? - "+exist);
         return exist;
     }
+    
+    /**
+     * Determine if the given pid exists on the identifier table.
+     * @param pid must be a PID
+     * @return true if it exists; false otherwise.
+     * @throws SQLException
+     */
+    public boolean existsInIdentifierTable(Identifier pid) throws SQLException {
+        boolean exists = false;
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            if(pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
+                //check out DBConnection
+                conn = DBConnectionPool.getDBConnection("IdentifierManager.existsInIdentifierTable");
+                serialNumber = conn.getCheckOutSerialNumber();
+                // Check if the document exists in xml_revisions table.
+                //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
+                logMetacat.debug("IdentifierManager.existsInIdentifierTable - check if the document "+ pid.getValue() +" exists in the identifier table");
+                pstmt = conn.prepareStatement("SELECT guid FROM xml_revisions WHERE guid = ?");
+                pstmt.setString(1, pid.getValue());
+                logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - executing SQL: " + pstmt.toString());
+                pstmt.execute();
+                rs = pstmt.getResultSet();
+                if(rs.next()){
+                    exists = true;
+                }
+                conn.increaseUsageCount(1);
+            }
+            
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+            if(rs != null) {
+                rs.close();
+            }
+            if(pstmt != null) {
+                pstmt.close();
+            }
+        }
+        logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "+pid.getValue()+ " exist in the xml_revision table? - "+exists);
+        return exists;
+    }
 }
 
