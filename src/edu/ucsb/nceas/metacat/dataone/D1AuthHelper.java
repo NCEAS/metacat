@@ -158,7 +158,7 @@ public class D1AuthHelper {
         }
         
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, permission, notAuthorizedCode); 
+            prepareAndThrowNotAuthorized(session,requestIdentifier, permission, notAuthorizedCode); 
         } else {
             // just use the first one
             ServiceFailure sf = exceptions.get(0);
@@ -199,7 +199,7 @@ public class D1AuthHelper {
         }
         
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+            prepareAndThrowNotAuthorized(session,requestIdentifier, null, notAuthorizedCode); 
         } else {
             // just use the first one
             ServiceFailure sf = exceptions.get(0);
@@ -271,7 +271,7 @@ public class D1AuthHelper {
         
         if (exceptions.isEmpty()) { 
             if(isAuthoritiveMN) {
-                prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+                prepareAndThrowNotAuthorized(session,requestIdentifier, permission, notAuthorizedCode); 
             } else {
                 logMetacat.warn(authoritiveMNMessage);
                 throw new NotAuthorized(notAuthorizedCode, authoritiveMNMessage);
@@ -320,7 +320,7 @@ public class D1AuthHelper {
         }
 
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+            prepareAndThrowNotAuthorized(session,requestIdentifier, null, notAuthorizedCode); 
         } else {
             // just use the first one
             ServiceFailure sf = exceptions.get(0);
@@ -359,7 +359,7 @@ public class D1AuthHelper {
         }
 
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+            prepareAndThrowNotAuthorized(session,requestIdentifier, null, notAuthorizedCode); 
         } else {
             // just use the first one
             ServiceFailure sf = exceptions.get(0);
@@ -430,7 +430,7 @@ public class D1AuthHelper {
         }
         
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, permission, notAuthorizedCode); 
+            prepareAndThrowNotAuthorized(session,requestIdentifier, permission, notAuthorizedCode); 
         } else {
              ServiceFailure sf = exceptions.get(0);
              sf.setDetail_code(serviceFailureCode);
