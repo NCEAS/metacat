@@ -811,7 +811,7 @@ public abstract class D1NodeService {
 
        String serviceFailureCode = "1090";
        String notFoundCode = "1420";
-       String notAuthorizedCode = "[TBD]";
+       String notAuthorizedCode = "1040";
        String invalidTokenCode = "1050";
        boolean needDeleteInfo = true;
        
