@@ -668,7 +668,8 @@ public class MNodeService extends D1NodeService
         sysmeta.setOriginMemberNode(originMemberNode);
         
         // if no authoritative MN, set it to the same
-        if (sysmeta.getAuthoritativeMemberNode() == null) {
+        if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+                sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
             sysmeta.setAuthoritativeMemberNode(originMemberNode);
         }
 
