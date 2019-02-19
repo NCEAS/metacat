@@ -443,13 +443,13 @@ public class MNodeService extends D1NodeService
         String notFoundCode ="1280";
         SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
         try {
-            D1AuthHelper authDel = new D1AuthHelper(request,null,"1200","1310");
+            D1AuthHelper authDel = new D1AuthHelper(request,pid,"1200","1310");
             authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
             allowed = true;
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         } catch(NotAuthorized e) {
-            throw new NotAuthorized("1200", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
+            throw new NotAuthorized("1200", "Can't update the object with id "+pid.getValue()+" since "+e.getDescription());
         }
         
         end =System.currentTimeMillis();
@@ -2804,7 +2804,7 @@ public class MNodeService extends D1NodeService
               } catch(ServiceFailure e) {
                   throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
               } catch(NotAuthorized e) {
-                  throw new NotAuthorized("4861", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+                  throw new NotAuthorized("4861", "Can't update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
               }      
 	          Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
 	          Date commingModiDate = sysmeta.getDateSysMetadataModified();
