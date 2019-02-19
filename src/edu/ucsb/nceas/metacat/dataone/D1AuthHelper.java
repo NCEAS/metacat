@@ -222,7 +222,7 @@ public class D1AuthHelper {
         if(session != null && session.getSubject() != null) {
             logMetacat.debug("D1AuthHepler.doUpdateAuth - the session is "+session.getSubject().getValue());
         }
-        boolean allow = false;
+        boolean isAuthoritiveMN = true;
                
         List<ServiceFailure> exceptions = new ArrayList<>();
         
@@ -249,6 +249,9 @@ public class D1AuthHelper {
             catch (ServiceFailure e) {
                 exceptions.add(e);
             }    
+        } else {
+            //this is not the authoritiveMN. Generally, this update/updateSystem should fail. But cn can do that. So go to check the cns subject
+            isAuthoritiveMN = false;
         }
         
         // (outside the above if statement on purpose)
@@ -262,11 +265,18 @@ public class D1AuthHelper {
             exceptions.add(e);
         }
 
-//        String oldAuthMessage = "Client can only call the request on the authoritative memember node of the object "
-//                +sysmeta.getIdentifier().getValue();    
+        String authoritiveMNMessage = "clients can only call the update/updateSystemMetadata request on an object when it locates on its authoritative memember node. "+
+               "However, the authoritative member node of the object "+sysmeta.getIdentifier().getValue()+ " on your request is "+sysmeta.getAuthoritativeMemberNode().getValue()+
+               ", which is differen to the current node "+localNodeId.getValue();    
         
         if (exceptions.isEmpty()) { 
-            prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+            if(isAuthoritiveMN) {
+                prepareAndThrowNotAuthorized(null,requestIdentifier, null, notAuthorizedCode); 
+            } else {
+                logMetacat.warn(authoritiveMNMessage);
+                throw new NotAuthorized(notAuthorizedCode, authoritiveMNMessage);
+            }
+            
         } else {    
             for (ServiceFailure sf : exceptions) {
                 logMetacat.warn("For request ["+ request+"]: ServiceFailure raised:" + sf.getDescription(),sf);
