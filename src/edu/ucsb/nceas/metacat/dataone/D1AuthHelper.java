@@ -9,6 +9,7 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -34,7 +35,6 @@ import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v2.util.NodelistUtil;
 
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 
 
 /**
@@ -113,6 +113,9 @@ public class D1AuthHelper {
      */
     public void doIsAuthorized(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure, NotAuthorized
     {
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doIsAuthorzied - the session is "+session.getSubject().getValue());
+        }
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
         if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) {
@@ -173,6 +176,9 @@ public class D1AuthHelper {
      */
     public void doAuthoritativeMNAuthorization(Session session, SystemMetadata sysmeta)  throws ServiceFailure, NotAuthorized
     {
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doAuthoritativeMNAuthorization - the session is "+session.getSubject().getValue());
+        }
         List<ServiceFailure> exceptions = new ArrayList<>();
         
         try {
@@ -213,6 +219,9 @@ public class D1AuthHelper {
     public void doUpdateAuth(Session session, SystemMetadata sysmeta, Permission permission, NodeReference localNodeId) 
             throws NotAuthorized, ServiceFailure 
     {
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doUpdateAuth - the session is "+session.getSubject().getValue());
+        }
         boolean allow = false;
                
         List<ServiceFailure> exceptions = new ArrayList<>();
@@ -278,6 +287,9 @@ public class D1AuthHelper {
      */
     public void doCNOnlyAuthorization(Session session) throws ServiceFailure, NotAuthorized
     {
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doCNOnlyAuthorization - the session is "+session.getSubject().getValue());
+        }
         List<ServiceFailure> exceptions = new ArrayList<>();
         
         try {
@@ -314,6 +326,9 @@ public class D1AuthHelper {
      * @throws NotAuthorized
      */
     public void doAdminAuthorization(Session session) throws ServiceFailure, NotAuthorized {
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doAdminAuthorization - the session is "+session.getSubject().getValue());
+        }
         List<ServiceFailure> exceptions = new ArrayList<>();
 
         try {
@@ -356,7 +371,10 @@ public class D1AuthHelper {
      * @throws NotAuthorized
      */
     public void doGetSysmetaAuthorization(Session session, SystemMetadata sysmeta, Permission permission) throws ServiceFailure, NotAuthorized
-    {       
+    {      
+        if(session != null && session.getSubject() != null) {
+            logMetacat.debug("D1AuthHepler.doGetSysmetaAuthorization - the session is "+session.getSubject().getValue());
+        }
         List<ServiceFailure> exceptions = new ArrayList<>();
         // most efficient step first - uses materials passed in
         if (this.isAuthorizedBySysMetaSubjects(session, sysmeta, permission)) {
@@ -705,6 +723,14 @@ public class D1AuthHelper {
         // get the subject[s] from the session
         // defer to the shared util for recursively compiling the subjects   
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+        
+        if(logMetacat.isEnabledFor(Level.DEBUG)) {
+            if(sessionSubjects != null) {
+                for(Subject subject : sessionSubjects) {
+                    logMetacat.debug("=================== The equalvent subject is "+subject.getValue());
+                }
+            } 
+        }
 
         if (AuthUtils.isAuthorized(sessionSubjects, permission, sysmeta)) {
             return true;
