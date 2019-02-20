@@ -2127,7 +2127,7 @@ public class MNodeService extends D1NodeService
 				// this is probably okay for many sci meta data docs
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue()+" by the name convention.");
 				// try the SOLR index
-				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(originalIdentifier);
+				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, originalIdentifier);
 				if (potentialOreIdentifiers != null) {
 					potentialOreIdentifier = potentialOreIdentifiers.get(0);
 					try {
@@ -2341,7 +2341,7 @@ public class MNodeService extends D1NodeService
 	 * @param guid of the EML/packaging object
 	 * @return list of resource map identifiers for the given pid
 	 */
-	public List<Identifier> lookupOreFor(Identifier guid, boolean includeObsolete) {
+	public List<Identifier> lookupOreFor(Session session, Identifier guid, boolean includeObsolete) {
 		// Search for the ORE if we can find it
 		String pid = guid.getValue();
 		List<Identifier> retList = null;
@@ -2351,7 +2351,7 @@ public class MNodeService extends D1NodeService
 				query = "fl=id,resourceMap&wt=xml&q=resourceMap:[* TO *]+id:\"" + pid + "\"";
 			}
 			
-			InputStream results = this.query(null, "solr", query);
+			InputStream results = this.query(session, "solr", query);
 			org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
 			//String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
 			org.w3c.dom.NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
@@ -2378,13 +2378,13 @@ public class MNodeService extends D1NodeService
      * @todo should be consolidate with the above method.
      * @param guid of the EML/packaging object
      */
-    private List<Identifier> lookupOreFor(Identifier guid) {
+    private List<Identifier> lookupOreFor(Session session, Identifier guid) {
         // Search for the ORE if we can find it
         String pid = guid.getValue();
         List<Identifier> retList = null;
         try {
             String query = "fl=id,resourceMap&wt=xml&q=id:\"" + pid + "\"";
-            InputStream results = this.query(null, "solr", query);
+            InputStream results = this.query(session, "solr", query);
             org.w3c.dom.Node rootNode = XMLUtilities.getXMLReaderAsDOMTreeRootNode(new InputStreamReader(results, "UTF-8"));
             //String resultString = XMLUtilities.getDOMTreeAsString(rootNode);
             org.w3c.dom.NodeList nodeList = XMLUtilities.getNodeListWithXPath(rootNode, "//arr[@name=\"resourceMap\"]/str");
