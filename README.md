@@ -70,7 +70,7 @@ for the next release.
 ### Release Notes for 2.10.1:
 New features and bugs fixed in this release:
 * Optimize the DataONE authorization process
-* Allow the node subject to read all SOLR records
+* Allow the node subject to read all Solr records
 * Improve the slow performance of the view service
 * Index the replicationStatus field
 * Failed to publish a private object
