@@ -549,8 +549,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
 
       // do we have a valid pid?
       if (pid == null || pid.getValue().trim().equals("")) {
-          //TODO: should throw a ServiceFailure, tokens indicate problem with the session, not other parameters
-          throw new InvalidToken("4973", "The provided identifier was invalid.");     
+          throw new ServiceFailure("4972", "The provided identifier was invalid.");     
       }
 
       
@@ -1795,13 +1794,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           authDel.doCNOnlyAuthorization(session);
 
           isAllowed = true;
-          
-          // additional check if it is the authoritative node if it is not the admin
-          // How can this work?  If the pid is on the CN, it will fail on the objectExists check
-//          if(!isAllowed) {
-//              isAllowed = isAuthoritativeMNodeAdmin(session, pid);
-//          }
-
           // proceed if we're called by a CN
           if ( isAllowed ) {
               
