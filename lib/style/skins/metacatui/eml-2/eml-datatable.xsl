@@ -242,14 +242,12 @@
     <xsl:param name="entityindex"/>
     
     <h4>Attribute Information</h4>
-    <div class="attributeList">
-         <xsl:call-template name="attributelist">
-           <xsl:with-param name="docid" select="$docid"/>
-           <xsl:with-param name="entitytype" select="$entitytype"/>
-           <xsl:with-param name="entityindex" select="$entityindex"/>
-         </xsl:call-template>
-    </div>
-    
+    <xsl:call-template name="attributelist">
+      <xsl:with-param name="docid" select="$docid"/>
+      <xsl:with-param name="entitytype" select="$entitytype"/>
+      <xsl:with-param name="entityindex" select="$entityindex"/>
+    </xsl:call-template>
+
   </xsl:template>
 
 
