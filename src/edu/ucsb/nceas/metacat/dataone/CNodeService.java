@@ -2008,21 +2008,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
           D1AuthHelper authDel = new D1AuthHelper(request, pid, "4851", "4852");
           authDel.doCNOnlyAuthorization(session);
       }
-      /*try {
-
-          // what is the controlling permission?
-          if (!isAuthorized(session, pid, Permission.WRITE)) {
-              throw new NotAuthorized("4851", "not allowed by "
-                      + subject.getValue() + " on " + pid.getValue());
-          }
-
-        
-      } catch (InvalidToken e) {
-          throw new NotAuthorized("4851", "not allowed by " + subject.getValue() + 
-                  " on " + pid.getValue());  
-          
-      }*/
-
+ 
       SystemMetadata systemMetadata = null;
       try {
           lock = HazelcastService.getInstance().getLock(pid.getValue());
