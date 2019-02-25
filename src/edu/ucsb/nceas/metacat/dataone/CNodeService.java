@@ -2005,7 +2005,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
       if(session == null) {
           throw new NotAuthorized("4851", "Session cannot be null. It is not authorized for updating the replication metadata of the object "+pid.getValue());
       } else {
-          D1AuthHelper authDel = new D1AuthHelper(request, pid, "4851", "????");
+          D1AuthHelper authDel = new D1AuthHelper(request, pid, "4851", "4852");
           authDel.doCNOnlyAuthorization(session);
       }
       /*try {
