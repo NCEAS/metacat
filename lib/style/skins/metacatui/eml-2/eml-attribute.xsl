@@ -72,7 +72,7 @@
    <xsl:param name="entitytype"/>
    <xsl:param name="entityindex"/>
 
-
+<div class="attributeList">
 	<div class="row-fluid">
 		<div class="span2">
 			<!-- render the side nav -->
@@ -85,6 +85,7 @@
 							<xsl:attribute name="class">active</xsl:attribute>
 						</xsl:if>
 						<a data-toggle="tab">
+              <xsl:attribute name="title"><xsl:value-of select="attributeName"/></xsl:attribute>
 							<xsl:attribute name="href">#entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
 						    <xsl:choose>
 						         <xsl:when test="references!=''">
@@ -629,7 +630,8 @@
   	</div>
   	
   </div>
-  
+</div>
+
  </xsl:template>
 
 

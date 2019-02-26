@@ -106,6 +106,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		// test DOIs in the create method
 		suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
+		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
 
 		return suite;
 
@@ -750,5 +751,111 @@ public class RegisterDOITest extends D1NodeServiceTest {
             assertTrue(e.getMessage().contains(guid.getValue()));
             assertTrue(e.getMessage().contains(sid.getValue()));
         }
+    }
+    
+    
+    /**
+     * Test change the access policy on an DOI object which is not public readable
+     * @throws Exception
+     */
+    public void testUpdateAccessPolicyOnPrivateDOIObject() throws Exception {
+        printTestHeader("testUpdateAccessPolicyOnPrivateDOIObject");
+        String user = "uid=test,o=nceas";
+        //create an doi object
+        String scheme = "DOI";
+        Session session = getTestSession();   
+        String emlFile = "test/eml-multiple-creators.xml";
+        InputStream content = null;
+        Identifier publishedIdentifier = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
+        content = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(publishedIdentifier, session.getSubject(), content);
+        sysmeta.setAccessPolicy(new AccessPolicy()); //nobody can read it except the rights holder
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, publishedIdentifier, content, sysmeta);
+        content.close();
+        assertEquals(publishedIdentifier.getValue(), pid.getValue());
+        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, publishedIdentifier);
+        //It should succeed to add a new access policy to the system metadata
+        Subject subject = new Subject();
+        subject.setValue(user);
+        AccessRule rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        AccessPolicy access = new AccessPolicy();
+        access.addAllow(rule);
+        meta.setAccessPolicy(access);
+        boolean success = MNodeService.getInstance(request).updateSystemMetadata(session, publishedIdentifier, meta);
+        assertTrue("The update should be successful even though there is no public readable rule on the new access policy since the old access policy is private.", success);
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, publishedIdentifier);
+        access = meta.getAccessPolicy();
+        boolean find = false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equals(user)) {
+                find = true;
+                break;
+            }
+        }
+        assertTrue("We should find the user "+user+" on the access rules.", find);
+        
+        boolean findPublic= false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equalsIgnoreCase("public")) {
+                findPublic = true;
+                break;
+            }
+        }
+        assertFalse("We should not find the public user on the access rules.", findPublic);
+        //System.out.println("The identifier is ========================================="+publishedIdentifier.getValue());
+        //test the doi on sid field
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdateAccessPolicyOnDOIObject." + System.currentTimeMillis());
+        System.out.println("The identifier is "+guid.getValue());
+        Identifier sid = MNodeService.getInstance(request).generateIdentifier(session, scheme, null);
+        System.out.println("The doi on the sid is "+sid.getValue());
+        content = new FileInputStream(emlFile);
+        sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+        sysmeta.setAccessPolicy(new AccessPolicy());
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+        sysmeta.setSeriesId(sid);
+        content = new FileInputStream(emlFile);
+        pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        content.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        //It should succeed to add a new access policy to the system metadata
+        subject = new Subject();
+        subject.setValue(user);
+        rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        access = new AccessPolicy();
+        access.addAllow(rule);
+        meta.setAccessPolicy(access);
+        success = MNodeService.getInstance(request).updateSystemMetadata(session, guid, meta);
+        assertTrue("he update should be successful even though there is no public readable rule on the new access policy since the old access policy is private.", success);
+        meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        access = meta.getAccessPolicy();
+        boolean found = false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equals(user)) {
+               found = true;
+                break;
+            }
+        }
+        assertTrue("We should find the user "+user+" on the access rules.", found);
+        findPublic= false;
+        for (AccessRule item : access.getAllowList()) {
+            if(item != null && item.getSubject(0) != null && item.getSubject(0).getValue().equalsIgnoreCase("public")) {
+                findPublic = true;
+                break;
+            }
+        }
+        assertFalse("We should not find the public user on the access rules.", findPublic);
+        //System.out.println("The identifier is ========================================="+guid.getValue());
+       
     }
 }

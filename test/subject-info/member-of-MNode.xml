@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:subjectInfo xmlns:ns2="http://ns.dataone.org/service/types/v1">
+  <person>
+    <subject>http://orcid.org/0000-0001-5041-1111</subject>
+    <givenName>Test</givenName>
+    <familyName>Test</familyName>
+    <isMemberOf>CN=urn:node:METACAT1,DC=dataone,DC=org</isMemberOf>
+    <verified>false</verified>
+  </person>
+  <group>
+    <subject>CN=urn:node:METACAT1,DC=dataone,DC=org</subject>
+    <groupName>membernode-admin</groupName>
+    <hasMember>http://orcid.org/0000-0001-5041-1111</hasMember>
+    <rightsHolder>http://orcid.org/0000-0001-5041-1111</rightsHolder>
+  </group>
+</ns2:subjectInfo>

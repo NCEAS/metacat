@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:subjectInfo xmlns:ns2="http://ns.dataone.org/service/types/v1">
+  <person>
+    <subject>http://orcid.org/0000-0003-2192-431X</subject>
+    <givenName>Lauren</givenName>
+    <familyName>Walker</familyName>
+    <isMemberOf>CN=knb-data-admins,DC=dataone,DC=org</isMemberOf>
+    <isMemberOf>CN=SASAP Data Team,DC=dataone,DC=org</isMemberOf>
+    <isMemberOf>CN=SASAP,DC=dataone,DC=org</isMemberOf>
+    <isMemberOf>CN=arctic-data-admins,DC=dataone,DC=org</isMemberOf>
+    <equivalentIdentity>CN=Lauren Walker A21971,O=Google,C=US,DC=cilogon,DC=org</equivalentIdentity>
+    <equivalentIdentity>UID=kepler,O=unaffiliated,DC=ecoinformatics,DC=org</equivalentIdentity>
+    <verified>false</verified>
+  </person>
+  <person>
+    <subject>CN=Lauren Walker A21971,O=Google,C=US,DC=cilogon,DC=org</subject>
+    <givenName>Lauren</givenName>
+    <familyName>Walker</familyName>
+    <equivalentIdentity>CN=Lauren Walker A10489,O=Google,C=US,DC=cilogon,DC=org</equivalentIdentity>
+    <equivalentIdentity>http://orcid.org/0000-0003-2192-431X</equivalentIdentity>
+    <verified>false</verified>
+  </person>
+  <person>
+    <subject>CN=Lauren Walker A10489,O=Google,C=US,DC=cilogon,DC=org</subject>
+    <givenName>Lauren</givenName>
+    <familyName>Walker</familyName>
+    <equivalentIdentity>CN=Lauren Walker A21971,O=Google,C=US,DC=cilogon,DC=org</equivalentIdentity>
+    <verified>false</verified>
+  </person>
+  <person>
+    <subject>uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org</subject>
+    <givenName>kepler</givenName>
+    <familyName>kepler</familyName>
+    <equivalentIdentity>http://orcid.org/0000-0003-2192-431X</equivalentIdentity>
+    <verified>false</verified>
+  </person>
+  <group>
+    <subject>CN=knb-data-admins,DC=dataone,DC=org</subject>
+    <groupName>knb-data-admins</groupName>
+    <hasMember>http://orcid.org/0000-0002-8121-2341</hasMember>
+    <hasMember>http://orcid.org/0000-0003-4703-1974</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1006-9496</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0077-4738</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0381-3766</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2192-403X</hasMember>
+    <hasMember>CN=Jing Tao A1098,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2192-431X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-6220-0134</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1209-5268</hasMember>
+    <rightsHolder>http://orcid.org/0000-0002-8121-2341</rightsHolder>
+  </group>
+  <group>
+    <subject>CN=SASAP Data Team,DC=dataone,DC=org</subject>
+    <groupName>SASAP Data Team</groupName>
+    <hasMember>http://orcid.org/0000-0003-4703-1974</hasMember>
+    <hasMember>CN=Susan Clark A96891,O=University of California-Santa Barbara,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>http://orcid.org/0000-0002-4244-2865</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1006-9496</hasMember>
+    <hasMember>CN=Matt Jones A729,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>http://orcid.org/0000-0002-8121-2341</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0077-4738</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0381-3766</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2192-431X</hasMember>
+    <hasMember>UID=https://orcid.org/0000-0002-1615-3963,DC=dataone,DC=org</hasMember>
+    <rightsHolder>http://orcid.org/0000-0003-4703-1974</rightsHolder>
+  </group>
+  <group>
+    <subject>CN=SASAP,DC=dataone,DC=org</subject>
+    <groupName>SASAP</groupName>
+    <hasMember>http://orcid.org/0000-0003-4703-1974</hasMember>
+    <hasMember>http://orcid.org/0000-0002-5415-3534</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0003-2515</hasMember>
+    <hasMember>http://orcid.org/0000-0002-4286-6959</hasMember>
+    <hasMember>http://orcid.org/0000-0001-7209-9757</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2820-8714</hasMember>
+    <hasMember>http://orcid.org/0000-0002-5859-8602</hasMember>
+    <hasMember>http://orcid.org/0000-0002-4244-2865</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2878-3943</hasMember>
+    <hasMember>http://orcid.org/0000-0001-7379-185X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1006-9496</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0908-6926</hasMember>
+    <hasMember>http://orcid.org/0000-0002-7705-5670</hasMember>
+    <hasMember>http://orcid.org/0000-0002-8121-2341</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0077-4738</hasMember>
+    <hasMember>http://orcid.org/0000-0002-4953-7189</hasMember>
+    <hasMember>http://orcid.org/0000-0002-6689-9392</hasMember>
+    <hasMember>http://orcid.org/0000-0001-8874-7595</hasMember>
+    <hasMember>http://orcid.org/0000-0002-8900-9479</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0381-3766</hasMember>
+    <hasMember>http://orcid.org/0000-0001-9663-2923</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2561-5840</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2057-2578</hasMember>
+    <hasMember>http://orcid.org/0000-0002-6220-0134</hasMember>
+    <hasMember>http://orcid.org/0000-0003-3283-554X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-6316-0058</hasMember>
+    <hasMember>http://orcid.org/0000-0002-4830-5378</hasMember>
+    <hasMember>http://orcid.org/0000-0001-6885-9821</hasMember>
+    <hasMember>http://orcid.org/0000-0003-3061-1091</hasMember>
+    <hasMember>http://orcid.org/0000-0003-4246-5685</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2192-403X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0347-8574</hasMember>
+    <hasMember>http://orcid.org/0000-0002-7822-2303</hasMember>
+    <hasMember>http://orcid.org/0000-0001-8594-506X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1615-3963</hasMember>
+    <hasMember>http://orcid.org/0000-0002-3554-6594</hasMember>
+    <hasMember>http://orcid.org/0000-0003-3697-394X</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2192-431X</hasMember>
+    <hasMember>UID=jared,DC=dataone,DC=org</hasMember>
+    <rightsHolder>http://orcid.org/0000-0003-4703-1974</rightsHolder>
+  </group>
+  <group>
+    <subject>CN=arctic-data-admins,DC=dataone,DC=org</subject>
+    <groupName>Arctic Data Center Team</groupName>
+    <hasMember>http://orcid.org/0000-0002-1006-9496</hasMember>
+    <hasMember>http://orcid.org/0000-0003-1264-1166</hasMember>
+    <hasMember>http://orcid.org/0000-0003-4703-1974</hasMember>
+    <hasMember>http://orcid.org/0000-0002-7705-5670</hasMember>
+    <hasMember>http://orcid.org/0000-0002-8121-2341</hasMember>
+    <hasMember>CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>CN=Matt Jones A729,O=Google,C=US,DC=cilogon,DC=org</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0077-4738</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0381-3766</hasMember>
+    <hasMember>http://orcid.org/0000-0003-1241-8351</hasMember>
+    <hasMember>http://orcid.org/0000-0001-9663-2923</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2561-5840</hasMember>
+    <hasMember>http://orcid.org/0000-0003-0632-7576</hasMember>
+    <hasMember>http://orcid.org/0000-0002-2192-403X</hasMember>
+    <hasMember>http://orcid.org/0000-0002-0347-8574</hasMember>
+    <hasMember>http://orcid.org/0000-0002-7822-2303</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1209-5268</hasMember>
+    <hasMember>http://orcid.org/0000-0002-1615-3963</hasMember>
+    <hasMember>http://orcid.org/0000-0003-2192-431X</hasMember>
+    <hasMember>http://orcid.org/0000-0001-6602-1558</hasMember>
+    <rightsHolder>http://orcid.org/0000-0002-1006-9496</rightsHolder>
+    <rightsHolder>http://orcid.org/0000-0002-8121-2341</rightsHolder>
+    <rightsHolder>http://orcid.org/0000-0002-2561-5840</rightsHolder>
+  </group>
+</ns2:subjectInfo>

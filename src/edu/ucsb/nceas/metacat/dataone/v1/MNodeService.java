@@ -106,9 +106,9 @@ public class MNodeService
     	impl.setSession(session);
     }
     
-    public boolean isAdminAuthorized(Session session) throws ServiceFailure, InvalidToken, NotAuthorized, NotImplemented {
-    	return impl.isAdminAuthorized(session);
-    }
+//    public boolean isAdminAuthorized(Session session) throws ServiceFailure, InvalidToken, NotAuthorized, NotImplemented {
+//    	return impl.isAdminAuthorized(session);
+//    }
 
 	@Override
 	public QueryEngineDescription getQueryEngineDescription(String engine)
@@ -190,7 +190,8 @@ public class MNodeService
         String notFound = "2901";
         impl.checkV1SystemMetaPidExist(pid, serviceFailure, "The object specified by "+pid.getValue()+" couldn't be identified if it exists",  notFound, 
                 "The object specified by "+pid.getValue()+" does not exist at this node.");
-		return impl.delete(null, pid);
+        Session session = null;
+		return impl.delete(session, pid);
 	}
 
 	@Override

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:subjectInfo xmlns:ns2="http://ns.dataone.org/service/types/v1">
+  <person>
+    <subject>http://orcid.org/0000-0003-5234-1234</subject>
+    <givenName>Test</givenName>
+    <familyName>Test</familyName>
+    <isMemberOf>cn=urn:node:MockCNode,dc=dataone,dc=org</isMemberOf>
+    <verified>false</verified>
+  </person>
+  <group>
+    <subject>cn=urn:node:MockCNode,dc=dataone,dc=org</subject>
+    <groupName>cnode-admin</groupName>
+    <hasMember>http://orcid.org/0000-0003-5234-1234</hasMember>
+    <rightsHolder>http://orcid.org/0000-0003-5234-1234</rightsHolder>
+  </group>
+</ns2:subjectInfo>

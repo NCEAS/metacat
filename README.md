@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.10.0 Release
+Version: 2.10.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,16 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.10.1:
+New features and bugs fixed in this release:
+* Optimize the DataONE authorization process
+* Allow the node subject to read all Solr records
+* Improve the slow performance of the view service
+* Index the replicationStatus field
+* Failed to publish a private object
+* Disable the index of the event counts by default
+
 
 ### Release Notes for 2.10.0:
 After installing this release, you need to issue the "reindexall" command since a new SOLR field has been added.

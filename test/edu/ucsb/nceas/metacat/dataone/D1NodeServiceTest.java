@@ -55,6 +55,7 @@ import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
@@ -134,33 +135,33 @@ public class D1NodeServiceTest extends MCTestCase {
 	       Subject user = new Subject();
 	       
 	       user.setValue("CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org");
-	       assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("uid=foo");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("http://orcid.org/0000-0002-8121-2341");
-	       assertTrue(D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("uid=foo");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
 	       user.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue(null);
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("");
 	       user.setValue("");
-	       assertTrue(!D1NodeService.expandRightsHolder(rightsHolder, user));
+	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       NodeLocator nodeLocator = new NodeLocator() {
 	           @Override
 	           public D1Node getCNode() throws ClientSideException {
@@ -281,6 +282,46 @@ public class D1NodeServiceTest extends MCTestCase {
 	    
 	}
 	
+	public Session getThirdSession() throws Exception {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue("cn=test34,dc=dataone,dc=org");
+        session.setSubject(subject);
+        return session;
+        
+    }
+	
+	/**
+	 * Get a session whose subject is a member of MNode subject (which is a group)
+	 * @return a session with the subject info
+	 * @throws Exception
+	 */
+	public Session getMemberOfMNodeSession() throws Exception {
+	    Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(MockCNode.MNODEMEMBERADMINSUBJECT);
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+	}
+	
+	
+	/**
+     * Get a session whose subject is a member of CNode subject (which is a group)
+     * @return a session with the subject info
+     * @throws Exception
+     */
+    public Session getMemberOfCNodeSession() throws Exception {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(MockCNode.CNODEMEMBERADMINSUBJECT);
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+    }
+	
 	/**
 	 * Run an initial test that always passes to check that the test harness is
 	 * working.
@@ -390,5 +431,7 @@ public class D1NodeServiceTest extends MCTestCase {
 	    System.out.println();
 	    System.out.println("*************** " + testName + " ***************");
 	}
- 
+	
+	
+    
 }

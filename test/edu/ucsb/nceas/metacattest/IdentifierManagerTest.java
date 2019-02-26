@@ -96,6 +96,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
+        suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
         
         return suite;
     }
@@ -1811,10 +1812,27 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         
     }
     
+    /**
+     * Test the existsInIdentifierTable method
+     * @throws Exception
+     */
+    public void testExistsInIdentifierTable() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The identifier "+guid.getValue()+" should exist on the talbe.", IdentifierManager.getInstance().existsInIdentifierTable(guid));
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        assertTrue("The identifier "+guid2.getValue()+" shouldn't exist on the talbe.", !IdentifierManager.getInstance().existsInIdentifierTable(guid2));
+    }
+    
     public void testExistsInXmlRevisionTable() {
         try {
             String localId = "test.12";
-            int rev =1;
+            int rev =1456789090;
             assertTrue("The object "+localId+" should not exists in the xml_revisions table.", !IdentifierManager.getInstance().existsInXmlLRevisionTable(localId, rev));
         } catch (Exception e) {
             e.printStackTrace();
