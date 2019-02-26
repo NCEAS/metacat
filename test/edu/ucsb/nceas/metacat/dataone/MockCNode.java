@@ -62,6 +62,10 @@ public class MockCNode extends MultipartCNode {
     private final static String MEMBEROFKNBADMINSUBJECTINFOPATH ="test/subject-info/member-of-knb-admin-group.xml";
     private final static String MEMBEROFPISCOMANAGERSUBJECTINFOPATH = "test/subject-info/member-of-pisco-manager-group.xml";
     private final static String MEMBEROFESSDIVEUSERSUBJECTINFOPATH = "test/subject-info/member-of-ess-dive-user.xml";
+    private final static String MEMBEROFMNODESUBJECTOFPATH = "test/subject-info/member-of-MNode.xml";
+    private final static String MEMBEROFCNODESUBJECTOFPATH = "test/subject-info/member-of-CNode.xml";
+    public final static String MNODEMEMBERADMINSUBJECT = "http://orcid.org/0000-0001-5041-1111";
+    public final static String CNODEMEMBERADMINSUBJECT = "http://orcid.org/0000-0003-5234-1234";
 
     /**
      * See superclass for documentation
@@ -152,6 +156,20 @@ public class MockCNode extends MultipartCNode {
         } else if (subject != null && subject.getValue().equals(MNodeAccessControlTest.ESSDIVEUSERSUBJECT)) {
             try {
                 info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFESSDIVEUSERSUBJECTINFOPATH);
+            } catch (Exception e) {
+                
+            }
+            return info;
+        } else if (subject != null && subject.getValue().equals(MNODEMEMBERADMINSUBJECT)) {
+            try {
+                info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFMNODESUBJECTOFPATH );
+            } catch (Exception e) {
+                
+            }
+            return info;
+        } else if (subject != null && subject.getValue().equals(CNODEMEMBERADMINSUBJECT)) {
+            try {
+                info = TypeMarshaller.unmarshalTypeFromFile(SubjectInfo.class, MEMBEROFCNODESUBJECTOFPATH);
             } catch (Exception e) {
                 
             }

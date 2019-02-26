@@ -1589,9 +1589,9 @@ public class MNodeService extends D1NodeService
         throws NotImplemented, ServiceFailure, NotAuthorized, InvalidRequest,
         InvalidToken {
         
-        /*if(isReadOnlyMode()) {
+        if(isReadOnlyMode()) {
             throw new InvalidRequest("1334", "The Metacat member node is on the read-only mode and your request can't be fulfiled. Please try again later.");
-        }*/
+        }
         // cannot be called by public
         if (session == null) {
             throw new InvalidToken("1332", "No session was provided.");
@@ -1605,30 +1605,9 @@ public class MNodeService extends D1NodeService
         
         SystemMetadata currentLocalSysMeta = null;
         SystemMetadata newSysMeta = null;
-        Subject callingSubject = null;
-        boolean allowed = false;
         
-        // are we allowed to call this?
-        callingSubject = session.getSubject();
-        NodeList nodeList = getCNNodeList();
-        
-        for(Node node : nodeList.getNodeList()) {
-            // must be a CN
-            if ( node.getType().equals(NodeType.CN)) {
-                List<Subject> subjectList = node.getSubjectList();
-                // the calling subject must be in the subject list
-                if ( subjectList.contains(callingSubject)) {
-                    allowed = true;
-                }           
-            }
-        }
-        
-        if (!allowed ) {
-            String msg = "The subject identified by " + callingSubject.getValue() +
-              " is not authorized to call this service.";
-            throw new NotAuthorized("1331", msg);
-            
-        }
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", serviceFailureCode);
+        authDel.doCNOnlyAuthorization(session);
         try {
             HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
         

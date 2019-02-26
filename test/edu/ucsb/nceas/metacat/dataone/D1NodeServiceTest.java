@@ -292,6 +292,37 @@ public class D1NodeServiceTest extends MCTestCase {
     }
 	
 	/**
+	 * Get a session whose subject is a member of MNode subject (which is a group)
+	 * @return a session with the subject info
+	 * @throws Exception
+	 */
+	public Session getMemberOfMNodeSession() throws Exception {
+	    Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(MockCNode.MNODEMEMBERADMINSUBJECT);
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+	}
+	
+	
+	/**
+     * Get a session whose subject is a member of CNode subject (which is a group)
+     * @return a session with the subject info
+     * @throws Exception
+     */
+    public Session getMemberOfCNodeSession() throws Exception {
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(MockCNode.CNODEMEMBERADMINSUBJECT);
+        session.setSubject(subject);
+        SubjectInfo subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
+        session.setSubjectInfo(subjectInfo);
+        return session;
+    }
+	
+	/**
 	 * Run an initial test that always passes to check that the test harness is
 	 * working.
 	 */

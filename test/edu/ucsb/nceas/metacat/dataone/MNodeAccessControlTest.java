@@ -77,6 +77,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     private static final Session publicSession = getPublicUser();
     private static Session KNBadmin = null;
     private static Session PISCOManager = null;
+    private static Session mNodeMember = null;
+    private static Session cNodeMember = null;
     
     /**
      * Constructor
@@ -148,6 +150,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
     public void testMethodsWithSession() throws Exception {
         KNBadmin = getOneKnbDataAdminsMemberSession();
         PISCOManager = getOnePISCODataManagersMemberSession();
+        mNodeMember = getMemberOfMNodeSession();
+        cNodeMember = getMemberOfCNodeSession();
         //rights holder on the system metadata is a user.
         Session rightsHolder = getAnotherSession();
         testMethodsWithGivenHightsHolder(rightsHolder, rightsHolder.getSubject());
@@ -182,6 +186,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         //3 The object id1 doesn't have any access policy, it can be read by rights holder, cn and mn.
         testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
         testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(mNodeMember, id1, sysmeta.getChecksum(), true);//member of MNode subject (which is a group) can read it
+        testGetAPI(cNodeMember, id1, sysmeta.getChecksum(), true);//member of CNode subject (which is a group) can read it
         testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
         testGetAPI(submitter, id1,sysmeta.getChecksum(),false); //submitter can't read it
         testGetAPI(publicSession, id1,sysmeta.getChecksum(),false); //public can't read it
@@ -212,6 +218,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(mNodeMember, id1, sysmeta, true);
+        testUpdateSystemmetadata(cNodeMember, id1, sysmeta, true);
         
         testIsAuthorized(nullSession, id1, Permission.CHANGE_PERMISSION, false);
         testIsAuthorized(publicSession, id1, Permission.CHANGE_PERMISSION, false);
@@ -221,10 +229,14 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(rightsHolderSession, id1, Permission.CHANGE_PERMISSION, true);
         testIsAuthorized(getCNSession(), id1, Permission.CHANGE_PERMISSION, true);
         testIsAuthorized(getMNSession(), id1, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(mNodeMember, id1, Permission.CHANGE_PERMISSION, true);
+        testIsAuthorized(cNodeMember, id1, Permission.CHANGE_PERMISSION, true);
         
         //read it with the access rule - knb group add read it
         testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
         testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(cNodeMember, id1, sysmeta.getChecksum(), true);//meber of the cn can read it
+        testGetAPI(mNodeMember, id1, sysmeta.getChecksum(), true);//meber of the mn can read it
         testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
         testGetAPI(submitter, id1,sysmeta.getChecksum(),false); //submitter can't read it
         testGetAPI(publicSession, id1,sysmeta.getChecksum(),false); //public can't read it
@@ -277,6 +289,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         //read
         testGetAPI(getCNSession(), id1, sysmeta.getChecksum(), true);//cn can read it
         testGetAPI(getMNSession(), id1, sysmeta.getChecksum(), true);//mn can read it
+        testGetAPI(cNodeMember, id1, sysmeta.getChecksum(), true);//member of cn can read it
+        testGetAPI(mNodeMember, id1, sysmeta.getChecksum(), true);//member of mn can read it
         testGetAPI(rightsHolderSession, id1, sysmeta.getChecksum(), true);//rightsholder can read it
         testGetAPI(submitter, id1,sysmeta.getChecksum(),true); //submitter can read it
         testGetAPI(publicSession, id1,sysmeta.getChecksum(),true); //public can read it
@@ -313,6 +327,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(cNodeMember, id1, sysmeta, true);
+        testUpdateSystemmetadata(mNodeMember, id1, sysmeta, true);
         //now pisco member session and submitter can update systememetadata since they have change permssion
         testUpdateSystemmetadata(nullSession, id1, sysmeta, false);
         testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
@@ -322,6 +338,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
+        testUpdateSystemmetadata(cNodeMember, id1, sysmeta, true);
+        testUpdateSystemmetadata(mNodeMember, id1, sysmeta, true);
         testIsAuthorized(submitter, id1,Permission.CHANGE_PERMISSION,true); 
         testIsAuthorized(getThirdUser(), id1,Permission.READ,true); 
         testIsAuthorized(publicSession, id1, Permission.READ,true); 
@@ -342,6 +360,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(rightsHolderSession, id1,Permission.WRITE,true);
         testIsAuthorized(getMNSession(), id1,Permission.WRITE,true); 
         testIsAuthorized(getCNSession(), id1,Permission.WRITE,true); 
+        testIsAuthorized(mNodeMember, id1,Permission.WRITE,true); 
+        testIsAuthorized(cNodeMember, id1,Permission.WRITE,true); 
         
         testUpdate(nullSession, id1, sysmeta, id2, false);
         testUpdate(publicSession, id1, sysmeta, id2, false);
@@ -436,6 +456,33 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testPublish(getThirdUser(), id11, false);
         testPublish(submitter, id11, false);
         testPublish(PISCOManager, id11, true);
+        Identifier id11_1 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id11_1, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id11_1, sysmeta, object, true);
+        testPublish(nullSession, id11_1, false);
+        testPublish(publicSession, id11_1, false);
+        testPublish(getThirdUser(), id11_1, false);
+        testPublish(submitter, id11_1, false);
+        testPublish(KNBadmin, id11_1, false);
+        testPublish(PISCOManager, id11_1, false);
+        testPublish(mNodeMember, id11_1, true);
+        Identifier id16 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id16, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        sysmeta.setAccessPolicy(new AccessPolicy());//no access policy
+        testCreate(submitter, id16, sysmeta, object, true);
+        testPublish(nullSession, id16, false);
+        testPublish(publicSession, id16, false);
+        testPublish(getThirdUser(), id16, false);
+        testPublish(submitter, id16, false);
+        testPublish(KNBadmin, id16, false);
+        testPublish(PISCOManager, id16, false);
+        testPublish(cNodeMember, id16, true);
+        
         
         //10 test syncFailed (needs mn+cn)
         SynchronizationFailed failed = new SynchronizationFailed("1100", "description");
@@ -448,7 +495,9 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testSyncFailed(PISCOManager, failed, false);
         testSyncFailed(rightsHolderSession, failed, false);
         testSyncFailed(getMNSession(), failed, false);
+        testSyncFailed(mNodeMember, failed, false);
         testSyncFailed(getCNSession(), failed, true);
+        testSyncFailed(cNodeMember, failed, true);
         
         //11 test system metadata change (needs cn)
         testSystemmetadataChanged(nullSession, id7, false);
@@ -460,6 +509,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testSystemmetadataChanged(rightsHolderSession, id7, false);
         testSystemmetadataChanged(getMNSession(), id7, false);
         testSystemmetadataChanged(getCNSession(), id7, true);
+        testSystemmetadataChanged(mNodeMember, id7, false);
+        testSystemmetadataChanged(cNodeMember, id7, true);
 
         //12 test archive (needs change permission)
         Thread.sleep(100);
@@ -552,6 +603,50 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testArchive(KNBadmin, id15, false);
         testArchive(PISCOManager, id15, false);
         testArchive(getCNSession(), id15, true);
+        Identifier id17 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id17, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        policy2 = new AccessPolicy();
+        rule7 = new AccessRule();
+        rule7.addPermission(Permission.WRITE);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        rule6 = new AccessRule();
+        rule6.addPermission(Permission.WRITE);
+        rule6.addSubject(getKnbDataAdminsGroupSubject());
+        policy2.addAllow(rule6);
+        sysmeta.setAccessPolicy(policy2);
+        testCreate(submitter, id17, sysmeta, object, true);
+        testArchive(nullSession, id17, false);
+        testArchive(publicSession, id17, false);
+        testArchive(getThirdUser(), id17, false);
+        testArchive(submitter, id17, false);
+        testArchive(KNBadmin, id17, false);
+        testArchive(PISCOManager, id17, false);
+        testArchive(cNodeMember, id17, true);
+        Identifier id18 = testGenerateIdentifier(submitter, scheme, "test-access"+System.currentTimeMillis(), true);
+        object = new ByteArrayInputStream(TEXT.getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(id18, submitter.getSubject(), object);
+        sysmeta.setRightsHolder(rightsHolderOnSys);
+        policy2 = new AccessPolicy();
+        rule7 = new AccessRule();
+        rule7.addPermission(Permission.WRITE);
+        rule7.addSubject(getPISCODataManagersGroupSubject());
+        policy2.addAllow(rule7);
+        rule6 = new AccessRule();
+        rule6.addPermission(Permission.WRITE);
+        rule6.addSubject(getKnbDataAdminsGroupSubject());
+        policy2.addAllow(rule6);
+        sysmeta.setAccessPolicy(policy2);
+        testCreate(submitter, id18, sysmeta, object, true);
+        testArchive(nullSession, id18, false);
+        testArchive(publicSession, id18, false);
+        testArchive(getThirdUser(), id18, false);
+        testArchive(submitter, id18, false);
+        testArchive(KNBadmin, id18, false);
+        testArchive(PISCOManager, id18, false);
+        testArchive(mNodeMember, id18, true);
         
         //13 test getLogRecord (needs MN+CN)
         testGetLogRecords(nullSession, false);
@@ -563,6 +658,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testGetLogRecords(rightsHolderSession, false);
         testGetLogRecords(getMNSession(), true);
         testGetLogRecords(getCNSession(), true);
+        testGetLogRecords(mNodeMember, true);
+        testGetLogRecords(cNodeMember, true);
         
         //14 test delete (needs mn+cn)
         testDelete(nullSession, id15, false);
@@ -575,6 +672,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testDelete(getCNSession(), id15, true);
         testDelete(getMNSession(), id1, true);
         testDelete(getMNSession(), id2, true);
+        testDelete(mNodeMember, id17, true);
+        testDelete(cNodeMember, id18, true);
         
         //15 test getReplica (defer to the test on D1Client.getCN().isNodeAuthorized(null, targetNodeSubject, pid)
         //testGetReplica(getCNSession(), id1, true);
