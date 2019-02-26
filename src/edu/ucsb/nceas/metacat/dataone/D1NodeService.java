@@ -273,7 +273,6 @@ public abstract class D1NodeService {
               if ( sysMeta != null ) {
                 HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
                 HazelcastService.getInstance().getIdentifiers().remove(pid);
-                sysMeta.setArchived(true);
                 try {
                     //MetacatSolrIndex.getInstance().submit(pid, sysMeta, null, false);
                     MetacatSolrIndex.getInstance().submitDeleteTask(pid, sysMeta);
