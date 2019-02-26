@@ -697,20 +697,24 @@ public class D1AuthHelper {
         NodeReference nodeReference = node.getIdentifier();
         logMetacat.debug("In isLocalNodeAdmin(), Node reference is: " + nodeReference.getValue());
         
-        Subject subject = session.getSubject();
+        Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
         
         if (nodeType == null || node.getType() == nodeType) {
             List<Subject> nodeSubjects = node.getSubjectList();
-            
-            // check if the session subject is in the node subject list
-            for (Subject nodeSubject : nodeSubjects) {
-                logMetacat.debug("In isLocalNodeAdmin(), comparing subjects: " +
-                    nodeSubject.getValue() + " and the user" + subject.getValue());
-                if ( nodeSubject.equals(subject) ) {
-                    allowed = true; // subject of session == this node's subect
-                    break;
+            if (sessionSubjects != null) {
+              outer:
+                for (Subject subject : sessionSubjects) {
+                    // check if the session subject is in the node subject list
+                    for (Subject nodeSubject : nodeSubjects) {
+                        logMetacat.debug("In isLocalNodeAdmin(), comparing subjects: " +
+                            nodeSubject.getValue() + " and the user" + subject.getValue());
+                        if ( nodeSubject.equals(subject) ) {
+                            allowed = true; // subject of session == this node's subect
+                            break outer;
+                        }
+                    }            
                 }
-            }              
+            }
         }
         logMetacat.debug("In is isLocalNodeAdmin method. Is this a local node admin? "+allowed);
         return allowed;
@@ -817,8 +821,8 @@ public class D1AuthHelper {
         }
         
 
-        Subject sessionSubject = session.getSubject();
-        if (sessionSubject == null) {
+        Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
+        if (sessionSubjects == null) {
             return false;
         }
         Node node = NodelistUtil.findNode(nodelist, authoritativeMNode);
@@ -830,12 +834,15 @@ public class D1AuthHelper {
         if(nodeSubjects != null) {
 
             // check if the session subject is in the node subject list
+          outer:
             for (Subject nodeSubject : nodeSubjects) {
-                logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin(), comparing subjects: " +
-                        nodeSubject.getValue() + " and " + sessionSubject.getValue());
-                if ( nodeSubject != null && nodeSubject.equals(sessionSubject) ) {
-                    allowed = true; // subject of session == target node subject
-                    break;
+                for (Subject sessionSubject : sessionSubjects) {
+                    logMetacat.debug("D1NodeService.isAuthoritativeMNodeAdmin(), comparing subjects: " +
+                            nodeSubject.getValue() + " and " + sessionSubject.getValue());
+                    if ( nodeSubject != null && nodeSubject.equals(sessionSubject) ) {
+                        allowed = true; // subject of session == target node subject
+                        break outer;
+                    }
                 }
             }              
         }
@@ -866,6 +873,7 @@ public class D1AuthHelper {
             return false;
         }
        
+        Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
         // find the node in the node list
         search: 
             for ( Node node : nodes ) {
@@ -875,22 +883,24 @@ public class D1AuthHelper {
                     logMetacat.debug("In isCNAdmin(), a Node reference from the CN node list is: " + nodeReference.getValue());
                 }
 
-                Subject subject = session.getSubject();
-
                 if (node.getType() == NodeType.CN) {
                     List<Subject> nodeSubjects = node.getSubjectList();
 
                     // check if the session subject is in the node subject list
                     for (Subject nodeSubject : nodeSubjects) {
-                        if (logMetacat.isDebugEnabled()) {
-                            logMetacat.debug("In isCNAdmin(), comparing subjects: " +
-                                    nodeSubject.getValue() + " and the user " + subject.getValue());
+                        if(sessionSubjects != null) {
+                            for (Subject subject : sessionSubjects) {
+                                if (logMetacat.isDebugEnabled()) {
+                                    logMetacat.debug("In isCNAdmin(), comparing subjects: " +
+                                            nodeSubject.getValue() + " and the user " + subject.getValue());
+                                }
+                                if ( nodeSubject.equals(subject) ) {
+                                    allowed = true; // subject of session == target node subject
+                                    break search;
+                                }
+                            }
                         }
-                        if ( nodeSubject.equals(subject) ) {
-                            allowed = true; // subject of session == target node subject
-                            break search;
-
-                        }
+                        
                     }              
                 }
             }
