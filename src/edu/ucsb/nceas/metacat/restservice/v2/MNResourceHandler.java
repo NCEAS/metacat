@@ -24,13 +24,14 @@ package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -411,6 +412,9 @@ public class MNResourceHandler extends D1ResourceHandler {
 	                if (httpVerb == GET) {
 	                    doQuery(engine, query);
 	                    status = true;
+	                } else if (httpVerb == POST) {
+	                    doPostQuery(engine);
+                        status = true;
 	                }
                 } else if (resource.startsWith(RESOURCE_GENERATE_ID)) {
                 	// generate an id
@@ -600,6 +604,59 @@ public class MNResourceHandler extends D1ResourceHandler {
 				logMetacat.error("Could not get output stream from response", ioe);
 			}
 			ServiceFailure se = new ServiceFailure("0000", e.getMessage());
+            serializeException(se, out);
+        }
+    }
+    
+    /*
+     * Handle the solr query sent by the http post method
+     */
+    private void doPostQuery(String engine) {
+        OutputStream out = null;
+        try {
+            // NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter            
+            collectMultipartParams();
+            MNodeService mnode = MNodeService.getInstance(request);               
+            if(multipartparams == null || multipartparams.isEmpty()) {
+                throw new InvalidRequest("2823", "The request doesn't have any query information by the HTTP POST method.");
+            }
+            HashMap<String, String[]> params = new HashMap<String, String[]>();
+            for(String key : multipartparams.keySet()) {
+                List<String> values = multipartparams.get(key);
+                logMetacat.debug("MNResourceHandler.doPostQuery -the key "+key +" has the value "+values);
+                if(values != null) {
+                    String[] arrayValues = values.toArray(new String[0]);
+                    params.put(key, arrayValues);
+                }
+            }
+            mnode.setSession(session);
+            InputStream stream = mnode.postQuery(session, engine, params);
+            // set the content-type if we have it from the implementation
+            if (stream instanceof ContentTypeInputStream) {
+                response.setContentType(((ContentTypeInputStream) stream).getContentType());
+            }
+            response.setStatus(200);
+            out = response.getOutputStream();
+            // write the results to the output stream
+            IOUtils.copyLarge(stream, out);
+            return;
+        } catch (BaseException be) {
+            // report Exceptions as clearly as possible
+            try {
+                out = response.getOutputStream();
+            } catch (IOException e) {
+                logMetacat.error("Could not get output stream from response", e);
+            }
+            serializeException(be, out);
+        } catch (Exception e) {
+            // report Exceptions as clearly and generically as possible
+            logMetacat.error(e.getClass() + ": " + e.getMessage(), e);
+            try {
+                out = response.getOutputStream();
+            } catch (IOException ioe) {
+                logMetacat.error("Could not get output stream from response", ioe);
+            }
+            ServiceFailure se = new ServiceFailure("0000", e.getMessage());
             serializeException(se, out);
         }
     }

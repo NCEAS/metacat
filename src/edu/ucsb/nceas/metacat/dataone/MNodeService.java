@@ -67,6 +67,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.common.params.MultiMapSolrParams;
+import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
@@ -2028,6 +2030,66 @@ public class MNodeService extends D1NodeService
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * Handle the query sent by the http post method
+	 * @param session  identity information of the requester
+	 * @param engine  the query engine will be used. Now we only support solr
+	 * @param params  the query parameters with key/value pairs
+	 * @return
+	 * @throws InvalidToken
+	 * @throws ServiceFailure
+	 * @throws NotAuthorized
+	 * @throws InvalidRequest
+	 * @throws NotImplemented
+	 * @throws NotFound
+	 */
+    public InputStream postQuery(Session session, String engine, HashMap<String, String[]> params) throws InvalidToken,
+            ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
+        String user = Constants.SUBJECT_PUBLIC;
+        String[] groups= null;
+        Set<Subject> subjects = null;
+        boolean isMNadmin= false;
+        if (session != null) {
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
+            if(authDel.isLocalMNAdmin(session)) {
+                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+                isMNadmin=true;//bypass access rules since it is the admin
+            } else {
+                user = session.getSubject().getValue();
+                subjects = AuthUtils.authorizedClientSubjects(session);
+                if (subjects != null) {
+                    List<String> groupList = new ArrayList<String>();
+                    for (Subject subject: subjects) {
+                        groupList.add(subject.getValue());
+                    }
+                    groups = groupList.toArray(new String[0]);
+                }
+            }
+        } else {
+            //add the public user subject to the set 
+            Subject subject = new Subject();
+            subject.setValue(Constants.SUBJECT_PUBLIC);
+            subjects = new HashSet<Subject>();
+            subjects.add(subject);
+        }
+        if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
+            if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
+                throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
+            try {
+                SolrParams slorParams = new MultiMapSolrParams(params);
+                //TODO: we need to pass the query params to the Solr server
+                String query ="q=id:*";
+                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
+            } catch (Exception e) {
+                throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
+            } 
+        } else {
+            throw new NotImplemented ("2824", "The query engine "+engine+" specified on the request isn't supported by the http post method. Now we only support the solr engine.");
+        }
+    }
 	
 	/**
 	 * Given an existing Science Metadata PID, this method mints a DOI
