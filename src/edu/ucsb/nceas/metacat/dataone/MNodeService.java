@@ -2071,7 +2071,7 @@ public class MNodeService extends D1NodeService
    */
     private boolean isMNAdminQuery(Session session) throws ServiceFailure {
         boolean isMNadmin= false;
-        if (session != null) {
+        if (session != null && session.getSubject() != null) {
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
             if(authDel.isLocalMNAdmin(session)) {
                 logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
