@@ -2079,10 +2079,8 @@ public class MNodeService extends D1NodeService
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
             }
             try {
-                SolrParams slorParams = new MultiMapSolrParams(params);
-                //TODO: we need to pass the query params to the Solr server
-                String query ="q=id:*";
-                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
+                SolrParams solrParams = new MultiMapSolrParams(params);
+                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin);
             } catch (Exception e) {
                 throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
             } 
