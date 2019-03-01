@@ -1970,38 +1970,23 @@ public class MNodeService extends D1NodeService
 	public InputStream query(Session session, String engine, String query) throws InvalidToken,
 			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
 			NotFound {
-	    String user = Constants.SUBJECT_PUBLIC;
-        String[] groups= null;
-        Set<Subject> subjects = null;
-        boolean isMNadmin= false;
-        if (session != null) {
-            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
-            if(authDel.isLocalMNAdmin(session)) {
-                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
-                isMNadmin=true;//bypass access rules since it is the admin
-            } else {
-                user = session.getSubject().getValue();
-                subjects = AuthUtils.authorizedClientSubjects(session);
-                if (subjects != null) {
-                    List<String> groupList = new ArrayList<String>();
-                    for (Subject subject: subjects) {
-                        groupList.add(subject.getValue());
-                    }
-                    groups = groupList.toArray(new String[0]);
-                }
-            }
-        } else {
-            //add the public user subject to the set 
-            Subject subject = new Subject();
-            subject.setValue(Constants.SUBJECT_PUBLIC);
-            subjects = new HashSet<Subject>();
-            subjects.add(subject);
-        }
-        //System.out.println("====== user is "+user);
-        //System.out.println("====== groups are "+groups);
+        Set<Subject> subjects = getQuerySubjects(session);
+        boolean isMNadmin = isMNAdminQuery(session);
 		if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
+		    String user = Constants.SUBJECT_PUBLIC;
+	        String[] groups= null;
+	        if (session != null) {
+	            user = session.getSubject().getValue();
+	        }
+            if (subjects != null) {
+                List<String> groupList = new ArrayList<String>();
+                for (Subject subject: subjects) {
+                    groupList.add(subject.getValue());
+                }
+                groups = groupList.toArray(new String[0]);
             }
 			try {
 				DBQuery queryobj = new DBQuery();
@@ -2047,33 +2032,8 @@ public class MNodeService extends D1NodeService
 	 */
     public InputStream postQuery(Session session, String engine, HashMap<String, String[]> params) throws InvalidToken,
             ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-        String user = Constants.SUBJECT_PUBLIC;
-        String[] groups= null;
-        Set<Subject> subjects = null;
-        boolean isMNadmin= false;
-        if (session != null) {
-            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
-            if(authDel.isLocalMNAdmin(session)) {
-                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
-                isMNadmin=true;//bypass access rules since it is the admin
-            } else {
-                user = session.getSubject().getValue();
-                subjects = AuthUtils.authorizedClientSubjects(session);
-                if (subjects != null) {
-                    List<String> groupList = new ArrayList<String>();
-                    for (Subject subject: subjects) {
-                        groupList.add(subject.getValue());
-                    }
-                    groups = groupList.toArray(new String[0]);
-                }
-            }
-        } else {
-            //add the public user subject to the set 
-            Subject subject = new Subject();
-            subject.setValue(Constants.SUBJECT_PUBLIC);
-            subjects = new HashSet<Subject>();
-            subjects.add(subject);
-        }
+        Set<Subject> subjects = getQuerySubjects(session);
+        boolean isMNadmin = isMNAdminQuery(session);
         if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
@@ -2087,6 +2047,38 @@ public class MNodeService extends D1NodeService
         } else {
             throw new NotImplemented ("2824", "The query engine "+engine+" specified on the request isn't supported by the http post method. Now we only support the solr engine.");
         }
+    }
+    
+    /*
+     * Extract all subjects from a given session. If the session is null, the public subject will be returned.
+     */
+    private Set<Subject> getQuerySubjects(Session session) {
+        Set<Subject> subjects = null;
+        if (session != null) {
+             subjects = AuthUtils.authorizedClientSubjects(session);
+        } else {
+            //add the public user subject to the set 
+            Subject subject = new Subject();
+            subject.setValue(Constants.SUBJECT_PUBLIC);
+            subjects = new HashSet<Subject>();
+            subjects.add(subject);
+        }
+        return subjects;
+    }
+    
+  /*
+   * Determine if the given session is a local admin subject.
+   */
+    private boolean isMNAdminQuery(Session session) throws ServiceFailure {
+        boolean isMNadmin= false;
+        if (session != null) {
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
+            if(authDel.isLocalMNAdmin(session)) {
+                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+                isMNadmin=true;//bypass access rules since it is the admin
+            }
+        }
+        return isMNadmin;
     }
 	
 	/**
