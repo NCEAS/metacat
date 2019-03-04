@@ -1672,8 +1672,9 @@ public class IdentifierManager {
      * @param accessPolicy
      * @throws McdbDocNotFoundException
      * @throws AccessException
+     * @throws InvalidSystemMetadata 
      */
-    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy) throws McdbDocNotFoundException, AccessException {
+    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy) throws McdbDocNotFoundException, AccessException, InvalidSystemMetadata {
     	
     	// check for the existing permOrder so that we remain compatible with it (DataONE does not care)
         XMLAccessAccess accessController  = new XMLAccessAccess();
@@ -1695,6 +1696,9 @@ public class IdentifierManager {
 				accessDAO.setPermOrder(existingPermOrder);
     			if (permissions != null) {
 	    			for (Permission permission: permissions) {
+	    			    if(permission == null) {
+	    			        throw new InvalidSystemMetadata("4956", "The Permission shouldn't be null. It may result from sepcifying a permssion by a typo, which is not one of read, write and changePermssion.");
+	    			    }
 	    				Long metacatPermission = new Long(convertPermission(permission));
 	        			accessDAO.addPermission(metacatPermission);
 	    			}
