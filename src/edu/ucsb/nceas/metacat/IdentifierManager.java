@@ -1697,7 +1697,7 @@ public class IdentifierManager {
     			if (permissions != null) {
 	    			for (Permission permission: permissions) {
 	    			    if(permission == null) {
-	    			        throw new InvalidSystemMetadata("4956", "The Permission shouldn't be null. It may result from sepcifying a permssion by a typo, which is not one of read, write and changePermssion.");
+	    			        throw new InvalidSystemMetadata("4956", "The Permission shouldn't be null. It may result from sepcifying a permission by a typo, which is not one of read, write and changePermission.");
 	    			    }
 	    				Long metacatPermission = new Long(convertPermission(permission));
 	        			accessDAO.addPermission(metacatPermission);
