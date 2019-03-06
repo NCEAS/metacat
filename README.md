@@ -44,7 +44,7 @@ data are well and consistently described.
 - Owen Jones (owen.jones@imperial.ac.uk)
 
 ## Installation
-See the file "docs/install.html" for detailed instructions
+See the file "docs/user/metacat/source/install.rst" for detailed instructions
 for your OS.
 
 ## Documentation
