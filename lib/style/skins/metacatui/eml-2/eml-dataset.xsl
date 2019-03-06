@@ -358,34 +358,59 @@
      <!-- add in the geographic coverage info -->
      <div class="row-fluid">  
            <xsl:if test="./coverage/geographicCoverage">
-             <xsl:for-each select="./coverage/geographicCoverage">
+             <xsl:for-each select="./coverage/geographicCoverage[position()&lt;26]">
                <xsl:call-template name="geographicCoverage">
                  <xsl:with-param name="firstColStyle" select="$firstColStyle"/>
                  <xsl:with-param name="secondColStyle" select="$secondColStyle"/>
                </xsl:call-template>
              </xsl:for-each>
+
+             <xsl:variable name="geoCount" select="count(./coverage/geographicCoverage)-25"/>
+
+             <xsl:if test="count(./coverage/geographicCoverage)&gt;25">
+               <div class="alert alert-info">
+                 <xsl:value-of select="$geoCount"/> geographic regions are hidden.
+               Download the full metadata document to see all geographic regions.</div>
+             </xsl:if>
+
            </xsl:if>
        </div>
        <!-- add in the temporal coverage info -->
        <div class="row-fluid">
            <xsl:if test="./coverage/temporalCoverage">
-             <xsl:for-each select="./coverage/temporalCoverage">
+             <xsl:for-each select="./coverage/temporalCoverage[position()&lt;26]">
                <xsl:call-template name="temporalCoverage">
                  <xsl:with-param name="firstColStyle" select="$firstColStyle"/>
                  <xsl:with-param name="secondColStyle" select="$secondColStyle"/>
                </xsl:call-template>
              </xsl:for-each>
+
+             <xsl:variable name="tempCount" select="count(./coverage/temporalCoverage)-25"/>
+
+             <xsl:if test="count(./coverage/temporalCoverage)&gt;25">
+               <div class="alert alert-info">
+                 <xsl:value-of select="$tempCount"/> temporal coverages are hidden.
+               Download the full metadata document to see all temporal coverages.</div>
+             </xsl:if>
            </xsl:if>
        </div>
        <!-- add in the taxonomic coverage info -->
        <div class="row-fluid">
            <xsl:if test="./coverage/taxonomicCoverage">
-             <xsl:for-each select="./coverage/taxonomicCoverage">
+             <xsl:for-each select="./coverage/taxonomicCoverage[position()&lt;26]">
                <xsl:call-template name="taxonomicCoverage">
                  <xsl:with-param name="firstColStyle" select="$firstColStyle"/>
                  <xsl:with-param name="secondColStyle" select="$secondColStyle"/>
                </xsl:call-template>
              </xsl:for-each>
+
+             <xsl:variable name="taxCount" select="count(./coverage/taxonomicCoverage)-25"/>
+
+             <xsl:if test="count(./coverage/taxonomicCoverage)&gt;25">
+               <div class="alert alert-info">
+                 <xsl:value-of select="$taxCount"/> taxonomic ranges are hidden.
+               Download the full metadata document to see all taxonomic ranges.</div>
+             </xsl:if>
            </xsl:if>
        </div>
 
