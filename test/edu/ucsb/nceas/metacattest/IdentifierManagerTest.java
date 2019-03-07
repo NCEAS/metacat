@@ -38,11 +38,14 @@ import org.apache.commons.io.FileUtils;
 
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
+import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
+import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
@@ -58,6 +61,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
@@ -97,7 +101,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
         suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
-        
+        suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
         return suite;
     }
     /**
@@ -1866,4 +1870,48 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         return session;
     }
     
+    /**
+     * Test the updateSystemMetadata method should throw an IvalidSystemMetadata exception 
+     * if the permission is wrongly spelled. 
+     * https://github.com/NCEAS/metacat/issues/1323
+     * @throws Exception
+     */
+    public void testUpdateSystemmetadata() throws Exception {
+        String typoPermission = "typo";
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        AccessPolicy policy = new AccessPolicy();
+        AccessRule rule = new AccessRule();
+        Subject subject = new Subject();
+        subject.setValue("cn=test,dc=org");
+        rule.addSubject(subject);
+        rule.addPermission(Permission.convert(typoPermission));
+        policy.addAllow(rule);
+        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        meta.setAccessPolicy(policy);
+        DBConnection dbConn = null;
+        int serialNumber = 1;
+        try {
+            // get a connection from the pool
+            dbConn = DBConnectionPool
+                    .getDBConnection("Metacathandler.handleInsertOrUpdateAction");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            try {
+                IdentifierManager.getInstance().updateSystemMetadata(meta, dbConn);
+                fail("Can't get there since an InvalidSystemMetadata exception should be thrown.");
+            } catch (InvalidSystemMetadata e) {
+                assertTrue(e.getMessage().contains(typoPermission));
+            }
+            
+        } finally {
+            // Return db connection
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        
+    }
 }

@@ -67,6 +67,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.common.params.MultiMapSolrParams;
+import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
@@ -1946,38 +1948,23 @@ public class MNodeService extends D1NodeService
 	public InputStream query(Session session, String engine, String query) throws InvalidToken,
 			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
 			NotFound {
-	    String user = Constants.SUBJECT_PUBLIC;
-        String[] groups= null;
-        Set<Subject> subjects = null;
-        boolean isMNadmin= false;
-        if (session != null) {
-            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
-            if(authDel.isLocalMNAdmin(session)) {
-                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
-                isMNadmin=true;//bypass access rules since it is the admin
-            } else {
-                user = session.getSubject().getValue();
-                subjects = AuthUtils.authorizedClientSubjects(session);
-                if (subjects != null) {
-                    List<String> groupList = new ArrayList<String>();
-                    for (Subject subject: subjects) {
-                        groupList.add(subject.getValue());
-                    }
-                    groups = groupList.toArray(new String[0]);
-                }
-            }
-        } else {
-            //add the public user subject to the set 
-            Subject subject = new Subject();
-            subject.setValue(Constants.SUBJECT_PUBLIC);
-            subjects = new HashSet<Subject>();
-            subjects.add(subject);
-        }
-        //System.out.println("====== user is "+user);
-        //System.out.println("====== groups are "+groups);
+        Set<Subject> subjects = getQuerySubjects(session);
+        boolean isMNadmin = isMNAdminQuery(session);
 		if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
+		    String user = Constants.SUBJECT_PUBLIC;
+	        String[] groups= null;
+	        if (session != null) {
+	            user = session.getSubject().getValue();
+	        }
+            if (subjects != null) {
+                List<String> groupList = new ArrayList<String>();
+                for (Subject subject: subjects) {
+                    groupList.add(subject.getValue());
+                }
+                groups = groupList.toArray(new String[0]);
             }
 			try {
 				DBQuery queryobj = new DBQuery();
@@ -2006,6 +1993,71 @@ public class MNodeService extends D1NodeService
 		}
 		return null;
 	}
+	
+	
+	/**
+	 * Handle the query sent by the http post method
+	 * @param session  identity information of the requester
+	 * @param engine  the query engine will be used. Now we only support solr
+	 * @param params  the query parameters with key/value pairs
+	 * @return
+	 * @throws InvalidToken
+	 * @throws ServiceFailure
+	 * @throws NotAuthorized
+	 * @throws InvalidRequest
+	 * @throws NotImplemented
+	 * @throws NotFound
+	 */
+    public InputStream postQuery(Session session, String engine, HashMap<String, String[]> params) throws InvalidToken,
+            ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
+        Set<Subject> subjects = getQuerySubjects(session);
+        boolean isMNadmin = isMNAdminQuery(session);
+        if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
+            if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
+                throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
+            }
+            try {
+                SolrParams solrParams = new MultiMapSolrParams(params);
+                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin);
+            } catch (Exception e) {
+                throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
+            } 
+        } else {
+            throw new NotImplemented ("2824", "The query engine "+engine+" specified on the request isn't supported by the http post method. Now we only support the solr engine.");
+        }
+    }
+    
+    /*
+     * Extract all subjects from a given session. If the session is null, the public subject will be returned.
+     */
+    private Set<Subject> getQuerySubjects(Session session) {
+        Set<Subject> subjects = null;
+        if (session != null) {
+             subjects = AuthUtils.authorizedClientSubjects(session);
+        } else {
+            //add the public user subject to the set 
+            Subject subject = new Subject();
+            subject.setValue(Constants.SUBJECT_PUBLIC);
+            subjects = new HashSet<Subject>();
+            subjects.add(subject);
+        }
+        return subjects;
+    }
+    
+  /*
+   * Determine if the given session is a local admin subject.
+   */
+    private boolean isMNAdminQuery(Session session) throws ServiceFailure {
+        boolean isMNadmin= false;
+        if (session != null && session.getSubject() != null) {
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
+            if(authDel.isLocalMNAdmin(session)) {
+                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+                isMNadmin=true;//bypass access rules since it is the admin
+            }
+        }
+        return isMNadmin;
+    }
 	
 	/**
 	 * Given an existing Science Metadata PID, this method mints a DOI
