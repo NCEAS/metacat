@@ -70,7 +70,8 @@ for the next release.
 ### Release Notes for 2.10.2:
 New features and bugs fixed in this release:
 * Allow POSTs to the query service
-* CONCURRENT_MAP_PUT error on malformed sysmeta update
+* Upgrade the version of MetacatUI to 2.5.1
+* Indirect error (CONCURRENT_MAP_PUT) on malformed sysmeta update
 
 
 ### Release Notes for 2.10.1:
