@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.10.1 Release
+Version: 2.10.2 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,13 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.10.2:
+New features and bugs fixed in this release:
+* Allow POSTs to the query service
+* Upgrade the version of MetacatUI to 2.5.1
+* Indirect error (CONCURRENT_MAP_PUT) on malformed sysmeta update
+
 
 ### Release Notes for 2.10.1:
 New features and bugs fixed in this release:

@@ -122,6 +122,32 @@ public class MetacatSolrIndex {
      */
     public InputStream query(String query, Set<Subject>authorizedSubjects, boolean isMNadmin) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
     ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
+        // allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
+        query = query.replaceAll("\\+", "%2B");
+        SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
+        return query(solrParams, authorizedSubjects, isMNadmin);
+     
+    }
+    
+    /**
+     * Handle the query when the query is on the key/value format
+     * @param solrParams  the query with the key/value format
+     * @param authorizedSubjects  the authorized subjects in this query session
+     * @param isMNadmin  the indicator of the authorized subjects are the mn admin or not
+     * @return the query result as the InputStream object
+     * @throws SolrServerException
+     * @throws IOException
+     * @throws PropertyNotFoundException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws NotImplemented
+     * @throws NotFound
+     * @throws UnsupportedType
+     */
+    public InputStream query(SolrParams solrParams, Set<Subject>authorizedSubjects, boolean isMNadmin) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
+    ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
         if(authorizedSubjects == null || authorizedSubjects.isEmpty()) {
             //throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized subjects(even the public user) in this query session.");
             Subject subject = new Subject();
@@ -134,14 +160,10 @@ public class MetacatSolrIndex {
             log.debug("MetacatSolrIndex.query - this is the mn admin object and the query will bypass the access controls rules.");
         }
         InputStream inputStream = null;
-        // allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
-        query = query.replaceAll("\\+", "%2B");
-        SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
         String wt = solrParams.get(SolrQueryService.WT);
         // handle normal and skin-based queries
         if (SolrQueryService.isSupportedWT(wt)) {
             // just handle as normal solr query
-           
             inputStream = SolrQueryServiceController.getInstance().query(solrParams, authorizedSubjects);
         }
         else {

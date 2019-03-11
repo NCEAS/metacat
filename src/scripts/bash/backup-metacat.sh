@@ -30,7 +30,8 @@ DAYSTOKEEP=7
 DVD=/dev/dvd
 
 # Location of the metacat.properties file
-METACATPROPERTIESPATH=/var/lib/tomcat6/webapps/knb/WEB-INF/metacat.properties
+METACATPROPERTIESPATH=/var/lib/tomcat7/webapps/knb/WEB-INF/metacat.properties
+METACATPROPERTIESPATH2=/var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties
 
 # Location of the apache configuration file
 APACHECONF=/etc/apache2/sites-enabled
@@ -60,14 +61,17 @@ ARCHDIR="$ARCHROOT/$ARCHNAME"
 mkdir $ARCHDIR
 
 # Shut down the tomcat server so nobody else changes anything while we backup
-/etc/init.d/tomcat6 stop
+/etc/init.d/tomcat7 stop
 
 # Shut down ldap too
 #/etc/init.d/slapd stop
 
 # Copy the metacat.properties file to /var/metacat
-cp $METACATPROPERTIESPATH $DATADIR
-
+if [ -f $METACATPROPERTIESPATH ]; then
+	cp $METACATPROPERTIESPATH $DATADIR
+else
+  cp $METACATPROPERTIESPATH2 $DATADIR
+fi
 # Backup postgres
 su - postgres -c "pg_dumpall | gzip > $ARCHDIR/metacat-postgres-backup.gz"
 
@@ -84,7 +88,7 @@ tar czhf $ARCHDIR/apache-config-backup.tgz $APACHECONF $KEYLOCATION $CERTLOCATIO
 #/etc/init.d/slapd start
 
 # Restart tomcat
-/etc/init.d/tomcat6 start
+/etc/init.d/tomcat7 start
 
 # Tar up the archive and copy it to archive media
 cd $ARCHROOT
