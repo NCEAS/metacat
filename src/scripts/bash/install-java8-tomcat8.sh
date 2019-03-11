@@ -9,7 +9,7 @@
 APACHE_ENABLED_SITES_DIR=/etc/apache2/sites-enabled
 APACHE_AVAILABLE_SITES_DIR=/etc/apache2/sites-available
 NEW_JDK_PACKAGE=openjdk-8-jdk
-NEW_JDK_HOME=/usr/lib/jvm/java-1.8.0-openjdk-amd64
+NEW_JDK_HOME=/usr/lib/jvm/java-8-openjdk-amd64
 DEFAULT_JAVA_HOME=/usr/lib/jvm/default-java
 
 JK_CONF=/etc/apache2/mods-enabled/jk.conf
@@ -93,7 +93,7 @@ else
 	sudo xmlstarlet ed -L -P -s "/Context" --type attr -n useHttpOnly -v false $NEW_TOMCAT_CONTEXT_CONF
 fi
 
-echo "remove the 8080 ports and add the 8009 ports to the tomcat7 server.xml"
+echo "remove the 8080 ports and add the 8009 ports to the tomcat8 server.xml"
 sudo cp $NEW_TOMCAT_SERVER_CONIF $NEW_TOMCAT_SERVER_CONIF.bak
 sudo xmlstarlet ed -L -P -d "//Connector[@port='8080']" $NEW_TOMCAT_SERVER_CONIF
 #echo "the configuration file is $NEW_TOMCAT_SERVER_CONIF"
@@ -162,6 +162,6 @@ do
 done
 
 sudo /etc/init.d/apache2 start
-sudo /etc/init.d/tomcat7 start
+sudo /etc/init.d/tomcat8 start
 
 exit 0
