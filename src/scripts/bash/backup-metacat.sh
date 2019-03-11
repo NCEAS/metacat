@@ -31,6 +31,7 @@ DVD=/dev/dvd
 
 # Location of the metacat.properties file
 METACATPROPERTIESPATH=/var/lib/tomcat7/webapps/knb/WEB-INF/metacat.properties
+METACATPROPERTIESPATH2=/var/lib/tomcat7/webapps/metacat/WEB-INF/metacat.properties
 
 # Location of the apache configuration file
 APACHECONF=/etc/apache2/sites-enabled
@@ -66,8 +67,11 @@ mkdir $ARCHDIR
 #/etc/init.d/slapd stop
 
 # Copy the metacat.properties file to /var/metacat
-cp $METACATPROPERTIESPATH $DATADIR
-
+if [ -f $METACATPROPERTIESPATH ]; then
+	cp $METACATPROPERTIESPATH $DATADIR
+else
+  cp $METACATPROPERTIESPATH2 $DATADIR
+fi
 # Backup postgres
 su - postgres -c "pg_dumpall | gzip > $ARCHDIR/metacat-postgres-backup.gz"
 
