@@ -123,7 +123,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
@@ -150,7 +150,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         
         MNodeService.getInstance(request).archive(session, guid);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(!resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
@@ -209,7 +209,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
         dataIds.add(guid);
@@ -312,7 +312,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
         dataIds.add(guid);
@@ -481,7 +481,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(new AccessPolicy());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
@@ -583,7 +583,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
@@ -687,7 +687,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object.close();
         object = new FileInputStream(taxononmyFilePath);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(30000);
+        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
