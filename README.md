@@ -70,6 +70,7 @@ for the next release.
 ### Release Notes for 2.10.2:
 New features and bugs fixed in this release:
 * Allow POSTs to the query service
+* Make ant build auto-detect maven location
 * Upgrade the version of MetacatUI to 2.5.1
 * Indirect error messages (CONCURRENT_MAP_PUT) on malformed sysmeta update
 * Taxonomic rank fields in Solr index are case-sensitive
