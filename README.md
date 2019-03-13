@@ -71,8 +71,8 @@ for the next release.
 New features and bugs fixed in this release:
 * Allow POSTs to the query service
 * Upgrade the version of MetacatUI to 2.5.1
-* Indirect error (CONCURRENT_MAP_PUT) on malformed sysmeta update
-
+* Indirect error messages (CONCURRENT_MAP_PUT) on malformed sysmeta update
+* Taxonomic rank fields in Solr index are case-sensitive
 
 ### Release Notes for 2.10.1:
 New features and bugs fixed in this release:
