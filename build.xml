@@ -163,7 +163,7 @@
 
 		<exec executable="sh" resultproperty="exec.mvn2.status" failifexecutionfails="false">
 			<arg value="-c"/>
-			<arg value="dpkg-query -L maven2 | grep '/boot$'" />
+			<arg value="dpkg-query -L maven2 | grep '/boot$' | cut -d'/' -f1-4" />
 			<redirector outputproperty="found.maven2.home" />
 		</exec>
 
