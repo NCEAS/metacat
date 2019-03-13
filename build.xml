@@ -161,6 +161,12 @@
 			<redirector outputproperty="found.maven3.home" />
 		</exec>
 
+		<exec executable="sh" resultproperty="exec.mvn2.status" failifexecutionfails="false">
+			<arg value="-c"/>
+			<arg value="dpkg-query -L maven2 | grep '/boot$'" />
+			<redirector outputproperty="found.maven2.home" />
+		</exec>
+
 		<!-- Use value set in $MAVEN_HOME if maven.home isn't already set -->
 		<condition property="isset.env.MAVEN_HOME">
 			<isset property="env.MAVEN_HOME"/>
@@ -187,6 +193,20 @@
 
 		<!-- Fall back to the found value via the above <exex> mvn -->
 		<condition property="maven.home" value="${found.maven.home}">
+    		<and>
+				<not>
+					<isset property="maven.home" />
+				</not>
+				<not>
+					<!-- Helps this condition fall through to find maven 2, below -->
+					<equals arg1="${found.maven.home}" arg2="" />
+				</not>
+				<equals arg1="${which.mvn}" arg2="0" />
+			</and>
+		</condition>
+
+		<!-- Fall back to the found value via the above <exex> mvn when version 2 is installed -->
+		<condition property="maven.home" value="${found.maven2.home}">
     		<and>
 				<not>
 					<isset property="maven.home" />
