@@ -25,83 +25,27 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
-
-
-
-import edu.ucsb.nceas.metacat.IdentifierManager;
-import edu.ucsb.nceas.metacat.dataone.CNodeService;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.service.ServiceService;
-import edu.ucsb.nceas.utilities.IOUtil;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.BagFile;
-import gov.loc.repository.bagit.Manifest;
-
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.math.BigInteger;
-import java.net.URL;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
-import org.dataone.client.v2.formats.ObjectFormatCache;
-import org.dataone.exceptions.MarshallingException;
 import org.dataone.configuration.Settings;
 import org.dataone.ore.ResourceMapFactory;
-import org.dataone.service.util.Constants;
-import org.dataone.service.util.TypeMarshaller;
-import org.dataone.service.exceptions.IdentifierNotUnique;
-import org.dataone.service.exceptions.InsufficientResources;
-import org.dataone.service.exceptions.InvalidRequest;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
-import org.dataone.service.exceptions.InvalidToken;
-import org.dataone.service.exceptions.NotAuthorized;
-import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.NotImplemented;
-import org.dataone.service.exceptions.ServiceFailure;
-import org.dataone.service.exceptions.SynchronizationFailed;
-import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.AccessPolicy;
-import org.dataone.service.types.v1.AccessRule;
-import org.dataone.service.types.v1.Checksum;
-import org.dataone.service.types.v1.DescribeResponse;
-import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v2.Log;
-import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.OptionList;
-import org.dataone.service.types.v1.NodeReference;
-import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.ObjectList;
-import org.dataone.service.types.v1.Permission;
-import org.dataone.service.types.v1.Person;
-import org.dataone.service.types.v1.ReplicationPolicy;
+
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
-import org.dataone.service.types.v1.SubjectInfo;
-import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
@@ -115,6 +59,7 @@ import org.junit.Before;
 public class MNodeQueryTest extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
+    private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
   /**
    * Set up the test fixtures
    * 
@@ -147,6 +92,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testPackageWithSID"));
     suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPrivateObject"));
     suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPublicObject"));
+    suite.addTest(new MNodeQueryTest("testQueryEMLTaxonomy"));
     return suite;
     
   }
@@ -725,6 +671,52 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+    }
+    
+    
+    public void testQueryEMLTaxonomy() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        HashMap<String, String[]> params = null;
+        guid.setValue("testUpdate." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(taxononmyFilePath);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.1.0");
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(taxononmyFilePath);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        Thread.sleep(30000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+        
+        //post query
+        params = new HashMap<String, String[]>();
+        String[] qValue = {"id:"+guid.getValue()};
+        params.put("q", qValue);
+        stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
     }
 
 }
