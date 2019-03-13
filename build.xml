@@ -47,6 +47,11 @@
              uri="antlib:org.apache.maven.artifact.ant"
              classpathref="maven-ant-tasks.classpath" />
 	
+	<!--  Don't run setMavenHome target if maven.home is already set -->
+	<condition property="maven.home.isset">
+		<isset property="maven.home" />
+	</condition>
+
 	<!-- defining the axis tasks -->
 	<path id="axis.ant.classpath">
 		<fileset dir="lib/lsid_lib">
@@ -120,7 +125,86 @@
 	<available file="${build.tomcat.dir}/common/lib/servlet-api.jar" 
 			property="tomcat.common.exists" />
 
-	<target name="config" depends="setTomcatCommon, setTomcatNoCommon">
+	<!-- 
+		Attempt to find and set the path to Maven
+
+		Prefers, in this order:
+
+	 	- The value set in build.properties. The reason for this is because this
+		  build file loads all properties from build.properties and properties are
+		  immutable so it's easiest to just use the same precedence chain.
+		- The value set in the $MAVEN_HOME environmental variable.
+		- The value found via the shell magic in the <exex> below.
+	-->
+	<target name="setMavenHome" unless="${maven.home.isset}">
+		<exec executable="sh" resultproperty="which.mvn" failifexecutionfails="false">
+			<arg value="-c"/>
+			<arg value="which mvn"/>
+			<redirector outputproperty="which.mvn.output" />
+		</exec>
+
+		<exec executable="sh" resultproperty="which.mvn3" failifexecutionfails="false">
+			<arg value="-c"/>
+			<arg value="which mvn3"/>
+			<redirector outputproperty="which.mvn3.output" />
+		</exec>
+
+		<exec executable="sh" resultproperty="exec.mvn.status" failifexecutionfails="false">
+			<arg value="-c"/>
+			<arg value="mvn --version | grep 'Maven home' | cut -d' ' -f3"/>
+			<redirector outputproperty="found.maven.home" />
+		</exec>
+		
+		<exec executable="sh" resultproperty="exec.mvn3.status" failifexecutionfails="false">
+			<arg value="-c"/>
+			<arg value="mvn3 --version | grep 'Maven home' | cut -d' ' -f3"/>
+			<redirector outputproperty="found.maven3.home" />
+		</exec>
+
+		<!-- Use value set in $MAVEN_HOME if maven.home isn't already set -->
+		<condition property="isset.env.MAVEN_HOME">
+			<isset property="env.MAVEN_HOME"/>
+		</condition>
+
+		<condition property="maven.home" value="${env.MAVEN_HOME}">
+    		<and>
+				<not>
+					<isset property="maven.home" />
+				</not>
+				<isset property="isset.env.MAVEN_HOME" />
+			</and>
+		</condition>
+
+		<!-- Fall back to the found value via the above <exex> for mvn3 -->
+		<condition property="maven.home" value="${found.maven3.home}">
+    		<and>
+				<not>
+					<isset property="maven.home" />
+				</not>
+				<equals arg1="${which.mvn3}" arg2="0" />
+			</and>
+		</condition>
+
+		<!-- Fall back to the found value via the above <exex> mvn -->
+		<condition property="maven.home" value="${found.maven.home}">
+    		<and>
+				<not>
+					<isset property="maven.home" />
+				</not>
+				<equals arg1="${which.mvn}" arg2="0" />
+			</and>
+		</condition>
+
+		<!-- Fail the task if maven.home never got set -->
+		<condition property="maven.home.is.set">
+			<isset property="maven.home" />
+		</condition>
+		
+		<fail message="Couldn't find Maven home. Either: (1) Set maven.home in build.properties, (2) set $MAVEN_HOME, or (3) put mvn in your $PATH." unless="maven.home.is.set"/>
+		<echo message="Setting Maven home (maven.home) to '${maven.home}'." />
+	</target>
+
+	<target name="config" depends="setMavenHome,setTomcatCommon, setTomcatNoCommon">
 		<!-- usr for client testing, generally you don't need change-->
 		<property name="mcuser"
 			value="uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org" />
