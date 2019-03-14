@@ -310,7 +310,7 @@
 	<bean id="eml.genus" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="genus" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Genus"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Genus" or ../taxonRankName="genus"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -318,7 +318,7 @@
 	<bean id="eml.species" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="species" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Species"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Species" or ../taxonRankName="species"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -326,7 +326,7 @@
 	<bean id="eml.kingdom" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="kingdom" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Kingdom"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Kingdom" or ../taxonRankName="kingdom"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -334,7 +334,7 @@
 	<bean id="eml.order" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="order" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Order"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Order" or ../taxonRankName="order"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -342,7 +342,7 @@
 	<bean id="eml.phylum" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="phylum" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Phylum"]/text() | //taxonomicClassification/taxonRankValue[../taxonRankName="Division"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Phylum" or ../taxonRankName="phylum"]/text() | //taxonomicClassification/taxonRankValue[../taxonRankName="Division" or ../taxonRankName="division"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -350,7 +350,7 @@
 	<bean id="eml.family" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="family" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Family"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Family" or ../taxonRankName="family"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -358,7 +358,7 @@
 	<bean id="eml.class" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="class" />
 		<constructor-arg name="xpath" 
-			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Class"]/text()' />
+			value='//taxonomicClassification/taxonRankValue[../taxonRankName="Class" or ../taxonRankName="class"]/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -372,7 +372,7 @@
 	
 	<bean id="eml.scientificNameRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
 		p:name="scientificName"
-		p:xPath='//taxonomicClassification[../taxonRankName="Genus"]'
+		p:xPath='//taxonomicClassification[../taxonRankName="Genus" or ../taxonRankName="genus"]'
 		p:template="[genus] [species]">
 		<property name="leafs">
 			<list>
