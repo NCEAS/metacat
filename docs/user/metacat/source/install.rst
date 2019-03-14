@@ -168,15 +168,15 @@ robust Web-serving environment and is required by some Metacat functionality.
 * PostgreSQL_ Database 
 * `Apache Ant`_ (if building from Source)
 
-Java 7
+Java 8
 ......
-To run Metacat, you should use Java 7. Make sure that the JAVA_HOME
+To run Metacat, you should use Java 8. Make sure that the JAVA_HOME
 environment variable is properly set and that both ``java`` and ``javac`` 
 are on your PATH. 
 
 To install Java if you are running Ubuntu_/Debian, you can install using apt-get:: 
 
-  sudo apt-get install openjdk-7-jdk
+  sudo apt-get install openjdk-8-jdk
 
 If you are not using Ubuntu_/Debian, you can get Java from the Oracle_ website and install using the RPM or other installer (Windows).
 
