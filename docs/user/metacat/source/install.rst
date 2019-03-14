@@ -416,7 +416,7 @@ Currently Metacat only supports PostgreSQL_. You can choose the release versions
 
   ::
 
-    CREATE USER metacat WITH UNENCRYPTED PASSWORD 'your_password';
+    CREATE USER metacat WITH PASSWORD 'your_password';
 
   where 'your_password' is whatever password you would like for the Metacat user. 
 
