@@ -18,7 +18,7 @@ running correctly:
 
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
-* `Java 7`_ (Note: Java 6 is deprecated)
+* `Java 8`_ (Note: Java 7 is deprecated)
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -30,7 +30,7 @@ running correctly:
 
 .. _Apache HTTPD Server: http://httpd.apache.org/
 
-.. _Java 7: http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html
+.. _Java 8: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 
 System requirements for running Metacat:
 
@@ -53,7 +53,7 @@ For the impatient or those who have already installed Metacat and know what
 they are doing, here are the steps needed to install Metacat. Detailed
 instructions for each step are in the next section.
 
-1. Download and install prerequisites (`Java 7`_, `Apache Tomcat`_ 6, PostgreSQL_, `Apache HTTPD Server`_)
+1. Download and install prerequisites (`Java 8`_, `Apache Tomcat`_ 7, PostgreSQL_, `Apache HTTPD Server`_)
 2. Create a database in PostgreSQL named 'metacat' and authorize access to it in ``pb_hba.conf`` for the user 'metacat'
 3. Log in to PostgreSQL and create the 'metacat' user
 4. Download Metacat from the `Metacat Download Page`_ and extract the archive
@@ -162,7 +162,7 @@ installing from source), and Tomcat are installed and running correctly. We
 also highly recommend that you install Apache Web server, as it provides a more
 robust Web-serving environment and is required by some Metacat functionality. 
 
-* `Java 7`_
+* `Java 8`_
 * `Apache Tomcat`_ 
 * `Apache HTTPD Server`_ (Highly Recommended)
 * PostgreSQL_ Database 
@@ -833,20 +833,20 @@ Install Required Software
 Before you can install and run Metacat, you must ensure that a recent Java SDK,
 PostgreSQL and Tomcat are installed, configured, and running correctly. 
 
-* `Java 7`_
+* `Java 8`_
 * `Apache Tomcat`_
 * PostgreSQL_ Database
 
-Java 7
+Java 8
 ......
-To run Metacat, you must have Java 7. Make sure that
+To run Metacat, you must have Java 8. Make sure that
 the JAVA_HOME environment variable is properly set and that both java and javac
 are on your PATH.
 
 To download and install Java:
 
-1. Browse to: http://www.oracle.com/technetwork/java/javase/downloads/jre7-downloads-1880261.html and follow
-   the instructions to download JDK 7.
+1. Browse to: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html and follow
+   the instructions to download JDK 8.
 
 2. Run the downloaded installer to install Java.
 
@@ -855,7 +855,7 @@ To download and install Java:
 
   ::
 
-    System Variable: JAVA_HOME C:\Program Files\Java\jdk1.7.0_79 
+    System Variable: JAVA_HOME C:\Program Files\Java\jdk1.8.0_79 
     (or whichever version you downloaded)
 
 Apache Tomcat
