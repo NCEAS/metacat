@@ -61,7 +61,10 @@
 	<bean id="isotc.pubDate" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="pubDate" />
 		<constructor-arg name="xpath" 
-			value="(//gmd:dateStamp/gco:Date/text() | //gmd:dateStamp/gco:DateTime/text())[1]" />
+			value="//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:Date/text() 
+			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date[1]/text() 
+			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:DateTime/text() 
+			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:DateTime[1]/text()" />
 		<property name="converter" ref="dateConverter" />
 	</bean>
 	

@@ -47,6 +47,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
@@ -93,6 +94,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPrivateObject"));
     suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPublicObject"));
     suite.addTest(new MNodeQueryTest("testQueryEMLTaxonomy"));
+    suite.addTest(new MNodeQueryTest("testISO211"));
     return suite;
     
   }
@@ -717,6 +719,28 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+    }
+    
+    public void testISO211() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testPangaea." + System.currentTimeMillis());
+        InputStream object = new FileInputStream("test/pangaea.xml");
+        InputStream sysmetaInput = new FileInputStream("test/sysmeta-pangaea.xml");
+        SystemMetadata sysmeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmetaInput);
+        Subject rightsHolder = session.getSubject();
+        sysmeta.setRightsHolder(rightsHolder);
+        sysmeta.setIdentifier(guid);
+        sysmeta.setAuthoritativeMemberNode(MNodeService.getInstance(request).getCapabilities().getIdentifier());
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue(pid.getValue().equals(guid.getValue()));
+        Thread.sleep(10000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T17:15:22Z</date>"));
+        assertTrue(resultStr.contains("<str name=\"formatId\">http://www.isotc211.org/2005/gmd-pangaea</str>"));
     }
 
 }
