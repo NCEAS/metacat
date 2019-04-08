@@ -9,6 +9,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.w3c.dom.Document;
 
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
@@ -21,71 +22,59 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
  * @author tao
  *
  */
-public class DefaultDataCiteFactory implements DataCiteMetadataFactory {
+public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
     private static Logger logMetacat = Logger.getLogger(DefaultDataCiteFactory.class);
-
+    
+    
     @Override
     public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure {
-        StringBuffer xml = new StringBuffer();
         if(identifier != null && sysmeta != null) {
-            xml.append(DataCiteMetadataFactory.XML_DECLARATION);
-            xml.append(DataCiteMetadataFactory.OPEN_RESOURCE);
-            
-            //identifier
-            xml.append(DataCiteMetadataFactory.OPEN_IDENTIFIER);
-            xml.append(identifier.getValue());
-            xml.append(DataCiteMetadataFactory.CLOSE_IDENTIFIER);
-            
-            //creator
-            xml.append(DataCiteMetadataFactory.OPEN_CREATORS);
-            xml.append(DataCiteMetadataFactory.OPEN_CREATOR);
-            xml.append(sysmeta.getRightsHolder().getValue());
-            xml.append(DataCiteMetadataFactory.CLOSE_CREATOR);
-            xml.append(DataCiteMetadataFactory.CLOSE_CREATORS);
-            
-            //title
-            xml.append(DataCiteMetadataFactory.OPEN_TITLE_WITHLONG_ATTR);
-            xml.append(DataCiteMetadataFactory.EN);
-            xml.append(DataCiteMetadataFactory.CLOSE_ATT);
-            xml.append(ErcMissingValueCode.UNKNOWN.toString());
-            xml.append(DataCiteMetadataFactory.CLOSE_TITLE);
-            
-            //publish
-            xml.append(DataCiteMetadataFactory.OPEN_PUBLISHER);
-            Node node = MNodeService.getInstance(null).getCapabilities();
-            xml.append(node.getName());
-            xml.append(DataCiteMetadataFactory.CLOSE_PUBLISHER);
-            
-            // publication year
-            xml.append(DataCiteMetadataFactory.OPEN_PUBLISHYEAR);
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-            String year = sdf.format(sysmeta.getDateUploaded());
-            xml.append(year);
-            xml.append(DataCiteMetadataFactory.CLOSE_PUBLISHYEAR);
-            
-            // type
-            String resourceType = lookupResourceType(sysmeta);
-            xml.append(DataCiteMetadataFactory.OPEN_RESOURCETYPE_WITHTYPEGENERALATT);
-            xml.append(DataCiteProfileResourceTypeValues.DATASET.toString());
-            xml.append(DataCiteMetadataFactory.CLOSE_ATT);
-            xml.append(resourceType);
-            xml.append(DataCiteMetadataFactory.CLOSE_RESROUCETYPE);
-            
-            // format
-            String format = lookupFormat(sysmeta);
-            if(format != null) {
-                xml.append(DataCiteMetadataFactory.OPEN_FORMATS);
-                xml.append(DataCiteMetadataFactory.OPEN_FORMAT);
-                xml.append(format);
-                xml.append(DataCiteMetadataFactory.CLOSE_FORMAT);
-                xml.append(DataCiteMetadataFactory.CLOSE_FORMATS);
+            try {
+                String language = "English";
+                Document doc = generateROOTDoc();
+                //identifier
+                addIdentifier(doc, identifier.getValue());
+                
+                //creator
+                String affiliation = null;
+                String nameIdentifier = null;
+                String nameIdentifierSchemeURI = null;
+                String nameIdentifierScheme = null;
+                appendCreator(sysmeta.getRightsHolder().getValue(), doc, affiliation, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
+                
+                //title
+                appendTitle(ErcMissingValueCode.UNKNOWN.toString(), doc, language);
+                
+                //publish
+                Node node = MNodeService.getInstance(null).getCapabilities();
+                addPublisher(doc,node.getName());
+
+                //publication year
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+                String year = sdf.format(sysmeta.getDateUploaded());
+                addPublicationYear(doc, year);
+                
+                // type
+                String resourceType = lookupResourceType(sysmeta);
+                if(resourceType != null) {
+                    addResourceType(doc, resourceType);
+                }
+
+                // format
+                String format = lookupFormat(sysmeta);
+                if(format != null) {
+                   appendFormat(doc, format);
+                }
+                return serializeDoc(doc);
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new ServiceFailure("", e.getMessage());
             }
-            
-            xml.append(DataCiteMetadataFactory.CLOSE_RESOURCE);
+           
         } else {
             return null;
         }
-        return xml.toString();
+       
     }
     
     /**

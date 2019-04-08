@@ -22,6 +22,8 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite;
 
+import java.util.Locale;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -96,6 +98,7 @@ public abstract class DataCiteMetadataFactory {
     
     public static final String CLOSE_ATT="\">";
     public static final String EN = "en";
+    public static final String XML_LANG= "xml:lang";
     
     public static final String NAMESPACE = "http://datacite.org/schema/kernel-3";
     public static final String SCHEMALOCATION = "https://schema.datacite.org/meta/kernel-3.1/metadata.xsd";
@@ -103,6 +106,12 @@ public abstract class DataCiteMetadataFactory {
     public static final String CREATORS = "creators";
     public static final String CREATOR = "creator";
     public static final String CREATORNAME = "creatorName";
+    public static final String TITLES = "titles";
+    public static final String SUBJECTS = "subjects";
+    public static final String DESCRIPTIONS = "descriptions";
+    public static final String FORMATS = "formats";
+    
+    private static final int FIRST = 0;
 
   
     protected static XPath xpath = null;
@@ -198,16 +207,217 @@ public abstract class DataCiteMetadataFactory {
             creatorsEle.appendChild(creator);
         } else {
             //we don't need to create the creators since it exists
-            int first = 0;
-            creatorsList.item(first).appendChild(creator);
+            creatorsList.item(FIRST).appendChild(creator);
         }
         return doc;
     }
     
     /**
+     * Append a title to the title list element
+     * @param doc  the document which will be modified
+     * @param title  the title will be appended
+     * @param language  the language which the tile uses. This method will transform the language to the ISO 639 two-letter code. If it is null, EN will be used
+     * @return the  modified document object
+     * @throws XPathExpressionException
+     */
+    public Document appendTitle (String title, Document doc, String language) throws XPathExpressionException {
+        //generate the title node
+        Element titleEle = doc.createElement("title");
+        String code = getISOLanguageCode(language);
+        titleEle.setAttribute(XML_LANG, code);
+        titleEle.appendChild(doc.createTextNode(title));
+        
+        String path = "//"+TITLES;
+        XPathExpression expr = xpath.compile(path);
+        NodeList titlesList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        if(titlesList == null ||titlesList.getLength() == 0) {
+            //we need to create the titles element since it doesn't exist
+            Element titlesEle = doc.createElement(TITLES);
+            doc.getFirstChild().appendChild(titlesEle);
+            titlesEle.appendChild(titleEle);
+        } else {
+            //we don't need to create the titles since it exists
+            titlesList.item(FIRST).appendChild(titleEle);
+        }
+        return doc;
+    }
+    
+    /**
+     * Add the publisher node
+     * @param doc  the doc needs to be modified
+     * @param publisher  the publisher will be added
+     * @return
+     */
+    protected Document addPublisher(Document doc, String publisher) {
+        //generate the publisher element
+        Element publisherEle = doc.createElement("publisher");
+        publisherEle.appendChild(doc.createTextNode(publisher));
+        doc.getFirstChild().appendChild(publisherEle);
+        return doc;
+    }
+    
+    /**
+     * Add the publication year node 
+     * @param doc  the doc needs to be modified
+     * @param publicationYear  the publication year will be added
+     * @return
+     */
+    protected Document addPublicationYear(Document doc, String publicationYear) {
+        Element publicationYearEle = doc.createElement("publicationYear");
+        publicationYearEle.appendChild(doc.createTextNode(publicationYear));
+        doc.getFirstChild().appendChild(publicationYearEle);
+        return doc;
+    }
+    
+    /**
+     * Append a subject to the document
+     * @param subject  the subject will be appended
+     * @param doc  the document will be modified
+     * @param language  the language which the subject is using. This method will transform the language string to the ISO 639 two-letter code. If it is null, EN will be used.
+     * @return the modified document object
+     * @throws XPathExpressionException
+     */
+    protected Document appendSubject(String subject, Document doc, String language) throws XPathExpressionException {
+        Element subjectEle = doc.createElement("subject");
+        String code = getISOLanguageCode(language);
+        subjectEle.setAttribute(XML_LANG, code);
+        subjectEle.appendChild(doc.createTextNode(subject));
+        
+        String path = "//"+SUBJECTS;
+        XPathExpression expr = xpath.compile(path);
+        NodeList subjectsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        if(subjectsList == null ||subjectsList.getLength() == 0) {
+            //we need to create the subjects element since it doesn't exist
+            Element subjectsEle = doc.createElement(SUBJECTS);
+            doc.getFirstChild().appendChild(subjectsEle);
+            subjectsEle.appendChild(subjectEle);
+        } else {
+            //we don't need to create the subjects since it exists
+            subjectsList.item(FIRST).appendChild(subjectEle);
+        }
+        return doc;
+    }
+    
+    /**
+     * Append a subject to the document. The language will be changed to the ISO639 code
+     * @param doc  the document object will be modified
+     * @param language  the language is used in the meta data. This method will transform the language string to the ISO 639 two-letter code.
+     * @return  the modified document object
+     */
+    protected Document addLanguage(Document doc, String language) {
+        String code = getISOLanguageCode(language);
+        Element languageEle = doc.createElement("language");
+        languageEle.appendChild(doc.createTextNode(code));
+        doc.getFirstChild().appendChild(languageEle);
+        return doc;
+    }
+    
+    
+    /**
+     * Add the resource type to the document
+     * @param doc  the document object will be modified
+     * @param resourceType  it should be one of those options:
+     * "Audiovisual"
+     * "Collection"
+     * "Dataset"
+     * "Event"
+     * "Image"
+     * "InteractiveResource"
+     * "Model"
+     * "PhysicalObject"
+     * "Service"
+     * "Software
+     * "Sound"
+     * "Text"
+     * "Workflow"
+     * "Other"
+     * @return the modified document object
+     */
+    protected Document addResourceType(Document doc, String resourceType) {
+        Element resourceTypeEle = doc.createElement("resourceType");
+        resourceTypeEle.setAttribute("resourceTypeGeneral", resourceType);
+        resourceTypeEle.appendChild(doc.createTextNode(resourceType));
+        doc.getFirstChild().appendChild(resourceTypeEle);
+        return doc;
+    }
+    
+    /**
+     * Add the format (MIME type) of the meta data object to the document 
+     * @param doc  the document object will be modified
+     * @param format  the format of the meta data object
+     * @return  the modfied docment
+     * @throws XPathExpressionException
+     */
+    protected Document appendFormat(Document doc, String format) throws XPathExpressionException {
+        Element formatEle = doc.createElement("format");
+        formatEle.appendChild(doc.createTextNode(format));
+        String path = "//"+FORMATS;
+        XPathExpression expr = xpath.compile(path);
+        NodeList formatsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        if(formatsList == null || formatsList.getLength() == 0) {
+            //we need to create the subjects element since it doesn't exist
+            Element formatsEle = doc.createElement(FORMATS);
+            doc.getFirstChild().appendChild(formatsEle);
+            formatsEle.appendChild(formatEle);
+        } else {
+            //we don't need to create the subjects since it exists
+            formatsList.item(FIRST).appendChild(formatEle);
+        }
+        return doc;
+    }
+    
+    /**
+     * Add the version element to the document
+     * @param doc  the document object will be modified
+     * @param version  the value of the version
+     * @return  the modified document
+     */
+    protected Document addVersion(Document doc, String version) {
+        Element versionEle = doc.createElement("version");
+        versionEle.appendChild(doc.createTextNode(version));
+        doc.getFirstChild().appendChild(versionEle);
+        return doc;
+    }
+    
+    /**
+     * Append a description to the document. This method can be called multiple times.
+     * @param description  the value of the description
+     * @param doc  the document object will be modified
+     * @param language  the language is used in the description
+     * @param descriptionType  the type of the description. It only can be the these options:
+     * "Abstract"
+     * "Methods"
+     * "SeriesInformation"
+     * "TableOfContents"
+     * "Other"
+     * @return the modified document object
+     * @throws XPathExpressionException
+     */
+    protected Document appendDescription(String description, Document doc, String language, String descriptionType) throws XPathExpressionException {
+        Element descriptionEle = doc.createElement("description");
+        String code = getISOLanguageCode(language);
+        descriptionEle.setAttribute(XML_LANG, code);
+        descriptionEle.setAttribute("descriptionType", descriptionType);
+        descriptionEle.appendChild(doc.createTextNode(description));
+        
+        String path = "//"+DESCRIPTIONS;
+        XPathExpression expr = xpath.compile(path);
+        NodeList descriptionsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        if(descriptionsList == null || descriptionsList.getLength() == 0) {
+            //we need to create the descriptions element since it doesn't exist
+            Element descriptionsEle = doc.createElement(DESCRIPTIONS);
+            doc.getFirstChild().appendChild(descriptionsEle);
+            descriptionsEle.appendChild(descriptionEle);
+        } else {
+            //we don't need to create the descriptions since it exists
+            descriptionsList.item(FIRST).appendChild(descriptionEle);
+        }
+        return doc;
+    }
+    /**
      * Serialize the given doc object to a string
      * @param doc
-     * @return
+     * @return the string representation of the document object
      */
     protected String serializeDoc(Document doc) {
         DOMImplementationLS domImplementation = (DOMImplementationLS) doc.getImplementation();
@@ -215,5 +425,21 @@ public abstract class DataCiteMetadataFactory {
         return lsSerializer.writeToString(doc);   
     }
   
+    /**
+     * Determine the ISO 639 two letters code
+     * @param language  the given language. If it is null, En will be returned.
+     * @return  the two letters code for the language. If we can't find, EN will be returned.
+     */
+    public static String getISOLanguageCode(String language) {
+        if(language == null) {
+            return EN;
+        }
+        for (Locale locale : Locale.getAvailableLocales()) {
+            if (language.equalsIgnoreCase(locale.getDisplayLanguage())) {
+                return locale.getLanguage();
+            }
+        }
+        return EN;
+    }
 
 }
