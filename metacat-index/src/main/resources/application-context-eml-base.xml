@@ -190,8 +190,14 @@
 	<bean id="eml.project" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="project" />
 		<constructor-arg name="xpath" value="//dataset/project/title/text()" />
-		<property name="multivalue" value="false" />
-	</bean>	
+		<property name="multivalue" value="true" />
+	</bean>
+
+	<bean id="eml.funding" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="funding" />
+		<constructor-arg name="xpath" value="//dataset/project/funding/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
 
 	<bean id="eml.authorSurName" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="authorSurName" />

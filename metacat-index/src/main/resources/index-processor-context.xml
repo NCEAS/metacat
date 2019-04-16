@@ -13,6 +13,7 @@
     <import resource="application-context-eml201.xml" />
     <import resource="application-context-eml210.xml" />
     <import resource="application-context-eml211.xml" />
+    <import resource="application-context-eml220.xml" />
     
     <import resource="application-context-fgdc-base.xml" />
     <import resource="application-context-fgdc-std-001-1998.xml" />
@@ -104,6 +105,7 @@
        <ref bean="eml201Subprocessor" />
        <ref bean="eml210Subprocessor" />
        <ref bean="eml211Subprocessor" />
+       <ref bean="eml220Subprocessor" />
        <ref bean="resourceMapSubprocessor" />
        <ref bean="fgdcstd0011998Subprocessor" />
        <ref bean="fgdcstd00111999Subprocessor" />
@@ -158,6 +160,11 @@
      <constructor-arg name="namespace"
       value="eml://ecoinformatics.org/eml-2.1.1" />
      <constructor-arg name="prefix" value="eml211" />
+    </bean>
+    <bean class="org.dataone.cn.indexer.XMLNamespace">
+     <constructor-arg name="namespace"
+      value="eml://ecoinformatics.org/eml-2.2.0" />
+     <constructor-arg name="prefix" value="eml220" />
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="prefix" value="cito" />

@@ -212,7 +212,15 @@
       </xsl:call-template>
     </xsl:for-each>
     </xsl:if>
-     
+
+    <xsl:if test="annotation">
+      <div class="control-group">
+        <label class="control-label">Annotations</label>
+        <xsl:call-template name="emlannotationtable">
+          <xsl:with-param name="annotations" select="annotation" />
+        </xsl:call-template>
+      </div>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="storedProcedureShowDistribution">
