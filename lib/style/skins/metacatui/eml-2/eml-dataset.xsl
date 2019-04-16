@@ -463,7 +463,15 @@
            </xsl:for-each>
          </xsl:if>
      </div>
-     
+
+		<xsl:if test="annotation">
+			<h4>Annotations</h4>
+			<div class="row fluid">
+			<xsl:call-template name="emlannotationtable">
+					<xsl:with-param name="annotations" select="annotation" />
+				</xsl:call-template>
+			</div>
+		</xsl:if>
   </xsl:template>
 
   <xsl:template name="datasetresource">

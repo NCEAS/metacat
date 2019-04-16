@@ -78,6 +78,11 @@
      <xsl:for-each select="access">
 		<xsl:call-template name="topaccess"/>
 	 </xsl:for-each>
+    <xsl:if test="annotations">
+      <xsl:call-template name="emlannotations">
+         <xsl:with-param name="annotations" select="annotations/annotation" />
+       </xsl:call-template>
+     </xsl:if>
      <!-- Additional metadata-->
      <xsl:choose>
        <xsl:when test="$displaymodule='additionalmetadata' or $displaymodule='printall'">
