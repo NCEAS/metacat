@@ -49,6 +49,7 @@
   <xsl:import href="eml-project.xsl"/>
   <xsl:import href="eml-protocol.xsl"/>
   <xsl:import href="eml-resource.xsl"/>
+  <xsl:import href="eml-semantics.xsl"/>
   <xsl:import href="eml-settings.xsl"/>
   <xsl:import href="eml-software.xsl"/>
   <xsl:import href="eml-spatialraster.xsl"/>
