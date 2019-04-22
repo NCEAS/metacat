@@ -33,7 +33,7 @@ use Template;           # load the template-toolkit module
 use CGI qw/:standard :html3/; # load the CGI module 
 use Net::LDAP;          # load the LDAP net libraries
 use Net::SMTP;          # load the SMTP net libraries
-use Digest::SHA1;       # for creating the password hash
+use Digest::SHA;       # for creating the password hash
 use MIME::Base64;       # for creating the password hash
 use URI;                # for parsing URL syntax
 use Config::Properties; # for parsing Java .properties files
