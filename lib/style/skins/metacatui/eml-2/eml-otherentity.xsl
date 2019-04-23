@@ -43,7 +43,6 @@
       <xsl:param name="otherentitysubHeaderStyle"/>
       <xsl:param name="docid"/>
       <xsl:param name="entityindex"/>
-      <table class="{$tabledefaultStyle}">
         <xsl:choose>
          <xsl:when test="references!=''">
           <xsl:variable name="ref_id" select="references"/>
@@ -66,7 +65,6 @@
             </xsl:call-template>
          </xsl:otherwise>
       </xsl:choose>
-      </table>
   </xsl:template>
 
   <xsl:template name="otherEntityCommon">
