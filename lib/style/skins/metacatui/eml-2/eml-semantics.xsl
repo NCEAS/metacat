@@ -43,6 +43,7 @@
             <xsl:with-param name="annotations" select="annotations/annotation" />
         </xsl:call-template>
     </xsl:template>
+
     <xsl:template name="emlannotationtag">
         <div>
             Annotation: <xsl:value-of select="./propertyURI" /> (<xsl:value-of select="./propertyURI/@label" />) <xsl:value-of select="./valueURI" /> (<xsl:value-of select="./valueURI/@label" />)
@@ -54,35 +55,37 @@
          element and also annotations under another parent element (e.g., dataset) -->
     <xsl:template name="emlannotationtable">
         <xsl:param name="annotations" />
-    	<table class="table table-striped table-condensed">
-            <thead>
-                <tr>
-                    <th>Property</th>
-                    <th>Value</th>
-                </tr>
+        <div class="annotations-table">
+            <table class="table table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th>Property</th>
+                        <th>Value</th>
+                    </tr>
                 </thead>
-            <tbody>
-                <xsl:for-each select="$annotations">
-                <tr>
-                    <td>
-                        <xsl:element name="span">
-                            <xsl:attribute name="class">annotation</xsl:attribute>
-                            <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
-                            <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
-                            <xsl:value-of select="normalize-space(./propertyURI/@label)" /> (<xsl:value-of select="normalize-space(./propertyURI/text())" />)
-                        </xsl:element>
-                    </td>
-                    <td>
-                        <xsl:element name="span">
-                            <xsl:attribute name="class">annotation</xsl:attribute>
-                            <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
-                            <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
-                            <xsl:value-of select="normalize-space(./valueURI/@label)" /> (<xsl:value-of select="normalize-space(./valueURI/text())" />)
-                        </xsl:element>
-                    </td>
-                </tr>
-                </xsl:for-each>
-            </tbody>
-        </table>
+                <tbody>
+                    <xsl:for-each select="$annotations">
+                    <tr>
+                        <td>
+                            <xsl:element name="span">
+                                <xsl:attribute name="class">annotation</xsl:attribute>
+                                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
+                                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
+                                <xsl:value-of select="normalize-space(./propertyURI/@label)" /> (<xsl:value-of select="normalize-space(./propertyURI/text())" />)
+                            </xsl:element>
+                        </td>
+                        <td>
+                            <xsl:element name="span">
+                                <xsl:attribute name="class">annotation</xsl:attribute>
+                                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
+                                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
+                                <xsl:value-of select="normalize-space(./valueURI/@label)" /> (<xsl:value-of select="normalize-space(./valueURI/text())" />)
+                            </xsl:element>
+                        </td>
+                    </tr>
+                    </xsl:for-each>
+                </tbody>
+            </table>
+        </div>
     </xsl:template>
 </xsl:stylesheet>
