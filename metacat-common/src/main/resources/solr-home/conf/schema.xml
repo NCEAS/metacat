@@ -388,6 +388,16 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="serviceEndpoint"   type="string"   indexed="true"  stored="true" multiValued="true" />
         <field name="serviceInput"      type="string"   indexed="true"  stored="true" multiValued="true" />
         <field name="serviceOutput"     type="string"   indexed="true"  stored="true" multiValued="true" />
+
+		<!--  EMl 2.2.0 AwardType fields -->
+		<field name="funderName" type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="funderIdentifier" type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardNumber" type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardTitle" type="string" indexed="true" stored="true" multiValued="true" />
+			        
+        <!-- Project document fields -->
+        <field name="projectName" type="string" indexed="true" stored="true" multiValued="false" />
+        <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
         
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields

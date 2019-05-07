@@ -43,6 +43,8 @@
     <import resource="application-context-prov-base.xml" />
     <import resource="application-context-provone20150115.xml" />
     
+    <import resource="application-context-project-beta1.xml" />
+    
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
@@ -118,6 +120,7 @@
        <ref bean="isotc211NoaaSubprocessor" />
        <ref bean="isotc211PangaeaSubprocessor" />
        <ref bean="dublinCoreOAISubprocessor" />
+       <ref bean="projectBeta1Subprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">
