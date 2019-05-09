@@ -16,6 +16,10 @@
     <ref bean="eml.title" />
     <ref bean="eml.project" />
     <ref bean="eml.funding" />
+    <ref bean="eml.funderName" />
+    <ref bean="eml.funderIdentifier" />
+    <ref bean="eml.awardNumber" />
+    <ref bean="eml.awardTitle" />
     <ref bean="eml.southBoundCoord" />
     <ref bean="eml.northBoundCoord" />
     <ref bean="eml.westBoundCoord" />
