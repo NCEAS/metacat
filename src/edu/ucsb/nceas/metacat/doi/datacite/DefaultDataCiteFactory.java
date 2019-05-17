@@ -78,6 +78,14 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
     }
     
     /**
+     * It can handle all namespace
+     */
+    @Override
+    public boolean canProcess(String namespace) {
+        return true;
+    }
+    
+    /**
      * Figure out the resource type of the data object
      * @param sysMeta
      * @return

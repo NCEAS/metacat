@@ -48,7 +48,9 @@ import org.w3c.dom.ls.LSSerializer;
 
 
 /**
- * A factory abstract class to generate the datacite metadata (xml format) for an DOI object
+ * A factory abstract class to generate the datacite metadata (xml format) for an DOI object.
+ * If you want to add a new factory for a meta data standard, you can extends this class and also 
+ * register the new factory on the property "guid.ezid.datacite.factories" on the metacat.properties file.
  * @author tao
  *
  */
@@ -127,6 +129,13 @@ public abstract class DataCiteMetadataFactory {
      * @return the xml string of the datacite meta data. 
      */
     abstract public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure;
+    
+    /**
+     * Determine if the factory can handle the meta data with the given name space
+     * @param namespace  the name space of the meta data
+     * @return true if this factory can process it; false otherwise.
+     */
+    abstract public boolean canProcess(String namespace);
     
     /**
      * Generate the blank DOM document for the datacite name space
