@@ -22,6 +22,8 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite;
 
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.Locale;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -43,6 +45,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.Text;
 import org.w3c.dom.ls.DOMImplementationLS;
+import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 
 
@@ -342,9 +345,9 @@ public abstract class DataCiteMetadataFactory {
      * "Other"
      * @return the modified document object
      */
-    protected Document addResourceType(Document doc, String resourceType) {
+    protected Document addResourceType(Document doc, String resourceTypeGeneral, String resourceType) {
         Element resourceTypeEle = doc.createElement("resourceType");
-        resourceTypeEle.setAttribute("resourceTypeGeneral", resourceType);
+        resourceTypeEle.setAttribute("resourceTypeGeneral", resourceTypeGeneral);
         resourceTypeEle.appendChild(doc.createTextNode(resourceType));
         doc.getFirstChild().appendChild(resourceTypeEle);
         return doc;
@@ -431,7 +434,12 @@ public abstract class DataCiteMetadataFactory {
     protected String serializeDoc(Document doc) {
         DOMImplementationLS domImplementation = (DOMImplementationLS) doc.getImplementation();
         LSSerializer lsSerializer = domImplementation.createLSSerializer();
-        return lsSerializer.writeToString(doc);   
+        LSOutput lsOutput =  domImplementation.createLSOutput();
+        lsOutput.setEncoding("UTF-8");
+        Writer stringWriter = new StringWriter();
+        lsOutput.setCharacterStream(stringWriter);
+        lsSerializer.write(doc, lsOutput);
+        return stringWriter.toString();   
     }
   
     /**
