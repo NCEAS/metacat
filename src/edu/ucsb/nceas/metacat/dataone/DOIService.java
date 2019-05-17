@@ -29,6 +29,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Vector;
 
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -63,9 +64,13 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
+import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
+import edu.ucsb.nceas.metacat.doi.datacite.DefaultDataCiteFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+import edu.ucsb.nceas.utilities.StringUtil;
 
 /**
  * 
@@ -76,6 +81,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author leinfelder
  */
 public class DOIService {
+    
+    public static final String DATACITE = "datacite";
 
 	private Logger logMetacat = Logger.getLogger(DOIService.class);
 
@@ -94,6 +101,8 @@ public class DOIService {
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 
 	private static DOIService instance = null;
+	
+	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 	
 	public static DOIService getInstance() {
 		if (instance == null) {
@@ -120,11 +129,38 @@ public class DOIService {
 			logMetacat.warn("DOI support is not configured at this node.", e);
 			return;
 		}
-		
 		ezid = new EZIDClient(ezidServiceBaseUrl);
-
-		
-		
+		initDataCiteFactories();
+	}
+	
+	/*
+	 * Initialize the datacite factory by reading the property guid.ezid.datacite.factories from the metacat.properties file.
+	 */
+	private void initDataCiteFactories() {
+	    String factoriesStr = null;
+	    try {
+            factoriesStr = PropertyService.getProperty("guid.ezid.datacite.factories");
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.warn("DOIService.generateDataCiteXML - could not get a metacat property - guid.ezid.datacite.factories in the metacat.properties file - "
+                            + pnfe.getMessage()+". So only the default factory will be used.");
+            return;
+        }
+        Vector<String> factoryClassess = null;
+        if (factoriesStr != null && !factoriesStr.trim().equals("")) {
+            factoryClassess = StringUtil.toVector(factoriesStr, ';');
+            if(factoryClassess != null) {
+                for(String factoryClass : factoryClassess) {
+                    try {
+                        Class classDefinition = Class.forName(factoryClass);
+                        DataCiteMetadataFactory factory = (DataCiteMetadataFactory)classDefinition.newInstance();
+                        dataCiteFactories.add(factory);
+                        logMetacat.debug("DOIService.initDataCiteFactories - the DataCiteFactory "+factoryClass+" was initialized.");
+                    } catch (Exception e) {
+                        logMetacat.warn("DOIService.initDataCiteFactories - can't initialize the class "+factoryClass+" since "+e.getMessage());
+                    } 
+                }
+            }
+        }
 	}
 	
 	/**
@@ -171,37 +207,13 @@ public class DOIService {
 			
             // only continue if this DOI identifier or sid is in our configured shoulder
 			if(identifierIsDOI || sidIsDOI) {
-			    //title and creator will be shared on both identifier and sid
-			    DataPackage emlPackage = null;
-	            try {
-	                emlPackage = getEMLPackage(sysMeta);
-	            } catch (Exception e) {
-	                logMetacat.warn("DOIService.registerDOI");
-	                // ignore
-	            }
-	            // title 
-	            String title = ErcMissingValueCode.UNKNOWN.toString();
-	            try {
-	                title = lookupTitle(emlPackage);
-	            } catch (Exception e) {
-	                e.printStackTrace();
-	                // ignore
-	            }
-	            
-	            // creator
-	            String creator = sysMeta.getRightsHolder().getValue();
-	            try {
-	                creator = lookupCreator(sysMeta.getRightsHolder(), emlPackage);
-	            } catch (Exception e) {
-	                // ignore and use default
-	            }
 	            // finish the other part for the identifier if it is an DOI
 	            if(identifierIsDOI) {
-	                registerDOI(identifier, title, sysMeta, creator);
+	                registerDOI(identifier, sysMeta);
 	            }
 	            // finish the other part for the sid if it is an DOI
 	            if(sidIsDOI) {
-	                registerDOI(sid, title, sysMeta, creator);
+	                registerDOI(sid, sysMeta);
 	            }
 			}
 			
@@ -221,26 +233,10 @@ public class DOIService {
 	 * @throws EZIDException 
 	 * @throws InterruptedException 
 	 */
-	private void registerDOI(String identifier, String title, SystemMetadata sysMeta, String creator ) throws NotImplemented, ServiceFailure, EZIDException, InterruptedException {
+	private void registerDOI(String identifier, SystemMetadata sysMeta) throws NotImplemented, ServiceFailure, EZIDException, InterruptedException {
 	    // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
-	    // publisher
-        String publisher = ErcMissingValueCode.UNKNOWN.toString();
         Node node = MNodeService.getInstance(null).getCapabilities();
-        publisher = node.getName();
-        
-        // publication year
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-        String year = sdf.format(sysMeta.getDateUploaded());
-        
-        // type
-        String resourceType = lookupResourceType(sysMeta);
-        
-        // format
-        String format = sysMeta.getFormatId().getValue();
-        
-        //size
-        String size = sysMeta.getSize().toString();
         
         // target (URL)
         String target = node.getBaseURL() + "/v1/object/" + identifier;
@@ -273,13 +269,8 @@ public class DOIService {
         }
         
         // set the datacite metadata fields
-        metadata.put(DataCiteProfile.TITLE.toString(), title);
-        metadata.put(DataCiteProfile.CREATOR.toString(), creator);
-        metadata.put(DataCiteProfile.PUBLISHER.toString(), publisher);
-        metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), year);
-        metadata.put(DataCiteProfile.RESOURCE_TYPE.toString(), resourceType);
-        metadata.put(DataCiteProfile.FORMAT.toString(), format);
-        metadata.put(DataCiteProfile.SIZE.toString(), size);
+        String dataCiteXML = generateDataCiteXML(identifier, sysMeta);
+        metadata.put(DATACITE, dataCiteXML);
         metadata.put(InternalProfile.TARGET.toString(), target);
         metadata.put(InternalProfile.STATUS.toString(), status);
         metadata.put(InternalProfile.EXPORT.toString(), export);
@@ -289,6 +280,28 @@ public class DOIService {
         
         // set using the API
         ezid.createOrUpdate(identifier, metadata);
+	}
+	
+	/**
+	 * Generate the datacite xml document for the given information.
+	 * This method will look at the registered datacite factories to find a proper one for the given meta data standard.
+	 * If it can't find it, the default factory will be used. 
+	 * @param identifier
+	 * @param sysmeta
+	 * @return
+	 * @throws ServiceFailure 
+	 */
+	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws ServiceFailure {
+	    Identifier id = new Identifier();
+        id.setValue(identifier);
+	    for(DataCiteMetadataFactory factory : dataCiteFactories) {
+	        if(factory != null && factory.canProcess(sysMeta.getFormatId().getValue())) {
+	            return factory.generateMetadata(id, sysMeta);
+	        }
+	    }
+	    //Can't find any factory for the given meta data standard, use the default one.
+	    DefaultDataCiteFactory defaultFactory = new DefaultDataCiteFactory();
+	    return defaultFactory.generateMetadata(id, sysMeta);
 	}
 
 	/**
