@@ -34,8 +34,11 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.log4j.Logger;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -47,6 +50,8 @@ import org.w3c.dom.Text;
 import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
+
+import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 
 
 
@@ -118,7 +123,7 @@ public abstract class DataCiteMetadataFactory {
     
     private static final int FIRST = 0;
 
-  
+    private static Logger logMetacat = Logger.getLogger(DataCiteMetadataFactory.class);
     protected static XPath xpath = null;
     static {
         XPathFactory xPathfactory = XPathFactory.newInstance();
@@ -443,20 +448,56 @@ public abstract class DataCiteMetadataFactory {
     }
   
     /**
-     * Determine the ISO 639 two letters code
-     * @param language  the given language. If it is null, En will be returned.
+     * Determine the ISO 639 two letters code for a given language.
+     * @param language  the given language. It can be full language, tow letters or three letters code. If it is null, En will be returned.
      * @return  the two letters code for the language. If we can't find, EN will be returned.
      */
-    public static String getISOLanguageCode(String language) {
+    static String getISOLanguageCode(String language) {
         if(language == null) {
             return EN;
         }
         for (Locale locale : Locale.getAvailableLocales()) {
-            if (language.equalsIgnoreCase(locale.getDisplayLanguage())) {
+            if (language.equalsIgnoreCase(locale.getDisplayLanguage()) || language.equalsIgnoreCase(locale.getLanguage()) || language.equalsIgnoreCase(locale.getISO3Language())) {
                 return locale.getLanguage();
             }
         }
         return EN;
+    }
+    
+    
+    /**
+     * Figure out the resource type of the data object
+     * @param sysMeta
+     * @return
+     */
+    public static String lookupResourceType(SystemMetadata sysMeta) {
+        String resourceType = DataCiteProfileResourceTypeValues.DATASET.toString();
+        try {
+            ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
+            resourceType += "/" + objectFormat.getFormatType().toLowerCase();
+        } catch (Exception e) {
+            // ignore
+            logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
+        }
+        
+        return resourceType;
+    }
+    
+    /**
+     * Figure out the format (mime type) of the data object
+     * @param sysMeta
+     * @return
+     */
+    public static String lookupFormat(SystemMetadata sysMeta) {
+        String format = null;
+        try {
+            ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
+            format = objectFormat.getMediaType().getName();
+        } catch (Exception e) {
+            // ignore
+            logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
+        }
+        return format;
     }
 
 }

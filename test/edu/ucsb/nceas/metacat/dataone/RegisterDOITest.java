@@ -295,9 +295,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			} while (metadata == null && count < 10);
 			
 			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
-			String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-			assertTrue(creators.equals("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
+			assertTrue(metadata.containsKey(DOIService.DATACITE));
+			String datacite = metadata.get(DOIService.DATACITE);
+			System.out.println(""+datacite);
+			assertTrue(datacite.contains("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Unexpected error: " + e.getMessage());

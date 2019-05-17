@@ -46,7 +46,30 @@ public class DataCiteMetadataFactoryTest extends MCTestCase {
         code = DataCiteMetadataFactory.getISOLanguageCode(language);
         System.out.println("the code for "+language+" is "+code);
         assertTrue(code.equals("es"));
-        
+        language = "es";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("es"));
+        language = "spa";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("es"));
+        language = "en";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("en"));
+        language = "German";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("de"));
+        language = "de";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("de"));
+        language = "deu";
+        code = DataCiteMetadataFactory.getISOLanguageCode(language);
+        System.out.println("the code for "+language+" is "+code);
+        assertTrue(code.equals("de"));
     }
 
 }

@@ -1,3 +1,25 @@
+/**
+ *  '$RCSfile$'
+ *  Copyright: 2000-2019 Regents of the University of California and the
+ *              National Center for Ecological Analysis and Synthesis
+ *
+ *   '$Author:  $'
+ *     '$Date:  $'
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 package edu.ucsb.nceas.metacat.doi.datacite;
 
 import java.text.SimpleDateFormat;
@@ -26,6 +48,9 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
     private static Logger logMetacat = Logger.getLogger(DefaultDataCiteFactory.class);
     
     
+    /**
+     * Method to generate the data cite xml document
+     */
     @Override
     public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure {
         if(identifier != null && sysmeta != null) {
@@ -85,39 +110,6 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
         return true;
     }
     
-    /**
-     * Figure out the resource type of the data object
-     * @param sysMeta
-     * @return
-     */
-    public static String lookupResourceType(SystemMetadata sysMeta) {
-        String resourceType = DataCiteProfileResourceTypeValues.DATASET.toString();
-        try {
-            ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-            resourceType += "/" + objectFormat.getFormatType().toLowerCase();
-        } catch (Exception e) {
-            // ignore
-            logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
-        }
-        
-        return resourceType;
-    }
-    
-    /**
-     * Figure out the format (mime type) of the data object
-     * @param sysMeta
-     * @return
-     */
-    public static String lookupFormat(SystemMetadata sysMeta) {
-        String format = null;
-        try {
-            ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-            format = objectFormat.getMediaType().getName();
-        } catch (Exception e) {
-            // ignore
-            logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
-        }
-        return format;
-    }
+  
 
 }
