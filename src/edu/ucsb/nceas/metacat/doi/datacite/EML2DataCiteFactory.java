@@ -50,7 +50,7 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
 /**
- * A factory to generate data cite meta data for the scientific meta data standards - eml 2.* 
+ * A factory to generate data cite meta data for the scientific meta data standards - eml-2.* 
  * @author tao
  *
  */
@@ -208,8 +208,9 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
             } else {
                 //organization name
                 //System.out.println("the organziation name ============== "+organization);
-                String fullName=null;
-                appendCreator(fullName, doc, organization, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
+                String fullName=organization; //organization is the creator.
+                String affiliation = null;
+                appendCreator(fullName, doc, affiliation, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
                 found = true;
             }
         }
