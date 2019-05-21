@@ -42,6 +42,7 @@ import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Party;
+import org.ecoinformatics.datamanager.parser.UserId;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
@@ -56,6 +57,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
  */
 public class EML2DataCiteFactory extends DataCiteMetadataFactory {
     private static Logger logMetacat = Logger.getLogger(EML2DataCiteFactory.class);
+    
     
     /**
      * Determine if the given name space can be handled by this factory
@@ -186,37 +188,63 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
      * @throws XPathExpressionException 
      */
     private void appendCreators(Subject subject, DataPackage emlPackage, Document doc) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken, XPathExpressionException {
-        String nameIdentifier = null;
-        String nameIdentifierSchemeURI = null;
-        String nameIdentifierScheme = null;
         String nameSep =", ";
         List<Party> parties = emlPackage.getCreators();
         boolean found = false;
         for(Party party : parties) {
             String surName = party.getSurName();
             String organization = party.getOrganization();
+            String fullName = null;
             if(surName != null && !surName.trim().equals("")) {
                 //this is a person
                 List<String> givenNames = party.getGivenNames();
                 //System.out.println("the surname ============== "+surName);
-                String fullName = surName;
+                fullName = surName;
                 if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null && !givenNames.get(0).trim().equals("")) {
                      fullName = fullName +nameSep+givenNames.get(0);
                  }
-                appendCreator(fullName, doc, organization, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
-                found = true;
             } else {
                 //organization name
                 //System.out.println("the organziation name ============== "+organization);
-                String fullName=organization; //organization is the creator.
-                String affiliation = null;
-                appendCreator(fullName, doc, affiliation, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
-                found = true;
+                fullName=organization; //organization is the creator.
+                organization = null; //affilication is null
             }
+            String nameIdentifier = null;
+            String nameIdentifierSchemeURI = null;
+            String nameIdentifierScheme = null;
+            List<UserId> userIds = party.getUserIdList();
+            if(userIds != null && !userIds.isEmpty()) {
+                UserId userId = userIds.get(0);//nameIdentifier only can happen at most once. So only choose the first one.
+                if(userId != null) {
+                    String value = userId.getValue();
+                    String directory = userId.getDirectory();
+                    if(directory != null && (directory.startsWith("https://orcid.org") || directory.startsWith("http://orcid.org"))) {
+                        nameIdentifierScheme = "ORCID";
+                        if(!directory.endsWith("/")) {
+                            directory = directory+"/";
+                        }
+                        nameIdentifierSchemeURI = directory;
+                        if(value.indexOf(nameIdentifierSchemeURI) > -1) {
+                            nameIdentifier = value.replaceFirst(nameIdentifierSchemeURI, "");//get rid of nameIdentifierSchemeURI from the id.
+                        } else {
+                            nameIdentifier = value;
+                        }
+                        
+                    } else {
+                        nameIdentifierScheme = directory;
+                        nameIdentifier = value;
+                    }
+                }
+            }
+            appendCreator(fullName, doc, organization, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
+            found = true;
         }
         if(!found) {
             // default to given DN
             String organization = null;
+            String nameIdentifier = null;
+            String nameIdentifierSchemeURI = null;
+            String nameIdentifierScheme = null;
             appendCreator(subject.getValue(), doc, organization, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
         }
        
