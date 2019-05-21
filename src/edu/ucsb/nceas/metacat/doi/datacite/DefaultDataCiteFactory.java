@@ -59,10 +59,7 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                 Document doc = generateROOTDoc();
                 //identifier
                 String scheme = "DOI";
-                String id = identifier.getValue();
-                if(id.startsWith(scheme.toLowerCase())) {
-                    id = id.replaceFirst(scheme.toLowerCase()+":", "");
-                }
+                String id = removeIdSchemePrefix(identifier.getValue(), scheme);
                 addIdentifier(doc, id, "DOI");
                 
                 //creator

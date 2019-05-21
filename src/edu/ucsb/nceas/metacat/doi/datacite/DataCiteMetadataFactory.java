@@ -499,5 +499,20 @@ public abstract class DataCiteMetadataFactory {
         }
         return format;
     }
+    
+    /**
+     * Remove the sheme prefix for a given id. For example, it returns 123 for given doi:123 and doi.
+     * @param id
+     * @param scheme
+     * @return
+     */
+    protected String removeIdSchemePrefix(String id, String scheme) {
+        if(id.startsWith(scheme.toLowerCase())) {
+            id = id.replaceFirst(scheme.toLowerCase()+":", "");
+        } else if (id.startsWith(scheme)) {
+            id = id.replaceFirst(scheme+":", "");
+        }
+        return id;
+    }
 
 }
