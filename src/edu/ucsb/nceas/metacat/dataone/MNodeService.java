@@ -2906,6 +2906,26 @@ public class MNodeService extends D1NodeService
 	      return success;
 	  }
 
+	  /**
+	   * Get the status of the system. this is an unofficial dataone api method. Currently we only reply the size of the index queue.
+	   * The method will return the input stream of a xml instance. In the future, we need to
+	   * add a new dataone type to represent the result.
+	   * @param session
+	   * @return the input stream which is the xml presentation of the status report
+	   */
+	  public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
+	      int size = HazelcastService.getInstance().getIndexQueue().size();
+	      StringBuffer result = new StringBuffer();
+	      result.append("<?xml version=\"1.0\"?>");
+	      result.append("<status>");
+	      result.append("<index>");
+	      result.append("<sizeOfQueue>");
+	      result.append(size);
+	      result.append("</sizeOfQueue>");
+	      result.append("</index>");
+	      result.append("</status>");
+	      return IOUtils.toInputStream(result.toString());
+	  }
 	
 	/**
 	 * Check if the new system meta data removed the public-readable access rule for an DOI object ( DOI can be in the identifier or sid fields)
