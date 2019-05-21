@@ -169,9 +169,9 @@ public abstract class DataCiteMetadataFactory {
      * @param identifier
      * @return
      */
-    protected Document addIdentifier(Document doc, String identifier) {
+    protected Document addIdentifier(Document doc, String identifier, String scheme) {
         Element identifierEle = doc.createElement("identifier");
-        identifierEle.setAttribute("identifierType", "DOI");
+        identifierEle.setAttribute("identifierType", scheme);
         identifierEle.appendChild(doc.createTextNode(identifier));
         doc.getFirstChild().appendChild(identifierEle);
         return doc;

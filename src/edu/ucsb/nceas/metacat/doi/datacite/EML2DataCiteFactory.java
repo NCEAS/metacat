@@ -86,7 +86,12 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     Document doc = generateROOTDoc();
                     
                     //identifier
-                    addIdentifier(doc, identifier.getValue());
+                    String scheme = "DOI";
+                    String id = identifier.getValue();
+                    if(id.startsWith(scheme.toLowerCase())) {
+                        id = id.replaceFirst(scheme.toLowerCase()+":", "");
+                    }
+                    addIdentifier(doc, id, scheme);
                     
                     //creator
                     appendCreators(sysmeta.getRightsHolder(), emlPackage, doc);

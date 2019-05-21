@@ -58,7 +58,12 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                 String language = "English";
                 Document doc = generateROOTDoc();
                 //identifier
-                addIdentifier(doc, identifier.getValue());
+                String scheme = "DOI";
+                String id = identifier.getValue();
+                if(id.startsWith(scheme.toLowerCase())) {
+                    id = id.replaceFirst(scheme.toLowerCase()+":", "");
+                }
+                addIdentifier(doc, id, "DOI");
                 
                 //creator
                 String affiliation = null;
