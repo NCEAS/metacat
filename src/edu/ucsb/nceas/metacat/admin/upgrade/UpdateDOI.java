@@ -171,24 +171,13 @@ public class UpdateDOI implements UpgradeUtilityInterface {
      */
     public boolean upgradeByFormatId(List<String> formatIds) throws AdminException {
         boolean success = true;  
-        List<String> idList = new ArrayList<String>();
-        
         try{
         	for (String formatId: formatIds) {        		
 	        	//Get all the docids with this formatId
-        		List<String> docids = IdentifierManager.getInstance().getGUIDs(formatId, nodeId, DOISCHEME);
-	        	
-        		//get the guids for each docid and add to our list
-	        	for(String id: docids){
-	        		String docid = DocumentUtil.getDocIdFromAccessionNumber(id);
-					int rev = DocumentUtil.getRevisionFromAccessionNumber(id);
-					String guid = IdentifierManager.getInstance().getGUID(docid, rev);	
-					idList.add(guid);
-	        	}
-	        	
+        		List<String> idList = IdentifierManager.getInstance().getGUIDs(formatId, nodeId, DOISCHEME);
 	        	//Update the registration for all these guids
-	            Collections.sort(idList);
-	            updateDOIRegistration(idList);
+	        Collections.sort(idList);
+	        updateDOIRegistration(idList);
         	}
 	    } catch (Exception e) {
 			String msg = "Problem updating DOIs: " + e.getMessage();
