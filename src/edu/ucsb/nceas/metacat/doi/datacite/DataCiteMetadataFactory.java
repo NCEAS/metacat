@@ -474,7 +474,7 @@ public abstract class DataCiteMetadataFactory {
         String resourceType = DataCiteProfileResourceTypeValues.DATASET.toString();
         try {
             ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-            resourceType += "/" + objectFormat.getFormatType().toLowerCase();
+            resourceType = objectFormat.getFormatType().toLowerCase();
         } catch (Exception e) {
             // ignore
             logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
