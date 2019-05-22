@@ -977,6 +977,57 @@ public class IdentifierManager {
     }
     
     /**
+     * Get the list of identifiers which system metadata matches the given format id and original member node id and guid or series id start with the scheme (doi for example).
+     * @param formatId  the format id of the identifier must match the given formatId. 
+     * @param nodeId  the original member node of the identifier must match the given nodeId. 
+     * @param scheme  the guid or series id must start with the given scheme (doi for exampe)
+     * @return the list of identifier string. An empty list will be returned if nothing was found.
+     */
+    public List<String> getGUIDs(String formatId, String nodeId, String scheme) {
+        List<String> guids = new ArrayList<String>();
+        String query = "select guid from systemmetadata where object_format = ? and origin_member_node = ? and ( guid like ? or series_id like ?)";
+        String guid = null;
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getGUIDs");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, formatId);
+            stmt.setString(2, nodeId);
+            stmt.setString(3, scheme+"%");
+            stmt.setString(4, scheme+"%");
+            ResultSet rs = stmt.executeQuery();
+            boolean found = rs.next();
+            while (found) {
+                guid = rs.getString(1);
+                guids.add(guid);
+                found = rs.next();
+            } 
+            if(rs != null) {
+                rs.close();
+            }
+        } catch (SQLException e) {
+            logMetacat.error("Error while looking up the guid: " 
+                    + e.getMessage());
+        } finally {
+            try {
+                if(stmt != null) {
+                    stmt.close();
+                }
+            } catch (Exception e) {
+                logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+            } finally {
+                // Return database connection to the pool
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }   
+        }
+        return guids;
+    }
+    
+    /**
      * Get the pid of the head (current) version of objects match the specified sid.
      * 1. locate all candidate chain-ends for S1:
      *      determined by:  seriesId == S1 AND (obsoletedBy == null  OR obsoletedBy.seriesId != S1) // these are the type1 and type2 ends

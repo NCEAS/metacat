@@ -31,13 +31,14 @@ import java.util.ArrayList;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
 
-import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.DOIService;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
@@ -53,6 +54,17 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 	private static Log log = LogFactory.getLog(UpdateDOI.class);
 
 	private int serverLocation = 1;
+	private String nodeId = null;
+	private String DOISCHEME = "doi:";
+	
+	/**
+	 * Public constructor
+	 * @throws Exception
+	 */
+	public UpdateDOI() throws Exception{
+	    Node node = MNodeService.getInstance(null).getCapabilities();
+	    nodeId = node.getIdentifier().getValue();
+	}
 
 	public int getServerLocation() {
 		return serverLocation;
@@ -69,7 +81,7 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 	private void updateDOIRegistration(List<String> identifiers) {
 		
 		// look up the prefix - NOTE we have used different shoulders over time, so might consider updating anything with "doi:..."
-		String prefix = "doi:";
+		//String prefix = "doi:";
 //		try {
 //			prefix = PropertyService.getProperty("guid.ezid.doishoulder." + serverLocation);
 //		} catch (PropertyNotFoundException pnfe) {
@@ -79,11 +91,10 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 
 		for (String pid: identifiers) {
 			try {
-				// skip if not a DOI
-				if (!pid.startsWith(prefix)) {
+				// don't skip if pid is not a DOI since sid can be
+				/*if (!pid.startsWith(prefix)) {
 					continue;
-				}
-				
+				}*/
 				//Create an identifier and retrieve the SystemMetadata for this guid
 				Identifier identifier = new Identifier();
 				identifier.setValue(pid);
@@ -105,25 +116,24 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 	 */
     public boolean upgrade() throws AdminException {
         boolean success = true;
-        
         try {
         	// get only local ids for this server
             List<String> idList = null;
             
-            idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_0NAMESPACE, true, serverLocation);
-            Collections.sort(idList);
+            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_0_0NAMESPACE, nodeId, DOISCHEME);
+            //Collections.sort(idList);
             updateDOIRegistration(idList);
             
-            idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_1NAMESPACE, true, serverLocation);
-            Collections.sort(idList);
+            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_0_1NAMESPACE, nodeId, DOISCHEME);
+            //Collections.sort(idList);
             updateDOIRegistration(idList);
             
-            idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_0NAMESPACE, true, serverLocation);
-            Collections.sort(idList);
+            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_1_0NAMESPACE, nodeId, DOISCHEME);
+            //Collections.sort(idList);
             updateDOIRegistration(idList);
             
-            idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_1NAMESPACE, true, serverLocation);
-            Collections.sort(idList);
+            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_1_1NAMESPACE, nodeId, DOISCHEME);
+            //Collections.sort(idList);
             updateDOIRegistration(idList);
             
 		} catch (Exception e) {
@@ -166,7 +176,7 @@ public class UpdateDOI implements UpgradeUtilityInterface {
         try{
         	for (String formatId: formatIds) {        		
 	        	//Get all the docids with this formatId
-        		List<String> docids = DBUtil.getAllDocidsByType(formatId, true, serverLocation);
+        		List<String> docids = IdentifierManager.getInstance().getGUIDs(formatId, nodeId, DOISCHEME);
 	        	
         		//get the guids for each docid and add to our list
 	        	for(String id: docids){
