@@ -441,7 +441,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(result.contains("Dataset/metadata"));
+                assertTrue(result.contains("metadata"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -492,7 +492,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(result.contains("Dataset/metadata"));
+                assertTrue(result.contains("metadata"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -542,7 +542,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(result.contains("Dataset/metadata"));
+                assertTrue(result.contains("metadata"));
                 
                 //query the sid
                 HashMap<String, String> metadata2 = null;
@@ -566,7 +566,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(result.contains("Dataset/metadata"));
+                assertTrue(result.contains("metadata"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
