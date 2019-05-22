@@ -68,6 +68,12 @@ for the next release.
 ## Release Notes
 
 ### Release Notes for 2.10.3:
+New features and bugs fixed in this release:
+* Update DOI registrations for EML objects with complete metadata
+* Make Solr field "replicationAllowed" to be searchable
+* Add an Metacat admin method to clear cached the style sheets
+* Add a DataONE method to display the size of the index queue
+* Not check if the new index pathes were added during the Metacat startup
 
 ### Release Notes for 2.10.2:
 New features and bugs fixed in this release:
