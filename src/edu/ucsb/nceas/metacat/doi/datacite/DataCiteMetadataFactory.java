@@ -353,7 +353,9 @@ public abstract class DataCiteMetadataFactory {
     protected Document addResourceType(Document doc, String resourceTypeGeneral, String resourceType) {
         Element resourceTypeEle = doc.createElement("resourceType");
         resourceTypeEle.setAttribute("resourceTypeGeneral", resourceTypeGeneral);
-        resourceTypeEle.appendChild(doc.createTextNode(resourceType));
+        if(resourceType != null) {
+            resourceTypeEle.appendChild(doc.createTextNode(resourceType));
+        }
         doc.getFirstChild().appendChild(resourceTypeEle);
         return doc;
     }

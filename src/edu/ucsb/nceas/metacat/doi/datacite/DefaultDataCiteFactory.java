@@ -82,10 +82,9 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                 addPublicationYear(doc, year);
                 
                 // type
-                String resourceType = lookupResourceType(sysmeta);
-                if(resourceType != null) {
-                    addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
-                }
+                //String resourceType = lookupResourceType(sysmeta);
+                String resourceType = null; //only set the attribute to "dataset"
+                addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
 
                 // format
                 String format = lookupFormat(sysmeta);

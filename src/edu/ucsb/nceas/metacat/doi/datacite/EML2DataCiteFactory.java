@@ -118,10 +118,9 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     
                     
                     //resource type
-                    String resourceType = lookupResourceType(sysmeta);
-                    if(resourceType != null) {
-                        addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
-                    }
+                    //String resourceType = lookupResourceType(sysmeta);
+                    String resourceType = null; //only set the attribute to "dataset"
+                    addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
                     
                     //version
                     
