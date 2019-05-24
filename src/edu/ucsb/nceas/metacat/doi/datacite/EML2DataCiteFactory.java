@@ -250,12 +250,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
             found = true;
         }
         if(!found) {
-            // default to given DN
-            String organization = null;
-            String nameIdentifier = null;
-            String nameIdentifierSchemeURI = null;
-            String nameIdentifierScheme = null;
-            appendCreator(subject.getValue(), doc, organization, nameIdentifier, nameIdentifierSchemeURI, nameIdentifierScheme);
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a creator. It can't be null or blank");
         }
        
     }
