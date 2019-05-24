@@ -184,7 +184,7 @@ public class DOIService {
 	 * @throws NotImplemented 
 	 * @throws InterruptedException 
 	 */
-	public boolean registerDOI(SystemMetadata sysMeta) throws EZIDException, NotImplemented, ServiceFailure, InterruptedException {
+	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, EZIDException, NotImplemented, ServiceFailure, InterruptedException {
 				
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
@@ -233,7 +233,7 @@ public class DOIService {
 	 * @throws EZIDException 
 	 * @throws InterruptedException 
 	 */
-	private void registerDOI(String identifier, SystemMetadata sysMeta) throws NotImplemented, ServiceFailure, EZIDException, InterruptedException {
+	private void registerDOI(String identifier, SystemMetadata sysMeta) throws InvalidRequest, NotImplemented, ServiceFailure, EZIDException, InterruptedException {
 	    // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
         Node node = MNodeService.getInstance(null).getCapabilities();
@@ -291,7 +291,7 @@ public class DOIService {
 	 * @return
 	 * @throws ServiceFailure 
 	 */
-	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws ServiceFailure {
+	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws InvalidRequest, ServiceFailure {
 	    Identifier id = new Identifier();
         id.setValue(identifier);
 	    for(DataCiteMetadataFactory factory : dataCiteFactories) {

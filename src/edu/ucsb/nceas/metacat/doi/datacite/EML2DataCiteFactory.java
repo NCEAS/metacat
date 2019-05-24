@@ -30,6 +30,7 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.log4j.Logger;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
 import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
@@ -76,7 +77,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
      * Method to generate the data cite xml document
      */
     @Override
-    public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure {
+    public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure {
         if(identifier != null && sysmeta != null) {
             try {
                 
@@ -86,7 +87,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     Document doc = generateROOTDoc();
                     
                     //identifier
-                    String scheme = "DOI";
+                    String scheme = DOI;
                     String id = removeIdSchemePrefix(identifier.getValue(), scheme);
                     addIdentifier(doc, id, scheme);
                     
@@ -94,7 +95,11 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     appendCreators(sysmeta.getRightsHolder(), emlPackage, doc);
                     
                     //title
-                    appendTitle(emlPackage.getTitle(), doc, language);
+                    String title = emlPackage.getTitle();
+                    if(title == null || title.trim().equals("")) {
+                        throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a title. It can't be null or blank");
+                    }
+                    appendTitle(title, doc, language);
                     
                     //publish
                     Node node = MNodeService.getInstance(null).getCapabilities();
@@ -127,7 +132,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     //description (abstract)
                     String description = emlPackage.getAbsctrac();
                     if(description != null) {
-                        appendDescription(description, doc, language, "Abstract");
+                        appendDescription(description, doc, language, ABSTRACT);
                     }
                     //size
 
@@ -142,11 +147,12 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     DefaultDataCiteFactory factory = new DefaultDataCiteFactory();
                     return factory.generateMetadata(identifier, sysmeta);
                 }
+            } catch (InvalidRequest e) { 
+                throw e;
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ServiceFailure("", e.getMessage());
+                throw new ServiceFailure("1030", e.getMessage());
             }
-           
         } else {
             return null;
         }
@@ -188,9 +194,12 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
      * @throws InvalidToken
      * @throws XPathExpressionException 
      */
-    private void appendCreators(Subject subject, DataPackage emlPackage, Document doc) throws ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken, XPathExpressionException {
+    private void appendCreators(Subject subject, DataPackage emlPackage, Document doc) throws InvalidRequest, ServiceFailure, NotAuthorized, NotImplemented, NotFound, InvalidToken, XPathExpressionException {
         String nameSep =", ";
         List<Party> parties = emlPackage.getCreators();
+        if (parties == null || parties.isEmpty()) {
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a creator. It can't be null or blank");
+        }
         boolean found = false;
         for(Party party : parties) {
             String surName = party.getSurName();

@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.ObjectFormat;
@@ -52,6 +53,7 @@ import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
+
 
 
 
@@ -120,8 +122,11 @@ public abstract class DataCiteMetadataFactory {
     public static final String SUBJECTS = "subjects";
     public static final String DESCRIPTIONS = "descriptions";
     public static final String FORMATS = "formats";
+    public static final String DOI = "DOI";
+    public static final String ABSTRACT = "Abstract";
     
     private static final int FIRST = 0;
+    protected static final String INVALIDCODE = "1031";
 
     private static Logger logMetacat = Logger.getLogger(DataCiteMetadataFactory.class);
     protected static XPath xpath = null;
@@ -136,7 +141,7 @@ public abstract class DataCiteMetadataFactory {
      * @param sysmeta  the system meta data information of an given object
      * @return the xml string of the datacite meta data. 
      */
-    abstract public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure;
+    abstract public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure;
     
     /**
      * Determine if the factory can handle the meta data with the given name space
@@ -169,7 +174,14 @@ public abstract class DataCiteMetadataFactory {
      * @param identifier
      * @return
      */
-    protected Document addIdentifier(Document doc, String identifier, String scheme) {
+    protected Document addIdentifier(Document doc, String identifier, String scheme) throws InvalidRequest {
+        if(identifier == null || identifier.trim().equals("")) {
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a identifier. It can't be null or blank");
+        }
+        if(scheme == null || !scheme.equals(DOI)) {
+            //now it only supports doi.
+            throw new InvalidRequest(INVALIDCODE, "The scheme of the identifier element only can be "+DOI+ " and the specified one "+scheme +" is not allowed.");
+        }
         Element identifierEle = doc.createElement("identifier");
         identifierEle.setAttribute("identifierType", scheme);
         identifierEle.appendChild(doc.createTextNode(identifier));
@@ -191,40 +203,42 @@ public abstract class DataCiteMetadataFactory {
      */
     protected Document appendCreator(String creatorName, Document doc, String affiliation, String nameIdentifier, String nameIdentifierSchemeURI, String nameIdentifierScheme) 
                                                                                                         throws XPathExpressionException {
-        //generate the creator node
-        Element creator = doc.createElement(CREATOR);
-        Element creatorNameEle = doc.createElement(CREATORNAME);
-        creatorNameEle.appendChild(doc.createTextNode(creatorName));
-        creator.appendChild(creatorNameEle);
-        
-        //name identifier is optional
-        if((nameIdentifier != null && !nameIdentifier.trim().equals("") ) && (nameIdentifierScheme != null && !nameIdentifierScheme.trim().equals("")) ) {
-            Element nameIdentifierEle = doc.createElement("nameIdentifier");
-            if(nameIdentifierSchemeURI != null && !nameIdentifierSchemeURI.trim().equals("")) {
-                nameIdentifierEle.setAttribute("schemeURI", nameIdentifierSchemeURI);
+        if(creatorName != null && !creatorName.trim().equals("")) {
+            //generate the creator node
+            Element creator = doc.createElement(CREATOR);
+            Element creatorNameEle = doc.createElement(CREATORNAME);
+            creatorNameEle.appendChild(doc.createTextNode(creatorName));
+            creator.appendChild(creatorNameEle);
+            
+            //name identifier is optional
+            if((nameIdentifier != null && !nameIdentifier.trim().equals("") ) && (nameIdentifierScheme != null && !nameIdentifierScheme.trim().equals("")) ) {
+                Element nameIdentifierEle = doc.createElement("nameIdentifier");
+                if(nameIdentifierSchemeURI != null && !nameIdentifierSchemeURI.trim().equals("")) {
+                    nameIdentifierEle.setAttribute("schemeURI", nameIdentifierSchemeURI);
+                }
+                nameIdentifierEle.setAttribute("nameIdentifierScheme", nameIdentifierScheme);
+                nameIdentifierEle.appendChild(doc.createTextNode(nameIdentifier));
+                creator.appendChild(nameIdentifierEle);
             }
-            nameIdentifierEle.setAttribute("nameIdentifierScheme", nameIdentifierScheme);
-            nameIdentifierEle.appendChild(doc.createTextNode(nameIdentifier));
-            creator.appendChild(nameIdentifierEle);
-        }
-        
-        //affiliation is optional
-        if(affiliation != null && !affiliation.trim().equals("")) {
-            Element affiliationEle = doc.createElement("affiliation");
-            affiliationEle.appendChild(doc.createTextNode(affiliation));
-            creator.appendChild(affiliationEle);
-        }
-        String path = "//"+CREATORS;
-        XPathExpression expr = xpath.compile(path);
-        NodeList creatorsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        if(creatorsList == null ||creatorsList.getLength() == 0) {
-            //we need to create the creators element
-            Element creatorsEle = doc.createElement(CREATORS);
-            doc.getFirstChild().appendChild(creatorsEle);
-            creatorsEle.appendChild(creator);
-        } else {
-            //we don't need to create the creators since it exists
-            creatorsList.item(FIRST).appendChild(creator);
+            
+            //affiliation is optional
+            if(affiliation != null && !affiliation.trim().equals("")) {
+                Element affiliationEle = doc.createElement("affiliation");
+                affiliationEle.appendChild(doc.createTextNode(affiliation));
+                creator.appendChild(affiliationEle);
+            }
+            String path = "//"+CREATORS;
+            XPathExpression expr = xpath.compile(path);
+            NodeList creatorsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(creatorsList == null ||creatorsList.getLength() == 0) {
+                //we need to create the creators element
+                Element creatorsEle = doc.createElement(CREATORS);
+                doc.getFirstChild().appendChild(creatorsEle);
+                creatorsEle.appendChild(creator);
+            } else {
+                //we don't need to create the creators since it exists
+                creatorsList.item(FIRST).appendChild(creator);
+            }
         }
         return doc;
     }
@@ -238,23 +252,25 @@ public abstract class DataCiteMetadataFactory {
      * @throws XPathExpressionException
      */
     public Document appendTitle (String title, Document doc, String language) throws XPathExpressionException {
-        //generate the title node
-        Element titleEle = doc.createElement("title");
-        String code = getISOLanguageCode(language);
-        titleEle.setAttribute(XML_LANG, code);
-        titleEle.appendChild(doc.createTextNode(title));
-        
-        String path = "//"+TITLES;
-        XPathExpression expr = xpath.compile(path);
-        NodeList titlesList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        if(titlesList == null ||titlesList.getLength() == 0) {
-            //we need to create the titles element since it doesn't exist
-            Element titlesEle = doc.createElement(TITLES);
-            doc.getFirstChild().appendChild(titlesEle);
-            titlesEle.appendChild(titleEle);
-        } else {
-            //we don't need to create the titles since it exists
-            titlesList.item(FIRST).appendChild(titleEle);
+        if(title != null && !title.trim().equals("")) {
+            //generate the title node
+            Element titleEle = doc.createElement("title");
+            String code = getISOLanguageCode(language);
+            titleEle.setAttribute(XML_LANG, code);
+            titleEle.appendChild(doc.createTextNode(title));
+            
+            String path = "//"+TITLES;
+            XPathExpression expr = xpath.compile(path);
+            NodeList titlesList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(titlesList == null ||titlesList.getLength() == 0) {
+                //we need to create the titles element since it doesn't exist
+                Element titlesEle = doc.createElement(TITLES);
+                doc.getFirstChild().appendChild(titlesEle);
+                titlesEle.appendChild(titleEle);
+            } else {
+                //we don't need to create the titles since it exists
+                titlesList.item(FIRST).appendChild(titleEle);
+            }
         }
         return doc;
     }
@@ -265,7 +281,11 @@ public abstract class DataCiteMetadataFactory {
      * @param publisher  the publisher will be added
      * @return
      */
-    protected Document addPublisher(Document doc, String publisher) {
+    protected Document addPublisher(Document doc, String publisher) throws InvalidRequest {
+        if(publisher == null || publisher.trim().equals("")) {
+            //it is a required field
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a publisher. It can't be null or blank");
+        }
         //generate the publisher element
         Element publisherEle = doc.createElement("publisher");
         publisherEle.appendChild(doc.createTextNode(publisher));
@@ -279,7 +299,11 @@ public abstract class DataCiteMetadataFactory {
      * @param publicationYear  the publication year will be added
      * @return
      */
-    protected Document addPublicationYear(Document doc, String publicationYear) {
+    protected Document addPublicationYear(Document doc, String publicationYear) throws InvalidRequest {
+        if(publicationYear == null || publicationYear.trim().equals("")) {
+            //it is a required field
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a publication year. It can't be null or blank");
+        }
         Element publicationYearEle = doc.createElement("publicationYear");
         publicationYearEle.appendChild(doc.createTextNode(publicationYear));
         doc.getFirstChild().appendChild(publicationYearEle);
@@ -295,22 +319,24 @@ public abstract class DataCiteMetadataFactory {
      * @throws XPathExpressionException
      */
     protected Document appendSubject(String subject, Document doc, String language) throws XPathExpressionException {
-        Element subjectEle = doc.createElement("subject");
-        String code = getISOLanguageCode(language);
-        subjectEle.setAttribute(XML_LANG, code);
-        subjectEle.appendChild(doc.createTextNode(subject));
-        
-        String path = "//"+SUBJECTS;
-        XPathExpression expr = xpath.compile(path);
-        NodeList subjectsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        if(subjectsList == null ||subjectsList.getLength() == 0) {
-            //we need to create the subjects element since it doesn't exist
-            Element subjectsEle = doc.createElement(SUBJECTS);
-            doc.getFirstChild().appendChild(subjectsEle);
-            subjectsEle.appendChild(subjectEle);
-        } else {
-            //we don't need to create the subjects since it exists
-            subjectsList.item(FIRST).appendChild(subjectEle);
+        if(subject != null && !subject.trim().equals("")) {
+            Element subjectEle = doc.createElement("subject");
+            String code = getISOLanguageCode(language);
+            subjectEle.setAttribute(XML_LANG, code);
+            subjectEle.appendChild(doc.createTextNode(subject));
+            
+            String path = "//"+SUBJECTS;
+            XPathExpression expr = xpath.compile(path);
+            NodeList subjectsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(subjectsList == null ||subjectsList.getLength() == 0) {
+                //we need to create the subjects element since it doesn't exist
+                Element subjectsEle = doc.createElement(SUBJECTS);
+                doc.getFirstChild().appendChild(subjectsEle);
+                subjectsEle.appendChild(subjectEle);
+            } else {
+                //we don't need to create the subjects since it exists
+                subjectsList.item(FIRST).appendChild(subjectEle);
+            }
         }
         return doc;
     }
@@ -368,19 +394,21 @@ public abstract class DataCiteMetadataFactory {
      * @throws XPathExpressionException
      */
     protected Document appendFormat(Document doc, String format) throws XPathExpressionException {
-        Element formatEle = doc.createElement("format");
-        formatEle.appendChild(doc.createTextNode(format));
-        String path = "//"+FORMATS;
-        XPathExpression expr = xpath.compile(path);
-        NodeList formatsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        if(formatsList == null || formatsList.getLength() == 0) {
-            //we need to create the subjects element since it doesn't exist
-            Element formatsEle = doc.createElement(FORMATS);
-            doc.getFirstChild().appendChild(formatsEle);
-            formatsEle.appendChild(formatEle);
-        } else {
-            //we don't need to create the subjects since it exists
-            formatsList.item(FIRST).appendChild(formatEle);
+        if(format != null && !format.trim().equals("")) {
+            Element formatEle = doc.createElement("format");
+            formatEle.appendChild(doc.createTextNode(format));
+            String path = "//"+FORMATS;
+            XPathExpression expr = xpath.compile(path);
+            NodeList formatsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(formatsList == null || formatsList.getLength() == 0) {
+                //we need to create the subjects element since it doesn't exist
+                Element formatsEle = doc.createElement(FORMATS);
+                doc.getFirstChild().appendChild(formatsEle);
+                formatsEle.appendChild(formatEle);
+            } else {
+                //we don't need to create the subjects since it exists
+                formatsList.item(FIRST).appendChild(formatEle);
+            }
         }
         return doc;
     }
@@ -392,9 +420,11 @@ public abstract class DataCiteMetadataFactory {
      * @return  the modified document
      */
     protected Document addVersion(Document doc, String version) {
-        Element versionEle = doc.createElement("version");
-        versionEle.appendChild(doc.createTextNode(version));
-        doc.getFirstChild().appendChild(versionEle);
+        if(version != null && !version.trim().equals("")) {
+            Element versionEle = doc.createElement("version");
+            versionEle.appendChild(doc.createTextNode(version));
+            doc.getFirstChild().appendChild(versionEle);
+        }
         return doc;
     }
     
@@ -413,23 +443,29 @@ public abstract class DataCiteMetadataFactory {
      * @throws XPathExpressionException
      */
     protected Document appendDescription(String description, Document doc, String language, String descriptionType) throws XPathExpressionException {
-        Element descriptionEle = doc.createElement("description");
-        String code = getISOLanguageCode(language);
-        descriptionEle.setAttribute(XML_LANG, code);
-        descriptionEle.setAttribute("descriptionType", descriptionType);
-        descriptionEle.appendChild(doc.createTextNode(description));
-        
-        String path = "//"+DESCRIPTIONS;
-        XPathExpression expr = xpath.compile(path);
-        NodeList descriptionsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
-        if(descriptionsList == null || descriptionsList.getLength() == 0) {
-            //we need to create the descriptions element since it doesn't exist
-            Element descriptionsEle = doc.createElement(DESCRIPTIONS);
-            doc.getFirstChild().appendChild(descriptionsEle);
-            descriptionsEle.appendChild(descriptionEle);
-        } else {
-            //we don't need to create the descriptions since it exists
-            descriptionsList.item(FIRST).appendChild(descriptionEle);
+        if(description != null && !description.trim().equals("")) {
+            Element descriptionEle = doc.createElement("description");
+            String code = getISOLanguageCode(language);
+            if(descriptionType == null || description.trim().equals("")) {
+                //set abstract the default type
+                descriptionType = ABSTRACT;
+            }
+            descriptionEle.setAttribute(XML_LANG, code);
+            descriptionEle.setAttribute("descriptionType", descriptionType);
+            descriptionEle.appendChild(doc.createTextNode(description));
+            
+            String path = "//"+DESCRIPTIONS;
+            XPathExpression expr = xpath.compile(path);
+            NodeList descriptionsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if(descriptionsList == null || descriptionsList.getLength() == 0) {
+                //we need to create the descriptions element since it doesn't exist
+                Element descriptionsEle = doc.createElement(DESCRIPTIONS);
+                doc.getFirstChild().appendChild(descriptionsEle);
+                descriptionsEle.appendChild(descriptionEle);
+            } else {
+                //we don't need to create the descriptions since it exists
+                descriptionsList.item(FIRST).appendChild(descriptionEle);
+            }
         }
         return doc;
     }

@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Node;
@@ -52,15 +53,15 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
      * Method to generate the data cite xml document
      */
     @Override
-    public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws ServiceFailure {
+    public String generateMetadata(Identifier identifier, SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure {
         if(identifier != null && sysmeta != null) {
             try {
                 String language = "English";
                 Document doc = generateROOTDoc();
                 //identifier
-                String scheme = "DOI";
+                String scheme = DOI;
                 String id = removeIdSchemePrefix(identifier.getValue(), scheme);
-                addIdentifier(doc, id, "DOI");
+                addIdentifier(doc, id, scheme);
                 
                 //creator
                 String affiliation = null;
@@ -92,9 +93,11 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                    appendFormat(doc, format);
                 }
                 return serializeDoc(doc);
+            } catch (InvalidRequest e) {
+                throw e;
             } catch (Exception e) {
                 e.printStackTrace();
-                throw new ServiceFailure("", e.getMessage());
+                throw new ServiceFailure("1030", e.getMessage());
             }
            
         } else {
