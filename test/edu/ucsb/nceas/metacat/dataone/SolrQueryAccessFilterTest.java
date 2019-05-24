@@ -131,6 +131,7 @@ public class SolrQueryAccessFilterTest extends D1NodeServiceTest {
         assertTrue(title.equals(TITLE));
         
         archive(session, id);
+        Thread.sleep(3000);
         input = query(querySession2, id);
         doc = generateDoc(input);
         String resultId3 = extractElementValue(doc, IDXPATH);
