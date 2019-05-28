@@ -92,16 +92,16 @@ public class DBTransform {
 	protected static synchronized Transformer getTransformer(String xslSystemId) throws TransformerConfigurationException {
 	    //The admin page can reset the value of forceRebuild to true.
 	    if(forceRebuild) {
-	        TemplatesMap = new HashMap<>();
+	        TemplatesMap.clear();
 	        forceRebuild = false;//after clearing the cache, we must reset the value to false in order to use the cache again.
 	        logMetacat.debug("DBTransform.getTransformer - clear the style sheet cache and will reload the style sheets from disk.");
 	    }
 		if (!TemplatesMap.containsKey(xslSystemId) ) { 
-		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from disk for the id "+xslSystemId);
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from disk for the id " + xslSystemId);
 			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));                                                     
 			TemplatesMap.put(xslSystemId,templates);                                                                                                  
 		} else {
-		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from the cache for the id "+xslSystemId);
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from the cache for the id " + xslSystemId);
 		}
 		return TemplatesMap.get(xslSystemId).newTransformer();                                                                                        
 	}                                                                                                                                                 
