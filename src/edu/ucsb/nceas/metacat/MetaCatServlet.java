@@ -516,9 +516,9 @@ public class MetaCatServlet extends HttpServlet {
     	try {
     	    needCheck = Boolean.parseBoolean(PropertyService.getProperty("dbquery.init.check.newpath"));
     	} catch (Exception e) {
-    	    logMetacat.warn("MetaCatServlet.checkIndexPaths - we can't get the property value of \"dbquery.init.check.newpath\" and the default value \"false\" will be used since "+e.getMessage());
+    	    logMetacat.warn("MetaCatServlet.checkIndexPaths - we can't get the property value of \"dbquery.init.check.newpath\" and the default value \"false\" will be used since " + e.getMessage());
     	}
-    	logMetacat.info("MetaCatServlet.checkIndexPaths - the final of needCheckInexPath value is "+needCheck);
+    	logMetacat.info("MetaCatServlet.checkIndexPaths - the final of needCheckInexPath value is " + needCheck);
     	if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE) || !needCheck) {
     		logMetacat.info("MetaCatServlet.checkIndexPaths - the pathquery is disabled or the property \"dbquery.init.check.newpath\" is set false, so it does nothing for checking path_index");
             return;

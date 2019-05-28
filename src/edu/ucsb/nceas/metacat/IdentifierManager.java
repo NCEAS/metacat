@@ -997,8 +997,8 @@ public class IdentifierManager {
             stmt = dbConn.prepareStatement(query);
             stmt.setString(1, formatId);
             stmt.setString(2, nodeId);
-            stmt.setString(3, scheme+"%");
-            stmt.setString(4, scheme+"%");
+            stmt.setString(3, scheme + "%");
+            stmt.setString(4, scheme + "%");
             ResultSet rs = stmt.executeQuery();
             boolean found = rs.next();
             while (found) {
@@ -1018,7 +1018,7 @@ public class IdentifierManager {
                     stmt.close();
                 }
             } catch (Exception e) {
-                logMetacat.warn("Couldn't close the prepared statement since "+e.getMessage());
+                logMetacat.warn("Couldn't close the prepared statement since " + e.getMessage());
             } finally {
                 // Return database connection to the pool
                 DBConnectionPool.returnDBConnection(dbConn, serialNumber);
