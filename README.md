@@ -70,6 +70,7 @@ for the next release.
 ### Release Notes for 2.10.3:
 New features and bugs fixed in this release:
 * Update DOI registrations for EML objects with complete metadata
+* Can't update DOI metadata on the Metacat admin page if the doi is an SID
 * Make Solr field "replicationAllowed" to be searchable
 * Add an Metacat admin method to clear cached the style sheets
 * Add a DataONE method to display the size of the index queue
