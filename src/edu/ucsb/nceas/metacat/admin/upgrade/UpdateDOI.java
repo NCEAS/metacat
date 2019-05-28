@@ -99,9 +99,20 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 				Identifier identifier = new Identifier();
 				identifier.setValue(pid);
 				SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+				if(sysMeta == null) {
+				    //The identifier can be a sid, so the sysMeta can be null. we need to check if it is a sid.
+				    Identifier sid = new Identifier();
+				    sid.setValue(pid);
+				    Identifier head = IdentifierManager.getInstance().getHeadPID(sid);
+				    if(head != null) {
+				        sysMeta= HazelcastService.getInstance().getSystemMetadataMap().get(head);
+				    }
+				}
 				
 				//Update the registration
-				DOIService.getInstance().registerDOI(sysMeta);
+				if(sysMeta != null) {
+				    DOIService.getInstance().registerDOI(sysMeta);
+				}
 			} catch (Exception e) {
 				// what to do? nothing
 				e.printStackTrace();
