@@ -65,53 +65,8 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
  *
  */
 public abstract class DataCiteMetadataFactory {
-    
-    public static final String XML_DECLARATION = "<?xml version=\"1.0\"?> ";
-    public static final String OPEN_RESOURCE =  "<resource xmlns=\"http://datacite.org/schema/kernel-3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://datacite.org/schema/kernel-3 https://schema.datacite.org/meta/kernel-3.1/metadata.xsd\">";
-    public static final String CLOSE_RESOURCE = "</resource>";
-    public static final String OPEN_IDENTIFIER = "<identifier identifierType=\"DOI\">";
-    public static final String CLOSE_IDENTIFIER = "</identifier>";
-    public static final String OPEN_CREATORS = "<creators>";
-    public static final String CLOSE_CREATORS = "</creators>";
-    public static final String OPEN_CREATOR = "<creator>";
-    public static final String CLOSE_CREATOR = "</creator>";
-    public static final String OPEN_CREATORNAME = "<creatorName>";
-    public static final String CLOSE_CREATORNAME = "</creatorName>";
-    public static final String OPEN_NAMEIDENTIFIER = "<nameIdentifier schemeURI=\"http://orcid.org/\" nameIdentifierScheme=\"ORCID\">";
-    public static final String CLOSE_NAMEIDENTIFIER = "</nameIdentifier>";
-    public static final String OPEN_AFFILICATION = "<affiliation>";
-    public static final String CLOSE_AFFILICATION = "/affiliation>";
-    public static final String OPEN_TITLES = "<titles>";
-    public static final String CLOSE_TITLES = "</titles>";
-    public static final String OPEN_TITLE_WITHLONG_ATTR = "<title xml:lang=\"";
-    public static final String CLOSE_TITLE= "</title>";
-    public static final String OPEN_PUBLISHER = "<publisher>";
-    public static final String CLOSE_PUBLISHER = "</publisher>";
-    public static final String OPEN_PUBLISHYEAR = "<publicationYear>";
-    public static final String CLOSE_PUBLISHYEAR = "</publicationYear>";
-    public static final String OPEN_SUBJECTS = "<subjects>";
-    public static final String CLOSE_SUBJECTS = "</subjects>";
-    public static final String OPEN_SUBJECT_WITHLONGATT = "<subject xml:lang=\"";
-    public static final String CLOSE_SUBJECT = "</subject>";
-    public static final String OPEN_LANGUAGE = "<language>";
-    public static final String CLOSE_LANGUAGE = "</language>";
-    public static final String OPEN_RESOURCETYPE_WITHTYPEGENERALATT = "<resourceType resourceTypeGeneral=\"";
-    public static final String CLOSE_RESROUCETYPE = "</resourceType>";
-    public static final String OPEN_FORMATS = "<formats>";
-    public static final String CLOSE_FORMATS = "</formats>";
-    public static final String OPEN_FORMAT = "<format>";
-    public static final String CLOSE_FORMAT = "</format>";        
-    public static final String OPEN_VERSION = "<version>";
-    public static final String CLOSE_VERSION = "</version>";
-    public static final String OPEN_DESCRIPTIONS = "<descriptions>";
-    public static final String CLOSE_DESCRIPTIONS = "</descriptions>";
-    public static final String OPEN_DESCRITPION_WITHLANGATT = "<description  descriptionType=\"Abstract\" xml:lang=\"";
-    public static final String CLOSE_DESCRIPTION = "</description>";
-    
-    public static final String CLOSE_ATT="\">";
     public static final String EN = "en";
     public static final String XML_LANG= "xml:lang";
-    
     public static final String NAMESPACE = "http://datacite.org/schema/kernel-3";
     public static final String SCHEMALOCATION = "https://schema.datacite.org/meta/kernel-3.1/metadata.xsd";
     public static final String RESOURCE = "resource";
@@ -162,7 +117,7 @@ public abstract class DataCiteMetadataFactory {
         Document doc = builder.newDocument();
         Element root = doc.createElementNS(NAMESPACE, RESOURCE);
         root.setAttributeNS("http://www.w3.org/2001/XMLSchema-instance", 
-            "xsi:schemaLocation", NAMESPACE + " "+SCHEMALOCATION);
+            "xsi:schemaLocation", NAMESPACE + " " + SCHEMALOCATION);
         doc.appendChild(root);
         return doc;
     }
@@ -180,7 +135,7 @@ public abstract class DataCiteMetadataFactory {
         }
         if(scheme == null || !scheme.equals(DOI)) {
             //now it only supports doi.
-            throw new InvalidRequest(INVALIDCODE, "The scheme of the identifier element only can be "+DOI+ " and the specified one "+scheme +" is not allowed.");
+            throw new InvalidRequest(INVALIDCODE, "The scheme of the identifier element only can be " + DOI + " and the specified one " + scheme + " is not allowed.");
         }
         Element identifierEle = doc.createElement("identifier");
         identifierEle.setAttribute("identifierType", scheme);
@@ -259,7 +214,7 @@ public abstract class DataCiteMetadataFactory {
             titleEle.setAttribute(XML_LANG, code);
             titleEle.appendChild(doc.createTextNode(title));
             
-            String path = "//"+TITLES;
+            String path = "//" + TITLES;
             XPathExpression expr = xpath.compile(path);
             NodeList titlesList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
             if(titlesList == null ||titlesList.getLength() == 0) {
@@ -325,7 +280,7 @@ public abstract class DataCiteMetadataFactory {
             subjectEle.setAttribute(XML_LANG, code);
             subjectEle.appendChild(doc.createTextNode(subject));
             
-            String path = "//"+SUBJECTS;
+            String path = "//" + SUBJECTS;
             XPathExpression expr = xpath.compile(path);
             NodeList subjectsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
             if(subjectsList == null ||subjectsList.getLength() == 0) {
@@ -397,7 +352,7 @@ public abstract class DataCiteMetadataFactory {
         if(format != null && !format.trim().equals("")) {
             Element formatEle = doc.createElement("format");
             formatEle.appendChild(doc.createTextNode(format));
-            String path = "//"+FORMATS;
+            String path = "//" + FORMATS;
             XPathExpression expr = xpath.compile(path);
             NodeList formatsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
             if(formatsList == null || formatsList.getLength() == 0) {
@@ -454,7 +409,7 @@ public abstract class DataCiteMetadataFactory {
             descriptionEle.setAttribute("descriptionType", descriptionType);
             descriptionEle.appendChild(doc.createTextNode(description));
             
-            String path = "//"+DESCRIPTIONS;
+            String path = "//" + DESCRIPTIONS;
             XPathExpression expr = xpath.compile(path);
             NodeList descriptionsList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
             if(descriptionsList == null || descriptionsList.getLength() == 0) {
@@ -502,25 +457,6 @@ public abstract class DataCiteMetadataFactory {
         return EN;
     }
     
-    
-    /**
-     * Figure out the resource type of the data object
-     * @param sysMeta
-     * @return
-     */
-    public static String lookupResourceType(SystemMetadata sysMeta) {
-        String resourceType = DataCiteProfileResourceTypeValues.DATASET.toString();
-        try {
-            ObjectFormat objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
-            resourceType = objectFormat.getFormatType().toLowerCase();
-        } catch (Exception e) {
-            // ignore
-            logMetacat.warn("Could not lookup resource type for formatId" + e.getMessage());
-        }
-        
-        return resourceType;
-    }
-    
     /**
      * Figure out the format (mime type) of the data object
      * @param sysMeta
@@ -546,9 +482,9 @@ public abstract class DataCiteMetadataFactory {
      */
     protected String removeIdSchemePrefix(String id, String scheme) {
         if(id.startsWith(scheme.toLowerCase())) {
-            id = id.replaceFirst(scheme.toLowerCase()+":", "");
+            id = id.replaceFirst(scheme.toLowerCase() + ":", "");
         } else if (id.startsWith(scheme)) {
-            id = id.replaceFirst(scheme+":", "");
+            id = id.replaceFirst(scheme + ":", "");
         }
         return id;
     }
