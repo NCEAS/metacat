@@ -69,7 +69,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
         if(namespace != null && namespace.startsWith("eml://ecoinformatics.org/eml-2")) {
             can = true;
         }
-        logMetacat.debug("EML2DataCitFactory.canProcess - If this factory can process the xml with the name space "+namespace+"? "+can);
+        logMetacat.debug("EML2DataCitFactory.canProcess - If this factory can process the xml with the name space " + namespace + "? " + can);
         return can;
     }
     
@@ -143,9 +143,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     }
                     return serializeDoc(doc);
                 } else {
-                    logMetacat.warn("EML2DataCiteFactory.generateMetadata - the eml package is null and we have to use the default factory");
-                    DefaultDataCiteFactory factory = new DefaultDataCiteFactory();
-                    return factory.generateMetadata(identifier, sysmeta);
+                    throw new ServiceFailure("1030", "Metacat can't parse the eml object " + identifier.getValue() + " so we can't get the needed information from it.");
                 }
             } catch (InvalidRequest e) { 
                 throw e;
