@@ -145,18 +145,18 @@ public class DOIService {
                             + pnfe.getMessage()+". So only the default factory will be used.");
             return;
         }
-        Vector<String> factoryClassess = null;
+        Vector<String> factoryClasses = null;
         if (factoriesStr != null && !factoriesStr.trim().equals("")) {
-            factoryClassess = StringUtil.toVector(factoriesStr, ';');
-            if(factoryClassess != null) {
-                for(String factoryClass : factoryClassess) {
+            factoryClasses = StringUtil.toVector(factoriesStr, ';');
+            if(factoryClasses != null) {
+                for(String factoryClass : factoryClasses) {
                     try {
                         Class classDefinition = Class.forName(factoryClass);
                         DataCiteMetadataFactory factory = (DataCiteMetadataFactory)classDefinition.newInstance();
                         dataCiteFactories.add(factory);
-                        logMetacat.debug("DOIService.initDataCiteFactories - the DataCiteFactory "+factoryClass+" was initialized.");
+                        logMetacat.debug("DOIService.initDataCiteFactories - the DataCiteFactory " + factoryClass + " was initialized.");
                     } catch (Exception e) {
-                        logMetacat.warn("DOIService.initDataCiteFactories - can't initialize the class "+factoryClass+" since "+e.getMessage());
+                        logMetacat.warn("DOIService.initDataCiteFactories - can't initialize the class " + factoryClass + " since "+e.getMessage());
                     } 
                 }
             }
