@@ -1229,6 +1229,10 @@
 				</fileset>
 			</batchtest>
 		</junit>
+    <tstamp>
+      <format property="NOW" pattern="MM/dd/yyyy hh:mm:ss aa" />
+    </tstamp>
+    <echo>Tests completed at ${NOW}</echo>
 	</target>
 
 	<target name="runonetest" depends="testprep"

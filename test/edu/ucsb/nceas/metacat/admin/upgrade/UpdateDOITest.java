@@ -113,7 +113,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
                     Thread.sleep(2000);
                 }
                 count++;
-            } while (metadata == null && count < 10);
+            } while (metadata == null && count < 30);
             //System.out.println("The doi on the identifier is "+publishedPID.getValue());
             assertNotNull(metadata);
             String result = metadata.get(DOIService.DATACITE);
@@ -162,7 +162,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
                     Thread.sleep(2000);
                 }
                 count++;
-            } while (metadata == null && count < 10);
+            } while (metadata == null && count < 30);
             
             assertNotNull(metadata);
             String result = metadata.get(DOIService.DATACITE);
@@ -205,7 +205,7 @@ public class UpdateDOITest extends D1NodeServiceTest {
                 Thread.sleep(2000);
             }
             count++;
-        } while (metadata == null && count < 10); 
+        } while (metadata == null && count < 30); 
         assertNotNull(metadata);
         String updateTime = metadata.get(UPDATETIMEKEY);
         long pidUpdate1 = (new Long(updateTime)).longValue();
@@ -219,75 +219,12 @@ public class UpdateDOITest extends D1NodeServiceTest {
                 Thread.sleep(2000);
             }
             count++;
-        } while (metadata == null && count < 10); 
+        } while (metadata == null && count < 30); 
         assertNotNull(metadata);
         updateTime = metadata.get(UPDATETIMEKEY);
         long sidUpdate1 = (new Long(updateTime)).longValue();
         //System.out.println("++++++++++++++++++++++ the original update time of the sid "+publishedSIDStr+" is "+SIDUpdateTime+" and the new update time is "+sidUpdate1);
         assertTrue(sidUpdate1 > SIDUpdateTime);
-        
-        //update the datacite by foramt ids
-        Thread.sleep(8000);
-        Vector<String> formatIds = new Vector<String>();
-        formatIds.add("eml://ecoinformatics.org/eml-2.1.0");
-        updater.upgradeByFormatId(formatIds);
-        do {
-            try {
-                metadata = ezid.getMetadata(publishedPIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
-            count++;
-        } while (metadata == null && count < 10); 
-        assertNotNull(metadata);
-        updateTime = metadata.get(UPDATETIMEKEY);
-        long pidUpdate2 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the last update time of the pid "+publishedPIDStr+" is "+pidUpdate1+" and the new update time is "+pidUpdate2);
-        assertTrue(pidUpdate2 > pidUpdate1);
-        do {
-            try {
-                metadata = ezid.getMetadata(publishedSIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
-            count++;
-        } while (metadata == null && count < 10); 
-        assertNotNull(metadata);
-        updateTime = metadata.get(UPDATETIMEKEY);
-        long sidUpdate2 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the last update time of the sid "+publishedSIDStr+" is "+sidUpdate1+" and the new update time is "+sidUpdate2);
-        assertTrue(sidUpdate2 > sidUpdate1);
-        
-        //update the datacite of all objects
-        Thread.sleep(8000);
-        updater.upgradeByFormatId(formatIds);
-        do {
-            try {
-                metadata = ezid.getMetadata(publishedPIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
-            count++;
-        } while (metadata == null && count < 10); 
-        assertNotNull(metadata);
-        updateTime = metadata.get(UPDATETIMEKEY);
-        long pidUpdate3 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the last update time of the pid "+publishedPIDStr+" is "+pidUpdate2+" and the new update time is "+pidUpdate3);
-        assertTrue(pidUpdate3 > pidUpdate2);
-        do {
-            try {
-                metadata = ezid.getMetadata(publishedSIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
-            count++;
-        } while (metadata == null && count < 10); 
-        assertNotNull(metadata);
-        updateTime = metadata.get(UPDATETIMEKEY);
-        long sidUpdate3 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the last update time of the sid "+publishedSIDStr+" is "+sidUpdate2+" and the new update time is "+sidUpdate3);
-        assertTrue(sidUpdate3 > sidUpdate2);
-        
     }
 
 }
