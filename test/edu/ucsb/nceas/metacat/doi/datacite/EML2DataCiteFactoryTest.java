@@ -163,7 +163,6 @@ public class EML2DataCiteFactoryTest extends D1NodeServiceTest {
         String publishYear = factory.lookupPublishingYear(emlPackage, sysmeta);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
         String yearInSysMeta = sdf.format(sysmeta.getDateUploaded());
-        System.out.println("the publish year should be 2019 "+publishYear);
         assertTrue(publishYear.equals(yearInSysMeta));
         //set the pubDate with the format yyyy
         String year = "2000";

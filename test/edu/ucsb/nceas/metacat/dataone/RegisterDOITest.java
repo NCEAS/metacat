@@ -370,7 +370,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            assertTrue(result.contains(id+EML2DataCiteFactoryTest.section1));
 	            assertTrue(result.contains(EML2DataCiteFactoryTest.section2));
 	            assertTrue(result.contains(EML2DataCiteFactoryTest.section3));
-	            assertTrue(result.contains(EML2DataCiteFactoryTest.section4+nodeName+EML2DataCiteFactoryTest.section41));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section4 + EML2DataCiteFactoryTest.section41));
 	            assertTrue(result.contains(EML2DataCiteFactoryTest.section5));
 	            assertTrue(result.contains(EML2DataCiteFactoryTest.section6));
 	            assertTrue(result.contains(EML2DataCiteFactoryTest.section7));
