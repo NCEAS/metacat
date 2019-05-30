@@ -74,7 +74,7 @@
       <givenName>John</givenName>
       <surName>Ed</surName>
     </individualName>
-    <organizationName>NCREAS</organizationName>
+    <organizationName>NCEAS</organizationName>
     <address>
       <deliveryPoint>735 State St., Suite 300</deliveryPoint>
       <city>Santa Barbara</city>
@@ -84,6 +84,10 @@
     <phone phonetype="voice">8058937554</phone>
     <electronicMailAddress>brun@nceas.ucsb.edu</electronicMailAddress>
     <userId directory="https://orcid.org/">https://orcid.org/0001-0005-9751-0000</userId>
+  </creator>
+  <creator id="8176318666062453">
+    <positionName>Data manager</positionName>
+    <organizationName>NCEAS, University of California</organizationName>
   </creator>
   <pubDate>2009-01-02</pubDate>
   <abstract>

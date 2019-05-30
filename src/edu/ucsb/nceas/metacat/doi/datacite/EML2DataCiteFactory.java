@@ -202,6 +202,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
         boolean found = false;
         for(Party party : parties) {
             String surName = party.getSurName();
+            String positionName = party.getPositionName();
             String organization = party.getOrganization();
             String fullName = null;
             if(surName != null && !surName.trim().equals("")) {
@@ -210,13 +211,15 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                 //System.out.println("the surname ============== "+surName);
                 fullName = surName;
                 if(givenNames!=null && givenNames.size() > 0 && givenNames.get(0) != null && !givenNames.get(0).trim().equals("")) {
-                     fullName = fullName +nameSep+givenNames.get(0);
+                     fullName = fullName + nameSep + givenNames.get(0);
                  }
+            } else if(positionName != null && !positionName.trim().equals("")) {
+                //it has a positionName and we will use the positionName as the full name (it doesn't have the individual name)
+                fullName = positionName;
             } else {
                 //organization name
-                //System.out.println("the organziation name ============== "+organization);
                 fullName=organization; //organization is the creator.
-                organization = null; //affilication is null
+                organization = null; //affiliation is null
             }
             String nameIdentifier = null;
             String nameIdentifierSchemeURI = null;
