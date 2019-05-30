@@ -107,13 +107,10 @@ public class UpdateDOITest extends D1NodeServiceTest {
             int count = 0;
             HashMap<String, String> metadata = null;
             do {
-                try {
-                    metadata = ezid.getMetadata(publishedPID.getValue());
-                } catch (Exception e) {
-                    Thread.sleep(2000);
-                }
+                metadata = ezid.getMetadata(publishedPID.getValue());
+                Thread.sleep(2000);
                 count++;
-            } while (metadata == null && count < 30);
+            } while ((metadata == null || metadata.get(DOIService.DATACITE) == null) && count < 30);
             //System.out.println("The doi on the identifier is "+publishedPID.getValue());
             assertNotNull(metadata);
             String result = metadata.get(DOIService.DATACITE);
@@ -156,13 +153,10 @@ public class UpdateDOITest extends D1NodeServiceTest {
             int count = 0;
             HashMap<String, String> metadata = null;
             do {
-                try {
-                    metadata = ezid.getMetadata(publishedSID.getValue());
-                } catch (Exception e) {
-                    Thread.sleep(2000);
-                }
+                metadata = ezid.getMetadata(publishedSID.getValue());
+                Thread.sleep(2000);
                 count++;
-            } while (metadata == null && count < 30);
+            } while ((metadata == null || metadata.get(DOIService.DATACITE) == null) && count < 30);
             
             assertNotNull(metadata);
             String result = metadata.get(DOIService.DATACITE);
@@ -187,43 +181,40 @@ public class UpdateDOITest extends D1NodeServiceTest {
         }
         
         //update the datacite metadata by ids.
-        Thread.sleep(8000);
         Vector<String> ids = new Vector<String>();
         ids.add(publishedSIDStr);
         ids.add(publishedPIDStr);
         UpdateDOI updater = new UpdateDOI();
         updater.upgradeById(ids);
+        Thread.sleep(8000);
         //make sure the pid's update changed, which means updating happened
         EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
         ezid.login(ezidUsername, ezidPassword);
         int count = 0;
         HashMap<String, String> metadata = null;
+        String updateTime = null;
+        long pidUpdate1 = -1;
         do {
-            try {
-                metadata = ezid.getMetadata(publishedPIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
+            metadata = ezid.getMetadata(publishedPIDStr);
+            updateTime = metadata.get(UPDATETIMEKEY);
+            pidUpdate1 = (new Long(updateTime)).longValue();
+            Thread.sleep(2000);
             count++;
-        } while (metadata == null && count < 30); 
-        assertNotNull(metadata);
-        String updateTime = metadata.get(UPDATETIMEKEY);
-        long pidUpdate1 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the original update time of the pid "+publishedPIDStr+" is "+PIDUpdateTime+" and the new update time is "+pidUpdate1);
-        assertTrue(pidUpdate1 > PIDUpdateTime);
-        
-        do {
-            try {
-                metadata = ezid.getMetadata(publishedSIDStr);
-            } catch (Exception e) {
-                Thread.sleep(2000);
-            }
-            count++;
-        } while (metadata == null && count < 30); 
+        } while (pidUpdate1 ==  PIDUpdateTime && count < 30); 
         assertNotNull(metadata);
         updateTime = metadata.get(UPDATETIMEKEY);
-        long sidUpdate1 = (new Long(updateTime)).longValue();
-        //System.out.println("++++++++++++++++++++++ the original update time of the sid "+publishedSIDStr+" is "+SIDUpdateTime+" and the new update time is "+sidUpdate1);
+        pidUpdate1 = (new Long(updateTime)).longValue();
+        assertTrue(pidUpdate1 > PIDUpdateTime);
+        
+        long sidUpdate1 = -1;
+        do {
+            metadata = ezid.getMetadata(publishedSIDStr);
+            updateTime = metadata.get(UPDATETIMEKEY);
+            sidUpdate1 = (new Long(updateTime)).longValue();
+            Thread.sleep(2000);
+            count++;
+        } while ((sidUpdate1 == SIDUpdateTime) && count < 30); 
+        assertNotNull(metadata);
         assertTrue(sidUpdate1 > SIDUpdateTime);
     }
 
