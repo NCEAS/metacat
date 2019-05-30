@@ -85,6 +85,7 @@
     <electronicMailAddress>brun@nceas.ucsb.edu</electronicMailAddress>
     <userId directory="https://orcid.org/">https://orcid.org/0001-0005-9751-0000</userId>
   </creator>
+  <pubDate>2009-01-02</pubDate>
   <abstract>
 		<para>
 			This data package contains information about the first year of participation in SNAPP synthesis working groups for different institutions
@@ -106,6 +107,14 @@
   <contact>
     <references>richard.inouye</references>
   </contact>
+  <publisher id="1234">
+	  <individualName>
+      <givenName>John</givenName>
+      <surName>Jefferson</surName>
+    </individualName>
+    <positionName>Director</positionName>
+    <organizationName>Institute of Ecology</organizationName>
+  </publisher>
   <dataTable id="xyz">
     <entityName>CDR LTER-patterns among communities.txt</entityName>
     <entityDescription>patterns amoung communities at CDR</entityDescription>

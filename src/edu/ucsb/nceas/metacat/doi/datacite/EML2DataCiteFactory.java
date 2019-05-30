@@ -25,6 +25,8 @@ package edu.ucsb.nceas.metacat.doi.datacite;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPathExpressionException;
 
@@ -101,13 +103,12 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     }
                     appendTitle(title, doc, language);
                     
-                    //publish
-                    Node node = MNodeService.getInstance(null).getCapabilities();
-                    addPublisher(doc,node.getName());
+                    //publisher
+                    String publisher = lookupPublisher(emlPackage);
+                    addPublisher(doc, publisher);
 
                     //publication year
-                    SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-                    String year = sdf.format(sysmeta.getDateUploaded());
+                    String year = lookupPublishingYear(emlPackage, sysmeta);
                     addPublicationYear(doc, year);
                     
                     //subjects (keywords)
@@ -130,7 +131,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     //version
                     
                     //description (abstract)
-                    String description = emlPackage.getAbsctrac();
+                    String description = emlPackage.getAbsctract();
                     if(description != null) {
                         appendDescription(description, doc, language, ABSTRACT);
                     }
@@ -251,6 +252,99 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
             throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a creator. It can't be null or blank");
         }
        
+    }
+    
+    /**
+     * Format the publishing year. First, it will look the pubDate of the eml package.
+     * If the format of the pubDate is yyyy or yyyy-mm-dd, it will get the yyyy from the pubDate.
+     * If it can't get the value from pubDate, it falls back to get from the upload date from the system metadata.
+     * If it still can't get anything, an exception will be thrown.
+     * @param emlPackage
+     * @param sysMeta
+     * @return  the publishing year of this package
+     * @throws InvalidRequest 
+     */
+    String lookupPublishingYear(DataPackage emlPackage, SystemMetadata sysMeta) throws InvalidRequest {
+        String publishYear = null;
+        String pubDate = emlPackage.getPubDate();
+        if(pubDate != null && !pubDate.trim().equals("")) {
+            String regex = "^\\d{4}";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(pubDate);
+            if (matcher.matches()) {
+                publishYear = pubDate;
+                return publishYear;
+            } else {
+                regex = "^\\d{4}-\\d{2}-\\d{2}";
+                pattern = Pattern.compile(regex);
+                matcher = pattern.matcher(pubDate);
+                if (matcher.matches()) {
+                    publishYear = pubDate.substring(0, 4);
+                    return publishYear;
+                }
+            }
+        }
+        if(publishYear == null) {
+            //fall back to use system meta data
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
+            publishYear = sdf.format(sysMeta.getDateUploaded());
+        }
+        if(publishYear == null || publishYear.trim().equals("")) {
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have the publishing year. Metacat looked the eml object and the system meta data. But they are blank.");
+        }
+        return publishYear;
+    }
+    
+    /**
+     * Format a publisher. First, it looks at the eml package's publisher element. 
+     * If it can't find anything, it falls back to look the name of the member node.
+     * If it still can't find anything, an exception will be thrown.
+     * @param emlPackage
+     * @return the publisher of the package
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     */
+    String lookupPublisher(DataPackage emlPackage) throws ServiceFailure, InvalidRequest {
+        String publisherStr = "";
+        Party publisher = emlPackage.getPublisher();
+        if(publisher != null) {
+            String givenNameDelimiter = ", ";
+            String delimiter = ". ";
+            String surName = publisher.getSurName();
+            List<String> givenNames = publisher.getGivenNames();
+            String positionName = publisher.getPositionName();
+            String organizationName = publisher.getOrganization();
+            if(surName != null && !surName.trim().equals("")) {
+                publisherStr = publisherStr + surName;
+            } 
+            if(givenNames != null && givenNames.get(0) != null && !givenNames.get(0).trim().equals("")) {
+                publisherStr = publisherStr + givenNameDelimiter + givenNames.get(0);
+            }
+            
+            if(positionName != null && !positionName.trim().equals("")) {
+                if(!publisherStr.trim().equals("")) {
+                    //already has the individual name, so we need to add the delimiter.
+                    publisherStr = publisherStr + delimiter;
+                }
+                publisherStr = publisherStr + positionName;
+            }
+            if(organizationName != null && !organizationName.trim().equals("")) {
+                if(!publisherStr.trim().equals("")) {
+                    //already has something, so we need to add the delimiter.
+                    publisherStr = publisherStr + delimiter;
+                }
+                publisherStr = publisherStr + organizationName;
+            }
+        }
+        if(publisherStr == null || publisherStr.trim().equals("")) {
+            //fall back to use the name of the member node 
+            Node node = MNodeService.getInstance(null).getCapabilities();
+            publisherStr = node.getName();
+        }
+        if(publisherStr == null || publisherStr.trim().equals("")) {
+            throw new InvalidRequest(INVALIDCODE, "The datacite instance must have a publisher. Metacat looked the eml object and member node name. But they are blank.");
+        }
+        return publisherStr;
     }
 
 }
