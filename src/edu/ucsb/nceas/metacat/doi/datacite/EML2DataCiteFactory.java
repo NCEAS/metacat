@@ -131,7 +131,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     //version
                     
                     //description (abstract)
-                    String description = emlPackage.getAbsctract();
+                    String description = emlPackage.getAbstract();
                     if(description != null) {
                         appendDescription(description, doc, language, ABSTRACT);
                     }
