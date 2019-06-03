@@ -349,6 +349,8 @@
 	%> 	
 				<div class="alert alert-success"><i class="icon-thumbs-up"></i>Configuration of Metacat is complete. Please restart Tomcat so that the webapps are initialized with these settings.
 				Note that this may take some time while the system initializes with the new configuration values.</div>
+				<div class="alert alert-success">All objects on this server need to be re-indexed because this Metacat release modified the schema file of the Solr server.
+                The details of re-indexing can be found in the documentation.</div>
 	<%
 			}
 		}

@@ -102,6 +102,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
         suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
         suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
+        suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
         return suite;
     }
     /**
@@ -1913,5 +1914,43 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         
+    }
+    
+    /**
+     * Test the getGUIDs method for either the guid matches the scheme or the series id matches the scheme
+     * @throws Exception
+     */
+    public void getGetGUIDs() throws Exception {
+        String urnScheme = "urn:uuid:";
+        Session session = getTestSession();
+        
+        //create an object whose identifier is a uuid
+        UUID uuid = UUID.randomUUID();
+        String str1 = uuid.toString();
+        Identifier guid = new Identifier();
+        guid.setValue(urnScheme+str1); 
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //create an object whose identifier is not a uuid, but its series id is
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        UUID uuid2 = UUID.randomUUID();
+        String str2 = uuid2.toString();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(urnScheme+str2); 
+        sysmeta2.setSeriesId(seriesId);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
+        
+        String nodeId = MNodeService.getInstance(request).getCapabilities().getIdentifier().getValue();
+        List<String> ids = IdentifierManager.getInstance().getGUIDs("application/octet-stream", nodeId, urnScheme);
+        //System.out.println("========the ids is \n"+ids);
+        assertTrue(ids.contains(guid.getValue()));
+        assertTrue(ids.contains(guid2.getValue()));
     }
 }

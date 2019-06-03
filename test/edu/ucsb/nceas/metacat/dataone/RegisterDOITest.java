@@ -47,6 +47,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.junit.After;
 import org.junit.Before;
@@ -54,6 +55,7 @@ import org.junit.Before;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
@@ -66,6 +68,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 public class RegisterDOITest extends D1NodeServiceTest {
 
 	private static final String EMLFILEPATH = "test/tao.14563.1.xml";
+	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
 	
 	/**
 	 * Set up the test fixtures
@@ -295,9 +298,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			} while (metadata == null && count < 10);
 			
 			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
-			String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-			assertTrue(creators.equals("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
+			assertTrue(metadata.containsKey(DOIService.DATACITE));
+			String datacite = metadata.get(DOIService.DATACITE);
+			System.out.println(""+datacite);
+			assertTrue(datacite.contains("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail("Unexpected error: " + e.getMessage());
@@ -322,7 +326,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			
 			// use EML to test
 			// TODO: include an ORE to really exercise it
-			String emlFile = "test/eml-multiple-creators.xml";
+			String emlFile = "test/eml-datacite.xml";
 			InputStream content = null;
 			try {
 				content = new FileInputStream(emlFile);
@@ -330,11 +334,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            // create the initial version without DOI
 	            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
 	            content.close();
-	            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+	            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.0.1").getFormatId());
 	            content = new FileInputStream(emlFile);
 	            Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
 	            content.close();
 	            assertEquals(guid.getValue(), pid.getValue());
+	            Thread.sleep(5000);
 
 	            // now publish it
 	            Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
@@ -348,26 +353,27 @@ public class RegisterDOITest extends D1NodeServiceTest {
 					try {
 						metadata = ezid.getMetadata(publishedIdentifier.getValue());
 					} catch (Exception e) {
-						Thread.sleep(1000);
+						Thread.sleep(2000);
 					}
 					count++;
-				} while (metadata == null && count < 10);
+				} while (metadata == null && count < 20);
 	            
 	            assertNotNull(metadata);
-	            String title = metadata.get(DataCiteProfile.TITLE.toString());
-	            String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-	            assertTrue(title.equals("Test EML package - public-readable from morpho"));
-	            assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
-	            String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
-                //System.out.println("publisher =======is"+publisher);
-                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
-                SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
-                String year = sdf.format(sysmeta.getDateUploaded());
-                assertTrue(year.equals(publishingYear));
-                //System.out.println("publishing year =======is"+publishingYear);
-                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
-                //System.out.println("resource type =======is"+resourceType);
-                assertTrue(resourceType.equals("Dataset/metadata"));
+	            String result = metadata.get(DOIService.DATACITE);
+	            System.out.println("result is\n"+result);
+	            Node node = MNodeService.getInstance(null).getCapabilities();
+	            String nodeName = node.getName();
+	            String id = publishedIdentifier.getValue();
+	            id = id.replaceFirst("doi:", "");
+	            //assertTrue(result.contains(EML2DataCiteFactoryTest.section));
+	            System.out.println(id+EML2DataCiteFactoryTest.section1);
+	            assertTrue(result.contains(id+EML2DataCiteFactoryTest.section1));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section2));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section3));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section4 + EML2DataCiteFactoryTest.section41));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section5));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section6));
+	            assertTrue(result.contains(EML2DataCiteFactoryTest.section7));
 	            content.close();
 			} catch (FileNotFoundException e) {
 				e.printStackTrace();
@@ -419,26 +425,23 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(2000);
                     }
                     count++;
                 } while (metadata == null && count < 10);
-                
+                System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
                 assertNotNull(metadata);
-                String title = metadata.get(DataCiteProfile.TITLE.toString());
-                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-                assertTrue(title.equals("Test EML package - public-readable from morpho"));
-                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
-                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                String result = metadata.get(DOIService.DATACITE);
+                System.out.println("the result is \n"+result);
+                assertTrue(result.contains("Test EML package - public-readable from morpho"));
+                assertTrue(result.contains(creatorsStr));
                 //System.out.println("publisher =======is"+publisher);
-                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
                 String year = sdf.format(sysmeta.getDateUploaded());
-                assertTrue(year.equals(publishingYear));
+                assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
-                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(resourceType.equals("Dataset/metadata"));
+                assertTrue(result.contains("Dataset"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -473,26 +476,23 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(2000);
                     }
                     count++;
                 } while (metadata == null && count < 10);
                 
                 assertNotNull(metadata);
-                String title = metadata.get(DataCiteProfile.TITLE.toString());
-                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-                assertTrue(title.equals("Test EML package - public-readable from morpho"));
-                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
-                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                String result = metadata.get(DOIService.DATACITE);
+                System.out.println("the result is \n"+result);
+                assertTrue(result.contains("Test EML package - public-readable from morpho"));
+                assertTrue(result.contains(creatorsStr));
                 //System.out.println("publisher =======is"+publisher);
-                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
                 String year = sdf.format(sysmeta.getDateUploaded());
-                assertTrue(year.equals(publishingYear));
+                assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
-                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(resourceType.equals("Dataset/metadata"));
+                assertTrue(result.contains("Dataset"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
@@ -532,20 +532,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata == null && count < 10);
                 
                 assertNotNull(metadata);
-                String title = metadata.get(DataCiteProfile.TITLE.toString());
-                String creators = metadata.get(DataCiteProfile.CREATOR.toString());
-                assertTrue(title.equals("Test EML package - public-readable from morpho"));
-                assertTrue(creators.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
-                String publisher = metadata.get(DataCiteProfile.PUBLISHER.toString());
+                String result = metadata.get(DOIService.DATACITE);
+                System.out.println("the result is \n"+result);
+                assertTrue(result.contains("Test EML package - public-readable from morpho"));
+                assertTrue(result.contains(creatorsStr));
                 //System.out.println("publisher =======is"+publisher);
-                String publishingYear = metadata.get(DataCiteProfile.PUBLICATION_YEAR.toString());
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy");
                 String year = sdf.format(sysmeta.getDateUploaded());
-                assertTrue(year.equals(publishingYear));
+                assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
-                String resourceType = metadata.get(DataCiteProfile.RESOURCE_TYPE.toString());
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(resourceType.equals("Dataset/metadata"));
+                assertTrue(result.contains("Dataset"));
                 
                 //query the sid
                 HashMap<String, String> metadata2 = null;
@@ -559,20 +556,17 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata2 == null && count < 10);
                 
                 assertNotNull(metadata2);
-                String title2 = metadata2.get(DataCiteProfile.TITLE.toString());
-                String creators2 = metadata2.get(DataCiteProfile.CREATOR.toString());
-                assertTrue(title2.equals("Test EML package - public-readable from morpho"));
-                assertTrue(creators2.equals("onlySurName;National Center for Ecological Analysis and Synthesis;Smith, John;King, Wendy;University of California Santa Barbara"));
-                String publisher2 = metadata2.get(DataCiteProfile.PUBLISHER.toString());
+                result = metadata.get(DOIService.DATACITE);
+                System.out.println("the result is \n"+result);
+                assertTrue(result.contains("Test EML package - public-readable from morpho"));
+                assertTrue(result.contains(creatorsStr));
                 //System.out.println("publisher =======is"+publisher);
-                String publishingYear2 = metadata2.get(DataCiteProfile.PUBLICATION_YEAR.toString());
-                SimpleDateFormat sdf2 = new SimpleDateFormat("yyyy");
-                String year2 = sdf2.format(sysmeta.getDateUploaded());
-                assertTrue(year2.equals(publishingYear2));
+                sdf = new SimpleDateFormat("yyyy");
+                year = sdf.format(sysmeta.getDateUploaded());
+                assertTrue(result.contains(year));
                 //System.out.println("publishing year =======is"+publishingYear);
-                String resourceType2 = metadata2.get(DataCiteProfile.RESOURCE_TYPE.toString());
                 //System.out.println("resource type =======is"+resourceType);
-                assertTrue(resourceType2.equals("Dataset/metadata"));
+                assertTrue(result.contains("Dataset"));
                 content.close();
             } catch (FileNotFoundException e) {
                 e.printStackTrace();

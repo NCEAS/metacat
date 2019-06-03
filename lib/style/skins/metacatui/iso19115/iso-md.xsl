@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<xsl:stylesheet 
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
+<xsl:stylesheet
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
     xmlns:gmd="http://www.isotc211.org/2005/gmd"
     xmlns:gml="http://www.opengis.net/gml"
     xmlns:gco="http://www.isotc211.org/2005/gco"
@@ -188,10 +188,10 @@
         <xsl:value-of select="./*/gml:identifier/text()" />
         <xsl:value-of select="./*/gml:name/text()" />
     </xsl:template>
-    <!-- gmd:MD_Distribution 
+    <!-- gmd:MD_Distribution
         - gmd:distributionFormat, 0-inf ( just grab gmd:MD_Format/gmd:name for each)
         - gmd:distributor/gmd:MD_Distributor... hold off on this for now?
-        - gmd:transferOptions 0-inf / 
+        - gmd:transferOptions 0-inf /
             gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()
             and
             gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:function/gmd:URL/gmd:CI_OnLineFunctionCode/text()
@@ -205,17 +205,17 @@
                 </tr>
             </thead>
             <tbody>
-                <xsl:for-each select="./gmd:distributionFormat/gmd:MD_Format/gmd:name">
+                <xsl:for-each select="./gmd:transferOptions/gmd:MD_DigitalTransferOptions/gmd:onLine">
                     <tr>
-                        <!-- Here I pop back up to the gmd:MD_Distribution to grab the 
-                        linkage. I'm doing this because the format and linkage aren't 
+                        <!-- Here I pop back up to the gmd:MD_Distribution to grab the
+                        linkage. I'm doing this because the format and linkage aren't
                         connected in ISO but I'm choosing to assume the first name pairs
                         with the first linkage.
-                        
+
                         Also note the use of position() to grab the nth URL for the
                         nth format. -->
                         <td>
-                            <xsl:variable name="url" select="../../../gmd:transferOptions[position()]/gmd:MD_DigitalTransferOptions/gmd:onLine/gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()" />
+                            <xsl:variable name="url" select="./gmd:CI_OnlineResource/gmd:linkage/gmd:URL/text()" />
                             <xsl:element name="a">
                                 <xsl:attribute name="href">
                                     <xsl:value-of select="$url" />
@@ -224,7 +224,16 @@
                                 <xsl:value-of select="$url" />
                             </xsl:element>
                         </td>
-                        <td><xsl:value-of select="./gco:CharacterString/text()" /></td>
+                        <xsl:choose>
+                          <!-- Show the distribution format if it exists -->
+                          <xsl:when test="../../../gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString">
+                            <td><xsl:value-of select="../../../gmd:distributionFormat/gmd:MD_Format/gmd:name/gco:CharacterString/text()" /></td>
+                          </xsl:when>
+                          <xsl:otherwise>
+                            <!-- Otherwise show the distribution name -->
+                            <td><xsl:value-of select="./gmd:CI_OnlineResource/gmd:name/gco:CharacterString/text()" /></td>
+                          </xsl:otherwise>
+                      </xsl:choose>
                     </tr>
                 </xsl:for-each>
             </tbody>

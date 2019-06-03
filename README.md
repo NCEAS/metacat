@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.10.2 Release
+Version: 2.10.3 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,15 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.10.3:
+New features and bugs fixed in this release:
+* Update DOI registrations for EML objects with complete metadata
+* Can't update DOI metadata on the Metacat admin page if the doi is an SID
+* Make Solr field "replicationAllowed" to be searchable
+* Add an Metacat admin method to clear cached the style sheets
+* Add a DataONE method to display the size of the index queue
+* Not check if the new index pathes were added during the Metacat startup
 
 ### Release Notes for 2.10.2:
 New features and bugs fixed in this release:

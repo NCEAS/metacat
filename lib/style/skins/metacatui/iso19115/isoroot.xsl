@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
-<xsl:stylesheet 
-    xmlns:xsl="http://www.w3.org/1999/XSL/Transform" 
-    xmlns:gmd="http://www.isotc211.org/2005/gmd" 
+<xsl:stylesheet
+    xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:gmd="http://www.isotc211.org/2005/gmd"
     xmlns:gco="http://www.isotc211.org/2005/gco" version="1.0">
     <xsl:import href="iso-md.xsl"/>
     <xsl:import href="iso-ci.xsl"/>
@@ -15,17 +15,17 @@
         <form class="form-horizontal">
             <div class="control-group entity">
                 <!-- distributionInfo is kind tricky: You have to go pretty deep
-                     to find out if there's actually any useful information. 
-                     Here I'm making a choice to look for at least one format 
+                     to find out if there's actually any useful information.
+                     Here I'm making a choice to look for at least one format
                      with a name to check whether we should show this section at
-                     all. 
-                     
-                     Also, the distribution format isn't tied explicitly to 
+                     all.
+
+                     Also, the distribution format isn't tied explicitly to
                      the transfer options so I've made a decision to assume that
                      the first format is for the first transfer option and so on
                      -->
-                <!-- PANGAEA's way of doing gmd:distributionInfo -->
-                <xsl:if test="./gmd:distributionInfo/gmd:MD_Distribution/gmd:distributionFormat/gmd:MD_Format/gmd:name">
+                <!-- PANGAEA's and IEDA's way of doing gmd:distributionInfo -->
+                <xsl:if test="./gmd:distributionInfo/gmd:MD_Distribution/gmd:transferOptions">
                     <h4>Distribution</h4>
                     <xsl:apply-templates select="./gmd:distributionInfo/gmd:MD_Distribution" />
                 </xsl:if>
@@ -72,7 +72,7 @@
                                     <xsl:variable name="code">
                                         <xsl:value-of select=".//gmd:code/gco:CharacterString/text()" />
                                     </xsl:variable>
-                            
+
                                     <xsl:choose>
                                         <xsl:when test="starts-with($code, 'http')">
                                             <xsl:element name="a">
@@ -89,7 +89,7 @@
                         </div>
                     </xsl:if>
                 </xsl:for-each>
-                
+
                 <!-- Abstract 0:∞  Only shown if the abstract has content -->
                 <xsl:for-each select="./gmd:identificationInfo/*/gmd:abstract">
                     <xsl:if test="normalize-space(./gco:CharacterString/text()) != ''">

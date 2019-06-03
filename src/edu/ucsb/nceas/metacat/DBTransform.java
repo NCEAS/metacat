@@ -72,8 +72,9 @@ import edu.ucsb.nceas.utilities.SortedProperties;
  */
 public class DBTransform {
 
-	static final protected Map<String,Templates> TemplatesMap = new HashMap<>();                                                                      
-	static final protected TransformerFactory transformerFactory = TransformerFactory.newInstance();                                                  
+	private static Map<String,Templates> TemplatesMap = new HashMap<>();                                                                      
+	private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();                                                  
+	private static boolean forceRebuild = false;
 	                                                                                                                                                    
 	/**                                                                                                                                               
 	 * The method that manages the Templates Map instances that will be used to build                                                                 
@@ -88,11 +89,20 @@ public class DBTransform {
 	// directly test this class (because it was proving too difficult for me to properly 
 	// configure this class in a test environment (related to configurating PropertyService)
 	// If you make changes to this method, you will need to duplicate those changes in the test class.
-	protected static synchronized Transformer getTransformer(String xslSystemId, boolean forceRebuild) throws TransformerConfigurationException {     
-		if (forceRebuild || !TemplatesMap.containsKey(xslSystemId) ) {                                                                                
+	protected static synchronized Transformer getTransformer(String xslSystemId) throws TransformerConfigurationException {
+	    //The admin page can reset the value of forceRebuild to true.
+	    if(forceRebuild) {
+	        TemplatesMap.clear();
+	        forceRebuild = false;//after clearing the cache, we must reset the value to false in order to use the cache again.
+	        logMetacat.debug("DBTransform.getTransformer - clear the style sheet cache and will reload the style sheets from disk.");
+	    }
+		if (!TemplatesMap.containsKey(xslSystemId) ) { 
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from disk for the id " + xslSystemId);
 			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));                                                     
 			TemplatesMap.put(xslSystemId,templates);                                                                                                  
-		}                                                                                                                                             
+		} else {
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from the cache for the id " + xslSystemId);
+		}
 		return TemplatesMap.get(xslSystemId).newTransformer();                                                                                        
 	}                                                                                                                                                 
 	                                                                                                                                                    
@@ -201,7 +211,7 @@ public class DBTransform {
       
       if (xslSystemId != null) {
     	                                                                                                                                       
-    		transformer = DBTransform.getTransformer(xslSystemId, false);  // false means use the existing factory template              
+    		transformer = DBTransform.getTransformer(xslSystemId);  // false means use the existing factory template              
     	              
         transformer.setParameter("qformat", qformat);
         logMetacat.info("DBTransform.doTransform - qformat: " + qformat);
@@ -430,46 +440,13 @@ public class DBTransform {
     return ret;
   }
 
-  /**
-   * the main routine used to test the transform utility.
-   *
-   * Usage: java DBTransform
-   */
-  static public void main(String[] args) {
-
-     if (args.length > 0)
-     {
-        System.err.println("Wrong number of arguments!!!");
-        System.err.println("USAGE: java DBTransform");
-        return;
-     } else {
-        try {
-
-          // Create a test document
-          StringBuffer testdoc = new StringBuffer();
-          String encoding = "UTF-8";
-          testdoc.append("<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>");
-          testdoc.append("<eml-dataset><metafile_id>NCEAS-0001</metafile_id>");
-          testdoc.append("<dataset_id>DS001</dataset_id>");
-          testdoc.append("<title>My test doc</title></eml-dataset>");
-
-          // Transform the document to the new doctype
-          Writer w = new OutputStreamWriter(System.out, encoding);
-          DBTransform dbt = new DBTransform();
-          dbt.transformXMLDocument(testdoc.toString(),
-                                   "-//NCEAS//eml-dataset//EN",
-                                   "-//W3C//HTML//EN",
-                                   "knb",
-                                   w, null, null);
-
-        } catch (Exception e) {
-          System.err.println("EXCEPTION HANDLING REQUIRED");
-          System.err.println(e.getMessage());
-          e.printStackTrace(System.err);
-        }
-     }
-  }
-
+    /**
+     * Set the field of forceRebuild
+     * @param forceRebuild
+     */
+    public static void setForceRebuild(boolean forceBuild) {
+        forceRebuild = forceBuild;
+    }
 //  private void dbg(int position) {
 //    System.err.println("Debug flag: " + position);
 //  }
