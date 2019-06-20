@@ -14,7 +14,6 @@
     <import resource="application-context-eml210.xml" />
     <import resource="application-context-eml211.xml" />
     <import resource="application-context-eml220.xml" />
-    <import resource="application-context-eml-annotation.xml" />
 
     <import resource="application-context-fgdc-base.xml" />
     <import resource="application-context-fgdc-std-001-1998.xml" />
@@ -46,7 +45,8 @@
     <import resource="application-context-provone20150115.xml" />
     
 
-    <import resource="application-context-ontology-model-service.xml" />
+    <import resource="classpath:application-context-eml-annotation.xml" />
+    <import resource="classpath:application-context-ontology-model-service.xml" />
 
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
