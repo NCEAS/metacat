@@ -43,11 +43,9 @@
     
     <import resource="application-context-prov-base.xml" />
     <import resource="application-context-provone20150115.xml" />
-    
 
-    <import resource="classpath:application-context-eml-annotation.xml" />
-    <import resource="classpath:application-context-ontology-model-service.xml" />
-
+    <import resource="application-context-eml-annotation.xml" />
+    <import resource="application-context-ontology-model-service.xml" />
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
