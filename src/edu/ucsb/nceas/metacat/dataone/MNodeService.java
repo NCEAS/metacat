@@ -2159,7 +2159,16 @@ public class MNodeService extends D1NodeService
 				// try the SOLR index
 				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, originalIdentifier);
 				if (potentialOreIdentifiers != null) {
-					potentialOreIdentifier = potentialOreIdentifiers.get(0);
+				    for(Identifier id :potentialOreIdentifiers) {
+				        if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
+				            SystemMetadata sys = this.getSystemMetadata(session, id);
+				            if(sys != null && sys.getObsoletedBy() == null) {
+				                //found the non-obsotetedBy ore document.
+				                potentialOreIdentifier = id;
+				                break;
+				            }
+				        }
+				    }
 					try {
 						oreInputStream = this.get(session, potentialOreIdentifier);
 					} catch (NotFound nf2) {
