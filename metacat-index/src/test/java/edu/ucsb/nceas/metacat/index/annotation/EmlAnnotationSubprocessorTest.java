@@ -17,8 +17,8 @@ import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.cn.indexer.parser.ISolrField;
 import org.junit.Test;
-import org.dataone.cn.indexer.annotation.EmlAnnotationSubprocessor;
 
+import edu.ucsb.nceas.metacat.index.annotation.EmlAnnotationSubprocessor;
 import edu.ucsb.nceas.metacat.index.SolrIndex;
 import edu.ucsb.nceas.metacat.index.SolrIndexIT;
 
@@ -89,8 +89,9 @@ public class EmlAnnotationSubprocessorTest {
         EmlAnnotationSubprocessor emlAnnotationSubprocessor = null;
         SolrIndex solrIndex = SolrIndexIT.generateSolrIndex();
         List<IDocumentSubprocessor> processors = solrIndex.getSubprocessors();
-        for(IDocumentSubprocessor processor : processors) {
-            if(processor instanceof EmlAnnotationSubprocessor) {
+
+        for (IDocumentSubprocessor processor : processors) {
+            if (processor instanceof EmlAnnotationSubprocessor) {
                 emlAnnotationSubprocessor = (EmlAnnotationSubprocessor) processor;
             }
         }

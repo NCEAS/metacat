@@ -2,7 +2,7 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-	<bean id="emlAnnotationSubprocessor" class="org.dataone.cn.indexer.annotation.EmlAnnotationSubprocessor">
+	<bean id="emlAnnotationSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.EmlAnnotationSubprocessor">
 		<property name="matchDocuments">
 			<list>
 				<value>eml://ecoinformatics.org/eml-2.2.0</value>
