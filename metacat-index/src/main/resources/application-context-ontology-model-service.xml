@@ -3,7 +3,7 @@
 	xmlns:p="http://www.springframework.org/schema/p"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
 
-	<bean id="ontologyModelService" class="org.dataone.cn.indexer.annotation.OntologyModelService">
+	<bean id="ontologyModelService" class="edu.ucsb.nceas.metacat.index.annotation.OntologyModelService">
 		<property name="fieldList">
 			<list>
 				<ref bean="eml.annotation.expansion" />
