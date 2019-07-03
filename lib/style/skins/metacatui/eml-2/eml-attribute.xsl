@@ -156,8 +156,6 @@
 		        </xsl:otherwise>
 		     </xsl:choose>
 		</div>
-	</div>	
-	
 	</div>
 
   <xsl:if test="annotation">
