@@ -61,6 +61,22 @@
     </xsl:for-each>
 
      <h4>General</h4>
+			<xsl:if test="annotation">
+				<div class="control-group">
+				<label class="control-label">
+					Annotations
+					<xsl:call-template name="annotation-info-tooltip" />
+				</label>
+				<div class="controls controls-well annotations-container">
+					<xsl:for-each select="annotation">
+					<xsl:call-template name="annotation">
+						<xsl:with-param name="context" select="concat('Dataset ', ../@packageId)" />
+					</xsl:call-template>
+					</xsl:for-each>
+				</div>
+				</div>
+			</xsl:if>
+
              <!-- put in the title -->
              <xsl:if test="./title">
                <xsl:for-each select="./title">
@@ -469,15 +485,6 @@
            </xsl:for-each>
          </xsl:if>
      </div>
-
-		<xsl:if test="annotation">
-			<h4>Annotations</h4>
-			<div class="row fluid">
-			<xsl:call-template name="emlannotationtable">
-					<xsl:with-param name="annotations" select="annotation" />
-				</xsl:call-template>
-			</div>
-		</xsl:if>
   </xsl:template>
 
   <xsl:template name="datasetresource">
