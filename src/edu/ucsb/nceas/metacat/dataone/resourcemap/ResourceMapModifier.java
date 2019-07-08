@@ -28,11 +28,15 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.vocabulary.CITO;
+import org.dataone.vocabulary.DC_TERMS;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
 import com.hp.hpl.jena.rdf.model.Literal;
@@ -58,7 +62,8 @@ public class ResourceMapModifier {
     private final static String DEFAULT_CN_URI = "https://cn.dataone.org/cn";
     private final static String SLASH = "/";
     private final static String RESOLVE = "cn/v2/resolve/";
-    private final static String TERM_NAMESPACE = "http://purl.org/dc/terms/";
+    private final static String TERM_NAMESPACE = DC_TERMS.namespace;
+    private final static String CITO_NAMESPACE = CITO.namespace;
     private final static String TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
     private final static String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
     
@@ -95,7 +100,7 @@ public class ResourceMapModifier {
     
     /**
      * Create new resource map by replacing obsoleted ids by new ids.
-     * @param obsoletedBys  a map represents the ids' with the obsoletedBy relationship - the keys are the one need to be obsoleted (replaced); value are the new ones need to be used
+     * @param obsoletedBys  a map represents the ids' with the obsoletedBy relationship - the keys are the one need to be obsoleted (replaced); value are the new ones need to be used. They are all science metadata objects
      * @param originalResourceMap  the content of original resource map
      * @param newResourceMap  the place where the created new resource map will be written
      * @throws UnsupportedEncodingException 
@@ -106,49 +111,81 @@ public class ResourceMapModifier {
         //read the RDF/XML file
         model.read(originalResourceMap, null);
         //generate a new resource for the new resource map identifier
-        Resource subject = null;
-        Property predicate = null;
-        RDFNode object = null;
-        Selector selector = new SimpleSelector(subject, predicate, object);
-        //StmtIterator iterator = model.listStatements(selector);
-       
-        Resource originalOre = model.getResource("https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae62c781c-643b-41f3-a0b0-9f6cbd80a708");
-        StmtIterator iterator =  originalOre.listProperties();
-        while (iterator.hasNext()) {
-            Statement statement = iterator.nextStatement();
-            Resource sub = statement.getSubject();
-            System.out.println("the subject is "+sub.getURI());;
-            Property pred = statement.getPredicate();
-            System.out.println("the predicate is "+pred.getLocalName());
-            RDFNode obj = statement.getObject();
-            System.out.println("the object "+obj.toString());
-            if(obj.isResource()) {
-                Resource res = (Resource)obj;
-                System.out.println("namespace "+res.getNameSpace());
-                System.out.println("local name "+res.getLocalName());
-                
+        generateNewOREId(model);
+        
+        //replace ids
+        if(obsoletedBys != null) {
+            Set<Identifier> ids = obsoletedBys.keySet();
+            for (Identifier obsoletedId : ids) {
+                Vector<Statement> needToRemove = new Vector<Statement>();
+                Identifier newId = obsoletedBys.get(obsoletedId);
+                Resource newResource = getResource(model, newId.getValue());
+                if(newResource == null) {
+                    newResource = generateNewComponent(model, newId.getValue());
+                }
+                Resource oldResource = getResource(model, obsoletedId.getValue());
+                if(oldResource != null) {
+                    //replace the documents relationship
+                    RDFNode node = null;
+                    Selector selector = new SimpleSelector(oldResource, CITO.documents, node);
+                    StmtIterator iterator = model.listStatements(selector);
+                    while (iterator.hasNext()) {
+                        Statement statement = iterator.nextStatement();
+                        RDFNode object = statement.getObject();
+                        //handle the case - oldId documents oldId
+                        if(object.isResource()) {
+                            Resource objResource = (Resource) object;
+                            if(objResource.getURI().equals(oldResource.getURI())) {
+                                object = newResource;
+                            }
+                        }
+                        Statement newStatement = ResourceFactory.createStatement(newResource, CITO.documents, object);
+                        needToRemove.add(statement);
+                        model.add(newStatement);
+                    }
+                    //replace the documentedBy relationship
+                    Resource nullSubject = null;
+                    selector = new SimpleSelector(nullSubject, CITO.isDocumentedBy, oldResource);
+                    iterator = model.listStatements(selector);
+                    while (iterator.hasNext()) {
+                        Statement statement = iterator.nextStatement();
+                        Resource subject = statement.getSubject();
+                        //handle the case - oldId isDocumentBy oldId
+                        if(subject.getURI().equals(oldResource.getURI())) {
+                                subject = newResource;
+                        }
+                        Statement newStatement = ResourceFactory.createStatement(subject, CITO.isDocumentedBy, newResource);
+                        needToRemove.add(statement);
+                        model.add(newStatement);
+                    }
+                    //remove those old documents/isDocumentedBy relationships
+                    for(Statement oldStatement : needToRemove) {
+                        model.remove(oldStatement);
+                    }
+                }
             }
         }
-        
         //write it to standard out
-        generateNewOREId(model);
         model.write(newResourceMap);
     }
-    
-    /*
+  
+    /**
      * This method generates a Resource object for the new ore id in the given model
+     * @param model  the model where the new generated Resource object will be attached
+     * @return the uri of the generated new Resource object
+     * @throws UnsupportedEncodingException
      */
-    private void generateNewOREId(Model model) throws UnsupportedEncodingException {
-        String escaptedNewOreId = URLEncoder.encode(newResourceMapId.getValue(), "UTF-8");
-        String uri = baseURI + escaptedNewOreId;
+    private String generateNewOREId(Model model) throws UnsupportedEncodingException {
+        String escapedNewOreId = URLEncoder.encode(newResourceMapId.getValue(), "UTF-8");
+        String uri = baseURI + escapedNewOreId;
         Resource resource = model.createResource(uri);
         //create a identifier property (statement)
-        Property identifierPred = ResourceFactory.createProperty(TERM_NAMESPACE, "identifier");
+        Property identifierPred = DC_TERMS.identifier;
         Literal identifierObj = ResourceFactory.createPlainLiteral(newResourceMapId.getValue());
         Statement state = ResourceFactory.createStatement(resource, identifierPred, identifierObj);
         model.add(state);
         //create a modification time statement 
-        Property modificationPred = ResourceFactory.createProperty(TERM_NAMESPACE, "modified");
+        Property modificationPred = DC_TERMS.modified;
         Date date = new Date();
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
@@ -165,8 +202,53 @@ public class ResourceMapModifier {
         Resource typeObj = ResourceFactory.createResource("http://www.openarchives.org/ore/terms/ResourceMap");
         Statement state4 = ResourceFactory.createStatement(resource, typePred, typeObj);
         model.add(state4);
+        return uri;
         //TODO: create a creator statement
-        
     }
+    
+    /**
+     * Create a Resource object for the given id.
+     * @param model  the model where the new Resource object will be attached
+     * @param id  the identifier of the new Resource object will have
+     * @return the uri of the new generated Resource object
+     * @throws UnsupportedEncodingException
+     */
+    private Resource generateNewComponent(Model model, String id) throws UnsupportedEncodingException {
+        String escapedNewId = URLEncoder.encode(id, "UTF-8");
+        String uri = baseURI + escapedNewId;
+        Resource resource = model.createResource(uri);
+        //create a identifier property (statement)
+        Property identifierPred = DC_TERMS.identifier;
+        Literal identifierObj = ResourceFactory.createPlainLiteral(id);
+        Statement state = ResourceFactory.createStatement(resource, identifierPred, identifierObj);
+        model.add(state);
+        return resource;
+    }
+    
+    /**
+     * Get the Resource object which has the given identifier
+     * @param model  the model where the query will be applied
+     * @param id  the identifier of the Resource object has
+     * @return the Resource object with the given identifier. It can return null if not found.
+     */
+    private Resource getResource(Model model, String id) {
+        Resource resource = null;
+        if(id != null && !id.trim().equals("")) {
+            Resource subject = null;
+            Property predicate = DC_TERMS.identifier;;
+            RDFNode object = ResourceFactory.createPlainLiteral(id);
+            Selector selector = new SimpleSelector(subject, predicate, object);
+            StmtIterator iterator = model.listStatements(selector);
+            while (iterator.hasNext()) {
+                Statement statement = iterator.nextStatement();
+                resource = statement.getSubject();
+                if(resource != null) {
+                    break;
+                }
+            }
+        }
+        return resource;
+    }
+    
 
 }
