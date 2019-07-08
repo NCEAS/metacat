@@ -64,8 +64,9 @@ public class ResourceMapModifier {
     private final static String RESOLVE = "cn/v2/resolve/";
     private final static String TERM_NAMESPACE = DC_TERMS.namespace;
     private final static String CITO_NAMESPACE = CITO.namespace;
-    private final static String TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
+    private final static String ORE_TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
     private final static String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    private final static String AGGREGATION = "#aggregation";
     
     private static Log log = LogFactory.getLog(ResourceMapModifier.class);
     private Identifier oldResourceMapId = null;
@@ -110,10 +111,10 @@ public class ResourceMapModifier {
         Model model = ModelFactory.createDefaultModel();
         //read the RDF/XML file
         model.read(originalResourceMap, null);
-        //generate a new resource for the new resource map identifier
-        generateNewOREId(model);
-        
+
         //replace ids
+        Vector<String> oldURIs = new Vector<String>(); //those uris (resource) shouldn't be aggregated into the new ore since they are obsoleted
+        Vector<String> newURIs = new Vector<String>(); //those uris (resource) should be added into the new aggregation
         if(obsoletedBys != null) {
             Set<Identifier> ids = obsoletedBys.keySet();
             for (Identifier obsoletedId : ids) {
@@ -123,7 +124,9 @@ public class ResourceMapModifier {
                 if(newResource == null) {
                     newResource = generateNewComponent(model, newId.getValue());
                 }
+                newURIs.add(newResource.getURI());
                 Resource oldResource = getResource(model, obsoletedId.getValue());
+                oldURIs.add(oldResource.getURI());
                 if(oldResource != null) {
                     //replace the documents relationship
                     RDFNode node = null;
@@ -165,6 +168,11 @@ public class ResourceMapModifier {
                 }
             }
         }
+        
+        //generate a new resource for the new resource map identifier
+        Resource newOreResource = generateNewOREResource(model);
+        Resource oldOreResource = getResource(model,oldResourceMapId.getValue());
+        replaceAggregations(model, oldOreResource.getURI(), newOreResource, oldURIs, newURIs);
         //write it to standard out
         model.write(newResourceMap);
     }
@@ -172,10 +180,10 @@ public class ResourceMapModifier {
     /**
      * This method generates a Resource object for the new ore id in the given model
      * @param model  the model where the new generated Resource object will be attached
-     * @return the uri of the generated new Resource object
+     * @return the generated new ORE Resource object
      * @throws UnsupportedEncodingException
      */
-    private String generateNewOREId(Model model) throws UnsupportedEncodingException {
+    private Resource generateNewOREResource(Model model) throws UnsupportedEncodingException {
         String escapedNewOreId = URLEncoder.encode(newResourceMapId.getValue(), "UTF-8");
         String uri = baseURI + escapedNewOreId;
         Resource resource = model.createResource(uri);
@@ -193,8 +201,8 @@ public class ResourceMapModifier {
         Statement state2 = ResourceFactory.createStatement(resource, modificationPred, modificationObj);
         model.add(state2);
         //create a describes statement
-        Property describesPred = ResourceFactory.createProperty(TER_NAMESPACE, "describes");
-        Resource describesObj = ResourceFactory.createResource(uri + "#aggregation");
+        Property describesPred = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "describes");
+        Resource describesObj = ResourceFactory.createResource(uri + AGGREGATION);
         Statement state3 = ResourceFactory.createStatement(resource, describesPred, describesObj);
         model.add(state3);
         //create a type
@@ -202,8 +210,92 @@ public class ResourceMapModifier {
         Resource typeObj = ResourceFactory.createResource("http://www.openarchives.org/ore/terms/ResourceMap");
         Statement state4 = ResourceFactory.createStatement(resource, typePred, typeObj);
         model.add(state4);
-        return uri;
         //TODO: create a creator statement
+        return resource;
+    }
+   
+    /**
+     * Replace the old aggregation relationship by the new ore id.
+     * This method will be called after calling generateNewOREResource
+     * @param model  the model will be modified
+     * @param oldOREUri  the uri of the old resource map 
+     * @param newOREResource  the uri of the new resource map
+     * @param oldURIs  the uri of old ids shouldn't included in the new aggregation
+     * @param newURIs  the uri of new ids should be added into the new aggregation
+     */
+    private void replaceAggregations(Model model, String oldOREUri, Resource newOREResource, Vector<String> oldURIs, Vector<String> newURIs) {
+        //create a aggregation resource for the new ore id
+        Resource newAggregation = ResourceFactory.createResource(newOREResource.getURI() + AGGREGATION);
+        Property predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "isDescribedBy");
+        Statement statement = ResourceFactory.createStatement(newAggregation, predicate, newOREResource);
+        model.add(statement);
+        
+        Vector<Statement> needToRemove = new Vector<Statement>();
+        Resource oldOreAggregation = model.getResource(oldOREUri+AGGREGATION);
+        //replace the aggregates relationship
+        RDFNode node = null;
+        predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "aggregates");
+        Selector selector = new SimpleSelector(oldOreAggregation, predicate, node);
+        StmtIterator iterator = model.listStatements(selector);
+        while (iterator.hasNext()) {
+            Statement aggregatesState = iterator.nextStatement();
+            RDFNode object = aggregatesState.getObject();
+            needToRemove.add(aggregatesState);
+            if(object.isResource() && oldURIs != null) {
+                //the object is an obsoleted id, we don't need to add it into the new aggregation
+                Resource objResource = (Resource)object;
+                if(oldURIs.contains(objResource.getURI())) {
+                    continue;
+                }
+            }
+            Statement newStatement = ResourceFactory.createStatement(newAggregation, predicate, object);
+            model.add(newStatement);
+        }
+        //add new ids
+        if(newURIs != null) {
+            for(String uri : newURIs) {
+                Resource newResource = model.getResource(uri);
+                if(newResource != null) {
+                    Statement newStatement = ResourceFactory.createStatement(newAggregation, predicate, newResource);
+                    model.add(newStatement);
+                }
+            }
+        }
+        
+        //replace the documentedBy relationship
+        Resource nullSubject = null;
+        predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "isAggregatedBy");
+        selector = new SimpleSelector(nullSubject, predicate, oldOreAggregation);
+        iterator = model.listStatements(selector);
+        while (iterator.hasNext()) {
+            Statement aggregatedBystatement = iterator.nextStatement();
+            Resource subject = aggregatedBystatement.getSubject();
+            needToRemove.add(aggregatedBystatement);
+            if(subject.isResource() && oldURIs != null) {
+                //the object is an obsoleted id, we don't need to add it into the new aggregation
+                Resource subjResource = (Resource)subject;
+                if(oldURIs.contains(subjResource.getURI())) {
+                    continue;
+                }
+            }
+            Statement newStatement = ResourceFactory.createStatement(subject, predicate, newAggregation);
+            model.add(newStatement);
+        }
+        //add new ids
+        if(newURIs != null) {
+            for(String uri : newURIs) {
+                Resource newResource = model.getResource(uri);
+                if(newResource != null) {
+                    Statement newStatement = ResourceFactory.createStatement(newResource, predicate, newAggregation);
+                    model.add(newStatement);
+                }
+            }
+        }
+
+        //remove those old aggregates/isAggregatedBy relationships
+        for(Statement oldStatement : needToRemove) {
+            model.remove(oldStatement);
+        }
     }
     
     /**
@@ -243,6 +335,7 @@ public class ResourceMapModifier {
                 Statement statement = iterator.nextStatement();
                 resource = statement.getSubject();
                 if(resource != null) {
+                    log.debug("ResourceMapModifier.getResource - get the resource "+resource.getURI()+" with the identifier "+id);
                     break;
                 }
             }
