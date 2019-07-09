@@ -59,19 +59,19 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
  *
  */
 public class ResourceMapModifier {
-    private final static String DEFAULT_CN_URI = "https://cn.dataone.org/cn";
-    private final static String SLASH = "/";
-    private final static String RESOLVE = "cn/v2/resolve/";
-    private final static String TERM_NAMESPACE = DC_TERMS.namespace;
-    private final static String CITO_NAMESPACE = CITO.namespace;
-    private final static String ORE_TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
-    private final static String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
-    private final static String AGGREGATION = "#aggregation";
+    public final static String DEFAULT_CN_URI = "https://cn.dataone.org/cn";
+    public final static String SLASH = "/";
+    public final static String RESOLVE = "v2/resolve/";
+    public final static String TERM_NAMESPACE = DC_TERMS.namespace;
+    public final static String CITO_NAMESPACE = CITO.namespace;
+    public final static String ORE_TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
+    public final static String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
+    public final static String AGGREGATION = "#aggregation";
     
     private static Log log = LogFactory.getLog(ResourceMapModifier.class);
     private Identifier oldResourceMapId = null;
     private Identifier newResourceMapId = null;
-    private static String baseURI = null;
+    public static String baseURI = null;
     static {
         try {
             String cnUrl = PropertyService.getProperty("D1Client.CN_URL");
@@ -323,11 +323,11 @@ public class ResourceMapModifier {
      * @param id  the identifier of the Resource object has
      * @return the Resource object with the given identifier. It can return null if not found.
      */
-    private Resource getResource(Model model, String id) {
+    public static Resource getResource(Model model, String id) {
         Resource resource = null;
         if(id != null && !id.trim().equals("")) {
             Resource subject = null;
-            Property predicate = DC_TERMS.identifier;;
+            Property predicate = DC_TERMS.identifier;
             RDFNode object = ResourceFactory.createPlainLiteral(id);
             Selector selector = new SimpleSelector(subject, predicate, object);
             StmtIterator iterator = model.listStatements(selector);
