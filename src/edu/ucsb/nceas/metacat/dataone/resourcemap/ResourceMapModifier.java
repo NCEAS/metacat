@@ -168,7 +168,7 @@ public class ResourceMapModifier {
         //generate a new resource for the new resource map identifier
         Resource newOreResource = generateNewOREResource(model);
         Resource oldOreResource = getResource(model,oldResourceMapId.getValue());
-        replaceAggregations(model, oldOreResource.getURI(), newOreResource, oldURIs, newURIs);
+        replaceAggregations(model, oldOreResource, newOreResource, oldURIs, newURIs);
         //write it to standard out
         model.write(newResourceMap);
     }
@@ -214,12 +214,12 @@ public class ResourceMapModifier {
      * Replace the old aggregation relationship by the new ore id.
      * This method will be called after calling generateNewOREResource
      * @param model  the model will be modified
-     * @param oldOREUri  the uri of the old resource map 
-     * @param newOREResource  the uri of the new resource map
+     * @param oldOREResource  the Resource object of the old ore
+     * @param newOREResource  the Resource object the new ore
      * @param oldURIs  the uri of old ids shouldn't included in the new aggregation
      * @param newURIs  the uri of new ids should be added into the new aggregation
      */
-    private void replaceAggregations(Model model, String oldOREUri, Resource newOREResource, Vector<String> oldURIs, Vector<String> newURIs) {
+    private void replaceAggregations(Model model, Resource oldOREResource, Resource newOREResource, Vector<String> oldURIs, Vector<String> newURIs) {
         //create a aggregation resource for the new ore id
         Resource newAggregation = ResourceFactory.createResource(newOREResource.getURI() + AGGREGATION);
         Property predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "isDescribedBy");
@@ -227,11 +227,11 @@ public class ResourceMapModifier {
         model.add(statement);
         
         Vector<Statement> needToRemove = new Vector<Statement>();
-        Resource oldOreAggregation = model.getResource(oldOREUri+AGGREGATION);
+        Resource oldOreAggregation = model.getResource(oldOREResource.getURI()+AGGREGATION);
         //replace the aggregates relationship
-        RDFNode node = null;
+        final RDFNode nullNode = null;
         predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "aggregates");
-        Selector selector = new SimpleSelector(oldOreAggregation, predicate, node);
+        Selector selector = new SimpleSelector(oldOreAggregation, predicate, nullNode);
         StmtIterator iterator = model.listStatements(selector);
         while (iterator.hasNext()) {
             Statement aggregatesState = iterator.nextStatement();
@@ -258,7 +258,7 @@ public class ResourceMapModifier {
             }
         }
         
-        //replace the documentedBy relationship
+        //replace the isAggregatedBy relationship
         Resource nullSubject = null;
         predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "isAggregatedBy");
         selector = new SimpleSelector(nullSubject, predicate, oldOreAggregation);
@@ -292,6 +292,12 @@ public class ResourceMapModifier {
         for(Statement oldStatement : needToRemove) {
             model.remove(oldStatement);
         }
+        Selector delSelector = new SimpleSelector(oldOreAggregation, null, nullNode);
+        StmtIterator delIterator = model.listStatements(delSelector);
+        model.remove(delIterator);
+        delSelector = new SimpleSelector(oldOREResource, null, nullNode);
+        delIterator = model.listStatements(delSelector);
+        model.remove(delIterator);
     }
     
     /**

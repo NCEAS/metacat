@@ -2167,7 +2167,7 @@ public class MNodeService extends D1NodeService
 				            SystemMetadata sys = this.getSystemMetadata(session, id);
 				            if(sys != null && sys.getObsoletedBy() == null) {
 				                //found the non-obsotetedBy ore document.
-				                System.out.println("============ found the ore map from the list when the index is "+i);
+				                logMetacat.debug("MNodeService.publish - found the ore map from the list when the index is " + i);
 				                potentialOreIdentifier = id;
 				                break;
 				            }
@@ -2212,6 +2212,7 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setObsoletedBy(null);
 				oreSysMeta.setSize(BigInteger.valueOf(resourceMapString.getBytes("UTF-8").length));
 				oreSysMeta.setChecksum(ChecksumUtil.checksum(resourceMapString.getBytes("UTF-8"), oreSysMeta.getChecksum().getAlgorithm()));
+				oreSysMeta.setFileName("resourceMap_" + newOreIdentifier.getValue() + ".rdf.xml");
 				
 				// ensure ORE is publicly readable
                 oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
