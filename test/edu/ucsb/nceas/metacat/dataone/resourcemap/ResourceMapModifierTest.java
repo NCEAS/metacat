@@ -114,7 +114,7 @@ public class ResourceMapModifierTest extends MCTestCase {
         origin_resourceMap_id.setValue(ORIGINAL_RESOURCEMAP_PID);
         Identifier new_resourceMap_id = new Identifier();
         new_resourceMap_id.setValue(NEW_RESOURCEMAP_PID);
-        ResourceMapModifier modifier = new ResourceMapModifier(origin_resourceMap_id, new_resourceMap_id);
+        ResourceMapModifier modifier = new ResourceMapModifier(origin_resourceMap_id, resourceMapInputStream, new_resourceMap_id);
         HashMap<Identifier, Identifier> obsoletedBys = new HashMap<Identifier, Identifier>();
         Identifier origin_metadata_id = new Identifier();
         origin_metadata_id.setValue(ORIGNAL_METADATA_PID);
@@ -122,7 +122,7 @@ public class ResourceMapModifierTest extends MCTestCase {
         new_metadata_id.setValue(NEW_METADATA_PID);
         obsoletedBys.put(origin_metadata_id, new_metadata_id);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        modifier.replaceObsoletedIds(obsoletedBys, resourceMapInputStream, out);
+        modifier.replaceObsoletedIds(obsoletedBys, out);
         String outStr = out.toString("UTF-8");
         System.out.println(outStr);
         ByteArrayInputStream in = new ByteArrayInputStream(outStr.getBytes("UTF-8"));

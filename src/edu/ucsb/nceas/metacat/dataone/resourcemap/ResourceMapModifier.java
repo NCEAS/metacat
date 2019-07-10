@@ -22,7 +22,6 @@ package edu.ucsb.nceas.metacat.dataone.resourcemap;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -71,6 +70,7 @@ public class ResourceMapModifier {
     private static Log log = LogFactory.getLog(ResourceMapModifier.class);
     private Identifier oldResourceMapId = null;
     private Identifier newResourceMapId = null;
+    private Model model = ModelFactory.createDefaultModel();
     public static String baseURI = null;
     static {
         try {
@@ -89,29 +89,23 @@ public class ResourceMapModifier {
     /**
      * Constructor
      * @param oldResourceMapId  the identifier of the old resource map which will be modified
+     * @param originalResourceMap  the content of original resource map
      * @param newResourceMapId  the identifier of the new resource map which will be generated
      */
-    public ResourceMapModifier(Identifier oldResourceMapId, Identifier newResourceMapId) {
+    public ResourceMapModifier(Identifier oldResourceMapId, InputStream originalResourceMap, Identifier newResourceMapId) {
         this.oldResourceMapId = oldResourceMapId;
         this.newResourceMapId = newResourceMapId;
-      
-        
+        //read the RDF/XML file
+        model.read(originalResourceMap, null);
     }
-    
     
     /**
      * Create new resource map by replacing obsoleted ids by new ids.
      * @param obsoletedBys  a map represents the ids' with the obsoletedBy relationship - the keys are the one need to be obsoleted (replaced); value are the new ones need to be used. They are all science metadata objects
-     * @param originalResourceMap  the content of original resource map
      * @param newResourceMap  the place where the created new resource map will be written
      * @throws UnsupportedEncodingException 
      */
-    public void replaceObsoletedIds(Map<Identifier, Identifier>obsoletedBys, InputStream originalResourceMap, OutputStream newResourceMap ) throws UnsupportedEncodingException {
-        //create an empty model
-        Model model = ModelFactory.createDefaultModel();
-        //read the RDF/XML file
-        model.read(originalResourceMap, null);
-
+    public void replaceObsoletedIds(Map<Identifier, Identifier>obsoletedBys,  OutputStream newResourceMap ) throws UnsupportedEncodingException {
         //replace ids
         Vector<String> oldURIs = new Vector<String>(); //those uris (resource) shouldn't be aggregated into the new ore since they are obsoleted
         Vector<String> newURIs = new Vector<String>(); //those uris (resource) should be added into the new aggregation
@@ -176,7 +170,7 @@ public class ResourceMapModifier {
         //write it to standard out
         model.write(newResourceMap);
     }
-  
+
     /**
      * This method generates a Resource object for the new ore id in the given model
      * @param model  the model where the new generated Resource object will be attached
