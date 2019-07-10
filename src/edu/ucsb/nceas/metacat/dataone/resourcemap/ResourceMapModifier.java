@@ -24,7 +24,9 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
@@ -335,6 +337,44 @@ public class ResourceMapModifier {
             }
         }
         return resource;
+    }
+    
+    
+    /**
+     * Get all subjects of the triple - * is documentedBy metadataId on the resource map
+     * @param metadataId  the id of object on the triple (it always be a metadata id). If it is null, it will be anything.
+     * @return  the all the identifiers of the subjects match the query
+     */
+    public List<Identifier> getSubjectsOfDocumentedBy(Identifier metadataId) {
+        List<Identifier> subjects = new ArrayList<Identifier>();
+        Resource nullSubject = null;
+        Resource object = null;
+        String objectId = null;
+        if(metadataId != null) {
+            objectId = metadataId.getValue();
+            object = getResource(model, objectId);
+            log.debug("ResourceMapModifier.getSubjectsOfDocumentedBy - the object's uri is " + object.getURI() + " for the id " + objectId);
+        }
+        Selector selector = new SimpleSelector(nullSubject, CITO.isDocumentedBy, object);
+        StmtIterator iterator = model.listStatements(selector);
+        while (iterator.hasNext()) {
+            Statement statement = iterator.nextStatement();
+            Resource subject = statement.getSubject();
+            Statement idStatement = subject.getProperty(DC_TERMS.identifier);
+            RDFNode idResource = idStatement.getObject();
+            log.debug("ResourceMapModifier.getSubjectsOfDocumentedBy - get the identifier RDF " + idResource.toString() + " . Is the RDF literal? " + idResource.isLiteral());
+            if (idResource != null && idResource.isLiteral()) {
+                Literal idValue = (Literal) idResource;
+                String idStr = idValue.getString();
+                if(idStr != null) {
+                    log.debug("ResourceMapModifier.getSubjectsOfDocumentedBy - add the " + idStr + " into the return list for given metadata id " + objectId);
+                    Identifier identifier = new Identifier();
+                    identifier.setValue(idStr);
+                    subjects.add(identifier);
+                }   
+            }
+        }
+        return subjects;
     }
     
 

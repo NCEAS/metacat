@@ -23,13 +23,12 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.net.URLEncoder;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Vector;
 
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.vocabulary.CITO;
-import org.dataone.vocabulary.DC_TERMS;
 
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -145,7 +144,7 @@ public class ResourceMapModifierTest extends MCTestCase {
             assertTrue(dataURI.contains(obj.getURI()));
             i++;
         }
-        assertTrue(i==3);
+        assertTrue(i == 3);
         //check documents relationship
         subject = null;
         predicate = CITO.isDocumentedBy;
@@ -162,7 +161,7 @@ public class ResourceMapModifierTest extends MCTestCase {
             assertTrue(obj.getURI().equals(newMetadataURI));
             i++;
         }
-        assertTrue(i==3);
+        assertTrue(i == 3);
         //check aggregate
         subject = null;
         predicate = ResourceFactory.createProperty("http://www.openarchives.org/ore/terms/", "aggregates");
@@ -179,7 +178,7 @@ public class ResourceMapModifierTest extends MCTestCase {
             assertTrue(dataURI.contains(obj.getURI()));
             i++;
         }
-        assertTrue(i==3);
+        assertTrue(i == 3);
         //check aggregateBy
         subject = null;
         predicate = ResourceFactory.createProperty("http://www.openarchives.org/ore/terms/", "isAggregatedBy");
@@ -196,7 +195,7 @@ public class ResourceMapModifierTest extends MCTestCase {
             assertTrue(obj.getURI().equals(newAggreOREUri));
             i++;
         }
-        assertTrue(i==3);
+        assertTrue(i == 3);
         //check the provenance relationship
         subject = null;
         predicate = ResourceFactory.createProperty("http://www.w3.org/ns/prov#", "wasDerivedFrom");
@@ -213,7 +212,15 @@ public class ResourceMapModifierTest extends MCTestCase {
             assertTrue(obj.getURI().equals(DATA_1_URI));
             i++;
         }
-        assertTrue(i==1);
+        assertTrue(i == 1);
+        //Test the method of getSubjectsOfDocumentedBy
+        List<Identifier> dataFileIds = modifier.getSubjectsOfDocumentedBy(new_metadata_id);
+        assertTrue(dataFileIds.size() == 3);
+        for(Identifier id : dataFileIds) {
+            assertTrue(id.getValue().equals(DATA_1_PID) || id.getValue().equals(DATA_2_PID) || id.getValue().equals(NEW_METADATA_PID));
+        }
         resourceMapInputStream.close();
     }
+    
+  
 }
