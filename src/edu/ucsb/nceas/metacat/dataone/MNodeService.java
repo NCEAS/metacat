@@ -2213,18 +2213,21 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setSize(BigInteger.valueOf(resourceMapString.getBytes("UTF-8").length));
 				oreSysMeta.setChecksum(ChecksumUtil.checksum(resourceMapString.getBytes("UTF-8"), oreSysMeta.getChecksum().getAlgorithm()));
 				
-				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")));
-				Map<Identifier, List<Identifier>> sciMetaMap = resourceMapStructure.get(newOreIdentifier);
-				List<Identifier> dataIdentifiers = sciMetaMap.get(newIdentifier);
 				// ensure ORE is publicly readable
                 oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
+                List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
 				List<String> pidsToSync = new ArrayList<String>();
 				for (Identifier dataId: dataIdentifiers) {
-					SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-					dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-					this.updateSystemMetadata(dataSysMeta);
-					pidsToSync.add(dataId.getValue());
+				    try {
+				        SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+	                    dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+	                    this.updateSystemMetadata(dataSysMeta);
+	                    pidsToSync.add(dataId.getValue());
+				    } catch (Exception e) {
+				     // ignore
+	                    logMetacat.warn("Error attempting to set data object " + dataId.getValue() + " public readable when publishing package");
+				    }
 				}
 				SyncAccessPolicy sap = new SyncAccessPolicy();
 				try {
@@ -2265,21 +2268,6 @@ public class MNodeService extends D1NodeService
 			sf.initCause(e);
 			throw sf;
 		} catch (UnsupportedEncodingException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (URISyntaxException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREParserException e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
