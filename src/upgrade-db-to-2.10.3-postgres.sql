@@ -10,5 +10,5 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'eml
  */
 UPDATE db_version SET status=0;
 
-INSERT INTO db_version (version, status, date_created) 
+INSERT INTO db_version (version, status, date_created)
   VALUES ('2.10.3', 1, CURRENT_DATE);

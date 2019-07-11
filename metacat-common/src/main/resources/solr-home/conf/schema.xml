@@ -217,18 +217,18 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="formatId"    		type="string"   indexed="true" stored="true" multiValued="false"/>
 		<field name="formatType"		type="string"	indexed="true"	stored="true"	multiValued="false"/>
         <field name="size"            	type="slong"     indexed="true" stored="true" multiValued="false"/>
-        <field name="checksum"        	type="string"   indexed="false" stored="true" multiValued="false"/>
+        <field name="checksum"        	type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="archived"        type="boolean"  indexed="true" stored="true" multiValued="false"/>
-        <field name="checksumAlgorithm" type="string" indexed="false" stored="true"/>
+        <field name="checksumAlgorithm" type="string" indexed="true" stored="true"/>
         <field name="dateUploaded"    type="date"     indexed="true" stored="true" multiValued="false"/>
         <field name="dateModified"    type="date"     indexed="true" stored="true" multiValued="false"/>
         <field name="submitter"       type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="rightsHolder"    type="string"   indexed="true" stored="true" multiValued="false"/>
-        <field name="authoritativeMN"       	type="string"   indexed="false" stored="true" multiValued="false"/>
-        <field name="replicationAllowed"     	type="boolean"  indexed="false" stored="true" multiValued="false"/>
-        <field name="numberReplicas"      		type="integer"  indexed="false" stored="true" multiValued="false"/>
-        <field name="preferredReplicationMN"   	type="string"   indexed="false" stored="true" multiValued="true"/>
-        <field name="blockedReplicationMN"  	type="string"   indexed="false" stored="true" multiValued="true"/>
+        <field name="authoritativeMN"       	type="string"   indexed="true" stored="true" multiValued="false"/>
+        <field name="replicationAllowed"     	type="boolean"  indexed="true" stored="true" multiValued="false"/>
+        <field name="numberReplicas"      		type="integer"  indexed="true" stored="true" multiValued="false"/>
+        <field name="preferredReplicationMN"   	type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="blockedReplicationMN"  	type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="replicaMN"      		type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="replicationStatus"     type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="replicaVerifiedDate" 	type="date"    indexed="true" stored="true" multiValued="true"/>

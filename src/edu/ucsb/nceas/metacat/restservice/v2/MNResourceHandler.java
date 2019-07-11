@@ -340,6 +340,10 @@ public class MNResourceHandler extends D1ResourceHandler {
                             // TODO: send to output	
                             status = true;
                             
+                        } else if (extra.toLowerCase().equals("status")) {
+                            logMetacat.debug("processing status request");
+                            getStatus();
+                            status = true;
                         }
                         
                     }
@@ -948,6 +952,19 @@ public class MNResourceHandler extends D1ResourceHandler {
 	        out.close();
 		}
 		
+    }
+    
+    /**
+     * Get the status of the system. Now we only support to get the size of the index queue.
+     */
+    private void getStatus() throws IOException, NotAuthorized, ServiceFailure {
+        InputStream result = MNodeService.getInstance(request).getStatus(this.session);
+        response.setStatus(200);
+        response.setContentType("text/xml");
+        OutputStream out = response.getOutputStream();
+        out = response.getOutputStream();  
+        IOUtils.copy(result, out);
+        //IOUtils.copyLarge(result, out);
     }
     
     /**
