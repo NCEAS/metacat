@@ -70,6 +70,7 @@ public class ResourceMapModifier {
     public final static String ORE_TER_NAMESPACE = "http://www.openarchives.org/ore/terms/";
     public final static String RDF_NAMESPACE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
     public final static String AGGREGATION = "#aggregation";
+    public final static String AGENT_URI = "http://purl.org/dc/terms/Agent";
     
     private static Log log = LogFactory.getLog(ResourceMapModifier.class);
     private Identifier oldResourceMapId = null;
@@ -221,7 +222,7 @@ public class ResourceMapModifier {
     }
     
     /**
-     * Generate an agent resource
+     * Generate an agent resource. If there is an existing agent with the same name and the type, the existing agent will be returned.
      * @param subject  the name of the agent resource
      * @return the agent resource
      */
@@ -230,15 +231,41 @@ public class ResourceMapModifier {
         if (subject != null && subject.getValue() != null && !subject.getValue().trim().equals("")) {
             name = subject.getValue();
         }
-        Resource creator = model.createResource(AnonId.create());
+        Resource creator = null;
+        //the type should be http://purl.org/dc/terms/Agent
         Property type = ResourceFactory.createProperty(RDF_NAMESPACE, "type");
-        Resource typeObj = ResourceFactory.createResource("http://purl.org/dc/terms/Agent");
-        Statement statement = ResourceFactory.createStatement(creator, type, typeObj);
-        model.add(statement);
+        Resource typeObj = ResourceFactory.createResource(AGENT_URI);
+        //check if the agent with the same name already exists
+        Resource nullSubject = null;
         Property namePred = ResourceFactory.createProperty("http://xmlns.com/foaf/0.1/", "name");
         Literal nameObj = ResourceFactory.createPlainLiteral(name);
-        Statement nameState = ResourceFactory.createStatement(creator, namePred, nameObj);
-        model.add(nameState);
+        Selector selector = new SimpleSelector(nullSubject, namePred, nameObj);
+        StmtIterator iterator = model.listStatements(selector);
+        while (iterator.hasNext()) {
+            Statement statement = iterator.nextStatement();
+            Resource subj =  statement.getSubject();
+            if(subj != null) {
+                //find an existing resource which has the same name
+                //then we need check the resource map has the type - http://purl.org/dc/terms/Agent
+                log.debug("ResourceMapModifier.generateAgentResource - found an existing agent with the name " + name + ". But we need to check if it has the type - http://purl.org/dc/terms/Agent.");
+                if(subj.hasProperty(type)) {
+                    log.debug("ResourceMapModifier.generateAgentResource - found an existing agent with the name " + name + " and it has the type we want.");
+                    creator = subj;
+                    break;
+                }
+            }
+        }
+        if( creator == null ) {
+            log.debug("ResourceMapModifier.generateAgentResource - didn't find an existing agent with the name " + name + " and a new one will be generated.");
+            //we didn't find an existing agent with the same name, so generate a new one
+            creator = model.createResource(AnonId.create());
+            //set the type
+            Statement statement = ResourceFactory.createStatement(creator, type, typeObj);
+            model.add(statement);
+            //set the name
+            Statement nameState = ResourceFactory.createStatement(creator, namePred, nameObj);
+            model.add(nameState);
+        }
         return creator;
     }
    
