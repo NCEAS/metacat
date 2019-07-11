@@ -2190,7 +2190,7 @@ public class MNodeService extends D1NodeService
 				Map<Identifier, Identifier> obsoletedBys = new HashMap<Identifier, Identifier>();
 				obsoletedBys.put(originalIdentifier, newIdentifier);
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-		        modifier.replaceObsoletedIds(obsoletedBys, out);
+		        modifier.replaceObsoletedIds(obsoletedBys, out, session.getSubject());
 				String resourceMapString = out.toString("UTF-8");
 				
 				// get the original ORE SM and update the values

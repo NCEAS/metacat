@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Vector;
 
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.vocabulary.CITO;
 
 import com.hp.hpl.jena.rdf.model.Model;
@@ -121,7 +122,9 @@ public class ResourceMapModifierTest extends MCTestCase {
         new_metadata_id.setValue(NEW_METADATA_PID);
         obsoletedBys.put(origin_metadata_id, new_metadata_id);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        modifier.replaceObsoletedIds(obsoletedBys, out);
+        Subject subj = new Subject();
+        subj.setValue("foo");
+        modifier.replaceObsoletedIds(obsoletedBys, out, subj);
         String outStr = out.toString("UTF-8");
         System.out.println(outStr);
         ByteArrayInputStream in = new ByteArrayInputStream(outStr.getBytes("UTF-8"));

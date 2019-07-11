@@ -36,10 +36,12 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.vocabulary.CITO;
 import org.dataone.vocabulary.DC_TERMS;
 
 import com.hp.hpl.jena.datatypes.xsd.XSDDatatype;
+import com.hp.hpl.jena.rdf.model.AnonId;
 import com.hp.hpl.jena.rdf.model.Literal;
 import com.hp.hpl.jena.rdf.model.Model;
 import com.hp.hpl.jena.rdf.model.ModelFactory;
@@ -105,9 +107,10 @@ public class ResourceMapModifier {
      * Create new resource map by replacing obsoleted ids by new ids.
      * @param obsoletedBys  a map represents the ids' with the obsoletedBy relationship - the keys are the one need to be obsoleted (replaced); value are the new ones need to be used. They are all science metadata objects
      * @param newResourceMap  the place where the created new resource map will be written
+     * @param subject  the subject who generates the resource map
      * @throws UnsupportedEncodingException 
      */
-    public void replaceObsoletedIds(Map<Identifier, Identifier>obsoletedBys,  OutputStream newResourceMap ) throws UnsupportedEncodingException {
+    public void replaceObsoletedIds(Map<Identifier, Identifier>obsoletedBys,  OutputStream newResourceMap, Subject subject) throws UnsupportedEncodingException {
         //replace ids
         Vector<String> oldURIs = new Vector<String>(); //those uris (resource) shouldn't be aggregated into the new ore since they are obsoleted
         Vector<String> newURIs = new Vector<String>(); //those uris (resource) should be added into the new aggregation
@@ -148,12 +151,12 @@ public class ResourceMapModifier {
                     iterator = model.listStatements(selector);
                     while (iterator.hasNext()) {
                         Statement statement = iterator.nextStatement();
-                        Resource subject = statement.getSubject();
+                        Resource subj = statement.getSubject();
                         //handle the case - oldId isDocumentBy oldId
-                        if(subject.getURI().equals(oldResource.getURI())) {
-                                subject = newResource;
+                        if(subj.getURI().equals(oldResource.getURI())) {
+                                subj = newResource;
                         }
-                        Statement newStatement = ResourceFactory.createStatement(subject, CITO.isDocumentedBy, newResource);
+                        Statement newStatement = ResourceFactory.createStatement(subj, CITO.isDocumentedBy, newResource);
                         needToRemove.add(statement);
                         model.add(newStatement);
                     }
@@ -166,20 +169,23 @@ public class ResourceMapModifier {
         }
         
         //generate a new resource for the new resource map identifier
-        Resource newOreResource = generateNewOREResource(model);
+        Resource newOreResource = generateNewOREResource(model, subject);
         Resource oldOreResource = getResource(model,oldResourceMapId.getValue());
         replaceAggregations(model, oldOreResource, newOreResource, oldURIs, newURIs);
         //write it to standard out
         model.write(newResourceMap);
     }
+    
+    
 
     /**
      * This method generates a Resource object for the new ore id in the given model
      * @param model  the model where the new generated Resource object will be attached
+     * @param subject  name of the creator of this resource map
      * @return the generated new ORE Resource object
      * @throws UnsupportedEncodingException
      */
-    private Resource generateNewOREResource(Model model) throws UnsupportedEncodingException {
+    private Resource generateNewOREResource(Model model, Subject subject) throws UnsupportedEncodingException {
         String escapedNewOreId = URLEncoder.encode(newResourceMapId.getValue(), "UTF-8");
         String uri = baseURI + escapedNewOreId;
         Resource resource = model.createResource(uri);
@@ -206,8 +212,34 @@ public class ResourceMapModifier {
         Resource typeObj = ResourceFactory.createResource("http://www.openarchives.org/ore/terms/ResourceMap");
         Statement state4 = ResourceFactory.createStatement(resource, typePred, typeObj);
         model.add(state4);
-        //TODO: create a creator statement
+        //create a creator statement
+        Property creator = ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/", "creator");
+        Resource agent = generateAgentResource(subject);
+        Statement creatorState = ResourceFactory.createStatement(resource, creator, agent);
+        model.add(creatorState);
         return resource;
+    }
+    
+    /**
+     * Generate an agent resource
+     * @param subject  the name of the agent resource
+     * @return the agent resource
+     */
+    private Resource generateAgentResource(Subject subject) {
+        String name = "Metacat";
+        if (subject != null && subject.getValue() != null && !subject.getValue().trim().equals("")) {
+            name = subject.getValue();
+        }
+        Resource creator = model.createResource(AnonId.create());
+        Property type = ResourceFactory.createProperty(RDF_NAMESPACE, "type");
+        Resource typeObj = ResourceFactory.createResource("http://purl.org/dc/terms/Agent");
+        Statement statement = ResourceFactory.createStatement(creator, type, typeObj);
+        model.add(statement);
+        Property namePred = ResourceFactory.createProperty("http://xmlns.com/foaf/0.1/", "name");
+        Literal nameObj = ResourceFactory.createPlainLiteral(name);
+        Statement nameState = ResourceFactory.createStatement(creator, namePred, nameObj);
+        model.add(nameState);
+        return creator;
     }
    
     /**
