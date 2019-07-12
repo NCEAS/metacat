@@ -80,7 +80,7 @@ public class ResourceMapModifier {
     static {
         try {
             String cnUrl = PropertyService.getProperty("D1Client.CN_URL");
-            if(cnUrl.endsWith(SLASH)) {
+            if (cnUrl.endsWith(SLASH)) {
                 baseURI = cnUrl + RESOLVE;
             } else {
                 baseURI = cnUrl + SLASH + RESOLVE;
@@ -115,19 +115,19 @@ public class ResourceMapModifier {
         //replace ids
         Vector<String> oldURIs = new Vector<String>(); //those uris (resource) shouldn't be aggregated into the new ore since they are obsoleted
         Vector<String> newURIs = new Vector<String>(); //those uris (resource) should be added into the new aggregation
-        if(obsoletedBys != null) {
+        if (obsoletedBys != null) {
             Set<Identifier> ids = obsoletedBys.keySet();
             for (Identifier obsoletedId : ids) {
                 Vector<Statement> needToRemove = new Vector<Statement>();
                 Identifier newId = obsoletedBys.get(obsoletedId);
                 Resource newResource = getResource(model, newId.getValue());
-                if(newResource == null) {
+                if (newResource == null) {
                     newResource = generateNewComponent(model, newId.getValue());
                 }
                 newURIs.add(newResource.getURI());
                 Resource oldResource = getResource(model, obsoletedId.getValue());
                 oldURIs.add(oldResource.getURI());
-                if(oldResource != null) {
+                if (oldResource != null) {
                     //replace the documents relationship
                     RDFNode node = null;
                     Selector selector = new SimpleSelector(oldResource, CITO.documents, node);
@@ -136,9 +136,9 @@ public class ResourceMapModifier {
                         Statement statement = iterator.nextStatement();
                         RDFNode object = statement.getObject();
                         //handle the case - oldId documents oldId
-                        if(object.isResource()) {
+                        if (object.isResource()) {
                             Resource objResource = (Resource) object;
-                            if(objResource.getURI().equals(oldResource.getURI())) {
+                            if (objResource.getURI().equals(oldResource.getURI())) {
                                 object = newResource;
                             }
                         }
@@ -154,7 +154,7 @@ public class ResourceMapModifier {
                         Statement statement = iterator.nextStatement();
                         Resource subj = statement.getSubject();
                         //handle the case - oldId isDocumentBy oldId
-                        if(subj.getURI().equals(oldResource.getURI())) {
+                        if (subj.getURI().equals(oldResource.getURI())) {
                                 subj = newResource;
                         }
                         Statement newStatement = ResourceFactory.createStatement(subj, CITO.isDocumentedBy, newResource);
@@ -162,7 +162,7 @@ public class ResourceMapModifier {
                         model.add(newStatement);
                     }
                     //remove those old documents/isDocumentedBy relationships
-                    for(Statement oldStatement : needToRemove) {
+                    for (Statement oldStatement : needToRemove) {
                         model.remove(oldStatement);
                     }
                 }
@@ -244,18 +244,18 @@ public class ResourceMapModifier {
         while (iterator.hasNext()) {
             Statement statement = iterator.nextStatement();
             Resource subj =  statement.getSubject();
-            if(subj != null) {
+            if (subj != null) {
                 //find an existing resource which has the same name
                 //then we need check the resource map has the type - http://purl.org/dc/terms/Agent
                 log.debug("ResourceMapModifier.generateAgentResource - found an existing agent with the name " + name + ". But we need to check if it has the type - http://purl.org/dc/terms/Agent.");
-                if(subj.hasProperty(type)) {
+                if (subj.hasProperty(type)) {
                     log.debug("ResourceMapModifier.generateAgentResource - found an existing agent with the name " + name + " and it has the type we want.");
                     creator = subj;
                     break;
                 }
             }
         }
-        if( creator == null ) {
+        if (creator == null) {
             log.debug("ResourceMapModifier.generateAgentResource - didn't find an existing agent with the name " + name + " and a new one will be generated.");
             //we didn't find an existing agent with the same name, so generate a new one
             creator = model.createResource(AnonId.create());
@@ -286,7 +286,7 @@ public class ResourceMapModifier {
         model.add(statement);
         
         Vector<Statement> needToRemove = new Vector<Statement>();
-        Resource oldOreAggregation = model.getResource(oldOREResource.getURI()+AGGREGATION);
+        Resource oldOreAggregation = model.getResource(oldOREResource.getURI() + AGGREGATION);
         //replace the aggregates relationship
         final RDFNode nullNode = null;
         predicate = ResourceFactory.createProperty(ORE_TER_NAMESPACE, "aggregates");
@@ -296,10 +296,10 @@ public class ResourceMapModifier {
             Statement aggregatesState = iterator.nextStatement();
             RDFNode object = aggregatesState.getObject();
             needToRemove.add(aggregatesState);
-            if(object.isResource() && oldURIs != null) {
+            if (object.isResource() && oldURIs != null) {
                 //the object is an obsoleted id, we don't need to add it into the new aggregation
                 Resource objResource = (Resource)object;
-                if(oldURIs.contains(objResource.getURI())) {
+                if (oldURIs.contains(objResource.getURI())) {
                     continue;
                 }
             }
@@ -307,10 +307,10 @@ public class ResourceMapModifier {
             model.add(newStatement);
         }
         //add new ids
-        if(newURIs != null) {
-            for(String uri : newURIs) {
+        if (newURIs != null) {
+            for (String uri : newURIs) {
                 Resource newResource = model.getResource(uri);
-                if(newResource != null) {
+                if (newResource != null) {
                     Statement newStatement = ResourceFactory.createStatement(newAggregation, predicate, newResource);
                     model.add(newStatement);
                 }
@@ -326,10 +326,10 @@ public class ResourceMapModifier {
             Statement aggregatedBystatement = iterator.nextStatement();
             Resource subject = aggregatedBystatement.getSubject();
             needToRemove.add(aggregatedBystatement);
-            if(subject.isResource() && oldURIs != null) {
+            if (subject.isResource() && oldURIs != null) {
                 //the object is an obsoleted id, we don't need to add it into the new aggregation
                 Resource subjResource = (Resource)subject;
-                if(oldURIs.contains(subjResource.getURI())) {
+                if (oldURIs.contains(subjResource.getURI())) {
                     continue;
                 }
             }
@@ -337,10 +337,10 @@ public class ResourceMapModifier {
             model.add(newStatement);
         }
         //add new ids
-        if(newURIs != null) {
-            for(String uri : newURIs) {
+        if (newURIs != null) {
+            for (String uri : newURIs) {
                 Resource newResource = model.getResource(uri);
-                if(newResource != null) {
+                if (newResource != null) {
                     Statement newStatement = ResourceFactory.createStatement(newResource, predicate, newAggregation);
                     model.add(newStatement);
                 }
@@ -348,7 +348,7 @@ public class ResourceMapModifier {
         }
 
         //remove those old aggregates/isAggregatedBy relationships
-        for(Statement oldStatement : needToRemove) {
+        for (Statement oldStatement : needToRemove) {
             model.remove(oldStatement);
         }
         Selector delSelector = new SimpleSelector(oldOreAggregation, null, nullNode);
@@ -386,7 +386,7 @@ public class ResourceMapModifier {
      */
     public static Resource getResource(Model model, String id) {
         Resource resource = null;
-        if(id != null && !id.trim().equals("")) {
+        if (id != null && !id.trim().equals("")) {
             Resource subject = null;
             Property predicate = DC_TERMS.identifier;
             RDFNode object = ResourceFactory.createPlainLiteral(id);
@@ -395,7 +395,7 @@ public class ResourceMapModifier {
             while (iterator.hasNext()) {
                 Statement statement = iterator.nextStatement();
                 resource = statement.getSubject();
-                if(resource != null) {
+                if (resource != null) {
                     log.debug("ResourceMapModifier.getResource - get the resource "+resource.getURI()+" with the identifier "+id);
                     break;
                 }
@@ -415,7 +415,7 @@ public class ResourceMapModifier {
         Resource nullSubject = null;
         Resource object = null;
         String objectId = null;
-        if(metadataId != null) {
+        if (metadataId != null) {
             objectId = metadataId.getValue();
             object = getResource(model, objectId);
             log.debug("ResourceMapModifier.getSubjectsOfDocumentedBy - the object's uri is " + object.getURI() + " for the id " + objectId);
@@ -431,7 +431,7 @@ public class ResourceMapModifier {
             if (idResource != null && idResource.isLiteral()) {
                 Literal idValue = (Literal) idResource;
                 String idStr = idValue.getString();
-                if(idStr != null) {
+                if (idStr != null) {
                     log.debug("ResourceMapModifier.getSubjectsOfDocumentedBy - add the " + idStr + " into the return list for given metadata id " + objectId);
                     Identifier identifier = new Identifier();
                     identifier.setValue(idStr);
