@@ -2166,7 +2166,7 @@ public class MNodeService extends D1NodeService
 				        if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
 				            SystemMetadata sys = this.getSystemMetadata(session, id);
 				            if(sys != null && sys.getObsoletedBy() == null) {
-				                //found the non-obsotetedBy ore document.
+				                //found the non-obsoletedBy ore document.
 				                logMetacat.debug("MNodeService.publish - found the ore map from the list when the index is " + i);
 				                potentialOreIdentifier = id;
 				                break;
@@ -2220,15 +2220,11 @@ public class MNodeService extends D1NodeService
 				// ensure all data objects allow public read
 				List<String> pidsToSync = new ArrayList<String>();
 				for (Identifier dataId: dataIdentifiers) {
-				    try {
-				        SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-	                    dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-	                    this.updateSystemMetadata(dataSysMeta);
-	                    pidsToSync.add(dataId.getValue());
-				    } catch (Exception e) {
-				     // ignore
-	                    logMetacat.warn("Error attempting to set data object " + dataId.getValue() + " public readable when publishing package");
-				    }
+			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+			            this.updateSystemMetadata(dataSysMeta);
+			            pidsToSync.add(dataId.getValue());
+				    
 				}
 				SyncAccessPolicy sap = new SyncAccessPolicy();
 				try {
