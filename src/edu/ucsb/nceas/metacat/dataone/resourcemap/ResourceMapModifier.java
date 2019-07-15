@@ -58,6 +58,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
  * This class will create a new resource map by modifying a given resourceMap input stream. 
+ * Note: this class can only be used on the mn.publish method since it will replace the all old pid existing places by the new id. It is only safe for the the mn.publish method.
  * @author tao
  *
  */
@@ -106,65 +107,71 @@ public class ResourceMapModifier {
     
     /**
      * Create new resource map by replacing obsoleted ids by new ids.
-     * @param obsoletedBys  a map represents the ids' with the obsoletedBy relationship - the keys are the one need to be obsoleted (replaced); value are the new ones need to be used. They are all science metadata objects
+     *  Note: this method can only be used on the mn.publish method since it will replace the all old pid existing places by the new id. It is only safe for the the mn.publish method.
+     * @param obsoletedId  the pid will be replaced
+     * @param newId  the pid will be used to replace the old pid
      * @param newResourceMap  the place where the created new resource map will be written
      * @param subject  the subject who generates the resource map
      * @throws UnsupportedEncodingException 
      */
-    public void replaceObsoletedIds(Map<Identifier, Identifier>obsoletedBys,  OutputStream newResourceMap, Subject subject) throws UnsupportedEncodingException {
+    public void replaceObsoletedId(Identifier obsoletedId, Identifier newId,  OutputStream newResourceMap, Subject subject) throws UnsupportedEncodingException {
         //replace ids
         Vector<String> oldURIs = new Vector<String>(); //those uris (resource) shouldn't be aggregated into the new ore since they are obsoleted
         Vector<String> newURIs = new Vector<String>(); //those uris (resource) should be added into the new aggregation
-        if (obsoletedBys != null) {
-            Set<Identifier> ids = obsoletedBys.keySet();
-            for (Identifier obsoletedId : ids) {
-                Vector<Statement> needToRemove = new Vector<Statement>();
-                Identifier newId = obsoletedBys.get(obsoletedId);
-                Resource newResource = getResource(model, newId.getValue());
-                if (newResource == null) {
-                    newResource = generateNewComponent(model, newId.getValue());
-                }
-                newURIs.add(newResource.getURI());
-                Resource oldResource = getResource(model, obsoletedId.getValue());
-                oldURIs.add(oldResource.getURI());
-                if (oldResource != null) {
-                    //replace the documents relationship
-                    RDFNode node = null;
-                    Selector selector = new SimpleSelector(oldResource, CITO.documents, node);
-                    StmtIterator iterator = model.listStatements(selector);
-                    while (iterator.hasNext()) {
-                        Statement statement = iterator.nextStatement();
-                        RDFNode object = statement.getObject();
-                        //handle the case - oldId documents oldId
+        if (obsoletedId != null && newId != null) {
+            Vector<Statement> needToRemove = new Vector<Statement>();
+            Resource newResource = getResource(model, newId.getValue());
+            if (newResource == null) {
+                newResource = generateNewComponent(model, newId.getValue());
+            }
+            newURIs.add(newResource.getURI());
+            Resource oldResource = getResource(model, obsoletedId.getValue());
+            oldURIs.add(oldResource.getURI());
+            if (oldResource != null) {
+                //replace all subjects having the old pid resource 
+                RDFNode node = null;
+                Property nullPredicate = null;
+                Selector selector = new SimpleSelector(oldResource, nullPredicate, node);
+                StmtIterator iterator = model.listStatements(selector);
+                while (iterator.hasNext()) {
+                    Statement statement = iterator.nextStatement();
+                    RDFNode object = statement.getObject();
+                    Property predicate = statement.getPredicate();
+                    log.debug("ResourceMapModifer.replaceObsoletedIds - the statement with the predicate " + predicate.getLocalName() + " before replace");
+                    //we don't need to replace the relationship - DC_TERMS.identifier, just remove it
+                    //handle the case - oldId predicates oldId
+                    if(predicate == null || !predicate.equals(DC_TERMS.identifier)) {
                         if (object.isResource()) {
                             Resource objResource = (Resource) object;
                             if (objResource.getURI().equals(oldResource.getURI())) {
                                 object = newResource;
                             }
                         }
-                        Statement newStatement = ResourceFactory.createStatement(newResource, CITO.documents, object);
-                        needToRemove.add(statement);
+                        log.debug("ResourceMapModifer.replaceObsoletedIds - the statement with the predicate " + predicate.getLocalName() + " has been replaced");
+                        Statement newStatement = ResourceFactory.createStatement(newResource, predicate, object);
                         model.add(newStatement);
                     }
-                    //replace the documentedBy relationship
-                    Resource nullSubject = null;
-                    selector = new SimpleSelector(nullSubject, CITO.isDocumentedBy, oldResource);
-                    iterator = model.listStatements(selector);
-                    while (iterator.hasNext()) {
-                        Statement statement = iterator.nextStatement();
-                        Resource subj = statement.getSubject();
-                        //handle the case - oldId isDocumentBy oldId
-                        if (subj.getURI().equals(oldResource.getURI())) {
-                                subj = newResource;
-                        }
-                        Statement newStatement = ResourceFactory.createStatement(subj, CITO.isDocumentedBy, newResource);
-                        needToRemove.add(statement);
-                        model.add(newStatement);
+                    needToRemove.add(statement);
+                }
+                //replace all objects having the old pid resource
+                Resource nullSubject = null;
+                selector = new SimpleSelector(nullSubject, nullPredicate, oldResource);
+                iterator = model.listStatements(selector);
+                while (iterator.hasNext()) {
+                    Statement statement = iterator.nextStatement();
+                    Resource subj = statement.getSubject();
+                    Property predicate = statement.getPredicate();
+                    //handle the case - oldId predicates oldId
+                    if (subj.getURI().equals(oldResource.getURI())) {
+                        subj = newResource;
                     }
-                    //remove those old documents/isDocumentedBy relationships
-                    for (Statement oldStatement : needToRemove) {
-                        model.remove(oldStatement);
-                    }
+                    Statement newStatement = ResourceFactory.createStatement(subj, predicate, newResource);
+                    model.add(newStatement);
+                    needToRemove.add(statement);
+                }
+                //remove those old  relationships
+                for (Statement oldStatement : needToRemove) {
+                    model.remove(oldStatement);
                 }
             }
         }

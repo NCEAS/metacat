@@ -115,16 +115,14 @@ public class ResourceMapModifierTest extends MCTestCase {
         Identifier new_resourceMap_id = new Identifier();
         new_resourceMap_id.setValue(NEW_RESOURCEMAP_PID);
         ResourceMapModifier modifier = new ResourceMapModifier(origin_resourceMap_id, resourceMapInputStream, new_resourceMap_id);
-        HashMap<Identifier, Identifier> obsoletedBys = new HashMap<Identifier, Identifier>();
         Identifier origin_metadata_id = new Identifier();
         origin_metadata_id.setValue(ORIGNAL_METADATA_PID);
         Identifier new_metadata_id = new Identifier();
         new_metadata_id.setValue(NEW_METADATA_PID);
-        obsoletedBys.put(origin_metadata_id, new_metadata_id);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         Subject subj = new Subject();
         subj.setValue("foo");
-        modifier.replaceObsoletedIds(obsoletedBys, out, subj);
+        modifier.replaceObsoletedId(origin_metadata_id, new_metadata_id, out, subj);
         String outStr = out.toString("UTF-8");
         System.out.println(outStr);
         ByteArrayInputStream in = new ByteArrayInputStream(outStr.getBytes("UTF-8"));
@@ -222,6 +220,26 @@ public class ResourceMapModifierTest extends MCTestCase {
         for(Identifier id : dataFileIds) {
             assertTrue(id.getValue().equals(DATA_1_PID) || id.getValue().equals(DATA_2_PID) || id.getValue().equals(NEW_METADATA_PID));
         }
+        
+        //no old ore triples
+        Resource oldOreResource = ResourceFactory.createResource("https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae62c781c-643b-41f3-a0b0-9f6cbd80a708");
+        subject = null;
+        predicate = null;
+        object = null;
+        selector = new SimpleSelector(oldOreResource, predicate, object);
+        iterator = model.listStatements(selector);
+        assertFalse(iterator.hasNext());
+        selector = new SimpleSelector(subject, predicate, oldOreResource);
+        iterator = model.listStatements(selector);
+        assertFalse(iterator.hasNext());
+        //no old metadata triples
+        Resource oldMetadataResource = ResourceFactory.createResource("https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ac0e0d342-7cc1-4eaa-9648-c6d9f7ed8b1f");
+        selector = new SimpleSelector(oldMetadataResource, predicate, object);
+        iterator = model.listStatements(selector);
+        assertFalse(iterator.hasNext());
+        selector = new SimpleSelector(subject, predicate, oldMetadataResource);
+        iterator = model.listStatements(selector);
+        assertFalse(iterator.hasNext());
         resourceMapInputStream.close();
     }
     

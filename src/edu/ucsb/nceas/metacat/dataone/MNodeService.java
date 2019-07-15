@@ -2187,10 +2187,8 @@ public class MNodeService extends D1NodeService
 			    logMetacat.info("MNodeService.publish - we find the old ore document "+potentialOreIdentifier+" for the metacat object "+originalIdentifier);
 				Identifier newOreIdentifier = MNodeService.getInstance(request).generateIdentifier(session, MNodeService.UUID_SCHEME, null);
 				ResourceMapModifier modifier = new ResourceMapModifier(potentialOreIdentifier, oreInputStream, newOreIdentifier);
-				Map<Identifier, Identifier> obsoletedBys = new HashMap<Identifier, Identifier>();
-				obsoletedBys.put(originalIdentifier, newIdentifier);
 				ByteArrayOutputStream out = new ByteArrayOutputStream();
-		        modifier.replaceObsoletedIds(obsoletedBys, out, session.getSubject());
+		        modifier.replaceObsoletedId(originalIdentifier, newIdentifier, out, session.getSubject());
 				String resourceMapString = out.toString("UTF-8");
 				
 				// get the original ORE SM and update the values
