@@ -158,6 +158,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -2158,8 +2159,20 @@ public class MNodeService extends D1NodeService
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue()+" by the name convention.");
 				// try the SOLR index
 				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, originalIdentifier);
-				if (potentialOreIdentifiers != null) {
-					potentialOreIdentifier = potentialOreIdentifiers.get(0);
+				if (potentialOreIdentifiers != null && potentialOreIdentifiers.size() >0) {
+				    int size = potentialOreIdentifiers.size();
+				    for (int i = size-1; i>=0; i--) {
+				        Identifier id = potentialOreIdentifiers.get(i);
+				        if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
+				            SystemMetadata sys = this.getSystemMetadata(session, id);
+				            if(sys != null && sys.getObsoletedBy() == null) {
+				                //found the non-obsoletedBy ore document.
+				                logMetacat.debug("MNodeService.publish - found the ore map from the list when the index is " + i);
+				                potentialOreIdentifier = id;
+				                break;
+				            }
+				        }
+				    }
 					try {
 						oreInputStream = this.get(session, potentialOreIdentifier);
 					} catch (NotFound nf2) {
@@ -2173,22 +2186,10 @@ public class MNodeService extends D1NodeService
 			if (oreInputStream != null) {
 			    logMetacat.info("MNodeService.publish - we find the old ore document "+potentialOreIdentifier+" for the metacat object "+originalIdentifier);
 				Identifier newOreIdentifier = MNodeService.getInstance(request).generateIdentifier(session, MNodeService.UUID_SCHEME, null);
-	
-				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-				Map<Identifier, List<Identifier>> sciMetaMap = resourceMapStructure.get(potentialOreIdentifier);
-				List<Identifier> dataIdentifiers = sciMetaMap.get(originalIdentifier);
-					
-				// reconstruct the ORE with the new identifiers
-				//the original identifier can be in the data object list, we should replace it if does exist.
-                if(dataIdentifiers.contains(originalIdentifier)) {
-                    dataIdentifiers.remove(originalIdentifier);
-                    dataIdentifiers.add(newIdentifier);
-                }
-				sciMetaMap.remove(originalIdentifier);
-				sciMetaMap.put(newIdentifier, dataIdentifiers);
-				
-				ResourceMap resourceMap = ResourceMapFactory.getInstance().createResourceMap(newOreIdentifier, sciMetaMap);
-				String resourceMapString = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+				ResourceMapModifier modifier = new ResourceMapModifier(potentialOreIdentifier, oreInputStream, newOreIdentifier);
+				ByteArrayOutputStream out = new ByteArrayOutputStream();
+		        modifier.replaceObsoletedId(originalIdentifier, newIdentifier, out, session.getSubject());
+				String resourceMapString = out.toString("UTF-8");
 				
 				// get the original ORE SM and update the values
 				SystemMetadata originalOreSysMeta = this.getSystemMetadata(session, potentialOreIdentifier);
@@ -2209,17 +2210,19 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setObsoletedBy(null);
 				oreSysMeta.setSize(BigInteger.valueOf(resourceMapString.getBytes("UTF-8").length));
 				oreSysMeta.setChecksum(ChecksumUtil.checksum(resourceMapString.getBytes("UTF-8"), oreSysMeta.getChecksum().getAlgorithm()));
+				oreSysMeta.setFileName("resourceMap_" + newOreIdentifier.getValue() + ".rdf.xml");
 				
 				// ensure ORE is publicly readable
-				oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
-				
+                oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
+                List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
 				List<String> pidsToSync = new ArrayList<String>();
 				for (Identifier dataId: dataIdentifiers) {
-					SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-					dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-					this.updateSystemMetadata(dataSysMeta);
-					pidsToSync.add(dataId.getValue());
+			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+			            this.updateSystemMetadata(dataSysMeta);
+			            pidsToSync.add(dataId.getValue());
+				    
 				}
 				SyncAccessPolicy sap = new SyncAccessPolicy();
 				try {
@@ -2260,26 +2263,6 @@ public class MNodeService extends D1NodeService
 			sf.initCause(e);
 			throw sf;
 		} catch (UnsupportedEncodingException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (URISyntaxException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREParserException e) {
-			// report as service failure
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (ORESerialiserException e) {
 			// report as service failure
 			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
 			sf.initCause(e);
