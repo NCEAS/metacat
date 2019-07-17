@@ -12,7 +12,7 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 public class DefaultDataCiteFactoryTest extends MCTestCase {
-    private static final String RESULT= "<?xml version=\"1.0\" encoding=\"UTF-16\"?>\n<resource xmlns=\"http://datacite.org/schema/kernel-3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://datacite.org/schema/kernel-3 https://schema.datacite.org/meta/kernel-3.1/metadata.xsd\"><identifier identifierType=\"DOI\">doi:10.5063/F1X34VQ5</identifier><creators><creator><creatorName>CN=Monica Ihli A139616,O=Google,C=US,DC=cilogon,DC=org</creatorName></creator></creators><titles><title xml:lang=\"en\">(:unkn)</title></titles><publisher>My Metacat Node</publisher><publicationYear>2017</publicationYear><resourceType resourceTypeGeneral=\"Dataset/metadata\">Dataset/metadata</resourceType><formats><format>text/xml</format></formats></resource>";
+    private static final String RESULT= "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<resource xmlns=\"http://datacite.org/schema/kernel-3\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:schemaLocation=\"http://datacite.org/schema/kernel-3 https://schema.datacite.org/meta/kernel-3.1/metadata.xsd\"><identifier identifierType=\"DOI\">10.5063/F1X34VQ5</identifier><creators><creator><creatorName>CN=Monica Ihli A139616,O=Google,C=US,DC=cilogon,DC=org</creatorName></creator></creators><titles><title xml:lang=\"en\">(:unkn)</title></titles><publisher>My Metacat Node</publisher><publicationYear>2017</publicationYear><resourceType resourceTypeGeneral=\"Dataset\"/><formats><format>text/xml</format></formats></resource>";
     
     public DefaultDataCiteFactoryTest (String name)  {
         super(name);
