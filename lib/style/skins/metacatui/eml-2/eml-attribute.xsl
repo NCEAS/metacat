@@ -76,40 +76,38 @@
 	<div class="row-fluid">
 		<div class="span2">
 			<!-- render the side nav -->
-			<ul class="nav nav-list" id="attributeTabs">
-			  <li class="nav-header">Variables</li>
-				<xsl:for-each select="attribute">
-					<xsl:variable name="attributeindex" select="position()"/>
-					<li>
-						<xsl:if test="position() = 1">
-							<xsl:attribute name="class">active</xsl:attribute>
-						</xsl:if>
-						<a data-toggle="tab">
-              <xsl:attribute name="title"><xsl:value-of select="attributeName"/></xsl:attribute>
-							<xsl:attribute name="href">#entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
-						    <xsl:choose>
-						         <xsl:when test="references!=''">
-						          <xsl:variable name="ref_id" select="references"/>
-						          <xsl:variable name="references" select="$ids[@id=$ref_id]" />
-						          <xsl:for-each select="$references">
-                        <xsl:if test="annotation">
-                          <i class="icon icon-ok-circle"></i>
-                        </xsl:if>
-						            <xsl:value-of select="attributeName"/>
-						          </xsl:for-each>
-						        </xsl:when>
-						        <xsl:otherwise>
-                      <xsl:if test="annotation">
-                        <i class="icon icon-ok-circle"></i>
-                      </xsl:if>
-						          <xsl:value-of select="attributeName"/>
-						        </xsl:otherwise>
-							</xsl:choose>
-							
-						</a>
-					</li>
-				</xsl:for-each>
-			</ul>
+      <span class="nav-header">Variables</span>
+      <table class="attributeListTable">
+        <tbody>
+        <xsl:for-each select="attribute">
+          <xsl:variable name="attributeindex" select="position()"/>
+          <tr>
+            <td><xsl:if test="annotation"><i class="icon icon-ok-circle"></i></xsl:if></td>
+            <td>    
+              <xsl:if test="position() = 1">
+                <xsl:attribute name="class">active</xsl:attribute>
+              </xsl:if>
+              <a data-toggle="tab">
+                <xsl:attribute name="title"><xsl:value-of select="attributeName"/></xsl:attribute>
+                <xsl:attribute name="href">#entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
+                  <xsl:choose>
+                      <xsl:when test="references!=''">
+                        <xsl:variable name="ref_id" select="references"/>
+                        <xsl:variable name="references" select="$ids[@id=$ref_id]" />
+                        <xsl:for-each select="$references">
+                          <xsl:value-of select="attributeName"/>
+                        </xsl:for-each>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:value-of select="attributeName"/>
+                      </xsl:otherwise>
+                </xsl:choose>
+              </a>
+            </td>
+          </tr>
+        </xsl:for-each>
+        </tbody>
+      </table>
 		</div>	
 		
 		<div class="tab-content span10">
