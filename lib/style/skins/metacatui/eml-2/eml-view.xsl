@@ -98,7 +98,7 @@
         <div class="controls controls-well annotations-container">
           <xsl:for-each select="annotation">
             <xsl:call-template name="annotation">
-              <xsl:with-param name="context" select="concat(local-name(..), ' ', ../entityName)" />
+              <xsl:with-param name="context" select="concat(local-name(..), ' &lt;strong&gt;', ../entityName, '&lt;/strong&gt;')" />
             </xsl:call-template>
           </xsl:for-each>
         </div>
