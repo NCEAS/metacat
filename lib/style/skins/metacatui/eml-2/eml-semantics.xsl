@@ -38,7 +38,7 @@
         indent="yes" />
 
     <xsl:template name="annotation">
-        <xsl:param name="context" select="concat('hi')" />
+        <xsl:param name="context" />
 
         <xsl:element name="div">
             <xsl:attribute name="class">annotation</xsl:attribute>
@@ -53,6 +53,13 @@
             <xsl:attribute name="data-value-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
             <div class="annotation-property"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></div>
             <div class="annotation-value"><xsl:value-of select="normalize-space(./valueURI/@label)" /></div>
+            <xsl:element name="div">
+                    <xsl:attribute name="class">annotation-findmore tooltip-this</xsl:attribute>
+                    <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
+                    <xsl:attribute name="data-placement">bottom</xsl:attribute>
+                    <xsl:attribute name="title"><xsl:value-of select="concat('Click to find more datasets with measurements of ', normalize-space(./valueURI/@label), '.')" /></xsl:attribute>
+                    <div><i class="icon-long-arrow-up"></i></div>
+                </xsl:element>
         </xsl:element>
     </xsl:template>
 
@@ -62,7 +69,7 @@
             <xsl:element name="i">
                 <xsl:attribute name="class">tooltip-this icon icon-info-sign</xsl:attribute>
                 <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
-                <xsl:attribute name="title">Annotations are rigorously-defined, expressive statements about portions of metadata. Each annotation represents a stand-alone, logical statement and uses terms from specific vocabularies that make it very clear what has been annotated. For more information about annotations, see... TODO</xsl:attribute>
+                <xsl:attribute name="title">Annotations are rigorously-defined, expressive statements about portions of metadata. Each annotation represents a stand-alone, logical statement and uses terms from specific vocabularies that make it very clear what has been annotated. For more information about each annotation, click on the respective annotation to the right.</xsl:attribute>
             </xsl:element>
         </xsl:element>
     </xsl:template>

@@ -70,7 +70,7 @@
 				<div class="controls controls-well annotations-container">
 					<xsl:for-each select="annotation">
 					<xsl:call-template name="annotation">
-						<xsl:with-param name="context" select="concat('Dataset ', ../@packageId)" />
+						<xsl:with-param name="context" select="concat('Dataset &lt;strong&gt;', ../@packageId, '&lt;/strong&gt;')" />
 					</xsl:call-template>
 					</xsl:for-each>
 				</div>
