@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <eml:eml packageId="eml220annotationscimeta" system="knb"
-  xmlns:eml="eml://ecoinformatics.org/eml-2.2.0"
+  xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.1" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.2.0 eml.xsd">
+  xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.1" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
   <dataset>
     <title>Test document for EML 2.2.0</title>
     <creator id="test.user">
