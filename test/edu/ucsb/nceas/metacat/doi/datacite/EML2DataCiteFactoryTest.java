@@ -61,7 +61,7 @@ public class EML2DataCiteFactoryTest extends D1NodeServiceTest {
         String EML201 = "eml://ecoinformatics.org/eml-2.0.1";
         String EML210 = "eml://ecoinformatics.org/eml-2.1.0";
         String EML211 = "eml://ecoinformatics.org/eml-2.1.1";
-        String EML220 = "eml://ecoinformatics.org/eml-2.2.0";
+        String EML220 = "https://eml.ecoinformatics.org/eml-2.2.0";
         String other = "http://www.isotc211.org/2005/gmx ";
         EML2DataCiteFactory factory = new EML2DataCiteFactory();
         assertTrue(factory.canProcess(EML200));

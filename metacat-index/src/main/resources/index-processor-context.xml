@@ -166,7 +166,7 @@
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"
-      value="eml://ecoinformatics.org/eml-2.2.0" />
+      value="https://eml.ecoinformatics.org/eml-2.2.0" />
      <constructor-arg name="prefix" value="eml220" />
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">

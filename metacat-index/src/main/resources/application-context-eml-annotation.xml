@@ -5,7 +5,7 @@
 	<bean id="emlAnnotationSubprocessor" class="edu.ucsb.nceas.metacat.index.annotation.EmlAnnotationSubprocessor">
 		<property name="matchDocuments">
 			<list>
-				<value>eml://ecoinformatics.org/eml-2.2.0</value>
+				<value>https://eml.ecoinformatics.org/eml-2.2.0</value>
 			</list>
 		</property>
 		<property name="fieldsToMerge">
