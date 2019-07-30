@@ -240,6 +240,8 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="resourceMap"		type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="documents"			type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="isDocumentedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="hasPart"	        type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="isPartOf"	        type="string"   indexed="true" stored="true" multiValued="true"/>
 
         <!--Permissions-->
         <field name="readPermission"    type="string"   indexed="true" stored="true" multiValued="true"/>

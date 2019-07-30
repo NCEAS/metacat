@@ -90,6 +90,8 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
         //Document doc = XmlDocumentUtility.generateXmlDocument(is);
         Identifier id = new Identifier();
         id.setValue(identifier);
+        
+        //Get the path to the resource map file
         String resourcMapPath = DistributedMapsFactory.getObjectPathMap().get(id);
 		List<SolrDoc> processedDocs = processResourceMap(resourceMapDoc, resourcMapPath);
         Map<String, SolrDoc> processedDocsMap = new HashMap<String, SolrDoc>();
@@ -170,6 +172,39 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
 	}
 	
 	/**
+	 * Gets a single solr document that is at the top of the version chain for the given seriesId
+	 * @param seriesId - the target object's seriesId
+	 * @return the SolrDoc
+	 * @throws MalformedURLException
+	 * @throws UnsupportedType
+	 * @throws NotFound
+	 * @throws SolrServerException
+	 * @throws ParserConfigurationException
+	 * @throws IOException
+	 * @throws SAXException
+	 */
+	public static SolrDoc getDocumentBySeriesId(String seriesId) throws MalformedURLException, 
+	            UnsupportedType, NotFound, SolrServerException, ParserConfigurationException, IOException, SAXException {
+	    
+		//Contruct a query to search for the most recent SolrDoc with the given seriesId
+		String query = "q=" + SolrElementField.FIELD_SERIES_ID + ":\"" + seriesId + "\" AND -obsoletedBy:*";
+		
+		//Ignore archived objects for this query
+	    boolean ignoreArchivedObjects = true;
+	    
+	    //Get the SolrDoc by querying for it
+	    List<SolrDoc> list = getDocumentsByQuery(query, ignoreArchivedObjects);
+	    	    
+	    //If query results were found, get the first one (only one result should be found anyway)
+	    SolrDoc doc = null;
+	    if(list != null && !list.isEmpty()) {
+	        doc = list.get(0);
+	    }
+	    
+	    return doc;
+	}
+	
+	/**
 	 * Get a list of solr documents which's resourcemap field matches the given value.
 	 * @param resourceMapId - the target resource map id
 	 * @return the list of solr document 
@@ -184,8 +219,8 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
 	public static List<SolrDoc> getDocumentsByResourceMap(String resourceMapId) throws MalformedURLException, 
 	            UnsupportedType, NotFound, SolrServerException, ParserConfigurationException, IOException, SAXException {
 	    String query = QUERY2 + "\"" + resourceMapId + "\"";
-	    boolean ignoreArchivedObjecst = false;
-	    return getDocumentsByQuery(query, ignoreArchivedObjecst);
+	    boolean ignoreArchivedObjects = false;
+	    return getDocumentsByQuery(query, ignoreArchivedObjects);
 	}
 	
 	/**

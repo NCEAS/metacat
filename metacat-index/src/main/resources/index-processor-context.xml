@@ -41,7 +41,10 @@
     <import resource="application-context-isotc211-pangaea.xml" />
     
     <import resource="application-context-prov-base.xml" />
-    <import resource="application-context-provone20150115.xml" />
+
+    <import resource="application-context-projects.xml" />
+    
+    <import resource="application-context-rdfxml.xml" />
     
     <import resource="application-context-project-beta1.xml" />
     
@@ -113,7 +116,7 @@
        <ref bean="fgdcEsri80Subprocessor" />
        <ref bean="dryad30Subprocessor" />
        <ref bean="dryad31Subprocessor" />
-       <ref bean="prov20150115RdfXmlSubprocessor" />
+       <ref bean="rdfXMLSubprocessor" />
        <ref bean="annotatorSubprocessor" />
        <ref bean="dublinCoreExtendedSubprocessor" />
        <ref bean="isotc211Subprocessor" />
