@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.index.annotation;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -30,6 +31,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.ContextConfiguration;
 import edu.ucsb.nceas.metacat.index.SolrIndex;
 import edu.ucsb.nceas.metacat.index.SolrIndexIT;
+
 public class OntologyModelServiceTest {
 
     @Before
@@ -50,10 +52,11 @@ public class OntologyModelServiceTest {
     public void testOntologyModelService() throws Exception {
         OntologyModelService service = OntologyModelService.getInstance();
 
+        System.out.println("FOOBAR: " + service.getClass().getName());
         List<ISolrDataField> fieldList = service.getFieldList();
-        assertTrue(fieldList.size() == 1);
+        assertEquals(1, fieldList.size());
 
         Map<String, String> altEntries = service.getAltEntryList();
-        assertTrue(altEntries.size() == 16);
+        assertEquals(16, altEntries.size());
     }
 }

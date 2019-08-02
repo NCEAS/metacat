@@ -38,7 +38,7 @@
 		<constructor-arg>
 				<map key-type="java.lang.String" value-type="java.lang.String">
 					<entry key="http://purl.dataone.org/ontologies/observation/d1-ECSO.owl" value="file:src/main/resources/ontologies/ECSO.owl" />
-					<entry key="http://purl.dataone.org/resources/ontologies/provenance/ProvONE/v1/owl/provone.owl" value="file:src/main/resources/ontologies/provone.owl" />
+					<entry key="http://purl.dataone.org/ontologies/provenance/ProvONE/v1/owl/provone.owl" value="file:src/main/resources/ontologies/provone.owl" />
 					<entry key="http://purl.obolibrary.org/obo/envo.owl" value="file:src/main/resources/ontologies/envo.owl" />
 					<entry key="http://ecoinformatics.org/oboe/oboe.1.0/oboe-owl.owl" value="file:src/main/resources/ontologies/oboe.owl" />
 					<entry key="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl" value="file:src/main/resources/ontologies/oboe-core.owl" />
