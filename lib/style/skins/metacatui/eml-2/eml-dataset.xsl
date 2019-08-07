@@ -35,7 +35,7 @@
   <xsl:output method="html" encoding="UTF-8"
     doctype-public="-//W3C//DTD XHTML 1.0 Transitional//EN"
     doctype-system="http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"
-    indent="yes" />  
+    indent="yes" />
 
   <xsl:template match="dataset" mode="dataset">
       <xsl:choose>
@@ -52,14 +52,14 @@
       </xsl:choose>
 
   </xsl:template>
-  
+
   <xsl:template name="datasetmixed">
-	
+
      <!-- citation -->
 	<xsl:for-each select=".">
 		<xsl:call-template name="datasetcitation" />
-    </xsl:for-each>		
-     
+    </xsl:for-each>
+
      <h4>General</h4>
              <!-- put in the title -->
              <xsl:if test="./title">
@@ -124,7 +124,7 @@
 					<div class="control-group">
 						<label class="control-label">
 							<xsl:text>Keywords</xsl:text>
-						</label>	
+						</label>
 						<div class="controls controls-well">
 							<xsl:for-each select="keywordSet">
 								<xsl:call-template name="resourcekeywordSet" >
@@ -133,11 +133,11 @@
 								</xsl:call-template>
 							</xsl:for-each>
 						</div>
-					</div>	
+					</div>
 				</div>
              </xsl:if>
-             
-             
+
+
 		     <!-- add in additionalInfo -->
 		     <div class="control-group">
 		         <xsl:if test="additionalInfo">
@@ -178,18 +178,18 @@
                  </xsl:call-template>
                </xsl:for-each>
              </xsl:if>
-             
-         
-         
+
+
+
            <!-- create a second easy access table listing the data entities -->
            <xsl:if test="dataTable|spatialRaster|spatialVector|storedProcedure|view|otherEntity">
 			<xsl:if test="$withEntityLinks='1' or $displaymodule = 'printall'">
 	             <xsl:call-template name="datasetentity"/>
 			</xsl:if>
            </xsl:if>
-           
 
-     
+
+
      <h4>People and Associated Parties</h4>
 
        <!-- add in the creators -->
@@ -200,13 +200,13 @@
          	</label>
          	<div class="controls controls-well">
 		         <xsl:for-each select="creator">
-		         
+
 		         	<xsl:variable name="absolutePath" >
 			         	<xsl:for-each select="ancestor-or-self::*">
-			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:text>/</xsl:text>
 			         		<xsl:value-of select="local-name()" />
 			         	</xsl:for-each>
-			         </xsl:variable>	
+			         </xsl:variable>
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<!--
@@ -215,12 +215,12 @@
 			         		<xsl:attribute name="type">party</xsl:attribute>
 			         		PARTY
 			         	</div>
-			         	-->	
+			         	-->
 		               <xsl:call-template name="party">
 		                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 		                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
 		               </xsl:call-template>
-		         	</div>      
+		         	</div>
 		         </xsl:for-each>
          	</div>
          </div>
@@ -234,10 +234,10 @@
 	         	<xsl:for-each select="contact">
 	         		<xsl:variable name="absolutePath" >
 			         	<xsl:for-each select="ancestor-or-self::*">
-			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:text>/</xsl:text>
 			         		<xsl:value-of select="local-name()" />
 			         	</xsl:for-each>
-			         </xsl:variable>	
+			         </xsl:variable>
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<!--
@@ -252,9 +252,9 @@
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
 	               </xsl:call-template>
 	               </div>
-		             
+
 	         	</xsl:for-each>
-	         </div>	
+	         </div>
          </div>
        </xsl:if>
 
@@ -266,10 +266,10 @@
 				<xsl:for-each select="associatedParty">
 					<xsl:variable name="absolutePath" >
 			         	<xsl:for-each select="ancestor-or-self::*">
-			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:text>/</xsl:text>
 			         		<xsl:value-of select="local-name()" />
 			         	</xsl:for-each>
-			         </xsl:variable>	
+			         </xsl:variable>
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<!--
@@ -283,11 +283,11 @@
 						<xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 						<xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
 					</xsl:call-template>
-					</div>	
+					</div>
 		         </xsl:for-each>
-	         </div>	
+	         </div>
          </div>
-		         
+
        </xsl:if>
 
        <!-- add in the metadataProviders using a two column table -->
@@ -298,10 +298,10 @@
 				<xsl:for-each select="metadataProvider">
 					<xsl:variable name="absolutePath" >
 			         	<xsl:for-each select="ancestor-or-self::*">
-			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:text>/</xsl:text>
 			         		<xsl:value-of select="local-name()" />
 			         	</xsl:for-each>
-			         </xsl:variable>	
+			         </xsl:variable>
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<!--
@@ -315,10 +315,10 @@
 	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
 	               </xsl:call-template>
-					</div>	
+					</div>
 				</xsl:for-each>
 		   </div>
-		</div>      
+		</div>
        </xsl:if>
 
        <!-- add in the publishers using a two column table -->
@@ -329,10 +329,10 @@
 		         <xsl:for-each select="publisher">
 		         	<xsl:variable name="absolutePath" >
 			         	<xsl:for-each select="ancestor-or-self::*">
-			         		<xsl:text>/</xsl:text>			         	
+			         		<xsl:text>/</xsl:text>
 			         		<xsl:value-of select="local-name()" />
 			         	</xsl:for-each>
-			         </xsl:variable>	
+			         </xsl:variable>
 					<xsl:variable name="index" select="position()" />
 		         	<div>
 		         		<!--
@@ -346,7 +346,7 @@
 	                 <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
 	                 <xsl:with-param name="partysecondColStyle" select="$secondColStyle"/>
 	               </xsl:call-template>
-					</div>		
+					</div>
 		         </xsl:for-each>
 	         </div>
          </div>
@@ -354,9 +354,9 @@
 
      <!-- add in the coverage info -->
      <!--  <h4>Context</h4> -->
-     
+
      <!-- add in the geographic coverage info -->
-     <div class="row-fluid">  
+     <div class="row-fluid">
            <xsl:if test="./coverage/geographicCoverage">
              <xsl:for-each select="./coverage/geographicCoverage[position()&lt;26]">
                <xsl:call-template name="geographicCoverage">
@@ -424,7 +424,7 @@
            </xsl:call-template>
          </xsl:if>
      </div>
-       
+
      <!-- add in the method info -->
 
      <div class="row-fluid">
@@ -463,7 +463,7 @@
            </xsl:for-each>
          </xsl:if>
      </div>
-     
+
   </xsl:template>
 
   <xsl:template name="datasetresource">
@@ -573,7 +573,7 @@
 		       </xsl:call-template>
 	    	</xsl:for-each>
 	    </div>
-	</div>    	
+	</div>
   </xsl:template>
 
   <xsl:template name="datasetpublisher">
@@ -630,17 +630,17 @@
       </div>
     </xsl:for-each>
   </xsl:template>
-  
+
 	<xsl:template name="datasetentity">
 		<xsl:if test="dataTable or spatialRaster or spatialVector or storedProcedure or view or otherEntity">
 			<h4>
 				<xsl:text>Data Table, Image, and Other Data Details</xsl:text>
 			</h4>
 		</xsl:if>
-		
-		
+
+
 		<!--  <xsl:call-template name="xml" /> -->
-			
+
 		<xsl:choose>
 			<xsl:when test="$displaymodule!='printall'">
 					<xsl:for-each select="dataTable | spatialRaster | spatialVector | storedProcedure | view | otherEntity">
@@ -675,8 +675,9 @@
 			<xsl:otherwise>
 				<xsl:for-each select="dataTable | spatialRaster | spatialVector | storedProcedure | view | otherEntity">
 					<xsl:variable name="currentNode" select="position()" />
+          <xsl:variable name="dataId" select="./@id" />
 						<div class="control-group entity">
-							<div class="controls controls-well entitydetails">
+							<div class="controls controls-well entitydetails" data-id="{$dataId}">
 								<label class="control-label">
 									<xsl:choose>
 										<xsl:when test="local-name()='dataTable'">
@@ -739,16 +740,16 @@
 					<label class="control-label">
 						<xsl:value-of select="$showtype"/>
 					</label>
-					<div class="controls controls-well"> 
-						<xsl:value-of select="./entityName"/> 
+					<div class="controls controls-well">
+						<xsl:value-of select="./entityName"/>
 						(<a>
 						<xsl:attribute name="href">
 						<xsl:value-of select="$tripleURI"/><xsl:value-of select="$docid"/>&amp;displaymodule=entity&amp;entitytype=<xsl:value-of select="$type"/>&amp;entityindex=<xsl:value-of select="$index"/></xsl:attribute>
-						View Metadata</a> 
+						View Metadata</a>
 						<xsl:text> </xsl:text>
 					    <xsl:choose>
-						    <xsl:when test="./physical/distribution/online/url"> 
-						    	| 
+						    <xsl:when test="./physical/distribution/online/url">
+						    	|
 						    	<xsl:variable name="URL" select="./physical/distribution/online/url"/>
 					            <a>
 									<xsl:choose>
