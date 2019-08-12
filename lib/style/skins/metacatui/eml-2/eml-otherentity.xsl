@@ -43,7 +43,6 @@
       <xsl:param name="otherentitysubHeaderStyle"/>
       <xsl:param name="docid"/>
       <xsl:param name="entityindex"/>
-      <table class="{$tabledefaultStyle}">
         <xsl:choose>
          <xsl:when test="references!=''">
           <xsl:variable name="ref_id" select="references"/>
@@ -66,7 +65,6 @@
             </xsl:call-template>
          </xsl:otherwise>
       </xsl:choose>
-      </table>
   </xsl:template>
 
   <xsl:template name="otherEntityCommon">
@@ -88,6 +86,23 @@
             </td>
        </tr>
     </xsl:for-each>
+
+    <xsl:if test="annotation">
+      <div class="control-group">
+        <label class="control-label">
+          Annotations
+          <xsl:call-template name="annotation-info-tooltip" />
+        </label>
+        <div class="controls controls-well annotations-container">
+          <xsl:for-each select="annotation">
+            <xsl:call-template name="annotation">
+              <xsl:with-param name="context" select="concat(local-name(..), ' &lt;strong&gt;', ../entityName, '&lt;/strong&gt;')" />
+            </xsl:call-template>
+          </xsl:for-each>
+        </div>
+      </div>
+    </xsl:if>
+
     <xsl:for-each select="alternateIdentifier">
        <xsl:call-template name="entityalternateIdentifier">
           <xsl:with-param name="entityfirstColStyle" select="$otherentityfirstColStyle"/>
@@ -175,7 +190,6 @@
       </xsl:call-template>
     </xsl:for-each>
     </xsl:if>
-    
   </xsl:template>
 
   <xsl:template name="otherEntityShowDistribution">

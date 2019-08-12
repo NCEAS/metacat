@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY cc "http://creativecommons.org/ns#" >
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY dc "http://purl.org/dc/elements/1.1#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY owl2xml "http://www.w3.org/2006/12/owl2-xml#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+    <!ENTITY oboe-core "http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#" >
+    <!ENTITY oboe-characteristics "http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#" >
+    <!ENTITY oboe-standards "http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#" >
+    <!ENTITY oboe-spatial "http://ecoinformatics.org/oboe/oboe.1.0/oboe-spatial.owl#" >
+    <!ENTITY oboe-temporal "http://ecoinformatics.org/oboe/oboe.1.0/oboe-temporal.owl#" >
+    <!ENTITY oboe-chemistry "http://ecoinformatics.org/oboe/oboe.1.0/oboe-chemistry.owl#" >
+    <!ENTITY oboe-taxa "http://ecoinformatics.org/oboe/oboe.1.0/oboe-taxa.owl#" >
+    <!ENTITY oboe-biology "http://ecoinformatics.org/oboe/oboe.1.0/oboe-biology.owl#" >
+    <!ENTITY oboe-ecology "http://ecoinformatics.org/oboe/oboe.1.0/oboe-ecology.owl#" >
+    <!ENTITY oboe-environment "http://ecoinformatics.org/oboe/oboe.1.0/oboe-environment.owl#" >
+    <!ENTITY oboe-anatomy "http://ecoinformatics.org/oboe/oboe.1.0/oboe-anatomy.owl#" >
+]>
+
+
+<rdf:RDF xmlns="http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl#"
+     xml:base="http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl"
+     xmlns:dc="http://purl.org/dc/elements/1.1#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl2xml="http://www.w3.org/2006/12/owl2-xml#"
+     xmlns:oboe-core="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#"
+     xmlns:oboe-characteristics="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#"
+     xmlns:oboe-standards="http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#"
+     xmlns:oboe-spatial="http://ecoinformatics.org/oboe/oboe.1.0/oboe-spatial.owl#"
+     xmlns:oboe-temporal="http://ecoinformatics.org/oboe/oboe.1.0/oboe-temporal.owl#"
+     xmlns:oboe-chemistry="http://ecoinformatics.org/oboe/oboe.1.0/oboe-chemistry.owl#"
+     xmlns:oboe-taxa="http://ecoinformatics.org/oboe/oboe.1.0/oboe-taxa.owl#"
+     xmlns:oboe-biology="http://ecoinformatics.org/oboe/oboe.1.0/oboe-biology.owl#"
+     xmlns:oboe-ecology="http://ecoinformatics.org/oboe/oboe.1.0/oboe-ecology.owl#"
+     xmlns:oboe-environment="http://ecoinformatics.org/oboe/oboe.1.0/oboe-environment.owl#"
+     xmlns:oboe-anatomy="http://ecoinformatics.org/oboe/oboe.1.0/oboe-anatomy.owl#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:cc="http://creativecommons.org/ns#">
+    <owl:Ontology rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl">
+        <rdfs:label>oboe</rdfs:label>
+        <owl:versionInfo>Version 1.0</owl:versionInfo>
+        <rdfs:comment>Copyright (c) 2006-2011 The Regents of the University of California.  All rights reserved. This work is licensed under the Creative Commons Attribution 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.</rdfs:comment>
+        <rdfs:comment>This ontology contains general terms that are common across OBOE extensions.  It extends the OBOE Core model by importing ontologies specific to measurement characteristics, measurement standards, spatial entities, temporal entities, biological taxa, and anatomical entities.</rdfs:comment>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-spatial.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-temporal.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-taxa.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-biology.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-ecology.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-environment.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-chemistry.owl"/>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-anatomy.owl"/>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Datatypes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Object Properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Data properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.2.3.22702) http://owlapi.sourceforge.net -->
+

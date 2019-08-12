@@ -49,6 +49,7 @@
   <xsl:import href="eml-project.xsl"/>
   <xsl:import href="eml-protocol.xsl"/>
   <xsl:import href="eml-resource.xsl"/>
+  <xsl:import href="eml-semantics.xsl"/>
   <xsl:import href="eml-settings.xsl"/>
   <xsl:import href="eml-software.xsl"/>
   <xsl:import href="eml-spatialraster.xsl"/>
@@ -78,6 +79,23 @@
      <xsl:for-each select="access">
 		<xsl:call-template name="topaccess"/>
 	 </xsl:for-each>
+    <xsl:if test="annotations">
+      <div class="control-group">
+        <label class="control-label">
+          Annotations
+          <xsl:call-template name="annotation-info-tooltip" />
+        </label>
+        <div class="controls controls-well annotations-container">
+          <xsl:for-each select="annotations/annotation">
+            <xsl:call-template name="annotation">
+               <xsl:with-param name="context"><xsl:value-of select="concat('Package &lt;strong&gt;', //@packageId, '&lt;/strong&gt;')" /></xsl:with-param>
+            </xsl:call-template>
+          </xsl:for-each>
+        </div>
+      </div>
+    </xsl:if>
+
+
      <!-- Additional metadata-->
      <xsl:choose>
        <xsl:when test="$displaymodule='additionalmetadata' or $displaymodule='printall'">

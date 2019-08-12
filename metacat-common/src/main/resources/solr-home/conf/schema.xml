@@ -320,8 +320,8 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="gcmdKeyword" 		type="text" 	indexed="true" stored="true" multiValued="true"/>
 
         <!-- these are ornl daac fields, may not be populated for nbii, but are required to be here for indexing purpose-->
-        <field name="project" 			type="string" 	indexed="true" stored="true"/>
-        <field name="projectText" 		type="text" 	indexed="true" stored="false"/>
+        <field name="project" 			type="string" 	indexed="true" stored="true" multiValued="true" />
+        <field name="projectText" 		type="text" 	indexed="true" stored="false" multiValued="true" />
 
         <field name="site" 				type="string" 	indexed="true" stored="true" multiValued="true"/>
         <field name="siteText" 			type="text" 	indexed="true" stored="false" multiValued="true"/>
@@ -388,6 +388,15 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="serviceEndpoint"   type="string"   indexed="true"  stored="true" multiValued="true" />
         <field name="serviceInput"      type="string"   indexed="true"  stored="true" multiValued="true" />
         <field name="serviceOutput"     type="string"   indexed="true"  stored="true" multiValued="true" />
+
+
+		<!-- Funding metadata -->
+        <field name="funding" 			type="string" 	indexed="true" stored="true" multiValued="true" />
+        <field name="fundingText" 		type="text" 	indexed="true" stored="false" multiValued="true" />
+        <field name="funderName"        type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="funderIdentifier"  type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardNumber"       type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
         
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
@@ -442,6 +451,7 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
     <copyField source="origin" dest="originatorText"/>
     
     <copyField source="project" dest="projectText"/>
+    <copyField source="funding" dest="fundingText"/>
     
     <copyField source="site" dest="siteText"/>
     <copyField source="parameter" dest="parameterText"/>

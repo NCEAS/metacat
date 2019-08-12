@@ -1,0 +1,625 @@
+<?xml version="1.0"?>
+
+
+<!DOCTYPE rdf:RDF [
+    <!ENTITY cc "http://creativecommons.org/ns#" >
+    <!ENTITY owl "http://www.w3.org/2002/07/owl#" >
+    <!ENTITY dc "http://purl.org/dc/elements/1.1#" >
+    <!ENTITY xsd "http://www.w3.org/2001/XMLSchema#" >
+    <!ENTITY owl2xml "http://www.w3.org/2006/12/owl2-xml#" >
+    <!ENTITY rdfs "http://www.w3.org/2000/01/rdf-schema#" >
+    <!ENTITY rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#" >
+    <!ENTITY oboe-core "http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#" >
+]>
+
+
+<rdf:RDF xmlns="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#"
+     xml:base="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl"
+     xmlns:dc="http://purl.org/dc/elements/1.1#"
+     xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#"
+     xmlns:owl2xml="http://www.w3.org/2006/12/owl2-xml#"
+     xmlns:oboe-core="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#"
+     xmlns:owl="http://www.w3.org/2002/07/owl#"
+     xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:cc="http://creativecommons.org/ns#">
+    <owl:Ontology rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl">
+        <rdfs:label>OBOE Characteristics</rdfs:label>
+        <rdfs:comment>This ontology contains general terms for characteristics that are measured either quantitatively or qualitatively, including physical characteristics, behavioral characteristics, and administrative characteristics.</rdfs:comment>
+        <rdfs:comment>Copyright (c) 2006-2011 The Regents of the University of California.  All rights reserved. This work is licensed under the Creative Commons Attribution 3.0 Unported License. To view a copy of this license, visit http://creativecommons.org/licenses/by/3.0/ or send a letter to Creative Commons, 444 Castro Street, Suite 900, Mountain View, California, 94041, USA.</rdfs:comment>
+        <owl:versionInfo>Version 1.0</owl:versionInfo>
+        <owl:imports rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl"/>
+    </owl:Ontology>
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Annotation properties
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Datatypes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- 
+    ///////////////////////////////////////////////////////////////////////////////////////
+    //
+    // Classes
+    //
+    ///////////////////////////////////////////////////////////////////////////////////////
+     -->
+
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AlgaeLifeStage -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AlgaeLifeStage">
+        <rdfs:label xml:lang="en">Algae Life Stage</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage"/>
+        <rdfs:comment xml:lang="en">The developmental stage of a given algae.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Amount -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Amount">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceConcentration -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceConcentration">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceMass -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceMass">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceWeight -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceWeight">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceWeightFlux -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#AmountOfSubstanceWeightFlux">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Angle -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Angle">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Area -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Area">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealMassDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealMassDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealMassDensityRate -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#ArealMassDensityRate">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Capacitance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Capacitance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#CatalyticActivity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#CatalyticActivity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Charge -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Charge">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Conductance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Conductance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>measures how easily electricity flows along a certain path through an electrical element. The SI derived unit for electrical conductance is the siemens</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Conductivity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Conductivity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>is a measure of a material&#39;s ability to conduct an electric current. Units are siemens per meter</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Count -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Count">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Current -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Current">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#CurrentDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#CurrentDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#DoseEquivalent -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#DoseEquivalent">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Energy -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Energy">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#FishLifeStage -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#FishLifeStage">
+        <rdfs:label xml:lang="en">Fish Life Stage</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage"/>
+        <rdfs:comment xml:lang="en">The developmental stage of a given fish.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Force -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Force">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Frequency -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Frequency">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Illuminance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Illuminance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Inductance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Inductance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Irradiance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Irradiance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>Irradiance, radiant emittance, and radiant exitance are radiometry terms for the power per unit area of electromagnetic radiation  at a surface. &quot;Irradiance&quot; is used when the electromagnetic radiation is incident on the surface. &quot;Radiant exitance&quot; or &quot;radiant emittance&quot; is used when the radiation is emerging from the surface. The SI units for all of these quantities are watts per square meter (W/m2) (wikipedia).  All of these quantities characterize the total amount of radiation present, at all frequencies. It is also common to consider each frequency in the spectrum separately. When this is done for radiation incident on a surface, it is called spectral irradiance, and has SI units W/m3, or commonly W·m−2·nm−1.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Length -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Length">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage">
+        <rdfs:label xml:lang="en">Life Stage</rdfs:label>
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment xml:lang="en">The developmental stage of life of a given organism.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Luminance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Luminance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>Luminance is a photometric measure of the luminous intensity per unit area of light  travelling in a given direction. It describes the amount of light that passes through or is emitted from a particular area, and falls within a given solid angle. The SI unit for luminance is candela per square metre (cd/m2).</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Luminosity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Luminosity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFieldStrength -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFieldStrength">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFlux -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFlux">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFluxDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MagneticFluxDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MammalLifeStage -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MammalLifeStage">
+        <rdfs:label xml:lang="en">Mammal Life Stage</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage"/>
+        <rdfs:comment xml:lang="en">The developmental stage of a given mammal.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Mass -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Mass">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassFlux -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassFlux">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassPerMass -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassPerMass">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassSpecificCount -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassSpecificCount">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassSpecificLength -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#MassSpecificLength">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Molality -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Molality">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>Molality amount of substance of solute B in a solution divided by the mass of the solvent: Often favored because measurements of mass are more precise than measurements of volume.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#PhotonFluxDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#PhotonFluxDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>The number of photons striking an area per unit time.  This could be probably also be called a PhotonArealDensityRate.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#PlantLifeStage -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#PlantLifeStage">
+        <rdfs:label xml:lang="en">Plant Life Stage</rdfs:label>
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#LifeStage"/>
+        <rdfs:comment xml:lang="en">The developmental stage of a given plant.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Power -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Power">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Pressure -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Pressure">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Proportion -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Proportion">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Radiance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Radiance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+        <rdfs:comment>Radiance and spectral radiance are radiometric measures that describe the amount of light that passes through or is emitted from a particular area, and falls within a given solid angle in a specified direction. They are used to characterize both emission from diffuse sources and reflection from diffuse surfaces. The SI unit of radiance is watts per steradian per square metre (W·sr−1·m−2).</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#RadionucleotideActivity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#RadionucleotideActivity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Resistance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Resistance">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Resistivity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Resistivity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificArea -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificArea">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificEnergy -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificEnergy">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificVolume -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpecificVolume">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpectralIrradiance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpectralIrradiance">
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Irradiance"/>
+        <rdfs:comment>Irradiance, radiant emittance, and radiant exitance are radiometry terms for the power per unit area of electromagnetic radiation  at a surface. &quot;Irradiance&quot; is used when the electromagnetic radiation is incident on the surface. &quot;Radiant exitance&quot; or &quot;radiant emittance&quot; is used when the radiation is emerging from the surface. The SI units for all of these quantities are watts per square meter (W/m2) (wikipedia).  All of these quantities characterize the total amount of radiation present, at all frequencies. It is also common to consider each frequency in the spectrum separately. When this is done for radiation incident on a surface, it is called spectral irradiance, and has SI units W/m3, or commonly W·m−2·nm−1.</rdfs:comment>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpectralRadiance -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#SpectralRadiance">
+        <rdfs:subClassOf rdf:resource="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Radiance"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Speed -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Speed">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Temperature -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Temperature">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Time -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Time">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Transmissivity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Transmissivity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Volume -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#Volume">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumePerVolume -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumePerVolume">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricArea -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricArea">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricDensity -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricDensity">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricMassDensityRate -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricMassDensityRate">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricRate -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#VolumetricRate">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+    
+
+
+    <!-- http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#WaveNumber -->
+
+    <owl:Class rdf:about="http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#WaveNumber">
+        <rdfs:subClassOf rdf:resource="&oboe-core;PhysicalCharacteristic"/>
+    </owl:Class>
+</rdf:RDF>
+
+
+
+<!-- Generated by the OWL API (version 3.2.3.1824) http://owlapi.sourceforge.net -->
+

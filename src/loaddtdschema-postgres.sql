@@ -105,6 +105,8 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@eml2_1_1namespace@', '/schema/eml-2.1.1/eml.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', '@eml2_2_0namespace@', '/schema/eml-2.2.0/eml.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ecoinformatics.org/registryentry-1.0.0', '/schema/RegistryService/RegistryEntryType.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
