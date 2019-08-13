@@ -438,19 +438,25 @@
          </xsl:if>
      </div>
 
-     <h4>Data Set Usage Rights</h4>
 
        <!-- add in the intellectiual rights info -->
-     <div class="row-fluid">
-         <xsl:if test="intellectualRights">
-           <xsl:for-each select="intellectualRights">
-             <xsl:call-template name="resourceintellectualRights">
-               <xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
-               <xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
-             </xsl:call-template>
-           </xsl:for-each>
-         </xsl:if>
-     </div>
+		 <xsl:if test="intellectualRights or licensed">
+			<h4>Data Set Usage Rights</h4>
+			<div class="row-fluid">
+				<xsl:for-each select="licensed">
+					<xsl:call-template name="resourceLicensed">
+						<xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
+						<xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
+					</xsl:call-template>
+				</xsl:for-each>
+				<xsl:for-each select="intellectualRights">
+					<xsl:call-template name="resourceintellectualRights">
+						<xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
+						<xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
+					</xsl:call-template>
+				</xsl:for-each>
+			</div>
+		 </xsl:if>
 
        <!-- add in the access control info -->
      <div class="row-fluid">
@@ -463,7 +469,15 @@
            </xsl:for-each>
          </xsl:if>
      </div>
-     
+
+		<xsl:if test="annotation">
+			<h4>Annotations</h4>
+			<div class="row fluid">
+			<xsl:call-template name="emlannotationtable">
+					<xsl:with-param name="annotations" select="annotation" />
+				</xsl:call-template>
+			</div>
+		</xsl:if>
   </xsl:template>
 
   <xsl:template name="datasetresource">

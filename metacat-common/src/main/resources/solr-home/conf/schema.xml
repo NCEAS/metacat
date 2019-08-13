@@ -1,11 +1,11 @@
 <?xml version="1.0" ?>
-<!-- 
-THE OFFICIAL DataONE Index Solr Schema definition file.  
+<!--
+THE OFFICIAL DataONE Index Solr Schema definition file.
 This schema is copied into the dataone-cn-index buildout for deployment on cn nodes.
 
 The Solr schema file. This file should be named "schema.xml" and
  should be in the conf directory under the solr home
- (i.e. ./solr/conf/schema.xml by default) 
+ (i.e. ./solr/conf/schema.xml by default)
  or located where the classloader for the Solr webapp can find it.
 
  For more information, on how to customize this file, please see...
@@ -88,7 +88,7 @@ lexicographic ordering isn't equal to the numeric ordering) -->
                 <filter class="solr.StopFilterFactory"/>
                 <filter class="solr.EnglishPorterFilterFactory"/>
             </analyzer>
-        </fieldtype> 
+        </fieldtype>
 -->
         <!-- One could also specify an existing Analyzer implementation in Java
              via the class attribute on the analyzer element:
@@ -107,12 +107,12 @@ lexicographic ordering isn't equal to the numeric ordering) -->
         <fieldtype name="text" class="solr.TextField" positionIncrementGap="100">
             <analyzer type="index">
           		<tokenizer class="solr.WhitespaceTokenizerFactory"/>
-                <filter class="solr.WordDelimiterFilterFactory" 
+                <filter class="solr.WordDelimiterFilterFactory"
                 	generateWordParts="1"
                 	catenateWords="1"
                 	generateNumberParts="1"
                 	splitOnNumerics="0"/>
-                
+
                 <filter class="solr.LowerCaseFilterFactory"/>
                 <filter class="solr.StopFilterFactory" />
                 <filter class="solr.PorterStemFilterFactory" />
@@ -120,13 +120,13 @@ lexicographic ordering isn't equal to the numeric ordering) -->
             </analyzer>
             <analyzer type="query">
                 <tokenizer class="solr.WhitespaceTokenizerFactory"/>
-                
-                <filter class="solr.WordDelimiterFilterFactory" 
+
+                <filter class="solr.WordDelimiterFilterFactory"
                 	generateWordParts="1"
                 	catenateWords="0"
                 	generateNumberParts="1"
                 	splitOnNumerics="0"/>
-                
+
                 <filter class="solr.LowerCaseFilterFactory"/>
                 <filter class="solr.StopFilterFactory"/>
                 <filter class="solr.PorterStemFilterFactory" />
@@ -135,12 +135,12 @@ lexicographic ordering isn't equal to the numeric ordering) -->
 
         <fieldtype name="text_no_token" class="solr.TextField" positionIncrementGap="100">
             <analyzer type="index">
-                <tokenizer class="solr.WhitespaceTokenizerFactory"/>    
+                <tokenizer class="solr.WhitespaceTokenizerFactory"/>
                 <filter class="solr.LowerCaseFilterFactory"/>
                 <filter class="solr.StopFilterFactory" />
             </analyzer>
             <analyzer type="query">
-                <tokenizer class="solr.WhitespaceTokenizerFactory"/>                
+                <tokenizer class="solr.WhitespaceTokenizerFactory"/>
                 <filter class="solr.LowerCaseFilterFactory"/>
                 <filter class="solr.StopFilterFactory"/>
             </analyzer>
@@ -152,7 +152,7 @@ lexicographic ordering isn't equal to the numeric ordering) -->
                 <tokenizer class="solr.WhitespaceTokenizerFactory"/>
                 in this example, we will only use synonyms at query time
                 <filter class="solr.SynonymFilterFactory" synonyms="index_synonyms.txt" ignoreCase="true" expand="false"/>
-               
+
                 <filter class="solr.StopFilterFactory" ignoreCase="true"/>
                 <filter class="solr.WordDelimiterFilterFactory" generateWordParts="1" generateNumberParts="1"
                         catenateWords="1" catenateNumbers="1" catenateAll="0"/>
@@ -183,7 +183,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
                 <filter class="solr.LowerCaseFilterFactory"/>
                 <filter class="solr.EnglishPorterFilterFactory" protected="protwords.txt"/>
             </analyzer>
-        </fieldtype> 
+        </fieldtype>
 
 		<fieldType name="alphaOnlySort" class="solr.TextField" sortMissingLast="true">
 			<analyzer>
@@ -193,7 +193,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 				<filter class="solr.PatternReplaceFilterFactory" pattern="([^a-z])" replacement="" replace="all"/>
 			</analyzer>
 		</fieldType>
-		
+
     </types>
 
 
@@ -248,7 +248,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="writePermission"   type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="changePermission"  type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="isPublic"          type="boolean"  indexed="true" stored="true" />
-        
+
         <!-- Science metadata properties -->
 
         <field name="author"				type="string"			multiValued="false"	indexed="true"	stored="true" />
@@ -256,9 +256,9 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="authorGivenName"		type="string" 			multiValued="false"	indexed="true"	stored="true" />
         <field name="authorSurNameSort"		type="alphaOnlySort"	multiValued="false"	indexed="true"	stored="true" />
         <field name="authorGivenNameSort"	type="alphaOnlySort"	multiValued="false"	indexed="true"	stored="true" />
-        
+
         <field name="authorLastName"	type="string"	multiValued="true"	indexed="true" stored="true" />
-        
+
         <field name="abstract"			type="text"		multiValued="false"	indexed="true" stored="true" />
         <field name="keywords"                 type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="keyConcept"               type="string"    multiValued="true" indexed="true" stored="true" />
@@ -269,7 +269,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="namedLocation"            type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="beginDate"                type="date"      multiValued="false" indexed="true" stored="true" />
         <field name="endDate"                  type="date"      multiValued="false" indexed="true" stored="true" />
-        
+
         <field name="title"                    type="text"    multiValued="false" indexed="true" stored="true" />
         <field name="scientificName"           type="string"    multiValued="true" indexed="true" stored="true" />
         <field name="relatedOrganizations"     type="string"    multiValued="true" indexed="true" stored="true" />
@@ -306,7 +306,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 		<field name="attributeDescription" 	type="text"		indexed="true"	stored="true"	multiValued="true" />
 		<field name="attributeUnit" 		type="string"	indexed="true"	stored="true"	multiValued="true" />
 		<field name="attribute"				type="text"		indexed="true"	stored="true"	multiValued="true" />
-        
+
         <field name="webUrl" 			type="string" 	indexed="false" stored="true" multiValued="true"/>
 
         <field name="contactOrganization" 		type="string" indexed="true" stored="true" multiValued="true"/>
@@ -322,8 +322,8 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="gcmdKeyword" 		type="text" 	indexed="true" stored="true" multiValued="true"/>
 
         <!-- these are ornl daac fields, may not be populated for nbii, but are required to be here for indexing purpose-->
-        <field name="project" 			type="string" 	indexed="true" stored="true"/>
-        <field name="projectText" 		type="text" 	indexed="true" stored="false"/>
+        <field name="project" 			type="string" 	indexed="true" stored="true" multiValued="true" />
+        <field name="projectText" 		type="text" 	indexed="true" stored="false" multiValued="true" />
 
         <field name="site" 				type="string" 	indexed="true" stored="true" multiValued="true"/>
         <field name="siteText" 			type="text" 	indexed="true" stored="false" multiValued="true"/>
@@ -354,7 +354,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
    		<field name="geohash_7" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
    		<field name="geohash_8" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
    		<field name="geohash_9" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
-   		
+
         <!-- Provenance-based fields -->
         <field name="prov_wasDerivedFrom"         type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_wasGeneratedBy"         type="string" indexed="true" stored="true" multiValued="true" />
@@ -372,15 +372,15 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="prov_hasSources"             type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_hasDerivations"         type="string" indexed="true" stored="true" multiValued="true" />
         <field name="prov_instanceOfClass"        type="string" indexed="true" stored="true" multiValued="true" />
-        
-        
+
+
         <!-- semantic fields -->
         <field name="sem_annotation"        type="string" indexed="true" stored="true" multiValued="true" />
         <field name="sem_annotated_by"        type="string" indexed="true" stored="true" multiValued="true" />
         <field name="sem_annotates"        type="string" indexed="true" stored="true" multiValued="true" />
         <field name="sem_comment"        type="string" indexed="true" stored="true" multiValued="true" />
-        
-        
+
+
         <!-- member node service fields -->
         <field name="isService"         type="boolean"  indexed="true"  stored="true" multiValued="false" default="false" />
         <field name="serviceCoupling"   type="string"   indexed="true"  stored="true"   multiValued="false" default="false" />
@@ -391,16 +391,19 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
         <field name="serviceInput"      type="string"   indexed="true"  stored="true" multiValued="true" />
         <field name="serviceOutput"     type="string"   indexed="true"  stored="true" multiValued="true" />
 
-		<!--  EMl 2.2.0 AwardType fields -->
-		<field name="funderName" type="string" indexed="true" stored="true" multiValued="true" />
-		<field name="funderIdentifier" type="string" indexed="true" stored="true" multiValued="true" />
-		<field name="awardNumber" type="string" indexed="true" stored="true" multiValued="true" />
-		<field name="awardTitle" type="string" indexed="true" stored="true" multiValued="true" />
-			        
-        <!-- Project document fields -->
-        <field name="projectName" type="string" indexed="true" stored="true" multiValued="false" />
-        <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
-        
+
+		<!-- Funding metadata -->
+        <field name="funding" 			type="string" 	indexed="true" stored="true" multiValued="true" />
+        <field name="fundingText" 		type="text" 	indexed="true" stored="false" multiValued="true" />
+        <field name="funderName"        type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="funderIdentifier"  type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardNumber"       type="string" indexed="true" stored="true" multiValued="true" />
+		<field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
+
+    <!-- Project document fields -->
+    <field name="projectName" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
+
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
 will be used if the name matches any of the patterns.
@@ -417,7 +420,7 @@ both match, the first appearing in the schema will be used.  -->
         <dynamicField name="*_f" type="sfloat" indexed="true" stored="true"/>
         <dynamicField name="*_d" type="sdouble" indexed="true" stored="true"/>
         <dynamicField name="*_dt" type="date" indexed="true" stored="true"/>
-        
+
         <!-- allow multivalued dynamic fields as well -->
         <dynamicField name="*_im" type="sint" indexed="true" stored="true" multiValued="true"/>
         <dynamicField name="*_sm" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -427,7 +430,7 @@ both match, the first appearing in the schema will be used.  -->
         <dynamicField name="*_fm" type="sfloat" indexed="true" stored="true" multiValued="true"/>
         <dynamicField name="*_dm" type="sdouble" indexed="true" stored="true" multiValued="true"/>
         <dynamicField name="*_dtm" type="date" indexed="true" stored="true" multiValued="true"/>
-        
+
     </fields>
 
 <!-- ======================================================================= -->
@@ -452,9 +455,10 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
 
     <copyField source="origin" dest="originText"/>
     <copyField source="origin" dest="originatorText"/>
-    
+
     <copyField source="project" dest="projectText"/>
-    
+    <copyField source="funding" dest="fundingText"/>
+
     <copyField source="site" dest="siteText"/>
     <copyField source="parameter" dest="parameterText"/>
     <copyField source="sensor" dest="sensorText"/>
@@ -466,7 +470,7 @@ ways, or to add multiple fields to the same field for easier/faster searching.  
     <copyField source="pubDate" dest="datePublished"/>
     <copyField source="dateUploaded" dest="updateDate"/>
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
-  
+
 
     <!-- Similarity is the scoring routine for each document vs a query.
 A custom similarity may be specified here, but the default is fine

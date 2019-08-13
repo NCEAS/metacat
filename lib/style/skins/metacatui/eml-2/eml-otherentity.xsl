@@ -43,7 +43,6 @@
       <xsl:param name="otherentitysubHeaderStyle"/>
       <xsl:param name="docid"/>
       <xsl:param name="entityindex"/>
-      <table class="{$tabledefaultStyle}">
         <xsl:choose>
          <xsl:when test="references!=''">
           <xsl:variable name="ref_id" select="references"/>
@@ -66,7 +65,6 @@
             </xsl:call-template>
          </xsl:otherwise>
       </xsl:choose>
-      </table>
   </xsl:template>
 
   <xsl:template name="otherEntityCommon">
@@ -175,7 +173,17 @@
       </xsl:call-template>
     </xsl:for-each>
     </xsl:if>
-    
+
+    <xsl:if test="annotation">
+      <div class="control-group">
+        <label class="control-label">Annotations</label>
+        <div class="controls controls-well">
+          <xsl:call-template name="emlannotationtable">
+            <xsl:with-param name="annotations" select="annotation" />
+          </xsl:call-template>
+        </div>
+      </div>
+    </xsl:if>
   </xsl:template>
 
   <xsl:template name="otherEntityShowDistribution">

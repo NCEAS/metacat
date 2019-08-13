@@ -190,8 +190,38 @@
 	<bean id="eml.project" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="project" />
 		<constructor-arg name="xpath" value="//dataset/project/title/text()" />
-		<property name="multivalue" value="false" />
-	</bean>	
+		<property name="multivalue" value="true" />
+	</bean>
+
+	<bean id="eml.funding" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="funding" />
+		<constructor-arg name="xpath" value="//dataset/project/funding/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.funderName" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="funderName" />
+		<constructor-arg name="xpath" value="//dataset/project/award/funderName/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.funderIdentifier" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="funderIdentifier" />
+		<constructor-arg name="xpath" value="//dataset/project/award/funderIdentifier/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.awardNumber" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="awardNumber" />
+		<constructor-arg name="xpath" value="//dataset/project/award/awardNumber/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
+	
+	<bean id="eml.awardTitle" class="org.dataone.cn.indexer.parser.SolrField">
+		<constructor-arg name="name" value="awardTitle" />
+		<constructor-arg name="xpath" value="//dataset/project/award/awardTitle/text()" />
+		<property name="multivalue" value="true" />
+	</bean>
 
 	<bean id="eml.authorSurName" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="authorSurName" />

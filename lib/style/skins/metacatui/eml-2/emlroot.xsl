@@ -49,6 +49,7 @@
   <xsl:import href="eml-project.xsl"/>
   <xsl:import href="eml-protocol.xsl"/>
   <xsl:import href="eml-resource.xsl"/>
+  <xsl:import href="eml-semantics.xsl"/>
   <xsl:import href="eml-settings.xsl"/>
   <xsl:import href="eml-software.xsl"/>
   <xsl:import href="eml-spatialraster.xsl"/>
@@ -78,6 +79,11 @@
      <xsl:for-each select="access">
 		<xsl:call-template name="topaccess"/>
 	 </xsl:for-each>
+    <xsl:if test="annotations">
+      <xsl:call-template name="emlannotations">
+         <xsl:with-param name="annotations" select="annotations/annotation" />
+       </xsl:call-template>
+     </xsl:if>
      <!-- Additional metadata-->
      <xsl:choose>
        <xsl:when test="$displaymodule='additionalmetadata' or $displaymodule='printall'">

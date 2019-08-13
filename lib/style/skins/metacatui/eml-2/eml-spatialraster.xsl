@@ -305,7 +305,17 @@
       </xsl:call-template>
     </xsl:for-each>
     </xsl:if>
-    
+
+    <xsl:if test="annotation">
+      <div class="control-group">
+        <label class="control-label">Annotations</label>
+        <div class="controls controls-well">
+          <xsl:call-template name="emlannotationtable">
+            <xsl:with-param name="annotations" select="annotation" />
+          </xsl:call-template>
+        </div>
+      </div>
+    </xsl:if>
   </xsl:template>
 
   <!--****************************************************
