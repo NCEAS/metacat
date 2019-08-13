@@ -37,55 +37,40 @@
         doctype-system="http://www.w3.org/TR/html4/loose.dtd"
         indent="yes" />
 
-    <xsl:template name="emlannotations">
-        <h4>Annotations</h4>
-        <xsl:call-template name="emlannotationtable">
-            <xsl:with-param name="annotations" select="annotations/annotation" />
-        </xsl:call-template>
+    <xsl:template name="annotation">
+        <xsl:param name="context" />
+
+        <xsl:element name="div">
+            <xsl:attribute name="class">annotation</xsl:attribute>
+            <xsl:attribute name="data-html">true</xsl:attribute>
+            <xsl:attribute name="title"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
+            <xsl:attribute name="data-placement">bottom</xsl:attribute>
+            <xsl:attribute name="data-content"><xsl:value-of select="concat(normalize-space(./propertyURI/@label), ' ', normalize-space(./valueURI/@label)) " /></xsl:attribute>
+            <xsl:attribute name="data-context"><xsl:value-of select="$context" /></xsl:attribute>
+            <xsl:attribute name="data-property-label"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
+            <xsl:attribute name="data-property-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
+            <xsl:attribute name="data-value-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
+            <xsl:attribute name="data-value-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
+            <div class="annotation-property"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></div>
+            <div class="annotation-value"><xsl:value-of select="normalize-space(./valueURI/@label)" /></div>
+            <xsl:element name="div">
+                    <xsl:attribute name="class">annotation-findmore tooltip-this</xsl:attribute>
+                    <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
+                    <xsl:attribute name="data-placement">bottom</xsl:attribute>
+                    <xsl:attribute name="title"><xsl:value-of select="concat('Click to find more datasets with measurements of ', normalize-space(./valueURI/@label), '.')" /></xsl:attribute>
+                    <div><i class="icon-long-arrow-up"></i></div>
+                </xsl:element>
+        </xsl:element>
     </xsl:template>
 
-    <xsl:template name="emlannotationtag">
-        <div>
-            Annotation: <xsl:value-of select="./propertyURI" /> (<xsl:value-of select="./propertyURI/@label" />) <xsl:value-of select="./valueURI" /> (<xsl:value-of select="./valueURI/@label" />)
-        </div>
-    </xsl:template>
-
-    <!-- This uses an $annotations to render each annotation instead of relying on an XPath
-         so the template can easily support annotations grouped under an <annotations> parent
-         element and also annotations under another parent element (e.g., dataset) -->
-    <xsl:template name="emlannotationtable">
-        <xsl:param name="annotations" />
-        <div class="annotations-table">
-            <table class="table table-striped table-condensed">
-                <thead>
-                    <tr>
-                        <th>Property</th>
-                        <th>Value</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <xsl:for-each select="$annotations">
-                    <tr>
-                        <td>
-                            <xsl:element name="span">
-                                <xsl:attribute name="class">annotation</xsl:attribute>
-                                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
-                                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
-                                <xsl:value-of select="normalize-space(./propertyURI/@label)" /> (<xsl:value-of select="normalize-space(./propertyURI/text())" />)
-                            </xsl:element>
-                        </td>
-                        <td>
-                            <xsl:element name="span">
-                                <xsl:attribute name="class">annotation</xsl:attribute>
-                                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
-                                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
-                                <xsl:value-of select="normalize-space(./valueURI/@label)" /> (<xsl:value-of select="normalize-space(./valueURI/text())" />)
-                            </xsl:element>
-                        </td>
-                    </tr>
-                    </xsl:for-each>
-                </tbody>
-            </table>
-        </div>
+    <xsl:template name="annotation-info-tooltip">
+        <xsl:element name="span">
+            <xsl:attribute name="style">display: inline-block; width: 1em; text-align: center;</xsl:attribute>
+            <xsl:element name="i">
+                <xsl:attribute name="class">tooltip-this icon icon-info-sign</xsl:attribute>
+                <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
+                <xsl:attribute name="title">Annotations are rigorously-defined, expressive statements about portions of metadata. Each annotation represents a stand-alone, logical statement and uses terms from specific vocabularies that make it very clear what has been annotated. For more information about each annotation, click on the respective annotation to the right.</xsl:attribute>
+            </xsl:element>
+        </xsl:element>
     </xsl:template>
 </xsl:stylesheet>

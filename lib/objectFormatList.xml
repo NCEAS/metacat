@@ -52,7 +52,7 @@
     <formatName>Ecological Metadata Language, version 2.1.1</formatName>
   </objectFormat>
   <objectFormat>
-    <fmtid>eml://ecoinformatics.org/eml-2.2.0</fmtid>
+    <fmtid>https://eml.ecoinformatics.org/eml-2.2.0</fmtid>
     <formatName>Ecological Metadata Language, version 2.2.0</formatName>
   </objectFormat>
   <objectFormat>

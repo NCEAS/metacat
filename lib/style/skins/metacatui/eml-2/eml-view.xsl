@@ -88,6 +88,23 @@
             </td>
        </tr>
     </xsl:for-each>
+
+    <xsl:if test="annotation">
+      <div class="control-group">
+        <label class="control-label">
+          Annotations
+          <xsl:call-template name="annotation-info-tooltip" />
+        </label>
+        <div class="controls controls-well annotations-container">
+          <xsl:for-each select="annotation">
+            <xsl:call-template name="annotation">
+              <xsl:with-param name="context" select="concat(local-name(..), ' &lt;strong&gt;', ../entityName, '&lt;/strong&gt;')" />
+            </xsl:call-template>
+          </xsl:for-each>
+        </div>
+      </div>
+    </xsl:if>
+
     <xsl:for-each select="alternateIdentifier">
        <xsl:call-template name="entityalternateIdentifier">
           <xsl:with-param name="entityfirstColStyle" select="$viewfirstColStyle"/>
@@ -202,17 +219,6 @@
         </xsl:call-template>
       </td></tr>
     </xsl:for-each>
-
-    <xsl:if test="annotation">
-      <div class="control-group">
-        <label class="control-label">Annotations</label>
-        <div class="controls controls-well">
-          <xsl:call-template name="emlannotationtable">
-            <xsl:with-param name="annotations" select="annotation" />
-          </xsl:call-template>
-        </div>
-      </div>
-    </xsl:if>
   </xsl:template>
 
 

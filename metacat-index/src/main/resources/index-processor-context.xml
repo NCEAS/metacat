@@ -3,18 +3,18 @@
  xmlns:p="http://www.springframework.org/schema/p"
  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
  xmlns:context="http://www.springframework.org/schema/context"
- xsi:schemaLocation="http://www.springframework.org/schema/beans 
+ xsi:schemaLocation="http://www.springframework.org/schema/beans
  http://www.springframework.org/schema/beans/spring-beans.xsd
- http://www.springframework.org/schema/context  
+ http://www.springframework.org/schema/context
  http://www.springframework.org/schema/context/spring-context-3.0.xsd">
-    
+
     <import resource="application-context-eml-base.xml" />
     <import resource="application-context-eml200.xml" />
     <import resource="application-context-eml201.xml" />
     <import resource="application-context-eml210.xml" />
     <import resource="application-context-eml211.xml" />
     <import resource="application-context-eml220.xml" />
-    
+
     <import resource="application-context-fgdc-base.xml" />
     <import resource="application-context-fgdc-std-001-1998.xml" />
     <import resource="application-context-fgdc-std-0011-1999.xml" />
@@ -24,31 +24,34 @@
     <import resource="application-context-dryad-base.xml" />
     <import resource="application-context-dryad30.xml" />
     <import resource="application-context-dryad31.xml" />
-    
+
     <import resource="application-context-resource-map.xml" />
     <import resource="application-context-systemmeta200.xml" />
-    
-    <import resource="application-context-annotator.xml" />    
-    
-    <import resource="application-context-delete-subprocessors.xml" />    
-    
+
+    <import resource="application-context-annotator.xml" />
+
+    <import resource="application-context-delete-subprocessors.xml" />
+
     <import resource="application-context-dc-base.xml" />
     <import resource="application-context-dcx.xml" />
     <import resource="application-context-dc-oai.xml" />
-    
+
     <import resource="application-context-isotc211-base.xml" />
     <import resource="application-context-isotc211.xml" />
     <import resource="application-context-isotc211-noaa.xml" />
     <import resource="application-context-isotc211-pangaea.xml" />
-    
+
     <import resource="application-context-prov-base.xml" />
 
     <import resource="application-context-projects.xml" />
-    
+
     <import resource="application-context-rdfxml.xml" />
-    
+
     <import resource="application-context-project-beta1.xml" />
-    
+
+    <import resource="application-context-eml-annotation.xml" />
+    <import resource="application-context-ontology-model-service.xml" />
+
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
  <bean id="dateConverter" class="org.dataone.cn.indexer.convert.SolrDateConverter" />
@@ -59,39 +62,39 @@
   <constructor-arg value="public" />
  </bean>
  <bean id="formatIdToFormatTypeConverter" class="org.dataone.cn.indexer.convert.FormatIdToFormatTypeConverter" />
- 
+
  <bean id="geohashConverter_1" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="1"/>
  </bean>
- 
+
  <bean id="geohashConverter_2" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="2"/>
  </bean>
- 
+
   <bean id="geohashConverter_3" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="3"/>
  </bean>
- 
+
   <bean id="geohashConverter_4" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="4"/>
  </bean>
- 
+
   <bean id="geohashConverter_5" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="5"/>
  </bean>
- 
+
   <bean id="geohashConverter_6" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="6"/>
  </bean>
- 
+
   <bean id="geohashConverter_7" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="7"/>
  </bean>
- 
+
   <bean id="geohashConverter_8" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="8"/>
  </bean>
- 
+
   <bean id="geohashConverter_9" class="org.dataone.cn.indexer.convert.GeohashConverter">
  	<property name="length" value="9"/>
  </bean>
@@ -111,6 +114,7 @@
        <ref bean="eml210Subprocessor" />
        <ref bean="eml211Subprocessor" />
        <ref bean="eml220Subprocessor" />
+       <ref bean="emlAnnotationSubprocessor" />
        <ref bean="resourceMapSubprocessor" />
        <ref bean="fgdcstd0011998Subprocessor" />
        <ref bean="fgdcstd00111999Subprocessor" />
@@ -137,11 +141,11 @@
    </list>
   </constructor-arg>
  </bean>
- 
+
  <bean id="xmlNamespaceConfig" class="org.dataone.cn.indexer.XMLNamespaceConfig">
   <constructor-arg name="namespaceList">
    <list>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"
       value="http://ns.dataone.org/service/types/v2.0" />
@@ -169,7 +173,7 @@
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">
      <constructor-arg name="namespace"
-      value="eml://ecoinformatics.org/eml-2.2.0" />
+      value="https://eml.ecoinformatics.org/eml-2.2.0" />
      <constructor-arg name="prefix" value="eml220" />
     </bean>
     <bean class="org.dataone.cn.indexer.XMLNamespace">
@@ -189,72 +193,72 @@
      	<constructor-arg name="prefix" value="dwc" />
      	<constructor-arg name="namespace" value="http://rs.tdwg.org/dwc/terms/" />
     </bean>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
 		<constructor-arg name="prefix" value="foaf" />
 		<constructor-arg name="namespace" value="http://xmlns.com/foaf/0.1/" />
     </bean>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
 		<constructor-arg name="prefix" value="ore" />
      	<constructor-arg name="namespace" value="http://www.openarchives.org/ore/terms/" />
     </bean>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
 		<constructor-arg name="prefix" value="rdf" />
      	<constructor-arg name="namespace" value="http://www.w3.org/1999/02/22-rdf-syntax-ns#" />
     </bean>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="rdfs1" />
     	<constructor-arg name="namespace" value="http://www.w3.org/2001/01/rdf-schema#" />
     </bean>
-    
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="bibo" />
     	<constructor-arg name="namespace" value="http://purl.org/ontology/bibo/" />
     </bean>
-    
+
 	<bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="dryad" />
     	<constructor-arg name="namespace" value="http://purl.org/dryad/terms/" />
-    </bean>   
-    
+    </bean>
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
     	<constructor-arg name="prefix" value="xsi" />
     	<constructor-arg name="namespace" value="http://www.w3.org/2001/XMLSchema-instance" />
-    </bean>    
-    
+    </bean>
+
     <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="gmd" />
                 <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gmd" />
-     </bean> 
-     
+     </bean>
+
      <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="gco" />
                 <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gco" />
      </bean>
-            
+
      <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="gmx" />
                 <constructor-arg name="namespace" value="http://www.isotc211.org/2005/gmx" />
      </bean>
-        
+
      <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="gml" />
                 <constructor-arg name="namespace" value="http://www.opengis.net/gml/3.2" />
-     </bean> 
-     
+     </bean>
+
      <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="srv" />
                 <constructor-arg name="namespace" value="http://www.isotc211.org/2005/srv" />
-      </bean> 
-            
+      </bean>
+
        <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="xlink" />
                 <constructor-arg name="namespace" value="http://www.w3.org/1999/xlink" />
-       </bean> 
-    
+       </bean>
+
    </list>
   </constructor-arg>
  </bean>

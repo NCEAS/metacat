@@ -355,7 +355,7 @@
 		<property name="eml2_1_1namespace"
 			value="eml://ecoinformatics.org/eml-2.1.1" />
 		<property name="eml2_2_0namespace"
-			value="eml://ecoinformatics.org/eml-2.2.0" />
+			value="https://eml.ecoinformatics.org/eml-2.2.0" />
 		<property name="stmmlnamespace"
 			value="http://www.xml-cml.org/schema/stmml" />
 		<property name="stmml11namespace"

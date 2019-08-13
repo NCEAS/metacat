@@ -80,10 +80,22 @@
 		<xsl:call-template name="topaccess"/>
 	 </xsl:for-each>
     <xsl:if test="annotations">
-      <xsl:call-template name="emlannotations">
-         <xsl:with-param name="annotations" select="annotations/annotation" />
-       </xsl:call-template>
-     </xsl:if>
+      <div class="control-group">
+        <label class="control-label">
+          Annotations
+          <xsl:call-template name="annotation-info-tooltip" />
+        </label>
+        <div class="controls controls-well annotations-container">
+          <xsl:for-each select="annotations/annotation">
+            <xsl:call-template name="annotation">
+               <xsl:with-param name="context"><xsl:value-of select="concat('Package &lt;strong&gt;', //@packageId, '&lt;/strong&gt;')" /></xsl:with-param>
+            </xsl:call-template>
+          </xsl:for-each>
+        </div>
+      </div>
+    </xsl:if>
+
+
      <!-- Additional metadata-->
      <xsl:choose>
        <xsl:when test="$displaymodule='additionalmetadata' or $displaymodule='printall'">
