@@ -21,11 +21,11 @@ import edu.ucsb.nceas.metacat.common.MetacatCommonTestBase;
 public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     /**
      * Test get the solr version
-     * @throws SAXException 
-     * @throws IOException 
-     * @throws ParserConfigurationException 
-     * @throws NotFound 
-     * @throws UnsupportedType 
+     * @throws SAXException
+     * @throws IOException
+     * @throws ParserConfigurationException
+     * @throws NotFound
+     * @throws UnsupportedType
      */
     @Test
     public void testGetSolrSpecVersion() throws UnsupportedType, NotFound, ParserConfigurationException, IOException, SAXException {
@@ -34,23 +34,23 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         assertTrue(version != null);
         assertTrue("The version should be 7.3.0 rather than "+version, version.equals("7.3.0"));
     }
-    
-    
+
+
     /**
      * Test get get valid schema fields.
-     * @throws SAXException 
-     * @throws IOException 
-     * @throws ParserConfigurationException 
-     * @throws NotFound 
-     * @throws UnsupportedType 
+     * @throws SAXException
+     * @throws IOException
+     * @throws ParserConfigurationException
+     * @throws NotFound
+     * @throws UnsupportedType
      */
     @Test
     public void testgetIndexSchemaFields() throws Exception {
        Map<String, SchemaField> fields = SolrQueryServiceController.getInstance().getIndexSchemaFields();
        assertTrue(fields != null);
-       assertTrue("The number of index schema fields should be 146 rather than "+fields.size(), fields.size() == 146);
+       assertTrue("The number of index schema fields should be 145 rather than "+fields.size(), fields.size() == 151);
     }
-    
+
     /**
      * Test the query method
      */

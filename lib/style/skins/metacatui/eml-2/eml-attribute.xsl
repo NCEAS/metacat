@@ -72,37 +72,42 @@
    <xsl:param name="entitytype"/>
    <xsl:param name="entityindex"/>
 
-
+<div class="attributeList">
 	<div class="row-fluid">
 		<div class="span2">
 			<!-- render the side nav -->
-			<ul class="nav nav-list" id="attributeTabs">
-			  <li class="nav-header">Variables</li>
-				<xsl:for-each select="attribute">
-					<xsl:variable name="attributeindex" select="position()"/>
-					<li>
-						<xsl:if test="position() = 1">
-							<xsl:attribute name="class">active</xsl:attribute>
-						</xsl:if>
-						<a data-toggle="tab">
-							<xsl:attribute name="href">#entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
-						    <xsl:choose>
-						         <xsl:when test="references!=''">
-						          <xsl:variable name="ref_id" select="references"/>
-						          <xsl:variable name="references" select="$ids[@id=$ref_id]" />
-						          <xsl:for-each select="$references">
-						            <xsl:value-of select="attributeName"/>
-						          </xsl:for-each>
-						        </xsl:when>
-						        <xsl:otherwise>
-						          <xsl:value-of select="attributeName"/>
-						        </xsl:otherwise>
-							</xsl:choose>
-							
-						</a>
-					</li>
-				</xsl:for-each>
-			</ul>
+      <span class="nav-header">Variables</span>
+      <table class="attributeListTable">
+        <tbody>
+        <xsl:for-each select="attribute">
+          <xsl:variable name="attributeindex" select="position()"/>
+          <tr>
+            <td><xsl:if test="annotation"><i class="icon icon-ok-circle"></i></xsl:if></td>
+            <td>    
+              <xsl:if test="position() = 1">
+                <xsl:attribute name="class">active</xsl:attribute>
+              </xsl:if>
+              <a data-toggle="tab">
+                <xsl:attribute name="title"><xsl:value-of select="attributeName"/></xsl:attribute>
+                <xsl:attribute name="href">#entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
+                  <xsl:choose>
+                      <xsl:when test="references!=''">
+                        <xsl:variable name="ref_id" select="references"/>
+                        <xsl:variable name="references" select="$ids[@id=$ref_id]" />
+                        <xsl:for-each select="$references">
+                          <xsl:value-of select="attributeName"/>
+                        </xsl:for-each>
+                      </xsl:when>
+                      <xsl:otherwise>
+                        <xsl:value-of select="attributeName"/>
+                      </xsl:otherwise>
+                </xsl:choose>
+              </a>
+            </td>
+          </tr>
+        </xsl:for-each>
+        </tbody>
+      </table>
 		</div>	
 		
 		<div class="tab-content span10">
@@ -149,8 +154,24 @@
 		        </xsl:otherwise>
 		     </xsl:choose>
 		</div>
-	</div>	
-	
+	</div>
+
+  <xsl:if test="annotation">
+    <div class="control-group">
+      <label class="control-label">
+        Annotations
+        <xsl:call-template name="annotation-info-tooltip" />
+      </label>
+      <div class="controls controls-well annotations-container">
+        <xsl:for-each select="annotation">
+          <xsl:call-template name="annotation">
+            <xsl:with-param name="context" select="concat('Attribute &lt;strong&gt;', ../attributeName, '&lt;/strong&gt; in ', local-name(../../..), ' &lt;strong&gt;', ../../../entityName, '&lt;/strong&gt;')" />
+          </xsl:call-template>
+        </xsl:for-each>
+      </div>
+    </div>
+  </xsl:if>
+
 	<!--  Header for the section and annotation target -->
 	<div class="annotation-target">
 		<xsl:attribute name="id">sem_entity_<xsl:value-of select="$entityindex"/>_attribute_<xsl:value-of select="$attributeindex"/></xsl:attribute>
@@ -621,7 +642,6 @@
 		     </xsl:choose>
 	     </div>
      </div>
-     
      </div> <!-- end the attribute section -->
      
      </xsl:for-each>
@@ -629,7 +649,8 @@
   	</div>
   	
   </div>
-  
+</div>
+
  </xsl:template>
 
 

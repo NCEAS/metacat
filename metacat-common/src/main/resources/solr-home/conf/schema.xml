@@ -134,19 +134,21 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="formatId"    		type="string"   indexed="true" stored="true" multiValued="false"/>
 		<field name="formatType"		type="string"	indexed="true"	stored="true"	multiValued="false"/>
         <field name="size"            	type="tlong"     indexed="true" stored="true" multiValued="false"/>
-        <field name="checksum"        	type="string"   indexed="false" stored="true" multiValued="false"/>
-        <field name="checksumAlgorithm" type="string" indexed="false" stored="true"/>
+        <field name="checksum"        	type="string"   indexed="true" stored="true" multiValued="false"/>
+        <field name="archived"        type="boolean"  indexed="true" stored="true" multiValued="false"/>
+        <field name="checksumAlgorithm" type="string" indexed="true" stored="true"/>
         <field name="dateUploaded"    type="tdate"     indexed="true" stored="true" multiValued="false"/>
         <field name="dateModified"    type="tdate"     indexed="true" stored="true" multiValued="false"/>
         <field name="submitter"       type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="rightsHolder"    type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="authoritativeMN"       	type="string"   indexed="true" stored="true" multiValued="false"/>
-        <field name="replicationAllowed"     	type="boolean"  indexed="false" stored="true" multiValued="false"/>
-        <field name="numberReplicas"      		type="int"  indexed="false" stored="true" multiValued="false"/>
-        <field name="preferredReplicationMN"   	type="string"   indexed="false" stored="true" multiValued="true"/>
-        <field name="blockedReplicationMN"  	type="string"   indexed="false" stored="true" multiValued="true"/>
+        <field name="replicationAllowed"     	type="boolean"  indexed="true" stored="true" multiValued="false"/>
+        <field name="numberReplicas"      		type="int"  indexed="true" stored="true" multiValued="false"/>
+        <field name="preferredReplicationMN"   	type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="blockedReplicationMN"  	type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="replicaMN"      		type="string"   indexed="true" stored="true" multiValued="true"/>
-        <field name="replicaVerifiedDate" 	type="tdate"    indexed="false" stored="true" multiValued="true"/>
+				<field name="replicationStatus"     type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="replicaVerifiedDate" 	type="tdate"    indexed="true" stored="true" multiValued="true"/>
         <field name="datasource"       		type="string"  indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletes"       		type="string"   indexed="true" stored="true" multiValued="false"/>
         <field name="obsoletedBy"      		type="string"   indexed="true" stored="true" multiValued="false"/>
@@ -234,8 +236,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="gcmdKeyword" 		type="text_general" 	indexed="true" stored="true" multiValued="true"/>
 
         <!-- these are ornl daac fields, may not be populated for nbii, but are required to be here for indexing purpose-->
-        <field name="project" 			type="string" 	indexed="true" stored="true"/>
-        <field name="projectText" 		type="text_general" 	indexed="true" stored="false"/>
+        <field name="project" 			type="string" 	indexed="true" stored="true" multiValued="true"/>
+        <field name="projectText" 		type="text_general" 	indexed="true" stored="false" multiValued="true"/>
 
         <field name="site" 				type="string" 	indexed="true" stored="true" multiValued="true"/>
         <field name="siteText" 			type="text_general" 	indexed="true" stored="false" multiValued="true"/>
@@ -301,6 +303,14 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
 		<field name="serviceEndpoint"	type="string"	indexed="true"  stored="true" multiValued="true" />
 		<field name="serviceInput"		type="string"	indexed="true"  stored="true" multiValued="true" />
 		<field name="serviceOutput"		type="string"	indexed="true"  stored="true" multiValued="true" />
+
+		<!-- Funding metadata -->
+    <field name="funding"       type="string"   indexed="true" stored="true" multiValued="true" />
+    <field name="fundingText"     type="text_general"   indexed="true" stored="false" multiValued="true" />
+    <field name="funderName"        type="string" indexed="true" stored="true" multiValued="true" />
+    <field name="funderIdentifier"  type="string" indexed="true" stored="true" multiValued="true" />
+    <field name="awardNumber"       type="string" indexed="true" stored="true" multiValued="true" />
+    <field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
 		
    <!--
      Some fields such as popularity and manu_exact could be modified to
@@ -412,6 +422,7 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <copyField source="origin" dest="originatorText"/>
     
     <copyField source="project" dest="projectText"/>
+    <copyField source="funding" dest="fundingText"/>
     
     <copyField source="site" dest="siteText"/>
     <copyField source="parameter" dest="parameterText"/>

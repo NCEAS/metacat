@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.9.0Beta1 Release
+Version: 2.11.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,74 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.10.4:
+Bugs fixed in this release:
+* Publishing dataset with provenance loses all provenance relationships
+* Publish call fails after adding provenance information
+
+### Release Notes for 2.10.3:
+New features and bugs fixed in this release:
+* Update DOI registrations for EML objects with complete metadata
+* Can't update DOI metadata on the Metacat admin page if the doi is an SID
+* Make Solr field "replicationAllowed" to be searchable
+* Add an Metacat admin method to clear cached the style sheets
+* Add a DataONE method to display the size of the index queue
+* Not check if the new index pathes were added during the Metacat startup
+
+### Release Notes for 2.10.2:
+New features and bugs fixed in this release:
+* Allow POSTs to the query service
+* Make ant build auto-detect maven location
+* Upgrade the version of MetacatUI to 2.5.1
+* Indirect error messages (CONCURRENT_MAP_PUT) on malformed sysmeta update
+* Taxonomic rank fields in Solr index are case-sensitive
+
+### Release Notes for 2.10.1:
+New features and bugs fixed in this release:
+* Optimize the DataONE authorization process
+* Allow the node subject to read all Solr records
+* Improve the slow performance of the view service
+* Index the replicationStatus field
+* Failed to publish a private object
+* Disable the index of the event counts by default
+
+
+### Release Notes for 2.10.0:
+After installing this release, you need to issue the "reindexall" command since a new SOLR field has been added.
+New features and bugs fixed in this release:
+* Exclude EcoGrid on Metacat
+* Do not allow restrictive access control change to content with a DOI 
+* MN/CN.updateSystemMetadata doesn't check the field - authoritativeMemberNode
+* Integrate the fixed SeriesIdResolver class which gets SystemMetadata locally
+* EZID metadata registration doesn't seem to work with SIDs
+* Metacat white space pid filter overlooks some cases
+* Update DOI registrations for EML objects with complete metadata
+* Keep archived object solr index but they don't show up at the default search
+* D1NodeService read api methods / getPidForSid bypassing Hz lookup
+* Enable a blacklist configuration for IP addresses and subjects
+* Replace the statement of "System.out.print" by the Log statement on D1URLFilter and D1HttpRequest classes
+* Publish DOI includes old metadata PID in new resource map
+* Support format id - http://www.openarchives.org/OAI/2.0/oai_dc/
+* EML Attribute XSLT re-using anchors in such as way that they're not unique / changing attribute tabs doesn't for some entities
+* Switch ORCID icons in EML XSLTs to be inlined instead of reference to MetacatUI
+
+
+### Release Notes for 2.9.0:
+New features and bugs fixed in this release:
+* Specify internal calls to Metacat on localhost or internal domain name
+* Upgrade to the 2.0 API to access the ORCID service
+* Remove the duplicated authorization code on D1NodeService.create and CNodeService.create method
+* XMLSchemaService progressively builds massively long string by calling doRefresh
+* Simplify the configuration of the metacat.properties file when users run junit tests
+* Run MDQ suite on insert/update
+* MN.updateSystemmetadata shouldn't call CN.synchronize if the synchronize is off on the MN
+* Metacat is double-decoding incoming urls on the CNs
+* Upgrade the version of MetacatUI to 1.14.15
+* Fixed improperly formatted Alternate Data Access URLs
+* Fixed a bug causing ISO19115 documents to render with empty Attributes tables
+* Support the formatID : http://datacite.org/schema/kernel-3.0 and http://datacite.org/schema/kernel-3.1
+
 
 ### Release Notes for 2.8.7:
 Bugs fixed in this release:

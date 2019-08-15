@@ -680,6 +680,7 @@
     <lst name="defaults">
       <str name="echoParams">explicit</str>
       <int name="rows">10</int>
+			<str name="archived">-archived:true</str>
       <!-- Default search field
          <str name="df">text</str> 
         -->
@@ -705,6 +706,9 @@
          <str name="fq">inStock:true</str>
        </lst>
       -->
+			<lst name="appends">
+         <str name="fq">{!v=$archived}</str>
+      </lst>
     <!-- "invariants" are a way of letting the Solr maintainer lock down
          the options available to Solr clients.  Any params values
          specified here are used regardless of what values may be specified

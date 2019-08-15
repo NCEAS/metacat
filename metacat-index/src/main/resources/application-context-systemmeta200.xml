@@ -101,14 +101,14 @@
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/obsoletedBy/text()" />
 				</bean>
-				<!-- 
+				 
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="archived" />
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/archived/text()" />
 					<property name="defaultValue" value="false" />
 				</bean>
-				 -->				
+							
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="dateUploaded" />
 					<constructor-arg name="xpath"
@@ -137,6 +137,12 @@
 						value="/d200:systemMetadata/replica/replicaMemberNode/text()" />
 					<property name="multivalue" value="true" />
 				</bean>
+				<bean class="org.dataone.cn.indexer.parser.SolrField">
+                    <constructor-arg name="name" value="replicationStatus" />
+                    <constructor-arg name="xpath"
+                        value="/d200:systemMetadata/replica/replicationStatus/text()" />
+                    <property name="multivalue" value="true" />
+                </bean>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="replicaVerifiedDate" />
 					<constructor-arg name="xpath"

@@ -63,6 +63,7 @@
     <xsl:call-template name="projectpersonnel" />
     <xsl:call-template name="projectabstract" />
     <xsl:call-template name="projectfunding" />
+    <xsl:call-template name="projectaward" />
     <xsl:call-template name="projectstudyareadescription" />
     <xsl:call-template name="projectdesigndescription" />
     <xsl:call-template name="projectrelatedproject" />
@@ -75,7 +76,7 @@
 	   <div class="control-group">
 	     <label class="control-label projectTitle">Title:</label>
 	   	 <div class="controls controls-well">
-		   <xsl:value-of select="../title" />
+		   <xsl:value-of select="./text()" />
 	   	 </div>
 	   </div>
      </xsl:for-each>
@@ -90,13 +91,6 @@
 			<xsl:for-each select="personnel">
 
 				<xsl:call-template name="party" />
-
-				<xsl:for-each select="role">
-					<label class="control-label projectRole">Role:</label>
-					<div class="controls controls-well">
-						<xsl:value-of select="." />
-					</div>
-				</xsl:for-each>
 
 			</xsl:for-each>
 		</div>
@@ -124,7 +118,68 @@
     </xsl:for-each>
   </xsl:template>
 
-
+  <xsl:template name="projectaward">
+    <xsl:for-each select="./award">
+      <xsl:variable name="awardUrl" select="./awardUrl/text()" />
+      <div class="control-group">
+        <label class="control-label projectAward">Award:</label>
+        <div class="controls controls-well projectFundingValue">
+          <!-- funderName -->
+          <div class="row-fluid">
+            <div class="control-group">
+              <label class="control-label">Funder</label>
+              <div class="controls">
+                <xsl:value-of select="./funderName/text()" />
+              </div>
+            </div>
+          </div>
+          <!-- funderIdentifier -->
+          <xsl:for-each select="./funderIdentifier">
+            <xsl:variable name="funderIdentifier" select="./text()" />
+            <div class="row-fluid">
+              <div class="control-group">
+                <label class="control-label">Funder Identifier</label>
+                <div class="controls">
+                  <xsl:value-of select="$funderIdentifier" />
+                </div>
+              </div>
+            </div>
+          </xsl:for-each>
+          <!-- awardNumber -->
+          <xsl:if test="./awardNumber">
+            <div class="row-fluid">
+              <div class="control-group">
+                <label class="control-label">Number</label>
+                <div class="controls">
+                  <xsl:value-of select="./awardNumber/text()" />
+                </div>
+              </div>
+            </div>
+          </xsl:if>
+          <!-- title -->
+          <div class="row-fluid">
+            <div class="control-group">
+              <label class="control-label">Title</label>
+              <div class="controls">
+                <xsl:value-of select="./title/text()" />
+              </div>
+            </div>
+          </div>
+          <!-- awardUrl -->
+          <xsl:if test="./awardUrl">
+            <div class="row-fluid">
+              <div class="control-group">
+                <label class="control-label">URL</label>
+                <div class="controls">
+                  <xsl:value-of select="$awardUrl" />
+                </div>
+              </div>
+            </div>
+          </xsl:if>
+        </div>
+      </div>
+    </xsl:for-each>
+  </xsl:template>
 
    <xsl:template name="projectstudyareadescription">
        <xsl:for-each select="studyAreaDescription">

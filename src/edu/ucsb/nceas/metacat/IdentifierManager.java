@@ -802,7 +802,7 @@ public class IdentifierManager {
     /**
      * Determine if an identifier exists already, returning true if so.
      * NOTE: looks in the identifier and system metadata table for a match
-     * (in that order)
+     * (in that order)  Can return true for both PIDs and SIDs. 
      * 
      * @param guid the global identifier to look up
      * @return boolean true if the identifier exists
@@ -974,6 +974,57 @@ public class IdentifierManager {
         }
         
         return guid;
+    }
+    
+    /**
+     * Get the list of identifiers which system metadata matches the given format id and original member node id and guid or series id start with the scheme (doi for example).
+     * @param formatId  the format id of the identifier must match the given formatId. 
+     * @param nodeId  the original member node of the identifier must match the given nodeId. 
+     * @param scheme  the guid or series id must start with the given scheme (doi for exampe)
+     * @return the list of identifier string. An empty list will be returned if nothing was found.
+     */
+    public List<String> getGUIDs(String formatId, String nodeId, String scheme) {
+        List<String> guids = new ArrayList<String>();
+        String query = "select guid from systemmetadata where object_format = ? and origin_member_node = ? and ( guid like ? or series_id like ?)";
+        String guid = null;
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getGUIDs");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, formatId);
+            stmt.setString(2, nodeId);
+            stmt.setString(3, scheme + "%");
+            stmt.setString(4, scheme + "%");
+            ResultSet rs = stmt.executeQuery();
+            boolean found = rs.next();
+            while (found) {
+                guid = rs.getString(1);
+                guids.add(guid);
+                found = rs.next();
+            } 
+            if(rs != null) {
+                rs.close();
+            }
+        } catch (SQLException e) {
+            logMetacat.error("Error while looking up the guid: " 
+                    + e.getMessage());
+        } finally {
+            try {
+                if(stmt != null) {
+                    stmt.close();
+                }
+            } catch (Exception e) {
+                logMetacat.warn("Couldn't close the prepared statement since " + e.getMessage());
+            } finally {
+                // Return database connection to the pool
+                DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            }   
+        }
+        return guids;
     }
     
     /**
@@ -1672,8 +1723,9 @@ public class IdentifierManager {
      * @param accessPolicy
      * @throws McdbDocNotFoundException
      * @throws AccessException
+     * @throws InvalidSystemMetadata 
      */
-    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy) throws McdbDocNotFoundException, AccessException {
+    private void insertAccessPolicy(String guid, AccessPolicy accessPolicy) throws McdbDocNotFoundException, AccessException, InvalidSystemMetadata {
     	
     	// check for the existing permOrder so that we remain compatible with it (DataONE does not care)
         XMLAccessAccess accessController  = new XMLAccessAccess();
@@ -1695,6 +1747,9 @@ public class IdentifierManager {
 				accessDAO.setPermOrder(existingPermOrder);
     			if (permissions != null) {
 	    			for (Permission permission: permissions) {
+	    			    if(permission == null) {
+	    			        throw new InvalidSystemMetadata("4956", "The Permission shouldn't be null. It may result from sepcifying a permission by a typo, which is not one of read, write and changePermission.");
+	    			    }
 	    				Long metacatPermission = new Long(convertPermission(permission));
 	        			accessDAO.addPermission(metacatPermission);
 	    			}
@@ -2501,6 +2556,53 @@ public class IdentifierManager {
         }
         logMetacat.info("IdentifierManager.existsInXmlLRevisionTable - Does the docid "+docid+"."+rev+ " exist in the xml_revision table? - "+exist);
         return exist;
+    }
+    
+    /**
+     * Determine if the given pid exists on the identifier table.
+     * @param pid must be a PID
+     * @return true if it exists; false otherwise.
+     * @throws SQLException
+     */
+    public boolean existsInIdentifierTable(Identifier pid) throws SQLException {
+        boolean exists = false;
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            if(pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
+                //check out DBConnection
+                conn = DBConnectionPool.getDBConnection("IdentifierManager.existsInIdentifierTable");
+                serialNumber = conn.getCheckOutSerialNumber();
+                // Check if the document exists in xml_revisions table.
+                //this only archives a document from xml_documents to xml_revisions (also archive the xml_nodes table as well)
+                logMetacat.debug("IdentifierManager.existsInIdentifierTable - check if the document "+ pid.getValue() +" exists in the identifier table");
+                pstmt = conn.prepareStatement("SELECT guid FROM identifier WHERE guid = ?");
+                pstmt.setString(1, pid.getValue());
+                logMetacat.debug("IdentifierManager.existsInXmlLRevisionTable - executing SQL: " + pstmt.toString());
+                pstmt.execute();
+                rs = pstmt.getResultSet();
+                if(rs.next()){
+                    exists = true;
+                }
+                conn.increaseUsageCount(1);
+            }
+            
+        } catch (Exception e) {
+            throw new SQLException(e.getMessage());
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+            if(rs != null) {
+                rs.close();
+            }
+            if(pstmt != null) {
+                pstmt.close();
+            }
+        }
+        logMetacat.info("IdentifierManager.existsInIdentifierTable - Does the guid "+pid.getValue()+ " exist in the xml_revision table? - "+exists);
+        return exists;
     }
 }
 

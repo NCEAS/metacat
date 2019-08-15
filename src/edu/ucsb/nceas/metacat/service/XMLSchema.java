@@ -102,7 +102,7 @@ public class XMLSchema {
 			
 		this.fileName = fileName;
 		try { 
-			this.localFileUri = SystemUtil.getContextURL() + XMLSchemaService.SCHEMA_DIR
+			this.localFileUri = SystemUtil.getInternalContextURL() + XMLSchemaService.SCHEMA_DIR
 					+ fileName;
 			logMetacat.debug("XMLSchema.setFileName - localFileUri: " + this.localFileUri);
 		} catch (PropertyNotFoundException pnfe) {
@@ -178,10 +178,10 @@ public class XMLSchema {
 	 * @param localFileUri
 	 *            the base uri to set.
 	 */
-	public void setLocalFileUri(String localFileUri) {
+	/*public void setLocalFileUri(String localFileUri) {
 		if (!localFileUri.startsWith("http://")) {
 			try {
-				localFileUri = SystemUtil.getContextURL() + XMLSchemaService.SCHEMA_DIR + localFileUri;
+				localFileUri = SystemUtil.getInternalContextURL() + XMLSchemaService.SCHEMA_DIR + localFileUri;
 			} catch (PropertyNotFoundException pnfe) {
 				logMetacat.warn("XMLSchema.setLocalFileUri - Could not find context url: " + pnfe.getMessage() + 
 						". Setting schema file uri to: " + XMLSchemaService.SCHEMA_DIR + localFileUri);
@@ -189,7 +189,7 @@ public class XMLSchema {
 			}
 		}
 		this.localFileUri = localFileUri;
-	}
+	}*/
 	
 	/**
 	 * Gets the local file uri

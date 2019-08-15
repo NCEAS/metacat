@@ -563,7 +563,6 @@ public class D1ResourceHandler {
                 result = URLDecoder.decode(s);
             }
             logMetacat.info("D1ResourceHandler.decode - the string after decoding is "+result);
-            System.out.println("After decoded: " + result);
         }
         
         return result;

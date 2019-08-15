@@ -453,6 +453,11 @@ public class SolrIndex {
     	try {
 			// copy the original values already indexed for this document	
 	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
+        if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+            query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
+        }
+	    	log.info("SolrIndex.insertFields - The query to get the original solr doc is ~~~~~~~~~~~~~~~=================="+query.toString());
 	    	QueryResponse res = solrServer.query(query);
 	    	SolrDoc doc = new SolrDoc();
 	    	
@@ -504,7 +509,8 @@ public class SolrIndex {
 	        insertToIndex(doc);
     	} catch (Exception e) {
     		String error = "SolrIndex.insetFields - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
-            writeEventLog(null, pid, error);
+    		    boolean deleteEvent = false;
+            writeEventLog(null, pid, error, false);
             log.error(error, e);
     	}
 
@@ -586,14 +592,15 @@ public class SolrIndex {
         log.debug("SolrIndex.update - trying to update(insert or remove) solr index of object "+pid.getValue());
         String objectPath = null;
         try {
-            if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
-                objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-            }
+            //if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
+            objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
+            //}
             update(pid, systemMetadata, objectPath);
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
             String error = "SolrIndex.update - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
-            writeEventLog(systemMetadata, pid, error);
+            boolean deleteEvent = false;
+            writeEventLog(systemMetadata, pid, error, deleteEvent);
             log.error(error, e);
         }
     }
@@ -628,15 +635,15 @@ public class SolrIndex {
             return;
         }
         boolean isArchive = systemMetadata.getArchived() != null && systemMetadata.getArchived();
-        if(isArchive ) {
+        /*if(isArchive ) {
             //delete the index for the archived objects
             remove(pid.getValue(), systemMetadata);
             log.info("SolrIndex.update============================= archive the idex for the identifier "+pid.getValue());
-        } else {
+        } else {*/
             //generate index for either add or update.
             insert(pid, systemMetadata, objectPath);
             log.info("SolrIndex.update============================= insert index for the identifier "+pid.getValue());
-        }
+        //}
     }
     
    
@@ -661,6 +668,29 @@ public class SolrIndex {
             return StringUtils.isNotEmpty(resourceMapId);
         } else {
             return false;
+        }
+    }
+    
+    /**
+     * Remove the solr index associated with specified pid
+     * @param pid  the pid whose solr index will be removed
+     * @param sysmeta  the system metadata of the given pid
+     * @throws Exception
+     */
+    public void remove(Identifier pid, SystemMetadata sysmeta) {
+        if(pid != null && sysmeta != null) {
+            try {
+                log.debug("SorIndex.remove - start to remove the solr index for the pid "+pid.getValue());
+                remove(pid.getValue(), sysmeta);
+                log.debug("SorIndex.remove - finished to remove the solr index for the pid "+pid.getValue());
+                EventlogFactory.createIndexEventLog().remove(pid);
+            } catch (Exception e) {
+                String error = "SolrIndex.remove - could not remove the solr index for the object "+pid.getValue()+" since " + e.getMessage();
+                boolean deleteEvent = true;
+                writeEventLog(sysmeta, pid, error, deleteEvent);
+                log.error(error, e);
+            }
+            
         }
     }
     /**
@@ -1088,6 +1118,10 @@ public class SolrIndex {
     public List<String> getSolrIds() throws SolrServerException, IOException {
         List<String> list = new ArrayList<String>();
         SolrQuery query = new SolrQuery(IDQUERY); 
+        if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+            query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
+        }
         query.setRows(Integer.MAX_VALUE); 
         query.setFields(ID); 
         QueryResponse response = solrServer.query(query); 
@@ -1102,21 +1136,29 @@ public class SolrIndex {
         return list;
     }
     
-    private void writeEventLog(SystemMetadata systemMetadata, Identifier pid, String error) {
+    /**
+     * Write the event to the table event_log. Note: we only log the failed event.
+     * @param systemMetadata  the system metadata associated with the event
+     * @param pid the pid associated with the event
+     * @param error error message in the event
+     * @param deletingEvent if this is a deleting-index event
+     */
+    private void writeEventLog(SystemMetadata systemMetadata, Identifier pid, String error, boolean deletingEvent) {
         IndexEvent event = new IndexEvent();
         event.setIdentifier(pid);
         event.setDate(Calendar.getInstance().getTime());
         String action = null;
-        if (systemMetadata == null ) {
-            action = Event.CREATE.xmlValue();
-            event.setAction(Event.CREATE);
-        }
-        else if(systemMetadata.getArchived() != null && systemMetadata.getArchived()) {
+        if(deletingEvent) {
             action = Event.DELETE.xmlValue();
             event.setAction(Event.DELETE);
         } else {
-            action = Event.CREATE.xmlValue();
-            event.setAction(Event.CREATE);
+            if (systemMetadata == null ) {
+                action = Event.CREATE.xmlValue();
+                event.setAction(Event.CREATE);
+            } else {
+                action = Event.UPDATE.xmlValue();
+                event.setAction(Event.UPDATE);
+            }
         }
         event.setDescription("Failed to "+action+"the solr index for the id "+pid.getValue()+" since "+error);
         try {

@@ -36,12 +36,16 @@ import java.io.StringReader;
 import java.io.Writer;
 import java.sql.SQLException;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
 
@@ -62,17 +66,55 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 
 /**
  * A Class that transforms XML documents utitlizing XSL style sheets
+ * Building a transformer from the .xsl is expensive, so Templates are used                                            
+ * as an intermediate construct to allow lightweight construction of Transformers.                                     
+ * (Transformers themselves are not thread safe, so can't be reused)   
  */
 public class DBTransform {
 
-
+	private static Map<String,Templates> TemplatesMap = new HashMap<>();                                                                      
+	private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();                                                  
+	private static boolean forceRebuild = false;
+	                                                                                                                                                    
+	/**                                                                                                                                               
+	 * The method that manages the Templates Map instances that will be used to build                                                                 
+	 * transformers from.                                                                                                                             
+	 * 
+	 * @param xslSystemId - the URL for the stylesheet 
+	 * @param forceRebuild - if true, forces reload of the stylesheet from the system, else use the existing one, if there
+	 * @return
+	 * @throws TransformerConfigurationException
+	 */
+	// NOTE: if changing this method, please note that the DBTransformTest class does not 
+	// directly test this class (because it was proving too difficult for me to properly 
+	// configure this class in a test environment (related to configurating PropertyService)
+	// If you make changes to this method, you will need to duplicate those changes in the test class.
+	protected static synchronized Transformer getTransformer(String xslSystemId) throws TransformerConfigurationException {
+	    //The admin page can reset the value of forceRebuild to true.
+	    if(forceRebuild) {
+	        TemplatesMap.clear();
+	        forceRebuild = false;//after clearing the cache, we must reset the value to false in order to use the cache again.
+	        logMetacat.debug("DBTransform.getTransformer - clear the style sheet cache and will reload the style sheets from disk.");
+	    }
+		if (!TemplatesMap.containsKey(xslSystemId) ) { 
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from disk for the id " + xslSystemId);
+			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));                                                     
+			TemplatesMap.put(xslSystemId,templates);                                                                                                  
+		} else {
+		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from the cache for the id " + xslSystemId);
+		}
+		return TemplatesMap.get(xslSystemId).newTransformer();                                                                                        
+	}                                                                                                                                                 
+	                                                                                                                                                    
+	 
   private String 	configDir = null;
   private String	defaultStyle = null;
-  private Logger logMetacat = Logger.getLogger(DBTransform.class);
+  private static Logger logMetacat = Logger.getLogger(DBTransform.class);
   private String httpServer = null;
   private String contextURL = null;
   private String servletURL = null;
   private String userManagementURL = null;
+  private String internalContextURL = null; //used to locate the xsl files.
   
   /**
    * construct a DBTransform instance.
@@ -93,6 +135,7 @@ public class DBTransform {
     contextURL = SystemUtil.getContextURL();
     servletURL = SystemUtil.getServletURL();
     userManagementURL = PropertyService.getProperty("auth.userManagementUrl");
+    internalContextURL = SystemUtil.getInternalContextURL();
   }
 
   /**
@@ -151,16 +194,15 @@ public class DBTransform {
    * It then adds the parameters passed to it via Hashtable param to the Transformer.
    * It then calls the Transformer.transform method.
    */
-  private void doTransform(StreamSource xml, 
+  protected void doTransform(StreamSource xml, 
           StreamResult resultOutput,
           String xslSystemId, 
           Hashtable<String, String[]> param,
           String qformat, 
           String sessionid) 
-          throws Exception {
+          throws PropertyNotFoundException, TransformerException {
       
       SortedProperties skinOptions;
-      TransformerFactory tFactory;
       Transformer transformer;
       String key, value;
       Enumeration<String> en;
@@ -168,9 +210,9 @@ public class DBTransform {
       Map.Entry<String, String> entry;
       
       if (xslSystemId != null) {
-        tFactory = TransformerFactory.newInstance();
-        transformer = tFactory.newTransformer(new StreamSource(xslSystemId));
-        
+    	                                                                                                                                       
+    		transformer = DBTransform.getTransformer(xslSystemId);  // false means use the existing factory template              
+    	              
         transformer.setParameter("qformat", qformat);
         logMetacat.info("DBTransform.doTransform - qformat: " + qformat);
         
@@ -280,7 +322,7 @@ public class DBTransform {
    * @param sourcetype the document type of the source
    * @param targettype the document type of the target
    */
-  public String getStyleSystemId(String qformat, String sourcetype,
+  private String getStyleSystemId(String qformat, String sourcetype,
                 String targettype) {
     String systemId = null;
 
@@ -355,7 +397,7 @@ public class DBTransform {
     //Check if the systemId is relative path, add a postfix - the contextULR to systemID. 
     if (systemId != null && !systemId.startsWith("http"))
     {
-    	systemId = contextURL+systemId;
+    	systemId = internalContextURL+systemId;
     }
     // Return the system ID for this particular source document type
     logMetacat.info("DBTransform.getStyleSystemId - style system id is: " + systemId);
@@ -398,46 +440,13 @@ public class DBTransform {
     return ret;
   }
 
-  /**
-   * the main routine used to test the transform utility.
-   *
-   * Usage: java DBTransform
-   */
-  static public void main(String[] args) {
-
-     if (args.length > 0)
-     {
-        System.err.println("Wrong number of arguments!!!");
-        System.err.println("USAGE: java DBTransform");
-        return;
-     } else {
-        try {
-
-          // Create a test document
-          StringBuffer testdoc = new StringBuffer();
-          String encoding = "UTF-8";
-          testdoc.append("<?xml version=\"1.0\" encoding=\"" + encoding + "\"?>");
-          testdoc.append("<eml-dataset><metafile_id>NCEAS-0001</metafile_id>");
-          testdoc.append("<dataset_id>DS001</dataset_id>");
-          testdoc.append("<title>My test doc</title></eml-dataset>");
-
-          // Transform the document to the new doctype
-          Writer w = new OutputStreamWriter(System.out, encoding);
-          DBTransform dbt = new DBTransform();
-          dbt.transformXMLDocument(testdoc.toString(),
-                                   "-//NCEAS//eml-dataset//EN",
-                                   "-//W3C//HTML//EN",
-                                   "knb",
-                                   w, null, null);
-
-        } catch (Exception e) {
-          System.err.println("EXCEPTION HANDLING REQUIRED");
-          System.err.println(e.getMessage());
-          e.printStackTrace(System.err);
-        }
-     }
-  }
-
+    /**
+     * Set the field of forceRebuild
+     * @param forceRebuild
+     */
+    public static void setForceRebuild(boolean forceBuild) {
+        forceRebuild = forceBuild;
+    }
 //  private void dbg(int position) {
 //    System.err.println("Debug flag: " + position);
 //  }

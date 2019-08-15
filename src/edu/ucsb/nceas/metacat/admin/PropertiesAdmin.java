@@ -196,10 +196,20 @@ public class PropertiesAdmin extends MetacatAdmin {
 				for (String name : propertyNames) {
 					PropertyService.checkAndSetProperty(request, name);
 				}
-
 				// we need to write the options from memory to the properties
 				// file
 				PropertyService.persistProperties();
+				
+				//auto generate the dataone.mn.baseURL property
+				try {
+				    PropertyService.getInstance().setProperty("dataone.mn.baseURL", SystemUtil.getInternalContextURL()+"/"+
+				            PropertyService.getProperty("dataone.serviceName")+"/" + PropertyService.getProperty("dataone.nodeType"));
+                } catch (Exception ue) {
+                    String errorString = "PropertiesAdmin.configureProperties - Could not set the property  dataone.mn.baseURL: " +
+                    ue.getMessage();
+                    logMetacat.error(errorString);
+                    validationErrors.add(errorString);
+                }
 
 				// Validate that the options provided are legitimate. Note that
 				// we've allowed them to persist their entries. As of this point

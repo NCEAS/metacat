@@ -33,7 +33,7 @@ use Template;           # load the template-toolkit module
 use CGI qw/:standard :html3/; # load the CGI module 
 use Net::LDAP;          # load the LDAP net libraries
 use Net::SMTP;          # load the SMTP net libraries
-use Digest::SHA1;       # for creating the password hash
+use Digest::SHA;       # for creating the password hash
 use MIME::Base64;       # for creating the password hash
 use URI;                # for parsing URL syntax
 use Config::Properties; # for parsing Java .properties files
@@ -109,10 +109,16 @@ import_names('FORM');
 
 # Must have a config to use Metacat
 my $skinName = "";
+# the skinDisplayName is used to prevent the cross-site scripting attack.
+my $skinDisplayName="";
 if ($FORM::cfg) {
     $skinName = $FORM::cfg;
+    $skinDisplayName=$skinName;
+    $skinDisplayName=~s/[^A-Za-z0-9 ]*//g;
 } elsif ($ARGV[0]) {
     $skinName = $ARGV[0];
+    $skinDisplayName=$skinName;
+    $skinDisplayName=~s/[^A-Za-z0-9 ]*//g;
 } else {
     debug("No configuration set.");
     print "Content-type: text/html\n\n";
@@ -125,7 +131,7 @@ if (!($metacatUrl)) {
     debug("No Metacat.");
     print "Content-type: text/html\n\n";
     'Registry Error: Metacat is not initialized! Make sure' .
-        ' MetacatUrl is set correctly in ' .  $skinName . '.properties';
+        ' MetacatUrl is set correctly in ' .  $skinDisplayName . '.properties';
     exit();
 }
 
@@ -135,9 +141,10 @@ if (!($skinName)) {
     push(@errorMessages, $error);
 } else {
     my $skinProps = "$skinsDir/$skinName/$skinName.properties";
+    my $skinDisplayProps = "$skinsDir/$skinDisplayName/$skinDisplayName.properties";
     unless (open (SKIN_PROPERTIES, $skinProps)) {
         print "Content-type: text/html\n\n";
-        print "Unable to locate skin properties at $skinProps.  Is this path correct?";
+        print "Unable to locate skin properties at $skinDisplayProps.  Is this path correct?";
         exit(0);
     }
     $skinProperties->load(*SKIN_PROPERTIES);
@@ -163,13 +170,20 @@ my $nrsConfig = $nrsProperties->splitToTree(qr/\./, 'registry.config');
 
 # XXX END HACK
 
+my $useStartTLS = $properties->getProperty('ldap.web.startTLS');
 
 my $searchBase;
 my $ldapUsername;
 my $ldapPassword;
 # TODO: when should we use surl instead? Is there a setting promoting one over the other?
 # TODO: the default tree for accounts should be exposed somewhere, defaulting to unaffiliated
-my $ldapurl = $properties->getProperty('auth.url');
+my $ldapurl;
+if($useStartTLS eq 'true') {
+   $ldapurl = $properties->getProperty('auth.url');
+} else {
+   $ldapurl = $properties->getProperty('auth.surl');
+}
+ 
 
 # Java uses miliseconds, Perl expects whole seconds
 my $timeout = $properties->getProperty('ldap.connectTimeLimit') / 1000;
@@ -295,8 +309,8 @@ if(!@validDisplayOrgList) {
      $contact = $skinProperties->getProperty("email.contact") or $contact = $properties->getProperty('email.contact');
     print "Content-type: text/html\n\n";
     print "The value of property ldap.templates.organizationList in " 
-     . $skinName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
-     . $skinName . ".properties file) is invalid. Please send the information to ". $contact;
+     . $skinDisplayName . ".properties file or metacat.properties file (if the property doesn't exist in the " 
+     . $skinDisplayName . ".properties file) is invalid. Please send the information to ". $contact;
     exit(0);
 }
 
@@ -368,8 +382,10 @@ sub clearTemporaryAccounts {
     debug("clearTemporaryAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'require',
+        if($useStartTLS eq 'true') {
+                $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
 		$mesg = $ldap->search (
 			base   => $tmpSearchBase,
@@ -858,8 +874,10 @@ sub changePassword {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-        $ldap->start_tls( verify => 'require',
+        if($useStartTLS eq 'true') {
+             $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
         debug("changePassword: attempting to bind to $bindDN");
         my $bindresult = $ldap->bind( version => 3, dn => $bindDN, 
                                   password => $bindPass );
@@ -923,9 +941,11 @@ sub getLdapEntry {
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-        $ldap->start_tls( verify => 'none');
-        #$ldap->start_tls( verify => 'require',
-        #              cafile => $ldapServerCACertFile);
+        if($useStartTLS eq 'true') {
+             $ldap->start_tls( verify => 'none');
+             #$ldap->start_tls( verify => 'require',
+             #              cafile => $ldapServerCACertFile);
+        }
     	my $bindresult = $ldap->bind;
     	if ($bindresult->code) {
         	return $entry;
@@ -954,6 +974,12 @@ sub getLdapEntry {
         	for (my $i = 0; $i <= $#references; $i++) {
             	my $uri = URI->new($references[$i]);
             	my $host = $uri->host();
+            	debug("the original reference $host");
+            	my $index = index ($host, 'ldaps://');
+            	if( $useStartTLS  ne 'true' && $index < 0) {
+            	   $host = "ldaps://" . $host . ":636";
+            	}
+            	debug("the new reference $host");
             	my $path = $uri->path();
             	$path =~ s/^\///;
             	$entry = &getLdapEntry($host, $path, $username, $org);
@@ -1039,9 +1065,11 @@ sub uidExists {
     debug("uidExists: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-        $ldap->start_tls( verify => 'none');
-        #$ldap->start_tls( verify => 'require',
-        #              cafile => $ldapServerCACertFile);
+        if($useStartTLS eq 'true') {
+            $ldap->start_tls( verify => 'none');
+            #$ldap->start_tls( verify => 'require',
+            #              cafile => $ldapServerCACertFile);
+        }
         $ldap->bind( version => 3, anonymous => 1);
         $mesg = $ldap->search (
             base   => $base,
@@ -1078,9 +1106,11 @@ sub findExistingAccounts {
     debug("findExistingAccounts: connecting to $ldapurl, $timeout");
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-    	$ldap->start_tls( verify => 'none');
-    	#$ldap->start_tls( verify => 'require',
-        #              cafile => $ldapServerCACertFile);
+        if($useStartTLS eq 'true') {
+                $ldap->start_tls( verify => 'none');
+                #$ldap->start_tls( verify => 'require',
+                #              cafile => $ldapServerCACertFile);
+        }
     	$ldap->bind( version => 3, anonymous => 1);
 		$mesg = $ldap->search (
 			base   => $base,
@@ -1132,6 +1162,12 @@ sub findExistingAccounts {
     	for (my $i = 0; $i <= $#references; $i++) {
         	my $uri = URI->new($references[$i]);
         	my $host = $uri->host();
+        	debug("the original reference $host");
+        my $index = index ($host, 'ldaps://');
+        if( $useStartTLS  ne 'true' && $index < 0) {
+            $host = "ldaps://" . $host . ":636";
+        }
+        debug("the new reference $host");
         	my $path = $uri->path();
         	$path =~ s/^\///;
         	my $refFound = &findExistingAccounts($host, $path, $filter, $attref, $notHtmlFormat);
@@ -1381,8 +1417,10 @@ sub createItem {
     #if main ldap server is down, a html file containing warning message will be returned
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
+        if($useStartTLS eq 'true') {
             $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
             debug("Attempting to bind to LDAP server with dn = $ldapUsername, pwd = $ldapPassword");
             $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword ); 
             my $result = $ldap->add ( 'dn' => $dn, 'attr' => [@$additions ]);
@@ -1442,8 +1480,10 @@ sub handleEmailVerification {
    #if main ldap server is down, a html file containing warning message will be returned
    my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
    if ($ldap) {
-        $ldap->start_tls( verify => 'require',
+        if($useStartTLS eq 'true') {
+            $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
         $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword );
         my $mesg = $ldap->search(base => $dn, scope => 'base', filter => '(objectClass=*)'); #This dn is with the dc=tmp. So it will find out the temporary account registered in registration step.
         my $max = $mesg->count;
@@ -1587,8 +1627,10 @@ sub searchDirectory {
     my $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     
     if ($ldap) {
-    	$ldap->start_tls( verify => 'require',
+        if($useStartTLS eq 'true') {
+                $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
     	$ldap->bind( version => 3, anonymous => 1);
     	my $mesg = $ldap->search (
         	base   => $base,
@@ -1702,8 +1744,10 @@ sub getNextUidNumber {
     
     if ($ldap) {
     	my $existingHighUid=getExistingHighestUidNum($ldapUsername, $ldapPassword);
-        $ldap->start_tls( verify => 'require',
+    	   if($useStartTLS eq 'true') {
+    	        $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+    	   }
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
         #read the uid value stored in uidObject class
         for(my $index=0; $index<$maxAttempt; $index++) {
@@ -1762,8 +1806,10 @@ sub getExistingHighestUidNum {
     #if main ldap server is down, a html file containing warning message will be returned
     $ldap = Net::LDAP->new($ldapurl, timeout => $timeout) or handleLDAPBindFailure($ldapurl);
     if ($ldap) {
-        $ldap->start_tls( verify => 'require',
+        if($useStartTLS eq 'true') {
+            $ldap->start_tls( verify => 'require',
                       cafile => $ldapServerCACertFile);
+        }
         my $bindresult = $ldap->bind( version => 3, dn => $ldapUsername, password => $ldapPassword);
         my $mesg = $ldap->search(base  => $dn_store_next_uid, filter => '(objectClass=*)');
          if ($mesg->count() > 0) {

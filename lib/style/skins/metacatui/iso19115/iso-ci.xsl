@@ -6,7 +6,7 @@
     <!-- CI_ResponsibleParty -->
     <xsl:template match="gmd:CI_ResponsibleParty">
         <div class="controls-well">
-            <xsl:if test="./gmd:individualName and normalize-space(./gmd:individualName/gco:CharacterString/text())!=''">
+            <xsl:if test="./gmd:individualName">
                 <div class="control-group">
                     <label class="control-label">Individual</label>
                     <div class="controls">
@@ -16,7 +16,7 @@
                     </div>
                 </div>
             </xsl:if>
-            <xsl:if test="./gmd:organisationName and normalize-space(./gmd:organisationName/gco:CharacterString/text())!=''">
+            <xsl:if test="./gmd:organisationName">
                 <div class="control-group">
                     <label class="control-label">Organization</label>
                     <div class="controls">
@@ -26,7 +26,7 @@
                     </div>
                 </div>
             </xsl:if>
-            <xsl:if test="./gmd:positionName and normalize-space(./gmd:positionName/gco:CharacterString/text())!=''">
+            <xsl:if test="./gmd:positionName">
                 <div class="control-group">
                     <label class="control-label">Position</label>
                     <div class="controls">
@@ -36,16 +36,14 @@
                     </div>
                 </div>
             </xsl:if>
-            <xsl:if test="./gmd:role and normalize-space(./gmd:role/gmd:CI_RoleCode/text())!=''">
-                <div class="control-group">
-                    <label class="control-label">Role</label>
-                    <div class="controls">
-                        <div class="controls-well">
-                            <xsl:apply-templates select="./gmd:role" />
-                        </div>
+            <div class="control-group">
+                <label class="control-label">Role</label>
+                <div class="controls">
+                    <div class="controls-well">
+                        <xsl:apply-templates select="./gmd:role" />
                     </div>
                 </div>
-            </xsl:if>
+            </div>
             <xsl:if test="./gmd:contactInfo/gmd:CI_Contact/gmd:phone">
                 <div class="control-group">
                     <label class="control-label">Phone</label>
@@ -179,11 +177,9 @@
                 <label class="control-label">E-Mail</label>
                 <div class="controls">
                     <div class="controls-well">
-                        <xsl:variable name="email" select="./gco:CharacterString/text()" />
+                        <xsl:variable name="email" select="normalize-space(./gco:CharacterString/text())" />
                         <xsl:element name="a">
-                            <xsl:attribute name="href">mailto:                
-                                <xsl:value-of select="$email" />
-                            </xsl:attribute>
+                            <xsl:attribute name="href">mailto:<xsl:value-of select="$email" /></xsl:attribute>
                             <xsl:value-of select="$email" />
                         </xsl:element>
                     </div>

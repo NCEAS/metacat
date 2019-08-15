@@ -52,6 +52,10 @@
     <formatName>Ecological Metadata Language, version 2.1.1</formatName>
   </objectFormat>
   <objectFormat>
+    <fmtid>https://eml.ecoinformatics.org/eml-2.2.0</fmtid>
+    <formatName>Ecological Metadata Language, version 2.2.0</formatName>
+  </objectFormat>
+  <objectFormat>
     <fmtid>FGDC-STD-001.1-1999</fmtid>
     <formatName>
       Content Standard for Digital Geospatial Metadata, 

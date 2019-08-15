@@ -322,6 +322,7 @@ CREATE TABLE systemMetadata (
   file_name    text,      -- the suggested file name for this object
 	CONSTRAINT systemMetadata_pk PRIMARY KEY (guid)
 );
+CREATE INDEX systemMetadata_series_id on systemMetadata(series_id);
 
 /*
  * Table used to store the properties for media types. They are part of the system metadata. But a media type

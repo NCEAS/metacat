@@ -105,6 +105,8 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@eml2_1_1namespace@', '/schema/eml-2.1.1/eml.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', '@eml2_2_0namespace@', '/schema/eml-2.2.0/eml.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ecoinformatics.org/registryentry-1.0.0', '/schema/RegistryService/RegistryEntryType.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
@@ -197,5 +199,13 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
     SELECT 'Schema', 'http://www.opengis.net/gml', 'http://www.isotc211.org/2005/gmd-pangaea', '/schema/isotc211-pangaea/gml.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE format_id='http://www.isotc211.org/2005/gmd-pangaea' AND public_id='http://www.opengis.net/gml');
 
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://datacite.org/schema/kernel-3','http://datacite.org/schema/kernel-3.0', '/schema/datacite-3.0/metadata.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://datacite.org/schema/kernel-3' AND format_id='http://datacite.org/schema/kernel-3.0');
+
+INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id) 
+    SELECT 'Schema', 'http://datacite.org/schema/kernel-3','http://datacite.org/schema/kernel-3.1', '/schema/datacite-3.1/metadata.xsd' WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://datacite.org/schema/kernel-3' AND format_id='http://datacite.org/schema/kernel-3.1');
+
+INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'http://www.openarchives.org/OAI/2.0/oai_dc/', '/schema/oai_dc/oai_dc.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://www.openarchives.org/OAI/2.0/oai_dc/');
+
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.9.0',1,CURRENT_DATE);
+  VALUES ('2.11.0',1,CURRENT_DATE);

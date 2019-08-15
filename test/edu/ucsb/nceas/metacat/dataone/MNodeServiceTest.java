@@ -31,6 +31,7 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.utilities.IOUtil;
@@ -192,7 +193,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletesChain"));
     
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataWithCircularObsoletedByChain"));
-    
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataImmutableFields"));
+    suite.addTest(new MNodeServiceTest("testUpdateAuthoritativeMN"));
+    suite.addTest(new MNodeServiceTest("testInvalidIds"));
+    suite.addTest(new MNodeServiceTest("testPublishPackage"));
+    suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
     return suite;
     
   }
@@ -590,6 +595,57 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
           assertTrue(result.getArchived());
           System.out.println("the identifier is ==================="+pid.getValue());
+          
+          //test to archive an obsoleted object
+          Identifier guid1 = new Identifier();
+          guid1.setValue("testArchive." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(guid1, session.getSubject(), object);
+          sysmeta.setArchived(false);
+          MNodeService.getInstance(request).create(session, guid1, object, sysmeta);
+          
+          Identifier guid2 = new Identifier();
+          guid2.setValue("testArchive2." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          SystemMetadata newSysMeta = createSystemMetadata(guid2, session.getSubject(), object);
+          newSysMeta.setObsoletes(guid1);
+          newSysMeta.setArchived(false);
+          MNodeService.getInstance(request).update(session, guid1, object, guid2, newSysMeta);
+          System.out.println("The object "+guid1.getValue()+" has been updated by the object "+guid2.getValue());
+          MNodeService.getInstance(request).archive(session, guid1);
+          SystemMetadata sys1= MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+          assertTrue(sys1.getIdentifier().equals(guid1));
+          assertTrue(sys1.getArchived() == true);
+          SystemMetadata sys2= MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+          assertTrue(sys2.getIdentifier().equals(guid2));
+          assertTrue(sys2.getArchived() == false);
+          
+          
+          //test to archive an obsoleted object again (by use the updateSystemMetadata methdo)
+          Identifier guid3 = new Identifier();
+          guid3.setValue("testArchive3." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(guid3, session.getSubject(), object);
+          sysmeta.setArchived(false);
+          MNodeService.getInstance(request).create(session, guid3, object, sysmeta);
+          
+          Identifier guid4 = new Identifier();
+          guid4.setValue("testArchive4." + System.currentTimeMillis());
+          object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+          newSysMeta = createSystemMetadata(guid4, session.getSubject(), object);
+          newSysMeta.setObsoletes(guid3);
+          newSysMeta.setArchived(false);
+          MNodeService.getInstance(request).update(session, guid3, object, guid4, newSysMeta);
+          System.out.println("The object "+guid3.getValue()+" has been updated by the object "+guid4.getValue());
+          SystemMetadata sysFromServer = MNodeService.getInstance(request).getSystemMetadata(session, guid3);
+          sysFromServer.setArchived(true);
+          MNodeService.getInstance(request).updateSystemMetadata(session, guid3, sysFromServer);
+          SystemMetadata sys3= MNodeService.getInstance(request).getSystemMetadata(session, guid3);
+          assertTrue(sys3.getIdentifier().equals(guid3));
+          assertTrue(sys3.getArchived() == true);
+          SystemMetadata sys4= MNodeService.getInstance(request).getSystemMetadata(session, guid4);
+          assertTrue(sys4.getIdentifier().equals(guid4));
+          assertTrue(sys4.getArchived() == false);
   }
 
   /**
@@ -638,6 +694,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           assertTrue( ee instanceof InvalidRequest);
       }
       
+      
       //update the authoritative node on the existing pid (newPid)
       SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
       BigInteger version = meta.getSerialVersion();
@@ -647,19 +704,29 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       newMN.setValue("urn:node:river1");
       newSysMeta.setAuthoritativeMemberNode(newMN);
       newSysMeta.setArchived(false);
-      MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+      try {
+          MNodeService.getInstance(request).updateSystemMetadata(session, newPid, newSysMeta);
+      }  catch (InvalidRequest ee) {
+          assertTrue(ee.getMessage().contains("urn:node:river1"));
+      }
+      
       try {
           updatedPid = 
                  MNodeService.getInstance(request).update(session, newPid, object, newPid2, newSysMeta2);
           fail("update an object on non-authoritatvie node should get anexception");
      } catch (Exception ee) {
-         assertTrue( ee instanceof NotAuthorized);
+         assertTrue( ee instanceof InvalidRequest);
      }
      //cn can succeed even though it updates an object on the non-authoritative node.
      Session cnSession = getCNSession();
-     updatedPid = 
-             MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
-     assertEquals(updatedPid.getValue(), newPid2.getValue());
+     try {
+         updatedPid = 
+                 MNodeService.getInstance(request).update(cnSession, newPid, object, newPid2, newSysMeta2);
+         fail("updating an object's authoritatvie node should get anexception");
+       //assertEquals(updatedPid.getValue(), newPid2.getValue());
+     } catch (InvalidRequest ee) {
+         //assertTrue(ee.getMessage().contains(newPid.getValue()));
+     }
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
@@ -1669,6 +1736,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
 						
 			// save the ORE object
+			Thread.sleep(10000);
 			object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
 			sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
 			sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
@@ -1721,7 +1789,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			bagFile.delete();
 			
 			// test the ORE lookup
-			List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(metadataId, true);
+			Thread.sleep(30000);
+			System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
+			List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(null, metadataId, true);
 			assertTrue(oreIds.contains(resourceMapId));
 
 		} catch (Exception e) {
@@ -1729,6 +1799,180 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			fail("Unexpected error: " + e.getMessage());
 		}
 	}
+	
+	
+	
+	/**
+     * Test to publish a package
+     */
+    public void testPublishPackage() {
+        printTestHeader("testPublishPackage");
+
+        try {
+            
+            // construct the ORE package
+            Identifier resourceMapId = new Identifier();
+            //resourceMapId.setValue("doi://1234/AA/map.1.1");
+            resourceMapId.setValue("testGetOREPackage." + System.currentTimeMillis());
+            Identifier metadataId = new Identifier();
+            metadataId.setValue("doi://2234/AA/meta.1." + + System.currentTimeMillis());
+            List<Identifier> dataIds = new ArrayList<Identifier>();
+            Identifier dataId = new Identifier();
+            dataId.setValue("doi://2234/AA/data.1." + System.currentTimeMillis());
+            Identifier dataId2 = new Identifier();
+            dataId2.setValue("doi://2234/AA/data.2." + System.currentTimeMillis());
+            dataIds.add(dataId);
+            dataIds.add(dataId2);
+            Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+            idMap.put(metadataId, dataIds);
+            ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+            ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+            assertNotNull(resourceMap);
+            String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+            assertNotNull(rdfXml);
+            
+            Session session = getTestSession();
+            InputStream object = null;
+            SystemMetadata sysmeta = null;
+            
+            // save the data objects (data just contains their ID)
+            InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(dataId, session.getSubject(), dataObject1);
+            MNodeService.getInstance(request).create(session, dataId, dataObject1, sysmeta);
+            // second data file
+            InputStream dataObject2 = new ByteArrayInputStream(dataId2.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(dataId2, session.getSubject(), dataObject2);
+            MNodeService.getInstance(request).create(session, dataId2, dataObject2, sysmeta);
+            // metadata file
+            InputStream metadataObject = new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+            MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+
+            // save the ORE object
+            Thread.sleep(10000);
+            object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
+            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
+            Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
+            
+            Thread.sleep(30000);
+            List<Identifier> oreId3 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            assertTrue(oreId3.size() == 1);
+          //publish the package
+            Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
+            // test the ORE lookup
+            Thread.sleep(30000);
+            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
+            List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
+            assertTrue(oreIds.size() == 1);
+            List<Identifier> oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            assertTrue(oreId2.size() == 2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * Test to publish a private package
+     */
+    public void testPublishPrivatePackage() {
+        printTestHeader("testPublishPrivatePackage");
+
+        try {
+            
+            // construct the ORE package
+            Identifier resourceMapId = new Identifier();
+            //resourceMapId.setValue("doi://1234/AA/map.1.1");
+            resourceMapId.setValue("testGetOREPackage." + System.currentTimeMillis());
+            Identifier metadataId = new Identifier();
+            metadataId.setValue("doi://2235/AA/meta.1." + + System.currentTimeMillis());
+            List<Identifier> dataIds = new ArrayList<Identifier>();
+            Identifier dataId = new Identifier();
+            dataId.setValue("doi://2235/AA/data.1." + System.currentTimeMillis());
+            Identifier dataId2 = new Identifier();
+            dataId2.setValue("doi://2235/AA/data.2." + System.currentTimeMillis());
+            dataIds.add(dataId);
+            dataIds.add(dataId2);
+            Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+            idMap.put(metadataId, dataIds);
+            ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+            ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+            assertNotNull(resourceMap);
+            String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+            assertNotNull(rdfXml);
+            
+            Session session = getTestSession();
+            InputStream object = null;
+            SystemMetadata sysmeta = null;
+            
+            // save the data objects (data just contains their ID)
+            InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(dataId, session.getSubject(), dataObject1);
+            sysmeta.setAccessPolicy(null);
+            MNodeService.getInstance(request).create(session, dataId, dataObject1, sysmeta);
+            try {
+                MNodeService.getInstance(request).get(getThirdSession(), dataId);
+                fail("we shouldn't get here");
+            } catch (NotAuthorized e) {
+                
+            }
+            // second data file
+            InputStream dataObject2 = new ByteArrayInputStream(dataId2.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(dataId2, session.getSubject(), dataObject2);
+            sysmeta.setAccessPolicy(null);
+            MNodeService.getInstance(request).create(session, dataId2, dataObject2, sysmeta);
+            try {
+                MNodeService.getInstance(request).get(getThirdSession(), dataId2);
+                fail("we shouldn't get here");
+            } catch (NotAuthorized e) {
+                
+            }
+            // metadata file
+            InputStream metadataObject = new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+            sysmeta.setAccessPolicy(null);
+            MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+            try {
+                MNodeService.getInstance(request).get(getThirdSession(), metadataId);
+                fail("we shouldn't get here");
+            } catch (NotAuthorized e) {
+                
+            }
+
+            // save the ORE object
+            Thread.sleep(10000);
+            object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
+            sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
+            sysmeta.setAccessPolicy(null);
+            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
+            Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
+            try {
+                MNodeService.getInstance(request).get(getThirdSession(), resourceMapId);
+                fail("we shouldn't get here");
+            } catch (NotAuthorized e) {
+                
+            }
+            
+            Thread.sleep(30000);
+            List<Identifier> oreId3 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            assertTrue(oreId3.size() == 1);
+          //publish the package
+            Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
+            // test the ORE lookup
+            Thread.sleep(30000);
+            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
+            List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
+            assertTrue(oreIds.size() == 1);
+            List<Identifier> oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            assertTrue(oreId2.size() == 2);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
 	
 	/**
      * Test the extra "delete information" was added to the NotFoundException
@@ -2908,5 +3152,328 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
        
    
+    }
+    
+    public void testUpdateSystemMetadataImmutableFields() throws Exception {
+        Date date = new Date();
+        Thread.sleep(1000);
+        String str = "object1";
+        //insert a test document
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        Identifier sid = new Identifier();
+        sid.setValue(generateDocumentId());
+        sysmeta.setSeriesId(sid);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        Thread.sleep(1000);
+        
+        //check identifier
+        Identifier newId = new Identifier();
+        newId.setValue("newValue123456newValuedfdfasdfasdfasdfcbsrtddf");
+        metadata.setIdentifier(newId);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata which has new identifier");
+       } catch (InvalidRequest e)  {
+           //System.out.println("Error 1- "+e.getMessage());
+           assertTrue("The update system metadata should fail since the identifier was changed on the system metadata.", e.getMessage().contains(newId.getValue()));
+       }
+
+        metadata.setIdentifier(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose identifier is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the identifier is null on the system metadata", e.getMessage().contains("shouldn't be null"));
+       }
+        metadata.setIdentifier(guid);//reset back the identifier
+        
+        ObjectFormatIdentifier formatId = metadata.getFormatId();
+        metadata.setFormatId(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose format id is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the format id is null on the system metadata", e.getMessage().contains("The formatId field "));
+       }
+        
+        metadata.setFormatId(formatId);//reset the format id
+        
+        Subject rightsHolder = metadata.getRightsHolder();
+        metadata.setRightsHolder(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata whose rights holder is null");
+       } catch (InvalidRequest e)  {
+           assertTrue("The update system metadata should fail since the righs holder  is null on the system metadata", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        //change to a new rightsHolder
+        Subject newRightsHolder = new Subject();
+        newRightsHolder.setValue("newSubject");
+        metadata.setRightsHolder(newRightsHolder);
+        
+        BigInteger size = metadata.getSize();
+        BigInteger newSize = new BigInteger("4");
+        metadata.setSize(newSize);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its size was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+       
+        metadata.setSize(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its size null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setSize(size); //reset it back
+        
+        Checksum check = metadata.getChecksum();
+        Checksum newCheck = new Checksum();
+        newCheck.setValue("12345");
+        metadata.setChecksum(newCheck);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its checksum was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+       
+        metadata.setChecksum(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its checksum is null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setChecksum(check);
+        
+        Subject submitter = metadata.getSubmitter();
+        metadata.setSubmitter(newRightsHolder);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its submitter was changed");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        metadata.setSubmitter(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+            fail("We can't update the system metadata since its submitter is null");
+       } catch (InvalidRequest e)  {
+           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+       }
+        
+        metadata.setSubmitter(submitter);
+        
+       Date uploadDate = metadata.getDateUploaded();
+       metadata.setDateUploaded(new Date());
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its upload date was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setDateUploaded(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its upload date is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       
+       metadata.setDateUploaded(uploadDate);
+       
+       NodeReference node = metadata.getOriginMemberNode();
+       NodeReference newNode = new NodeReference();
+       newNode.setValue("newNode");
+       metadata.setOriginMemberNode(newNode);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its original node was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setOriginMemberNode(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its original node is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setOriginMemberNode(node);
+       
+       Identifier newSid = new Identifier();
+       newSid.setValue("newSid123adfadffadfieredfesllkiju898765");
+       metadata.setSeriesId(newSid);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its series id was changed");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       metadata.setSeriesId(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since its series id is null");
+      } catch (InvalidRequest e)  {
+          //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+      }
+       
+       metadata.setSeriesId(sid);
+       
+       metadata.setArchived(true);
+       AccessPolicy policy = new AccessPolicy();
+       AccessRule allow = new AccessRule();
+       allow.addPermission(Permission.CHANGE_PERMISSION);
+       allow.addSubject(rightsHolder);
+       policy.addAllow(allow);
+       metadata.setAccessPolicy(policy);
+       //successfully update system metadata when the rights holder and access policy were changed
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+       
+       /*metadata.setArchived(null);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since we can't set archvied to be null when original value is true");
+      } catch (InvalidRequest e)  {
+         assertTrue("The update system metadata should fail since the archived can't be set null when original value is true", e.getMessage().contains("archvied field"));
+      }
+      
+       metadata.setArchived(false);
+       try {
+           MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+           fail("We can't update the system metadata since we can't set archvied to be false when original value is true");
+      } catch (InvalidRequest e)  {
+         assertTrue("The update system metadata should fail since the archived can't be set false when original value is true", e.getMessage().contains("archvied field"));
+      }*/
+    }
+    
+    public void testUpdateAuthoritativeMN() throws Exception {
+        String str1 = "object1";
+        Date date = new Date();
+        Thread.sleep(2000);
+        //insert test documents with a series id
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        String sid1= "sid."+System.nanoTime();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(sid1);
+        System.out.println("the first sid is "+seriesId.getValue());
+        sysmeta.setSeriesId(seriesId);
+        sysmeta.setArchived(false);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        //Test the generating object succeeded. 
+        SystemMetadata metadata = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        assertTrue(metadata.getIdentifier().equals(guid));
+        assertTrue(metadata.getArchived().equals(false));
+        System.out.println("the checksum from request is "+metadata.getChecksum().getValue());
+        assertTrue(metadata.getSize().equals(sysmeta.getSize()));
+        System.out.println("the identifier is "+guid.getValue());
+        
+        System.out.println("the identifier is ----------------------- "+guid.getValue());
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta);
+        SystemMetadata metadata2 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+        assertTrue(metadata2.getIdentifier().equals(guid));
+        assertTrue(metadata2.getSeriesId().equals(seriesId));
+        assertTrue(metadata2.getArchived().equals(false));
+        NodeReference oldValue = metadata2.getAuthoritativeMemberNode();
+        
+        NodeReference newNode = new NodeReference();
+        newNode.setValue("newNode");
+        metadata2.setAuthoritativeMemberNode(newNode);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+            fail("The updateSystemMeta should fail since it tried to update the authoritative member node");
+        } catch (InvalidRequest e) {
+            assertTrue(e.getMessage().contains(newNode.getValue()));
+        } catch (NotAuthorized ee) {
+            
+        }
+        metadata2.setAuthoritativeMemberNode(null);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+            fail("The updateSystemMeta should fail since it tried to update the authoritative member node");
+        } catch (InvalidRequest e) {
+           
+        }  catch (NotAuthorized ee) {
+            
+        }
+        metadata2.setAuthoritativeMemberNode(oldValue);
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata2);
+        SystemMetadata metadata3 = MNodeService.getInstance(request).getSystemMetadata(session, seriesId);
+        assertTrue(metadata3.getIdentifier().equals(guid));
+        assertTrue(metadata3.getSeriesId().equals(seriesId));
+
+    }
+       
+    public void testInvalidIds() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCreate.\t" + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("MNodeService should reject identifier with a whitespace");
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        guid.setValue("testCreate. " + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+         sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("MNodeService should reject identifier with a whitespace");
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        guid.setValue("testCreate." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        Identifier newPid = new Identifier();
+        newPid.setValue("testUpdate. " + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        try {
+            Identifier updatedPid = 
+                    MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            fail("MNodeService should reject identifier with a whitespace");        
+        } catch (InvalidRequest e) {
+            
+        }
+        
+        newPid.setValue("testUpdate.\f" + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        try {
+            Identifier updatedPid = 
+                    MNodeService.getInstance(request).update(session, guid, object, newPid, newSysMeta);
+            fail("MNodeService should reject identifier with a whitespace");        
+        } catch (InvalidRequest e) {
+            
+        }
+        
+       
+      
     }
 }

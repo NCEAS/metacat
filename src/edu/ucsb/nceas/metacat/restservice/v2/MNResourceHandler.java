@@ -24,13 +24,14 @@ package edu.ucsb.nceas.metacat.restservice.v2;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -89,6 +90,7 @@ import org.xml.sax.SAXException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
@@ -338,6 +340,10 @@ public class MNResourceHandler extends D1ResourceHandler {
                             // TODO: send to output	
                             status = true;
                             
+                        } else if (extra.toLowerCase().equals("status")) {
+                            logMetacat.debug("processing status request");
+                            getStatus();
+                            status = true;
                         }
                         
                     }
@@ -410,6 +416,9 @@ public class MNResourceHandler extends D1ResourceHandler {
 	                if (httpVerb == GET) {
 	                    doQuery(engine, query);
 	                    status = true;
+	                } else if (httpVerb == POST) {
+	                    doPostQuery(engine);
+                        status = true;
 	                }
                 } else if (resource.startsWith(RESOURCE_GENERATE_ID)) {
                 	// generate an id
@@ -603,6 +612,59 @@ public class MNResourceHandler extends D1ResourceHandler {
         }
     }
     
+    /*
+     * Handle the solr query sent by the http post method
+     */
+    private void doPostQuery(String engine) {
+        OutputStream out = null;
+        try {
+            // NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter            
+            collectMultipartParams();
+            MNodeService mnode = MNodeService.getInstance(request);               
+            if(multipartparams == null || multipartparams.isEmpty()) {
+                throw new InvalidRequest("2823", "The request doesn't have any query information by the HTTP POST method.");
+            }
+            HashMap<String, String[]> params = new HashMap<String, String[]>();
+            for(String key : multipartparams.keySet()) {
+                List<String> values = multipartparams.get(key);
+                logMetacat.debug("MNResourceHandler.doPostQuery -the key "+key +" has the value "+values);
+                if(values != null) {
+                    String[] arrayValues = values.toArray(new String[0]);
+                    params.put(key, arrayValues);
+                }
+            }
+            mnode.setSession(session);
+            InputStream stream = mnode.postQuery(session, engine, params);
+            // set the content-type if we have it from the implementation
+            if (stream instanceof ContentTypeInputStream) {
+                response.setContentType(((ContentTypeInputStream) stream).getContentType());
+            }
+            response.setStatus(200);
+            out = response.getOutputStream();
+            // write the results to the output stream
+            IOUtils.copyLarge(stream, out);
+            return;
+        } catch (BaseException be) {
+            // report Exceptions as clearly as possible
+            try {
+                out = response.getOutputStream();
+            } catch (IOException e) {
+                logMetacat.error("Could not get output stream from response", e);
+            }
+            serializeException(be, out);
+        } catch (Exception e) {
+            // report Exceptions as clearly and generically as possible
+            logMetacat.error(e.getClass() + ": " + e.getMessage(), e);
+            try {
+                out = response.getOutputStream();
+            } catch (IOException ioe) {
+                logMetacat.error("Could not get output stream from response", ioe);
+            }
+            ServiceFailure se = new ServiceFailure("0000", e.getMessage());
+            serializeException(se, out);
+        }
+    }
+    
     private void doViews(String format, String pid) {
     	
 		OutputStream out = null;
@@ -728,12 +790,14 @@ public class MNResourceHandler extends D1ResourceHandler {
         final Date dateSysMetaLastModified = DateTimeMarshaller.deserializeDateToUTC(dateSysMetaLastModifiedStr);
         
         // check authorization before sending to implementation
-        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
-        if (!authorized) {
-        	String msg = "User is not authorized to call systemMetadataChanged";
-            NotAuthorized failure = new NotAuthorized("1331", msg);
-        	throw failure;
-        }
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", "????");
+        authDel.doAdminAuthorization(session);
+//        boolean authorized = MNodeService.getInstance(request).isAdminAuthorized(session);
+//        if (!authorized) {
+//        	String msg = "User is not authorized to call systemMetadataChanged";
+//            NotAuthorized failure = new NotAuthorized("1331", msg);
+//        	throw failure;
+//        }
         
         // run it in a thread to avoid connection timeout
         Runnable runner = new Runnable() {
@@ -891,6 +955,19 @@ public class MNResourceHandler extends D1ResourceHandler {
     }
     
     /**
+     * Get the status of the system. Now we only support to get the size of the index queue.
+     */
+    private void getStatus() throws IOException, NotAuthorized, ServiceFailure {
+        InputStream result = MNodeService.getInstance(request).getStatus(this.session);
+        response.setStatus(200);
+        response.setContentType("text/xml");
+        OutputStream out = response.getOutputStream();
+        out = response.getOutputStream();  
+        IOUtils.copy(result, out);
+        //IOUtils.copyLarge(result, out);
+    }
+    
+    /**
      * Processes failed synchronization message
      * @throws NotImplemented
      * @throws ServiceFailure
@@ -986,12 +1063,15 @@ public class MNResourceHandler extends D1ResourceHandler {
             NotAuthorized failure = new NotAuthorized("2152", msg);
         	throw failure;
         } else {
-        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
-        	if (!allowed) {
-        		String msg = "User is not an admin user";
-                NotAuthorized failure = new NotAuthorized("2152", msg);
-            	throw failure;
-        	}
+            // TODO: should we refactore replicate() in MNodeservice to not replicate, it would avoid a possible second listNodes call...
+            D1AuthHelper authDel = new D1AuthHelper(request, null, "2152", "????");
+            authDel.doAdminAuthorization(session);
+//        	allowed = MNodeService.getInstance(request).isAdminAuthorized(session);
+//        	if (!allowed) {
+//        		String msg = "User is not an admin user";
+//                NotAuthorized failure = new NotAuthorized("2152", msg);
+//            	throw failure;
+//        	}
         }
         
         // parse the systemMetadata

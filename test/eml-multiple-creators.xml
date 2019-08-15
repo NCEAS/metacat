@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eml:eml packageId="tao.14563.1" system="knb"
+	xmlns:eml="eml://ecoinformatics.org/eml-2.1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.0 eml.xsd">
+	<access authSystem="knb" order="allowFirst">
+		<allow>
+			<principal>public</principal>
+			<permission>read</permission>
+		</allow>
+	</access>
+	<dataset>
+		<title>Test EML package - public-readable from morpho</title>
+		<creator id="1320966812705">
+			<individualName>
+				<surName>onlySurName</surName>
+			</individualName>
+		</creator>
+    <creator id="1320966812706">
+		 <organizationName>National Center for Ecological Analysis and Synthesis</organizationName> 
+    </creator>
+    <creator id="1320966812707">
+      <individualName>
+        <givenName>John</givenName>
+        <givenName>secondFirstName</givenName>
+        <surName>Smith</surName>
+      </individualName>
+    </creator>
+     <creator id="1320966812708">
+      <individualName>
+        <givenName>Wendy</givenName>
+        <givenName>secondFirstName</givenName>
+        <surName>King</surName>
+      </individualName>
+    </creator>
+    <creator id="1320966812709">
+     <organizationName>University of California Santa Barbara</organizationName> 
+    </creator>
+		<abstract>
+			<para>adf</para>
+		</abstract>
+		<keywordSet>
+			<keyword>SAEON, South Africa</keyword>
+		</keywordSet>
+		<contact id="1320966816821">
+			<individualName>
+				<surName>asdfdas</surName>
+			</individualName>
+		</contact>
+	</dataset>
+</eml:eml>

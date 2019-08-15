@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<eml:eml packageId="eml220annotationscimeta" system="knb"
+  xmlns:eml="https://eml.ecoinformatics.org/eml-2.2.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.1" xsi:schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0 eml.xsd">
+  <dataset>
+    <title>Test document for EML 2.2.0</title>
+    <creator id="test.user">
+      <individualName>
+        <givenName>Test</givenName>
+        <surName>User</surName>
+      </individualName>
+    </creator>
+    <annotation>
+        <propertyURI label="type">http://www.w3.org/1999/02/22-rdf-syntax-ns#type</propertyURI>
+        <valueURI label="Carbon Dioxide Flux">http://purl.dataone.org/odo/ECSO_00000536</valueURI>
+    </annotation>
+    <annotation>
+        <propertyURI label="type">http://www.w3.org/1999/02/22-rdf-syntax-ns#type</propertyURI>
+        <valueURI label="Total Soil Carbon">http://purl.dataone.org/odo/ECSO_00000531</valueURI>
+    </annotation>
+    <contact>
+      <references>test.user</references>
+    </contact>
+  </dataset>
+</eml:eml>

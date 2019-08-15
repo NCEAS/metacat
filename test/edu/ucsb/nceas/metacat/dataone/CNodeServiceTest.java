@@ -125,6 +125,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testListViews"));
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
 		suite.addTest(new CNodeServiceTest("testArchive"));
+		suite.addTest(new CNodeServiceTest("testInvalidIds"));
 		
 		return suite;
 	}
@@ -821,7 +822,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           Thread.sleep(3000);
           // use MN admin to delete
-          session = getMNSession();
+          session = getCNSession();
           Identifier deletedPid = CNodeService.getInstance(request).delete(session, pid);
           System.out.println("after deleting");
           assertEquals(pid.getValue(), deletedPid.getValue());
@@ -1315,7 +1316,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           assertTrue(archived.getArchived());
           
           // test delete a series id by v2
-          CNodeService.getInstance(request).delete(mnSession, seriesId2);
+          CNodeService.getInstance(request).delete(session, seriesId2);
           try {
               CNodeService.getInstance(request).get(session, seriesId2);
               fail("we can't reach here since the series id was deleted ");
@@ -1349,7 +1350,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
           
           //delete seriesId
-          CNodeService.getInstance(request).delete(mnSession, seriesId);
+          CNodeService.getInstance(request).delete(session, seriesId);
           try {
               CNodeService.getInstance(request).get(session, newPid);
               fail("we can't reach here since the series id was deleted ");
@@ -1708,4 +1709,28 @@ public class CNodeServiceTest extends D1NodeServiceTest {
       return session;
   }
   
+  public void testInvalidIds() throws Exception {
+      Session session = getTestSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testCreate.\n" + System.currentTimeMillis());
+      InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      try {
+          CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          fail("MNodeService should reject identifier with a whitespace");
+      } catch (InvalidRequest e) {
+          
+      }
+      
+      guid.setValue("testCreate. " + System.currentTimeMillis());
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+       sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      try {
+          CNodeService.getInstance(request).create(session, guid, object, sysmeta);
+          fail("MNodeService should reject identifier with a whitespace");
+      } catch (InvalidRequest e) {
+          
+      }
+      
+  }
 }

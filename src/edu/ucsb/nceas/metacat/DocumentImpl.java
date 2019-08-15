@@ -3373,14 +3373,44 @@ public class DocumentImpl
         return documentType;
     }
 
+    
     /**
-     * Delete an XML file from the database (actually, just make it a revision
-     * in the xml_revisions table)
-     *
-     * @param docid
-     *            the ID of the document to be deleted from the database
+     * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
+     * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
+     * @param accnum  the local id (including the rev) will be applied.
+     * @param user  the subject who does the action.
+     * @param groups  the groups which the user belongs to.
+     * @param notifyServer  the server will be notified in the replication. It can be null.
+     * @param removeAll  it will be the delete action if this is true; otherwise it will be the archive action
+     * @throws SQLException
+     * @throws InsufficientKarmaException
+     * @throws McdbDocNotFoundException
+     * @throws Exception
      */
     public static void delete(String accnum, String user, 
+            String[] groups, String notifyServer, boolean removeAll)
+            throws SQLException, InsufficientKarmaException, McdbDocNotFoundException,
+            Exception {
+        //default, we only match the docid part on archive action
+        boolean ignoreRev = true;
+        delete(accnum, ignoreRev, user, groups, notifyServer, removeAll);
+     }
+    
+    /**
+     * Archive an object from the xml_documents table to the xml_revision table (including other changes as well).
+     * Or delete an object totally from the db. The parameter "removeAll" decides which action will be taken.
+     * @param accnum  the local id (including the rev) will be applied.
+     * @param ignoreRev  if the archive action should only match docid and ignore the rev 
+     * @param user  the subject who does the action.
+     * @param groups  the groups which the user belongs to.
+     * @param notifyServer  the server will be notified in the replication. It can be null.
+     * @param removeAll  it will be the delete action if this is true; otherwise it will be the archive action.
+     * @throws SQLException
+     * @throws InsufficientKarmaException
+     * @throws McdbDocNotFoundException
+     * @throws Exception
+     */
+    public static void delete(String accnum, boolean ignoreRev, String user, 
       String[] groups, String notifyServer, boolean removeAll)
       throws SQLException, InsufficientKarmaException, McdbDocNotFoundException,
       Exception
@@ -3421,6 +3451,13 @@ public class DocumentImpl
                 	//Get the rev from the xml_table. If the value is greater than the one user specified, we will use this one.
                 	 //In ReplicationHandler.handleDeleteSingleDocument method, the code use "1" as the revision number not matther what is the actual value
                 	 int revFromTable = rs.getInt(1);
+                	 if(!ignoreRev && revFromTable != rev) {
+                	     pstmt.close();
+                         conn.increaseUsageCount(1);                    
+                         throw new McdbDocNotFoundException("Docid " + accnum  + 
+                               " does not exist. Please check that you have also " +
+                               "specified the revision number of the document.");
+                	 }
                 	 if(revFromTable > rev) {
                 		 logMetacat.info("DocumentImpl.delete - in the archive the user specified rev - "+rev +"is less than the version in xml_document table - "+revFromTable+
                 				 ". We will use the one from table.");
@@ -3648,7 +3685,7 @@ public class DocumentImpl
                 			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
                 			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
                 			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
-                			MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                			MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
                 		} catch (RuntimeException ee) {
                 			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
                 			throw new Exception("DocumentImpl.delete -"+ee.getMessage());

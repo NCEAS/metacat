@@ -27,6 +27,7 @@
 package edu.ucsb.nceas.metacat.admin;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.Vector;
 
 import javax.servlet.ServletConfig;
@@ -38,6 +39,7 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 
+import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -202,6 +204,9 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process replication config
                 SolrAdmin.getInstance().configureSolr(request, response);
                 return; 
+			} else if (action.equals("refreshStylesheets")) {
+			    clearStylesheetCache(response);
+			    return;
 			} else {
 				String errorMessage = "MetacatAdminServlet.handleGetOrPost - Invalid action in configuration request: " + action;
 				logMetacat.error(errorMessage);
@@ -241,5 +246,20 @@ public class MetacatAdminServlet extends HttpServlet {
 			logMetacat.error(errorMessage);
 			processingErrors.add(errorMessage);
 		}
-	}       	
+	}
+	
+	/*
+	 * Method to set up the forceBuild true which will clear the style sheet map.
+	 */
+	private void clearStylesheetCache(HttpServletResponse response) throws IOException {
+	    Boolean forceRebuild = true;
+	    DBTransform.setForceRebuild(forceRebuild);
+	    response.setContentType("text/xml");
+        PrintWriter out = response.getWriter();
+        out.print("<success>");
+        out.print("The style sheet cache has been cleared and they will be reload from the disk.");
+        out.print("</success>");
+        out.close();
+       
+	}
 }

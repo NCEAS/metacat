@@ -38,11 +38,14 @@ import org.apache.commons.io.FileUtils;
 
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.configuration.Settings;
+import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.NodeType;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.ObjectList;
+import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.MediaType;
@@ -58,6 +61,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
@@ -96,7 +100,9 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testSystemMetadataSIDExists"));
         suite.addTest(new IdentifierManagerTest("testObjectFileExist"));
         suite.addTest(new IdentifierManagerTest("testExistsInXmlRevisionTable"));
-        
+        suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
+        suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
+        suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
         return suite;
     }
     /**
@@ -1811,10 +1817,27 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         
     }
     
+    /**
+     * Test the existsInIdentifierTable method
+     * @throws Exception
+     */
+    public void testExistsInIdentifierTable() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue("The identifier "+guid.getValue()+" should exist on the talbe.", IdentifierManager.getInstance().existsInIdentifierTable(guid));
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        assertTrue("The identifier "+guid2.getValue()+" shouldn't exist on the talbe.", !IdentifierManager.getInstance().existsInIdentifierTable(guid2));
+    }
+    
     public void testExistsInXmlRevisionTable() {
         try {
             String localId = "test.12";
-            int rev =1;
+            int rev =1456789090;
             assertTrue("The object "+localId+" should not exists in the xml_revisions table.", !IdentifierManager.getInstance().existsInXmlLRevisionTable(localId, rev));
         } catch (Exception e) {
             e.printStackTrace();
@@ -1848,4 +1871,86 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         return session;
     }
     
+    /**
+     * Test the updateSystemMetadata method should throw an IvalidSystemMetadata exception 
+     * if the permission is wrongly spelled. 
+     * https://github.com/NCEAS/metacat/issues/1323
+     * @throws Exception
+     */
+    public void testUpdateSystemmetadata() throws Exception {
+        String typoPermission = "typo";
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        AccessPolicy policy = new AccessPolicy();
+        AccessRule rule = new AccessRule();
+        Subject subject = new Subject();
+        subject.setValue("cn=test,dc=org");
+        rule.addSubject(subject);
+        rule.addPermission(Permission.convert(typoPermission));
+        policy.addAllow(rule);
+        SystemMetadata meta = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        meta.setAccessPolicy(policy);
+        DBConnection dbConn = null;
+        int serialNumber = 1;
+        try {
+            // get a connection from the pool
+            dbConn = DBConnectionPool
+                    .getDBConnection("Metacathandler.handleInsertOrUpdateAction");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            try {
+                IdentifierManager.getInstance().updateSystemMetadata(meta, dbConn);
+                fail("Can't get there since an InvalidSystemMetadata exception should be thrown.");
+            } catch (InvalidSystemMetadata e) {
+                assertTrue(e.getMessage().contains(typoPermission));
+            }
+            
+        } finally {
+            // Return db connection
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        
+    }
+    
+    /**
+     * Test the getGUIDs method for either the guid matches the scheme or the series id matches the scheme
+     * @throws Exception
+     */
+    public void getGetGUIDs() throws Exception {
+        String urnScheme = "urn:uuid:";
+        Session session = getTestSession();
+        
+        //create an object whose identifier is a uuid
+        UUID uuid = UUID.randomUUID();
+        String str1 = uuid.toString();
+        Identifier guid = new Identifier();
+        guid.setValue(urnScheme+str1); 
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //create an object whose identifier is not a uuid, but its series id is
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        UUID uuid2 = UUID.randomUUID();
+        String str2 = uuid2.toString();
+        Identifier seriesId = new Identifier();
+        seriesId.setValue(urnScheme+str2); 
+        sysmeta2.setSeriesId(seriesId);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
+        
+        String nodeId = MNodeService.getInstance(request).getCapabilities().getIdentifier().getValue();
+        List<String> ids = IdentifierManager.getInstance().getGUIDs("application/octet-stream", nodeId, urnScheme);
+        //System.out.println("========the ids is \n"+ids);
+        assertTrue(ids.contains(guid.getValue()));
+        assertTrue(ids.contains(guid2.getValue()));
+    }
 }

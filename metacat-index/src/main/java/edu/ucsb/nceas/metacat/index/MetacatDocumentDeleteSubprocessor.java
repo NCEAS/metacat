@@ -69,8 +69,9 @@ public class MetacatDocumentDeleteSubprocessor implements IDocumentDeleteSubproc
             SolrDoc indexedDoc, Map<String, SolrDoc> docs) throws Exception {
 
         // gather all docs with relations from self source
+        boolean ignoreArchivedObjecst = false;
         List<SolrDoc> relatedDocs = ResourceMapSubprocessor.getDocumentsByQuery(
-                "q=" + relationSourceField + ":\"" + relationSourceId + "\"");
+                "q=" + relationSourceField + ":\"" + relationSourceId + "\"", ignoreArchivedObjecst);
 
         Set<String> otherSourceDocs = new HashSet<String>();
 
@@ -118,8 +119,9 @@ public class MetacatDocumentDeleteSubprocessor implements IDocumentDeleteSubproc
             SolrDoc indexedDoc, Map<String, SolrDoc> docs) throws Exception {
 
         for (String relationField : getBiDirectionalRelationFields()) {
+            boolean ignoreArchivedObjecst = false;
             List<SolrDoc> inverseDocs = ResourceMapSubprocessor.getDocumentsByQuery(
-                    "q=" + relationField + ":\"" + identifier + "\"");
+                    "q=" + relationField + ":\"" + identifier + "\"", ignoreArchivedObjecst);
             for (SolrDoc inverseDoc : inverseDocs) {
                 String inverseDocId = inverseDoc.getFirstFieldValue(SolrElementField.FIELD_ID);
                 if (docs.get(inverseDocId) != null) {

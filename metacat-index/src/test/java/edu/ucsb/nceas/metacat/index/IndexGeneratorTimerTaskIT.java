@@ -13,7 +13,7 @@ public class IndexGeneratorTimerTaskIT {
         SolrIndex solrIndex = generateSolrIndex();
         SystemMetadataEventListener systeMetaListener = new SystemMetadataEventListener(solrIndex);
         systeMetaListener.run();
-        IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask(solrIndex);
+        IndexGeneratorTimerTask generator = new IndexGeneratorTimerTask();
         generator.indexAll();
         String result = SolrIndexIT.doQuery(solrIndex.getSolrServer());
         systeMetaListener.stop();

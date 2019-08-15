@@ -78,6 +78,7 @@ import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.ecoinformatics.eml.EMLParser;
@@ -390,8 +391,8 @@ public class MetacatHandler {
                     + " which has username" + session.getAttribute("username")
                     + " into hash in login method");
             try {
-                System.out.println("registering session with id " + id);
-                System.out.println("username: " + (String) session.getAttribute("username"));
+                //System.out.println("registering session with id " + id);
+                //System.out.println("username: " + (String) session.getAttribute("username"));
                 SessionService.getInstance().registerSession(id, 
                         (String) session.getAttribute("username"), 
                         (String[]) session.getAttribute("groupnames"), 
@@ -4023,9 +4024,37 @@ public class MetacatHandler {
             
             File directory = new File(directoryName);
             directory.mkdirs();
-            String urlRoot = request.getRequestURL().toString();
-            Sitemap smap = new Sitemap(directory, urlRoot, skin);
-            long firstDelay = 60*1000;   // 60 seconds delay
+
+            // Determine sitemap location and entry base URLs. Prepends the 
+            // secure server URL from the metacat configuration if the 
+            // values in the properties don't start with 'http' (e.g., '/view')
+            String serverUrl = "";
+            String locationBase = "";
+            String entryBase = "";
+
+            try {
+                serverUrl = SystemUtil.getSecureServerURL();
+                locationBase = PropertyService.getProperty("sitemap.location.base");
+                entryBase = PropertyService.getProperty("sitemap.entry.base");
+            } catch (PropertyNotFoundException pnfe) {
+                logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
+                		         "Could not run site map generation because property " +
+                		         "could not be found: " + pnfe.getMessage());
+            }
+
+            // Prepend server URL to locationBase if needed
+            if (!locationBase.startsWith("http")) {
+                locationBase = serverUrl + locationBase;
+            }
+
+            // Prepend server URL to entryBase if needed
+            if (!entryBase.startsWith("http")) {
+                entryBase = serverUrl + entryBase;
+            }
+            
+            Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+            long firstDelay = 10*1000;   // 60 seconds delay
+
             timer.schedule(smap, firstDelay, sitemapInterval);
             _sitemapScheduled = true;
         }
