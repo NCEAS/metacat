@@ -2904,16 +2904,22 @@ public class MetacatHandler {
      * Index all non-resourcemap objects first. We don't put the list of pids in a vector anymore.
      */
     private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
-        String sql = "select guid from systemmetadata where archived=false";
-        if(resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            for(String format :resourceMapFormatList) {
-                if(format != null && !format.trim().equals("")) {
-                    sql = sql +" and object_format !='"+format+"'";
+        boolean firstTime = true;
+        String sql = "select guid from systemmetadata";
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
+            for (String format :resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql = sql + " where object_format !='" + format + "'";
+                        firstTime = false;
+                    } else {
+                        sql = sql + " and object_format !='" + format + "'";
+                    }
                 }
                 
             }
         }
-        logMetacat.info("MetacatHandler.buildAllNonResourceMapIndex - the final query is "+sql);
+        logMetacat.info("MetacatHandler.buildAllNonResourceMapIndex - the final query is " + sql);
         try {
              buildIndexFromQuery(sql);
         } catch (Exception e) {
@@ -2926,25 +2932,21 @@ public class MetacatHandler {
      * Index all resource map objects. We don't put the list of pids in a vector anymore.
      */
     private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
-        String sql = "select guid from systemmetadata where archived=false";
-        if(resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
-            sql = sql +" and (";
+        String sql = "select guid from systemmetadata";
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
             boolean firstTime = true;
-            for(String format :resourceMapFormatList) {
-                if(format != null && !format.trim().equals("")) {
-                    if(firstTime) {
-                        sql = sql +"object_format ='"+format+"'";
+            for (String format :resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql = sql + " where object_format ='" + format + "'";
                         firstTime=false;
                     } else {
-                        sql = sql +" or object_format ='"+format+"'";
-                    }
-                    
+                        sql = sql + " or object_format ='" + format + "'";
+                    }   
                 }
-                
             }
-            sql = sql +")";
         }
-        logMetacat.info("MetacatHandler.buildAllResourceMapIndex - the final query is "+sql);
+        logMetacat.info("MetacatHandler.buildAllResourceMapIndex - the final query is " + sql);
         try {
             buildIndexFromQuery(sql);
        } catch (Exception e) {
