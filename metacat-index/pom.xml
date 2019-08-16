@@ -92,7 +92,7 @@
                 <version>2.6</version>
                 <configuration>
                     <packagingExcludes>
-                        WEB-INF/classes/solr-home/solr.xml,WEB-INF/classes/solr-home/core.properties
+                        WEB-INF/classes/solr-home/core.properties
                     </packagingExcludes>
                  </configuration>
            </plugin>
