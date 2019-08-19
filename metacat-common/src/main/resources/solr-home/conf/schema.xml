@@ -194,6 +194,18 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 			</analyzer>
 		</fieldType>
 
+    <fieldType name="text_case_insensitive" class="solr.TextField">
+      <analyzer type="index">
+          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+
+      <analyzer type="query">
+          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+  </fieldType>
+
     </types>
 
 
@@ -401,7 +413,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 		<field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
 
     <!-- Project document fields -->
-    <field name="label" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="label" type="text_case_insensitive" indexed="true" stored="true" multiValued="false" />
     <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
 
 <!-- ======================================================================= -->
