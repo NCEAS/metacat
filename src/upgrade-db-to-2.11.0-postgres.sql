@@ -4,6 +4,8 @@
 SELECT setval('xml_catalog_id_seq', (SELECT max(catalog_id) from xml_catalog));
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'https://eml.ecoinformatics.org/eml-2.2.0', '/schema/eml-2.2.0/eml.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='https://eml.ecoinformatics.org/eml-2.2.0');
+INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'https://purl.dataone.org/collections-1.0.0', '/schema/collections-1.0.0/collections.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='https://purl.dataone.org/collections-1.0.0');
+INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'https://purl.dataone.org/portals-1.0.0', '/schema/portals-1.0.0/portals.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='https://purl.dataone.org/portals-1.0.0');
 
 /*
  * update the database version
