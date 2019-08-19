@@ -401,7 +401,7 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 		<field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
 
     <!-- Project document fields -->
-    <field name="projectName" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="label" type="string" indexed="true" stored="true" multiValued="false" />
     <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
 
 <!-- ======================================================================= -->

@@ -6,60 +6,60 @@
 						http://www.springframework.org/schema/context
     					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
 
-	<bean id="projectBeta1Subprocessor"
+	<bean id="portalsSubprocessor"
 	  	class="org.dataone.cn.indexer.parser.ScienceMetadataDocumentSubprocessor">
 	  	<property name="xmlNamespaceConfig" ref="xmlNamespaceConfig" />
 		<property name="matchDocuments">
 	   		<list>
-				<value>http://ecoinformatics.org/project-beta1</value>
+				<value>https://purl.dataone.org/portals-1.0.0</value>
 			</list>
 	   	</property>
 	  	<property name="fieldList">
 		   	<list>
-		    	<ref bean="project.name" />
-		    	<ref bean="project.label" />
-		    	<ref bean="project.description" />
-		    	<ref bean="project.logo" />
-		    	<ref bean="project.associatedParty" />
-		    	<ref bean="project.funderName" />
-		    	<ref bean="project.funderIdentifier" />
-		    	<ref bean="project.awardNumber" />
-		    	<ref bean="project.awardTitle" />
+		    	<ref bean="portals.name" />
+		    	<ref bean="portals.label" />
+		    	<ref bean="portals.description" />
+		    	<ref bean="portals.logo" />
+		    	<ref bean="portals.associatedParty" />
+		    	<ref bean="portals.funderName" />
+		    	<ref bean="portals.funderIdentifier" />
+		    	<ref bean="portals.awardNumber" />
+		    	<ref bean="portals.awardTitle" />
 		   	</list>
 	  	</property>
 	</bean>
 
-	<bean id="project.label" class="org.dataone.cn.indexer.parser.SolrField">
-	  <constructor-arg name="name" value="projectName" />
+	<bean id="portals.label" class="org.dataone.cn.indexer.parser.SolrField">
+	  <constructor-arg name="name" value="label" />
 	  <constructor-arg name="xpath" value="//label/text()" />
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="project.name" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.name" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="title" />
 	  <constructor-arg name="xpath" value="//name/text()" />
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="project.description" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.description" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="abstract" />
 	  <constructor-arg name="xpath" value="//description/text()" />
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="project.logo" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.logo" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="logo" />
 	  <constructor-arg name="xpath" value="//logo/identifier/text()" />
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="project.associatedParty" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
+	<bean id="portals.associatedParty" class="org.dataone.cn.indexer.parser.CommonRootSolrField"
 		p:multivalue="true"
-		p:root-ref="project.associatedPartyRoot">
+		p:root-ref="portals.associatedPartyRoot">
 		<constructor-arg name="name" value="investigator" />
 	</bean>
 
-	<bean id="project.associatedPartyRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
+	<bean id="portals.associatedPartyRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
 		p:name="investigator"
 		p:xPath="//associatedParty"
 		p:template="[individualName]||[organizationName]">
@@ -67,7 +67,7 @@
 		<property name="subRoots"><list><ref bean="eml.individualNameRoot" /></list></property>
 	</bean>
 
-	<bean id="project.funderName" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.funderName" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="funderName" />
 	  <constructor-arg name="xpath"
 	    value="//award/funderName/text()" />
@@ -75,7 +75,7 @@
 	  <property name="dedupe" value="true" />
 	</bean>
 
-	<bean id="project.funderIdentifier" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.funderIdentifier" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="funderIdentifier" />
 	  <constructor-arg name="xpath"
 	    value="//award/funderIdentifier/text()" />
@@ -83,7 +83,7 @@
 	  <property name="dedupe" value="true" />
 	</bean>
 
-	<bean id="project.awardNumber" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.awardNumber" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="awardNumber" />
 	  <constructor-arg name="xpath"
 	    value="//award/awardNumber/text()" />
@@ -91,7 +91,7 @@
 	  <property name="dedupe" value="true" />
 	</bean>
 
-	<bean id="project.awardTitle" class="org.dataone.cn.indexer.parser.SolrField">
+	<bean id="portals.awardTitle" class="org.dataone.cn.indexer.parser.SolrField">
 	  <constructor-arg name="name" value="awardTitle" />
 	  <constructor-arg name="xpath"
 	    value="//award/awardTitle/text()" />
