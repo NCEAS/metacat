@@ -47,6 +47,7 @@
 
     <import resource="application-context-rdfxml.xml" />
 
+    <import resource="application-context-collections.xml" />
     <import resource="application-context-portals.xml" />
 
     <import resource="application-context-eml-annotation.xml" />
@@ -129,6 +130,7 @@
        <ref bean="isotc211NoaaSubprocessor" />
        <ref bean="isotc211PangaeaSubprocessor" />
        <ref bean="dublinCoreOAISubprocessor" />
+       <ref bean="collectionsSubprocessor" />
        <ref bean="portalsSubprocessor" />
       </list>
      </property>

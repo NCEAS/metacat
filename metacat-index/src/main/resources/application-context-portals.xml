@@ -16,9 +16,9 @@
 	   	</property>
 	  	<property name="fieldList">
 		   	<list>
-		    	<ref bean="portals.name" />
-		    	<ref bean="portals.label" />
-		    	<ref bean="portals.description" />
+		   	    <ref bean="collections.name" />
+		    	<ref bean="collections.label" />
+		    	<ref bean="collections.description" />
 		    	<ref bean="portals.logo" />
 		    	<ref bean="portals.associatedParty" />
 		    	<ref bean="portals.funderName" />
@@ -27,24 +27,6 @@
 		    	<ref bean="portals.awardTitle" />
 		   	</list>
 	  	</property>
-	</bean>
-
-	<bean id="portals.label" class="org.dataone.cn.indexer.parser.SolrField">
-	  <constructor-arg name="name" value="label" />
-	  <constructor-arg name="xpath" value="//label/text()" />
-	  <property name="multivalue" value="false" />
-	</bean>
-
-	<bean id="portals.name" class="org.dataone.cn.indexer.parser.SolrField">
-	  <constructor-arg name="name" value="title" />
-	  <constructor-arg name="xpath" value="//name/text()" />
-	  <property name="multivalue" value="false" />
-	</bean>
-
-	<bean id="portals.description" class="org.dataone.cn.indexer.parser.SolrField">
-	  <constructor-arg name="name" value="abstract" />
-	  <constructor-arg name="xpath" value="//description/text()" />
-	  <property name="multivalue" value="false" />
 	</bean>
 
 	<bean id="portals.logo" class="org.dataone.cn.indexer.parser.SolrField">

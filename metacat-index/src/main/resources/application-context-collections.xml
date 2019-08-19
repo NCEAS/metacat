@@ -1,0 +1,44 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:p="http://www.springframework.org/schema/p"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+						http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context
+    					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+	<bean id="collectionsSubprocessor"
+	  	class="org.dataone.cn.indexer.parser.ScienceMetadataDocumentSubprocessor">
+	  	<property name="xmlNamespaceConfig" ref="xmlNamespaceConfig" />
+		<property name="matchDocuments">
+	   		<list>
+				<value>https://purl.dataone.org/collections-1.0.0</value>
+			</list>
+	   	</property>
+	  	<property name="fieldList">
+		   	<list>
+		    	<ref bean="collections.name" />
+		    	<ref bean="collections.label" />
+		    	<ref bean="collections.description" />
+		   	</list>
+	  	</property>
+	</bean>
+
+	<bean id="collections.label" class="org.dataone.cn.indexer.parser.SolrField">
+	  <constructor-arg name="name" value="label" />
+	  <constructor-arg name="xpath" value="//label/text()" />
+	  <property name="multivalue" value="false" />
+	</bean>
+
+	<bean id="collections.name" class="org.dataone.cn.indexer.parser.SolrField">
+	  <constructor-arg name="name" value="title" />
+	  <constructor-arg name="xpath" value="//name/text()" />
+	  <property name="multivalue" value="false" />
+	</bean>
+
+	<bean id="collections.description" class="org.dataone.cn.indexer.parser.SolrField">
+	  <constructor-arg name="name" value="abstract" />
+	  <constructor-arg name="xpath" value="//description/text()" />
+	  <property name="multivalue" value="false" />
+	</bean>
+
+</beans>
