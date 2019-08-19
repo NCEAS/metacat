@@ -693,16 +693,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = resultStr.replaceAll("\\s","");
         System.out.println("the guid is "+guid.getValue());
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+        assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arrname=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"class\"><str>Class</str><str>class</str></arr>"));
         
         //post query
         params = new HashMap<String, String[]>();
@@ -710,15 +711,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = resultStr.replaceAll("\\s","");
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+        assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arrname=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"class\"><str>Class</str><str>class</str></arr>"));
     }
     
     public void testISO211() throws Exception {

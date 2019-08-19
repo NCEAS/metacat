@@ -1223,6 +1223,7 @@
 					<include name="harvester.jar" />
 					<include name="${name}-junittests.jar" />
 				</fileset>
+				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
 			</classpath>
 
 			<formatter type="plain" />
@@ -1270,6 +1271,7 @@
 					<include name="harvester.jar" />
 					<include name="${name}-junittests.jar" />
 				</fileset>
+				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
 			</classpath>
 
 			<formatter type="plain" />
