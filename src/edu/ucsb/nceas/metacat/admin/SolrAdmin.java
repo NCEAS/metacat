@@ -49,6 +49,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.NameFileFilter;
+import org.apache.commons.io.filefilter.NotFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
 import org.apache.log4j.Logger;
@@ -112,6 +113,10 @@ public class SolrAdmin extends MetacatAdmin {
 	public static final String EXISTINGCORE = "existingCore";
 	public static final String SOLRCORENAME = "solrCoreName";
 	public static final String NEWSOLCORENAME = "newSolrCoreName";
+	
+	private static final String CONF = "conf";
+	private static final String DATA = "data";
+	private static final String CORE_PROPERTY = "core.properties";
 	
 	private SolrSchemaModificationException solrSchemaException = null;
 	private Vector<String> updateClassList = null;
@@ -186,6 +191,9 @@ public class SolrAdmin extends MetacatAdmin {
                         throw new AdminException("SolrAdmin.configureProperties - SOLR home is not a directory: " + solrHomePath);
                     }
                 }
+                boolean solrHomeConfExists = new File(solrHomePath + "/" + CONF).exists();
+                boolean solrHomeDataExists = new File(solrHomePath + "/"+ DATA).exists();
+                boolean solrHomeCoreExists = new File(solrHomePath + "/" + CORE_PROPERTY).exists();
                 request.setAttribute("solrHomeExist", (Boolean) solrHomeExists);
                 request.setAttribute("solrHomeValueInProp", solrHomePath);
                 //check the solr-home for given core name
@@ -203,7 +211,7 @@ public class SolrAdmin extends MetacatAdmin {
                 logMetacat.info("SolrAmdin.confgureSolr -the solr-home on the properties is "+solrHomePath +" and doe it exist? "+solrHomeExists);
                 logMetacat.info("SolrAmdin.confgureSolr - the instance directory for the core "+coreName +" is "+solrHomeForGivenCore+" If it is null, this means the core doesn't exit.");
                 logMetacat.info("SolrAmdin.confgureSolr - in this upgrade/installation, do we need to update the schema file?"+updateSchema);
-                if(solrHomeForGivenCore == null && !solrHomeExists) {
+                if(solrHomeForGivenCore == null && (!solrHomeExists || (!solrHomeConfExists && !solrHomeCoreExists && !solrHomeDataExists))) {
                     //action 1 - create (no core and no solr home)
                     request.setAttribute(ACTION, CREATE);
                 } else if (solrHomeForGivenCore == null && solrHomeExists && !updateSchema) {
@@ -518,9 +526,10 @@ public class SolrAdmin extends MetacatAdmin {
             String indexContext = PropertyService.getProperty("index.context");
             String solrUser = PropertyService.getProperty("solr.osUser");
             boolean solrHomeExists = new File(solrHomePath).exists();
-            boolean solrHomeConfExists = new File(solrHomePath+"/conf").exists();
-            boolean solrHomeCoreExists = new File(solrHomePath+"/core.properties").exists();
-            if (!solrHomeExists || (!solrHomeConfExists && !solrHomeCoreExists)) {
+            boolean solrHomeConfExists = new File(solrHomePath + "/" + CONF).exists();
+            boolean solrHomeDataExists = new File(solrHomePath + "/"+ DATA).exists();
+            boolean solrHomeCoreExists = new File(solrHomePath + "/" + CORE_PROPERTY).exists();
+            if (!solrHomeExists || (!solrHomeConfExists && !solrHomeCoreExists && !solrHomeDataExists)) {
                 try {
                     String metacatWebInf = ServiceService.getRealConfigDir();
                     String metacatIndexSolrHome = metacatWebInf + "/../../" + indexContext + "/WEB-INF/classes/solr-home";
@@ -535,7 +544,7 @@ public class SolrAdmin extends MetacatAdmin {
                         if (!solrXmlExists) {
                             fileFilter.addFileFilter(new WildcardFileFilter("*"));
                         } else {
-                            fileFilter.addFileFilter(new NameFileFilter(SOLRXMLFILENAME));
+                            fileFilter.addFileFilter(new NotFileFilter(new NameFileFilter(SOLRXMLFILENAME)));
                         }
                         FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
                         //The solr home directory will be owned by the solr user, but the tomcat group has the permission to write
@@ -609,7 +618,11 @@ public class SolrAdmin extends MetacatAdmin {
                     String errorString = "SolrAdmin.createSolrHome - existing SOLR home is not a directory: " + solrHomePath;
                     logMetacat.error(errorString);
                     throw new IOException(errorString);
-                } 
+                } else {
+                    String errorString = "SolrAdmin.createSolrHome - existing SOLR home " + solrHomePath + " already has a core and we can't create blank core in there.";
+                    logMetacat.error(errorString);
+                    throw new IOException(errorString);
+                }
             }
 	}
 	
