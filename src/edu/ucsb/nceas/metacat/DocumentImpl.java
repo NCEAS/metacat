@@ -141,6 +141,7 @@ public class DocumentImpl
     public static final String EML2_0_1NAMESPACE;
     public static final String EML2_1_0NAMESPACE;
     public static final String EML2_1_1NAMESPACE;
+    public static final String EML2_2_0NAMESPACE;
     public static final String RDF_SYNTAX_NAMESPACE;
     
     static {
@@ -148,18 +149,21 @@ public class DocumentImpl
     	String eml201NameSpace = null;
     	String eml210NameSpace = null;
     	String eml211NameSpace = null;
+    	String eml220NameSpace = null;
     	String rdfNameSpace = null;
     	try {
     		eml200NameSpace = PropertyService.getProperty("xml.eml2_0_0namespace");
     		eml201NameSpace = PropertyService.getProperty("xml.eml2_0_1namespace");
     		eml210NameSpace = PropertyService.getProperty("xml.eml2_1_0namespace");
     		eml211NameSpace = PropertyService.getProperty("xml.eml2_1_1namespace");
+    		eml220NameSpace = PropertyService.getProperty("xml.eml2_2_0namespace");
     		rdfNameSpace = PropertyService.getProperty("xml.rdf_syntax_namespace");
     	} catch (PropertyNotFoundException pnfe) {
     		System.err.println("Could not get property in static block: " 
 					+ pnfe.getMessage());
     	}
     	
+    	EML2_2_0NAMESPACE = eml220NameSpace;
     	EML2_1_1NAMESPACE = eml211NameSpace;
         // "eml://ecoinformatics.org/eml-2.1.1";
     	EML2_1_0NAMESPACE = eml210NameSpace;

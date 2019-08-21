@@ -657,11 +657,13 @@ public class DatapackageSummarizer {
 			Vector<String> idList1 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_0_1NAMESPACE, false, serverLocation);
 			Vector<String> idList2 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_0NAMESPACE, false, serverLocation);
 			Vector<String> idList3 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_1_1NAMESPACE, false, serverLocation);
+			Vector<String> idList4 = DBUtil.getAllDocidsByType(DocumentImpl.EML2_2_0NAMESPACE, false, serverLocation);
 			
 			idList.addAll(idList0);
 			idList.addAll(idList1);
 			idList.addAll(idList2);
 			idList.addAll(idList3);
+			idList.addAll(idList4);
 		
 		}
 		

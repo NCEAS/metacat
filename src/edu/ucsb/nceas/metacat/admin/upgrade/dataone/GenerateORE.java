@@ -106,6 +106,11 @@ public class GenerateORE implements UpgradeUtilityInterface {
             Collections.sort(idList);
             SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
             
+            idList = DBUtil.getAllDocidsByType(DocumentImpl.EML2_2_0NAMESPACE, true, serverLocation);
+            filterOutExisting(idList);
+            Collections.sort(idList);
+            SystemMetadataFactory.generateSystemMetadata(idList, includeOre, downloadData);
+            
 		} catch (Exception e) {
 			String msg = "Problem generating missing system metadata: " + e.getMessage();
 			log.error(msg, e);
