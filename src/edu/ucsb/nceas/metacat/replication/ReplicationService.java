@@ -730,7 +730,10 @@ public class ReplicationService extends BaseService {
 					&& (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE)) {
 				logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.1.1 document!");
 				parserBase = DocumentImpl.EML210;
-			}
+			} else if (docType != null
+                    && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
+                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.2.0 document!");
+                parserBase = DocumentImpl.EML210;
 			logReplication.warn("ReplicationService.handleForceReplicateRequest - The parserBase is: " + parserBase);
 			
 			/*String formatId = null;

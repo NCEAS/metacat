@@ -369,7 +369,9 @@ public class SystemMetadataFactory {
 				|| fmtid == ObjectFormatCache.getInstance().getFormat(
 						"eml://ecoinformatics.org/eml-2.1.0").getFormatId()
 				|| fmtid == ObjectFormatCache.getInstance().getFormat(
-						"eml://ecoinformatics.org/eml-2.1.1").getFormatId()) {
+						"eml://ecoinformatics.org/eml-2.1.1").getFormatId()
+				|| fmtid == ObjectFormatCache.getInstance().getFormat(
+                        "https://ecoinformatics.org/eml-2.2.0").getFormatId()) {
 
 			try {
 				
