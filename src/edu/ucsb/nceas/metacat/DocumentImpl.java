@@ -1133,7 +1133,7 @@ public class DocumentImpl
                 && (doctype.equals(EML2_0_0NAMESPACE)
                         || doctype.equals(EML2_0_1NAMESPACE) 
                         || doctype.equals(EML2_1_0NAMESPACE)
-                		|| doctype.equals(EML2_1_1NAMESPACE))) {
+                		|| doctype.equals(EML2_1_1NAMESPACE) || doctype.equals(EML2_2_0NAMESPACE) )) {
             proccessEml2 = true;
         }
         // flag for process inline data
