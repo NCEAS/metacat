@@ -85,7 +85,7 @@ public class DocumentIdQuery {
 		operator[0] = "UNION";
 		params.put("operator", operator);
 
-		String[] doctypes = new String[7];
+		String[] doctypes = new String[8];
 		doctypes[0] = "eml://ecoinformatics.org/eml-2.0.1";
 		doctypes[1] = "eml://ecoinformatics.org/eml-2.0.0";
 		doctypes[2] = "eml://ecoinformatics.org/eml-2.1.0";
@@ -93,6 +93,7 @@ public class DocumentIdQuery {
 		doctypes[4] = "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN";
 		doctypes[5] = "-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN";
 		doctypes[6] = "metadata";
+		doctypes[7] = "https://ecoinformatics.org/eml-2.2.0";
 		params.put("returndoctype", doctypes);
 
 		String[] fields = new String[12];
