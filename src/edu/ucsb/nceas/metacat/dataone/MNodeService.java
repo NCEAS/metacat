@@ -2546,7 +2546,7 @@ public class MNodeService extends D1NodeService
 
 							
 							//If this is in eml format, extract the filename and GUID from each entity in its package
-							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://")) {
+							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
 								//Get the package
 								DataPackageParserInterface parser = new Eml200DataPackageParser();
 								InputStream emlStream = this.get(session, metadataID);

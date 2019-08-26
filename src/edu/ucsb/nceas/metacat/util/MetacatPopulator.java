@@ -115,7 +115,7 @@ public class MetacatPopulator
         String params = "returndoctype=eml://ecoinformatics.org/eml-2.1.0&" +
                         "returndoctype=eml://ecoinformatics.org/eml-2.0.1&" +
                         "returndoctype=eml://ecoinformatics.org/eml-2.0.0&" +
-                        "returndoctype=https://ecoinformatics.org/eml-2.2.0&";
+                        "returndoctype=https://eml.ecoinformatics.org/eml-2.2.0&";
         params += "action=query&";
         params += "qformat=xml&";
         params += "anyfield=" + query;

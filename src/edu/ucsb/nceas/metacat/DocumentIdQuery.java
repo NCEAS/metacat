@@ -93,7 +93,7 @@ public class DocumentIdQuery {
 		doctypes[4] = "-//ecoinformatics.org//eml-dataset-2.0.0beta6//EN";
 		doctypes[5] = "-//ecoinformatics.org//eml-dataset-2.0.0beta4//EN";
 		doctypes[6] = "metadata";
-		doctypes[7] = "https://ecoinformatics.org/eml-2.2.0";
+		doctypes[7] = "https://eml.ecoinformatics.org/eml-2.2.0";
 		params.put("returndoctype", doctypes);
 
 		String[] fields = new String[12];
