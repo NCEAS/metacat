@@ -84,7 +84,7 @@
           <tr>
             <td>
               <xsl:if test="annotation">
-                <span class="icon-stack annotation icon">
+                <span class="icon-stack annotation-icon">
                   <i class="icon icon-certificate icon-stack-base"></i>
                   <i class="icon icon-ok"></i>
                 </span>
@@ -166,7 +166,7 @@
   <xsl:if test="annotation">
     <div class="control-group">
       <label class="control-label">
-        <span class="icon-stack annotation icon">
+        <span class="icon-stack annotation-icon">
           <i class="icon icon-certificate icon-stack-base"></i>
           <i class="icon icon-ok"></i>
         </span>
