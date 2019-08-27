@@ -110,6 +110,10 @@ public class Sitemap extends TimerTask {
     /** The name to give to the sitemap index file */
     static final String indexFilename = "sitemap_index.xml";
 
+    /** lastmod (SystemMetadata.date_modified) format strings to try */
+    static final String lastModFormatFull = "yyyy-MM-dd H:mm:ss.S";
+    static final String lastModFormatShort = "yyyy-MM-dd H:mm:ss";
+
     /**
      * Construct a new instance of the Sitemap class.
      *
@@ -159,6 +163,8 @@ public class Sitemap extends TimerTask {
      * documentation for details.
      */
     public void generateSitemaps() {
+        Date start = new Date(); // For logging the time to run this method
+
         logMetacat.info("Running the Sitemap task. Directory is " +
                 directory + " and locationBase is " + locationBase + ".");
 
@@ -243,7 +249,7 @@ public class Sitemap extends TimerTask {
             while (rs.next()) {
                 // Write out the current sitemap file and set up a new one if
                 // we need to
-                if (counter % this.MAX_URLS_IN_FILE == 0) {
+                if (counter % MAX_URLS_IN_FILE == 0) {
                     // Only write out the sitemap file if one's already open
                     // This basically prevents writing before we even begin
                     if (sitemapFile != null && sitemapFile.canWrite()) {
@@ -314,6 +320,9 @@ public class Sitemap extends TimerTask {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+
+        logMetacat.info("sitemap task took " + 
+            ((new Date()).getTime() - start.getTime()) / 1000 + " seconds.");
     }
 
     /**
@@ -349,25 +358,23 @@ public class Sitemap extends TimerTask {
             // loc
             Element locElement = document.createElement("loc");
             locElement.setTextContent(url.toString());
+            urlElement.appendChild(locElement);
 
             // lastmod
-            Date lastmodDate =
-                    new SimpleDateFormat("yyyy-MM-dd H:mm:ss.S").parse(lastmod);
-            Element lastmodElement = document.createElement("lastmod");
-            SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
-            lastmodElement.setTextContent(fmt.format(lastmodDate));
+            // Parsing can fail so we guard this with a null check
+            Date lastmodDate = tryParseLastModDateTime(lastmod);
 
-            urlElement.appendChild(locElement);
-            urlElement.appendChild(lastmodElement);
+            if (lastmodDate != null) {
+                Element lastmodElement = document.createElement("lastmod");
+                SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd");
+                lastmodElement.setTextContent(fmt.format(lastmodDate));
+                urlElement.appendChild(lastmodElement);
+            }
 
             return urlElement;
         } catch (UnsupportedEncodingException  e) {
             logMetacat.warn("Couldn't encode PID " + pid + " in UTF-8 so this" +
                     " entry will be skipped.");
-        } catch (ParseException e) {
-            System.out.println("Couldn't parse " + lastmod);
-            logMetacat.warn("Couldn't parse lastmod datetime of " + lastmod +
-                    " so this entry will be skipped.");
         }
 
         return urlElement;
@@ -459,5 +466,34 @@ public class Sitemap extends TimerTask {
         sitemapElement.appendChild(lastmod);
 
         return sitemapElement;
+    }
+
+    private Date tryParseLastModDateTime(String lastmod) {
+        Date lastmodDate = null;
+
+        try {
+            lastmodDate =
+                    new SimpleDateFormat(lastModFormatFull).parse(lastmod);
+        } catch (ParseException e) {
+            logMetacat.debug("Failed to parse " + lastmod +
+                    " with SimpleDateFormat of " + lastModFormatFull + " " +
+                    "trying the next format.");
+        }
+
+        if (lastmodDate != null) {
+            return lastmodDate;
+        }
+
+        try {
+            lastmodDate =
+                    new SimpleDateFormat(lastModFormatShort).parse(lastmod);
+        } catch (ParseException e) {
+            logMetacat.debug("Failed to parse " + lastmod +
+                    " with SimpleDateFormat of " + lastModFormatShort + " a " +
+                    "lastmod element won't be inserted for this sitemap entry" +
+                    ".");
+        }
+
+        return lastmodDate;
     }
 }

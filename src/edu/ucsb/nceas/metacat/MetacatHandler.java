@@ -3941,63 +3941,64 @@ public class MetacatHandler {
     
     /**
      * Schedule the sitemap generator to run periodically and update all
-     * of the sitemap files for search indexing engines.
-     *
-     * @param request a servlet request, from which we determine the context
+     * of the sitemap files for search indexing engines
      */
-    protected void scheduleSitemapGeneration(HttpServletRequest request) {
-        if (!_sitemapScheduled) {
-            String directoryName = null;
-            String skin = null;
-            long sitemapInterval = 0;
-            
-            try {
-                directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
-                skin = PropertyService.getProperty("application.default-style");
-                sitemapInterval = 
-                    Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
-            } catch (PropertyNotFoundException pnfe) {
-                logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
-                		         "Could not run site map generation because property " +
-                		         "could not be found: " + pnfe.getMessage());
-            }
-            
-            File directory = new File(directoryName);
-            directory.mkdirs();
+    protected void scheduleSitemapGeneration() {
+        if (_sitemapScheduled) {
+            logMetacat.debug("MetacatHandler.scheduleSitemapGeneration: Tried to call " + 
+            "scheduleSitemapGeneration() when a sitemap was already scheduld. Doing nothing.");
 
-            // Determine sitemap location and entry base URLs. Prepends the 
-            // secure server URL from the metacat configuration if the 
-            // values in the properties don't start with 'http' (e.g., '/view')
-            String serverUrl = "";
-            String locationBase = "";
-            String entryBase = "";
-
-            try {
-                serverUrl = SystemUtil.getSecureServerURL();
-                locationBase = PropertyService.getProperty("sitemap.location.base");
-                entryBase = PropertyService.getProperty("sitemap.entry.base");
-            } catch (PropertyNotFoundException pnfe) {
-                logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
-                		         "Could not run site map generation because property " +
-                		         "could not be found: " + pnfe.getMessage());
-            }
-
-            // Prepend server URL to locationBase if needed
-            if (!locationBase.startsWith("http")) {
-                locationBase = serverUrl + locationBase;
-            }
-
-            // Prepend server URL to entryBase if needed
-            if (!entryBase.startsWith("http")) {
-                entryBase = serverUrl + entryBase;
-            }
-            
-            Sitemap smap = new Sitemap(directory, locationBase, entryBase);
-            long firstDelay = 10*1000;   // 60 seconds delay
-
-            timer.schedule(smap, firstDelay, sitemapInterval);
-            _sitemapScheduled = true;
+            return;
         }
+
+        String directoryName = null;
+        long sitemapInterval = 0;
+        
+        try {
+            directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
+            sitemapInterval = 
+                Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
+                                "Could not run site map generation because property " +
+                                "could not be found: " + pnfe.getMessage());
+        }
+        
+        File directory = new File(directoryName);
+        directory.mkdirs();
+
+        // Determine sitemap location and entry base URLs. Prepends the 
+        // secure server URL from the metacat configuration if the 
+        // values in the properties don't start with 'http' (e.g., '/view')
+        String serverUrl = "";
+        String locationBase = "";
+        String entryBase = "";
+
+        try {
+            serverUrl = SystemUtil.getSecureServerURL();
+            locationBase = PropertyService.getProperty("sitemap.location.base");
+            entryBase = PropertyService.getProperty("sitemap.entry.base");
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
+                                "Could not run site map generation because property " +
+                                "could not be found: " + pnfe.getMessage());
+        }
+
+        // Prepend server URL to locationBase if needed
+        if (!locationBase.startsWith("http")) {
+            locationBase = serverUrl + locationBase;
+        }
+
+        // Prepend server URL to entryBase if needed
+        if (!entryBase.startsWith("http")) {
+            entryBase = serverUrl + entryBase;
+        }
+        
+        Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+        long firstDelay = 10000; // in milliseconds
+
+        timer.schedule(smap, firstDelay, sitemapInterval);
+        _sitemapScheduled = true;
     }
 
     /**
@@ -4006,6 +4007,4 @@ public class MetacatHandler {
     public void set_sitemapScheduled(boolean sitemapScheduled) {
         _sitemapScheduled = sitemapScheduled;
     }
-
-    
 }

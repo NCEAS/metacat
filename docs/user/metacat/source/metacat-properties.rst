@@ -549,6 +549,35 @@ The EZID service assigning Digital Object Identifiers (DOIs) is included in the 
 |                                   |                                                                               |                                               |
 +-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
 
+Sitemap Properties
+------------------------
+
+Metacat automatically generates sitemaps for all all publicly-readable datasets and stores them in the sitemaps subdirectory under Metacat's deployment directory.
+
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| Property                          | Description                                                                   | Example                                       |
++===================================+===============================================================================+===============================================+
+| .. _sitemap.enabled:              |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| sitemap.enabled                   | Whether or not sitemaps are enabled.                                          | true                                          |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _sitemap.interval:             |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| sitemap.interval                  | The interval, in milliseconds, between rebuilding the sitemap(s).             | 86400000 (24hrs)                              |
+|                                   |                                                                               |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _sitemap.location.base:        |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| sitemap.location.base             | Base part of the URLs for the location of the sitemap files and the sitemap.  | https://my-metacat.com                        |
+|                                   | index. Either full URL or absolute path. Trailing slash optional.             |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+| .. _sitemap.entry.base:           |                                                                               |                                               |
+|                                   |                                                                               |                                               |
+| sitemap.entry.base                | Base part of the URLs for the location entries in the sitemaps.               | https://my-metacat.com/dataset                |
+|                                   | Either full URL or absolute path. Trailing slash optional.                    |                                               |
++-----------------------------------+-------------------------------------------------------------------------------+-----------------------------------------------+
+
 
 Additional Properties
 ----------------------

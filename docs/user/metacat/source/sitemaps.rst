@@ -19,21 +19,11 @@ take effect.
 Configuration
 -------------
 
-Metacat's sitemaps functionality is controlled by three properties in 
+Metacat's sitemaps functionality is controlled by four properties in 
 metacat.properties.
 
-######## Sitemap section              #########################################
-# Sitemap Interval (in milliseconds) between rebuilding the sitemap
-sitemap.interval=86400000
-# Base part of the URLs for the location of the sitemap files themselves. 
-# Either full URL or absolute path. Trailing slash optional.
-sitemap.location.base=/metacatui
-# Base part of the URLs for the location entries in the sitemaps which should
-# be the base URL of the dataset landing page.
-# Either full URL or absolute path. Trailing slash optional.
-sitemap.entry.base=/metacatui/view
-
-
+- ``sitemap.enabled``: Controls whether sitemaps are automatically generated
+  while Metacat is running. Defaults to true.
 - ``sitemap.interval``: Controls the interval, in milliseconds, between 
   rebuilding the sitemap index and sitemap files.
 - ``sitemap.location.base``: Controls the URL pattern used in the 
@@ -61,7 +51,7 @@ The directory contains an index file:
 
   sitemap_index.xml
   
-and one or more sitemap XML files named::
+and one or more sitemap XML files named:
 
   sitemap<X>.xml
 
@@ -74,6 +64,34 @@ Verify that your sitemap files are available to the Web by browsing to::
 
   <your_web_context>/sitemaps/sitemap<X>.xml 
   (e.g., https://example.org/metacat/sitemaps/sitemap1.xml)
+
+Serving Your Sitemaps
+------------------
+
+In most scenarios, you'll want to take extra steps to make sure your sitemaps
+are served correctly so they're available and indexable by Google. Because 
+Metacat places sitemap XML files in ``<your_web_context>/sitemaps``, you'll need
+to configure your web server to serve these files.
+
+As an example, a sample configuration is presented for the Apache 2 web server
+that uses `mod_proxy` to serve your sitemaps at the top level of your website:
+
+.. code-block:: text
+
+    ProxyPassMatch "^/(sitemap.+)" "http://localhost:8080/metacat/sitemaps/$1"
+    ProxyPassReverse "^/(sitemap.+)" "http://localhost:8080/metacat/sitemaps/$1"
+
+You should also ensure your ``robots.txt`` file correctly points to the location
+of the ``sitemap_index.xml``. e.g., for example.org:
+
+``robots.txt``:
+
+.. code-block:: text
+
+    User-agent: *
+    Allow: /
+
+    sitemap: https://example.org/sitemap_index.xml
 
 Registering a Sitemap
 ---------------------
