@@ -195,7 +195,7 @@
 
 	<bean id="eml.funding" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="funding" />
-		<constructor-arg name="xpath" value="//dataset/project/funding/text()" />
+		<constructor-arg name="xpath" value="//dataset/project/funding/descendant::text()" />
 		<property name="multivalue" value="true" />
 	</bean>
 	
