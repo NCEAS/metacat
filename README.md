@@ -67,6 +67,10 @@ for the next release.
 
 ## Release Notes
 
+### Release Notes for 2.11.0:
+New features in this release:
+* Support the new metadata standard - EML 2.2.0
+
 ### Release Notes for 2.10.4:
 Bugs fixed in this release:
 * Publishing dataset with provenance loses all provenance relationships
