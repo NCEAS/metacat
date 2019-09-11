@@ -795,7 +795,7 @@
 			</fileset>
 		</copy>
 		
-		<!-- Checkout eml211 for given schema tag-->
+		<!-- Checkout eml220 for the given schema tag-->
 		<mkdir dir="lib/schema/eml-2.2.0" />
 		<copy todir="lib/schema/eml-2.2.0" filtering="yes">
 		   <fileset
