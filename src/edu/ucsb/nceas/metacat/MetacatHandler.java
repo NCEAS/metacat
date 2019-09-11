@@ -1789,7 +1789,7 @@ public class MetacatHandler {
                         documentWrapper = new DocumentImplWrapper(rule, true, writeAccessRules);
                     } else if (
                     		namespace.compareTo(DocumentImpl.EML2_1_0NAMESPACE) == 0
-                    		|| namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0) {
+                    		|| namespace.compareTo(DocumentImpl.EML2_1_1NAMESPACE) == 0 || namespace.compareTo(DocumentImpl.EML2_2_0NAMESPACE) == 0) {
                         // set eml2 base validation parser
                         String rule = DocumentImpl.EML210;
                         // using emlparser to check id validation

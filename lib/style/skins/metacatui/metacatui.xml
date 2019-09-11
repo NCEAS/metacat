@@ -43,6 +43,9 @@
   <doctype publicid="-//NCEAS//login//EN">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui-login.xsl</target>
   </doctype>
+  <doctype publicid="https://eml.ecoinformatics.org/eml-2.2.0">
+    <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
+  </doctype>
   <doctype publicid="eml://ecoinformatics.org/eml-2.1.1">
     <target publicid="-//W3C//HTML//EN">/style/skins/metacatui/metacatui.xsl</target>
   </doctype>

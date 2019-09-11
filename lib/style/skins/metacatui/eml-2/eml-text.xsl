@@ -139,4 +139,15 @@
             </p>
         </xsl:if>
     </xsl:template>
+
+    <xsl:template match="markdown">
+    <!-- Here we use a <pre> element so clients that have either not enabled JS
+    or disabled whichever JS library/ies we use to render Markdown in a pretty
+    fashion still see something half reasonable because most browsers respect
+    whitespace like newlines in <pre> elements -->
+        <xsl:element name="pre">
+            <xsl:attribute name="class">markdown</xsl:attribute>
+            <xsl:value-of select="." />
+        </xsl:element>
+    </xsl:template>
 </xsl:stylesheet>

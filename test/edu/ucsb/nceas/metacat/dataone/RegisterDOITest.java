@@ -110,7 +110,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("tesCreateDOIinSid"));
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
-
+		suite.addTest(new RegisterDOITest("testPublishEML220"));
 		return suite;
 
 	}
@@ -851,5 +851,53 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertFalse("We should not find the public user on the access rules.", findPublic);
         //System.out.println("The identifier is ========================================="+guid.getValue());
        
+    }
+    
+    /**
+     * Test to publish an eml 2.2.0 document
+     * @throws Exception
+     */
+    public void testPublishEML220() throws Exception {
+        String ezidUsername = PropertyService.getProperty("guid.ezid.username");
+        String ezidPassword = PropertyService.getProperty("guid.ezid.password");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testPublishDOI." + System.currentTimeMillis());
+        // use EML to test 
+        String emlFile = "test/eml-2.2.0.xml";
+        InputStream content = null;
+        content = new FileInputStream(emlFile);
+        // create the initial version without DOI
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        content.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        Thread.sleep(1000);
+        // now publish it
+        Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
+        // check for the metadata explicitly, using ezid service
+        EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+        ezid.login(ezidUsername, ezidPassword);
+        int count = 0;
+        HashMap<String, String> metadata = null;
+        do {
+            try {
+                metadata = ezid.getMetadata(publishedIdentifier.getValue());
+            } catch (Exception e) {
+                Thread.sleep(2000);
+            }
+            count++;
+        } while (metadata == null && count < 20);
+        assertNotNull(metadata);
+        String result = metadata.get(DOIService.DATACITE);
+        System.out.println("result is\n"+result);
+        assertTrue(result.contains("EML Annotation Example"));
+        assertTrue(result.contains("0000-0002-1209-5122"));
+        assertTrue(result.contains("It can include multiple paragraphs"));
+        content.close();
     }
 }

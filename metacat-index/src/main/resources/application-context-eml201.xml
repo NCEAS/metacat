@@ -15,6 +15,7 @@
     <ref bean="eml.keywords" />
     <ref bean="eml.title" />
     <ref bean="eml.project" />
+    <ref bean="eml.funding" />
     <ref bean="eml.southBoundCoord" />
     <ref bean="eml.northBoundCoord" />
     <ref bean="eml.westBoundCoord" />

@@ -129,15 +129,15 @@
 						<a id="viewMetadataCitationLink"> 
 							<xsl:attribute name="href">
 								<!--<xsl:value-of select="$viewURI"/><xsl:value-of select="$pid"/>-->
-								<xsl:text>#view/</xsl:text><xsl:value-of select="$pid"/>
+								<!-- <xsl:text>#view/</xsl:text><xsl:value-of select="$pid"/> -->
 							</xsl:attribute>
-							(<xsl:value-of select="$pid"/>)
+							<!-- (<xsl:value-of select="$pid"/>) -->
 						</a>				        		
 					</xsl:if>
 		</cite>
    					<a class="btn" id="downloadPackage">
    						<xsl:attribute name="href">
-							<xsl:value-of select="$packageURI"/><xsl:value-of select="$pid"/>
+							<!-- <xsl:value-of select="$packageURI"/><xsl:value-of select="$pid"/> -->
 						</xsl:attribute>
    						Download <i class="icon-arrow-down"></i>
    					</a>

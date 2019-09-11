@@ -241,6 +241,38 @@
 	</div>   
   </xsl:template>
 
+  <xsl:template name="resourceLicensed">
+     <xsl:param name="resfirstColStyle"/>
+     <xsl:param name="ressecondColStyle"/>
+     <div class="control-group">
+		<label class="control-label">License</label>
+		<div class="controls controls-well">
+      <div class="row-fluid">
+        <div class="control-group">
+          <label class="control-label">Name</label>
+          <div class="controls"><xsl:value-of select="./licenseName/text()" /></div>
+        </div>
+      </div>
+      <xsl:if test="./url">
+        <div class="row-fluid">
+          <div class="control-group">
+            <label class="control-label">URL</label>
+            <div class="controls"><xsl:value-of select="./url/text()" /></div>
+          </div>
+        </div>
+      </xsl:if>
+      <xsl:if test="./identifier">
+        <div class="row-fluid">
+          <div class="control-group">
+            <label class="control-label">Identifier</label>
+            <div class="controls"><xsl:value-of select="./identifier/text()" /></div>
+          </div>
+        </div>
+      </xsl:if>
+		</div>
+	</div>   
+  </xsl:template>
+
    <xsl:template name="resourcedistribution">
      <xsl:param name="ressubHeaderStyle"/>
      <xsl:param name="resfirstColStyle"/>

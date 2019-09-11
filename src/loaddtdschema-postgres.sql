@@ -105,6 +105,8 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@eml2_1_1namespace@', '/schema/eml-2.1.1/eml.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', '@eml2_2_0namespace@', '/schema/eml-2.2.0/eml.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ecoinformatics.org/registryentry-1.0.0', '/schema/RegistryService/RegistryEntryType.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://ns.dataone.org/service/types/v1', '/schema/dataone/dataoneTypes.xsd');
@@ -206,4 +208,4 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'http://www.openarchives.org/OAI/2.0/oai_dc/', '/schema/oai_dc/oai_dc.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://www.openarchives.org/OAI/2.0/oai_dc/');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.10.4',1,CURRENT_DATE);
+  VALUES ('2.11.0',1,CURRENT_DATE);

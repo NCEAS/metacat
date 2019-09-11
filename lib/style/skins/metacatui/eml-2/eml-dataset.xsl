@@ -61,6 +61,22 @@
     </xsl:for-each>
 
      <h4>General</h4>
+			<xsl:if test="annotation">
+				<div class="control-group">
+				<label class="control-label">
+					Annotations
+					<xsl:call-template name="annotation-info-tooltip" />
+				</label>
+				<div class="controls controls-well annotations-container">
+					<xsl:for-each select="annotation">
+					<xsl:call-template name="annotation">
+						<xsl:with-param name="context" select="concat('Dataset &lt;strong&gt;', ../@packageId, '&lt;/strong&gt;')" />
+					</xsl:call-template>
+					</xsl:for-each>
+				</div>
+				</div>
+			</xsl:if>
+
              <!-- put in the title -->
              <xsl:if test="./title">
                <xsl:for-each select="./title">
@@ -438,19 +454,25 @@
          </xsl:if>
      </div>
 
-     <h4>Data Set Usage Rights</h4>
 
        <!-- add in the intellectiual rights info -->
-     <div class="row-fluid">
-         <xsl:if test="intellectualRights">
-           <xsl:for-each select="intellectualRights">
-             <xsl:call-template name="resourceintellectualRights">
-               <xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
-               <xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
-             </xsl:call-template>
-           </xsl:for-each>
-         </xsl:if>
-     </div>
+		 <xsl:if test="intellectualRights or licensed">
+			<h4>Data Set Usage Rights</h4>
+			<div class="row-fluid">
+				<xsl:for-each select="licensed">
+					<xsl:call-template name="resourceLicensed">
+						<xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
+						<xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
+					</xsl:call-template>
+				</xsl:for-each>
+				<xsl:for-each select="intellectualRights">
+					<xsl:call-template name="resourceintellectualRights">
+						<xsl:with-param name="resfirstColStyle" select="$firstColStyle"/>
+						<xsl:with-param name="ressecondColStyle" select="$secondColStyle"/>
+					</xsl:call-template>
+				</xsl:for-each>
+			</div>
+		 </xsl:if>
 
        <!-- add in the access control info -->
      <div class="row-fluid">
@@ -463,7 +485,6 @@
            </xsl:for-each>
          </xsl:if>
      </div>
-
   </xsl:template>
 
   <xsl:template name="datasetresource">
