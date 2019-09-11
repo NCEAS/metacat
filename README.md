@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.11.0 Release
+Version: 2.11.0 RC1
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
