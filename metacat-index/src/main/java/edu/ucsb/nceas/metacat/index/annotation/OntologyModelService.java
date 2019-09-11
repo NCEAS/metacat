@@ -80,6 +80,12 @@ public class OntologyModelService {
         }
     }
 
+    /**
+     * Perform expansion on a given term URI.
+     *
+     * @param uri The URI to expand
+     * @return A Map of String (field) <-> Set<String> expanded concepts
+     */
     protected Map<String, Set<String>> expandConcepts(String uri) {
         log.debug("expandConcepts " + uri);
         Map<String, Set<String>> conceptFields = new HashMap<String, Set<String>>();
@@ -168,6 +174,11 @@ public class OntologyModelService {
         altEntryList = entryList;
     }
 
+    /**
+     * Tell the OntologyModelService where to find ontologies by adding alternative
+     * entries to the OntDocumentManager with imports disabled. Processing of
+     * imports is a security risk so this is disabled explicitly.
+     */
     public void loadAltEntries() {
         log.debug("OntologyModelService - Loading altEntries of size " + altEntryList.size());
 
