@@ -2127,9 +2127,11 @@ public class MNodeService extends D1NodeService
             ObjectFormatIdentifier objFormatId = originalSystemMetadata.getFormatId();
             String formatId = objFormatId.getValue();
             //For all EML formats
-            if(formatId.indexOf("eml") == 0){
-                logMetacat.debug("~~~~~~~~~~~~~~~~~~~~~~MNodeService.publish - the object "+originalIdentifier.getValue()+" with format id "+formatId+" is an eml document.");
+            if(formatId.contains("ecoinformatics.org/eml")){
+                logMetacat.debug("~~~~~~~~~~~~~~~~~~~~~~MNodeService.publish - the object " + originalIdentifier.getValue() + " with format id " + formatId + " is an eml document.");
                 isEML = true;
+            } else {
+                logMetacat.debug("MNodeService.publish - the object " + originalIdentifier.getValue() + " with format id " + formatId + " is NOT an eml document.");
             }
 			InputStream originalObject = this.get(session, originalIdentifier);
 			

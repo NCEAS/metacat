@@ -344,6 +344,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            // now publish it
 	            Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
 	            
+	            //check if the package id was updated
+	            InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
+	            String emlStr = IOUtils.toString(emlObj, "UTF-8");
+	            assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
+	            
 	            // check for the metadata explicitly, using ezid service
 	            EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 	            ezid.login(ezidUsername, ezidPassword);
@@ -894,10 +899,35 @@ public class RegisterDOITest extends D1NodeServiceTest {
         } while (metadata == null && count < 20);
         assertNotNull(metadata);
         String result = metadata.get(DOIService.DATACITE);
-        System.out.println("result is\n"+result);
         assertTrue(result.contains("EML Annotation Example"));
         assertTrue(result.contains("0000-0002-1209-5122"));
         assertTrue(result.contains("It can include multiple paragraphs"));
         content.close();
+        
+        //check if the package id was updated
+        InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
+        String emlStr = IOUtils.toString(emlObj, "UTF-8");
+        assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
+        
+        //check the query
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        do {
+            try {
+               if(resultStr.contains("funding")) {
+                   break;
+               }
+            } catch (Exception e) {
+                Thread.sleep(2000);
+            }
+            count++;
+        } while (metadata == null && count < 20);
+        assertTrue(resultStr.contains("<arr name=\"funding\">"));
+        assertTrue(resultStr.contains("<str>Funding is from a grant from the National Science Foundation.</str>"));
+        assertTrue(resultStr.contains("<arr name=\"funderName\">"));
+        assertTrue(resultStr.contains("<str>National Science Foundation</str>"));
+        assertTrue(resultStr.contains("<arr name=\"sem_annotation\"><str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
+        assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
     }
 }
