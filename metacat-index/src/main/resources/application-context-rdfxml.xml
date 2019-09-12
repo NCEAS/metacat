@@ -9,7 +9,7 @@
 				<value>http://www.w3.org/TR/rdf-syntax-grammar</value>
 				<value>http://www.openarchives.org/ore/terms</value>
 			</list>
-		</property>	
+		</property>
 		<property name="fieldList">
 			<list>
                 <ref bean="prov20150115.wasDerivedFrom" />
@@ -27,17 +27,17 @@
                 <ref bean="prov20150115.instanceOfClass" />
                 <!--  <ref bean="prov20150115.hasSources" /> -->
                 <ref bean="prov20150115.hasDerivations" />
-                <ref bean="dcterms.hasPart" />
-                <ref bean="dcterms.isPartOf" />
-                <ref bean="dcterms.hasPart.reverse" />
-                <ref bean="dcterms.isPartOf.reverse" />
+                <ref bean="hasPart" />
+                <ref bean="isPartOf" />
+                <ref bean="hasPart.reverse" />
+                <ref bean="isPartOf.reverse" />
 			</list>
 		</property>
 		<property name="fieldsToMerge">
      		<list>
      			<value>prov_wasDerivedFrom</value>
      			<value>prov_wasInformedBy</value>
-     			<value>prov_used</value>     			
+     			<value>prov_used</value>
      			<value>prov_generated</value>
      			<value>prov_generatedByProgram</value>
      			<value>prov_generatedByExecution</value>
@@ -53,6 +53,6 @@
      			<value>hasPart</value>
      			<value>isPartOf</value>
      		</list>
-     	</property>	
+     	</property>
 	</bean>
 </beans>
