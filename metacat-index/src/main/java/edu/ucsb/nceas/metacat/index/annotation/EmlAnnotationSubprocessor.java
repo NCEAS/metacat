@@ -25,16 +25,15 @@ import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.cn.indexer.XmlDocumentUtility;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.w3c.dom.Document;
+
 /**
- * A subprocessor that extracts semantic annotations from EML records and
- * materializes the superclass hierarchy for all extracted concepts using a
- * pre-defined set of ontologies. It is very similar to a
- * BaseXPathDocumentSubprocessor but a bit different in that it post-processes
- * results from the usual ISolrDoc.getFields() instead of mergingn them asi-s.
+ * Extracts semantic annotations from EML records and materializes the
+ * superclass hierarchy for all extracted concepts using a pre-defined set of
+ * ontologies. It is very similar to a BaseXPathDocumentSubprocessor but a bit
+ * different in that it post-processes results from the usual
+ * ISolrDoc.getFields() instead of mergingn them asi-s.
  *
- * User: Mecum
- * Date: 2019/02/05
- * Time: 4:57 PM
+ * User: Mecum Date: 2019/02/05 Time: 4:57 PM
  *
  */
 public class EmlAnnotationSubprocessor implements IDocumentSubprocessor {
@@ -131,7 +130,7 @@ public class EmlAnnotationSubprocessor implements IDocumentSubprocessor {
     /**
      * Merge updates with existing solr documents
      *
-     * @param indexDocument
+     * @param indexDocument The index document to merge processed fields with
      * @return
      * @throws IOException
      * @throws EncoderException
