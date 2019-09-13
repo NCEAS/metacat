@@ -463,6 +463,8 @@ public class ReplicationHandler extends TimerTask
       else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE))
       {
         parserBase = DocumentImpl.EML210;
+      } else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
+          parserBase = DocumentImpl.EML210;
       }
       
       /*String formatId = null;

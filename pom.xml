@@ -43,7 +43,7 @@
 		<dependency>
 			<groupId>org.ecoinformatics.eml</groupId>
 			<artifactId>datamanager</artifactId>
-			<version>0.9.2</version>
+			<version>1.0.0</version>
 		</dependency>
     	<dependency>
     		<groupId>gov.loc</groupId>

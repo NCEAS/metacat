@@ -92,7 +92,7 @@ public class MetacatCatalog extends AbstractCatalog {
   private final String QUERY =
   "SELECT xd.docid, xd.doctype, xd.date_updated " +
   "FROM xml_documents xd, identifier id " +
-  "WHERE xd.doctype like 'eml://ecoinformatics.org/eml-2%' " +
+  "WHERE xd.doctype like '%ecoinformatics.org/eml-2%' " +
   " AND xd.docid = id.docid " +
   " AND xd.rev = id.rev " +
   // ALLOW rule
@@ -516,7 +516,7 @@ public class MetacatCatalog extends AbstractCatalog {
      */
     if (doctype != null && 
         (metadataPrefix.equals("oai_dc") ||
-         (doctype.startsWith("eml://ecoinformatics.org/eml-") && 
+         (doctype.contains("ecoinformatics.org/eml-") && 
           doctype.endsWith(metadataPrefix)
          )
         )

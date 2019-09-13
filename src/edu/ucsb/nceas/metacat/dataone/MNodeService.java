@@ -2127,9 +2127,11 @@ public class MNodeService extends D1NodeService
             ObjectFormatIdentifier objFormatId = originalSystemMetadata.getFormatId();
             String formatId = objFormatId.getValue();
             //For all EML formats
-            if(formatId.indexOf("eml") == 0){
-                logMetacat.debug("~~~~~~~~~~~~~~~~~~~~~~MNodeService.publish - the object "+originalIdentifier.getValue()+" with format id "+formatId+" is an eml document.");
+            if(formatId.contains("ecoinformatics.org/eml")){
+                logMetacat.debug("~~~~~~~~~~~~~~~~~~~~~~MNodeService.publish - the object " + originalIdentifier.getValue() + " with format id " + formatId + " is an eml document.");
                 isEML = true;
+            } else {
+                logMetacat.debug("MNodeService.publish - the object " + originalIdentifier.getValue() + " with format id " + formatId + " is NOT an eml document.");
             }
 			InputStream originalObject = this.get(session, originalIdentifier);
 			
@@ -2546,7 +2548,7 @@ public class MNodeService extends D1NodeService
 
 							
 							//If this is in eml format, extract the filename and GUID from each entity in its package
-							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://")) {
+							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
 								//Get the package
 								DataPackageParserInterface parser = new Eml200DataPackageParser();
 								InputStream emlStream = this.get(session, metadataID);

@@ -68,7 +68,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
     @Override
     public boolean canProcess(String namespace) {
         boolean can = false;
-        if(namespace != null && namespace.startsWith("eml://ecoinformatics.org/eml-2")) {
+        if (namespace != null && (namespace.startsWith("eml://ecoinformatics.org/eml-2") || namespace.startsWith("https://eml.ecoinformatics.org/eml"))) {
             can = true;
         }
         logMetacat.debug("EML2DataCitFactory.canProcess - If this factory can process the xml with the name space " + namespace + "? " + can);
@@ -165,7 +165,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
      */
     private DataPackage getEMLPackage(SystemMetadata sysMeta) throws Exception{
         DataPackage dataPackage = null;
-        if (sysMeta.getFormatId().getValue().startsWith("eml://")) {
+        if (sysMeta.getFormatId().getValue().startsWith("eml://") || sysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org/eml")) {
             DataPackageParserInterface parser = new Eml200DataPackageParser();
             // for using the MN API as the MN itself
             MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
