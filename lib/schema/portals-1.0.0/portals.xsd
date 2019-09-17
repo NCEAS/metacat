@@ -10,12 +10,12 @@
     xmlns:cit="https://eml.ecoinformatics.org/literature-2.2.0"
     xmlns:col="https://purl.dataone.org/collections-1.0.0">
 
-    <xs:import namespace="https://eml.ecoinformatics.org/documentation-2.2.0" schemaLocation="eml-documentation.xsd"/>
-    <xs:import namespace="https://eml.ecoinformatics.org/text-2.2.0" schemaLocation="eml-text.xsd"/>
-    <xs:import namespace="https://eml.ecoinformatics.org/party-2.2.0" schemaLocation="eml-party.xsd"/>
-    <xs:import namespace="https://eml.ecoinformatics.org/project-2.2.0" schemaLocation="eml-project.xsd"/>
-    <xs:import namespace="https://eml.ecoinformatics.org/literature-2.2.0" schemaLocation="eml-literature.xsd"/>
-    <xs:import namespace="https://purl.dataone.org/collections-1.0.0" schemaLocation="collections.xsd"/>
+    <xs:import namespace="https://eml.ecoinformatics.org/documentation-2.2.0" schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-documentation.xsd"/>
+    <xs:import namespace="https://eml.ecoinformatics.org/text-2.2.0" schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-text.xsd"/>
+    <xs:import namespace="https://eml.ecoinformatics.org/party-2.2.0" schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-party.xsd"/>
+    <xs:import namespace="https://eml.ecoinformatics.org/project-2.2.0" schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-project.xsd"/>
+    <xs:import namespace="https://eml.ecoinformatics.org/literature-2.2.0" schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-literature.xsd"/>
+    <xs:import namespace="https://purl.dataone.org/collections-1.0.0" schemaLocation="https://purl.dataone.org/collections-1.0.0"/>
 
     <xs:element name="portal">
      <xs:annotation>

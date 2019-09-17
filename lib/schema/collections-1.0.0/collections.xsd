@@ -6,7 +6,7 @@
     xmlns:doc="https://eml.ecoinformatics.org/documentation-2.2.0">
 
     <xs:import namespace="https://eml.ecoinformatics.org/documentation-2.2.0"
-      schemaLocation="eml-documentation.xsd"/>
+      schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-documentation.xsd"/>
 
     <xs:element name="collection" type="CollectionType"></xs:element>
 
