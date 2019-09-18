@@ -219,7 +219,7 @@
 	
 	<bean id="eml.awardTitle" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="awardTitle" />
-		<constructor-arg name="xpath" value="//dataset/project/award/awardTitle/text()" />
+		<constructor-arg name="xpath" value="//dataset/project/award/title/text()" />
 		<property name="multivalue" value="true" />
 	</bean>
 
