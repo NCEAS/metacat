@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.11.0 Release
+Version: 2.11.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,10 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.11.1:
+Bugs fixed in this release:
+* Metacat can't index the award tile element in an EML 2.2.0 object
 
 ### Release Notes for 2.11.0:
 New features in this release:
