@@ -19,6 +19,7 @@
 		    	<ref bean="collections.name" />
 		    	<ref bean="collections.label" />
 		    	<ref bean="collections.description" />
+				<ref bean="collection.memberQuery" />
 		   	</list>
 	  	</property>
 	</bean>
@@ -40,5 +41,126 @@
 	  <constructor-arg name="xpath" value="//description/text()" />
 	  <property name="multivalue" value="false" />
 	</bean>
+
+	<bean id="collection.memberQuery" class="edu.ucsb.nceas.metacat.index.parser.FilterCommonRootSolrField"
+		  p:root-ref="collection.filterFields">
+		<constructor-arg name="name" value="memberQuery" />
+	</bean>
+
+	<bean id="collection.filterFields" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement"
+		  p:name="memberQuery"
+		  p:xPath="//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
+		  p:prefixMatch="isPartOf,seriesId,id"
+		  p:postfix="AND (-obsoletedBy:* AND formatType:METADATA)">
+		<property name="filters">
+			<list>
+				<ref bean="collection.booleanFilter"/>
+				<ref bean="collection.dateFilter"/>
+				<ref bean="collection.numericFilter"/>
+				<ref bean="collection.textFilter"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="collection.booleanFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+		  p:name="booleanFilter"
+		  p:matchElement="booleanFilter"
+		  p:template="(field:value)">
+		<property name="leafs">
+			<list>
+				<ref bean="collection.filterFieldLeaf"/>
+				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterValueLeaf"/>
+				<ref bean="collection.filterExclude"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="collection.dateFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+		  p:name="dateFilter"
+		  p:matchElement="dateFilter"
+		  p:defaults="min:*,max:*"
+		  p:template="(field:value),(field:[min TO max])">
+		<property name="leafs">
+			<list>
+				<ref bean="collection.filterFieldLeaf"/>
+				<ref bean="collection.filterMinLeaf"/>
+				<ref bean="collection.filterMaxLeaf"/>
+				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterValueLeaf"/>
+				<ref bean="collection.filterExclude"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="collection.numericFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+		  p:name="numericFilter"
+		  p:matchElement="numericFilter"
+		  p:defaults="min:*,max:*"
+		  p:template="(field:value), (field:[min TO max])">
+		<property name="leafs">
+			<list>
+				<ref bean="collection.filterFieldLeaf"/>
+				<ref bean="collection.filterMinLeaf"/>
+				<ref bean="collection.filterMaxLeaf"/>
+				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterValueLeaf"/>
+				<ref bean="collection.filterExclude"/>
+			</list>
+		</property>
+	</bean>
+
+	<bean id="collection.textFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+		  p:name="textfilter"
+		  p:matchElement="filter"
+		  p:escapeSpecialChars="true"
+		  p:quoteMultipleWords="true"
+		  p:template="(field:value)">
+		<property name="leafs">
+			<list>
+				<ref bean="collection.filterFieldLeaf"/>
+				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterValueLeaf"/>
+				<ref bean="collection.filterExclude"/>
+				<ref bean="collection.filterMatchSubstring"/>
+			</list>
+		</property>
+	</bean>
+
+	<!-- Currently 'field' is the only element in the collection.xsd that is allowed repeat,
+         so only need a delimeter for this, to dermine if multiple values have been specified. -->
+	<bean id="collection.filterFieldLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="field"
+		  p:delimiter="--"
+		  p:xPath="field/text()" />
+
+	<bean id="collection.filterValueLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="value"
+		  p:delimiter="--"
+		  p:xPath="value/text()" />
+
+	<bean id="collection.filterExcludeLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="exclude"
+		  p:xPath="exclude/text()" />
+
+	<bean id="collection.filterMinLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="min"
+		  p:xPath="min/text()" />
+
+	<bean id="collection.filterMaxLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="max"
+		  p:xPath="max/text()" />
+
+	<bean id="collection.filterOperatorLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="operator"
+		  p:xPath="operator/text()" />
+
+	<bean id="collection.filterExclude" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="exclude"
+		  p:xPath="exclude/text()" />
+
+	<bean id="collection.filterMatchSubstring" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="matchSubstring"
+		  p:xPath="matchSubstring/text()" />
 
 </beans>
