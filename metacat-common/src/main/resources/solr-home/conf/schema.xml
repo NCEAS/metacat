@@ -412,9 +412,10 @@ but may be good for SKUs.  Can insert dashes in the wrong place and still match.
 		<field name="awardNumber"       type="string" indexed="true" stored="true" multiValued="true" />
 		<field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
 
-    <!-- Project document fields -->
+    <!-- Collection and Portal fields -->
     <field name="label" type="text_case_insensitive" indexed="true" stored="true" multiValued="false" />
     <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="collectionQuery" type="string" indexed="true" multiValued="false" />
 
 <!-- ======================================================================= -->
         <!-- Dynamic field definitions.  If a field name is not found, dynamicFields

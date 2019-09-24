@@ -27,7 +27,7 @@ public class PortalSubprocessorIT {
     @Test
     public void testProcessDocument() throws Exception {
         String id = "urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i";
-        String memberQuery = null;
+        String collectionQuery = null;
         InputStream is = getPortalDoc();
         List<SolrElementField> sysSolrFields = new ArrayList<SolrElementField>();
         SolrDoc indexDocument = new SolrDoc(sysSolrFields);
@@ -37,23 +37,23 @@ public class PortalSubprocessorIT {
         try {
             // Read in the query string that the processor should create. This is read in
             // from disk so that we don't have to bother with special character escaping.
-            File file = new File("src/test/resources/portal-memberQuery.txt");
-            memberQuery = FileUtils.readFileToString(file);
+            File file = new File("src/test/resources/portal-collectionQuery.txt");
+            collectionQuery = FileUtils.readFileToString(file);
 
             docs = processor.processDocument(id, docs, is);
             // Extract the processed document we just created
             SolrDoc myDoc = docs.get("urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i");
             // Extract fields and check the values
             String title = myDoc.getField("title").getValue();
-            String queryStr = myDoc.getField("memberQuery").getValue();
+            String queryStr = myDoc.getField("collectionQuery").getValue();
 
-            //System.out.println("query field value: " + myDoc.getField("memberQuery").getValue());
+            //System.out.println("query field value: " + myDoc.getField("collectionQuery").getValue());
 
             // Did the index sub processor correctly extract the 'title' field from the portal document?
             assertTrue("The portalSubprocessor correctly build the document with the correct value in the title field.", title.equalsIgnoreCase("My Portal"));
 
-            // Did the index sub processor correctly extract the 'memberQuery' field from the portal document?
-            assertTrue("The portalSubprocessor correctly built the document with the correct value in the \"memberQuery\" field.", queryStr.equalsIgnoreCase(memberQuery));
+            // Did the index sub processor correctly extract the 'collectionQuery' field from the portal document?
+            assertTrue("The portalSubprocessor correctly built the document with the correct value in the \"collectionQuery\" field.", queryStr.equalsIgnoreCase(collectionQuery));
 
         } catch (Exception e) {
             System.out.println("Error: " +e.getMessage());

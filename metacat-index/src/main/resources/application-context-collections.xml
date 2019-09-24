@@ -19,7 +19,7 @@
 		    	<ref bean="collections.name" />
 		    	<ref bean="collections.label" />
 		    	<ref bean="collections.description" />
-				<ref bean="collection.memberQuery" />
+				<ref bean="collection.collectionQuery" />
 		   	</list>
 	  	</property>
 	</bean>
@@ -42,13 +42,13 @@
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="collection.memberQuery" class="edu.ucsb.nceas.metacat.index.parser.FilterCommonRootSolrField"
+	<bean id="collection.collectionQuery" class="edu.ucsb.nceas.metacat.index.parser.FilterCommonRootSolrField"
 		  p:root-ref="collection.filterFields">
-		<constructor-arg name="name" value="memberQuery" />
+		<constructor-arg name="name" value="collectionQuery" />
 	</bean>
 
 	<bean id="collection.filterFields" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement"
-		  p:name="memberQuery"
+		  p:name="collectionQuery"
 		  p:xPath="//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
 		  p:prefixMatch="isPartOf,seriesId,id"
 		  p:postfix="AND (-obsoletedBy:* AND formatType:METADATA)">

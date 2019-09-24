@@ -58,7 +58,7 @@ public class FilterCommonRootSolrField extends SolrField {
             resultValue = root.getRootValues(doc);
         }
 
-        fields.add(new SolrElementField("memberQuery", resultValue));
+        fields.add(new SolrElementField("collectionQuery", resultValue));
         return fields;
     }
 
@@ -75,4 +75,3 @@ public class FilterCommonRootSolrField extends SolrField {
         this.root = root;
     }
 }
-

@@ -19,7 +19,7 @@
 		   	    <ref bean="collections.name" />
 		    	<ref bean="collections.label" />
 		    	<ref bean="collections.description" />
-				<ref bean="collection.memberQuery" />
+				<ref bean="collection.collectionQuery" />
 		    	<ref bean="portals.logo" />
 		    	<ref bean="portals.associatedParty" />
 		    	<ref bean="portals.funderName" />
