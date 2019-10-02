@@ -103,6 +103,19 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
      default: a value that should be used if no value is specified
        when adding a document.
    -->
+   <types>
+     <fieldType name="text_case_insensitive" class="solr.TextField">
+      <analyzer type="index">
+          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+
+      <analyzer type="query">
+          <tokenizer class="solr.WhitespaceTokenizerFactory"/>
+          <filter class="solr.LowerCaseFilterFactory"/>
+      </analyzer>
+    </fieldType>
+   </types>
 
    <!-- field names should consist of alphanumeric or underscore characters only and
       not start with a digit.  This is not currently strictly enforced,
@@ -157,6 +170,8 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
         <field name="resourceMap"		type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="documents"			type="string"   indexed="true" stored="true" multiValued="true"/>
         <field name="isDocumentedBy"	type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="hasPart"	        type="string"   indexed="true" stored="true" multiValued="true"/>
+        <field name="isPartOf"	        type="string"   indexed="true" stored="true" multiValued="true"/>
 
         <!--Permissions-->
         <field name="readPermission"    type="string"   indexed="true" stored="true" multiValued="true"/>
@@ -311,7 +326,13 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <field name="funderIdentifier"  type="string" indexed="true" stored="true" multiValued="true" />
     <field name="awardNumber"       type="string" indexed="true" stored="true" multiValued="true" />
     <field name="awardTitle"        type="string" indexed="true" stored="true" multiValued="true" />
-		
+	
+    <!-- Collection and Portal fields -->
+    <field name="label" type="text_case_insensitive" indexed="true" stored="true" multiValued="false" />
+    <field name="logo" type="string" indexed="true" stored="true" multiValued="false" />
+    <field name="collectionQuery" type="string" indexed="true" multiValued="false" />
+
+	
    <!--
      Some fields such as popularity and manu_exact could be modified to
      leverage doc values:
