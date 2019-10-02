@@ -43,6 +43,7 @@ import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
 import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -53,6 +54,15 @@ import junit.framework.TestSuite;
  */
 public class ResourceMapModifierTest extends MCTestCase {
     
+    private static String CN_URL = null;
+    static {
+        try {
+            CN_URL = PropertyService.getProperty("D1Client.CN_URL");
+        } catch (Exception e) {
+            CN_URL = "https://cn.dataone.org/cn";
+        }
+        
+    }
     private static final String RESOURCEMAP_FILEPATH = "test/resourcemap-with-prov.xml";
     private static final String ORIGINAL_RESOURCEMAP_PID = "urn:uuid:e62c781c-643b-41f3-a0b0-9f6cbd80a708";
     private static final String NEW_RESOURCEMAP_PID = "urn:uuid:e62c781c-643b-41f3-a0b0-9f6cbd80a719";
@@ -100,12 +110,12 @@ public class ResourceMapModifierTest extends MCTestCase {
      * @throws Exception
      */
     public void testReplaceObsoletedIds() throws Exception {
-        String newMetadataURI = "https://cn.dataone.org/cn/v2/resolve/" + "doi%3A10.5072%2FFK27D2ZR71";
+        String newMetadataURI = CN_URL + "/v2/resolve/" + "doi%3A10.5072%2FFK27D2ZR71";
         Vector<String> dataURI = new Vector<String>();
         dataURI.add(DATA_1_URI);
         dataURI.add(DATA_2_URI);
         dataURI.add(newMetadataURI);
-        String newOREUri = "https://cn.dataone.org/cn/v2/resolve/" + "urn%3Auuid%3Ae62c781c-643b-41f3-a0b0-9f6cbd80a719";
+        String newOREUri = CN_URL + "/v2/resolve/" + "urn%3Auuid%3Ae62c781c-643b-41f3-a0b0-9f6cbd80a719";
         String newAggreOREUri = newOREUri + "#aggregation";
         File resourceMapFile = new File(RESOURCEMAP_FILEPATH);
         assertTrue(resourceMapFile.exists());

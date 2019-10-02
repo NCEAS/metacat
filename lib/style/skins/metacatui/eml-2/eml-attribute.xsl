@@ -82,7 +82,14 @@
         <xsl:for-each select="attribute">
           <xsl:variable name="attributeindex" select="position()"/>
           <tr>
-            <td><xsl:if test="annotation"><i class="icon icon-ok-circle"></i></xsl:if></td>
+            <td>
+              <xsl:if test="annotation">
+                <span class="icon-stack annotation-icon">
+                  <i class="icon icon-certificate icon-stack-base"></i>
+                  <i class="icon icon-ok"></i>
+                </span>
+              </xsl:if>
+            </td>
             <td>    
               <xsl:if test="position() = 1">
                 <xsl:attribute name="class">active</xsl:attribute>
@@ -159,6 +166,10 @@
   <xsl:if test="annotation">
     <div class="control-group">
       <label class="control-label">
+        <span class="icon-stack annotation-icon">
+          <i class="icon icon-certificate icon-stack-base"></i>
+          <i class="icon icon-ok"></i>
+        </span>
         Annotations
         <xsl:call-template name="annotation-info-tooltip" />
       </label>

@@ -133,6 +133,9 @@ public class UpdateDOI implements UpgradeUtilityInterface {
             //Collections.sort(idList);
             updateDOIRegistration(idList);
             
+            idList = IdentifierManager.getInstance().getGUIDs(DocumentImpl.EML2_2_0NAMESPACE, nodeId, DOISCHEME);
+            updateDOIRegistration(idList);
+            
 		} catch (Exception e) {
 			String msg = "Problem updating DOIs: " + e.getMessage();
 			log.error(msg, e);

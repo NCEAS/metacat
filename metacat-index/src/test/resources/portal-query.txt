@@ -1,0 +1,7 @@
+(isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708i) OR
+(text:*soil* AND (keywords:*"soil layer"* AND attribute:*"soil layer"*) AND
+(dateUploaded:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z]) AND
+isPublic:true AND
+numberReplicas:[1 TO *] AND
+southBoundCoord:[1.03 TO 141.78])) AND
+(-obsoletedBy:* AND formatType:METADATA)
