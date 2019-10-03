@@ -46,8 +46,7 @@ public class PortalSubprocessorIT {
             // Extract fields and check the values
             String title = myDoc.getField("title").getValue();
             String queryStr = myDoc.getField("collectionQuery").getValue();
-
-            //System.out.println("query field value: " + myDoc.getField("collectionQuery").getValue());
+            //System.out.println("query field value: " + queryStr);
 
             // Did the index sub processor correctly extract the 'title' field from the portal document?
             assertTrue("The portalSubprocessor correctly build the document with the correct value in the title field.", title.equalsIgnoreCase("My Portal"));

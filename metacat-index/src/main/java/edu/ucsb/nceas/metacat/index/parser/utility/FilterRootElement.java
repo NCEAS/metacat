@@ -97,13 +97,19 @@ public class FilterRootElement {
             Node node = nodeList.item(i);
 
             // For each node, search for a matching filter that can process that filter type
+            // Only the first filter that matches is used
             for (FilterProcessor filterProcessor : filters) {
                 if (node.getNodeName().equalsIgnoreCase(filterProcessor.getMatchElement())) {
                     //System.out.println("Running Filter processor name: " + filterProcessor.getName());
                     filterProcessor.initXPathExpressions();
                     filterValue = filterProcessor.getFilterValue(node);
+                    break;
                 }
             }
+
+            // If no value was returned from the filter, then go to the next node;
+            if(filterValue == null)
+                continue;
 
             preFilter = false;
             // See if this filter value matches one of the 'prefix' filters, that will be 'OR'd
@@ -142,21 +148,24 @@ public class FilterRootElement {
 
             // Add this search term to the complete filter
             if(completeFilterValue == null) {
-                completeFilterValue = filterValue + operator;
+                completeFilterValue = filterValue ;
             } else {
-                if(i >= (nodeList.getLength() - 1)) {
-                    //System.out.println("Last filter");
-                    completeFilterValue += filterValue;
-                } else {
-                    //System.out.println("not Last filter");
-                    completeFilterValue += filterValue + operator;
-                }
+                completeFilterValue += operator + filterValue;
             }
         }
 
-        // Add the prefilter terms
-        if(preFilterStr != null) {
+        // Add the prefilter terms to the competed query
+        // Only four possibilities - One of these cases has to be true
+        if(preFilterStr != null && completeFilterValue != null) {
             completeFilterValue = "(" + preFilterStr + ") OR (" + completeFilterValue + ")";
+        } else if(preFilterStr != null && completeFilterValue == null) {
+            completeFilterValue = "(" + preFilterStr + ")";
+        } else if(preFilterStr == null && completeFilterValue != null) {
+            completeFilterValue = "(" + completeFilterValue + ")";
+        } else if(preFilterStr == null && completeFilterValue == null) {
+            // This case should never happen - no collection filters are defined!
+            // Enter a value that will ensure that the query succeeds, but doesn't return any values.
+            completeFilterValue = "(-id:*)";
         }
 
         // Add the postfilter terms
