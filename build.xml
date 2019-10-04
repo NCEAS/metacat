@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="2.6.4" />
+	<property name="metacatui-tag" value="2.7.0" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
@@ -342,7 +342,7 @@
 		<property name="eml2_0_1-schema-tag" value="RELEASE_EML_2_0_1" />
 		<property name="eml2_1_0-schema-tag" value="RELEASE_EML_2_1_0" />
 		<property name="eml2_1_1-schema-tag" value="RELEASE_EML_2_1_1" />
-		<property name="eml2_2_0-schema-tag" value="BRANCH_EML_2_2" />
+		<property name="eml2_2_0-schema-tag" value="RELEASE_EML_2_2_0" />
 		<!--<property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_0_7" />-->
 		
 
@@ -739,6 +739,8 @@
                         dest="${build.tmp}/eml_${eml2_1_1-schema-tag}" refname="${eml2_1_1-schema-tag}" />
         <git-clone-pull repository="${eml.git.repository.url}" 
                         dest="${build.tmp}/eml_${eml2-style-tag}" refname="${eml2-style-tag}" />
+        <git-clone-pull repository="${eml.git.repository.url}" 
+    	                        dest="${build.tmp}/eml_${eml2_2_0-schema-tag}" refname="${eml2_2_0-schema-tag}" />
     </target>
 
 	<target name="geteml2+" depends="prepare,giteml" if="eml.required"
@@ -791,6 +793,15 @@
 				dir="${build.tmp}/eml_${eml2_1_1-schema-tag}">
 				<include name="*.xsd" />
 			</fileset>
+		</copy>
+		
+		<!-- Checkout eml220 for the given schema tag-->
+		<mkdir dir="lib/schema/eml-2.2.0" />
+		<copy todir="lib/schema/eml-2.2.0" filtering="yes">
+		   <fileset
+		        dir="${build.tmp}/eml_${eml2_2_0-schema-tag}/xsd">
+		        <include name="*.xsd" />
+		    </fileset>
 		</copy>
 	</target>
 

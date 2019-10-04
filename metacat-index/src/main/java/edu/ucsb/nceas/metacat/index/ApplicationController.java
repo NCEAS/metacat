@@ -163,8 +163,8 @@ public class ApplicationController implements Runnable {
             }
             
         }
-        queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.appned.include.archived.name");
-        queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.incldue.archived.value");
+        queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.append.includeArchived.name");
+        queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.includeArchived.value");
     }
     
     /**
@@ -326,7 +326,7 @@ public class ApplicationController implements Runnable {
      */
     public static String getIncludeArchivedQueryParaName() {
         if(queryIncludeArchivedParaName == null) {
-            queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.appned.include.archived.name");
+            queryIncludeArchivedParaName = Settings.getConfiguration().getString("solr.query.append.includeArchived.name");
         }
         return queryIncludeArchivedParaName;
     }
@@ -337,7 +337,7 @@ public class ApplicationController implements Runnable {
      */
     public static String getIncludeArchivedQueryParaValue() {
         if(queryIncludeArchivedParaValue == null) {
-            queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.incldue.archived.value");
+            queryIncludeArchivedParaValue = Settings.getConfiguration().getString("solr.query.append.includeArchived.value");
         }
         return queryIncludeArchivedParaValue;
     }
