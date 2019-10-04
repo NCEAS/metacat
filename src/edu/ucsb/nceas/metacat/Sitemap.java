@@ -303,7 +303,11 @@ public class Sitemap extends TimerTask {
                 writeSitemapIndex(fileNumber);
             }
 
-            sitemapWriter.close();
+            // Onlhy close the sitemapWriter if one's still instantiated
+            // which will happen when we have zero documents
+            if (sitemapWriter != null) {
+                sitemapWriter.close();
+            }
         } catch (SQLException e) {
             logMetacat.warn("Error while writing to the sitemap file: "
                     + e.getMessage());
