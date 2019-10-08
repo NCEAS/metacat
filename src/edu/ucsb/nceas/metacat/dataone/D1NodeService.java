@@ -113,7 +113,9 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -2178,6 +2180,7 @@ public abstract class D1NodeService {
               params.put("qformat", new String[] {format});               
               params.put("docid", new String[] {localId});
               params.put("pid", new String[] {id.getValue()});
+              addParasFromSkinProperties(params, format);//add more params from the skin properties file 
               transformer.transformXMLDocument(
                       documentContent , 
                       sourceType, 
@@ -2216,11 +2219,50 @@ public abstract class D1NodeService {
           ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
           sf.initCause(e);
           throw sf;
+      } catch (ServiceException e) {
+          ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+          sf.initCause(e);
+          throw sf;
       }
       
       return resultInputStream;
   } 
   
+  /**
+   * Read the properties file of the theme and add more parameters to the styel sheet.
+   * The configuration on the theme properties file should look like:
+   * stylesheet.parameters.1.name=serverName
+   * stylesheet.parameters.1.value=server.name
+   * stylesheet.parameters.2.name=organization
+   * stylesheet.parameters.2.value=ESS-DIVE
+   * The value can be either a name of metacat properties (e.g.server.name) or a real value (e.g. ESS-DIVE).
+   * @return the params with more name/value pairs from the theme properties file.
+ * @throws ServiceException 
+ * @throws PropertyNotFoundException 
+   */
+  static void addParasFromSkinProperties(Hashtable<String, String[]> params, String format) throws ServiceException, PropertyNotFoundException {
+      SkinPropertyService skinPropService = SkinPropertyService.getInstance(); 
+      Vector<String> propertiesNames = skinPropService.getPropertyNamesByGroup(format, "stylesheet.parameters");
+      logMetacat.debug("D1NodeService.addParasFromSkinProperties - the names of properties  are " + propertiesNames);
+      if(propertiesNames != null && !propertiesNames.isEmpty()) {
+          String name = null;
+          String value = null;
+          for(String property : propertiesNames) {
+              if (property.contains("name")) {
+                  name = skinPropService.getProperty(format, property);
+              } else if (property.contains("value")) {
+                  try {
+                      value = PropertyService.getInstance().getProperty(skinPropService.getProperty(format, property));
+                  } catch (Exception e) {
+                      //we can't find the property at the metacat properties. Fall back to treat the properties as the vlaue
+                      value = skinPropService.getProperty(format, property);
+                  }
+                  logMetacat.debug("D1NodeService.addParasFromSkinProperties - add the pair name " + name + " and its value " + value + " the style sheet parameters list");
+                  params.put(name, new String[] {value});
+              }
+          }
+      }
+  }
   /*
    * Determine if the given identifier exists in the obsoletes field in the system metadata table.
    * If the return value is not null, the given identifier exists in the given cloumn. The return value is 
