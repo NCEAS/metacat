@@ -123,8 +123,24 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     if(pid == null || pid.trim().equals("")) {
                         pid = "UNKNOWN";
                     }
-                    CheckedFile checkedFile = writeStreamToCheckedFile(tempDir,  stream, algorithm, pid);
+                    String prefix = "upload-" + System.currentTimeMillis();
+                    String suffix =  null;
+                    File newFile = null;
+                    try {
+                        newFile = File.createTempFile(prefix, suffix, tempDir);
+                    } catch (Exception e) {
+                        //try again if the first time fails
+                        newFile = File.createTempFile(prefix, suffix, tempDir);
+                    }
+                    CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
                     mpFiles.put(name, checkedFile);
+                    if(stream != null) {
+                        try {
+                            stream.close();
+                        } catch (Exception e) {
+                            log.warn("Couldn't close the stream since" + e.getMessage());
+                        }
+                    }
                 }
             }
         }
@@ -133,7 +149,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     
     /**
      * Write the input stream into the given fileName and directory while calculate the checksum.
-     * @param directory  the directory which holds the tmp file into which the stream will be written
+     * @param file  the file into which the stream will be written. It should exists already.
      * @param dataStream  the source stream
      * @param checksumAlgorithm  the algorithm will be used for calculating the checksum
      * @param pid  the pid of the object (only used for debug information)
@@ -142,36 +158,22 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public static CheckedFile writeStreamToCheckedFile(File directory, InputStream dataStream, String checksumAlgorithm, String pid) 
+    public static CheckedFile writeStreamToCheckedFile(File file, InputStream dataStream, String checksumAlgorithm, String pid) 
         throws NoSuchAlgorithmException, FileNotFoundException, IOException {
         Checksum checksum = null;
-        String prefix = "upload-"+System.currentTimeMillis();
-        String suffix =  null;
-        File newFile = null;
-        try {
-            newFile = File.createTempFile(prefix, suffix, directory);
-        } catch (Exception e) {
-            //try again if the first time fails
-            newFile = File.createTempFile(prefix, suffix, directory);
-        }
-        log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: " + newFile.getAbsolutePath() + " for the pid " + pid + " by the algorithm " + checksumAlgorithm);
-        if (newFile.createNewFile()) {
-          MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
-          // write data stream to desired file
-          DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
-          long length = IOUtils.copyLarge(dataStream, os);
-          os.flush();
-          os.close();
-          String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-          checksum = new Checksum();
-          checksum.setAlgorithm(checksumAlgorithm);
-          checksum.setValue(localChecksum);
-          log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum calculated from the saved local file is " + localChecksum + " for the pid " + pid);
-        } else {
-            log.error("StreamingMultipartRequestResolver.writeStreamToCheckedFile - file creation failed, or file already exists for the pid " + pid );
-            throw new IOException("File already exists: " + newFile + " for the pid " + pid);
-        }
-        CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
+        log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: " + file.getAbsolutePath() + " for the pid " + pid + " by the algorithm " + checksumAlgorithm);
+        MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
+        // write data stream to desired file
+        DigestOutputStream os = new DigestOutputStream( new FileOutputStream(file), md);
+        long length = IOUtils.copyLarge(dataStream, os);
+        os.flush();
+        os.close();
+        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+        checksum = new Checksum();
+        checksum.setAlgorithm(checksumAlgorithm);
+        checksum.setValue(localChecksum);
+        log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum calculated from the saved local file is " + localChecksum + " for the pid " + pid);
+        CheckedFile checkedFile = new CheckedFile(file.getCanonicalPath(), checksum);
         return checkedFile;
     }
     
