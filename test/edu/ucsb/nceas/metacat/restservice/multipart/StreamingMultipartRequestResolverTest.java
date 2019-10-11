@@ -91,7 +91,8 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
     public static Test suite()  {
         TestSuite suite = new TestSuite();
         suite.addTest(new StreamingMultipartRequestResolverTest("initialize"));
-        suite.addTest(new StreamingMultipartRequestResolverTest("testResolveMultipart"));
+        suite.addTest(new StreamingMultipartRequestResolverTest("testV2ResolveMultipart"));
+        suite.addTest(new StreamingMultipartRequestResolverTest("testV1ResolveMultipart"));
         return suite;
     }
     
@@ -103,17 +104,18 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
     }
     
     /**
-     * Test the method resolveMultipart
+     * Test the method resolveMultipart with the v2 system metadata
      * @throws Exception
      */
-    public void testResolveMultipart() throws Exception {
+    public void testV2ResolveMultipart() throws Exception {
         String algorithm = "MD5";
         Session session = getTestSession();
         Identifier guid = new Identifier();
-        guid.setValue("testResolveMultipart." + System.currentTimeMillis());
+        guid.setValue("testV2ResolveMultipart." + System.currentTimeMillis());
         byte[] fileContent = Files.readAllBytes((new File(objectFile)).toPath());
         InputStream object = new ByteArrayInputStream(fileContent);
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        assertTrue(sysmeta instanceof org.dataone.service.types.v2.SystemMetadata);
         ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
         formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
         sysmeta.setFormatId(formatId);
@@ -137,10 +139,12 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
-        org.dataone.service.types.v1.SystemMetadata parsedValue = resolver.getSystemMetadataPart();
-        assertTrue(parsedValue instanceof SystemMetadata);
+        org.dataone.service.types.v1.SystemMetadata parsedSys = resolver.getSystemMetadataPart();
         
-        SystemMetadata parsedSysmeta = (SystemMetadata) parsedValue;
+        //v2 system metadata object is both v1 and v2
+        assertTrue(parsedSys instanceof org.dataone.service.types.v1.SystemMetadata);
+        assertTrue(parsedSys instanceof org.dataone.service.types.v2.SystemMetadata);
+        SystemMetadata parsedSysmeta = (SystemMetadata) parsedSys;
         assertTrue(parsedSysmeta.getIdentifier().equals(guid));
         assertTrue(parsedSysmeta.getFormatId().getValue().equals("https://eml.ecoinformatics.org/eml-2.2.0"));
         assertTrue(parsedSysmeta.getChecksum().getAlgorithm().equals(algorithm));
@@ -171,6 +175,80 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         assertTrue(savedChecksum.getValue().equalsIgnoreCase(sysmeta.getChecksum().getValue()));
         assertTrue(savedChecksum.getValue().equalsIgnoreCase(calculatedChecksum.getValue()));
     }
+    
+    
+    /**
+     * Test the method resolveMultipart with the v1 system metadata
+     * @throws Exception
+     */
+    public void testV1ResolveMultipart() throws Exception {
+        String algorithm = "MD5";
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testV1ResolveMultipart." + System.currentTimeMillis());
+        byte[] fileContent = Files.readAllBytes((new File(objectFile)).toPath());
+        InputStream object = new ByteArrayInputStream(fileContent);
+        org.dataone.service.types.v1.SystemMetadata sysmeta = createV1SystemMetadata(guid, session.getSubject(), object);
+        assertTrue(!(sysmeta instanceof org.dataone.service.types.v2.SystemMetadata));
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta.setFormatId(formatId);
+        ByteArrayOutputStream sysOutput = new ByteArrayOutputStream();
+        TypeMarshaller.marshalTypeToOutputStream(sysmeta, sysOutput);
+        byte[] sysContent = sysOutput.toByteArray();
+        
+        // Create part & entity from resource
+        Part[] parts = new Part[] { new StringPart("pid", guid.getValue()), new FilePart(StreamingMultipartRequestResolver.SYSMETA, new ByteArrayPartSource("sysmetametadata.xml", sysContent)),
+            new FilePart("object", new ByteArrayPartSource(objectFile, fileContent)) };
+        MultipartRequestEntity multipartRequestEntity =
+            new MultipartRequestEntity(parts, new PostMethod().getParams());
+        // Serialize request body
+        ByteArrayOutputStream requestContent = new ByteArrayOutputStream();
+        multipartRequestEntity.writeRequest(requestContent);
+        ByteArrayInputStream requestInput = new ByteArrayInputStream(requestContent.toByteArray());
+        ServletInputStream objectInputStream = new  WrappingServletInputStream(requestInput);
+        HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
+        Mockito.when(request.getMethod()).thenReturn("post");
+        Mockito.when(request.getContentType()).thenReturn(multipartRequestEntity.getContentType());
+        Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
+        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
+        MultipartRequest result = resolver.resolveMultipart(request);
+        org.dataone.service.types.v1.SystemMetadata parsedSysmeta = resolver.getSystemMetadataPart();
+        
+        //v1 system metadata object is only v1, not v2
+        assertTrue(parsedSysmeta instanceof org.dataone.service.types.v1.SystemMetadata);
+        assertTrue(!(parsedSysmeta instanceof org.dataone.service.types.v2.SystemMetadata));
+        assertTrue(parsedSysmeta.getIdentifier().equals(guid));
+        assertTrue(parsedSysmeta.getFormatId().getValue().equals("https://eml.ecoinformatics.org/eml-2.2.0"));
+        assertTrue(parsedSysmeta.getChecksum().getAlgorithm().equals(algorithm));
+        assertTrue(parsedSysmeta.getChecksum().getValue().equals(sysmeta.getChecksum().getValue()));
+        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getPermission(0).equals(Permission.READ));
+        assertTrue(parsedSysmeta.getAccessPolicy().getAllow(0).getSubject(0).getValue().equals(Constants.SUBJECT_PUBLIC));
+        assertTrue(parsedSysmeta.getSize().equals(sysmeta.getSize()));
+        assertTrue(parsedSysmeta.getSubmitter().getValue().equals(session.getSubject().getValue()));
+        assertTrue(parsedSysmeta.getRightsHolder().getValue().equals(session.getSubject().getValue()));
+        assertTrue(parsedSysmeta.getOriginMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
+        assertTrue(parsedSysmeta.getAuthoritativeMemberNode().getValue().equals(Settings.getConfiguration().getString("dataone.nodeId")));
+        assertTrue(parsedSysmeta.getDateUploaded().getTime() == sysmeta.getDateUploaded().getTime());
+        assertTrue(parsedSysmeta.getDateSysMetadataModified().getTime() == sysmeta.getDateSysMetadataModified().getTime());
+       
+        Map<String, List<String>> stringMaps = result.getMultipartParameters();
+        assertTrue(stringMaps.get("pid").get(0).equals(guid.getValue()));
+        assertTrue(stringMaps.get("foo") == null);
+        
+        Map<String, File> fileMaps = result.getMultipartFiles();
+        File file = fileMaps.get("object");
+        CheckedFile savedFile = (CheckedFile) file;
+        assertTrue(savedFile.exists());
+        Checksum savedChecksum = savedFile.getChecksum();
+        InputStream savedFileInputStream = new FileInputStream(savedFile);
+        Checksum calculatedChecksum = ChecksumUtil.checksum(savedFileInputStream, algorithm);
+        savedFileInputStream.close();
+        assertTrue(savedChecksum.getAlgorithm().equals(algorithm));
+        assertTrue(savedChecksum.getValue().equalsIgnoreCase(sysmeta.getChecksum().getValue()));
+        assertTrue(savedChecksum.getValue().equalsIgnoreCase(calculatedChecksum.getValue()));
+    }
+ 
 }
 
 /**

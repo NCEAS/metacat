@@ -133,6 +133,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         //Transforming to the v2 systemmeta object failed. Try to transform to v1
                         input.reset();
                         sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
                     }
                     input.close();
                 } else {
@@ -154,7 +155,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     if(pid == null || pid.trim().equals("")) {
                         pid = "UNKNOWN";
                     }
-                    File newFile = generatedTmpFile("upload");
+                    File newFile = generateTmpFile("upload");
                     CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
                     mpFiles.put(name, checkedFile);
                 }
@@ -175,7 +176,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @return
      * @throws IOException
      */
-    private File generatedTmpFile(String prefix) throws IOException {
+    private File generateTmpFile(String prefix) throws IOException {
         String newPrefix = prefix + "-" + System.currentTimeMillis();
         String suffix =  null;
         File newFile = null;
@@ -185,6 +186,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
             //try again if the first time fails
             newFile = File.createTempFile(newPrefix, suffix, tempDir);
         }
+        log.debug("StreamingMultiplePartRequestResolver.generateTmepFile - the new file  is " + newFile.getCanonicalPath());
         return newFile;
     }
     
