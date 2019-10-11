@@ -20,6 +20,8 @@
 
 package edu.ucsb.nceas.metacat.restservice.multipart;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -36,13 +38,10 @@ import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.commons.fileupload.FileItem;
+
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
-import org.apache.commons.fileupload.FileUpload;
 import org.apache.commons.fileupload.FileUploadException;
-import org.apache.commons.fileupload.disk.DiskFileItem;
-import org.apache.commons.fileupload.disk.DiskFileItemFactory;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
 import org.apache.commons.io.IOUtils;
@@ -51,10 +50,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
-import org.dataone.service.exceptions.InvalidSystemMetadata;
-import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
-import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
 
@@ -124,15 +120,30 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                 log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field " + name + " with file name " + item.getName() + " detected.");
                 // Process the input stream
                 if (name.equals(SYSMETA)) {
-                    sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, stream);
+                    //copy the stream to a byte array output stream so we can read it multiple times. Since we don't know it is v1 or v2, we need to try two times.
+                    ByteArrayOutputStream os = new ByteArrayOutputStream();
+                    IOUtils.copy(stream, os);
+                    byte[] sysmetaBytes = os.toByteArray();
+                    os.close();
+                    ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes);
+                    try {
+                        org.dataone.service.types.v2.SystemMetadata sysMeta2 = TypeMarshaller.unmarshalTypeFromStream(org.dataone.service.types.v2.SystemMetadata.class, input);
+                        sysMeta = sysMeta2;
+                    } catch (Exception e) {
+                        //Transforming to the v2 systemmeta object failed. Try to transform to v1
+                        input.reset();
+                        sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+                    }
+                    input.close();
                 } else {
                     String algorithm = null;
                     if (sysMeta != null && sysMeta.getChecksum() != null ) {
-                        //if we are lucky and the system metadata has been processed
+                        //We are lucky and the system metadata has been processed
                         algorithm = sysMeta.getChecksum().getAlgorithm();
                     }
                     //if we haven't handle the system metadata part, we use the default algorithm.
                     if(algorithm == null || algorithm.trim().equals("")) {
+                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. So we have to calculate the checksum by the default calgorithm " + defaultAlgorithm);
                         algorithm = defaultAlgorithm;
                     }
                     //decide the pid for debug purpose
@@ -143,28 +154,38 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     if(pid == null || pid.trim().equals("")) {
                         pid = "UNKNOWN";
                     }
-                    String prefix = "upload-" + System.currentTimeMillis();
-                    String suffix =  null;
-                    File newFile = null;
-                    try {
-                        newFile = File.createTempFile(prefix, suffix, tempDir);
-                    } catch (Exception e) {
-                        //try again if the first time fails
-                        newFile = File.createTempFile(prefix, suffix, tempDir);
-                    }
+                    File newFile = generatedTmpFile("upload");
                     CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
                     mpFiles.put(name, checkedFile);
-                    if(stream != null) {
-                        try {
-                            stream.close();
-                        } catch (Exception e) {
-                            log.warn("Couldn't close the stream since" + e.getMessage());
-                        }
-                    }
+                }
+            }
+            if(stream != null) {
+                try {
+                    stream.close();
+                } catch (Exception e) {
+                    log.warn("Couldn't close the stream since" + e.getMessage());
                 }
             }
         }
         return multipartRequest;
+    }
+    
+    /**
+     * Create a temporary new file
+     * @return
+     * @throws IOException
+     */
+    private File generatedTmpFile(String prefix) throws IOException {
+        String newPrefix = prefix + "-" + System.currentTimeMillis();
+        String suffix =  null;
+        File newFile = null;
+        try {
+            newFile = File.createTempFile(newPrefix, suffix, tempDir);
+        } catch (Exception e) {
+            //try again if the first time fails
+            newFile = File.createTempFile(newPrefix, suffix, tempDir);
+        }
+        return newFile;
     }
     
     /**
