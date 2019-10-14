@@ -31,7 +31,7 @@
   Node listed in the metacat properties file or from a cached version in
   the metacat database, it will revert to this file.
  -->
-<d1:objectFormatList count="31" start="0" total="31"
+<d1:objectFormatList count="33" start="0" total="33"
   xmlns:d1="http://ns.dataone.org/service/types/0.6.0" 
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://ns.dataone.org/service/types/0.6.0 dataoneTypes.xsd">
@@ -188,5 +188,13 @@
   <objectFormat>
     <fmtid>application/octet-stream</fmtid>
     <formatName>Octet Stream</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>https://purl.dataone.org/collections-1.0.0</fmtid>
+    <formatName>Dataset collections v1.0.0</formatName>
+  </objectFormat>
+  <objectFormat>
+    <fmtid>https://purl.dataone.org/portals-1.0.0</fmtid>
+    <formatName>Dataset portals v1.0.0</formatName>
   </objectFormat>
 </d1:objectFormatList>
