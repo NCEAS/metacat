@@ -76,7 +76,7 @@
 	<bean id="collection.booleanFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
 		  p:name="booleanFilter"
 		  p:matchElement="booleanFilter"
-		  p:template="(field:value)">
+		  p:template="field:value">
 		<property name="leafs">
 			<list>
 				<ref bean="collection.filterFieldLeaf"/>
@@ -91,7 +91,7 @@
 		  p:name="dateFilter"
 		  p:matchElement="dateFilter"
 		  p:defaults="min:*,max:*"
-		  p:template="(field:value),(field:[min TO max])">
+		  p:template="field:value,field:[min TO max]">
 		<property name="leafs">
 			<list>
 				<ref bean="collection.filterFieldLeaf"/>
@@ -108,7 +108,7 @@
 		  p:name="numericFilter"
 		  p:matchElement="numericFilter"
 		  p:defaults="min:*,max:*"
-		  p:template="(field:value), (field:[min TO max])">
+		  p:template="field:value,field:[min TO max]">
 		<property name="leafs">
 			<list>
 				<ref bean="collection.filterFieldLeaf"/>
@@ -126,7 +126,7 @@
 		  p:matchElement="filter"
 		  p:escapeSpecialChars="true"
 		  p:quoteMultipleWords="true"
-		  p:template="(field:value)">
+		  p:template="field:value">
 		<property name="leafs">
 			<list>
 				<ref bean="collection.filterFieldLeaf"/>
