@@ -49,11 +49,12 @@ public class FilterRootElement {
     private String xPath;
     private XPathExpression xPathExpression = null;
     private String delimiter = " ";
-    private String prefixMatch;
-    private String postfix;
     private List<LeafElement> leafs = new ArrayList<LeafElement>();
     private List<FilterRootElement> subRoots = new ArrayList<FilterRootElement>();
     private List<FilterProcessor> filters = null;
+    private String prefixMatch = null;
+    private String fixedTerm = null;
+    private String postfixMatch = null;
 
     public FilterRootElement() {
     }
@@ -64,11 +65,14 @@ public class FilterRootElement {
         NodeList nodeList = (NodeList) getxPathExpression().evaluate(docOrNode,
                 XPathConstants.NODESET);
 
-        String preFilterStr = null;
+        String prefilterValue = null;
+        String postfilterValue = null;
 
         String filterValue = null;
         List<FilterProcessor> filters = getFilters();
-        String prefixMatch = getPrefixMatch();
+        prefixMatch = getPrefixMatch();
+        fixedTerm = getFixedTerm();
+        postfixMatch = getPostfixMatch();
 
         // A typical query prefilter: (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708i)) OR
         // A main filter: ((text:soil) AND (-(keywords:*soil layer*) AND -(attribute:*soil layer*)) AND ((dateUploaded:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z])
@@ -85,12 +89,23 @@ public class FilterRootElement {
             }
         }
 
+        // Collect the terms that are used to identify a 'postfilter' item. These terms will be added to
+        // the front of the complete query and 'OR'd together
+        HashSet<String> postfixMatchingFields = new HashSet<String>();
+        if(postfixMatch != null && !postfixMatch.isEmpty()) {
+            String tokens[] = postfixMatch.split(",");
+            for (String token : tokens) {
+                postfixMatchingFields.add(token);
+            }
+        }
+
+        String mainFilterValue = null;
         String completeFilterValue = null;
         String operator = "AND";
         Boolean prefilter;
+        Boolean postfilter;
         int nFilters = filters.size();
         int iFilter;
-        Boolean preFilter;
 
         // Loop through the nodes that match the filter xpath, for example "//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
         for (int i = 0; i < nodeList.getLength(); i++) {
@@ -111,27 +126,46 @@ public class FilterRootElement {
             if(filterValue == null)
                 continue;
 
-            preFilter = false;
+            prefilter = false;
+            postfilter = false;
             // See if this filter value matches one of the 'prefix' filters, that will be 'OR'd
             // with the other filters. The 'prefilters' will be accumulated and prepended to the query
             // string, to be in sync with the way metacatui does things, and to make it easy to apply
             // the correct logical operators.
             if(!prefixMatchingFields.isEmpty()) {
                 for(String term : prefixMatchingFields) {
-                    // Only match the term if it is surrounded by non-alpha characters, i.e.
-                    // term to match "id" is not embedded in another string such as "myId". That
-                    // doesn't match, but "(id:1234)" does.
-                    Pattern p = Pattern.compile("[^a-zA-Z0-9]" + term + "[^a-zA-Z0-9]");
+                    // Only match the term if it is preceded by a "(" or " " and followed by a ":"
+                    // Example: 'id' matches '(id:10)' or 'id:10', but doesn't match 'myId:10'
+                    Pattern p = Pattern.compile("[(-]" + term + ":" + "|" + "^" + term + ":");
                     Matcher m1 = null;
                     m1 = p.matcher(filterValue);
                     if(m1.find()) {
-                        preFilter = true;
-                        if(preFilterStr == null) {
-                            preFilterStr = filterValue;
+                        prefilter = true;
+                        if(prefilterValue == null) {
+                            prefilterValue = filterValue;
                         } else {
-                            preFilterStr += " OR " + filterValue;
+                            prefilterValue += " OR " + filterValue;
                         }
-                        //System.out.println("matched term " + term + ", prefilter: " + preFilterStr);
+                        continue;
+                    }
+                }
+            }
+
+            if(!postfixMatchingFields.isEmpty()) {
+                for(String term : postfixMatchingFields) {
+                    // Only match the term if it is surrounded by non-alpha characters, i.e.
+                    // term to match "id" is not embedded in another string such as "myId". That
+                    // doesn't match, but "(id:1234)" does.
+                    Pattern p = Pattern.compile("[(-]" + term + ":" + "|" + "^" + term + ":");
+                    Matcher m1 = null;
+                    m1 = p.matcher(filterValue);
+                    if(m1.find()) {
+                        postfilter = true;
+                        if(postfilterValue == null) {
+                            postfilterValue = filterValue;
+                        } else {
+                            postfilterValue += " OR " + filterValue;
+                        }
                         continue;
                     }
                 }
@@ -139,38 +173,57 @@ public class FilterRootElement {
 
             // If we found a prefilter item, don't add this portion to the completed query string yet. It
             // will be added after all other filters are processed.
-            if(preFilter) {
+            if(prefilter || postfilter) {
                 continue;
             }
 
-            // The default operator to join search terms
-            operator = " AND ";
-
             // Add this search term to the complete filter
-            if(completeFilterValue == null) {
-                completeFilterValue = filterValue ;
+            if(mainFilterValue == null) {
+                mainFilterValue = filterValue;
             } else {
-                completeFilterValue += operator + filterValue;
+                mainFilterValue += " " + operator + " " + filterValue;
             }
         }
 
-        // Add the prefilter terms to the competed query
-        // Only four possibilities - One of these cases has to be true
-        if(preFilterStr != null && completeFilterValue != null) {
-            completeFilterValue = "(" + preFilterStr + ") OR (" + completeFilterValue + ")";
-        } else if(preFilterStr != null && completeFilterValue == null) {
-            completeFilterValue = "(" + preFilterStr + ")";
-        } else if(preFilterStr == null && completeFilterValue != null) {
-            completeFilterValue = "(" + completeFilterValue + ")";
-        } else if(preFilterStr == null && completeFilterValue == null) {
-            // This case should never happen - no collection filters are defined!
-            // Enter a value that will ensure that the query succeeds, but doesn't return any values.
-            completeFilterValue = "(-id:*)";
+
+        // Now assemble the complete query
+
+        // ( ((prefilter) OR (mail filters)) AND (fixedTerm)) OR (postfilter)
+        // Add the prefilter value, if defined.
+        if(prefilterValue != null) {
+            completeFilterValue = "(" + prefilterValue + ")";
         }
 
-        // Add the postfilter terms
-        if(postfix != null && !postfix.isEmpty()) {
-            completeFilterValue = completeFilterValue + " " + postfix;
+        // Next add the main filter value, if defined.
+        if(mainFilterValue != null) {
+            if(completeFilterValue != null) {
+                completeFilterValue = "(" + completeFilterValue + " OR " + "(" + mainFilterValue + "))";
+            } else {
+                completeFilterValue = "(" + mainFilterValue + ")";
+            }
+        }
+
+        // Add the fixed terms
+        if(fixedTerm != null) {
+            if(completeFilterValue != null) {
+                completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
+            } else {
+                completeFilterValue = "(" + fixedTerm + ")";
+            }
+        }
+
+        // Add the postfix terms
+        if(postfilterValue != null && !postfilterValue.isEmpty()) {
+            if(completeFilterValue != null) {
+                completeFilterValue = completeFilterValue + " OR " + "(" + postfilterValue + ")";
+            } else {
+                completeFilterValue = postfilterValue;
+            }
+        }
+
+        // This cause shouldn't happen (no terms found or specified), but check anyway
+        if(completeFilterValue == null) {
+            completeFilterValue = "(id:*)";
         }
 
         completeFilterValue = "(" + completeFilterValue + ")";
@@ -235,12 +288,20 @@ public class FilterRootElement {
         this.prefixMatch = prefixMatch;
     }
 
-    public String getPostfix() {
-        return postfix;
+    public String getFixedTerm() {
+        return fixedTerm;
     }
 
-    public void setPostfix(String postfix) {
-        this.postfix = postfix;
+    public void setFixedTerm(String fixedTerm) {
+        this.fixedTerm = fixedTerm;
+    }
+
+    public String getPostfixMatch() {
+        return postfixMatch;
+    }
+
+    public void setPostfixMatch(String postfixMatch) {
+        this.postfixMatch = postfixMatch;
     }
 
     public List<LeafElement> getLeafs() {
