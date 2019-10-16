@@ -27,6 +27,7 @@
             <exclude>false</exclude>
             <matchSubstring>false</matchSubstring>
             <value>urn:uuid:55be0c0e-c77a-4971-9ea7-16acc65d5f04</value>
+            <value>urn:uuid:23242117-0024-4028-9064-0abbbf4fa4e6</value>
         </filter>
         <filter>
             <label>Datasets about soil</label>
