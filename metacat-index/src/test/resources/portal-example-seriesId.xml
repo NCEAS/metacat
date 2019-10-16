@@ -1,83 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <por:portal xmlns:por="https://purl.dataone.org/portals-1.0.0">
     <label>laurentest5</label>
-    <name>My Portal</name>
+    <name>Another test portal</name>
     <description>This is a collection of datasets related to soil</description>
     <definition>
-        <filter>
-            <label>Datasets added manually</label>
-            <field>isPartOf</field>
-            <operator>OR</operator>
-            <exclude>false</exclude>
-            <matchSubstring>false</matchSubstring>
-            <value>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i</value>
-        </filter>
         <filter>
             <label>Datasets added manually</label>
             <field>seriesId</field>
             <operator>OR</operator>
             <exclude>false</exclude>
             <matchSubstring>false</matchSubstring>
-            <value>urn:uuid:4297479f-edf6-4740-aaaa-f1291e3c2e86</value>
+            <value>urn:uuid:1234</value>
         </filter>
-        <filter>
-            <label>Datasets added manually</label>
-            <field>id</field>
-            <operator>OR</operator>
-            <exclude>false</exclude>
-            <matchSubstring>false</matchSubstring>
-            <value>urn:uuid:55be0c0e-c77a-4971-9ea7-16acc65d5f04</value>
-        </filter>
-        <filter>
-            <label>Datasets about soil</label>
-            <field>text</field>
-            <operator>AND</operator>
-            <exclude>false</exclude>
-            <matchSubstring>false</matchSubstring>
-            <value>soil</value>
-        </filter>
-        <filter>
-            <field>keywords</field>
-            <field>attribute</field>
-            <operator>AND</operator>
-            <exclude>true</exclude>
-            <matchSubstring>true</matchSubstring>
-            <value>soil carbon</value>
-        </filter>
-        <dateFilter>
-            <field>dateUploaded</field>
-            <field>beginDate</field>
-            <operator>AND</operator>
-            <exclude>false</exclude>
-            <min>1800-01-01T00:00:00Z</min>
-            <max>2009-12-31T23:59:59Z</max>
-        </dateFilter>
-        <booleanFilter>
-            <field>isPublic</field>
-            <exclude>false</exclude>
-            <value>true</value>
-        </booleanFilter>
-        <numericFilter>
-            <field>numberReplicas</field>
-            <operator>AND</operator>
-            <exclude>false</exclude>
-            <min>1</min>
-        </numericFilter>
-        <numericFilter>
-            <label>Numeric with range</label>
-            <field>southBoundCoord</field>
-            <operator>AND</operator>
-            <exclude>false</exclude>
-            <min>1.03</min>
-            <max>141.78</max>
-        </numericFilter>
-        <numericFilter>
-            <label>Numeric with range</label>
-            <field>northBoundCoord</field>
-            <operator>AND</operator>
-            <exclude>false</exclude>
-            <value>5</value>
-        </numericFilter>
     </definition>
     <logo>
         <identifier>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</identifier>
