@@ -17,7 +17,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
-public class PortalSubprocessorIT {
+public class PortalSubprocessorTest {
 
     /**
      * Attempt to parse a 'portal' document using the indexer. See 'application-context-portals.xml'
