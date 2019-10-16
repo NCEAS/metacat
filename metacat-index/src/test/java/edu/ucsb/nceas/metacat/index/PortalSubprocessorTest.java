@@ -30,18 +30,21 @@ public class PortalSubprocessorTest {
 
         // Three different portal documents will be processed
         ArrayList<String> portalFiles = new ArrayList<String>();
+        portalFiles.add("src/test/resources/collection-example.xml");
         portalFiles.add("src/test/resources/portal-example-full.xml");
         portalFiles.add("src/test/resources/portal-example-seriesId.xml");
         portalFiles.add("src/test/resources/portal-example-sasap.xml");
 
         // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
+        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-full.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-seriesId.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-sasap.txt");
 
         // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
+        portalNames.add("My saved search");
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
         portalNames.add("Lauren's test project - updated");

@@ -54,6 +54,7 @@ public class FilterProcessor {
     private String template;
     private String defaults;
     private HashMap<String, String> defaultValues = new HashMap<String, String>();
+    private final String DEFAULT_OPERATOR = "AND";
 
     public FilterProcessor() {
     }
@@ -190,17 +191,25 @@ public class FilterProcessor {
                 thisFilterValue = "-" + thisFilterValue;
             }
 
-            // Are multiple versions of this filter being made?
+            // Are multiple versions of this filter being made, i.e. different 'name', same 'value'
+            // Example:
+            //         <dateFilter>
+            //            <field>dateUploaded</field>
+            //            <field>beginDate</field>
+            //            <min>1800-01-01T00:00:00Z</min>
+            //            <max>2009-01-01T00:00:00Z</max>
+            //        </dateFilter>
             if(nTemplate > 1) {
                 String operator = null;
-                if(leafValues.containsKey("operator"))
+                if(leafValues.containsKey("operator")) {
                     operator = leafValues.get("operator");
-
-                if(operator == null) {
-                    filterValue = filterValue + " " + thisFilterValue;
                 } else {
-                    filterValue = filterValue + " " + operator + " " + thisFilterValue;
+                    // If an operator wasn't defined for this filter, we have to use a default,
+                    // otherwise the query that is build will be syntactilly invalid.
+                    operator = DEFAULT_OPERATOR;
                 }
+
+                filterValue = filterValue + " " + operator + " " + thisFilterValue;
             } else {
                 filterValue = thisFilterValue;
             }

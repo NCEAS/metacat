@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.0.0">
+    <label>saved-search</label>
+    <name>My saved search</name>
+    <description>This is a collection of datasets related to soil</description>
+    <definition>
+        <filter>
+            <label>Datasets about soil</label>
+            <field>text</field>
+            <exclude>false</exclude>
+            <matchSubstring>true</matchSubstring>
+            <value>soil</value>
+        </filter>
+        <!-- This filter returns results on KNB -->
+        <filter>
+            <field>keywords</field>
+            <field>attribute</field>
+            <value>soil</value>
+        </filter>
+        <dateFilter>
+            <field>dateUploaded</field>
+            <field>beginDate</field>
+            <min>1800-01-01T00:00:00Z</min>
+            <max>2019-12-01T00:00:00Z</max>
+        </dateFilter>
+        <booleanFilter>
+            <field>isPublic</field>
+            <value>true</value>
+        </booleanFilter>
+        <numericFilter>
+            <field>numberReplicas</field>
+            <min>1</min>
+        </numericFilter>
+    </definition>
+</col:collection>
