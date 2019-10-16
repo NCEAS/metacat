@@ -1,7 +1,7 @@
 package edu.ucsb.nceas.metacat.index.parser.utility;
 
 /**
- *  Copyright: 2013 Regents of the University of California and the
+ *  Copyright: 2019 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
  * This program is free software; you can redistribute it and/or modify
@@ -59,6 +59,24 @@ public class FilterRootElement {
     public FilterRootElement() {
     }
 
+    /**
+     *
+     * @param docOrNode - An XML document root or sub-node of a DataONE collection document
+     * @return the value of the query derived from the document
+     * @throws XPathExpressionException
+     *
+     * <p>
+     * This method parses a DataONE collection document and builds a Solr query from the filters
+     * defined in the document. The filters define the set of DataONE pids that are of interest
+     * to the outhor of the collection (portal). The Solr query provides a way for client
+     * programs to fetch the same set of pids that are defined by the filters.
+     * </p>
+     * <p>
+     * One example client use case for this Solr 'collectionQuery' field is to retrive all
+     * the pids for a collection and run metadata quality scores on them, to allow the portal
+     * users to determine the quality of the metadata for their collection.
+     * </p>
+     */
     public String getRootValues(Object docOrNode)
             throws XPathExpressionException {
 
@@ -74,10 +92,12 @@ public class FilterRootElement {
         fixedTerm = getFixedTerm();
         postfixMatch = getPostfixMatch();
 
-        // A typical query prefilter: (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708i)) OR
+        // A typical query prefilter: (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708 OR seriesId:urn:uuid:8c63bc73-c60e-4082-8dc2-8e3ea20bd6e5)
         // A main filter: ((text:soil) AND (-(keywords:*soil layer*) AND -(attribute:*soil layer*)) AND ((dateUploaded:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z])
-        // A postfilter: AND (-obsoletedBy:* AND formatType:METADATA))
-        // These are concatenated together to arrive at the full query
+        // A 'fixed' filter: AND (-obsoletedBy:* AND formatType:METADATA))
+        // A 'poastfix' filter: OR (id:urn:uuid:298073d0-dc2b-4f59-bf35-f7a8e60efa0e OR id:urn:uuid:6c6040ef-1393-47f9-a725-645f125f61ef)
+        // These are concatenated together to arrive at the full query:
+        //     (((<prefix filter) OR (<main filter>)) AND (<fixed filter>)) OR (<postfix filter)
 
         // Collect the terms that are used to identify a 'prefilter' item. These terms will be added to
         // the front of the complete query and 'OR'd together
@@ -151,6 +171,7 @@ public class FilterRootElement {
                 }
             }
 
+            // Check this filter for a match with the 'postfix' filter pattern.
             if(!postfixMatchingFields.isEmpty()) {
                 for(String term : postfixMatchingFields) {
                     // Only match the term if it is surrounded by non-alpha characters, i.e.
