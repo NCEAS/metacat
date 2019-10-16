@@ -1,0 +1,937 @@
+<proj:project xmlns:proj="http://ecoinformatics.org/datasetproject-beta1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://ecoinformatics.org/datasetproject-beta1">
+    <name>Lauren's test project - updated</name>
+    <label>lauren-test</label>
+    <description>
+        The State of Alaska's Salmon and People (SASAP) project is a collaboration of researchers, cultural leaders, and others working to bring together integrated, accurate, and up-to-date information that will help to support better salmon decision-making.
+    </description>
+    <definition>
+        <filter>
+            <field>isPartOf</field>
+            <value>urn:uuid:7c959e15-d309-4850-91e8-399c0e862893</value>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Datasets added manually</label>
+        </filter>
+        <filter>
+            <field>text</field>
+            <value>test</value>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Search</label>
+        </filter>
+        <dateFilter>
+            <field>datePublished</field>
+            <field>dateUploaded</field>
+            <value>1919-01-01T00:00:00Z TO 2019-12-31T00:00:00Z</value>
+            <operator>AND</operator>
+            <label>Publish Year</label>
+        </dateFilter>
+        <filter>
+            <field>documents</field>
+            <value>*</value>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Show only results with data</label>
+        </filter>
+    </definition>
+    <logo>
+        <identifier>urn:uuid:7c959e15-d309-4850-91e8-399c0e862882</identifier>
+    </logo>
+    <section>
+        <label>About</label>
+        <image>urn:uuid:a7833e2d-bf52-47c4-bd3d-839e1a6feaf8</image>
+        <title>
+            Explore the connection between Alaska's salmon and people
+        </title>
+        <introduction>
+            The State of Alaska's Salmon and People (SASAP) project is a collaboration of researchers, cultural leaders, and others working to bring together important, accurate, and up-to-date information that will help to support better salmon decision-making.
+        </introduction>
+        <content>
+            <markdown>
+                <![CDATA[
+### The strength of Alaska’s salmon and people system relies on our commitment to healthy, long-term connections. <br> <br> **The mission of the State of Alaska’s Salmon and People project is to create an equitable decision-making platform for all stakeholders through information synthesis, collaboration, and stakeholder engagement.** --- # Nurturing our collective salmon future The relationships between salmon and people have been broken throughout much of the world but remain intact in Alaska, largely due to a long tradition of stewardship. However, the sustainability of the healthy relationship between salmon and people is threatened by issues such as changes in salmon abundance, declines in the size of salmon, inequitable access to salmon fisheries, graying of the fleet, and other social shifts. The State of Alaska’s Salmon and People (SASAP) project aims to make available and accessible the information needed to continue and strengthen Alaska’s legacy of science-based management of Alaska’s salmon. The SASAP project integrates knowledge across disciplines and agencies, between cultures and users, and across regions. By doing so, SASAP seeks to provide a more holistic view of the complex and dynamic system that will serve to influence research priorities, develop and monitor indicators of system health, and facilitate equitable management of the system. The SASAP process is supported by a novel data science and synthesis partnership between the National Center for Ecological Analysis and Synthesis (NCEAS) at the University of California, Santa Barbara and more than 100 Indigenous and non-Indigenous knowledge experts, scientists, and educators throughout Alaska, the United States, and Canada. What has emerged is a deep look into the state of knowledge of the biological, cultural, economic, and governance dimensions of Alaska’s salmon and the people who depend upon them. This unique approach produces a multi-disciplinary, cross-cultural, and thus more complete understanding of Alaska’s salmon and people systems than has yet been done to date. The State of Alaska’s Salmon and People project was generously funded by the Gordon and Betty Moore Foundation. Salmon and people have thrived in Alaska for millennia and today are increasingly under pressure from both local and global factors. To help inform looming future decisions, the State of Alaska’s Salmon and People (SASAP) project brought together Indigenous and non-Indigenous salmon experts from academia, management agencies, and non-governmental organizations. Together, they provide a holistic assessment of the current state of the complex and dynamic salmon-and-people system in Alaska. --- # Process and People ![Working group](urn:uuid:97be2462-43af-4f4e-9eba-74c6e01a555e) ## Better Together The State of Alaska’s Salmon and People (SASAP) project is a collaboration of Indigenous and non-Indigenous researchers, scholars and community leaders working to produce and share integrated, accurate, and up-to-date information on Alaska’s salmon and people systems. To foster the multidisciplinary, cross-cultural dialogue necessary to sustain salmon populations in Alaska, the SASAP project incorporates the ‘Working Group’ approach developed by lead partner [NCEAS](https://nceas.ucsb.edu) (National Center for Ecological Analysis and Synthesis), which works to enhance understanding of natural and human systems by enabling collaborations, partnerships, and “big-picture thinking”. Like all NCEAS projects, SASAP is grounded in open, accessible science. ## Our Process #### Working Across Disciplines, Cultures and Time Central to SASAP’s ‘Working Group’ approach is a deliberate emphasis on weaving together Indigenous knowledge and Western Science perspectives to tell the true story of Alaska’s salmon and people and bridge information gaps. A second component of the SASAP approach is our focus on synthesizing existing information into new knowledge, rather than on conducting new research. By tapping into broad perspectives, and with thorough analyses across multiple data sources, SASAP working groups strive to: 1. identify and describe the current state of knowledge of salmon in Alaska 2. discover key gaps in knowledge, and 3. reveal untapped opportunities in the evidence. <br> #### The Working Group Process <br> **Ultimately, it is collaboration and partnership, rather than individual research, that results in greater problem-solving capacity.** Beginning in 2016, nine SASAP working groups formed–each composed of between 12 and 24 knowledge experts from a range of disciplines, backgrounds, and regions. Each participant brought his or her data and experiences for synthesis and analysis, while NCEAS provided logistical and technical support to facilitate each group’s innovative work. Each of the nine groups focused on specific issues related to salmon and people in Alaska: **Statewide Synthesis Working Groups** Four SASAP groups were tasked with integrating knowledge across multiple disciplines to understand the fundamental state of knowledge of Alaska’s salmon systems. The work of each group is presented for each of the major watersheds in Alaska in the Region section. **Special Topics Working Groups** An additional five working groups were selected to focus on specific research questions that provide insight into the pressures on salmon and salmon communities, as well as options for response to those pressures. Their work is presented in the Topics section. ## A Model for Impact **Data Task Force and the KNB Portal** An essential component of the SASAP working group process is the support each group received from a stellar group of “data wranglers”, a team of geospatial analysis experts from NCEAS known as the Data Task Force. The task force coordinated data requests from Alaska Department of Fish and Game and other agencies and organizations, then worked to reformat, integrate, and run quality control on millions of lines of data in over 125 data sets. The graphs, figures, and infograms generated by the task force greatly enhanced the ability of users to visualize often complex information about Alaska salmon.
+]]>
+            </markdown>
+        </content>
+    </section>
+    <section>
+        <label>Regions</label>
+        <image>urn:uuid:59a91aae-3fa4-47ef-84ec-1fa1e13d1ebf</image>
+        <title>Alaska is a salmon state</title>
+        <introduction>
+            But the many regions cohabitating in the salmon state are diverse. Explore the varying biophysical, sociocultural, economic and governance factors that differ among regions ranging in size from as small as Connecticut (Chignik region) to larger than the state of Texas (Yukon region).
+        </introduction>
+        <content>
+            <markdown>
+                <![CDATA[
+# Regions Overview The story of Alaska’s salmon and people is rooted in place. It is only by understanding the differences among regions that one can see the connections that unite all Alaskans to salmon. The thirteen SASAP regions were determined based on their geogr
+]]>
+                <![CDATA[
+aphy, and in many cases, represent large watersheds where all falling water flows into the same ocean location. Moreover, regions tend to be grouped by Indigenous cultures and languages, evidence of the deep-time ties between Alaska’s salmon and people. Some regions align with current ADF and G statistical areas; some do not. ![Regions](urn:uuid:70577331-0df5-4c01-9985-6698fb2c1901) --- # Arctic #### Emerging salmon fishing futures in the Arctic In the Arctic region of Alaska, connections between salmon and people are in their infancy. Salmon are just one harbinger of change in this region. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A1836118d-a170-4027-9d62-e62870abe61b" width="800" /> [@elevation] **Iñupiaq names for salmon** + Amaqtuuq (pink salmon) + Iqalugruaq (chum salmon) ### Climate ### The Arctic is warming at the fastest rate of any region of Alaska, yet is still the coldest area. A lack of consistent monitoring and an unfamiliarity of local people with many of the species of salmon make it difficult to know whether salmon numbers are increasing. ![Temperature](https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A2ec06dd4-227d-46b3-87aa-a25af0140eaf) We do not know whether the abundance of salmon is increasing in the Arctic, despite increasing use of salmon by local people. The consistent subsistence harvests of chum salmon (primarily) followed by pink salmon support the evidence that these species are established in the region, but this too is unknown. As the climate warms , it is likely that more rivers will become suitable to spawning salmon, however, the current temperatures during the summer growing months for are not yet favorable for rapid growth. In addition to freshwater conditions [@temperature], populations of salmon can only become self-sustaining and rooted in place if they are able to successfully migrate back and forth to the ocean. Currently it is unknown whether the Chukchi Sea region of the Arctic Ocean is conducive to juvenile salmon survival. ### Subsistence #### Emerging subsistence salmon fisheries in the high Arctic are just one of a suite of environmental and social changes occurring in this region. Arctic Slope communities are heavily engaged in subsistence livelihoods [@subsistence_csis]. Fishing has always been a stable component of the seasonal round of subsistence production, but salmon has not been a key resource in this region. Pink salmon and chum salmon have been documented in this region at least since the 1800s, but only recently have salmon harvests been increasing in communities such as Utqiaġvik and Wainwright. Some view salmon as a pest species, while others are participating in emerging salmon fisheries and learning new knowledge about processing these fish. ### Salmon and Economy ### The role of salmon in the subsistence economy of North Slope Borough communities is growing, consistent with an expanding range of salmon in the Arctic. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn:uuid:893dd09c-d16e-42a6-80b3-01a13cdde43a" width="800" /> Compared to most other areas of Alaska, salmon are a relatively minor portion of subsistence harvests in Arctic District (North Slope Borough) communities. Comprehensive surveys show that about 3% of the area’s subsistence harvest is salmon. Marine mammals (50% of total by weight) and land mammals (33%) make up most of the harvest [@subsistence_csis]. Residents of Arctic District communities are reporting observations of increasing runs of salmon along with increasing subsistence harvests and uses. There are issues with identification of species of salmon in subsistence harvests in the Arctic District. For example, local residents often refer to ocean bright salmon as “silvers,” leading to misidentifying chums as coho in some harvest overviews (see similar issues in Yukon region). --- # Kotzebue #### Salmon as part of Kotzebue’s rich portfolio of resources Straddling the Arctic Circle, the Kotzebue region is twice the size of West Virginia and categorized as among the driest areas of Alaska. Chum salmon is the primary species in this region and is harvested by local users in both subsistence and commercial fisheries. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A2b83ac9b-1669-4c2e-a0b5-b4a292862e30" width="800" /> [@elevation] **Iñupiaq names for salmon** + Sikayujak (king salmon) + Aqalugruaq (chum salmon) + Amaqtuq (pink salmon) ### Climate #### Large quantity and quality of salmon habitat are likely to make this region a potential major producer as the climate warms. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ab0c171dc-ba8d-4c43-bcde-75f244adcd77" width="800" /> [@land_cover] The total abundance of salmon in the Kotzebue region ranks only behind the Arctic as having the fewest salmon of any region, at least currently. Despite this low abundance, the importance to people and thus the maintenance of high quality salmon habitat is vital. Chum salmon is the dominant species in this region, but it is unknown whether this and or other species will become more common in a warmer future. Currently, Kotzebue has the lowest evidence of a human footprint compared to other regions. ### Subsistence #### Residents participate in mixed cash-subsistence economies typical of rural communities in Alaska. The foundations of subsistence persist, including sharing, social networks, and customary trade. The Iñupiat of the Northwest Arctic have existed in the region for at least 4,000 years. The 20th century was marked by social, economic, technological, and climatic changes restructuring many aspects of everyday life, however subsistence culture has changed very little. The use of rifles and snowmachines changed the means by which animals were taken from the land and water, but underlying beliefs and institutions guiding how wild resources are processed, stored, and shared have remained relatively stable through time. Communities in the region are at the northern extent of the geographic distribution of most salmon species, and so salmon subsistence practices vary based on how abundant salmon have traditionally been in the local area. ### Monitoring #### Although a significant component of local subsistence harvests, there is no annual harvest monitoring program for salmon in the Kotzebue District. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A32c7f0f4-3f10-4187-a8a9-b30528abe110" width="800" /> Based upon comprehensive household harvest surveys, salmon make up about 13% of subsistence harvests by residents of the communities of the Kotzebue District; land mammals (36%), fish other than salmon (35%), and marine mammals (12%) make up the bulk of the subsistence harvests in this area [@subsistence_csis]. From 1994 through 2016, the subsistence harvest of salmon in the Kotzebue District averaged 69,188 fish. Chum salmon comprised 93% of this harvest, followed by coho (3%), pink (2%), sockeye (1%), and Chinook (<1%) [@subsistence_salmon]. ### Governance #### Salmon stocks, particularly pinks, are relatively abundant and very few limitations on subsistence are needed. Access to processors has restrained commercial fishing, primarily for chums. While state management predominates, the Kotzebue area encompasses parts of seven federal conservation units. Significant levels of subsistence fishing occur on the Noatak and Kobuk rivers, within federal conservation units like the Noatak National Preserve and the Kobuk Valley National Park, for example. Both systems provide for subsistence fishing with a variety of gear, generally, with no seasons, bag, or possession limits. In a minor difference, state regulations include bag and possession limits for the sport fishery and these apply to subsistence users fishing with rod and reel. Federal regulations do not apply these limits to those fishing with rod and reel. The commercial fishery for chum salmon saw a record harvest in 2018, but access to processors resulted in limitations during the season. ### Economics #### Salmon fisheries of Kotzebue Sound have generated more than $65 million in revenue to harvesters since 1975 (2017 inflation-adjusted dollars). <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ace88378d-ed47-479f-a047-39698302bf26" width="800" /> [@earnings] Historically, the largest revenue share went to local urban residents residing in Kotzebue, followed by much smaller shares going to local rural residents and residents from elsewhere in Alaska. The commercial salmon fishery in this region provides important cash income for local rural subsistence cash-economies, similar to other western Alaska regions. The cash earned in commercial fishing supports cultural activities including subsistence fishing and hunting. Year-by-year fishing revenues have varied the most in this region since 1975 compared to any other region in Alaska. --- # Norton Sound #### Salmon-connected people in Norton Sound An average of two million pink salmon and 250,000 chum salmon return to the sub-Arctic region of Norton Sound, an area approximately twice the size of Massachusetts. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A8f040b31-7153-42f0-9f45-b3c4ea81a0fa" width="800" /> [@elevtion] **Iñupiaq names for salmon** + Amaqtuuq (pink salmon) + Iqalugruaq (chum or king salmon) + There are no specific words for sockeye or coho salmon ### Habitat #### Increases in chum salmon and pink salmon abundance in recent years may in part offset the loss of Chinook salmon for salmon-dependent people. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ac47a367b-4731-4a39-958f-7cd1b225992a" width="800" /> Although among the smaller regions, nearly 5,000 km of Norton Sound streams and rivers are known to contain at least one species of salmon [@awc]. However, only a few locations are known to produce sockeye salmon, given the lack of large lakes this species needs for rearing juveniles. Conditions favoring increases in chum salmon have been observed in recent years [@total_abundance]. The region has a long western history of mining (70 mines are still apparent on the landscape) [@mines] which contributes to the third highest human footprint across the state [@land_cover]. Habitat connectivity is potentially a problem with 90% of the known 104 culverts potentially impacting fish passage. ### Subsistence #### All communities in the Norton Sound region harvest salmon for subsistence purposes; several areas support commercial fishing activity. Indigenous salmon people in this region are represented by three distinct groups. Archaeological evidence suggests that ancestors of these groups, believed to have arrived by overland migration from the Chukotka region of Russia, first settled 10,000 years ago. Trade has long been and continues to be a hallmark of life in the Norton Sound region. Today, communities on the coast of Norton Sound vary considerably in their dependence on salmon. Unalakleet and Shaktoolik subdistricts take the largest catches of commercially caught salmon in the region. Regionwide, a majority of subsistence salmon are pink, chum, and coho although there are sizeable sockeye salmon runs in the Port Clarence and Unalakleet areas [@subsistence_salmon]. ### Governance #### A portion of Norton Sound was the site of Alaska’s only Tier II subsistence fishery, in which participation is limited to those who score highest on a permit application. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A0567e344-72a9-4709-bc0d-5bf5089c5599" width="800" /> Recent comprehensive household surveys show that salmon make up about 17% of the total subsistence harvests of wild foods [@subsistence_salmon]. Because of fishery managers’ concerns about chum salmon escapements in rivers around the regional center of Nome from 1999 through 2005, chum salmon fishing in Subdistrict 1 was managed as a Tier II fishery, the only such fishery in Alaska. Individual applicants are scored based on their historical uses of the particular fish stock and their ability to obtain alternative foods. When chum returns improved beginning in 2006, this fishery was managed as Tier I, in which any Alaska resident may obtain a permit but other uses (commercial, sport) are prohibited. ### Economics #### Salmon fisheries of Norton Sound have historically generated more than $45 million in revenue since 1975 (2017 inflation-adjusted dollars). <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A3ae98678-416a-4330-85d0-7a35b0350f96" width="800" /> Historically, the largest revenue share went to local rural residents of the region, followed by local urban residents (residing in Nome) and nonlocal urban residents [@earnings]. This pattern of revenue shares is similar to the patterns observed in the Kuskokwim and Yukon regions, indicating that commercial salmon fisheries in these regions provide important cash income for local rural subsistence cash-economies. The cash earned in commercial fishing supports cultural activities including subsistence fishing and hunting. --- # Yukon #### Alaska’s Largest Watershed – Dynamic change and connections over time Larger than the state of Texas and home to the third longest river in the United States, the Yukon region is a governance mosaic of state and federal fisheries management. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A5c1222ee-8696-414d-a7d0-4becfa1ef96d" width="800" /> [@elevation] **Denaakk’e (Koyukon Athabaskan) names for salmon** + Ggaal (king salmon) + Noolaaghe: (chum salmon) + Saanlaaghe: (coho salmon, a.k.a. silver-colored fall chum salmon) + Lookk’e (fish) **Benhti Kenaga (Lower Tanana) names for salmon** + Khwyhts’en’ (fall fish, coho salmon) + Gath (king salmon) **Gwich’in names for salmon** + Nahdlii (winter chum salmon) + Shii (coho salmon, a.k.a. silver-colored, fall chum salmon) + Luk Choo (king salmon) ### Salmon Size #### Compounding the issues of declines in Chinook salmon abundance is a clear pattern of shrinking sizes of returning adult salmon. In the Yukon region, the size of adult Chinook salmon returning to the river has gone down by approximately 10% in the past three decades, and in some locations by nearly 20%. This change in size is mostly due to the fact that individuals are returning from sea at a younger age. Older fish tend to be larger, given they spend more time in the ocean feeding. While the factors causing the change in size and age are not fully understood, the consequences of the changes in size are clear for local subsistence harvesters who end up with fewer meals and calories in the freezer. Whether the shrinking of fish may impede the recovery of salmon abundance is less clear. ### Culture #### Though histories, practices, and management differ along the length of the Yukon, salmon continues to be a central part of life for the people of the region. Salmon remains central to the social and economic systems of the region and fish camps are at the heart of people-salmon relationships. Families work together at fish camp, passing on valuable cultural and social teachings. However, many residents of the Yukon Region find it increasingly difficult to travel to fish camp for a multitude of reasons. Alaska Native Elders have expressed concern about what it means for younger generations to not join their families at fish camp, a place and time where important teachings about fishing, cultural heritage, and personal responsibility are passed on. ### Harvest #### Historically the largest subsistence salmon fishery in Alaska, Chinook runs are declining and have created management challenges and lower harvests. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A02efb76f-ee89-4fd7-aff3-9253a2aba19d" width="800" /> Yukon River drainage subsistence salmon harvests have been historically the largest in Alaska [@subsistence_salmon]. Since the mid-1990s, the abundance of Yukon River salmon stocks has fluctuated and subsistence harvests have declined. Consequences of reduced subsistence harvests linked to weak salmon runs and restricted fisheries include increased fishing costs, decreased earnings from commercial salmon fisheries, fewer fish wheels, increased drifting, decreased fish camp use, increased difficulties obtaining subsistence foods, maintaining dog teams without salmon as a food source which results in decreased use of sled dogs, and increased constraints on subsistence fishing from the need to engage in wage employment. ### Management #### As the largest drainage in Alaska, the Yukon River encompasses a mix of jurisdictions. Recent challenges include equitably sharing the burden of conservation throughout the drainage. State management is predominant in the Yukon River drainage, though federal subsistence management applies in 12 conservation units and four rivers designated as ‘Wild and Scenic’ under the 1968 congressional act. To minimize confusion, state and federal managers coordinate under a memorandum of agreement in consultation with stakeholder groups, including the Yukon River Drainage Fisheries Association (YRDFA). The Pacific Salmon Treaty provides for joint development with Canada of escapement goals and border fish passage objectives. Through YRDFA and the more recently established Yukon River Inter Tribal Fisheries Commission, local residents have worked to restore salmon stocks. Between 2000-2018, the Yukon River salmon fisheries were declared a disaster on four occasions. ### Economy #### The Yukon is the most profitable fishery in the Western region of Alaska north of Bristol Bay. Since 1975, commercial salmon fisheries on the Yukon River have generated over $380 million for harvesters [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A4b980839-b2b3-4de0-bbe6-370f67682bc0" width="800" /> Historically, the volume of salmon caught by the commercial fleet in most years has been smaller than the volume caught by subsistence fishing, underlining the importance of subsistence fishing in the region. Also, commercial fishing in this region plays an important role in generating cash to support traditional subsistence activity, which is also shown by the large proportion of revenue retained within the region through local rural permit ownership. --- # Kuskokwim #### Decline, rise of alternative management, and rebuilding in the Kuskokwim region. The Kuskokwim region is the 4th largest of Alaska, comparable in size (154,168 km²) to the State of Georgia, draining one of the great rivers of the world; the Kuskokwim River. The salmon-producing habitat of the Kuskokwim is diverse and productive. Compared to the neighboring Bristol Bay region, the Kuskokwim is drier and is categorized by more burned area by forest fires than other regions (the Yukon excepted). <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aa70b4d0e-7c7b-414d-9bb7-67cd2aae1b8d" width="800" /> [@elevation] **Yup’ik names for salmon** + Neqaraq (salmon) + Aluyak, iqalluk, kangitneq, mac’utaq, teggmaarrluk (chum salmon) + Amaqaayak, amaqsuq, cuqpeq, terteq (pink salmon) + Kiagtaq, taryaqvak (king salmon) + Caayuryaq, qakiiyaq, qavlunaq, uqurliq (coho salmon) + Cayak, sayak (sockeye salmon) + Masseq, nalayaq, talayaq (spawning salmon) + Aciirturtet (king salmon running under smelt) + Cilluvak (salmon eggs) + Culunallraq, taryitaq (salmon strips) ### Restoring Chinook ### New Management Frameworks are Restoring Abundance of Chinook Combined efforts to reduce harvest of depressed returns of Chinook salmon came at a great societal cost in the region, yet the efforts are apparently working as the abundance of salmon is rebuilding. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A0fe271c0-042b-4c7f-93ee-b6fdb0c99ff2" width="800" /> The decline of total abundance of Chinook salmon [@total_abundance] – the most culturally important species of the region – was the catalyst that accelerated the rise of new management frameworks and partnerships. Through reduced harvest by local users, the Chinook salmon resource has begun to rebuild. Greatly reduced harvest has helped increase the number of potential spawning individuals (i.e., escapement). The rapid rise of other species such as sockeye salmon have, at least in part, mitigated the loss of Chinook salmon but is not a perfect replacement. ### Salmon and Culture #### The Role of the Kuskokwim River in Culture, Tradition, and Economy The Kuskokwim River connects cultural values and traditions between the people, land, and animals of the region. Ancient residents of the Central Yup’ik region followed the seasonal round of subsistence by returning to permanent winter settlements and dispersing seasonally to spring and summer/fall camps for harvest of marine mammals, fish, and caribou. The increase in use of nets to catch salmon is suggested as the reason why the Norton Tradition people grew significantly in number roughly 2,400 years ago. Subsistence practices continue to be critically important and have incorporated modern harvest technologies. A string of poor Chinook salmon returns in the 1990s caused fishery closures and restrictions on harvest for both commercial and subsistence fishermen. ### Management #### Management Implications of Declining Chinook Runs Historically the second-largest subsistence salmon fishery in Alaska, declining Chinook runs have resulted in regulatory change and lowered harvests. <img src="https://cn.dataone.org/cn/v2/resolve/urn:uuid:e0da9d06-f6b4-4b4d-af10-ec9a6d0bdca5" width="800" /> [@subsistence_salmon] Subsistence salmon harvests in the Kuskokwim Area have historically ranked second to those of the Yukon River. Comprehensive household surveys show that salmon provide 45% of the total subsistence harvest, as estimated in usable pounds in Kuskokwim Area communities [@subsistence_csis]. Until 2001, there were few regulatory restrictions on subsistence salmon fishing in the Kuskokwim Area, with no permit or harvest reporting requirements. Following declines in Chinook and chum beginning in 1997, state and federal managers adopted a management plan that allowed implementing a subsistence fishing schedule in June and July to achieve escapement goals. ### Governance #### Declining Chinook Runs Lead to the Emergence of New Governance Systems Governance dynamics in this region arise from deep-rooted Yup’ik beliefs and traditions, Chinook conservation challenges, and emergence of a tribal collaborative management commission. Governance has evolved rapidly, with a growing presence of state and federal managers post-1980s. Yup’ik residents asserted the validity of their traditions for resource use and called for co-management programs. The Kuskokwim River Salmon Management Working Group, state Advisory Committees, and federal subsistence Regional Advisory Councils reflect this dynamic. When Chinook stocks collapsed, harvest restrictions were implemented. In 2012, a number of residents fished during a closure, resulting in law enforcement. In legal challenges, the court found that Yup’ik subsistence fishing is a religious-based activity, but that the state’s conservation responsibilities were paramount; citations and fines were upheld. Seeking more consequential governance roles, tribes worked with federal managers to create the Kuskokwim River Inter-Tribal Fisheries Commission. ### Economy #### Economic Benefits of the Kuskokwim Region Commercial Fishery Commercial salmon fisheries in the Kuskokwim have historically generated over $230 million in revenue to harvesters since 1975 (2017 inflation-adjusted dollars) [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ad8e3afea-3942-41a4-9e67-220cea249988" width="800" /> The Kuskokwim commercial salmon fishery primarily relies on chum salmon returns and is comparatively small in value and volume compared to other commercial salmon fisheries in the state. However, the fishery is important for generating cash income supporting local cultural traditional activities, particularly subsistence fishing. Most of the revenue generated by commercial fisheries stays in the region as it is largely retained by local rural permit holders. --- # Alaska Peninsula and Aleutian Islands #### Salmon livelihoods at the Western front Although relatively small in landmass (4th smallest region) the total expanse of the Alaska Peninsula and Aleutian Island (AP/AI) region is enormous, spanning over 1600 km (1000 miles) and 10 degrees of longitude. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Abcd5bbcf-ca66-48ad-9556-bf84e8a3d1ec" width="800" /> [@elevation] **Aleut (Unangam tunuu) names for salmon** + Qakiidax̂ (coho salmon) + x̂aykix̂; x̂aykux̂ (chum salmon) + hudax̂; yuukalax̂; udax̂ (dried salmon) + chisulix̂ (dried salmon eggs) + qachimaazax̂; qachimaasax̂ (half dried/half boiled salmon) + sumgax̂; chaguchax̂; chavichax̂ (king salmon) + Qungaayux̂ (male pink salmon) + Qam dimiĝii; Balikax̂ (smoked salmon) ### Habitat #### All five Pacific salmon species are represented in the region’s more than 4,000 km (1200 miles) of streams and rivers. Pink salmon, sockeye salmon, and chum salmon are most common. Compared to neighboring regions, this area is categorized by a relatively cool and less wet climate. Given the small landmass, the human footprint is quite large in this region (ranked 5th out of 13). A total of 110 culverts are known, of which 49% have or likely have fish passage problems [@culverts]. Over 4,000 km (1200 miles) of streams and rivers are known to contain salmon, with nearly equal representation among all five species, yet pink salmon, chum salmon, and sockeye salmon dominate the catch and escapement [@total_abundance]. The migration patterns of of sockeye salmon bound for the Bristol Bay provide harvest opportunities for people of this region, yet is the subject of a perennial governance challenge. ### Commercial and Subsistence Fisheries #### Commercial and subsistence salmon fishing activities are deeply intertwined for Aleut/Unangan communities along the eastern Aleutians and Alaska Peninsula. The importance of salmon fisheries are integral to the sociocultural and economic backbone of the region. In regards to salmon in the western Aleutians, harvests have historically been low compared to other regions of the state and eastern area. For Alaska Peninsula and eastern Aleutian communities, there is very little separation between commercial and subsistence fishing activities, and often subsistence fish are retained to fill freezers from commercial harvests (i.e., “homepack”), particularly so for salmon. Understanding commercial fishing participation in fishing communities is complex, and motivations are tied to far more than economic activity and benefits. ### Governance #### Integration of commercial and subsistence fishing is notable in these management areas, and reflected in how subsistence allocations have been defined by the BOF. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ad252f0c0-8fa2-4dad-b190-7ab8c07759e2" width="800" /> The most recent comprehensive household surveys show that salmon provide 58% of the total wild resource harvests for home use in the Alaska Peninsula – Aleutian Islands Management Area. Integration of commercial and subsistence fishing is quite pronounced in communities of the Alaska Peninsula. Commercial gear is regularly used in support of subsistence fishing and hunting. In recognition that a substantial portion of the salmon for home use for communities in these management areas comes from sources other than the subsistence fishery, the BOFs’ ANS findings are based upon subsistence permit returns and estimated harvests from commercial removal and with rod and reel recorded on comprehensive household surveys. [@subsistence_salmon] #### Controversy over Alaska Peninsula/Aleutians Islands (AP/AI) purse seine and drift gillnet fisheries was a major governance issue in the 1990s when salmon returning to the Kuskokwim River, Yukon River, and Norton Sound streams were at extremely low levels. Contention ensued when the Bering Sea regional populations sought to strictly regulate harvests in the AP/AI fisheries and the AP/AI fishermen responded that they were historic fisheries, having been conducted since the early 20th century. After much conflict, openings were limited and caps placed on the AP/AI harvests of salmon heading for Bering Sea streams during the times they passed through AP/AI waters. ### Economy #### Since 1975, salmon fisheries in the AP/AI have generated over $2.2 billion in revenue to harvesters, making it the state’s fourth largest in value and the fifth in volume [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ad43b8a22-0815-4449-b3a9-66d17a2a9367" width="800" /> Combined real (inflation-adjusted) revenue for all commercial salmon fishing permits fished in the Alaska Peninsula and Aleutian Islands region. Revenue declined between record years in the late 1980s and a historical low in the early 2000s. Since then, revenues have recovered but have not reached the high historical levels observed in the pre-2000 period. Compared with revenues in other salmon regions of Alaska, the Alaska Peninsula Aleutian Islands fisheries have always been among the top three fisheries in terms of the revenues generated for harvesters. --- # Chignik #### The importance of habitat diversity for salmon and people in the Chignik region Despite being the smallest salmon-people region of Alaska (6,587 km²), Chignik is remarkably rich in habitat diversity, which translates into biological diversity of its salmon. The Chignik region is home to multiple dispersed communities such as Chignik Lake, Chignik Lagoon, Chignik Bay, Perryville, and Ivanof Bay. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aee96fc27-7eb7-4808-9d03-2297040d7c49" width="800" /> [@elevation] **Alutiiq/Sugpiaq (from Kodiak Island and shares affinities to Chignik, local variations are likely) names for salmon** + Alimaq (chum salmon) + Amartuq; Amaqaayak (pink salmon) + Aamasuuk; Iiliksak (king salmon) + Qakiiyaq (coho salmon) + Niklliq (sockeye salmon) ### Habitat #### For its small size, the Chignik Region is a wild fish factory, supported by diverse habitat. Abundant sockeye salmon, coho salmon, and Chinook salmon flourish in the Chignik lakes watershed and pink salmon and chum salmon thrive in countless small coastal streams. Most of the sockeye salmon are produced in – and return to – the Chignik lakes watershed, which is comprised of two lakes: Black Lake and Chignik Lake. Most of the nearly two million adult pink salmon are born in countless small coastal streams in the region. Salmon habitats in Chignik are not only diverse, but also remain connected, which gives options for rearing for multiple life stages and species of salmon. For example, we now know that a substantial fraction of salmon born in the upper watershed move downstream and spend part of their life in the tidal Chignik Lagoon. The connections between habitats provides salmon with additional space for growth and the diversity of options provides a buffer for fish in the face of climate and other natural changes occurring in the system. ### Culture #### The Chignik region has experienced multiple changes in recent years including population decline and commercial fleet restructuring. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A41c3682b-066b-4954-8696-608da56afd59" width="800" /> The population of the region has seen a 31% decline from 518 in 1990 to 362 in 2010 [@census]. The Chignik commercial salmon fishery underwent a fundamental fleet restructuring with a cooperative system in place from 2002-2005. Subsistence harvests of salmon in the Chignik area are affected by multidimensional factors, including stock abundance and run timing, weather cycles, fuel and gear costs, employment opportunities, commercial salmon prices, and access to traditional knowledge. Fishing experiences at lodges in the region for visiting tourists are also popular. ### Governance #### Salmon are a key resource for Chignik Area communities, but traditional use of fish camps has declined due to economic and regulatory changes. <img src="https://cn.dataone.org/cn/v2/resolve/urn:uuid:fe047b9a-c023-43b3-9286-9fcd341468c2" width="800" /> From 1977-2016, the average annual subsistence harvest in the Chignik Area was 11,121 salmon [@subsistence_salmon]. Based upon comprehensive household harvest surveys, salmon provide about 46% of the total harvests of wild resources for home use by residents of this area. Most residents of Perryville and many residents of Chignik Lake traditionally moved in spring to fish camps on the north side of Chignik Lagoon. By the early 2000s, most of these camps were no longer occupied, primarily because of the closure of the Columbia Ward cannery, the imposition of use fees by land owners, and changes to management of the commercial fishery. #### Governance actions under state jurisdiction have recently addressed amounts of salmon necessary for subsistence (ANS levels), timing of commercial openings, and experimental mechanisms for distributing salmon harvests. The Chignik area commercial salmon fishery undertook a unique experiment between 2002 and 2005 as a co-op was created to allow a few designated fishermen to harvest salmon and distribute the revenue equally among the salmon permit holders participating in the co-op. When the arrangement was legally challenged, the court determined that the Board of Fisheries lacked the authority to authorize the arrangement. Purse seine fishermen, the sole permitted fishery in the area, have been actively involved with the Board of Fisheries and the biological managers. Between 2000-2018, the Chignik area salmon fisheries were declared a disaster on two occasions. ### Economic #### Historically, salmon fisheries in the Chignik region have been the seventh largest in the state, generating almost $1 billion in revenue since 1975 [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A78912420-b9a9-4698-9a7c-959676f81ce1" width="800" /> Even though the Chignik commercial salmon fishery is not among the largest in the state, it is one of the most stable with the third lowest variability in year-by-year fishing revenues. All five species of Pacific salmon are harvested in the commercial fishery with sockeye being the primary targeted and most important species in this region. --- # Kodiak #### An archipelago of tradition and change The abundance of salmon returning to the largest island in Alaska remain high, though sociocultural challenges loom as large as the 925 glaciers that cling to the island’s coastal and interior mountains. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ade9d1d75-cadb-4ae0-85cc-25e6af5feefe" width="800" /> [@elevation] Alutiiq/Sugpiaq names for salmon + Alimaq (chum salmon) + Amartuq; Amaqaayak (pink salmon) + Amartut angitut (The pink salmon are coming back.) + Aamasuuk; Iiliksak (king salmon) + Qakiiyaq (coho salmon) + Niklliq (sockeye salmon) + Kupcuunaq; Palik; Paal’kaaq (smoked salmon) + Sikiaq (partially/lightly smoked salmon) ### Habitat #### Though relatively small as a region, Kodiak is the 4th largest salmon producing area of Alaska. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn:uuid:054342bf-6322-4551-be3c-3a57c169273d" width="800" /> Kodiak is the 4th largest salmon producing region of Alaska [@total_abundance] with habitat most well suited to pink salmon (short coastal streams) and sockeye salmon (suitable rearing lakes). The region has a temperate, and some may say temperamental, climate characterized by wet, cool, and windy summers and winters. High human density on the east side of the island near the hub of Kodiak results in the 4th highest index of human footprints among regions. Approximately half of the known culverts on the island are known to or have the potential to negatively affect fish passage. Though among the smaller regions of Alaska, Kodiak has approximately 2700 km (1677 miles) of streams and rivers known to contain at least one species of Pacific salmon. The region has a long history of lake fertilization and hatchery enhancement aimed to bolster adult salmon returns. ### Culture #### The Alutiiq people have lived in this region for at least 7,500 years and cultural connections to maritime livelihoods remain vital today. The Kodiak Archipelago hosts diverse salmon fishing activities including subsistence, recreational, and commercial opportunities. A critical issue for Kodiak’s salmon-people relationships is the dispossession of local commercial salmon fishing rights from fishing communities. In the region’s rural fishing villages, there has been an 84% decline of people under 40 years old holding salmon purse seine limited entry permits. These changes reflect the growing concern about opportunities for young and rural fishermen, which are increasingly constrained by interrelated social, economic, and regulatory barriers. ### Harvest #### Salmon are a large portion of the food supply of Kodiak Area communities, but annual monitoring programs underestimate this harvest. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A20b62b7a-5f27-4c8a-a54b-e87a2ef1ec44" width="800" /> From 1986-2016, annual reported subsistence harvests in the Kodiak Area averaged 30,549 salmon [@subsistence_salmon]. This is one of the few Alaska subsistence fisheries for which harvest estimates are not produced; only harvests reported on returned permits appear in annual summaries. The harvest from 1994 through 2016 was composed of 79% sockeye, 15% coho, 4% pink, less than 1% chum, and less than 1% Chinook. Comprehensive household harvest surveys document the importance of rod and reel and commercial “home pack” harvests, in addition to subsistence harvests, for Kodiak communities’ supply of salmon. ### Governance #### Recent significant governance topics in the Kodiak region include sportfishing regulations, commercial fishing area opening timing, and salmon habitat protection. Governance topics addressed at the Board of Fish include commercial fishing and sportfishing questions. The Kodiak National Wildlife Refuge dominates land holding in this region, while state fisheries management play the largest role. State representative Louise Stutes submitted HB 199 in 2014 to improve protections for salmon and salmon habitat by strengthening the permitting system for salmon stream changes and expediting determinations about the status of streams as salmonid habitat. The bill was not addressed by the legislature and was then advanced by public interest groups to become Initiative 1, Stand for Salmon, in the 2018 election. The initiative was defeated on Nov. 6, 2018. ### Economics #### Salmon fisheries in the Kodiak region are the state’s fifth largest in value, having generated $1.7 billion in revenue since 1975, and are the state’s fourth largest in volume [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A4d5049c2-1ae2-4de6-88c4-4aca3e6fb59e" width="800" /> Historical fishing revenue variability in the Kodiak salmon fisheries has been low and is associated with the diversity of species available to the commercial fishery. Sockeye are the primary target species in the early season, followed by pink, chum, and coho. As with other more valuable commercial salmon fisheries, the proportion of nonresident permit holders has increased in this region. Participation from permit holders residing in the City of Kodiak has sharply decreased since 2000. About half of the revenue generated currently goes to permit holders residing outside Alaska, a share that historically was much smaller. --- # Bristol Bay #### A global salmon stronghold on the front line Bristol Bay is sockeye salmon country. The region is a land of great inland lakes, ideally suited to the juvenile life of sockeye salmon. The habitats here are virtually pristine and intact with a notable absence of mining and offshore oil and gas exploration in the region. The long proposed Pebble Mine, situated at the intersection between the Nushagak River and Kvichak River watersheds, would unquestionably and permanently change this salmon landscape. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A33d41687-b5fc-4de9-9de9-de1c9c57c9ec" width="800" /> [@elevation] **Yup’ik names for salmon** + Taryaqvak, Kiagtuk, Aciirturtet (king salmon) + Iqalluk; Kangitneq, Aluyak (summer chum salmon) + Cayak, Sayak: (sockeye salmon) + Caqun: (sealskin bag used as a container for poking dried salmon fish in seal oil) + Cin’aq: (salmon fish, usually chum or king, aged through the process of burying) ### Habitat #### More sockeye salmon return to Bristol Bay in a typical year than all species combined in the Columbia River prior to European contact. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A033f77e7-97af-44a5-9fa3-92b3e2cb3e1a" width="800" /> [@total_abundance] Since 2001, the Bristol Bay region has averaged an annual return of over 30 million adult sockeye salmon, making it the largest sockeye salmon fishery on Earth. For perspective, this is approximately 3 times the number of salmon of all species combined that returned to the mighty Columbia River in its hay-day, prior to arrival of Euro-Americans. Across regions, Bristol Bay has among the smallest human footprint on the landscape, reflecting the region’s small population (6947 local residents in 2015). There are virtually no roads and only 25 documented culverts. Logging, mining, and invasive species remain absent at this moment in time. Bristol Bay is a stand out exception with respect to sockeye salmon abundance. ### Cultural Impact #### Although the abundance of salmon remains high, local participation in commercial fisheries has declined in recent decades, threatening the social sustainability of long-time fishing communities. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A96aeaa13-edb0-4a7c-a66a-fe49e32a3447" width="800" /> [@community_permits] The cultural value of salmon among those who call Bristol Bay home is immeasurable, especially among the Aleut, Dena’ina Athabascan, and Yup’ik peoples who practice mixed commercial and traditional salmon livelihoods. Subsistence fishing remains a major part of life for both Alaska Native and non-Native residents, and is often supported by commercial fishery participation and cooperative efforts among social and kin networks. For many, the controversial development of Pebble Mine, a large-scale copper, gold, and molybdenum mineral deposit in the region’s headwaters, threatens this iconic salmon stronghold. Subsistence, sport, and commercial fishing interests and others have been united in their opposition to Pebble Mine for more than a decade. ### Harvest #### Subsistence salmon fishing is central to the way of life of Bristol Bay communities, with relatively stable harvests and participation over the last two decades [@subsistence_salmon]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A1eb0f52f-99a1-4e42-b7ad-50d26667730e" width="800" /> Comprehensive household harvest surveys show that salmon comprise 58% of the total harvests of wild resources for home use by residents of Bristol Bay communities. Participation in the Bristol Bay subsistence salmon fishery has been stable. Since 1990, 1,143 subsistence permits have been issued annually, 83% to local residents; the recent 10-year average (2007-2016) is 1,123 permits. Since 1994, the largest portion of the Bristol Bay subsistence harvest has been sockeye (78%), followed by Chinook (12%), coho (6%), chum (4%), and pink (1%). ### Governance #### Bristol Bay salmon governance has faced declining local ownership of limited entry permits and the highly controversial proposed development of the Pebble Project. Commercial salmon fisheries arrived early in Bristol Bay, starting in the 1890s. With declining runs in the 1970s, Bristol Bay figured prominently in the implementation of the Limited Entry permit system, with the second largest number of permits issued, after Southeast Alaska. Market conditions and demographic changes have resulted in migration of many permits from local to nonlocal and nonresident fishermen. Local residents have often combined participation in commercial fisheries with stable patterns of subsistence production since 2000. Salmon runs have recently been at historic levels, but between 2000-2018, Bristol Bay salmon fisheries were declared a disaster on two occasions. ### Economics #### Even though Bristol Bay harvest is second in volume to Southeast, its historical revenue is twice the size of revenue generated by Southeast salmon fisheries [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ace35602e-bb37-4aa2-ab26-028fa30513b0" width="800" /> About one third of Bristol Bay fishermen and two-thirds of Bristol Bay processing workers live in Washington, Oregon, and California. In order to illustrate the ripple effect of the Bristol Bay sockeye salmon fishery, in 2010, the harvest value associated with 29 million sockeye salmon being caught was $165 million. Salmon processing added another $225 million to this value for a total wholesale value of $390 million. The total value of Bristol Bay seafood exports in that year was $250 million, which amounted to about 6% of the total U.S. seafood export. --- # Copper River #### A diverse region of salmon and salmon-dependent people Fewer than 2500 people live permanently in the Copper River region, an area comparable in size to the state of West Virginia. Sockeye salmon are dominant here, given the multiple large lakes available for rearing juvenile salmon. Though less abundant than sockeye, king salmon are deeply important to all salmon-connected people. Kings have declined in number since 2007. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A4aa35a88-af70-479b-aaec-be0fef9e0548" width="800" /> [@elevation] **Ahtna names for salmon** + Luk’ae (salmon) + Nulaeggi (sockeye salmon) + Sesluugge’ (small sockeye salmon) + Natael luugge’ (Upper Copper River sockeye salmon) + Luk’ece’e (king salmon) + Kentsina’i (king salmon that spawns up Tonsina River) + Dak’aay; Dak’aagi (pink salmon) + Dadzaasi; Tultaeni (spawned out salmon) + Nulaeggi (sockeye salmon) ### Habitat #### The Copper River has the most diversity of salmon-producing habitats in Alaska [@awc]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A5601ea17-e444-4790-81bd-cda5a562bd33" width="800" /> The Copper River is the most diverse region in terms of salmon habitat. This diversity of habitat is associated with high densities of known salmon populations. For example, the density of Chinook salmon in the Copper River rivals the larger Kuskokwim River and sockeye salmon are even more densely distributed in the Copper River than in Bristol Bay. Returning salmon are smaller than in the past, primarily because individuals are returning to spawn at a younger age. Shifts towards younger fish translates into less dollars per fish for commercial harvesters, fewer calories per fish for salmon-dependent people, and perhaps less satisfaction by anglers dreaming to catch a large fish. ### Governance #### The salmon fisheries of the basin are a microcosm for the management struggles that have played out across the rest of Alaska. Copper River Ahtna Elders have witnessed dramatic change through time in their lives as salmon-dependent people. In 1984, after the passing of the Alaska Native Claims Settlement Act (ANCSA) (1971) and Title VIII of the Alaska National Interest Lands Conservation Act (ANILCA) (1980), Ahtna elders began what is now called the Katie John litigation in pursuit of the right to fish for salmon in their traditional site at Batzulnetas. In 1995, their rights were upheld in federal courts. This legal case exemplifies the continuing struggle between Tribal, state, and federal jurisdiction and power over Alaska Native subsistence fishing rights. #### Connected by road to Alaska’s population centers, subsistence and personal use salmon fisheries have grown rapidly [@subsistence_salmon], raising concerns among local residents. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A7421e9b9-7c0d-4feb-80cc-ec4c43d4fac2" width="800" /> In 2018, multiple sets of regulations governed subsistence and personal use fishing in the Copper River. A personal use dip net fishery occurred at Chitina, while subsistence fisheries took place in the Glennallen Subdistrict and near Cordova. In all Copper River fisheries combined from 1989 to 2016, 96% of the harvest was sockeye salmon. Since the 1970s, steady growth occurred in the upper Copper River fisheries [@subsistence_salmon]. The growth of nonlocal participation in the Glennallen Subdistrict subsistence fishery and the Chitina personal use fishery has raised concerns among local residents, including Indigenous Ahtna Athabascan communities, regarding competition for fish and fishing sites. #### The Copper River Valley above Chitina is the focus of subsistence, sportfishing, and personal use fishermen, most of whom do not reside in the region. Governance of the Copper River salmon fisheries takes place largely through state processes. Prior to in-river harvest, salmon are taken by commercial drift gillnet fishermen in marine waters managed by the ADFG. Sport and personal use fisheries are prominent, as seen by the number of proposals concerning the fishery submitted to the Board of Fisheries. Also, data from the Alaska Wildlife Troopers reports that the Copper River region has the second highest number of personal use violations over the 2014-2017 period. Access to the Copper River and trespassing across posted Ahtna Native corporation lands has been a major concern to Ahtna due to the costliness and the lack of state attention to the problem. ### Economics #### The Copper River salmon fishery is the state’s sixth largest in value having generated $1.6 billion in revenue since 1975 [@earnings]. It is is highly dependent on hatchery production. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A6fcc6257-3fa7-4f3f-9426-f18bb0a35d54" width="800" /> The variability in revenues generated in this fishery has been historically below average. Subsistence, personal use, and sport fish catch are comparatively small compared to the commercial catch, but of importance to local subsistence culture and personal use fishers from urban areas of the state. Striking and not comparable to any other fishery in the state, the local share of harvest revenues is insignificant. Historically, two thirds of harvest revenue has gone to non-local Alaska residents residing in the urban part of the state, while the remaining third was shared among permit holders residing outside Alaska and nonlocal rural residents of Alaska. --- # Cook Inlet #### A potential glimpse at Alaska’s future? Home to over 60% of Alaska’s residents, the Cook Inlet region may provide a glimpse of the future. Issues of urbanization, road building, and the rise of invasive species are increasingly prominent here. These changes are set within a context of a changing climate and increased conflict among user groups for limited salmon resources. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aab18d6dd-af16-4339-8cb1-718a64efd378" width="800" /> [@elevation] **Kenai Dena’ina names for salmon** + łuq’a (salmon) + łuq’aka’a (king salmon) + k’q’uya (sockeye salmon) + nudlaghi (coho salmon) + alima (chum salmon) + qughuna (pink salmon) ### Management #### A perennial management challenge in Cook Inlet is to maximize harvest opportunities on the more abundant sockeye and pink salmon, without over-harvesting coho or Chinook salmon. <img src="https://www.researchgate.net/profile/Erik_Schoen/publication/320604700/figure/fig1/AS:555957954777089@1509562113800/Changes-facing-salmon-ecosystems.png" width="800" /> [@schoen] Despite the increasing pressures by people on the landscape, the Cook Inlet region continues to produce millions of salmon each year. Sockeye salmon are most common, followed by pink salmon. However, the returns of Chinook salmon and coho salmon are vital to vibrant sport fishing economies and local cultures. Declines of Chinook salmon create a management conundrum: how can managers maximize harvest opportunities on sockeye salmon and pink salmon but not over harvest coho salmon or Chinook salmon? These challenges are nested into what is said to be the most complex management plan in Alaska. Though most of the fish in Cook Inlet are wild, hatchery enhancement of pink salmon is increasing after a period of decline. ### Culture #### Though people-salmon relationships in Cook Inlet are often defined in terms of urban and political tensions, the region has deep-time salmon connections and subsistence practices persist. Households in the Cook Inlet region rely on a variety of strategies for obtaining salmon to fill their freezers including recreational fishing, personal use, subsistence, commercial take, and sharing networks. Some of these strategies (sharing networks, traveling “home”) include direct connections to the salmon systems of other regions. The conflict over allocation in Upper Cook Inlet has arisen due to low Chinook returns and subsequent management decisions, creating discord within communities in the region. There are three distinct commercial salmon fisheries within the Cook Inlet region: Upper Cook Inlet Drift, Upper Cook Inlet Set Net, and Lower Cook Inlet Seine. ### Subsistence #### The Cook Inlet region includes several small subsistence salmon fisheries and growing personal use salmon fisheries, with most participants from urban areas [@subsistence_salmon]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A349f9dbc-9df1-4e77-8cf1-8ccbed085126" width="800" /> This region has the most complex regulations for subsistence and personal use fisheries, reflecting the high human population. It is mostly within the Anchorage-Matsu-Kenai Non-subsistence Area where only personal use fisheries may occur. There are small state subsistence fisheries at Tyonek, in the Yentna River, at Seldovia, and at Nanwalek and Port Graham, and small federal subsistence fisheries in the Kenai and Kasilof rivers. In 1996, the Board created fixed seasons and openings for the Kenai and Kasilof personal use fisheries; harvests in these fisheries subsequently grew rapidly, over 300% from the early 1990s to 2012-2016 (Figure). From 1996-2016, personal use fisheries accounted for 97% of the total estimated noncommercial, non-sport salmon harvests. ### Governance #### Governance issues are numerous in this region and include “fish wars”, habitat impacts from urban development, and environmental impacts on salmon from coal and dam development. As the most densely populated area of the state, residents are overwhelming participants in sport and personal use fisheries but there are also subsistence and commercial fisheries. A large majority of the citations issued for sport and personal use salmon violations are received by Cook Inlet residents. Cook Inlet drift gillnet fishermen who fish in federal waters governed by the NPFMC brought suit against state and ADFG management contending that salmon management here was not in compliance with federal standards resulting in low returns.These fishermen prevailed, setting in motion a court-ordered process to bring state and federal management systems into alignment. Between 2000-2018, Cook Inlet salmon fisheries were declared a disaster on two occasions. ### Economics #### Cook Inlet’s commercial salmon fisheries are the state’s third largest in value [@earnings] and extensive participation in personal use and sport fisheries underscore the political complexity of the region. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A13c6bd56-297c-4a55-8d28-d722fb99ba4d" width="800" /> The potential for large revenue comes at a cost, because fishing revenue variability in this region has been greater than anywhere else in the Gulf of Alaska. Cook Inlet has the most diverse set of salmon users in the state, including commercial, sport, subsistence, and personal use fisheries. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aefd1264c-01f7-4e91-b4d3-6f3010e77594" width="800" /> [@subsistence_salmon] <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A13c6bd56-297c-4a55-8d28-d722fb99ba4d" width="800" /> Historically, the largest catch volume has gone to the commercial salmon fleet, followed by sportfish, subsistence, and personal use [@harvest_all_sectors]. Since 1995, the total volume of fish allocated to personal use, subsistence, and sport fishing has been relatively stable, ranging between 5 and 15 million lbs/year. --- # Prince William Sound #### Salmon and people before and beyond the Exxon Valdez oil spill Prince William Sound is a region of rain, icefields, and glaciers. Only two (Whittier and Valdez) of Prince William Sound’s largest human communities are connected via road. The terminus of the Alaska oil pipeline ends in this region and results in a fairly high footprint of human activity in a relatively small region. Pink salmon, chum salmon, and sockeye salmon fisheries are current mainstays of local communities with hatchery enhancement of these species (particularly pink salmon) a fundamental dynamic in the region. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A5d95526a-cea1-4126-a82c-08d5ccc80f12" width="800" /> [@elevation] **Eyak names for salmon** + te’ya’lee (king salmon) + tahi’id, cha’ch (sockeye salmon) + tiitl’ (chum salmon) + giyah sdilahL, kaashk’ (pink salmon) + ta’ay (coho salmon) + chi’in (salmon) + q’Amaa (salmon roe) + GAts’ (dry smoked salmon) + q’Amaa (female salmon) + qAts’LG (male salmon) + xaanih (old salmon) ### Hatchery Enhancement #### No other region of state is as tied to hatchery enhancement as Prince William Sound. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Ad5ded097-e0cd-4db5-a300-6f9a334105dd" width="800" /> Nearly ¾ of a billion salmon are released in this region with the majority being pink salmon, followed by chum salmon and sockeye salmon [@hatchery_returns]. Returning adults are integral components of the fishery, where in some years the entire catch of some species can be the result of hatchery production. Concerns of negative legacy effects of the Exxon Valdez oil spill remain, though recent evidence points to a stronger role of large scale changes in the ocean. For some species, potential competitive interactions with large numbers of wild and hatchery individuals are a primary determinant of salmon productivity, rather than the oil spill. ### Exxon Valdez #### Prince William Sound: the epicenter of the 1989 Exxon Valdez oil spill (EVOS). This region has experienced similar waves of change and impacts on fishing ways of life as other regions, but was the the epicenter of the 1989 Exxon Valdez oil spill (EVOS). EVOS had immediate and lasting disastrous impacts on communities in and beyond the region. The subsequent damaged ecosystem resources and services generated significant losses, particularly for Alaska Natives and commercial fishermen. Overall, EVOS was more than an oil spill. Chronic ecosystem, resource, and sociocultural loss, stress, and unhealthy coping mechanisms from protracted litigation are key themes of this monumental technological disaster. In its aftermath, local citizens organized and created a regional entity to monitor oil transportation to minimize the likelihood of future spills. This community response is illustrative of an adaptation strategy. ### Harvest #### Salmon are the largest provider of wild foods in Prince William Sound communities, but annual programs likely underestimate harvests [@subsistence_salmon]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Aafdf5e8d-34dc-46a6-b2d2-c0b210fab658" width="800" /> Estimates of subsistence salmon harvests in Prince William Sound vary widely. Subsistence activities in Prince William Sound were severely disrupted by the Exxon Valdez oil spill of March 1989. Local residents were concerned about oil contamination of salmon and other resources. Several years passed before subsistence harvests approached pre-spill levels (Figure 1). Based on findings from comprehensive surveys, salmon provided 40% of the harvest of wild resources in the three Prince William Sound communities outside the non-subsistence area (Chenega Bay, Tatitlek, and Whittier). Salmon made up 48% of noncommercial harvests of wild resources by residents of the Valdez Non-subsistence Area in 2014. ### Governance #### Governance processes through ADFG and the BOF institutions authorize hatchery releases in the region, primarily of pink and chum salmon. The federal lands of the Chugach National Forest predominate, but state fisheries management plays the larger role. The prevention of future oil spills has been a significant factor in mobilizing residents and fishermen to participate in the creation of laws and governmental organizations to monitor oil transport through the region. The Chugach Alutiiq villagers, whose subsistence uses were drastically impacted by the oil spill, brought suit in federal court for compensatory damages to traditional cultural practices linked to subsistence activities and harvests but lost the case receiving compensation only for the food value of their losses. Between 2000-2018, PWS salmon fisheries were declared a disaster on one occasion. ### Economics #### PWS salmon fisheries are the state’s eighth largest in value [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A74b2fb8b-efe0-4de8-aebe-9bce65bb0948" width="800" /> Having generated nearly a billion dollars in revenue since 1975, PWS fisheries have been the third largest in volume, and remain highly dependent on hatchery production. The state has consistently invested in salmon enhancement in the region since the early 1980s. PWS commercial salmon fisheries stand out to be an anomaly regarding historical revenue. It’s the only region where post-2000 revenue reached historical records, increasing from a pre-2000 high of $40 million to a record $60 million in real revenue in the last decade. The distribution of revenue received by commercial harvesters in the region varied historically. Permit holders that previously resided in the rural part of the region either moved to urban parts of the state or sold their permits primarily to residents living in Cook Inlet. The Figure in this section shows the disappearance of revenue received by local rural residents. --- # Southeast #### Rainforest-dominated ecosystems at the crossroads of climate change Approximate in size to the State of Kansas, the Southeast region is categorized by thousands of small coastal watersheds that provide ideal spawning habitat for pink salmon and chum salmon in particular. All five species are caught and return to this region. In terms of total abundance of salmon, Southeast Alaska dominates the state. Managing and conserving salmon populations that move beyond international borders is a key challenge here as many of the Chinook salmon caught in Southeast were born outside Alaska. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A6ebc24c0-12eb-43b7-9fd5-bd449ffdc723" width="800" /> [@elevation] **Tsimshian (Sm’algyax), Tlingit names for salmon** + Yee, t’á (king salmon) + Misoo, g̱aat (sockeye salmon) + Gaynii, téel’ (chum salmon) + Sti’moon, cháas’ (pink salmon) + ÜÜx, l’ook (coho salmon) + hoon (salmon) + aashát (steelhead) + x̱áat – (fish; coastal salmon) ### Habitat #### Maintaining connections of rivers to their floodplains will provide options for spawning and rearing salmon and is a tangible way to respond to changing climates. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn:uuid:cd1d5c2d-e1e4-4942-8341-71c35d004243" width="800" /> Southeast Alaska is a veritable wild fish factory and is by far the most rich in terms of total salmon abundance [@total_abundance]. An average of over 75 million total salmon return and are caught here each year. The vast majority of the fish caught are wild pink salmon. Adult chum salmon abundance is bolstered by the release of hundreds of millions of juvenile salmon from hatcheries. The landscape is dominated by coastal rainforests kept moist by seemingly constant rainfall. Although future changes in precipitation are unclear, maintaining connections of rivers to their floodplains will provide options for spawning and rearing salmon and helps salmon respond to a rapidly changing climate. ### Culture #### Subsistence, sport, and commercial fishing practices are culturally valued. Salmon management has developed through social, ecological, and political changes. Tlingit traditional knowledge and spiritual beliefs led to stewardship practices that sustained salmon runs throughout human history. Indigenous management practices using traditional knowledge informed a system that included allocation and utilization linked to clan groups, cultural values of avoiding waste, and respect for salmon. In the first half of the 20th century, Southeast salmon fisheries’ cannery-owned fish traps were used to harvest salmon. The pursuit of Alaska statehood was driven by the territorial citizens’ desires to control and benefit from their resources. Following statehood in 1959, fish traps were banned. Ensuing struggles over access to salmon continued with the introduction of limited entry permits in the 1970s. ### Governance #### Salmon are a fundamental subsistence resource, but fishing is highly regulated and annual monitoring programs substantially underestimate harvests. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Adf54e943-2ab6-423b-8e53-8baeafedd07f" width="800" /> [@subsistence_salmon] Loss of commercial fishing permits has affected access to salmon. People have lost direct access to fish to take home, transportation options to fishing locations, gear for fishing, and income to support harvest activities. From 1985-2016, annual subsistence harvests in the Southeast Alaska and Yakutat areas averaged over 50,000 salmon, primarily sockeye salmon (Figure). Subsistence salmon fisheries here are highly regulated, in part due to the relatively small, local salmon systems with limited harvestable surpluses. Reasons for the underestimate from permit returns include underreporting harvests, sharing of permits, fishers not obtaining permits, and other sources not being recorded on permits. #### Pressing governance issues include allocation among users, impacts of development, and Alaskan resident benefits from commercial salmon fisheries. Governance in Southeast is a complex web of interconnected state, federal, and international institutions that involve state and regional leaders in multi-lateral decision-making institutions. More than any other region, transboundary salmon migration is of critical importance to governance as many of the Chinook salmon and coho salmon caught here were born outside Alaska. Between 2000-2017, Southeast Alaska salmon fisheries were declared a disaster on one occasion. ### Economics #### Southeast salmon fisheries are the state’s largest in volume. They are the second most valuable fisheries in the state, having generated $3.4 billion in revenue since 1975, and are highly dependent on hatchery production [@earnings]. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3Add547574-9fa6-4299-868e-1612ad1ed28d" width="800" /> Harvest revenue variability from year to year is the fourth lowest in the state. Given this low risk and large size in volume and value, Southeast Alaska salmon fisheries have historically attracted a larger share of nonresident permit holders than other salmon regions of the state. Since the 1980s about half, sometimes more, of the revenue generated has been received by permit holders residing outside Alaska. The region’s salmon catch has always been highly dependent on hatchery production. Besides commercial salmon fisheries, subsistence and sport fishing are also important sectors that add to the complexity of the Southeast Alaska salmon system. ### Other prominent issues include: + The legacy of past logging activities in the Tongass National Forest such as 489 culverts at road-stream crossings that may impede fish passage + Proposed and active mining on the Canadian side of the border in watersheds (e.g. Taku, Stikine, and Unuk) that drain into US waters + Recent observations of low dissolved oxygen in streams associated with low water flows and large returns of fish, resulting in stress and potential die-offs + Complex mixed-stock fisheries that can result in the masking of true declines in local salmon abundance
+]]>
+            </markdown>
+        </content>
+    </section>
+    <section>
+        <label>Topics</label>
+        <image>urn:uuid:119331ce-43fa-43e2-bba6-86ea60bb780c</image>
+        <title>Special Topics in Alaska's Salmon Systems</title>
+        <introduction>
+            SASAP’s ‘Special Topics’ Working Groups focus their work on specific biological, social, and cultural issues, adding new insights into pressures facing Alaska’s salmon and salmon-dependent communities.
+        </introduction>
+        <content>
+            <markdown>
+                <![CDATA[
+### Multidisciplinary, Cross-Cultural Collaborations Each of the seven Special Topics Working Group stories presented here represent two or more years of collaborative work among Indigenous and non-Indigenous researchers, cultural leaders and other participants. By bringing multidimensional thinking into their work, the researchers acknowledge the entwined relationship Alaskans share with salmon. Topics such as the link between inequitable access to salmon and social well-being, or the relationship between ocean change and salmon distribution, can be explored in a way that tries to understand both the communities affected by change, and the systems in place that drive those changes. <br> <br> # The declining size and age of salmon #### The size and age of salmon returning to Alaska rivers is generally declining across species. Changes that affect salmon also affect the health, economy, and way of life of people in Alaska. ### The Trend <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/01/year_smoothers_for_website-e1551381057400-600x537.jpg" width="400" /> #### Are salmon declining in size? Across Alaska, salmon are returning from sea at younger ages with smaller adult body sizes. Alaskans have long noted these changes, as have previous scientific studies. Until now, no project has compared trends across all of Alaska’s regions and species. By analyzing patterns of body size among salmon species from across the state, we are learning more about how and why salmon are getting smaller. The goal is to eventually understand the causes and consequences of those changes. We find that Chinook (also known as king), coho (silver), chum (dog), and sockeye (red) salmon are all getting smaller. Patterns of change vary among species, regions, and even rivers. It is clear that in general, Alaska salmon are getting smaller and the declines are most stark for Chinook salmon. These changes are especially pronounced in the past 15-20 years. Unfortunately, although they are the most abundant species in Alaska, very few data on pink salmon are available. So, we cannot address whether pink salmon are changing in size through time. #### What is causing this trend? Salmon populations can become smaller bodied, on average, in two non-mutually exclusive ways. First, they may be growing smaller if they cannot acquire enough food at sea. This results in salmon of the same age that are smaller than they were in the past. Second, salmon may return from the ocean at younger ages. Because salmon continue to grow as they age, older salmon are generally larger than younger salmon. In Alaska, all four species of salmon are getting smaller primarily because they are returning from the ocean at younger ages. Research has found that no single factor can explain changes in salmon size. Instead, salmon face many factors that collectively contribute to smaller size and younger age, including a warming climate, increased predation from marine mammals, fisheries-induced evolution (or changes in the characteristics of salmon due to fishing gear that preferentially catches large, old salmon), and increased competition from highly abundant wild and hatchery salmon at sea. #### Who's affected by declining salmon size? ##### Subsistence Users Smaller salmon have important consequences for Alaska’s people, economy, and ecosystems. For subsistence users, smaller salmon mean fewer calories and grams of protein per fish. If subsistence users cannot catch more fish in years when fish are small, they will have fewer meals of salmon. ##### Commercial Fishermen Smaller salmon are also a problem for commercial fisheries, which may lose profits because smaller fish have less meat and cannot be processed into high value products. ##### Ecosystems Alaska’s rivers, lakes, and forests rely on salmon nutrients. Smaller salmon could mean bears, eagles, trout, and other species that eat salmon or their eggs will receive less food. Less of the important nutrients that salmon bring with them from the ocean will enter freshwater and forest food webs. Smaller salmon also lay fewer eggs, imperiling salmon populations by possibly reducing the number of salmon born in each subsequent generation. <br> ### Principal Investigators #### Eric P. Palkovacs CO-LEAD University of California Santa Cruz, Department of Ecology and Evolution Biology epalkova@ucsc.edu *Eric’s research focus is eco-evolutionary dynamics of aquatic ecosystems--the bi-directional interactions occurring between ecology and evolution in nature. He combines surveys of genetic, phenotypic, and ecological variation in nature with field and laboratory experiments to examine how evolution shapes populations, communities, and ecosystems and how these changes feed back to shape the trajectory of evolution.* #### Peter Westley University of Alaska Fairbanks, College of Fisheries and Ocean Sciences *Peter received his BSc and MSc from the University of Washington’s School of Aquatic and Fishery Sciences and his PhD from Memorial University of Newfoundland. In the summer of 2014 he made the final leg of a long journey back to his home state of Alaska, where he joined the faculty in the Department of Fisheries in the College of Fisheries and Ocean Sciences at the University of Alaska Fairbanks. As Principal Investigator of the [Salmonid Evolutionary Ecology and Conservation Lab](https://seec-lab.com), Peter and his students strive to understand the ecological patterns and processes that give rise to adaptation in nature, the consequences of adaptation for management and conservation, with the goal of sustaining the connections between salmon, people, and place.* #### Bert Lewis CO-LEAD Alaska Department of Fish and Game, Division of Commercial Fisheries bert.lewis@alaksa.gov *Bert is the ADFG Central Region Supervisor. His research has focused on salmon ecology including lake and stream trophic, paleolimnolgy, size and age patterns, hatchery and wild interactions, and spawning population monitoring. This research serves as a template for his commercial fisheries management responsibilities. Education: B.S. University of Colorado, M.S. Utah State University.* <br> ### Links of Interest Learn how a small “army” of data scientists collected and organized vast amounts of data on Alaska’s salmon – and why this matters. [A Search and Rescue Team for Salmon Data](https://www.nceas.ucsb.edu/news/a-search-and-rescue-team-for-salmon-data) How A Massive Dataset and A Set of Rural Communities Are Helping to Sustain Alaska’s Salmon. Podcast: [Alaska’s Exceptional Salmon Data](https://www.nceas.ucsb.edu/news/podcast-alaskas-exceptional-salmon-data) --- # Well-being and salmon systems <br> #### Alaska salmon fisheries and fishing communities are marked by rich and diverse connections to place, work, and environment. Increasingly, they are also marked by inequities and loss in fishery access and participation. Closures and the criminalization and closures of subsistence fisheries are just a few of the important indicators of social conditions for sustainable and successful salmon management in Alaska. <br> This project aims to better understand and measure well-being to better inform management and ensure a more equitable and sustainable salmon future for Alaska. <br> **Cup’ik: cuuyaraq; Yup’ik: yuuyaraq**: Way of life as a human being, including interactions with others, subsistence knowledge, environmental knowledge and understanding, and spiritual balance. <br> [International organizations](https://www.millenniumassessment.org/documents/document.356.aspx.pdf), [nations](https://ec.europa.eu/eurostat/documents/118025/118123/Fitoussi+Commission+report), and [specific regions and communities](https://ec.europa.eu/eurostat/documents/118025/118123/Fitoussi+Commission+report) increasingly recognize well-being as an integral goal of sustainable development. Scientists identify well-being as central to effective management of fisheries and marine ecosystems. This project builds on these efforts and provides a path forward in defining and incorporating well-being measures into salmon governance and decision-making arenas. We developed objective, subjective, and relational indicators to better identify what promotes and what threatens well-being in Alaska’s diverse salmon systems. We especially considered well-being concepts inclusive of Indigenous people’s priorities and perspectives. ### Key domains of well-being Our project team identified nine domains of well-being in Alaska’s salmon and people systems. Domains are further divided into specific attributes and indicators. While organized as distinct categories, many domains are interdependent, and influence or overlap with others. For example, social relationships can influence health and safety; education and knowledge can influence economy and livelihoods, and so on. The SWIMM project, carried out along the US West Coast, provided a foundational starting point for our work. This painting by artist Zack Martin, from the Ahtna region, is a visual representation of the well-being domains. <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/themes/SASAP/_images/bg-wellbeing_map.jpg" width="400" /> ### Domains ![](urn:uuid:2a53aa62-d42d-4676-9cd2-e5abef90d842) ### Exploring Well-Being <br> #### Access to salmon ensures access to well-being Resource access cuts across six of the [nine well-being domains](https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A9f5a8f35-ffbb-47c1-b02a-dd7bcf197774), such that there are economic, ecological, physical, social, legal, political, technical, cultural, and cognitive [dimensions of resource access](https://www.researchgate.net/publication/321941587_Evaluating_indicators_of_human_well-being_for_ecosystem-based_management). But resource access is also a foundational prerequisite to well-being. It is critical that decision makers are able to more fully account for the many ways changes in fishery access and participation affects well-being. #### What are the social and cultural contributions of salmon? Salmon are a central facet of social relationships, roles, and responsibilities within and between families and communities. Salmon contribute to multigenerational connections to culture and place. The development and transmission of skills, knowledge and values–practical, political, and place-based–occur through salmon-people connections. Salmon help teach people gratitude, hard work, humility, and stewardship, among other qualities. Many Alaska Native people have a deep spiritual connection to salmon and engaging in fishing for salmon is vital to practicing their traditional Alaska Native values and ancestral knowledge. #### Defining Well-Being: Building on earlier [efforts](https://www.sciencedirect.com/science/article/pii/S1462901116303719?via%3Dihub) our diverse team developed a definition of well-being that intentionally seeks to be appropriate for all of Alaska’s diverse and complex salmon fisheries, communities, and peoples. Our definition emphasizes equity and self-determination and makes clear that there are multiple domains of well-being. <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/04/well-being-definition-crop.jpg" width="400" /> ### What We've Learned #### Sample Indicators, Super Indicators Our team identified and evaluated over 250 indicators. We found that even among our highest-ranked indicators, few indicators were universally applicable across Alaska. And our working group members also had varied opinions about what domains and indicators should be prioritized for study and assessment. We, therefore, identified suitable sample indicators that communities can refine to be more locally relevant. We also identified super indicators that measure multiple domains, like “change in median age of fishermen” (see graph), or “change in the number of fish camps,” which crosscuts domains of social relationships, environment, economy, and governance. Our team also created [maps](https://pages.github.nceas.ucsb.edu/NCEAS/sasap-maps/wellbeing_static_maps.html) and [data sets](https://knb.ecoinformatics.org/view/doi:10.5063/F1XK8CVG) to show the relationship between community characteristics and resource access and use trends. <img src="https://knb.ecoinformatics.org/knb/d1/mn/v2/object/urn%3Auuid%3A32192677-44a9-4402-9ac2-9bc408f514b6" width="600" /> #### Data Gaps and Limitations *Where are the gaps and limitations in data availability for the many domains and indicators?* Our work exposes large gaps in data availability for many domains and indicators. Many high-priority indicators have not been consistently measured, and where data is regularly collected, such as age of permit holders, it is sometimes not taken into account in management decisions. Another example of data limitations is the [Amount Necessary for Subsistence](https://www.adfg.alaska.gov/index.cfm?adfg=subsistence.reasonable) (ANS). ANS is identified as a good measure for whether subsistence needs are being met; however, our case study of the upper Copper River shows that ANS data is not regularly reviewed, is not being met and, when it is, is often due to increasing pressure from non-local harvesters. This raises questions about the utility of ANS as a measure that can adequately assess subsistence needs in places like the upper Copper River. #### Utility and Ethics of Measuring Well-Being *How can we support decision makers who continue to struggle to incorporate social and qualitative data into decision-making processes?* Indicators present a potential solution but it is easy to tell the wrong story when relying on simple measures without appropriate context or cultural grounding. An understanding of how people define their own well-being should be the first step in attempts to develop and apply indicators, with communities engaged from the onset in processes of indicator development and selection. We present our work here with a note of caution where direct community involvement and evaluation is most effective and appropriate for assessing the well-being of people and communities. <br> ### Links of Interest 1. [Telling the Hidden Stories of Salmon](https://www.nceas.ucsb.edu/news/telling-hidden-stories-salmon): How synthesizing knowledge of Alaskans’ relationships with salmon could support management. By Jenny Seifert, NCEAS 2. [Zotero Reference Library: Well-Being](https://www.zotero.org/groups/926789/sasap/items/tag/well-being) 3. [Language Loss Data](https://pages.github.nceas.ucsb.edu/dstrong/pages/language/language_vis.html) --- # Salmon in a changing ocean <br> ### Protecting the salmon future <br> #### Ocean conditions have a profound effect on the distribution, growth, and survival of salmon. Predicting specific effects of climate change on salmon in their marine environment is difficult due to limited knowledge of the marine habits of salmon, combined with uncertainties about how marine habitats will be affected by climate change. We know ocean temperatures are increasing. We also know there are more salmon in the North Pacific than at any point in the past 100 years. By accounting for how warming and increasing competition interact to affect salmon survival, we can help inform decision makers on potential changes in salmon productivity to better plan for an uncertain future. #### Latitudinal effects The effect of temperature and competitors on salmon stocks depends on where the salmon are from. When a warming ocean is coupled with increasing salmon competitors, southern (West Coast) stocks experience a decline in productivity. Further north (Bering Sea), warming improves survival, while very little competitor effect is seen. <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/02/R2-Ocean-Climate-graph-1-600x450.jpg" width="600" /> #### Planktonic algal blooms It has been suggested that many of the food webs of which salmon are a part will be disrupted by climate change. For example, the timing of the planktonic ‘blooms’ required by the young is governed by climatic factors. Changes in the timing of these blooms could cause a scarcity of food at a critical stage of the salmon’s life cycle. #### Arctic migration of salmon Salmon are becoming more common in the Arctic region of Alaska. We evaluated current gaps in Arctic monitoring and made recommendations to decision-makers on how to improve understanding of the expansion of salmon into the Arctic. #### Life history variation Does variation in age at ocean entry (smolt age) mediate effects of competition? Our models suggest that salmon populations that exhibit more variation in age of smolts may be buffered from the negative effects of competition. <br> ### Links of Interest **Watch the Video** [Are There Too Many Salmon in the Ocean?](https://www.youtube.com/watch?v=YnoKfrsoMlE) **NCEAS Story** [A record-setting abundance of some salmon species in the North Pacific may be harming the populations of other salmon species: Too Many Salmon in the Sea?](https://www.nceas.ucsb.edu/news/too-many-salmon-sea) **More Data** Ruggerone, Greg; Irvine, James R. 2018. [Numbers and Biomass of Natural and Hatchery Origin Pink Salmon, Chum Salmon, and Sockeye Salmon in the North Pacific Ocean, 1925-2015](https://www.researchgate.net/publication/324268483_Numbers_and_Biomass_of_Natural-_and_Hatchery-Origin_Pink_Salmon_Chum_Salmon_and_Sockeye_Salmon_in_the_North_Pacific_Ocean_1925-2015). Marine and Coastal Fisheries-Dynamics, Management, and Ecosystem Science. --- # Engaging our communities with science <br> #### Grassroots gathering of information may lead to more equitable governance of salmon on the Kuskokwim By integrating ideas for monitoring salmon populations and the fisheries that depend upon them, the general community will have a better understanding of the science behind fisheries management decisions. We are modelers, salmon population dynamics experts, Community-Based Monitoring practitioners, and regional stakeholders from the Arctic-Yukon-Kuskokwim (AYK) region of Alaska, home to the largest subsistence salmon fisheries in the world. <br> ### Community-Based Monitoring: Using Participatory Modeling to Empower Community Engagement in Salmon Science Trust is central to successful implementation of fisheries management decisions in Western Alaska. A Kuskokwim River citizen science effort is ongoing to empower communities to collect their own information and provide it to tribal, state, and federal managers. The information gathered guides decisions about when to allow or restrict fishing. This two-way exchange of information is intended to build mutual respect and trust, leading to better, and less controversial decisions. Community-Based Monitoring (CBM) is increasingly contributing to the management of natural resources in rural Alaska. There are two dimensions to our story of CMB on the Kuskokwim River. The first is more technical: how do we define the most valuable information needed for guiding wise and sustainable management of subsistence fisheries? The second is more social: how do we build relationships that engender mutual respect and trust between the community and fishery managers on a foundation of information collection? To address both of these issues, we identified intersections between fisheries managers seeking information for better decision making, and the capacity of stakeholders to monitor information from within their own communities. We incorporated community-sourced information into decision-making models to better inform fish harvest decisions, also support the exchange of knowledge between two world views of salmon management. <br> ### Value of Information Model <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/02/Screen-Shot-2019-02-08-at-4.11.08-PM.png" width="600" /> We applied simulation models of salmon fisheries questions, such as harvest decisions, to a variety of VOI models, with input from community-based monitoring efforts (Fig. 1). Improvement in decision-making was measured in terms of forecasted outcomes that relate to objectives of stakeholders. Fisheries managers make difficult decisions amid many uncertainties. The “Value of Information” (VOI) analysis is a model-based approach developed to support critical thinking about complex decision-making. The VOI model allows us to ask: How can we identify the uncertainties that increase our ability to make the best decision? The strength of the model lies in the ability to identify which questions deserve the most focus from managers with limited time and resources. <br> ### Principal Investigator #### Michael L. Jones PRINCIPAL INVESTIGATOR Department of Fisheries and Wildlife Quantitative, Michigan State University Jonesm30@msu.edu In his position with the Partnership for Ecosystem Research and Management (PERM), Michael’s research focuses on fish population dynamics and ecology, resource management, and simulation modeling. He is especially interested in how Structured Decision Making methods can lead to better management outcomes, especially when they involve stakeholder engagement. <br> ### Links of Interest How A Massive Dataset and A Set of Rural Communities Are Helping to Sustain Alaska’s Salmon: Podcast: [Alaska’s Exceptional Salmon Data](https://www.nceas.ucsb.edu/news/podcast-alaskas-exceptional-salmon-data) --- # The Kenai Lowlands: A healthy home for salmon <br> #### The Kenai Lowlands region is one of the world’s most productive habitats for spawning salmon. Key landscape elements promote resilience in salmon-producing watersheds on the Kenai. One of the most important are peatlands, which provide carbon inputs for the stream systems and regulate groundwater temperatures. New outreach tools and materials inspired by knowledge produced by the Kenai Lowlands Working Group are aiding salmon management and decision making. They also inform private landowners on how to preserve and protect the Kenai’s vital salmon habitat. <br> ### About Our Work **Salmon are a cultural touchstone in Alaska and we have an incredible opportunity to sustain the landscape that supports them, before it becomes too late. Our hope is that through regional ecosystem-based understanding of salmon habitat, stakeholders will be able to make informed decisions that increase community stewardship of the landscape and result in greater salmon resiliency.** The extensive research on healthy salmon habitat is not necessarily common knowledge among decision makers. This issue is especially pressing in the Kenai Lowlands where land ownership is predominantly private, and land use decisions are made at various geographic scales. Our working group strives to put years of research into the hands of stakeholders. In collaboration with landowners, resource managers, land use planners, tribal leaders, regulators, and researchers, we have developed a variety of tools that can aid in decision making surrounding salmon support systems as well as outreach materials curated for the general public. We also present the state of watershed research related to salmon with an [interactive story map](https://accsmaps.maps.arcgis.com/apps/MapSeries/index.html?appid=066eb9da45e44db88d3c421bea611652) and short videos that help stakeholders understand how different landscape elements (i.e. alder, peat wetlands, and shallow groundwater flows) are essential for salmon success. The geospatial tool allows landowners and decision makers to view these elements within a geographic information system including land parcels, existing infrastructure, and waterways. Incorporating the geospatial tool into decision making allows stakeholders to pursue development in a way that maintains watershed connectivity and landscape elements that support salmon streams. <br> ### What we've learned #### Understanding the ecosystem Alder, peat wetlands, and shallow groundwater are all key elements supporting the productivity of salmon streams in the Kenai Lowlands. Working collaboratively with researchers from across the country since 2005, the Kachemak Bay National Estuarine Research Reserve (KBNERR) has been studying how different landscape elements support juvenile salmon in the watersheds of the Kenai Lowlands. Research shows that nitrogen from alder groves and carbon from peat wetlands are essential building blocks of the stream food web. These elements are transported by groundwater. Additionally, groundwater moderates stream temperatures, providing cooler water in summer and warmer water in winter. By exploring salmon use of estuaries and overwintering sites throughout the watershed, we can learn from the landscape connections that are foundational to salmon habitat in the region’s watersheds. It is clear that the systems that support these iconic fish extend well past the banks of the rivers. <img src="https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2018/12/image71-e1551377195892-1200x810.png" width="800" /> #### The role of waterflow through the Kenai Lowlands This basic model of a watershed illustrates how shallow groundwater moves nutrients from peat wetlands (carbon) and alder patches (nitrogen) into the river system. These nutrients, coupled with the groundwater, are fundamental in stream productivity. #### KBNERR in the community We know that connecting local communities to salmon science is critical. KBNERR partnered with ProjectGRAD to give local teens first-hand experience with salmon research. The youth sampled baby salmon using electrofishing equipment, and invertebrates using kick nets in creeks that flow near their schools. <br> ### Outreach Tools **Landscape Story Map** This interactive, data-filled story map is an exploration of people and salmon on the lower Kenai Peninsula of Southcentral Alaska. In video, maps and graphics, the story map examines how 15+ years of research have enhanced our understanding of the ways in which the landscape supports our salmon. We also explore how our decisions on land influence the success and productivity of our salmon streams. [**View Map**](https://accsmaps.maps.arcgis.com/apps/MapJournal/index.html?appid=4581405af3fc4712a0f3a918cc501c4e) <br> ### Principal Investigators #### Coowe Walker PRINCIPAL INVESTIGATOR Kachemak Bay National Estuarine Research Reserve cmwalker9@alaska.edu Coowe has led the development of the watershed research program at KBNERR since the Reserve’s designation in 2001, and she became Reserve Manager in March 2018. Her projects focus on understanding ecosystem processes that support watershed productivity, and in particular, juvenile salmon habitats. #### Ryan King CO-LEAD Baylor University ryan_s_king@baylor.edu Ryan and his lab are working to understand how altering the availability of the essential building blocks of life–phosphorus, nitrogen, and carbon–may cause detrimental and even irreversible damage to the ecosystems on which we rely for water, food, and recreation. #### Mark Rains CO-LEAD University of South Florida mrains@usf.edu Mark Rains is a Professor of Geology and the Director of the School of Geosciences at the University of South Florida and the Associate Editor for Wetland and Watershed Hydrology for the Journal of the American Water Resources Association. Dr. Rains’ research is focused on hydrological connectivity and the role that hydrological connectivity plays in governing ecosystem structure and function. #### Charles Simenstad CO-LEAD University of Washington simenstd@uw.edu Charles (“Si”) Simenstad – Research Professor Emeritus in the University of Washington–is an estuarine and coastal marine ecologist who has studied the organization and function of estuarine and coastal marine ecosystems, communities, seascapes, and restoration potential throughout Puget Sound, Washington, Oregon and California coasts, and Alaska for over forty years. #### Dennis Whigham CO-LEAD Smithsonian Environmental Research Center whighamd@si.edu Dennis Whigham is a Senior Botanist and Founding Director of the North American Orchid Conservation Center. He is an Associate Editor for Estuaries and Coasts, AoB Plants, Plant Species Biology, and Restoration Ecology. Dr. Whigham’s research is focused on plant ecology, especially orchid-fungal interactions, and wetland ecology. --- # Deep Time Connections <br> #### A long tradition of sustainability First Alaskans have been managers and stewards of Alaska salmon for millennia. Learn more about this timeless relationship predicated on spirituality, respect, and reciprocity in the essay Deep Time. The material presented sets the stage for the State of Alaska’s Salmon and People (SASAP) project, and seeks to illuminate and elevate the story of the profound relationship between Alaska Natives and their Salmon Relatives. A thoughtful perspective on SASAP from an Indigenous point of view is offered in the accompanying piece, An Indigenous Forward. <br> ### Deep Time – Salmon and People in Alaska Before Contact This deeply researched essay weaves together the evolutionary biology of Pacific salmon, the diverse and dynamic landscape that provided a template for salmon evolution, and the arrival of First Peoples through Western contact to explore the “Deep-Time” ties of Alaska’s Salmon and People. * Learn about the evolutionary roots of salmon and the evidence that early human settlements were shaped by their annual return. * Discover how archaeology reveals the use of salmon by peoples of the Yukon River dating back 11,500 years. While not diminishing the connections between contemporary Alaskans and salmon, this essay is intended as a celebration of the enduring relationship between Indigenous Alaskans and their Salmon Relatives. [**Read Deep Time**](https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/03/Deep-Time.pdf) <br> ### An Indigenous Forward to *Deep Time – Salmon and People in Alaska before Contact* The divergence in rules of law between Euro/Western processes and Spiritual Connectivity as a function of Indigenous ownership and sharing of resources came sharply into focus during the SASAP project. It became very clear that the dominant Euro/Western thought patterns within their own system were going to be reevaluated on a generational basis rather than the immediate needs or currying of political favors. Readers should presume that this dynamic shift in approach is neither new nor unique. Bits and pieces of Indigenous-management thought philosophy and Spiritual meaning have floated through research papers for a hundred years, yet it only has been in the last decade that this uniquely successful system of management which looks at salmon as friend, neighbor and fellow traveler has come to the fore. Much can be said about the best teachers having moved past their earthly existence, but it can also really be said that in the end, it is all about rediscovery and reshaping a value system aimed at connectivity and adaptation. [**Read An Indigenous Forward**](https://concrete-prawn.nceas.ucsb.edu/wp-content/uploads/2019/03/An-Indigenous-Forward.pdf) --- # Resurrecting the public record <br> #### Assessing stakeholder participation in Alaska's Board of Fisheries process Every three years, the Alaska Board of Fisheries calls for regional management proposals, inviting the public to directly participate in fisheries governance. Stakeholder participation is lauded as a key component of successful fisheries management, but few studies have characterized and assessed this participation to examine issues of equity, efficiency, and effectiveness. <br> ### Project Overview The Alaska Board of Fisheries’ public process has been referred to as “among the most open regulatory processes in Alaska if not the nation” (ADFG website). Under this system, anyone can submit a proposal or provide written or oral testimony to request regulatory changes. The SASAP Board of Fisheries Governance Working Group digitized more than 50 years of proposals, and analyzed the data to learn more about the history of proposal submissions and outcomes, with the goal to perhaps improve the process. The group used integrated data digitization and coding methods to analyze archived management proposals from 1959-2015. They assessed 19 different aspects including proposal group, topic, fishing sector, species, statute title, and Board votes. <br> ### Resources [Access the proposal dataset](https://knb.ecoinformatics.org/view/doi:10.5063/F1QN652R) Generate your own graphs and charts with the Interactive [BOF Shiny App](https://sasap-data.shinyapps.io/board_of_fisheries/)! Easily display Board of Fisheries proposals and actions, sorted by proponent group, species, region or fishing sector. Just choose the dates and download the resulting graph. <br> ### Principal Investigators #### Dr. Meagan Krupa Nautilus Impact Investing and NCEAS #### Molly McCarthy Cunfer Alaska Department of Fish  Game <br> ### Links of Interest [Resurrecting the public record: Assessing stakeholder participation in Alaska’s fisheries](https://www.sciencedirect.com/science/article/pii/S0308597X18301817?via%3Dihub) [A Search and Rescue Team for Salmon Data](https://www.nceas.ucsb.edu/news/a-search-and-rescue-team-for-salmon-data): The story of the NCEAS Data Task Force
+]]>
+            </markdown>
+        </content>
+    </section>
+    <associatedParty id="6779427102012720">
+        <individualName>
+            <givenName>Courtney</givenName>
+            <surName>Carothers</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>Lead, Socio-Eco</positionName>
+        <electronicMailAddress>clcarothers@alaska.edu</electronicMailAddress>
+        <role>primary project member</role>
+        <userId directory="https://orcid.org">https://orcid.org/0000-0002-1513-9078</userId>
+    </associatedParty>
+    <associatedParty id="4756224789424920">
+        <individualName>
+            <givenName>Rachel</givenName>
+            <surName>Donkersloot</surName>
+        </individualName>
+        <organizationName>Alaska Marine Conservation Council</organizationName>
+        <positionName>Lead, Well-Being and Alaska Salmon Systems</positionName>
+        <electronicMailAddress>rachel@akmarine.org</electronicMailAddress>
+        <role>primary project member</role>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="1911325403647972">
+        <individualName>
+            <givenName>Michael</givenName>
+            <surName>Jones</surName>
+        </individualName>
+        <organizationName>Michigan State University</organizationName>
+        <positionName>
+            Lead, Using participatory modeling to empower community engagement in salmon science
+        </positionName>
+        <electronicMailAddress>jonesm30@anr.msu.edu</electronicMailAddress>
+        <role>primary project member</role>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="4749036300163344">
+        <individualName>
+            <givenName>Steve</givenName>
+            <surName>Langdon</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>Lead, Governance</positionName>
+        <electronicMailAddress>sjlandgdon@alaska.edu</electronicMailAddress>
+        <role>primary project member</role>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="1709722595048648">
+        <individualName>
+            <givenName>Coowe</givenName>
+            <surName>Walker</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>
+            Lead, Integrated Watershed Management for Salmon in Kenai Lowlands
+        </positionName>
+        <electronicMailAddress>cmwalker9@alaska.edu</electronicMailAddress>
+        <role>primary project member</role>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="2065473604841635">
+        <individualName>
+            <salutation>Dr.</salutation>
+            <givenName>Frank</givenName>
+            <surName>Davis</surName>
+        </individualName>
+        <organizationName>NCEAS/UCSB</organizationName>
+        <positionName>Lead Principal Investigator</positionName>
+        <phone phonetype="voice">(805)893-2500</phone>
+        <electronicMailAddress>frank.davis@nceas.ucsb.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="1016516012250194">
+        <individualName>
+            <salutation>Dr.</salutation>
+            <givenName>Ian</givenName>
+            <surName>Dutton</surName>
+        </individualName>
+        <organizationName>NII</organizationName>
+        <positionName>Co-Principal Investigator/Alaska Coordinator</positionName>
+        <phone phonetype="voice">(907)280-8923</phone>
+        <electronicMailAddress>ian@nautilusii.com</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="3555232530160527">
+        <individualName>
+            <givenName>Jessica</givenName>
+            <surName>Black</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>
+            Co-Lead, Socio-Eco and Well-Being and Alaska Salmon Systems
+        </positionName>
+        <electronicMailAddress>jcblack@alaska.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="2581965150987275">
+        <individualName>
+            <givenName>Taylor</givenName>
+            <surName>Brelsford</surName>
+        </individualName>
+        <positionName>Co-Lead, Gov</positionName>
+        <electronicMailAddress>brelsfot@alaska.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="4537674907823474">
+        <individualName>
+            <givenName>Robert W.</givenName>
+            <surName>Campbell</surName>
+        </individualName>
+        <organizationName>Prince William Sound Science Center</organizationName>
+        <positionName>
+            Co-Lead, Ocean Climate Interactions with At-Sea Salmon Competition
+        </positionName>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="9453275379545486">
+        <individualName>
+            <givenName>James</givenName>
+            <surName>Fall</surName>
+        </individualName>
+        <organizationName>Alaska Department of Fish and Game</organizationName>
+        <positionName>Co-Lead, Gov</positionName>
+        <electronicMailAddress>jim.fall@alaska.gov</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="5550260396557414">
+        <individualName>
+            <givenName>Kristin B.</givenName>
+            <surName>Gorman</surName>
+        </individualName>
+        <organizationName>Prince William Sound Science Center</organizationName>
+        <positionName>
+            Co-Lead, Ocean Climate Interactions with At-Sea Salmon Competition
+        </positionName>
+        <electronicMailAddress>kgorman@pwscc.org</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="6335656060682069">
+        <individualName>
+            <givenName>Ryan</givenName>
+            <surName>King</surName>
+        </individualName>
+        <organizationName>Baylor University</organizationName>
+        <positionName>
+            Co-Lead, Integrated WaterShed Management for Salmon in Kenai Lowlands
+        </positionName>
+        <electronicMailAddress>Ryan_S_King@baylor.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="8392331948669279">
+        <individualName>
+            <givenName>Bert</givenName>
+            <surName>Lewis</surName>
+        </individualName>
+        <organizationName>Alaska Department of Fish and Game</organizationName>
+        <positionName>
+            Co-Lead, Consistency, Causes, and Consequences of Salmon Size Declines
+        </positionName>
+        <electronicMailAddress>bert.lewis@alaska.gov</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="6013958232518832">
+        <individualName>
+            <givenName>Mark</givenName>
+            <surName>Rains</surName>
+        </individualName>
+        <organizationName>University of South Florida</organizationName>
+        <positionName>
+            Co-Lead, Integrated Watershed Management for Salmon in Kenai Lowlands
+        </positionName>
+        <electronicMailAddress>mrains@usf.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="2369333659967279">
+        <individualName>
+            <givenName>Peter S.</givenName>
+            <surName>Rand</surName>
+        </individualName>
+        <organizationName>Prince William Sound Science Center</organizationName>
+        <positionName>
+            Co-Lead, Ocean Climate Interactions with At-Sea Salmon Competition
+        </positionName>
+        <electronicMailAddress>prand@pwssc.org</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="5990077295588602">
+        <individualName>
+            <givenName>Dan</givenName>
+            <surName>Rinella</surName>
+        </individualName>
+        <organizationName>US Fish and Wildlife Service</organizationName>
+        <positionName>Co-Lead, Bio-Phys</positionName>
+        <electronicMailAddress>daniel_rinella@fws.gov</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="4648424172271337">
+        <individualName>
+            <givenName>Tobias</givenName>
+            <surName>Schwoerer</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>Co-Lead, Socio-Eco</positionName>
+        <electronicMailAddress>tschwoerer@alaska.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="4651308892895714">
+        <individualName>
+            <givenName>Charles</givenName>
+            <surName>Simenstad</surName>
+        </individualName>
+        <organizationName>University of Washington</organizationName>
+        <positionName>
+            Co-Lead, Integrated Watershed Management for Salmon in Kenai Lowlands
+        </positionName>
+        <electronicMailAddress>simenstd@u.washington.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty id="5236109761319095">
+        <individualName>
+            <givenName>Peter</givenName>
+            <surName>Westley</surName>
+        </individualName>
+        <organizationName>University of Alaska</organizationName>
+        <positionName>
+            Co-Lead, Consistency, Causes, and Consequences of Salmon Size Declines
+        </positionName>
+        <electronicMailAddress>pwestley@alaska.edu</electronicMailAddress>
+        <role>project member</role>
+    </associatedParty>
+    <!--  === associatedParty ===  -->
+    <acknowledgments>
+        Richard Brenner and Jennifer Womack, Alaska Department of Fish and Game, have been vital for facilitating data requests; Matt Jones, Jeanette Clark, Jorge Cornejo-Donoso, Jesse Goldstein, and Jared Kibele, National Center for Ecological Analysis and Synthesis have led data organization and QA/QC; Sarah Warnock, Nautilus Impact Investing has coordinated outreach and communication. This work was funded by generous support of the Gordon and Betty Moore Foundation.
+    </acknowledgments>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</identifier>
+        <label>Nautilus Impact Investing</label>
+        <associatedURL>https://nautilusii.com/</associatedURL>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:cd625b80-4b2c-4320-a27a-8556aa47f1c7</identifier>
+        <label>NCEAS</label>
+        <associatedURL>https://www.nceas.ucsb.edu</associatedURL>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:35e2506c-8b41-4c74-85f9-64ac9d41faac</identifier>
+        <label>Gordon and Betty Moore Foundation</label>
+        <associatedURL>https://www.moore.org/</associatedURL>
+    </acknowledgmentsLogo>
+    <award>
+        <funderName>Gordon and Betty Moore Foundation</funderName>
+        <funderIdentifier>https://dx.doi.org/10.13039/100000936</funderIdentifier>
+        <awardNumber>5124</awardNumber>
+        <title>State of Alaska’s Salmon and People</title>
+        <funderLogo/>
+    </award>
+    <award>
+        <funderName>Gordon and Betty Moore Foundation</funderName>
+        <funderIdentifier>https://dx.doi.org/10.13039/100000936</funderIdentifier>
+        <awardNumber>5451</awardNumber>
+        <title>Data Task Forces for Better Synthesis Studies</title>
+        <funderLogo/>
+    </award>
+    <literatureCited>
+        <bibtex>
+            <![CDATA[
+@misc{total_abundance, title={Estimate of total Alaskan salmon abundance by region, 2000-2015}, url={https://doi.org/10.5063/F1S46Q72}, DOI={10.5063/f1s46q72}, publisher={KNB Data Repository}, author={Clark, S. Jeanette and Thiessen-Bock, Robyn}, year={2019} } @misc{hatchery_returns, title={Annual salmon hatchery releases from the Hatchery Release Report Form, Alaska, 1952-2017}, url={https://doi.org/10.5063/F12N50JP}, DOI={10.5063/f12n50jp}, publisher={KNB Data Repository}, author={{Alaska Department of Fish and Game Mark Tag And Age Laboratory} and Jovanovich, Madeline and O’Dean, Emily}, year={2019} } @misc{harvest_all_sectors,title={Harvest of Salmon across Commercial, Subsistence, Personal Use, and Sport Fish sectors, Alaska, 1995-2016}, url={https://doi.org/10.5063/F1HM56Q3}, DOI={10.5063/f1hm56q3}, publisher={KNB Data Repository}, author={Clark, S. Jeanette and {Alaska Department of Fish And Game Division Of Commercial Fisheries}}, year={2019} } @misc{subsistence_salmon, title={Subsistence and personal use harvest of salmon in Alaska, 1960-2012}, url={https://doi.org/10.5063/F18P5XTN}, DOI={10.5063/F18P5XTN}, publisher={KNB Data Repository}, author={{Alaska Department of Fish and Game Subsistence Division}}, year={2019} } @misc{earnings, title={Regional commercial salmon permit earnings by residency status, Alaska, 1975-2016}, url={https://doi.org/10.5063/F1WW7FZ2}, DOI={10.5063/f1ww7fz2}, publisher={KNB Data Repository}, author={Schwoerer, Tobias}, year={2019} } @misc{census, title={Alaskan Population Demographic Information from Decennial and American Community Survey Census Data, 1940-2016}, url={https://doi.org/10.5063/F1XW4H3V}, DOI={10.5063/f1xw4h3v}, publisher={KNB Data Repository}, author={{United States Census Bureau} and Bachtel, Juliet and Randazzo, John and Gavenus, Erika}, year={2019} } @misc{temperature, title={Historic air temperatures in Alaska for 1901-2015, with spatial subsetting by region}, url={https://doi.org/10.5063/F1MK6B60}, DOI={10.5063/f1mk6b60}, publisher={KNB Data Repository}, author={Kibele, Jared and Jones, Leslie}, year={2019} } @misc{subsistence_csis, title={Subsistence harvest information by region, community, resource, and year, 1964-2015}, url={https://doi.org/10.5063/F1S75DNC}, DOI={10.5063/f1s75dnc}, publisher={KNB Data Repository}, author={{Alaska Department of Fish and Game Subsistence Division}}, year={2019} } @misc{elevation, title={Elevation per SASAP region and Hydrologic Unit (HUC8) boundary for Alaskan watersheds}, url={https://doi.org/10.5063/F1D798QQ}, DOI={10.5063/F1D798QQ}, publisher={KNB Data Repository}, author={Kibele, Jared and Carlson, Rachel and Johnson, Marie}, year={2019} } @misc{land_cover, title={Percent landcover per SASAP region and Hydrologic Unit (HUC8) boundary for Alaskan watersheds}, url={https://doi.org/doi:10.5063/F18G8J1V}, DOI={doi:10.5063/F18G8J1V}, publisher={KNB Data Repository}, author={Kibele, Jared and Carlson, Rachel}, year={2019} } @misc{mines, title={Mines in Alaska with subsetting by watershed and SASAP region, 2010 to 2016}, url={https://doi.org/10.5063/F1445JSW}, DOI={10.5063/F1445JSW}, publisher={KNB Data Repository}, author={Kibele, Jared and Jones, Leslie}, year={2019} } @misc{culverts, title={Regional fish passage assessment, Alaska, 2000-2017}, url={https://doi.org/10.5063/F1X928KM}, DOI={10.5063/F1X928KM}, publisher={KNB Data Repository}, author={Kibele, Jared and Jones, Leslie and Johnson, Marie}, year={2019} } @misc{awc, title={Anadromous Waters Catalog (AWC) of Alaska, 2018}, url={https://doi.org/10.5063/F1057D7X}, DOI={10.5063/F1057D7X}, publisher={KNB Data Repository}, author={{Alaska Department of Fish and Game} and Jones, Leslie}, year={2019} } @misc{community_permits, title={Commercial Fisheries Entry Commision CFEC Public Permit Holders by Community of Residence 1975-2016}, url={https://doi.org/10.5063/F189144V}, DOI={10.5063/F189144V}, publisher={KNB Data Repository}, author={{Alaska Department of Fish and Game, Commercial Fisheries Entry Commission}}, year={2019} } @article{schoen, author = {Schoen, Erik and S. Wipfli, Mark and Trammell, E and J. Rinella, Daniel and L. Floyd, Angelica and Grunblatt, Jesse and McCarthy, Molly and Meyer, Benjamin and Morton, John and E. Powell, James and Prakash, Anupma and Reimer, Matthew and Stuefer, Svetlana and Toniolo, Horacio and M. Wells, Brett and D. W. Witmer, Frank}, year = {2017}, month = {10}, pages = {538-553}, title = {Future of Pacific Salmon in the Face of Environmental Change: Lessons from One of the World's Remaining Productive Salmon Regions}, volume = {42}, journal = {Fisheries}, doi = {10.1080/03632415.2017.1374251} }
+]]>
+        </bibtex>
+    </literatureCited>
+    <filterGroup>
+        <label>Geography</label>
+        <description>The specific site that the data relate to</description>
+        <icon>globe</icon>
+        <textFilter>
+            <field>siteText</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Waterbody</label>
+            <placeholder>Kenai River</placeholder>
+            <icon>anchor</icon>
+            <description>Rivers, river systems, or other waterbodies</description>
+        </textFilter>
+        <textFilter>
+            <field>siteText</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Community</label>
+            <placeholder>Bethel</placeholder>
+            <icon>home</icon>
+            <description>Community or city</description>
+        </textFilter>
+        <choiceFilter>
+            <field>siteText</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>SASAP Region</label>
+            <icon>map-marker</icon>
+            <description>State of Alaska's Salmon and People region</description>
+            <choice>
+                <label>Alaska Peninsula and Aleutian Islands</label>
+                <value>Alaska Peninsula and Aleutian Islands</value>
+            </choice>
+            <choice>
+                <label>Arctic</label>
+                <value>Arctic</value>
+            </choice>
+            <choice>
+                <label>Bristol Bay</label>
+                <value>Bristol Bay</value>
+            </choice>
+            <choice>
+                <label>Chignik</label>
+                <value>Chignik</value>
+            </choice>
+            <choice>
+                <label>Cook Inlet</label>
+                <value>Cook Inlet</value>
+            </choice>
+            <choice>
+                <label>Copper River</label>
+                <value>Copper River</value>
+            </choice>
+            <choice>
+                <label>Kodiak</label>
+                <value>Kodiak</value>
+            </choice>
+            <choice>
+                <label>Kotzebue</label>
+                <value>Kotzebue</value>
+            </choice>
+            <choice>
+                <label>Kuskokwim</label>
+                <value>Kuskokwim</value>
+            </choice>
+            <choice>
+                <label>Prince William Sound</label>
+                <value>Prince William Sound</value>
+            </choice>
+            <choice>
+                <label>Norton Sound</label>
+                <value>Norton Sound</value>
+            </choice>
+            <choice>
+                <label>Southeast</label>
+                <value>Southeast</value>
+            </choice>
+            <choice>
+                <label>Yukon</label>
+                <value>Yukon</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Species</label>
+        <description>Species of salmon, common names</description>
+        <icon>sitemap</icon>
+        <choiceFilter>
+            <field>species</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Species</label>
+            <description>Salmon species, by common name</description>
+            <choice>
+                <label>Sockeye</label>
+                <value>Oncorhynchus nerka</value>
+            </choice>
+            <choice>
+                <label>Chinook</label>
+                <value>Oncorhynchus tshawytscha</value>
+            </choice>
+            <choice>
+                <label>Coho</label>
+                <value>Oncorhynchus kisutch</value>
+            </choice>
+            <choice>
+                <label>Chum</label>
+                <value>Oncorhynchus keta</value>
+            </choice>
+            <choice>
+                <label>Pink</label>
+                <value>Oncorhynchus gorbuscha</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Theme</label>
+        <description>Topic covered by the data</description>
+        <icon>book</icon>
+        <choiceFilter>
+            <field>keywords</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Fish productivity</label>
+            <placeholder>Choose a topic</placeholder>
+            <icon>sitemap</icon>
+            <description>
+                Data related to measuring salmon productivity and abundance
+            </description>
+            <choice>
+                <label>Escapement</label>
+                <value>escapement</value>
+            </choice>
+            <choice>
+                <label>Age, sex, length</label>
+                <value>age, sex, length</value>
+            </choice>
+            <choice>
+                <label>Brood table</label>
+                <value>brood table</value>
+            </choice>
+            <choice>
+                <label>Ocean distribution</label>
+                <value>ocean distribution</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+        <choiceFilter>
+            <field>keywords</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Habitat</label>
+            <placeholder>Choose a topic</placeholder>
+            <icon>leaf</icon>
+            <description>Data related to salmon habitat</description>
+            <choice>
+                <label>Land use</label>
+                <value>land use</value>
+            </choice>
+            <choice>
+                <label>Temperature</label>
+                <value>temperature</value>
+            </choice>
+            <choice>
+                <label>Precipitation</label>
+                <value>precipitation</value>
+            </choice>
+            <choice>
+                <label>Watershed characteristics</label>
+                <value>watershed characteristics</value>
+            </choice>
+            <choice>
+                <label>Stream characteristics</label>
+                <value>stream characteristics</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+        <choiceFilter>
+            <field>keywords</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Harvest and management</label>
+            <placeholder>Choose a topic</placeholder>
+            <icon>file</icon>
+            <description>
+                Data about salmon harvest, governance, and hatcheries
+            </description>
+            <choice>
+                <label>Harvest</label>
+                <value>harvest</value>
+            </choice>
+            <choice>
+                <label>Governance</label>
+                <value>governance</value>
+            </choice>
+            <choice>
+                <label>Hatcheries</label>
+                <value>hatcheries</value>
+            </choice>
+            <choice>
+                <label>Commercial fishing</label>
+                <value>commercial fishing</value>
+            </choice>
+            <choice>
+                <label>Subsistence and personal use fishing</label>
+                <value>subsistence and personal use fishing</value>
+            </choice>
+            <choice>
+                <label>Sport fishing</label>
+                <value>sport fishing</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+        <choiceFilter>
+            <field>keywords</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Human dimensions</label>
+            <placeholder>Choose a topic</placeholder>
+            <icon>group</icon>
+            <description>
+                Data that incorporate surveys, census, demographic, or economic data
+            </description>
+            <choice>
+                <label>Surveys</label>
+                <value>survey</value>
+            </choice>
+            <choice>
+                <label>Census and Demographic</label>
+                <value>census and demographic</value>
+            </choice>
+            <choice>
+                <label>Economic</label>
+                <value>economic</value>
+            </choice>
+            <choice>
+                <label>Places</label>
+                <value>places</value>
+            </choice>
+        </choiceFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Featured</label>
+        <description>Datasets featured in SASAP academic output</description>
+        <icon>star</icon>
+        <toggleFilter>
+            <field>keywords</field>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Featured</label>
+            <description>View only featured datasets</description>
+        </toggleFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>People and Organizations</label>
+        <description>
+            The people, organization, or working group attributed with creating or using the data
+        </description>
+        <icon>group</icon>
+        <choiceFilter>
+            <field>origin</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Organization</label>
+            <icon>building</icon>
+            <description>Organization that provided the data</description>
+            <choice>
+                <label>
+                    Alaska Department of Commerce, Community, and Economic Development
+                </label>
+                <value>
+                    Alaska Department of Commerce, Community, and Economic Development
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game (all departments)
+                </label>
+                <value>Alaska Department of Fish and Game</value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Commercial Fisheries Entry Commission
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Commercial Fisheries Entry Commission
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Arctic-Yukon-Kuskokwim Region
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Arctic-Yukon-Kuskokwim Region
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Central Region
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Central Region
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Southeast Region
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Commercial Fisheries, Southeast Region
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Habitat
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Habitat
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Sport Fish
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Sport Fish
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Division of Subsistence
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Division of Subsistence
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Fish and Game, Mark, Tag and Age Laboratory
+                </label>
+                <value>
+                    Alaska Department of Fish and Game, Mark, Tag and Age Laboratory
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Labor and Workforce Development
+                </label>
+                <value>
+                    Alaska Department of Labor and Workforce Development
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Natural Resources, Support Services Division, Information Resource Management
+                </label>
+                <value>
+                    Alaska Department of Natural Resources, Support Services Division, Information Resource Management
+                </value>
+            </choice>
+            <choice>
+                <label>
+                    Alaska Department of Public Safety, Division of Alaska Wildlife Troopers
+                </label>
+                <value>
+                    Alaska Department of Public Safety, Division of Alaska Wildlife Troopers
+                </value>
+            </choice>
+            <choice>
+                <label>Alaska Division of Legislative Finance</label>
+                <value>Alaska Division of Legislative Finance</value>
+            </choice>
+            <choice>
+                <label>Cook Inletkeeper</label>
+                <value>Cook Inletkeeper</value>
+            </choice>
+            <choice>
+                <label>National Historic Geographic Information System</label>
+                <value>National Historic Geographic Information System</value>
+            </choice>
+            <choice>
+                <label>National Park Service</label>
+                <value>National Park Service</value>
+            </choice>
+            <choice>
+                <label>North Pacific Anadromous Fish Commission</label>
+                <value>North Pacific Anadromous Fish Commission</value>
+            </choice>
+            <choice>
+                <label>Orutsararmiut Traditional Native Council</label>
+                <value>Orutsararmiut Traditional Native Council</value>
+            </choice>
+            <choice>
+                <label>Southeast Alaska Long-term Monitoring Network</label>
+                <value>Southeast Alaska Long-term Monitoring Network</value>
+            </choice>
+            <choice>
+                <label>United States Census Bureau</label>
+                <value>United States Census Bureau</value>
+            </choice>
+            <choice>
+                <label>United States Fish and Wildlife Service</label>
+                <value>United States Fish and Wildlife Service</value>
+            </choice>
+            <choice>
+                <label>United States Geological Survey</label>
+                <value>United States Geological Survey</value>
+            </choice>
+            <choice>
+                <label>Washington Department of Fish and Wildlife</label>
+                <value>Washington Department of Fish and Wildlife</value>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+        <textFilter>
+            <field>origin</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Person</label>
+            <icon>user</icon>
+            <description>The people who created or provided the data</description>
+        </textFilter>
+        <choiceFilter>
+            <field>keywords</field>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Working group</label>
+            <icon>group</icon>
+            <description>
+                The working group who created, compiled, or used the data
+            </description>
+            <choice>
+                <label>Biophysical</label>
+                <value>biophysical</value>
+            </choice>
+            <choice>
+                <label>Sociocultural</label>
+                <value>sociocultural</value>
+            </choice>
+            <choice>
+                <label>Economic</label>
+                <value>economic</value>
+            </choice>
+            <choice>
+                <label>Governance</label>
+                <value>governance</value>
+            </choice>
+            <choice>
+                <label>Salmon size</label>
+                <value>salmon size</value>
+            </choice>
+            <choice>
+                <label>Ocean climate</label>
+                <value>ocean climate</value>
+            </choice>
+            <choice>
+                <label>Community monitoring</label>
+                <value>community monitoring</value>
+            </choice>
+            <choice>
+                <label>Kenai lowlands</label>
+                <value>kenai lowlands</value>
+            </choice>
+            <choice>
+                <label>Well being</label>
+                <value>well being</value>
+            </choice>
+        </choiceFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Year</label>
+        <description>Year the data pertain to or year of publication</description>
+        <icon>calendar</icon>
+        <dateFilter>
+            <field>datePublished</field>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Year of publication</label>
+            <min>2015</min>
+            <max>2018</max>
+        </dateFilter>
+        <dateFilter>
+            <field>beginDate</field>
+            <field>endDate</field>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>Year of data coverage</label>
+            <min>1882</min>
+            <max>2018</max>
+        </dateFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Identifier</label>
+        <description>unique ID of data package or object</description>
+        <icon>bullseye</icon>
+        <textFilter>
+            <field>id</field>
+            <field>documents</field>
+            <field>resourceMap</field>
+            <operator>OR</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>DOI or ID</label>
+            <placeholder>doi:10.5063/F18P5XTN</placeholder>
+            <description>unique ID of data package or object</description>
+        </textFilter>
+        <textFilter>
+            <field>text</field>
+            <operator>AND</operator>
+            <matchSubstring>true</matchSubstring>
+            <label>File name</label>
+            <placeholder>Regions_Elevation.csv</placeholder>
+            <description>File name of an object</description>
+        </textFilter>
+    </filterGroup>
+    <option>
+        <optionName>primaryColor</optionName>
+        <optionValue>#404B67</optionValue>
+    </option>
+    <option>
+        <optionName>secondaryColor</optionName>
+        <optionValue>#79A3C3</optionValue>
+    </option>
+    <option>
+        <optionName>accentColor</optionName>
+        <optionValue>#EB5638</optionValue>
+    </option>
+    <option>
+        <optionName>mapZoomLevel</optionName>
+        <optionValue>3</optionValue>
+    </option>
+    <option>
+        <optionName>mapCenterLatitude</optionName>
+        <optionValue>63.217889</optionValue>
+    </option>
+    <option>
+        <optionName>mapCenterLongitude</optionName>
+        <optionValue>-156.844462</optionValue>
+    </option>
+    <option>
+        <optionName>mapShapeHue</optionName>
+        <optionValue>10</optionValue>
+    </option>
+    <!--
+     <acknowledgmentsLogo>
+            urn%3Auuid%3A40a35ab7-d468-467d-b420-8191763e25c2 NCEAS long
+        </acknowledgmentsLogo>
+    -->
+    <!--
+     <acknowledgmentsLogo>
+            urn%3Auuid%3A2276eea8-28d8-4ae1-a406-5acf66c0689f   UAF
+        </acknowledgmentsLogo>
+    -->
+    <!--
+     <acknowledgmentsLogo>
+            urn%3Auuid%3A1ec8d96c-d36b-455b-9a45-4b752f5ce49b  Center for salmon and society
+        </acknowledgmentsLogo>
+    -->
+    <!--  ====== Geography Filter Group ======  -->
+    <!--  ====== Species Filter Group ======  -->
+    <!--  ====== Theme Filter Group ======  -->
+    <!--  ====== Featured Filter Group ======  -->
+    <!--
+     ====== Creator/Organization/Working Group Filter Group ======
+    -->
+    <!--  ====== Year Filter Group ======  -->
+    <!--  ====== Identifier Filter Group ======  -->
+    <!--  ====== Display options ======  -->
+    <!--  TODO: choose branding colours  -->
+</proj:project>
