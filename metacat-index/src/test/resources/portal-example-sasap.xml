@@ -9,7 +9,7 @@
             <field>isPartOf</field>
             <value>urn:uuid:7c959e15-d309-4850-91e8-399c0e862893</value>
             <operator>AND</operator>
-            <matchSubstring>true</matchSubstring>
+            <matchSubstring>false</matchSubstring>
             <label>Datasets added manually</label>
         </filter>
         <filter>
@@ -22,7 +22,8 @@
         <dateFilter>
             <field>datePublished</field>
             <field>dateUploaded</field>
-            <value>1919-01-01T00:00:00Z TO 2019-12-31T00:00:00Z</value>
+            <min>1919-01-01T00:00:00Z</min>
+            <max>2019-12-31T00:00:00Z</max>
             <operator>AND</operator>
             <label>Publish Year</label>
         </dateFilter>
@@ -30,7 +31,7 @@
             <field>documents</field>
             <value>*</value>
             <operator>AND</operator>
-            <matchSubstring>true</matchSubstring>
+            <matchSubstring>false</matchSubstring>
             <label>Show only results with data</label>
         </filter>
     </definition>

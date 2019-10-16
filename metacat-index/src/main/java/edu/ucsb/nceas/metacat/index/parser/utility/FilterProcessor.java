@@ -1,7 +1,7 @@
 package edu.ucsb.nceas.metacat.index.parser.utility;
 
 /**
- *  Copyright: 2013 Regents of the University of California and the
+ *  Copyright: 2019 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
  * This program is free software; you can redistribute it and/or modify
@@ -54,10 +54,17 @@ public class FilterProcessor {
     private String template;
     private String defaults;
     private HashMap<String, String> defaultValues = new HashMap<String, String>();
+    private final String DEFAULT_OPERATOR = "AND";
 
     public FilterProcessor() {
     }
 
+    /**
+     *
+     * @param node the XML node that the filter will be applied to
+     * @return the query term produced by this filter
+     * @throws XPathExpressionException
+     */
     public String getFilterValue(Node node) throws XPathExpressionException {
 
         //System.out.println("FilterProcessor.getFilterValues");
@@ -102,7 +109,7 @@ public class FilterProcessor {
             String thisFilterValue = null;
             // Assume we aren't going to find another 'concatenated' leaf value
             moreTemplates = false;
-            // Loop through each leaf bean that may have the corresponging element in the XML
+            // Loop through each leaf bean that may have the corresponding element in the XML
             for (LeafElement leafElement : getLeafs()) {
                 String leafName = leafElement.getName();
                 allLeafNames.add(leafName);
@@ -155,6 +162,9 @@ public class FilterProcessor {
                 }
             }
 
+            // Multiple templates may be defined in the Spring context file, so choose which one matches the
+            // XML element. The first one that matches is used, so order of the templates in the context file
+            // is important.
             thisFilterValue = selectTemplate(leafNames, allLeafNames);
 
             // Now apply the leaf values for the leaves that were present
@@ -181,17 +191,25 @@ public class FilterProcessor {
                 thisFilterValue = "-" + thisFilterValue;
             }
 
-            // Are multiple versions of this filter being made?
+            // Are multiple versions of this filter being made, i.e. different 'name', same 'value'
+            // Example:
+            //         <dateFilter>
+            //            <field>dateUploaded</field>
+            //            <field>beginDate</field>
+            //            <min>1800-01-01T00:00:00Z</min>
+            //            <max>2009-01-01T00:00:00Z</max>
+            //        </dateFilter>
             if(nTemplate > 1) {
                 String operator = null;
-                if(leafValues.containsKey("operator"))
+                if(leafValues.containsKey("operator")) {
                     operator = leafValues.get("operator");
-
-                if(operator == null) {
-                    filterValue = filterValue + " " + thisFilterValue;
                 } else {
-                    filterValue = filterValue + " " + operator + " " + thisFilterValue;
+                    // If an operator wasn't defined for this filter, we have to use a default,
+                    // otherwise the query that is build will be syntactilly invalid.
+                    operator = DEFAULT_OPERATOR;
                 }
+
+                filterValue = filterValue + " " + operator + " " + thisFilterValue;
             } else {
                 filterValue = thisFilterValue;
             }
@@ -212,6 +230,17 @@ public class FilterProcessor {
         return filterValue;
     }
 
+    /**
+     *
+     * <p>
+     * Templates are used to convert XML elements, attributes and values into the form defined by
+     * the template.
+     * </p>
+     * <p>The 'leaf' values for a filter are compared to the tokens in the template to find a match</p>
+     * @param leafNames - XML 'leaf' elements available to the filter
+     * @param allLeafNames - all possible leaf name values
+     * @return
+     */
     private String selectTemplate(Set<String> leafNames, Set<String> allLeafNames)  {
         String selectedTemplate = null;
 
@@ -273,6 +302,14 @@ public class FilterProcessor {
         return selectedTemplate;
     }
 
+    /**
+     *
+     * Fill in the template with the appropriate name and value
+     * @param name the template name, i.e. 'name:value'
+     * @param value the template value
+     * @param filterValue the resulting filter value after the name and value have been substituted in
+     * @return
+     */
     private String applyTemplate(String name, String value, String filterValue) {
         HashMap<String, String> thisMap;
         Pattern pattern;
@@ -283,6 +320,14 @@ public class FilterProcessor {
         return filterValue;
     }
 
+    /**
+     *
+     * Apply one change to the template
+     * @param name the filter name
+     * @param value the value element of the filter
+     * @param filterValue the current value of the resulting filter
+     * @return the filter with the item filled in
+     */
     private String applyItem(String name, String value, String filterValue) {
 
        filterValue = filterValue.replace(name, value);

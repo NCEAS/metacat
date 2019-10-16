@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *  Copyright: 2013 Regents of the University of California and the
+ *  Copyright: 2019 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
  * This program is free software; you can redistribute it and/or modify

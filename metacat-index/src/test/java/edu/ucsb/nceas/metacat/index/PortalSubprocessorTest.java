@@ -20,7 +20,7 @@ import static org.junit.Assert.assertTrue;
 public class PortalSubprocessorTest {
 
     /**
-     * Attempt to parse a 'portal' document using the indexer. See 'application-context-portals.xml'
+     * Attempt to parse a 'portal' document using the indexer PortalSubProcessor. See 'application-context-portals.xml'
      * for details on the indexer beans that are configured for parsing these type of documents.
      * @throws Exception something bad happened
      */
@@ -28,17 +28,23 @@ public class PortalSubprocessorTest {
     public void testProcessDocument() throws Exception {
         String id = "urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i";
 
+        // Three different portal documents will be processed
         ArrayList<String> portalFiles = new ArrayList<String>();
+        portalFiles.add("src/test/resources/collection-example.xml");
         portalFiles.add("src/test/resources/portal-example-full.xml");
         portalFiles.add("src/test/resources/portal-example-seriesId.xml");
         portalFiles.add("src/test/resources/portal-example-sasap.xml");
 
+        // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
+        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-full.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-seriesId.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-sasap.txt");
 
+        // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
+        portalNames.add("My saved search");
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
         portalNames.add("Lauren's test project - updated");
@@ -50,6 +56,8 @@ public class PortalSubprocessorTest {
             SolrDoc indexDocument = new SolrDoc(sysSolrFields);
             Map<String, SolrDoc> docs = new HashMap<String, SolrDoc>();
             docs.put(id, indexDocument);
+
+            // Process the document, creating a Solr document from the input XML document
             IDocumentSubprocessor processor = getPortalSubprocessor();
 
             String queryResult = null;
