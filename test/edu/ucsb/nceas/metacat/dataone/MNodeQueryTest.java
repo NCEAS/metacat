@@ -1014,7 +1014,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         //assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>"));
-        assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid.getValue() + "</str></arr>"));
+        //assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains(guid.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
