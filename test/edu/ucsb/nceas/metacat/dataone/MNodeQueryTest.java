@@ -901,16 +901,19 @@ public class MNodeQueryTest extends D1NodeServiceTest {
      * Test upload/query a package with the hasPart/isPartOf relationship
      */
     public void testPackageWithParts() throws Exception {
-        //insert data
+        //insert a collection object with series id
         Session session = getTestSession();
         Identifier guid = new Identifier();
-        guid.setValue("testPackageWithParts-data." + System.currentTimeMillis());
-        System.out.println("the data file id is ==== "+guid.getValue());
+        guid.setValue("testPackageWithParts-collection." + System.currentTimeMillis());
+        System.out.println("the collection file id is ==== "+guid.getValue());
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        Identifier seriesId = new Identifier();
+        seriesId.setValue("testPackageWithParts-collection-series." + System.currentTimeMillis());
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setSeriesId(seriesId);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
-        //insert metadata
+        //insert a metadata object
         Identifier guid2 = new Identifier();
         guid2.setValue("testPackageWithParts-metadata." + System.currentTimeMillis());
         System.out.println("the metadata  file id is ==== "+guid2.getValue());
@@ -955,25 +958,23 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         Resource resourceMap = ResourceMapModifier.generateNewOREResource(model, subject, resourceMapId);
         //create an aggregation resource
         Resource aggregation = ResourceFactory.createResource(resourceMap.getURI() + "#aggregation");
-        //create a data object resource
-        Resource data = ResourceMapModifier.generateNewComponent(model, guid.getValue());
+        //create a collection object resource
+        Resource collection = ResourceMapModifier.generateNewComponent(model, seriesId.getValue());//it only works with a series id
         //create a metadata object resource 
         Resource metadata = ResourceMapModifier.generateNewComponent(model, guid2.getValue());
         //add relationships to the model
         Property predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isDescribedBy");
         model.add(model.createStatement(aggregation, predicate, resourceMap));
         predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "aggregates");
-        model.add(model.createStatement(aggregation, predicate, data));
         model.add(model.createStatement(aggregation, predicate, metadata));
         predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isAggregatedBy");
-        model.add(model.createStatement(data, predicate, aggregation));
         model.add(model.createStatement(metadata, predicate, aggregation));
-        model.add(model.createStatement(data, CITO.isDocumentedBy, metadata));
-        model.add(model.createStatement(metadata, CITO.documents, data));
+        model.add(model.createStatement(metadata, CITO.isDocumentedBy, metadata));
+        model.add(model.createStatement(metadata, CITO.documents, metadata));
         predicate = ResourceFactory.createProperty("https://schema.org/", "isPartOf");
-        model.add(model.createStatement(data, predicate, metadata));
+        model.add(model.createStatement(metadata, predicate, collection));
         predicate = ResourceFactory.createProperty("https://schema.org/", "hasPart");
-        model.add(model.createStatement(metadata, predicate, data));
+        model.add(model.createStatement(collection, predicate, metadata));
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         model.write(System.out);
         model.write(output);
@@ -988,18 +989,14 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("hasPart")) && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         System.out.println(resultStr);
-        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + guid2.getValue() + "</str></arr>"));
-        assertTrue(resultStr.contains(guid2.getValue()));
-        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
-        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str></arr>"));
         
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1013,9 +1010,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
-        //assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>"));
-        //assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid.getValue() + "</str></arr>"));
-        assertTrue(resultStr.contains(guid.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
     }
