@@ -113,6 +113,7 @@ import org.junit.Before;
  *This really is a integration test. It should be run in a configured DataONE environment. 
  *It will upload a metadata object to a MN with the replication perference of the running node (the local host). 
  *Couple minutes later, it will check if the running node has the replica.
+ *The test should be run on mn-sandbox-ucsb2.
  * 
  * @author Jing Tao
  *
