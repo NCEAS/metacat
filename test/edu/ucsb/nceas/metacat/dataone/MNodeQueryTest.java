@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
+import java.util.UUID;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -901,21 +901,25 @@ public class MNodeQueryTest extends D1NodeServiceTest {
      * Test upload/query a package with the hasPart/isPartOf relationship
      */
     public void testPackageWithParts() throws Exception {
+        String uuid_prefix = "urn:uuid:";
+        UUID uuid = UUID.randomUUID();
         //insert a collection object with series id
         Session session = getTestSession();
         Identifier guid = new Identifier();
-        guid.setValue("testPackageWithParts-collection." + System.currentTimeMillis());
+        guid.setValue(uuid_prefix + uuid.toString());
         System.out.println("the collection file id is ==== "+guid.getValue());
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         Identifier seriesId = new Identifier();
-        seriesId.setValue("testPackageWithParts-collection-series." + System.currentTimeMillis());
+        uuid = UUID.randomUUID();
+        seriesId.setValue(uuid_prefix + uuid.toString());
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setSeriesId(seriesId);
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         
         //insert a metadata object
         Identifier guid2 = new Identifier();
-        guid2.setValue("testPackageWithParts-metadata." + System.currentTimeMillis());
+        uuid = UUID.randomUUID();
+        guid2.setValue(uuid_prefix + uuid.toString());
         System.out.println("the metadata  file id is ==== "+guid2.getValue());
         InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
@@ -927,7 +931,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
         //Make sure both data and metadata objects have been indexed
-        String query = "q=id:"+guid.getValue();
+        String query = "q=id:" +  "\"" + guid.getValue()  + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
         int account = 0;
@@ -937,7 +941,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        query = "q=id:"+guid2.getValue();
+        query = "q=id:" + "\""+ guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
@@ -950,6 +954,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         
         //generate the resource map with the documents/documentedBy and isPartOf/hasPart relationships.
         Identifier resourceMapId = new Identifier();
+        uuid = UUID.randomUUID();
         resourceMapId.setValue("testPackageWithParts-resourceMap." + System.currentTimeMillis());
         Subject subject = new Subject();
         subject.setValue("Jhon Smith");
@@ -985,7 +990,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         sysmeta3.setFormatId(formatId3);
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
         
-        query = "q=id:"+guid.getValue();
+        query = "q=id:" + "\"" + guid.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
@@ -998,7 +1003,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str></arr>"));
         
-        query = "q=id:"+guid2.getValue();
+        query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
