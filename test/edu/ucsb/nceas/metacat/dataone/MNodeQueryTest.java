@@ -74,7 +74,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "test/example-portal.xml";
-    private int tryAcccounts = 10;
+    private int tryAcccounts = 20;
     
     private static final String collectionResult = "<str name=\"collectionQuery\">(((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA)))</str>";
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
@@ -961,7 +961,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         //generate the resource map with the documents/documentedBy and isPartOf/hasPart relationships.
         Identifier resourceMapId = new Identifier();
         uuid = UUID.randomUUID();
-        resourceMapId.setValue("testPackageWithParts-resourceMap." + System.currentTimeMillis());
+        resourceMapId.setValue("testPackageWithParts_resourceMap_" + uuid_prefix + uuid.toString());
         Subject subject = new Subject();
         subject.setValue("Jhon Smith");
         Model model = ModelFactory.createDefaultModel();
