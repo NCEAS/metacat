@@ -903,18 +903,24 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     public void testPackageWithParts() throws Exception {
         String uuid_prefix = "urn:uuid:";
         UUID uuid = UUID.randomUUID();
-        //insert a collection object with series id
+        //insert a portal object with series id
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue(uuid_prefix + uuid.toString());
         System.out.println("the collection file id is ==== "+guid.getValue());
-        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        InputStream object = new FileInputStream(portalFilePath);
         Identifier seriesId = new Identifier();
         uuid = UUID.randomUUID();
         seriesId.setValue(uuid_prefix + uuid.toString());
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        InputStream object8 = new FileInputStream(portalFilePath);
         sysmeta.setSeriesId(seriesId);
-        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        ObjectFormatIdentifier formatId4 = new ObjectFormatIdentifier();
+        formatId4.setValue("https://purl.dataone.org/portals-1.0.0");
+        sysmeta.setFormatId(formatId4);
+        MNodeService.getInstance(request).create(session, guid, object8, sysmeta);
+        object8.close();
         
         //insert a metadata object
         Identifier guid2 = new Identifier();
@@ -1002,6 +1008,9 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         }
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str></arr>"));
+        assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
+        assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
+        assertTrue(resultStr.contains(collectionResult));
         
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
