@@ -936,7 +936,22 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
-        //Make sure both data and metadata objects have been indexed
+        //insert another metadata object
+        Identifier guid3 = new Identifier();
+        uuid = UUID.randomUUID();
+        guid3.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the second metadata  file id is ==== "+guid3.getValue());
+        InputStream object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        SystemMetadata sysmeta5 = createSystemMetadata(guid3, session.getSubject(), object5);
+        object5.close();
+        ObjectFormatIdentifier formatId5 = new ObjectFormatIdentifier();
+        formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta5.setFormatId(formatId5);
+        object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        
+        
+        //Make sure both portal and metadata objects have been indexed
         String query = "q=id:" +  "\"" + guid.getValue()  + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
@@ -948,6 +963,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         query = "q=id:" + "\""+ guid2.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:" +  "\"" + guid3.getValue()  + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
@@ -973,19 +998,27 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         Resource collection = ResourceMapModifier.generateNewComponent(model, seriesId.getValue());//it only works with a series id
         //create a metadata object resource 
         Resource metadata = ResourceMapModifier.generateNewComponent(model, guid2.getValue());
+        //create the second metadata object resource 
+        Resource metadata2 = ResourceMapModifier.generateNewComponent(model, guid3.getValue());
         //add relationships to the model
         Property predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isDescribedBy");
         model.add(model.createStatement(aggregation, predicate, resourceMap));
         predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "aggregates");
         model.add(model.createStatement(aggregation, predicate, metadata));
+        model.add(model.createStatement(aggregation, predicate, metadata2));
         predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isAggregatedBy");
         model.add(model.createStatement(metadata, predicate, aggregation));
+        model.add(model.createStatement(metadata2, predicate, aggregation));
         model.add(model.createStatement(metadata, CITO.isDocumentedBy, metadata));
         model.add(model.createStatement(metadata, CITO.documents, metadata));
+        model.add(model.createStatement(metadata2, CITO.isDocumentedBy, metadata2));
+        model.add(model.createStatement(metadata2, CITO.documents, metadata2));
         predicate = ResourceFactory.createProperty("https://schema.org/", "isPartOf");
         model.add(model.createStatement(metadata, predicate, collection));
+        model.add(model.createStatement(metadata2, predicate, collection));
         predicate = ResourceFactory.createProperty("https://schema.org/", "hasPart");
         model.add(model.createStatement(collection, predicate, metadata));
+        model.add(model.createStatement(collection, predicate, metadata2));
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         model.write(System.out);
         model.write(output);
@@ -1007,12 +1040,29 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         System.out.println(resultStr);
-        assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
         
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
