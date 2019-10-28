@@ -224,12 +224,17 @@ public class FilterRootElement {
             }
         }
 
-        // Add the fixed terms
-        if(fixedTerm != null) {
-            if(completeFilterValue != null) {
-                completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
-            } else {
-                completeFilterValue = "(" + fixedTerm + ")";
+        // Don't include the 'fixed' filter if there are no pre or main filters. The fixed filter
+        // is usually something like '(-obsoletedBy:* AND formatType:METADATA)', which will return ALL
+        // unobsoleted metadata pids if there is no pre or main filters to constrain it.
+        if(prefilterValue != null || mainFilterValue != null) {
+            // Add the fixed terms
+            if (fixedTerm != null) {
+                if (completeFilterValue != null) {
+                    completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
+                } else {
+                    completeFilterValue = "(" + fixedTerm + ")";
+                }
             }
         }
 
