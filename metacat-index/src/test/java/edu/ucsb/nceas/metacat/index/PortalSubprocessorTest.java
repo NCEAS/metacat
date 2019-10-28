@@ -34,6 +34,8 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/portal-example-full.xml");
         portalFiles.add("src/test/resources/portal-example-seriesId.xml");
         portalFiles.add("src/test/resources/portal-example-sasap.xml");
+        portalFiles.add("src/test/resources/portal-example-multiple-pids.xml");
+        portalFiles.add("src/test/resources/portal-example-multiple-fields-values.xml");
 
         // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
@@ -41,6 +43,8 @@ public class PortalSubprocessorTest {
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-full.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-seriesId.txt");
         collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-sasap.txt");
+        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-multiple-pids.txt");
+        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-multiple-fields-values.txt");
 
         // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
@@ -48,10 +52,13 @@ public class PortalSubprocessorTest {
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
         portalNames.add("Lauren's test project - updated");
+        portalNames.add("Lauren test 11");
+        portalNames.add("Multiple fields, multiple values");
 
         for(int i=0; i < portalFiles.size(); i++) {
             String collectionQuery = null;
             InputStream is = getPortalDoc(portalFiles.get(i));
+            System.out.println("Processing documment: " + portalFiles.get(i));
             List<SolrElementField> sysSolrFields = new ArrayList<SolrElementField>();
             SolrDoc indexDocument = new SolrDoc(sysSolrFields);
             Map<String, SolrDoc> docs = new HashMap<String, SolrDoc>();
