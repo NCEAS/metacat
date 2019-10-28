@@ -2180,7 +2180,7 @@ public abstract class D1NodeService {
               params.put("qformat", new String[] {format});               
               params.put("docid", new String[] {localId});
               params.put("pid", new String[] {id.getValue()});
-              addParasFromSkinProperties(params, format);//add more params from the skin properties file 
+              addParamsFromSkinProperties(params, format);//add more params from the skin properties file 
               transformer.transformXMLDocument(
                       documentContent , 
                       sourceType, 
@@ -2240,7 +2240,7 @@ public abstract class D1NodeService {
  * @throws ServiceException 
  * @throws PropertyNotFoundException 
    */
-  static void addParasFromSkinProperties(Hashtable<String, String[]> params, String format) throws ServiceException, PropertyNotFoundException {
+  static void addParamsFromSkinProperties(Hashtable<String, String[]> params, String format) throws ServiceException, PropertyNotFoundException {
       SkinPropertyService skinPropService = SkinPropertyService.getInstance(); 
       Vector<String> propertiesNames = skinPropService.getPropertyNamesByGroup(format, "stylesheet.parameters");
       logMetacat.debug("D1NodeService.addParasFromSkinProperties - the names of properties  are " + propertiesNames);

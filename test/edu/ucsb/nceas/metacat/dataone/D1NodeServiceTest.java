@@ -260,7 +260,7 @@ public class D1NodeServiceTest extends MCTestCase {
         SkinPropertyService service = SkinPropertyService.getInstance();
         
         Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-        D1NodeService.addParasFromSkinProperties(params, SKIN_NAME);
+        D1NodeService.addParamsFromSkinProperties(params, SKIN_NAME);
         String[] value = params.get("serverName");
         assertTrue(value[0].equals("https://foo.com"));//real value
         value = params.get("testUser");
