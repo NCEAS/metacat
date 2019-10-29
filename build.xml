@@ -360,6 +360,10 @@
 			value="http://www.xml-cml.org/schema/stmml" />
 		<property name="stmml11namespace"
 			value="http://www.xml-cml.org/schema/stmml-1.1" />
+		<property name="collections1_0_0namespace"
+					value="https://purl.dataone.org/collections-1.0.0" />
+		<property name="portals1_0_0namespace"
+					value="https://purl.dataone.org/portals-1.0.0" />
 		<property name="eml-css" value="eml_xsl.css" />
 		<property name="eml-module.default.css" value="default.css" />
 		<property name="systemidserver" value="" />
@@ -414,6 +418,8 @@
 		<filter token="eml2_2_0namespace" value="${eml2_2_0namespace}" />
 		<filter token="stmmlnamespace" value="${stmmlnamespace}" />
 		<filter token="stmml11namespace" value="${stmml11namespace}" />
+		<filter token="collections1_0_0namespace" value="${collections1_0_0namespace}" />
+		<filter token="portals1_0_0namespace" value="${portals1_0_0namespace}" />
 		<filter token="debugprefix" value="${debugprefix}" />
 
 		<filter token="defaultStage" value="${defaultStage}" />

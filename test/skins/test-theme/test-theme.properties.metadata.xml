@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+
+<metadataConfig>
+	<group>
+		<index>1</index>
+		<name>Skins Configuration</name>
+		<comment>Choose configure the skins that will be available in this instance of MetaCat.</comment> 
+		<description>Skin Configuration Values.</description>
+	</group>
+	
+	<config>
+		<key>registry.show.siteList</key>
+		<label>Show Site List</label>
+		<group>1</group>
+		<index>1</index>
+		<fieldType>checkbox</fieldType>
+		<description>Show the site list in the registry.</description>
+		<helpFile>docs/metacat-properties.html#registry.show.siteList</helpFile>
+	</config>
+
+	<config>
+		<key>registry.show.wgList</key>
+		<label>Show Work Group List</label>
+		<group>1</group>
+		<index>2</index>
+		<fieldType>checkbox</fieldType>
+		<description>Show the work group list in the registry.</description>
+		<helpFile>docs/metacat-properties.html#registry.show.wgList</helpFile>
+	</config>
+
+	<config>
+		<key>registry.show.organization</key>
+		<label>Show Organization List</label>
+		<group>1</group>
+		<index>3</index>
+		<fieldType>checkbox</fieldType>
+		<description>Show the organization in the registry.</description>
+		<helpFile>docs/metacat-properties.html#registry.show.organization</helpFile>
+	</config>
+
+</metadataConfig>

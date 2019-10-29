@@ -1,0 +1,1 @@
+((((isPartOf:urn\:uuid\:7c959e15-d309-4850-91e8-399c0e862893) OR (text:*test* AND (datePublished:[1919-01-01T00:00:00Z TO 2019-12-31T00:00:00Z] AND dateUploaded:[1919-01-01T00:00:00Z TO 2019-12-31T00:00:00Z]) AND documents:*)) AND (-obsoletedBy:* AND formatType:METADATA)))

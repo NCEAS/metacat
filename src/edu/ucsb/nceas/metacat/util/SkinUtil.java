@@ -38,6 +38,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
 public class SkinUtil {
 	
 	private static Logger logMetacat = Logger.getLogger(SkinUtil.class);
+	private static Vector<String> skinNames = null;
 
 	/**
 	 * private constructor - all methods are static so there is no no need to
@@ -69,8 +70,19 @@ public class SkinUtil {
 	 * @return a Vector of Strings holding skin names
 	 */
 	public static Vector<String> getSkinNames() throws PropertyNotFoundException {
-		String skinStringList = PropertyService.getProperty("skin.names");
-		return StringUtil.toVector(skinStringList, ',');
+	    if(skinNames == null || skinNames.isEmpty()) {
+	        String skinStringList = PropertyService.getProperty("skin.names");
+	        skinNames = StringUtil.toVector(skinStringList, ',');
+	    }
+	    return skinNames;
+	}
+	
+	/**
+	 * Set the names of skin. We use this method for testing
+	 * @param names  the name of skins will be set
+	 */
+	public static void setSkinName(Vector<String> names) {
+	    skinNames = names;
 	}
 
 }

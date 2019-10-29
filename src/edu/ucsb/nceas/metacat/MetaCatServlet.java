@@ -434,8 +434,9 @@ public class MetaCatServlet extends HttpServlet {
 	         //Initialize Metacat Handler
             handler = new MetacatHandler(timer);
 
-			handler.set_sitemapScheduled(false);
-			
+			// Turn on sitemaps if appropriate
+			initializeSitemapTask(handler);
+
 			// initialize the plugins
 			MetacatHandlerPluginManager.getInstance();
 			
@@ -1237,11 +1238,6 @@ public class MetaCatServlet extends HttpServlet {
 					out.close();
 				}
 			}
-
-			// Schedule the sitemap generator to run periodically
-			handler.scheduleSitemapGeneration(request);
-
-
 		} catch (PropertyNotFoundException pnfe) {
 			String errorString = "Critical property not found: " + pnfe.getMessage();
 			logMetacat.error("MetaCatServlet.handleGetOrPost - " + errorString);
@@ -1291,5 +1287,19 @@ public class MetaCatServlet extends HttpServlet {
             out.close();
         }
         return readOnly;
-    }
+		}
+		
+		public static void initializeSitemapTask(MetacatHandler handler) {
+			Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+			Boolean sitemap_enabled = false;
+
+			try {
+				sitemap_enabled = Boolean.parseBoolean(PropertyService.getProperty("sitemap.enabled"));
+			} catch (PropertyNotFoundException pnfe) {
+				logMetacat.info("sitemap.enabled property not found so sitemaps are disabled");
+			}
+			
+			// Schedule the sitemap generator to run periodically
+			handler.scheduleSitemapGeneration();
+		}
 }
