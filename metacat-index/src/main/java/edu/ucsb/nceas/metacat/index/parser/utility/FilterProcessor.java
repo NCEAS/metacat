@@ -19,7 +19,6 @@ package edu.ucsb.nceas.metacat.index.parser.utility;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.cn.indexer.parser.utility.LeafElement;
@@ -64,7 +63,7 @@ public class FilterProcessor {
     }
 
     /**
-     *
+     * Convert an XML '<filter>' entry into a Solr query string.
      * @param node the XML node (i.e. a "<filter>" entry in the colleciton document) that the filter will be applied to
      * @return the query term produced by this filter
      * @throws XPathExpressionException
@@ -74,7 +73,6 @@ public class FilterProcessor {
         HashMap<String, ArrayList<String>> leafValues = new HashMap<String, ArrayList<String>>();
 
         log.debug("FilterProcessor.getFilterValues");
-        Map<String, String> leafDelimeters = new HashMap<String, String>();
         // Leaf names that have corresponding, present values in the XML
         Set<String> leafNames = new HashSet<String>();
         // All possible leaf names, every ones that don't appear in the template
@@ -87,9 +85,7 @@ public class FilterProcessor {
         String value = null;
         String completeFilterValue = null;
         name = getName();
-        int nFiltersOut = 1;
 
-        Pattern pattern;
         Boolean excludeCondition = false;
         Boolean matchSubstring = false;
 
@@ -275,11 +271,16 @@ public class FilterProcessor {
      * <p>
      * Templates are used to convert XML elements, attributes and values into the form defined by
      * the template.
+     * <p>
+     *     Several templates may be available for a filter to use. The 'best' template will be selected
+     *     by determining which template can be completely filled in by the values that are provided
+     *     in a given XML document to be processed.
+     * </p>
      * </p>
      * <p>The 'leaf' values for a filter are compared to the tokens in the template to find a match</p>
      * @param leafNames - XML 'leaf' elements available to the filter
      * @param allLeafNames - all possible leaf name values
-     * @return
+     * @return the template string that the filter processor will use.
      */
     private String selectTemplate(Set<String> leafNames, Set<String> allLeafNames)  {
         String selectedTemplate = null;
@@ -292,8 +293,6 @@ public class FilterProcessor {
         if (templateValues.length == 1) {
             return template;
         }
-
-        String tokens;
 
         // Regex to extract all alphanumeric words from a template
         Pattern p = Pattern.compile("[a-zA-Z]+");
@@ -329,30 +328,28 @@ public class FilterProcessor {
             }
             if(matchAll) {
                 selectedTemplate = tval;
-                //log.debug("Selecting template: " + tval);
+                log.debug("Selecting template: " + tval);
                 break;
             }
         }
 
         if(! matchAll) {
             selectedTemplate = templateValues[0];
-            //log.debug("Can't find template match, using template: " + selectedTemplate);
+            log.debug("Can't find template match, using template: " + selectedTemplate);
         }
 
         return selectedTemplate;
     }
 
     /**
-     *
      * Fill in the template with the appropriate name and value
      * @param name the template name, i.e. 'name:value'
      * @param value the template value
      * @param filterValue the resulting filter value after the name and value have been substituted in
-     * @return
+     * @return the filled in template value.
      */
     private String applyTemplate(String name, String value, String filterValue) {
         HashMap<String, String> thisMap;
-        Pattern pattern;
 
         if(value == null || value.isEmpty()) return filterValue;
         filterValue = applyItem(name, value, filterValue);
@@ -361,7 +358,6 @@ public class FilterProcessor {
     }
 
     /**
-     *
      * Apply one change to the template
      * @param name the filter name
      * @param value the value element of the filter
@@ -372,12 +368,10 @@ public class FilterProcessor {
 
        filterValue = filterValue.replace(name, value);
        return filterValue;
-
     }
 
     /**
-     * Add a list of values to a leaf element, checking if the corresponding leaf entry
-     * has any values already.
+     * Add a leaf element value to the hash of leaf values.
      *
      * <p>
      *     The leaf value may be compound, i.e. "keyword--text", so add an entry for each of these
@@ -386,13 +380,12 @@ public class FilterProcessor {
      *
      * @param leafName the name of the leaf, which is the hashmap key
      * @param leafValue a single value to add to the list of values for this entry
-     * @return
+     * @return the hash containing all current leaf values
      */
     private HashMap<String, ArrayList<String>> addLeafValue(HashMap<String, ArrayList<String>> leafValues,
                                                                  String leafName, String leafValue, String delimeter) {
 
         ArrayList<String> currentValues = new ArrayList<String>();
-
         Boolean replace = false;
 
         if(leafValues.containsKey(leafName)) {
@@ -429,11 +422,14 @@ public class FilterProcessor {
     }
 
     /**
-     *
-     * @param leafValues
-     * @param leafName
-     * @param index
-     * @return
+     * Get the 'leaf' values of a filter, which are all the 1st level child elements of the filter.
+     * <p>
+     *     Each leaf (indexed by name) may contain multiple values
+     * </p>
+     * @param leafValues the hash of leaf values
+     * @param leafName the leaf to extract
+     * @param index the index of the leaf values to extract
+     * @return the single leaf value
      */
     private String getLeafValue(HashMap<String, ArrayList<String>>leafValues, String leafName, int index) {
         ArrayList<String> currentValues = leafValues.get(leafName);
@@ -441,6 +437,11 @@ public class FilterProcessor {
         return currentValues.get(index);
     }
 
+    /**
+     * Apply escape characters in order to 'protect' a string
+     * @param value The value to be escaped
+     * @return the escaped value.
+     */
     private String escapeSpecialChars(String value) {
         value = value.replace("%7B", "\\%7B");
         value = value.replace("%7D", "\\%7D");
@@ -456,6 +457,11 @@ public class FilterProcessor {
         return value;
     }
 
+    /**
+     * Surround a value with quotes if it contains multiple tokens.
+     * @param value the value to check and apply quotes to.
+     * @return the quoted (or not quaoted) string
+     */
     private String checkQuoting(String value) {
 
         // Match one or more spaces, reluctantly
@@ -470,6 +476,9 @@ public class FilterProcessor {
         return value;
     }
 
+    /**
+     * Initialize an XPath expression used to find the nodes in a filter.
+     */
     public void initXPathExpressions() {
         // Create XPathFactory object
         XPathFactory xpathFactory = XPathFactory.newInstance();
@@ -486,84 +495,167 @@ public class FilterProcessor {
         }
     }
 
+    /**
+     * Get the name of this filter
+     * @return the name of this filter
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Set the name of this filter
+     * @param name the name of this filter
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Get the XPath used by this filter
+     * @return the XPath used by this filter
+     */
     public String getxPath() {
         return xPath;
     }
 
+    /**
+     * Set the XPath used by this filter
+     * @param xPath the XPath used by this filter
+     */
     public void setxPath(String xPath) {
         this.xPath = xPath;
     }
 
+    /**
+     * Get default filter element values
+     * @return the default values for this filter
+     * @see "application-context-collections.xml"
+     */
     public String getDefaults() {
         return defaults;
     }
 
+    /**
+     * Set default filter element values
+     * @param defaults the filter element defaults
+     */
     public void setDefaults(String defaults) {
         this.defaults = defaults;
     }
 
+    /**
+     * Get the setting that determines if special characters should be escaped in this filter value
+     * @return the setting value
+     * @see "application-context-collections.xml"
+     */
     public Boolean getEscapeSpecialChars() {
         return escapeSpecialChars;
     }
 
+    /**
+     * Set the setting that determines if special characters should be escaped in this filter value
+     * @param escapeSpecialChars
+     */
     public void setEscapeSpecialChars(Boolean escapeSpecialChars) {
         this.escapeSpecialChars = escapeSpecialChars;
     }
 
+    /**
+     * Get the setting that determines if multiple word values are quoted
+     * @return the setting for multiple words being quoted
+     * @see "application-context-collections.xml"
+     */
     public Boolean getQuoteMultipleWords() {
         return quoteMultipleWords;
     }
 
+    /**
+     * Set the setting that determines if multiple word values are quoted
+     * @param quoteMultipleWords
+     */
     public void setQuoteMultipleWords(Boolean quoteMultipleWords) {
         this.quoteMultipleWords = quoteMultipleWords;
     }
 
+    /**
+     * Get the XPath expression used to process this filter
+     * @return the XPath expression used to process this filter
+     */
     public XPathExpression getxPathExpression() {
         return xPathExpression;
     }
 
+    /**
+     * Set the XPath expression used to process this filter
+     * @param xPathExpression
+     */
     public void setxPathExpression(XPathExpression xPathExpression) {
         this.xPathExpression = xPathExpression;
     }
 
+    /**
+     * Get the token delimeter used to separate values
+     * @return the token delimeter used to sepapate values
+     */
     public String getDelimiter() {
         return delimiter;
     }
 
+    /**
+     * Set the token delimeter used to separate values
+     * @param delimiter
+     */
     public void setDelimiter(String delimiter) {
         this.delimiter = delimiter;
     }
 
+    /**
+     * Get the template used by this filter
+     * @return the template used by this filter
+     */
     public String getTemplate() {
         return template;
     }
 
+    /**
+     * Set the template used by this filter
+     * @param template the template used by this filter
+     */
     public void setTemplate(String template) {
         this.template = template;
     }
 
+    /**
+     * Get the string used to match this filter to an application context description
+     * @return the string used to match this filter to an application context description
+     * @see "application-context-collections.xml"*
+     */
     public String getMatchElement() {
         return matchElement;
     }
 
+    /**
+     * Set the string used to match this filter to an application context description
+     * @param matchElement
+     */
     public void setMatchElement(String matchElement) {
         this.matchElement = matchElement;
     }
 
+    /**
+     * Get the leaf (child element) of a filter
+     * @return the leaf (child element) of a filter
+     */
     public List<LeafElement> getLeafs() {
         return leafs;
     }
 
+    /**
+     * Set the leaf (child element) of a filter
+     * @param leafs the leaf (child element) of a filter
+     */
     public void setLeafs(List<LeafElement> leafs) {
         this.leafs = leafs;
     }
 }
-

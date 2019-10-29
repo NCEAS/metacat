@@ -1,7 +1,15 @@
 <por:portal xmlns:por="https://purl.dataone.org/portals-1.0.0">
     <label>laurentest11</label>
-    <name>Lauren test 11</name>
+    <name>Multiple pids</name>
     <definition>
+        <filter>
+            <label>Datasets added manually</label>
+            <field>isPartOf</field>
+            <operator>OR</operator>
+            <exclude>false</exclude>
+            <matchSubstring>false</matchSubstring>
+            <value>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i</value>
+        </filter>
         <filter>
             <field>id</field>
             <operator>OR</operator>

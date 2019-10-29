@@ -49,6 +49,13 @@ public class FilterCommonRootSolrField extends SolrField {
         this.name = name;
     }
 
+    /**
+     *
+     * @param doc
+     * @param identifier
+     * @return
+     * @throws Exception
+     */
     @Override
     public List<SolrElementField> getFields(Document doc, String identifier) throws Exception {
 
@@ -62,15 +69,27 @@ public class FilterCommonRootSolrField extends SolrField {
         return fields;
     }
 
+    /**
+     *
+     * @param xpathObject
+     */
     @Override
     public void initExpression(XPath xpathObject) {
         root.initXPathExpressions(xpathObject);
     }
 
+    /**
+     *
+     * @return
+     */
     public FilterRootElement getRoot() {
         return root;
     }
 
+    /**
+     *
+     * @param root
+     */
     public void setRoot(FilterRootElement root) {
         this.root = root;
     }

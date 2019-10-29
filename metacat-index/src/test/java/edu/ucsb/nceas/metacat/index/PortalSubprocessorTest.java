@@ -17,10 +17,13 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertTrue;
 
+/**
+ *
+ */
 public class PortalSubprocessorTest {
 
     /**
-     * Attempt to parse a 'portal' document using the indexer PortalSubProcessor. See 'application-context-portals.xml'
+     * Attempt to parse example 'portal' documents using the indexer PortalSubProcessor. See 'application-context-portals.xml'
      * for details on the indexer beans that are configured for parsing these type of documents.
      * @throws Exception something bad happened
      */
@@ -30,21 +33,22 @@ public class PortalSubprocessorTest {
 
         // Three different portal documents will be processed
         ArrayList<String> portalFiles = new ArrayList<String>();
-        portalFiles.add("src/test/resources/collection-example.xml");
-        portalFiles.add("src/test/resources/portal-example-full.xml");
-        portalFiles.add("src/test/resources/portal-example-seriesId.xml");
-        portalFiles.add("src/test/resources/portal-example-sasap.xml");
-        portalFiles.add("src/test/resources/portal-example-multiple-pids.xml");
-        portalFiles.add("src/test/resources/portal-example-multiple-fields-values.xml");
-
+        portalFiles.add("src/test/resources/collection/collection-example.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-full.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-seriesId.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-sasap.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-multiple-pids.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-only-pids.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-multiple-fields-values.xml");
         // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example.txt");
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-full.txt");
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-seriesId.txt");
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-sasap.txt");
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-multiple-pids.txt");
-        collectionQueryResultFiles.add("src/test/resources/collectionQuery-result-example-multiple-fields-values.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-full.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-seriesId.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-sasap.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-multiple-pids.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-only-pids.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-multiple-fields-values.txt");
 
         // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
@@ -52,7 +56,8 @@ public class PortalSubprocessorTest {
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
         portalNames.add("Lauren's test project - updated");
-        portalNames.add("Lauren test 11");
+        portalNames.add("Multiple pids");
+        portalNames.add("Only pids");
         portalNames.add("Multiple fields, multiple values");
 
         for(int i=0; i < portalFiles.size(); i++) {
@@ -93,8 +98,11 @@ public class PortalSubprocessorTest {
         }
     }
 
-    /*
-     * Get the document format of the test resource map file
+    /**
+     * Get the document to test with the portal processor
+     * @param filename the filename of the document to test
+     * @return the document to test with the portal subprocessor
+     * @throws Exception
      */
     private InputStream getPortalDoc(String filename) throws Exception{
         File file = new File(filename);
@@ -102,8 +110,10 @@ public class PortalSubprocessorTest {
         return is;
     }
 
-    /*
-     * Get the ResourceMapSubprocessor
+    /**
+     * Search all subprocessors and return the portal subprocessor
+     * @return the portal subprocessor
+     * @throws Exception
      */
     private IDocumentSubprocessor getPortalSubprocessor() throws Exception {
         ScienceMetadataDocumentSubprocessor portalSubprocessor = null;
@@ -111,7 +121,6 @@ public class PortalSubprocessorTest {
         List<IDocumentSubprocessor> processors = solrIndex.getSubprocessors();
         for(IDocumentSubprocessor processor : processors) {
             if(processor.canProcess("https://purl.dataone.org/portals-1.0.0")) {
-                //System.out.println("found processor..." + processor.toString());
                 return processor;
             }
         }
