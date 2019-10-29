@@ -1040,7 +1040,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         System.out.println(resultStr);
-        assertTrue(resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>"));
+        assertTrue((resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>")) ||
+                   (resultStr.contains("<arr name=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue() + "</str></arr>")));
         assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
