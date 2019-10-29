@@ -61,6 +61,7 @@ public class FilterRootElement {
     }
 
     /**
+     * Get the document processor values for the document or node
      *
      * @param docOrNode - An XML document root or sub-node of a DataONE collection document
      * @return the value of the query derived from the document

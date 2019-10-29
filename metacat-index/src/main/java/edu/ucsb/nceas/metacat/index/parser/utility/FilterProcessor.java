@@ -30,14 +30,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Used by FilterRootElement.
  *
  * For each matching 'filter' element in a document, build a query term from it. These individual
  * query terms will assembled into a complete query by calling routine.
- *
- * Each filter type can have a set of leaf elements that will be used to build the search term
- * contributed by that filter to the entire query being assembled.
- * Each filter can have parameters defined that control how the query is built.
+ * <p>
+ *   Each filter type can have a set of leaf elements that will be used to build the search term
+ *   contributed by that filter to the entire query being assembled.
+ *   Each filter can have parameters defined that control how the query is built.
+ * </p>
  *
  * @author slaughter
  *
@@ -268,7 +268,6 @@ public class FilterProcessor {
 
     /**
      *
-     * <p>
      * Templates are used to convert XML elements, attributes and values into the form defined by
      * the template.
      * <p>
@@ -276,8 +275,9 @@ public class FilterProcessor {
      *     by determining which template can be completely filled in by the values that are provided
      *     in a given XML document to be processed.
      * </p>
+     * <p>
+     *     The 'leaf' values for a filter are compared to the tokens in the template to find a match
      * </p>
-     * <p>The 'leaf' values for a filter are compared to the tokens in the template to find a match</p>
      * @param leafNames - XML 'leaf' elements available to the filter
      * @param allLeafNames - all possible leaf name values
      * @return the template string that the filter processor will use.
@@ -372,12 +372,10 @@ public class FilterProcessor {
 
     /**
      * Add a leaf element value to the hash of leaf values.
-     *
      * <p>
      *     The leaf value may be compound, i.e. "keyword--text", so add an entry for each of these
      *     compound values.
      * </p>
-     *
      * @param leafName the name of the leaf, which is the hashmap key
      * @param leafValue a single value to add to the list of values for this entry
      * @return the hash containing all current leaf values
