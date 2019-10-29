@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.IOUtils;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
@@ -92,7 +93,17 @@ public class OrcidServiceTest extends D1NodeServiceTest {
         object = new FileInputStream(new File(path));
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         object.close();
-        Thread.sleep(2000);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int times = 0;
+        int tryAcccounts = 20;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && times <= tryAcccounts) {
+            Thread.sleep(1000);
+            times++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         
         
 		int count = 0;
