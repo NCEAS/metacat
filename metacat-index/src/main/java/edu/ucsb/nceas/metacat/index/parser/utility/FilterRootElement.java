@@ -19,7 +19,9 @@ package edu.ucsb.nceas.metacat.index.parser.utility;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -59,6 +61,7 @@ public class FilterRootElement {
     }
 
     /**
+     * Get the document processor values for the document or node
      *
      * @param docOrNode - An XML document root or sub-node of a DataONE collection document
      * @return the value of the query derived from the document
