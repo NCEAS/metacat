@@ -67,6 +67,10 @@ for the next release.
 
 ## Release Notes
 
+### Release Notes for 2.12.1:
+Bugs fixed in this release:
+* Patch a security bug
+
 ### Release Notes for 2.12.0:
 New features and bugs fixed in this release:
 * Support a new format id - portal, which will be used on the MetacatUI portal service
