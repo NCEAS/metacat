@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- *  Copyright: 2013 Regents of the University of California and the
+ *  Copyright: 2019 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
  * This program is free software; you can redistribute it and/or modify
@@ -33,10 +33,11 @@ import java.util.List;
  * A complex data value mining SolrField. This class returns a value to
  * an indexing subprocessor from its dependent class. See FilterRootElement for
  * a typical usage.
+ * <p>
+ *     Based on CommonRootSolrField by sroseboo
+ * </p>
  *
  * @author slaughter
- *
- * Based on CommonRootSolrField by sroseboo
  *
  */
 public class FilterCommonRootSolrField extends SolrField {
@@ -49,6 +50,15 @@ public class FilterCommonRootSolrField extends SolrField {
         this.name = name;
     }
 
+    /**
+     * Prepare a Solr fields by extracting information from an input XML document, using the document processor configured
+     * by Spring context files
+     * @param doc the document to process
+     * @param identifier a specific identifier to process
+     * @return the Solr fields to be added to the index
+     * @throws Exception
+     * @see "application-context-collections.xml"
+     */
     @Override
     public List<SolrElementField> getFields(Document doc, String identifier) throws Exception {
 
@@ -62,15 +72,27 @@ public class FilterCommonRootSolrField extends SolrField {
         return fields;
     }
 
+    /**
+     * Inialize the XPath expression that will be used to location XML nodes to process
+     * @param xpathObject the XPath to initialize
+     */
     @Override
     public void initExpression(XPath xpathObject) {
         root.initXPathExpressions(xpathObject);
     }
 
+    /**
+     * Get the root element that will be processed
+     * @return the root element that will be processed
+     */
     public FilterRootElement getRoot() {
         return root;
     }
 
+    /**
+     * Set the root element that will be processed
+     * @param root the root element that will be processed
+     */
     public void setRoot(FilterRootElement root) {
         this.root = root;
     }

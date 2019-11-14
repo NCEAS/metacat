@@ -177,7 +177,7 @@ public class ResourceMapModifier {
         }
         
         //generate a new resource for the new resource map identifier
-        Resource newOreResource = generateNewOREResource(model, subject);
+        Resource newOreResource = generateNewOREResource(model, subject, newResourceMapId);
         Resource oldOreResource = getResource(model,oldResourceMapId.getValue());
         replaceAggregations(model, oldOreResource, newOreResource, oldURIs, newURIs);
         //write it to standard out
@@ -193,13 +193,13 @@ public class ResourceMapModifier {
      * @return the generated new ORE Resource object
      * @throws UnsupportedEncodingException
      */
-    private Resource generateNewOREResource(Model model, Subject subject) throws UnsupportedEncodingException {
-        String escapedNewOreId = URLEncoder.encode(newResourceMapId.getValue(), "UTF-8");
+    public static Resource generateNewOREResource(Model model, Subject subject, Identifier newId) throws UnsupportedEncodingException {
+        String escapedNewOreId = URLEncoder.encode(newId.getValue(), "UTF-8");
         String uri = baseURI + escapedNewOreId;
         Resource resource = model.createResource(uri);
         //create a identifier property (statement)
         Property identifierPred = DC_TERMS.identifier;
-        Literal identifierObj = ResourceFactory.createPlainLiteral(newResourceMapId.getValue());
+        Literal identifierObj = ResourceFactory.createPlainLiteral(newId.getValue());
         Statement state = ResourceFactory.createStatement(resource, identifierPred, identifierObj);
         model.add(state);
         //create a modification time statement 
@@ -222,7 +222,7 @@ public class ResourceMapModifier {
         model.add(state4);
         //create a creator statement
         Property creator = ResourceFactory.createProperty("http://purl.org/dc/elements/1.1/", "creator");
-        Resource agent = generateAgentResource(subject);
+        Resource agent = generateAgentResource(subject, model);
         Statement creatorState = ResourceFactory.createStatement(resource, creator, agent);
         model.add(creatorState);
         return resource;
@@ -233,7 +233,7 @@ public class ResourceMapModifier {
      * @param subject  the name of the agent resource
      * @return the agent resource
      */
-    private Resource generateAgentResource(Subject subject) {
+    public static Resource generateAgentResource(Subject subject, Model model ) {
         String name = "Metacat";
         if (subject != null && subject.getValue() != null && !subject.getValue().trim().equals("")) {
             name = subject.getValue();
@@ -373,7 +373,7 @@ public class ResourceMapModifier {
      * @return the uri of the new generated Resource object
      * @throws UnsupportedEncodingException
      */
-    private Resource generateNewComponent(Model model, String id) throws UnsupportedEncodingException {
+    public static Resource generateNewComponent(Model model, String id) throws UnsupportedEncodingException {
         String escapedNewId = URLEncoder.encode(id, "UTF-8");
         String uri = baseURI + escapedNewId;
         Resource resource = model.createResource(uri);

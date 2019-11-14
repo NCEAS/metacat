@@ -24,9 +24,7 @@
 
 package edu.ucsb.nceas.metacattest;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Vector;
@@ -54,18 +52,17 @@ public class SitemapTest extends MCTestCase {
     protected void setUp() throws Exception {
         super.setUp();
 
-        DBConnectionPool pool = DBConnectionPool.getInstance();
+		DBConnectionPool pool = DBConnectionPool.getInstance();
 		metacatConnectionNeeded = true;
-
 		sitemapTempDir = Files.createTempDirectory("sitemap");
 
 		super.setUp();
-    }
+	}
 
-    /**
-     * Test the static generateSitemaps() method.
-     */
-    public void testGenerateSitemaps() {	
+	/**
+	 * Test the static generateSitemaps() method.
+	 */
+		public void testGenerateSitemaps() {
     	try {
 			debug("\nRunning: testGenerateSitemaps()");
 
@@ -93,7 +90,7 @@ public class SitemapTest extends MCTestCase {
 					null, null, null, null, accessBlock, null, null, null, null);
 			insertDocumentId(docid2 + ".1", testdocument, SUCCESS, false);
 
-			// Update the previous document so we can test whether sitemaps only list 
+			// Update the previous document so we can test whether sitemaps only list
 			// the head revision in each chain
 			debug("inserting docid: " + docid2 + ".2 which has public read/write section");
 			testdocument = getTestEmlDoc(
@@ -112,7 +109,7 @@ public class SitemapTest extends MCTestCase {
 					"Doc with public read and write", EML2_0_1,
 					null, null, null, null, accessBlock2, null, null, null, null);
 			insertDocumentId(docid3 + ".1", testdocument, SUCCESS, false);
-			
+
 			debug("logging out");
 			m.logout();
 
@@ -122,22 +119,26 @@ public class SitemapTest extends MCTestCase {
 			String entryBase = "http://foo.example.com/ctx/metacat";
 			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
 			smap.generateSitemaps();
-			
+
 			File sitemap1 = new File(directory, "sitemap1.xml");
 			assertTrue(sitemap1.exists() && sitemap1.isFile());
 
+			String doc = FileUtil.readFileToString(sitemapTempDir.toString() +
+					"/sitemap1.xml");
+			String indexDoc = FileUtil.readFileToString(
+					sitemapTempDir.toString() + "/sitemap_index.xml");
 
-			debug(sitemapTempDir.toString());
-
-			String doc = FileUtil.readFileToString(sitemapTempDir.toString() + "/sitemap1.xml");
-
-			debug("**** sitemap doc *** \n");
-			debug(doc);
 			assertTrue(doc.indexOf("<?xml") >= 0);
 			assertTrue(doc.indexOf("<urlset") >= 0);
 			assertTrue(doc.indexOf("<url>") >= 0);
 			assertTrue(doc.indexOf("http:") >= 0);
-			
+
+			assertTrue(indexDoc.indexOf("<?xml") >= 0);
+			assertTrue(indexDoc.indexOf("<sitemapindex") >= 0);
+			assertTrue(indexDoc.indexOf("<loc>") >= 0);
+			assertTrue(indexDoc.indexOf("<lastmod>") >= 0);
+			assertTrue(indexDoc.indexOf("http:") >= 0);
+
 			// docid1 and docid3 should not show up in the sitemap because they have do not have a public-read access
 			// policy
 			assertTrue(doc.indexOf(docid1) == -1);

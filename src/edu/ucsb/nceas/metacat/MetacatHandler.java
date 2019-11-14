@@ -835,11 +835,8 @@ public class MetacatHandler {
                         // case docid="http://.../filename"
                     } else {
                         docid = docs[i];
-                        if (zip) {
-                            addDocToZip(request, docid, providedFileName, zout, user, groups);
-                        } else {
-                            readFromURLConnection(response, docid);
-                        }
+                        //we don't support to read a file or http link directly
+                        throw new Exception("Metacat doesn't support this format of the docid - " + docid);
                     }
                     
                 } catch (MalformedURLException mue) {
@@ -1457,54 +1454,6 @@ public class MetacatHandler {
         return outputname;
     }
     
-    /**
-     * read data from URLConnection
-     */
-    private void readFromURLConnection(HttpServletResponse response,
-            String docid) throws IOException, MalformedURLException {
-        ServletOutputStream out = response.getOutputStream();
-        //String contentType = servletContext.getMimeType(docid); //MIME type
-        String contentType = (new MimetypesFileTypeMap()).getContentType(docid);
-        if (contentType == null) {
-            if (docid.endsWith(".xml")) {
-                contentType = "text/xml";
-            } else if (docid.endsWith(".css")) {
-                contentType = "text/css";
-            } else if (docid.endsWith(".dtd")) {
-                contentType = "text/plain";
-            } else if (docid.endsWith(".xsd")) {
-                contentType = "text/xml";
-            } else if (docid.endsWith("/")) {
-                contentType = "text/html";
-            } else {
-                File f = new File(docid);
-                if (f.isDirectory()) {
-                    contentType = "text/html";
-                } else {
-                    contentType = "application/octet-stream";
-                }
-            }
-        }
-        response.setContentType(contentType);
-        // if we decide to use "application/octet-stream" for all data returns
-        // response.setContentType("application/octet-stream");
-        
-        // this is http url
-        URL url = new URL(docid);
-        BufferedInputStream bis = null;
-        try {
-            bis = new BufferedInputStream(url.openStream());
-            byte[] buf = new byte[4 * 1024]; // 4K buffer
-            int b = bis.read(buf);
-            while (b != -1) {
-                out.write(buf, 0, b);
-                b = bis.read(buf);
-            }
-        } finally {
-            if (bis != null) bis.close();
-        }
-        
-    }
     
     /**
      * read file/doc and write to ZipOutputStream
@@ -1525,34 +1474,6 @@ public class MetacatHandler {
             Exception {
         byte[] bytestring = null;
         ZipEntry zentry = null;
-        
-        try {
-            URL url = new URL(docid);
-            
-            // this http url; read from URLConnection; add to zip
-            //use provided file name if we have one
-            if (providedFileName != null && providedFileName.length() > 1) {
-                zentry = new ZipEntry(providedFileName);
-            }
-            else {
-                zentry = new ZipEntry(docid);
-            }
-            zout.putNextEntry(zentry);
-            BufferedInputStream bis = null;
-            try {
-                bis = new BufferedInputStream(url.openStream());
-                byte[] buf = new byte[4 * 1024]; // 4K buffer
-                int b = bis.read(buf);
-                while (b != -1) {
-                    zout.write(buf, 0, b);
-                    b = bis.read(buf);
-                }
-            } finally {
-                if (bis != null) bis.close();
-            }
-            zout.closeEntry();
-            
-        } catch (MalformedURLException mue) {
             
             // this is metacat doc (data file or metadata doc)
             try {
@@ -1617,7 +1538,6 @@ public class MetacatHandler {
             } catch (Exception except) {
                 throw except;
             }
-        }
     }
     
     /**
@@ -4003,63 +3923,64 @@ public class MetacatHandler {
     
     /**
      * Schedule the sitemap generator to run periodically and update all
-     * of the sitemap files for search indexing engines.
-     *
-     * @param request a servlet request, from which we determine the context
+     * of the sitemap files for search indexing engines
      */
-    protected void scheduleSitemapGeneration(HttpServletRequest request) {
-        if (!_sitemapScheduled) {
-            String directoryName = null;
-            String skin = null;
-            long sitemapInterval = 0;
-            
-            try {
-                directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
-                skin = PropertyService.getProperty("application.default-style");
-                sitemapInterval = 
-                    Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
-            } catch (PropertyNotFoundException pnfe) {
-                logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
-                		         "Could not run site map generation because property " +
-                		         "could not be found: " + pnfe.getMessage());
-            }
-            
-            File directory = new File(directoryName);
-            directory.mkdirs();
+    protected void scheduleSitemapGeneration() {
+        if (_sitemapScheduled) {
+            logMetacat.debug("MetacatHandler.scheduleSitemapGeneration: Tried to call " + 
+            "scheduleSitemapGeneration() when a sitemap was already scheduld. Doing nothing.");
 
-            // Determine sitemap location and entry base URLs. Prepends the 
-            // secure server URL from the metacat configuration if the 
-            // values in the properties don't start with 'http' (e.g., '/view')
-            String serverUrl = "";
-            String locationBase = "";
-            String entryBase = "";
-
-            try {
-                serverUrl = SystemUtil.getSecureServerURL();
-                locationBase = PropertyService.getProperty("sitemap.location.base");
-                entryBase = PropertyService.getProperty("sitemap.entry.base");
-            } catch (PropertyNotFoundException pnfe) {
-                logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
-                		         "Could not run site map generation because property " +
-                		         "could not be found: " + pnfe.getMessage());
-            }
-
-            // Prepend server URL to locationBase if needed
-            if (!locationBase.startsWith("http")) {
-                locationBase = serverUrl + locationBase;
-            }
-
-            // Prepend server URL to entryBase if needed
-            if (!entryBase.startsWith("http")) {
-                entryBase = serverUrl + entryBase;
-            }
-            
-            Sitemap smap = new Sitemap(directory, locationBase, entryBase);
-            long firstDelay = 10*1000;   // 60 seconds delay
-
-            timer.schedule(smap, firstDelay, sitemapInterval);
-            _sitemapScheduled = true;
+            return;
         }
+
+        String directoryName = null;
+        long sitemapInterval = 0;
+        
+        try {
+            directoryName = SystemUtil.getContextDir() + FileUtil.getFS() + "sitemaps";
+            sitemapInterval = 
+                Integer.parseInt(PropertyService.getProperty("sitemap.interval"));
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
+                                "Could not run site map generation because property " +
+                                "could not be found: " + pnfe.getMessage());
+        }
+        
+        File directory = new File(directoryName);
+        directory.mkdirs();
+
+        // Determine sitemap location and entry base URLs. Prepends the 
+        // secure server URL from the metacat configuration if the 
+        // values in the properties don't start with 'http' (e.g., '/view')
+        String serverUrl = "";
+        String locationBase = "";
+        String entryBase = "";
+
+        try {
+            serverUrl = SystemUtil.getSecureServerURL();
+            locationBase = PropertyService.getProperty("sitemap.location.base");
+            entryBase = PropertyService.getProperty("sitemap.entry.base");
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.error("MetacatHandler.scheduleSitemapGeneration - " +
+                                "Could not run site map generation because property " +
+                                "could not be found: " + pnfe.getMessage());
+        }
+
+        // Prepend server URL to locationBase if needed
+        if (!locationBase.startsWith("http")) {
+            locationBase = serverUrl + locationBase;
+        }
+
+        // Prepend server URL to entryBase if needed
+        if (!entryBase.startsWith("http")) {
+            entryBase = serverUrl + entryBase;
+        }
+        
+        Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+        long firstDelay = 10000; // in milliseconds
+
+        timer.schedule(smap, firstDelay, sitemapInterval);
+        _sitemapScheduled = true;
     }
 
     /**
@@ -4068,6 +3989,4 @@ public class MetacatHandler {
     public void set_sitemapScheduled(boolean sitemapScheduled) {
         _sitemapScheduled = sitemapScheduled;
     }
-
-    
 }

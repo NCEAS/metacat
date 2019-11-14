@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.11.1 Release
+Version: 2.12.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,17 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.12.1:
+Bugs fixed in this release:
+* Patch a security bug
+
+### Release Notes for 2.12.0:
+New features and bugs fixed in this release:
+* Support a new format id - portal, which will be used on the MetacatUI portal service
+* Change how Metacat generates sitemaps. Sitemaps will now be generated automatically when Metacat starts, if enabled
+* Add a mechanism that operators can pass paramters to the stylesheets of the view service
+* Upgrade the version of the Xerces library to fix the issue of statck overflow when users upload XML objects having long text fields
 
 ### Release Notes for 2.11.1:
 Bugs fixed in this release:

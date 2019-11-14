@@ -1,7 +1,7 @@
 package edu.ucsb.nceas.metacat.index.parser.utility;
 
 /**
- *  Copyright: 2013 Regents of the University of California and the
+ *  Copyright: 2019 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
  * This program is free software; you can redistribute it and/or modify
@@ -19,7 +19,8 @@ package edu.ucsb.nceas.metacat.index.parser.utility;
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.cn.indexer.parser.utility.LeafElement;
 import org.w3c.dom.Node;
 
@@ -29,14 +30,14 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Used by FilterRootElement.
  *
  * For each matching 'filter' element in a document, build a query term from it. These individual
  * query terms will assembled into a complete query by calling routine.
- *
- * Each filter type can have a set of leaf elements that will be used to build the search term
- * contributed by that filter to the entire query being assembled.
- * Each filter can have parameters defined that control how the query is built.
+ * <p>
+ *   Each filter type can have a set of leaf elements that will be used to build the search term
+ *   contributed by that filter to the entire query being assembled.
+ *   Each filter can have parameters defined that control how the query is built.
+ * </p>
  *
  * @author slaughter
  *
@@ -54,30 +55,37 @@ public class FilterProcessor {
     private String template;
     private String defaults;
     private HashMap<String, String> defaultValues = new HashMap<String, String>();
+    private final String DEFAULT_OPERATOR = "AND";
+
+    private Log log = LogFactory.getLog(FilterProcessor.class);
 
     public FilterProcessor() {
     }
 
+    /**
+     * Convert an XML '<filter>' entry into a Solr query string.
+     * @param node the XML node (i.e. a "<filter>" entry in the colleciton document) that the filter will be applied to
+     * @return the query term produced by this filter
+     * @throws XPathExpressionException
+     */
     public String getFilterValue(Node node) throws XPathExpressionException {
 
-        //System.out.println("FilterProcessor.getFilterValues");
-        Map<String, String> leafDelimeters = new HashMap<String, String>();
+        HashMap<String, ArrayList<String>> leafValues = new HashMap<String, ArrayList<String>>();
+
+        log.debug("FilterProcessor.getFilterValues");
         // Leaf names that have corresponding, present values in the XML
         Set<String> leafNames = new HashSet<String>();
         // All possible leaf names, every ones that don't appear in the template
         Set<String> allLeafNames = new HashSet<String>();
 
         // These are the leaf possible values that also have values in the corresponding xml
-        HashMap<String, String> leafValues = new HashMap<String, String>();
+        //HashMap<String, ArrayList<String>> leafValues = new HashMap<String, ArrayList<String>>();
 
-        //System.out.println("getting filter values for node: " + node.getNodeName());
+        log.debug("getting filter values for node: " + node.getNodeName());
         String value = null;
-        String filterValue = null;
+        String completeFilterValue = null;
         name = getName();
-        int nFiltersOut = 1;
 
-        Pattern pattern;
-        //String delimeter;
         Boolean excludeCondition = false;
         Boolean matchSubstring = false;
 
@@ -93,125 +101,187 @@ public class FilterProcessor {
             }
         }
 
-        // Start with only one copy of the template. If a 'concatenated' leaf value is found, we
-        // may have to make another pass.
-        int nTemplate = 1;
-        int totalTemplateCount = 1;
-        Boolean moreTemplates = true;
-        while(moreTemplates) {
-            String thisFilterValue = null;
-            // Assume we aren't going to find another 'concatenated' leaf value
-            moreTemplates = false;
-            // Loop through each leaf bean that may have the corresponging element in the XML
-            for (LeafElement leafElement : getLeafs()) {
-                String leafName = leafElement.getName();
-                allLeafNames.add(leafName);
-                value = leafElement.getLeafValue(node);
+        // Assume ware are only making one pass throught this code that will apply the template, e.g. 'field:value'
+        // If a 'concatenated' leaf value is found, we may have to make more passes. The concatenated value occurs when multiple
+        // elements in the filter repeat, so the value returned by 'getLeafValue' will be a concatenation, i.e.
+        //     <filter>
+        //        <field>keyword</keyword>
+        //        <field>text</text>
+        //     ...
+        //     </filter>
+        //
+        // will be returned as
+        //     "keyword--text"
+        // The same is true for <value> elements:
+        //     <filter>
+        //        ...
+        //        <value>1234</text>
+        //        <value>5678</text>
+        //        ...
+        //     </filter>
+        //
+        // will be returned as
+        //     "1234--5678"
 
-                // If a leaf value doesn't exist, use a default if specified.
-                if (value == null || value.isEmpty()) {
-                    // Use default value for a leaf
-                    if (defaultValues.containsKey(leafName)) {
-                        leafValues.put(leafName, defaultValues.get(leafName));
-                        leafNames.add(leafName);
-                    } else {
-                        // No supplied name, nor default for this leaf, so skip it.
-                        continue;
-                    }
-                } else {
-                    // Found a value for this leaf, use it.
+        // The <field> element has to occur at least once, but may occur multiple times, so a pass must be made for each <field>
+        // value. In addition, the <value> element can occur 0 or more times, so a pass has to be made for each value of the <value>
+        // field, for each value of the <field>, i.e. pass 1: 1st field, 1st value, pass 2: 1st field, 2nd value, pass 3: 1st field, 3rd value, etc.
+        // So we have to keep indexes for both, keeping in mind that <value> may not have been specified in the filter.
+
+        String thisFilterValue = null;
+        // Assume we aren't going to find another 'concatenated' leaf value
+        // Loop through each leaf bean that may have the corresponding element in the XML
+        // These are the leafs that are specified in the application context file
+        for (LeafElement leafElement : getLeafs()) {
+            String leafName = leafElement.getName();
+            log.trace("Processing leafname: " + leafName);
+            allLeafNames.add(leafName);
+            value = leafElement.getLeafValue(node);
+            String delimeter = leafElement.getDelimiter();
+
+            // If a leaf value doesn't exist, use a default value if specified.
+            if (value == null || value.isEmpty()) {
+                // Use default value for a leaf
+                if (defaultValues.containsKey(leafName)) {
+                    leafValues = addLeafValue(leafValues, leafName, defaultValues.get(leafName), delimeter);
                     leafNames.add(leafName);
-
-                    // Check for a couple of special leaf values, specifically
-                    // <exclude>true</exclude> and <matchSubstring>true</matchSubstring>
-                    if(leafName.compareToIgnoreCase("exclude") == 0) {
-                        if(Boolean.parseBoolean(value))
-                            excludeCondition = true;
-                    } else if(leafName.compareToIgnoreCase("matchSubstring") == 0) {
-                        if(Boolean.parseBoolean(value))
-                            matchSubstring = true;
-                    }
-
-                    // Now check if this is a 'compound' leaf value - the LeafElement
-                    // class will concatenate multiple values together if a LeafElement repeats,
-                    // for exmaple, <field>keywords</field><field>attribute</field> are returned by
-                    // LeafElement as 'keywords--attribute'.
-                    String delimeter = leafElement.getDelimiter();
-                    if(delimeter != null && ! delimeter.isEmpty()) {
-                        String thisLeafValues[] = value.split(delimeter);
-                        int valueCount = thisLeafValues.length;
-                        if (valueCount > 1) {
-                            // put the nth compound leaf value into the nth template
-                            value = thisLeafValues[nTemplate - 1];
-                            leafValues.put(leafName, value);
-                            if (valueCount > totalTemplateCount) {
-                                moreTemplates = true;
-                                totalTemplateCount = valueCount;
-                            }
-                        } else
-                            leafValues.put(leafName, value);
-                    } else
-                        leafValues.put(leafName, value);
-                }
-            }
-
-            thisFilterValue = selectTemplate(leafNames, allLeafNames);
-
-            // Now apply the leaf values for the leaves that were present
-            for (String name : leafNames) {
-                value = leafValues.get(name);
-                // If the 'matchSubstring' modifier is true, then have to surround
-                // the 'value' item with '*'.
-                if(matchSubstring) {
-                    if(name.compareToIgnoreCase("value") == 0) {
-                        value = "*" + value + "*";
-                    }
-                }
-                // Apply the filter 'value' modifiers, if they are specified in the XML, to the
-                // <value> element.
-                if(name.compareToIgnoreCase("value") == 0) {
-                    if(escapeSpecialChars) value = escapeSpecialChars(value);
-                    if(quoteMultipleWords) value = checkQuoting(value);
-                }
-                thisFilterValue = applyTemplate(name, value, thisFilterValue);
-            }
-
-            // Apply the 'exclude' modifier, if it was present in the XML
-            if(excludeCondition) {
-                thisFilterValue = "-" + thisFilterValue;
-            }
-
-            // Are multiple versions of this filter being made?
-            if(nTemplate > 1) {
-                String operator = null;
-                if(leafValues.containsKey("operator"))
-                    operator = leafValues.get("operator");
-
-                if(operator == null) {
-                    filterValue = filterValue + " " + thisFilterValue;
                 } else {
-                    filterValue = filterValue + " " + operator + " " + thisFilterValue;
+                    // No supplied name, nor default for this leaf, so skip it.
+                    continue;
                 }
             } else {
-                filterValue = thisFilterValue;
-            }
+                // Found a value for this leaf, use it.
+                leafNames.add(leafName);
 
-            nTemplate += 1;
-            // Failsafe - this should never be true
-            if(nTemplate > totalTemplateCount) {
-                break;
+                // Check for a couple of special leaf values, specifically
+                // <exclude>true</exclude> and <matchSubstring>true</matchSubstring>
+                if (leafName.compareToIgnoreCase("exclude") == 0) {
+                    if (Boolean.parseBoolean(value))
+                        excludeCondition = true;
+                } else if (leafName.compareToIgnoreCase("matchSubstring") == 0) {
+                    if (Boolean.parseBoolean(value))
+                        matchSubstring = true;
+                }
+                leafValues = addLeafValue(leafValues, leafName, value, delimeter);
             }
         }
 
-        if(totalTemplateCount > 1) {
-            filterValue = "(" + filterValue + ")";
-        }
-        filterValue = filterValue.trim();
-        //System.out.println("    * * * * Final filter value: " + filterValue);
+        // Multiple templates may be defined in the Spring context file, so choose which one matches the
+        // XML element. The first one that matches is used, so order of the templates in the context file
+        // is important.
+        String selectedTemplate = selectTemplate(leafNames, allLeafNames);
 
-        return filterValue;
+        for (String key: leafValues.keySet()) {
+            log.trace("leafValues name: " + key);
+        }
+        // Now that we have all the leaf names and values, apply the template to each one
+        int nFields = 0;
+        int nValues = 0;
+
+        // <field> element has to exist, as stated by the collections.xsd
+        ArrayList currentValues = leafValues.get("field");
+        nFields = currentValues.size();
+
+        // <value> element might exist
+        if(leafValues.containsKey("value")) {
+            currentValues = leafValues.get("value");
+            nValues = currentValues.size();
+        } else {
+            nValues = 1;
+        }
+
+        log.trace("nFields: " + nFields);
+        log.trace("nValues: " + nValues);
+
+        // Make a filter pass for each <field> entry
+        for(int iField = 0; iField < nFields; iField++) {
+            log.trace("iField: " + iField);
+            // Make a pass for each <value> element, with the current <field>
+            // if no <value> elements are present, then just make one pass (we may have <min>, <max>, etc
+            for(int iValue = 0; iValue < nValues; iValue++) {
+                log.trace("iValue: " + iValue);
+
+                // Reset the template for this pass
+                thisFilterValue = selectedTemplate;
+
+                // Now apply the leaf values for the leaves that were present
+                for (String lname : leafNames) {
+                    if (lname.compareToIgnoreCase("field") == 0) {
+                        value = getLeafValue(leafValues, lname, iField);
+                    } else if (lname.compareToIgnoreCase("value") == 0) {
+                        value = getLeafValue(leafValues, lname, iValue);
+                    } else {
+                        value = getLeafValue(leafValues, lname, 0);
+                    }
+
+                    // If the 'matchSubstring' modifier is true, then have to surround
+                    // the 'value' item with '*'.
+                    if (matchSubstring) {
+                        if (lname.compareToIgnoreCase("value") == 0) {
+                            value = "*" + value + "*";
+                        }
+                    }
+                    // Apply the filter 'value' modifiers, if they are specified in the XML, to the
+                    // <value> element.
+                    if (lname.compareToIgnoreCase("value") == 0) {
+                        if (escapeSpecialChars) value = escapeSpecialChars(value);
+                        if (quoteMultipleWords) value = checkQuoting(value);
+                    }
+                    // Apply the current value to the filter
+                    thisFilterValue = applyTemplate(lname, value, thisFilterValue);
+                }
+
+                log.debug("thisFilterValue: " + thisFilterValue);
+
+                // Apply the 'exclude' modifier, if it was present in the XML
+                if (excludeCondition) {
+                    thisFilterValue = "-" + thisFilterValue;
+                }
+
+                // If first pass, then initialize the completed filter value
+                if (iValue == 0 && iField == 0) {
+                    completeFilterValue = thisFilterValue;
+                } else {
+                    String operator = null;
+                    if (leafValues.containsKey("operator")) {
+                        operator = getLeafValue(leafValues, "operator", 0);
+                    } else {
+                        // If an operator wasn't defined for this filter, we have to use a default,
+                        // otherwise the query that is build will be syntactilly invalid.
+                        operator = DEFAULT_OPERATOR;
+                    }
+
+                    completeFilterValue = completeFilterValue + " " + operator + " " + thisFilterValue;
+                }
+            }
+        }
+
+        if(nFields > 1 || nValues > 1) {
+            completeFilterValue = "(" + completeFilterValue + ")";
+        }
+
+        completeFilterValue = completeFilterValue.trim();
+        log.debug("    * * * * Final filter value: " + completeFilterValue);
+
+        return completeFilterValue;
     }
 
+    /**
+     *
+     * Templates are used to convert XML elements, attributes and values into the form defined by
+     * the template.
+     * <p>
+     *     Several templates may be available for a filter to use. The 'best' template will be selected
+     *     by determining which template can be completely filled in by the values that are provided
+     *     in a given XML document to be processed.
+     * </p>
+     * <p>
+     *     The 'leaf' values for a filter are compared to the tokens in the template to find a match
+     * </p>
+     * @param leafNames - XML 'leaf' elements available to the filter
+     * @param allLeafNames - all possible leaf name values
+     * @return the template string that the filter processor will use.
+     */
     private String selectTemplate(Set<String> leafNames, Set<String> allLeafNames)  {
         String selectedTemplate = null;
 
@@ -223,8 +293,6 @@ public class FilterProcessor {
         if (templateValues.length == 1) {
             return template;
         }
-
-        String tokens;
 
         // Regex to extract all alphanumeric words from a template
         Pattern p = Pattern.compile("[a-zA-Z]+");
@@ -260,22 +328,28 @@ public class FilterProcessor {
             }
             if(matchAll) {
                 selectedTemplate = tval;
-                //System.out.println("Selecting template: " + tval);
+                log.debug("Selecting template: " + tval);
                 break;
             }
         }
 
         if(! matchAll) {
             selectedTemplate = templateValues[0];
-            //System.out.println("Can't find template match, using template: " + selectedTemplate);
+            log.debug("Can't find template match, using template: " + selectedTemplate);
         }
 
         return selectedTemplate;
     }
 
+    /**
+     * Fill in the template with the appropriate name and value
+     * @param name the template name, i.e. 'name:value'
+     * @param value the template value
+     * @param filterValue the resulting filter value after the name and value have been substituted in
+     * @return the filled in template value.
+     */
     private String applyTemplate(String name, String value, String filterValue) {
         HashMap<String, String> thisMap;
-        Pattern pattern;
 
         if(value == null || value.isEmpty()) return filterValue;
         filterValue = applyItem(name, value, filterValue);
@@ -283,13 +357,89 @@ public class FilterProcessor {
         return filterValue;
     }
 
+    /**
+     * Apply one change to the template
+     * @param name the filter name
+     * @param value the value element of the filter
+     * @param filterValue the current value of the resulting filter
+     * @return the filter with the item filled in
+     */
     private String applyItem(String name, String value, String filterValue) {
 
        filterValue = filterValue.replace(name, value);
        return filterValue;
-
     }
 
+    /**
+     * Add a leaf element value to the hash of leaf values.
+     * <p>
+     *     The leaf value may be compound, i.e. "keyword--text", so add an entry for each of these
+     *     compound values.
+     * </p>
+     * @param leafName the name of the leaf, which is the hashmap key
+     * @param leafValue a single value to add to the list of values for this entry
+     * @return the hash containing all current leaf values
+     */
+    private HashMap<String, ArrayList<String>> addLeafValue(HashMap<String, ArrayList<String>> leafValues,
+                                                                 String leafName, String leafValue, String delimeter) {
+
+        ArrayList<String> currentValues = new ArrayList<String>();
+        Boolean replace = false;
+
+        if(leafValues.containsKey(leafName)) {
+            replace = true;
+            currentValues = leafValues.get(leafName);
+        }
+
+        // Now check if this is a 'compound' leaf value - the LeafElement
+        // class will concatenate multiple values together if a LeafElement repeats,
+        // for exmaple, <field>keywords</field><field>attribute</field> are returned by
+        // LeafElement as 'keywords--attribute'.
+        // If the leaf value is a compound value, split it and add each separate value
+        if(delimeter != null && ! delimeter.isEmpty()) {
+            String thisLeafValues[] = leafValue.split(delimeter);
+            for(String val : thisLeafValues) {
+                log.debug("Adding leaf name, value: " + leafName + ", " + val);
+                currentValues.add(val);
+            }
+        } else {
+            // No delimeter is defined, so we have no alternative but to add the entire value into
+            // one entry
+            currentValues.add(leafValue);
+            log.debug("Adding leaf name,value: " + leafName + ", " + leafValue);
+        }
+
+        if(replace) {
+            leafValues.remove(leafName);
+            leafValues.put(leafName, currentValues);
+        } else {
+            leafValues.put(leafName, currentValues);
+        }
+
+        return leafValues;
+    }
+
+    /**
+     * Get the 'leaf' values of a filter, which are all the 1st level child elements of the filter.
+     * <p>
+     *     Each leaf (indexed by name) may contain multiple values
+     * </p>
+     * @param leafValues the hash of leaf values
+     * @param leafName the leaf to extract
+     * @param index the index of the leaf values to extract
+     * @return the single leaf value
+     */
+    private String getLeafValue(HashMap<String, ArrayList<String>>leafValues, String leafName, int index) {
+        ArrayList<String> currentValues = leafValues.get(leafName);
+        log.debug("Getting leaf name, value: " + leafName + ", " + currentValues.get(index));
+        return currentValues.get(index);
+    }
+
+    /**
+     * Apply escape characters in order to 'protect' a string
+     * @param value The value to be escaped
+     * @return the escaped value.
+     */
     private String escapeSpecialChars(String value) {
         value = value.replace("%7B", "\\%7B");
         value = value.replace("%7D", "\\%7D");
@@ -305,6 +455,11 @@ public class FilterProcessor {
         return value;
     }
 
+    /**
+     * Surround a value with quotes if it contains multiple tokens.
+     * @param value the value to check and apply quotes to.
+     * @return the quoted (or not quaoted) string
+     */
     private String checkQuoting(String value) {
 
         // Match one or more spaces, reluctantly
@@ -319,6 +474,9 @@ public class FilterProcessor {
         return value;
     }
 
+    /**
+     * Initialize an XPath expression used to find the nodes in a filter.
+     */
     public void initXPathExpressions() {
         // Create XPathFactory object
         XPathFactory xpathFactory = XPathFactory.newInstance();
@@ -335,84 +493,167 @@ public class FilterProcessor {
         }
     }
 
+    /**
+     * Get the name of this filter
+     * @return the name of this filter
+     */
     public String getName() {
         return name;
     }
 
+    /**
+     * Set the name of this filter
+     * @param name the name of this filter
+     */
     public void setName(String name) {
         this.name = name;
     }
 
+    /**
+     * Get the XPath used by this filter
+     * @return the XPath used by this filter
+     */
     public String getxPath() {
         return xPath;
     }
 
+    /**
+     * Set the XPath used by this filter
+     * @param xPath the XPath used by this filter
+     */
     public void setxPath(String xPath) {
         this.xPath = xPath;
     }
 
+    /**
+     * Get default filter element values
+     * @return the default values for this filter
+     * @see "application-context-collections.xml"
+     */
     public String getDefaults() {
         return defaults;
     }
 
+    /**
+     * Set default filter element values
+     * @param defaults the filter element defaults
+     */
     public void setDefaults(String defaults) {
         this.defaults = defaults;
     }
 
+    /**
+     * Get the setting that determines if special characters should be escaped in this filter value
+     * @return the setting value
+     * @see "application-context-collections.xml"
+     */
     public Boolean getEscapeSpecialChars() {
         return escapeSpecialChars;
     }
 
+    /**
+     * Set the setting that determines if special characters should be escaped in this filter value
+     * @param escapeSpecialChars
+     */
     public void setEscapeSpecialChars(Boolean escapeSpecialChars) {
         this.escapeSpecialChars = escapeSpecialChars;
     }
 
+    /**
+     * Get the setting that determines if multiple word values are quoted
+     * @return the setting for multiple words being quoted
+     * @see "application-context-collections.xml"
+     */
     public Boolean getQuoteMultipleWords() {
         return quoteMultipleWords;
     }
 
+    /**
+     * Set the setting that determines if multiple word values are quoted
+     * @param quoteMultipleWords
+     */
     public void setQuoteMultipleWords(Boolean quoteMultipleWords) {
         this.quoteMultipleWords = quoteMultipleWords;
     }
 
+    /**
+     * Get the XPath expression used to process this filter
+     * @return the XPath expression used to process this filter
+     */
     public XPathExpression getxPathExpression() {
         return xPathExpression;
     }
 
+    /**
+     * Set the XPath expression used to process this filter
+     * @param xPathExpression
+     */
     public void setxPathExpression(XPathExpression xPathExpression) {
         this.xPathExpression = xPathExpression;
     }
 
+    /**
+     * Get the token delimeter used to separate values
+     * @return the token delimeter used to sepapate values
+     */
     public String getDelimiter() {
         return delimiter;
     }
 
+    /**
+     * Set the token delimeter used to separate values
+     * @param delimiter
+     */
     public void setDelimiter(String delimiter) {
         this.delimiter = delimiter;
     }
 
+    /**
+     * Get the template used by this filter
+     * @return the template used by this filter
+     */
     public String getTemplate() {
         return template;
     }
 
+    /**
+     * Set the template used by this filter
+     * @param template the template used by this filter
+     */
     public void setTemplate(String template) {
         this.template = template;
     }
 
+    /**
+     * Get the string used to match this filter to an application context description
+     * @return the string used to match this filter to an application context description
+     * @see "application-context-collections.xml"*
+     */
     public String getMatchElement() {
         return matchElement;
     }
 
+    /**
+     * Set the string used to match this filter to an application context description
+     * @param matchElement
+     */
     public void setMatchElement(String matchElement) {
         this.matchElement = matchElement;
     }
 
+    /**
+     * Get the leaf (child element) of a filter
+     * @return the leaf (child element) of a filter
+     */
     public List<LeafElement> getLeafs() {
         return leafs;
     }
 
+    /**
+     * Set the leaf (child element) of a filter
+     * @param leafs the leaf (child element) of a filter
+     */
     public void setLeafs(List<LeafElement> leafs) {
         this.leafs = leafs;
     }
 }
-

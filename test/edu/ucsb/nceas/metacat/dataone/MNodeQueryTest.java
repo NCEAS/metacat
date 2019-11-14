@@ -26,6 +26,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -48,9 +50,19 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
+import org.dataone.vocabulary.CITO;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+
+
+import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 
 /**
  * A JUnit test to exercise the Metacat Member Node  query service implementation.
@@ -61,6 +73,12 @@ public class MNodeQueryTest extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
+    private static String portalFilePath = "test/example-portal.xml";
+    private int tryAcccounts = 20;
+    
+    private static final String collectionResult = "<str name=\"collectionQuery\">(((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA)))</str>";
+    private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
+    
   /**
    * Set up the test fixtures
    * 
@@ -95,6 +113,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testQueryAccessControlAgainstPublicObject"));
     suite.addTest(new MNodeQueryTest("testQueryEMLTaxonomy"));
     suite.addTest(new MNodeQueryTest("testISO211"));
+    suite.addTest(new MNodeQueryTest("testPortalDocument"));
+    suite.addTest(new MNodeQueryTest("testPackageWithParts"));
     return suite;
     
   }
@@ -125,12 +145,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the guid is "+guid.getValue());
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //post query
@@ -152,9 +176,15 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         
         MNodeService.getInstance(request).archive(session, guid);
         SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, guid);
-        Thread.sleep(10000);
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(!resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(!resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
@@ -211,7 +241,27 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
-        Thread.sleep(10000);
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
         dataIds.add(guid);
@@ -229,11 +279,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         sysmeta3.setFormatId(formatId3);
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
         
-        Thread.sleep(60000);
-        String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -314,7 +369,27 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
         MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
         
-        Thread.sleep(10000);
+      //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
         List<Identifier> dataIds = new ArrayList<Identifier>();
         dataIds.add(guid);
@@ -332,11 +407,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         sysmeta3.setFormatId(formatId3);
         MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
         
-        Thread.sleep(60000);
-        String query = "q=id:"+guid.getValue();
-        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
-        String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
@@ -398,7 +478,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
         
         //update the resourceMap
-        Thread.sleep(60000);
+        query = "q=id:"+guid4.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         Map<Identifier, List<Identifier>> idMap5 = new HashMap<Identifier, List<Identifier>>();
         idMap5.put(guid4, dataIds);
         Identifier resourceMapId2 = new Identifier();
@@ -412,11 +501,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         sysmeta5.setFormatId(formatId3);
         MNodeService.getInstance(request).update(session, resourceMapId, object5, resourceMapId2, sysmeta5);
         
-        Thread.sleep(60000);
+
         query = "q=id:"+guid.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
         assertTrue(resultStr.contains(guid2.getValue()));
         assertTrue(resultStr.contains(guid4.getValue()));
@@ -483,12 +578,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         sysmeta.setAccessPolicy(new AccessPolicy());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the guid is "+guid.getValue());
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
@@ -585,12 +684,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the guid is "+guid.getValue());
-        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
@@ -689,11 +792,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object.close();
         object = new FileInputStream(taxononmyFilePath);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
-        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
         resultStr = resultStr.replaceAll("\\s","");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         System.out.println("the guid is "+guid.getValue());
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
@@ -736,13 +845,246 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         sysmeta.setAuthoritativeMemberNode(MNodeService.getInstance(request).getCapabilities().getIdentifier());
         Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
         assertTrue(pid.getValue().equals(guid.getValue()));
-        Thread.sleep(10000);
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
-        System.out.println("the guid is "+guid.getValue());
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T17:15:22Z</date>"));
         assertTrue(resultStr.contains("<str name=\"formatId\">http://www.isotc211.org/2005/gmd-pangaea</str>"));
     }
+    
+    /**
+     * Test to insert a portal document
+     * @throws Exception
+     */
+    public void testPortalDocument() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testPortal." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(portalFilePath);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://purl.dataone.org/portals-1.0.0");
+        sysmeta.setFormatId(formatId);
+        System.out.println("the checksum is "+sysmeta.getChecksum().getValue());
+        object.close();
+        InputStream object2 = new FileInputStream(portalFilePath);
+        System.out.println("before insert the object +++++++++++++++++++++ " +guid.getValue());
+        try {
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+        } catch (Exception e) {
+            System.out.println("the error is " + e.getMessage());
+            e.printStackTrace();
+        }
+        
+        System.out.println("After insert the object =========================");
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
+        assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
+        assertTrue(resultStr.contains(collectionResult));
+        System.out.println(resultStr);
+    }
+    
+    
+    /**
+     * Test upload/query a package with the hasPart/isPartOf relationship
+     */
+    public void testPackageWithParts() throws Exception {
+        String uuid_prefix = "urn:uuid:";
+        UUID uuid = UUID.randomUUID();
+        //insert a portal object with series id
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the collection file id is ==== "+guid.getValue());
+        InputStream object = new FileInputStream(portalFilePath);
+        Identifier seriesId = new Identifier();
+        uuid = UUID.randomUUID();
+        seriesId.setValue(uuid_prefix + uuid.toString());
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object.close();
+        InputStream object8 = new FileInputStream(portalFilePath);
+        sysmeta.setSeriesId(seriesId);
+        ObjectFormatIdentifier formatId4 = new ObjectFormatIdentifier();
+        formatId4.setValue("https://purl.dataone.org/portals-1.0.0");
+        sysmeta.setFormatId(formatId4);
+        MNodeService.getInstance(request).create(session, guid, object8, sysmeta);
+        object8.close();
+        
+        //insert a metadata object
+        Identifier guid2 = new Identifier();
+        uuid = UUID.randomUUID();
+        guid2.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        
+        //insert another metadata object
+        Identifier guid3 = new Identifier();
+        uuid = UUID.randomUUID();
+        guid3.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the second metadata  file id is ==== "+guid3.getValue());
+        InputStream object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        SystemMetadata sysmeta5 = createSystemMetadata(guid3, session.getSubject(), object5);
+        object5.close();
+        ObjectFormatIdentifier formatId5 = new ObjectFormatIdentifier();
+        formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta5.setFormatId(formatId5);
+        object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        
+        
+        //Make sure both portal and metadata objects have been indexed
+        String query = "q=id:" +  "\"" + guid.getValue()  + "\"";
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:" + "\""+ guid2.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:" +  "\"" + guid3.getValue()  + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //generate the resource map with the documents/documentedBy and isPartOf/hasPart relationships.
+        Identifier resourceMapId = new Identifier();
+        uuid = UUID.randomUUID();
+        resourceMapId.setValue("testPackageWithParts_resourceMap_" + uuid_prefix + uuid.toString());
+        Subject subject = new Subject();
+        subject.setValue("Jhon Smith");
+        Model model = ModelFactory.createDefaultModel();
+        //create a resourceMap resource
+        Resource resourceMap = ResourceMapModifier.generateNewOREResource(model, subject, resourceMapId);
+        //create an aggregation resource
+        Resource aggregation = ResourceFactory.createResource(resourceMap.getURI() + "#aggregation");
+        //create a collection object resource
+        Resource collection = ResourceMapModifier.generateNewComponent(model, seriesId.getValue());//it only works with a series id
+        //create a metadata object resource 
+        Resource metadata = ResourceMapModifier.generateNewComponent(model, guid2.getValue());
+        //create the second metadata object resource 
+        Resource metadata2 = ResourceMapModifier.generateNewComponent(model, guid3.getValue());
+        //add relationships to the model
+        Property predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isDescribedBy");
+        model.add(model.createStatement(aggregation, predicate, resourceMap));
+        predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "aggregates");
+        model.add(model.createStatement(aggregation, predicate, metadata));
+        model.add(model.createStatement(aggregation, predicate, metadata2));
+        predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isAggregatedBy");
+        model.add(model.createStatement(metadata, predicate, aggregation));
+        model.add(model.createStatement(metadata2, predicate, aggregation));
+        model.add(model.createStatement(metadata, CITO.isDocumentedBy, metadata));
+        model.add(model.createStatement(metadata, CITO.documents, metadata));
+        model.add(model.createStatement(metadata2, CITO.isDocumentedBy, metadata2));
+        model.add(model.createStatement(metadata2, CITO.documents, metadata2));
+        predicate = ResourceFactory.createProperty("https://schema.org/", "isPartOf");
+        model.add(model.createStatement(metadata, predicate, collection));
+        model.add(model.createStatement(metadata2, predicate, collection));
+        predicate = ResourceFactory.createProperty("https://schema.org/", "hasPart");
+        model.add(model.createStatement(collection, predicate, metadata));
+        model.add(model.createStatement(collection, predicate, metadata2));
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        model.write(System.out);
+        model.write(output);
+        InputStream object3 = new ByteArrayInputStream(output.toByteArray());
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        
+        query = "q=id:" + "\"" + guid.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("hasPart")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue((resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>")) ||
+                   (resultStr.contains("<arr name=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue() + "</str></arr>")));
+        assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
+        assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
+        assertTrue(resultStr.contains(collectionResult));
+        
+        query = "q=id:" + "\"" + guid2.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        query = "q=id:" + "\"" + guid3.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+    }
+    
+   
 
 }
