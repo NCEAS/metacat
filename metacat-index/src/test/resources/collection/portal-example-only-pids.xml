@@ -1,0 +1,87 @@
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.0.0">
+    <label>laurentest11</label>
+    <name>Only pids</name>
+    <definition>
+        <filter>
+            <field>id</field>
+            <operator>OR</operator>
+            <exclude>false</exclude>
+            <matchSubstring>false</matchSubstring>
+            <value>doi:10.5072/FK2CF9SR7F</value>
+            <value>urn:uuid:43a50d52-ced4-4dc5-8000-7ec40803b7c2</value>
+            <value>urn:uuid:9cc96524-391f-4dcb-8b0b-8cef053da26f</value>
+            <value>knb.26.2</value>
+        </filter>
+    </definition>
+    <logo>
+        <identifier>urn:uuid:4adc5fac-79d5-46d1-b5d9-425a5a90b39a</identifier>
+        <label>logo</label>
+    </logo>
+    <section>
+        <label>test</label>
+        <title>test</title>
+        <introduction>test</introduction>
+        <image>
+            <identifier>urn:uuid:6449bd7d-cfbe-4c40-b22a-9257302a671c</identifier>
+        </image>
+        <content>
+            <markdown>
+                <![CDATA[ d ]]>
+            </markdown>
+        </content>
+    </section>
+    <section>
+        <label>Test page</label>
+        <title>750w 500h</title>
+        <image>
+            <identifier>urn:uuid:386ab558-5960-48ac-b6a1-92d1ce364ecf</identifier>
+        </image>
+        <content>
+            <markdown>
+                <![CDATA[
+Replace this example with your content. Styling using markdown is supported. # Level 1 Header Markdown is a simple way to format text. ## Level 2 Headerasdf For example, *this text will be italic* and **this text will be bold**. Here is a link to [DataOne](https://www.dataone.org), and here is an equation written using the TeX language: $$ y =X\beta + \epsilon $$. Add an image like so: ![DataOne logo](https://www.dataone.org/sites/default/files/d1-logo-v8_aligned_left.png) Show in-line code using `single backticks`, or show it as a separate block using triple backticks: ```r my_string <- "Check out the code I wrote" print(my_string) ``` Here is how to make a table: | Tables | Are | Cool | | ------ | --- | ----- | | x | a | $1600 | | y | b | $12 | | z | c | $1600 | The following is an unordered list: * List item a * List item b * List item c * You can create nested lists by indenting list items by four spaces. * Sub-item 2 This is a numbered list: 1. First 2. Second 3. Third To quote some text, just start a line with a `>` character. In the words of Grace Hopper: > information is more valuable than the hardware which processes it. You can even add emojis :smile:! ### More help with markdown - [Markdown reference](https://commonmark.org/help/) - [Ten minute tutorial](https://commonmark.org/help/tutorial/) - For a longer example where you can also preview the results, checkout the [Showdown Live Editor](http://demo.showdownjs.com/)
+]]>
+            </markdown>
+        </content>
+    </section>
+    <section>
+        <label>New page</label>
+        <title>1500w 1000h</title>
+        <image>
+            <identifier>urn:uuid:fa099f05-aba0-46e7-8c5e-8b98f6ada39a</identifier>
+        </image>
+        <content>
+            <markdown>
+                <![CDATA[
+Replace this example with your content. Styling using markdown is supported. # Level 1 Headerf Markdown is a simple way to format text. ## Level 2 Header For example, *this text will be italic* and **this text will be bold**. Here is a link to [DataOne](https://www.dataone.org), and here is an equation written using the TeX language: $$ y =X\beta + \epsilon $$. Add an image like so: ![DataOne logo](https://www.dataone.org/sites/default/files/d1-logo-v8_aligned_left.png) Show in-line code using `single backticks`, or show it as a separate block using triple backticks: ```r my_string <- "Check out the code I wrote" print(my_string) ``` Here is how to make a table: | Tables | Are | Cool | | ------ | --- | ----- | | x | a | $1600 | | y | b | $12 | | z | c | $1600 | The following is an unordered list: * List item a * List item b * List item c * You can create nested lists by indenting list items by four spaces. * Sub-item 2 This is a numbered list: 1. First 2. Second 3. Third To quote some text, just start a line with a `>` character. In the words of Grace Hopper: > information is more valuable than the hardware which processes it. You can even add emojis :smile:! ### More help with markdown - [Markdown reference](https://commonmark.org/help/) - [Ten minute tutorial](https://commonmark.org/help/tutorial/) - For a longer example where you can also preview the results, checkout the [Showdown Live Editor](http://demo.showdownjs.com/)
+]]>
+            </markdown>
+        </content>
+    </section>
+    <section>
+        <label>Testing a long page title here</label>
+        <title>asdf</title>
+        <content>
+            <markdown>
+                <![CDATA[
+Replace this example with your content. Styling using markdown is supported. # Level 1 Header Markdown is a simple way to format text.asdf ## Level 2 Header For example, *this text will be italic* and **this text will be bold**. Here is a link to [DataOne](https://www.dataone.org), and here is an equation written using the TeX language: $$ y =X\beta + \epsilon $$. Add an image like so: ![DataOne logo](https://www.dataone.org/sites/default/files/d1-logo-v8_aligned_left.png) Show in-line code using `single backticks`, or show it as a separate block using triple backticks: ```r my_string <- "Check out the code I wrote" print(my_string) ``` Here is how to make a table: | Tables | Are | Cool | | ------ | --- | ----- | | x | a | $1600 | | y | b | $12 | | z | c | $1600 | The following is an unordered list: * List item a * List item b * List item c * You can create nested lists by indenting list items by four spaces. * Sub-item 2 This is a numbered list: 1. First 2. Second 3. Third To quote some text, just start a line with a `>` character. In the words of Grace Hopper: > information is more valuable than the hardware which processes it. You can even add emojis :smile:! ### More help with markdown - [Markdown reference](https://commonmark.org/help/) - [Ten minute tutorial](https://commonmark.org/help/tutorial/) - For a longer example where you can also preview the results, checkout the [Showdown Live Editor](http://demo.showdownjs.com/)
+]]>
+            </markdown>
+        </content>
+    </section>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:2737a72e-47ea-4ea2-921f-ead0432bed11</identifier>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:8b4d230f-8d54-4a49-800c-9dfd5d86b08a</identifier>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:d109bca8-7906-4eb9-8ef7-9edd75071251</identifier>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:9f0f06c4-efc4-442b-8781-ea518da1aa11</identifier>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:87b2087f-1e93-4eff-91ab-61783c5f7d14</identifier>
+    </acknowledgmentsLogo>
+</por:portal>

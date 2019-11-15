@@ -31,7 +31,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.math.BigInteger;
 import java.util.Date;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Vector;
+
+import javax.servlet.ServletContext;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -61,11 +65,15 @@ import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
+import org.mockito.Mockito;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
+import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
+import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.util.SkinUtil;
 
 /**
  * A JUnit superclass for testing the dataone Node implementations
@@ -89,6 +97,7 @@ public class D1NodeServiceTest extends MCTestCase {
         suite.addTest(new D1NodeServiceTest("initialize"));
         suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
         suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
+        suite.addTest(new D1NodeServiceTest("testAddParaFromSkinProperties"));
         
         return suite;
     }
@@ -230,6 +239,38 @@ public class D1NodeServiceTest extends MCTestCase {
         assertTrue(D1NodeService.isValidIdentifier(pid));
         pid.setValue("p1312.ds2636_20181109_0300");
         assertTrue(D1NodeService.isValidIdentifier(pid));
+	}
+	
+	/**
+	 * Test the method of addParasFromSkinProperties
+	 * @throws Exception
+	 */
+	public void testAddParaFromSkinProperties() throws Exception {
+	    String SKIN_NAME = "test-theme";
+	    //setings for testing
+	    Vector<String> originalSkinNames = SkinUtil.getSkinNames();
+        Vector<String> newNames = new Vector<String>();
+        newNames.add(SKIN_NAME);
+        SkinUtil.setSkinName(newNames);
+        ServletContext servletContext = Mockito.mock(ServletContext.class);
+        Mockito.when(servletContext.getContextPath()).thenReturn("context");
+        Mockito.when(servletContext.getRealPath("/")).thenReturn("/");
+        Mockito.when(servletContext.getRealPath("/style/skins")).thenReturn("test/skins");
+        ServiceService.getInstance(servletContext);
+        SkinPropertyService service = SkinPropertyService.getInstance();
+        
+        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+        D1NodeService.addParamsFromSkinProperties(params, SKIN_NAME);
+        String[] value = params.get("serverName");
+        assertTrue(value[0].equals("https://foo.com"));//real value
+        value = params.get("testUser");
+        assertTrue(value[0].equals("uid=kepler,o=unaffiliated,dc=ecoinformatics,dc=org")); //value of "test.mcUser" from the metacat.properties file
+        value = params.get("testThirdUser");
+        assertTrue(value[0].equals("http://orcid.org\\0023-0001-7868-2567")); //value of "test.mcThirdUser" from the metacat.properties file
+        value = params.get("organization");
+        assertTrue(value[0].equals("ESS-DIVE")); //real value
+        SkinUtil.setSkinName(originalSkinNames);
+	   
 	}
 	
 	/**

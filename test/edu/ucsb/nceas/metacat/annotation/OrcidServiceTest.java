@@ -18,17 +18,27 @@
  */
 package edu.ucsb.nceas.metacat.annotation;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.io.IOUtils;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
+
 import junit.framework.Test;
 import junit.framework.TestSuite;
-import edu.ucsb.nceas.MCTestCase;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 
-public class OrcidServiceTest extends MCTestCase {
+public class OrcidServiceTest extends D1NodeServiceTest {
 
 	
 	/**
@@ -68,8 +78,34 @@ public class OrcidServiceTest extends MCTestCase {
 		assertEquals("http://orcid.org/0000-0003-0077-4738", orcid);
 	}
 	
-	public void findMatches() {
-		
+	public void findMatches() throws Exception {
+        
+        // insert an object in case there are no objects on the server
+        String path = "test/eml-datacite.xml";
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("findMatches." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(new File(path));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta.setFormatId(formatId);
+        object = new FileInputStream(new File(path));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object.close();
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int times = 0;
+        int tryAcccounts = 20;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && times <= tryAcccounts) {
+            Thread.sleep(1000);
+            times++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        
 		int count = 0;
 		Map<String, String> matches = new HashMap<String, String>();
 
