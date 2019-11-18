@@ -29,6 +29,7 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.security.NoSuchAlgorithmException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
@@ -43,6 +44,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.portal.PortalCertificateManager;
@@ -59,6 +61,8 @@ import org.dataone.service.types.v1.SubjectInfo;
 import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
@@ -397,6 +401,27 @@ public class D1ResourceHandler {
         }
         
         return files;
+    }
+    
+    /**
+     * Parse the request by the streaming multiple part handler. This method is good for the cn.create and mn.create/update methods.
+     * @return  the MultipartRequestWithSysmeta object which includes the stored object file with its checksum and the system metadata about this object
+     * @throws IOException
+     * @throws FileUploadException
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws NoSuchAlgorithmException
+     * @throws MarshallingException
+     */
+    protected MultipartRequestWithSysmeta collectObjectFiles() throws IOException, FileUploadException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, MarshallingException {
+        logMetacat.debug("Disassembling MIME multipart form with object files");
+        // handle MMP inputs
+        File tmpDir = getTempDirectory();
+        logMetacat.debug("temp dir: " + tmpDir.getAbsolutePath());
+        StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
+        MultipartRequestWithSysmeta mq = null;
+        mq = (MultipartRequestWithSysmeta)resolver.resolveMultipart(request);
+        return mq;
     }
     
 		/**

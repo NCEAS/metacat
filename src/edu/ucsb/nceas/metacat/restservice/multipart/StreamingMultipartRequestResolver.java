@@ -48,6 +48,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
 import org.dataone.service.types.v1.Checksum;
@@ -93,7 +94,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @param request  the request needs to be resolved
      * @return multipartRequest with the data structure including form fields and file items. 
      */
-    public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException, FileUploadException, Exception {
+    public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException, FileUploadException, InstantiationException, IllegalAccessException, MarshallingException, NoSuchAlgorithmException {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
         MultipartRequestWithSysmeta multipartRequest = new MultipartRequestWithSysmeta(request, mpFiles, mpParams);
