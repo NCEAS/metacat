@@ -96,7 +96,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     public MultipartRequest resolveMultipart(HttpServletRequest request) throws IOException, FileUploadException, Exception {
         Map<String, List<String>> mpParams = new HashMap<String, List<String>>();
         Map<String, File> mpFiles = new HashMap<String, File>();
-        MultipartRequest multipartRequest = new MultipartRequest(request, mpFiles, mpParams);
+        MultipartRequestWithSysmeta multipartRequest = new MultipartRequestWithSysmeta(request, mpFiles, mpParams);
         if (!isMultipartContent(request)) {
             return multipartRequest;
         }
@@ -136,7 +136,8 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                         log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
                     }
                     input.close();
-                } else {
+                    multipartRequest.setSystemMetadata(sysMeta);
+                } else if (name.equals("object")){
                     String algorithm = null;
                     if (sysMeta != null && sysMeta.getChecksum() != null ) {
                         //We are lucky and the system metadata has been processed
@@ -158,6 +159,10 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     File newFile = generateTmpFile("upload");
                     CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
                     mpFiles.put(name, checkedFile);
+                } else {
+                    File newFile = generateTmpFile("other");
+                    writeStreamToFile(newFile, stream);
+                    mpFiles.put(name, newFile);
                 }
             }
             if(stream != null) {
@@ -218,6 +223,22 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         log.info("StreamingMultipartRequestResolver.writeStreamToCheckedFile - the checksum calculated from the saved local file is " + localChecksum + " for the pid " + pid);
         CheckedFile checkedFile = new CheckedFile(file.getCanonicalPath(), checksum);
         return checkedFile;
+    }
+    
+    /**
+     * Write the stream into a given file.
+     * @param file
+     * @param dataStream
+     * @return
+     * @throws IOException
+     */
+    private static File writeStreamToFile(File file, InputStream dataStream) throws IOException {
+        FileOutputStream os = new FileOutputStream(file);
+        long length = IOUtils.copyLarge(dataStream, os);
+        os.flush();
+        os.close();
+        return file;
+        
     }
     
     /**
