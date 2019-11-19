@@ -94,6 +94,9 @@ import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
+import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -1568,7 +1571,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException {
        
     	// Read the incoming data from its Mime Multipart encoding
-    	Map<String, File> files = collectMultipartFiles();
+    MultipartRequestWithSysmeta multiparts = collectObjectFiles();
                
     	Identifier pid = new Identifier();
         if (trailingPid == null) {
@@ -1588,24 +1591,20 @@ public class MNResourceHandler extends D1ResourceHandler {
         logMetacat.debug("putObject with pid " + pid.getValue());
         logMetacat.debug("Entering putObject: " + pid.getValue() + "/" + action);
 
-        InputStream object = null;
-        InputStream sysmeta = null;
-        File smFile = files.get("sysmeta");
-        File objFile = files.get("object");
-        // ensure we have the object bytes
-        if  ( objFile == null ) {
-            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-            
-        }
-        object = new FileInputStream(objFile);
-        
-        // ensure we have the system metadata
-        if  ( smFile == null ) {
+        SystemMetadata smd = (SystemMetadata) multiparts.getSystemMetadata();
+        if  ( smd == null ) {
             throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
             
         }
-        sysmeta = new FileInputStream(smFile);
-        
+       
+        Map<String, File> files = multiparts.getMultipartFiles();
+        CheckedFile objFile = (CheckedFile) files.get("object");
+        // ensure we have the object bytes
+        if  ( objFile == null ) {
+            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
+        }
+        DetailedFileInputStream object = new DetailedFileInputStream(objFile, objFile.getChecksum());
+
         response.setStatus(200);
         response.setContentType("text/xml");
         OutputStream out = response.getOutputStream();
@@ -1613,7 +1612,6 @@ public class MNResourceHandler extends D1ResourceHandler {
         if (action.equals(FUNCTION_NAME_INSERT)) { 
             // handle inserts
             logMetacat.debug("Commence creation...");
-            SystemMetadata smd = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
 
             logMetacat.debug("creating object with pid " + pid.getValue());
             Identifier rId = MNodeService.getInstance(request).create(session, pid, object, smd);
@@ -1632,10 +1630,6 @@ public class MNResourceHandler extends D1ResourceHandler {
 				logMetacat.error("Could not get newPid from request");
 			}
             logMetacat.debug("Commence update...");
-            
-            // get the systemmetadata object
-            SystemMetadata smd = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
-
             Identifier rId = MNodeService.getInstance(request).update(session, pid, object, newPid, smd);
             TypeMarshaller.marshalTypeToOutputStream(rId, out);
         } else {

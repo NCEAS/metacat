@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
@@ -83,6 +84,9 @@ import edu.ucsb.nceas.metacat.dataone.v1.CNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1HttpRequest;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
+import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -622,15 +626,17 @@ public class CNResourceHandler extends D1ResourceHandler {
      * @throws IOException
      * @throws IllegalAccessException
      * @throws InstantiationException
+     * @throws FileUploadException 
+     * @throws NoSuchAlgorithmException 
      */
     protected void putObject(String action) throws ServiceFailure,
             InvalidRequest, IdentifierNotUnique, MarshallingException, InvalidToken,
             NotAuthorized, UnsupportedType, InsufficientResources,
             InvalidSystemMetadata, NotImplemented, IOException,
-            InstantiationException, IllegalAccessException {
+            InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
     	
         // Read the incoming data from its Mime Multipart encoding
-        Map<String, File> files = collectMultipartFiles();
+        MultipartRequestWithSysmeta multiparts = collectObjectFiles();
         
 	    // get the encoded pid string from the body and make the object
         String pidString = multipartparams.get("pid").get(0);
@@ -639,20 +645,24 @@ public class CNResourceHandler extends D1ResourceHandler {
         
         logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
         
-        InputStream object = null;
-        InputStream sysmeta = null;
-
-        File smFile = files.get("sysmeta");
-        sysmeta = new FileInputStream(smFile);
-        File objFile = files.get("object");
-        object = new FileInputStream(objFile);
+        SystemMetadata smd = multiparts.getSystemMetadata();
+        // ensure we have the system metadata
+        if  ( smd == null ) {
+            throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
+            
+        }
+        DetailedFileInputStream object = null;
+        Map<String, File> files = multiparts.getMultipartFiles();
+        CheckedFile objFile = (CheckedFile) files.get("object");
+        // ensure we have the object bytes
+        if  ( objFile == null ) {
+            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
+        }
+        object = new DetailedFileInputStream(objFile, objFile.getChecksum());
 
         if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
 
             logMetacat.debug("Commence creation...");
-            SystemMetadata smd = TypeMarshaller.unmarshalTypeFromStream(
-                    SystemMetadata.class, sysmeta);
-
            
             logMetacat.debug("creating object with pid " + pid.getValue());
             Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
