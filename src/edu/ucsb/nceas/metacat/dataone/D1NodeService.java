@@ -53,6 +53,7 @@ import java.util.concurrent.locks.Lock;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
@@ -115,6 +116,7 @@ import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -1683,6 +1685,33 @@ public abstract class D1NodeService {
                 logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
                 throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
             }
+          
+          //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
+          if (dataStream instanceof DetailedFileInputStream ) {
+              DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
+              Checksum expectedChecksum = stream.getExpectedChecksum();
+              if(expectedChecksum != null) {
+                  String expectedAlgorithm = expectedChecksum.getAlgorithm();
+                  String exprectedChecksumValue = expectedChecksum.getValue();
+                  if(expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
+                      //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
+                      if (exprectedChecksumValue != null && exprectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                          File tempFile = stream.getFile();
+                          FileUtils.moveFile(tempFile, newFile);
+                          logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
+                          return newFile;
+                      } else {
+                          logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                                                  ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
+                          throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                                  ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
+                      }
+                  } else {
+                      logMetacat.info("D1NodeService.writeStreamToFile - the checksum algorithm which the multipart handler used is " + expectedAlgorithm + " and it is different to one on the system metadata " + algorithm + ". So we have to calculate again.");
+                  }
+              } 
+          }
+          //The input stream is not a DetaileFileInputStream or the algorithm doesn't match, we have to calculate the checksum.
           MessageDigest md = MessageDigest.getInstance(algorithm);
           // write data stream to desired file
           DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
