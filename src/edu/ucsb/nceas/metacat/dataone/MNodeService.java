@@ -2472,6 +2472,31 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
+    /*
+     * Writes the resource map to disk. This file gets written to the metadata/ folder.
+     *
+     * @param resMap: The resource map that's being written to disk
+     * @param metadataRoot: The File that represents the metadata/ folder
+     *
+     */
+    private void writeResourceMap(ResourceMap resMap,
+                                  File metadataRoot) {
+
+        // Write the resource map to the metadata directory
+        String filename = metadataRoot.getAbsolutePath() + "/" + "oai-ore.xml";
+        try {
+            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
+            File systemMetadataDocument = new File(filename);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
+            writer.write(resMapString);
+            writer.close();
+        }
+        catch (IOException e) {
+            logMetacat.error("Failed to write resource map to the bag.", e);
+        } catch (ORESerialiserException e) {
+            logMetacat.error("Failed to de-serialize the resource map", e);
+        }
+    }
 
     /*
      * Checks to see if the package can be exported based on the formatId
@@ -2517,7 +2542,8 @@ public class MNodeService extends D1NodeService
 		// the pids to include in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
 
-
+		// Container that holds the pids of all of the objects that are in a package
+        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
         // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
         File metadataRoot = null;
         // A temporary directory within metadataRoot that holds system metadata
@@ -2543,46 +2569,34 @@ public class MNodeService extends D1NodeService
             throw new ServiceFailure("", "Metacat failed to create the temporary bag archive.");
         }
 
-		// catch non-D1 service errors and throw as ServiceFailures
-		try {
-			// find the package contents
-			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
-			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
-				//Get the resource map as a map of Identifiers
-				InputStream oreInputStream = this.get(session, pid);
-				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-				packagePids.addAll(resourceMapStructure.keySet());
-				//Loop through each object in this resource map
-				for (Map<Identifier, List<Identifier>> entries: resourceMapStructure.values()) {
-					//Loop through each metadata object in this entry
-					Set<Identifier> metadataIdentifiers = entries.keySet();
-					for(Identifier metadataID: metadataIdentifiers){
-						try{
-							//Get the system metadata for this metadata object
-							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
-							
-							// include user-friendly metadata
-							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
+        // Get the system metadata for the package
+        SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+        ResourceMap resMap = null;
 
-							}
-						}
-						catch(Exception e){
-							//Catch errors that would prevent package download
-							logMetacat.debug(e.toString());
-						}
-					}
-					packagePids.addAll(entries.keySet());
-					for (List<Identifier> dataPids: entries.values()) {
-						packagePids.addAll(dataPids);
-					}
-				}
-			} else {
-				// just the lone pid in this package
-				//packagePids.add(pid);
-			    //throw an invalid request exception
-			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package id (resource map id). Please use a package id instead.");
-			}
-			
+        // Maps a resource map to a list of aggregated identifiers. Use this to get the list of pids inside
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
+
+        if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
+            InputStream oreInputStream = null;
+
+            // Attempt to open/parse the resource map so that we can get a list of pids inside
+            try {
+                oreInputStream = this.get(session, pid);
+                resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
+                // Write the resource map to disk
+                this.writeResourceMap(resMap, metadataRoot);
+
+                oreInputStream = this.get(session, pid);
+                resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
+                pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
+            } catch (Exception e) {
+                logMetacat.error("Error getting identifiers from the resource map.", e);
+            }
+        } else {
+            //throw an invalid request exception if there's just a single pid
+            throw new InvalidRequest("2873", "The given pid " + pid.getValue() + " is not a package id (resource map id). Please use a package id instead.");
+        }
+        try {
 			//Create a temp file, then delete it and make a directory with that name
 			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
 			tempDir.delete();
