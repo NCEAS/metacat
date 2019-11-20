@@ -2473,6 +2473,40 @@ public class MNodeService extends D1NodeService
     }
 
     /*
+     * Writes an EML document to disk. In particular, it writes it to the metadata/ directory which eventually
+     * gets added to the bag.
+     *
+     * @param session: The current session
+     * @param metadataID: The ID of the EML document
+     * @param metadataRoot: The File that represents the metadata/ folder
+
+     */
+    private void writeEMLDocument(Session session,
+                                  Identifier metadataID,
+                                  File metadataRoot) {
+
+        InputStream emlStream = null;
+        try {
+            emlStream = this.get(session, metadataID);
+        } catch (Exception e) {
+            logMetacat.error("Failed to retrieve the EML document.", e);
+        }
+        try {
+            // Write the EML document to the bag zip
+            String documentContent = IOUtils.toString(emlStream, "UTF-8");
+            String filename = metadataRoot.getAbsolutePath() + "/" + "eml.xml";
+            File systemMetadataDocument = new File(filename);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
+            writer.write(documentContent);
+            writer.close();
+        }
+        catch (Exception e) {
+            logMetacat.warn("Failed to write the eml document.", e);
+        }
+
+    }
+
+    /*
      * Searches through the resource map for any objects that have had their location specified with
      * prov:atLocation. The filePathMap parameter is mutated with the file path and corresponding pid.
      *
@@ -2677,6 +2711,11 @@ public class MNodeService extends D1NodeService
                         if (metadataType.startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
                             // Add the ID to the list of metadata pids
                             coreMetadataIdentifiers.add(metadataID);
+
+                            // Write the EML document to disk
+                            this.writeEMLDocument(session,
+                                    metadataID,
+                                    metadataRoot);
                         }
                     }
                 }
