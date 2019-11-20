@@ -2563,79 +2563,7 @@ public class MNodeService extends D1NodeService
 							
 							// include user-friendly metadata
 							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-								InputStream metadataStream = this.get(session, metadataID);
-							
-								try {
-									// transform
-						            String format = "default";
 
-									DBTransform transformer = new DBTransform();
-						            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
-						            String sourceType = metadataSysMeta.getFormatId().getValue();
-						            String targetType = "-//W3C//HTML//EN";
-						            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						            Writer writer = new OutputStreamWriter(baos , "UTF-8");
-						            // TODO: include more params?
-						            Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-						            String localId = null;
-									try {
-										localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-									} catch (McdbDocNotFoundException e) {
-										throw new NotFound("1020", e.getMessage());
-									}
-									params.put("qformat", new String[] {format});	            
-						            params.put("docid", new String[] {localId});
-						            params.put("pid", new String[] {pid.getValue()});
-						            params.put("displaymodule", new String[] {"printall"});
-						            
-						            transformer.transformXMLDocument(
-						                    documentContent , 
-						                    sourceType, 
-						                    targetType , 
-						                    format, 
-						                    writer, 
-						                    params, 
-						                    null //sessionid
-						                    );
-						            
-						            // finally, get the HTML back
-						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
-						            
-						            // write to temp file with correct css path
-						            File tmpDir = File.createTempFile("package_", "_dir");
-						            tmpDir.delete();
-						            tmpDir.mkdir();
-						            File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
-						            File cssDir = new File(tmpDir, format);
-						            cssDir.mkdir();
-						            File cssFile = new File(tmpDir, format + "/" + format + ".css");
-						            String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
-						            File pdfFile = new File(tmpDir, pdfFileName);
-						            //File pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
-						            
-						            // put the CSS file in place for the html to find it
-						            String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
-						            IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
-						            
-						            // write the HTML file
-						            IOUtils.copy(resultInputStream, new FileOutputStream(htmlFile));
-						            
-						            // convert to PDF
-						            HtmlToPdf.export(htmlFile.getAbsolutePath(), pdfFile.getAbsolutePath());
-						            
-						            //add to the package
-						            bag.addFileToPayload(pdfFile);
-
-						            // mark for clean up after we are done
-									htmlFile.delete();
-									cssFile.delete();
-									cssDir.delete();
-						            tempFiles.add(tmpDir);
-									tempFiles.add(pdfFile); // delete this first later on
-						            
-								} catch (Exception e) {
-									logMetacat.warn("Could not transform metadata", e);
-								}
 							}
 						}
 						catch(Exception e){
