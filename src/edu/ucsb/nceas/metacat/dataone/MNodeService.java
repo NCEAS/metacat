@@ -2724,43 +2724,73 @@ public class MNodeService extends D1NodeService
             logMetacat.warn("There was an error while parsing the files in the resource map.", e);
         }
 
-        try {
-			//Create a temp file, then delete it and make a directory with that name
-			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
-			tempDir.delete();
-			tempDir = new File(tempDir.getPath() + "_dir");
-			tempDir.mkdir();			
-			tempFiles.add(tempDir);
+        List<Identifier> metadataIds = new ArrayList();
+        /*
+		    Loop over each pid in the resource map. First, the system metadata gets written. Next, the data file that
+			corresponds to the system metadata gets written.
+		*/
 
-			// loop through the package contents
-			for (Identifier entryPid: packagePids) {
-				//Get the system metadata for each item
-				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
-				
-				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-				String fileName = null;
-				
-				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
-				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
-				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-				
-				// ensure there is a file extension for the object
-				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-				fileName += extension;
-				
-				// if SM has the file name, ignore everything else and use that
-				if (entrySysMeta.getFileName() != null) {
-					fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
-				
-		        //Create a new file for this item and add to the list
-				File tempFile = new File(tempDir, fileName);
-				tempFiles.add(tempFile);
-				
-				InputStream entryInputStream = this.get(session, entryPid);			
-				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-				bag.addFileToPayload(tempFile);
-			}
+        // loop through the package contents
+        for (Identifier entryPid : pidsOfPackageObjects) {
+            //Get the system metadata for the objbect with pid entryPid
+            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+
+            // Write its system metadata to disk
+            Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
+            metadataIds.add(objectSystemMetadataID);
+            try {
+                String filename = systemMetadataDirectory.getAbsolutePath() + "/sysmeta-" + objectSystemMetadataID.getValue() + ".xml";
+                File systemMetadataDocument = new File(filename);
+                FileOutputStream sysMetaStream = new FileOutputStream(systemMetadataDocument);
+                TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
+            } catch (Exception e) {
+                logMetacat.warn("Error writing system metadata to disk.");
+            }
+
+            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
+            if (coreMetadataIdentifiers.contains(entryPid)) {
+                continue;
+            }
+
+            String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
+            String fileName = null;
+
+            //TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
+            //Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
+            fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
+
+            // ensure there is a file extension for the object
+            String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
+            fileName += extension;
+
+            // if SM has the file name, ignore everything else and use that
+            if (entrySysMeta.getFileName() != null) {
+                fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+            }
+
+            // Create a new file for this data file. The default location is in the data diretory
+            File dataPath = dataRoot;
+
+            // Create the directory for the data file, if it was specified in the resource map
+            if (filePathMap.containsKey(entryPid.getValue())) {
+                dataPath = new File(dataRoot.getAbsolutePath() + "/" + filePathMap.get(entryPid.getValue()));
+            }
+            // We want to make sure that the directory exists before referencing it later
+            if (!dataPath.exists()) {
+                dataPath.mkdirs();
+            }
+
+            // Create a temporary file that will hold the bytes of the data object. This file will get
+            // placed into the bag
+            File tempFile = new File(dataPath, fileName);
+            try {
+                InputStream entryInputStream = this.get(session, entryPid);
+                IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
+            } catch (Exception e) {
+                logMetacat.warn("There was an error while writing a data file", e);
+            }
+        }
+
 			bag = bag.makeComplete();
 			
 			///Now create the zip file
@@ -2783,32 +2813,6 @@ public class MNodeService extends D1NodeService
 			for (int i=tempFiles.size()-1; i>=0; i--){
 				tempFiles.get(i).delete();
 			}
-			
-		} catch (IOException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (URISyntaxException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREParserException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		}
 		
 		return bagInputStream;
 	}
