@@ -2545,9 +2545,6 @@ public class MNodeService extends D1NodeService
 
 		// catch non-D1 service errors and throw as ServiceFailures
 		try {
-			// track the pid-to-file mapping
-			StringBuffer pidMapping = new StringBuffer();
-			
 			// find the package contents
 			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
 			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
@@ -2628,8 +2625,7 @@ public class MNodeService extends D1NodeService
 						            
 						            //add to the package
 						            bag.addFileToPayload(pdfFile);
-									pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
-						            
+
 						            // mark for clean up after we are done
 									htmlFile.delete();
 									cssFile.delete();
@@ -2665,8 +2661,7 @@ public class MNodeService extends D1NodeService
 			tempDir = new File(tempDir.getPath() + "_dir");
 			tempDir.mkdir();			
 			tempFiles.add(tempDir);
-			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
-			
+
 			// loop through the package contents
 			for (Identifier entryPid: packagePids) {
 				//Get the system metadata for each item
@@ -2695,14 +2690,7 @@ public class MNodeService extends D1NodeService
 				InputStream entryInputStream = this.get(session, entryPid);			
 				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
 				bag.addFileToPayload(tempFile);
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + tempFile.getName() + "\n");
 			}
-			
-			//add the the pid to data file map
-			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
-			bag.addFileAsTag(pidMappingFile);
-			tempFiles.add(pidMappingFile);
-			
 			bag = bag.makeComplete();
 			
 			///Now create the zip file
