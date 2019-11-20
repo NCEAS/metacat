@@ -2852,6 +2852,15 @@ public class MNodeService extends D1NodeService
 		// Container that holds the pids of all of the objects that are in a package
         List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
 
+        /*
+           The bag has a few standard directories (metadata, metadata/sysmeta, data/). Create File objects
+           representing each of these directories so that the appropriate files can be added to them. Initialize them
+           to null so that they can be used outside of the try/catch block.
+         */
+
+        // A temporary directory where the non-zipped bag is formed
+        File tempBagRoot = null;
+
         // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
         File metadataRoot = null;
         // A temporary directory within metadataRoot that holds system metadata
