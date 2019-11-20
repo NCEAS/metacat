@@ -2473,6 +2473,175 @@ public class MNodeService extends D1NodeService
     }
 
     /*
+     * Inserts a file table into the readme html. This works by searching for the
+     * first table row in the first table group and pasting the table in front of it.
+     * If for some reason the readme HTML is empty, just return the table.
+     *
+     * @param table: The HTML file table
+     * @param htmlDoc: The greater HTML document that the table goes in
+     */
+    public String insertTableIntoReadme(String table, String htmlDoc) {
+        if (htmlDoc.length() >1) {
+            // Look for the first table within the first table group
+            String bodyTag = "<table class=\"subGroup onehundred_percent\">\n";
+            int bodyTagLocation = htmlDoc.indexOf(bodyTag);
+            // Insert the file table above the table
+            int insertLocation = bodyTagLocation+bodyTag.length();
+            StringBuilder builder = new StringBuilder(htmlDoc);
+            builder.insert(insertLocation, table);
+            return builder.toString();
+        }
+        return table;
+    }
+
+    /*
+     * Generates a basic readme file using the metacatui xslt.
+     *
+     * @param session: The current session
+     * @param metadataId: The EML metadata ID
+     * @param metadataSysMeta: The EML sysmeta document
+     */
+    public String generateReadmeBody(Session session, Identifier metadataId, SystemMetadata metadataSysMeta) {
+        String readmeBody = new String();
+        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+        try{
+            // Get a stream to the object
+            InputStream metadataStream = this.get(session, metadataId);
+            // Turn the stream into a string for the xslt
+            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
+            // Get the type so the xslt can properly parse it
+            String sourceType = metadataSysMeta.getFormatId().getValue();
+            // Holds the HTML that the transformer returns
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // Handles writing the xslt response to the byte array
+            Writer writer = new OutputStreamWriter(baos, "UTF-8");
+
+            DBTransform transformer = new DBTransform();
+            transformer.transformXMLDocument(documentContent,
+                    sourceType,
+                    "-//W3C//HTML//EN",
+                    "default",
+                    writer,
+                    params,
+                    null //sessionid
+            );
+            return baos.toString();
+        } catch(Exception e) {
+            logMetacat.error("Failed to generate the README body") ;
+        }
+        return "";
+    }
+
+    /**
+     * Creates a table of filename, size, and hash for objects in a data package.
+     *
+     * @param session: The current session
+     * @param metadataIds: A list of metadata identifiers of objects that should be included in the table
+     */
+    public String createSysMetaTable(Session session, List<Identifier> metadataIds) {
+
+        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
+
+        // Holds the HTML rows
+        StringBuilder tableHTMLBuilder = new StringBuilder();
+        for(Identifier metadataID: metadataIds) {
+            try {
+                SystemMetadata entrySysMeta = this.getSystemMetadata(session, metadataID);
+                Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
+
+                // Holds the content of the system metadata document
+                ByteArrayOutputStream sysMetaStream = new ByteArrayOutputStream();
+
+                // Retrieve the sys meta document
+                TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
+
+                // Holds the HTML that the xslt returns
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+                // Handles writing the xslt response to the byte array
+                Writer writer = new OutputStreamWriter(baos, "UTF-8");
+
+                // The xslt requires the sysmeta document in string form
+                String documentContent = sysMetaStream.toString("UTF-8");
+                DBTransform transformer = new DBTransform();
+
+                // Transform the system metadocument using the 'export' xslt, targeting an HTML return type
+                transformer.transformXMLDocument(documentContent,
+                        "export",
+                        "-//W3C//HTML//EN",
+                        "export",
+                        writer,
+                        params,
+                        null //sessionid
+                );
+
+                // Write the table to our string builder
+                tableHTMLBuilder.append(baos.toString());
+            } catch (Exception e) {
+                logMetacat.error("There was an error while generating the README table.");
+            }
+        }
+
+        // This is ugly, but we need to wrap the sysmeta file rows in a table
+        String openingHtml ="<td class=\"fortyfive_percent\"><table class=\"subGroup subGroup_border onehundred_percent\">"+
+                "<tr>"+
+                "<th colspan=\"3\">"+
+                "<h4>Files in this downloaded dataset:</h4>"+
+                "</tr>"+
+                "<tr>"+
+                "<TD><B>Name</B></TD>"+
+                "<TD><B>Size (Bytes)</B></TD>"+
+                "<TD><B>Hash</B></TD>"+
+                "</tr>"+
+                "</th>";
+        String closingHtml = "</table></td>";
+
+        // Wrap the table rows in a table
+        return openingHtml + tableHTMLBuilder.toString() + closingHtml;
+    }
+
+    /*
+     * Generates the README.html file in the bag root. This is a partially hacky
+     * portion of code. To do this, a file table is generated via an xslt and system metadata
+     * documents. Then, the metacatui theme is used to generate a complete readme document. The
+     * table is then inserted into the html body.
+     *
+     * @param session: The current session
+     * @param metadataIds: A list of metadata identifiers that
+     * @param tempBagRoot: The temporary directory where the unzipped-bag is being stored
+     */
+    public File generateReadmeHTMLFile(Session session,
+                                       List<Identifier> metadataIds,
+                                       File tempBagRoot) {
+        String readmeBody = "";
+        File ReadmeFile = null;
+        // Generate the file table
+        String sysmetaTable = this.createSysMetaTable(session, metadataIds);
+
+        try {
+            // The body of the README is generated from the primary system metadata document. Find this document, and
+            // generate the body.
+            for (Identifier metadataID : metadataIds) {
+                SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
+                // Look for the science metadata object
+                if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
+                    readmeBody = this.generateReadmeBody(session, metadataID, metadataSysMeta);
+                }
+            }
+            // Now that we have the HTML table and the rest of the HTML body, we need to combine them
+            String fullHTML = this.insertTableIntoReadme(sysmetaTable, readmeBody);
+            ReadmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
+            // Write the html to a stream
+            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(fullHTML.getBytes());
+            // Copy the bytes to the html file
+            IOUtils.copy(resultInputStream, new FileOutputStream(ReadmeFile, true));
+        } catch (Exception e) {
+            logMetacat.error("There was an error while writing README.html", e);
+        }
+        return ReadmeFile;
+    }
+
+    /*
      * Creates a bag file from a directory and returns a stream to it.
      * @param bagFactory And instance of BagIt.BagFactory
      * @param bag The bag instance being used for this export
@@ -2543,7 +2712,6 @@ public class MNodeService extends D1NodeService
         catch (Exception e) {
             logMetacat.warn("Failed to write the eml document.", e);
         }
-
     }
 
     /*
@@ -2833,6 +3001,10 @@ public class MNodeService extends D1NodeService
 
         BagFactory bagFactory = new BagFactory();
         Bag bag = bagFactory.createBag();
+
+        // Create the README.html document
+        File ReadmeFile = this.generateReadmeHTMLFile(session, metadataIds, tempBagRoot);
+        bag.addFileAsTag(ReadmeFile);
 
         // The directory where the actual bag zipfile is saved (and streamed from)
         File streamedBagFile = new File("/var/tmp/exportedPackages/"+Long.toString(System.nanoTime()));
