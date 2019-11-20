@@ -2516,7 +2516,33 @@ public class MNodeService extends D1NodeService
 		
 		// the pids to include in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
-		
+
+
+        // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
+        File metadataRoot = null;
+        // A temporary directory within metadataRoot that holds system metadata
+        File systemMetadataDirectory = null;
+        // A temporary directory within tempBagRoot that holds data objects
+        File dataRoot = null;
+
+        // Tie the File objects above to actual locations on the filesystem
+        try {
+            tempBagRoot = new File("/var/tmp/exportedPackages/"+Long.toString(System.nanoTime()));
+            tempBagRoot.mkdirs();
+
+            metadataRoot = new File(tempBagRoot.getAbsolutePath() + "/metadata");
+            metadataRoot.mkdir();
+
+            systemMetadataDirectory = new File(metadataRoot.getAbsolutePath() + "/sysmeta");
+            systemMetadataDirectory.mkdir();
+
+            dataRoot = new File(tempBagRoot.getAbsolutePath() + "/data");
+            dataRoot.mkdir();
+        } catch (Exception e) {
+            logMetacat.warn("Error creating bag files", e);
+            throw new ServiceFailure("", "Metacat failed to create the temporary bag archive.");
+        }
+
 		// catch non-D1 service errors and throw as ServiceFailures
 		try {
 			// track the pid-to-file mapping
