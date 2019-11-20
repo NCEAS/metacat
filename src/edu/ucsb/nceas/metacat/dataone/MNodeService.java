@@ -2498,9 +2498,6 @@ public class MNodeService extends D1NodeService
 		
 		// catch non-D1 service errors and throw as ServiceFailures
 		try {
-			//Create a map of dataone ids and file names
-			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
-			
 			// track the pid-to-file mapping
 			StringBuffer pidMapping = new StringBuffer();
 			
@@ -2597,47 +2594,6 @@ public class MNodeService extends D1NodeService
 									logMetacat.warn("Could not transform metadata", e);
 								}
 							}
-
-							
-							//If this is in eml format, extract the filename and GUID from each entity in its package
-							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
-								//Get the package
-								DataPackageParserInterface parser = new Eml200DataPackageParser();
-								InputStream emlStream = this.get(session, metadataID);
-								parser.parse(emlStream);
-								DataPackage dataPackage = parser.getDataPackage();
-								
-								//Get all the entities in this package and loop through each to extract its ID and file name
-								Entity[] entities = dataPackage.getEntityList();
-								for(Entity entity: entities){
-									try{
-										//Get the file name from the metadata
-										String fileNameFromMetadata = entity.getName();
-										
-										//Get the ecogrid URL from the metadata
-										String ecogridIdentifier = entity.getEntityIdentifier();
-										//Parse the ecogrid URL to get the local id
-										String idFromMetadata = DocumentUtil.getAccessionNumberFromEcogridIdentifier(ecogridIdentifier);
-										
-										//Get the docid and rev pair
-										String docid = DocumentUtil.getDocIdFromString(idFromMetadata);
-										String rev = DocumentUtil.getRevisionStringFromString(idFromMetadata);
-										
-										//Get the GUID
-										String guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(rev));
-										Identifier dataIdentifier = new Identifier();
-										dataIdentifier.setValue(guid);
-										
-										//Add the GUID to our GUID & file name map
-										fileNames.put(dataIdentifier, fileNameFromMetadata);
-									}
-									catch(Exception e){
-										//Prevent just one entity error
-										e.printStackTrace();
-										logMetacat.debug(e.getMessage(), e);
-									}
-								}
-							}
 						}
 						catch(Exception e){
 							//Catch errors that would prevent package download
@@ -2675,11 +2631,6 @@ public class MNodeService extends D1NodeService
 				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
 				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
 				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-
-				if (fileNames.containsKey(entryPid)){
-					//Let's use the file name and extension from the metadata is we have it
-					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
 				
 				// ensure there is a file extension for the object
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
