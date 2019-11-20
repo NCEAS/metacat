@@ -2575,9 +2575,9 @@ public class MNodeService extends D1NodeService
 
                 // Transform the system metadocument using the 'export' xslt, targeting an HTML return type
                 transformer.transformXMLDocument(documentContent,
-                        "export",
+                        "package-export",
                         "-//W3C//HTML//EN",
-                        "export",
+                        "package-export",
                         writer,
                         params,
                         null //sessionid
