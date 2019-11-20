@@ -2472,20 +2472,41 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
+
+    /*
+     * Checks to see if the package can be exported based on the formatId
+     *
+     * @param formatId: The format ID of the package
+     * @param pid: The pid of the package
+     *
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     * @throws ServiceFailure
+
+     */
+    private void validateExportPackage(ObjectFormatIdentifier formatId, Identifier pid)
+            throws InvalidRequest, NotImplemented, ServiceFailure{
+        if(formatId == null) {
+            throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
+        } else if(!formatId.getValue().equals("application/bagit-097")) {
+            throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
+        }
+
+        String serviceFailureCode = "2871";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if(sid != null) {
+            pid = sid;
+        }
+    }
+
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-	    if(formatId == null) {
-	        throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
-	    } else if(!formatId.getValue().equals("application/bagit-097")) {
-	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
-	    }
-	    String serviceFailureCode = "2871";
-	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
-	    if(sid != null) {
-	        pid = sid;
-	    }
+
+        // Do some checks to make sure this package can be exported
+        validateExportPackage(formatId, pid);
+
 		InputStream bagInputStream = null;
 		BagFactory bagFactory = new BagFactory();
 		Bag bag = bagFactory.createBag();
