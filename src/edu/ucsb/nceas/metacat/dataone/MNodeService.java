@@ -2473,6 +2473,56 @@ public class MNodeService extends D1NodeService
     }
 
     /*
+     * Searches through the resource map for any objects that have had their location specified with
+     * prov:atLocation. The filePathMap parameter is mutated with the file path and corresponding pid.
+     *
+     * @param resMap: The resource map that's being parsed
+     * @param filePathMap: Mapping between pid and file path. Should be empty when passed in
+
+     */
+    private void documentObjectLocations(ResourceMap resMap,
+                                         Map<String, String> filePathMap)
+    {
+        try {
+            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
+            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+            DocumentBuilder builder;
+            builder = factory.newDocumentBuilder();
+            Document document = builder.parse(new InputSource(new StringReader(resMapString)));
+
+            org.w3c.dom.NodeList nodeList = document.getElementsByTagName("j.1:atLocation");
+
+            // For each atLocation record, we want to save the location and the pid of the object
+            for (int i = 0; i < nodeList.getLength(); i++) {
+                org.w3c.dom.Node node = nodeList.item(i);
+                org.w3c.dom.NamedNodeMap parentAttributes = node.getParentNode().getAttributes();
+                String parentURI = parentAttributes.item(0).getTextContent();
+                logMetacat.info(parentURI);
+                String filePath = node.getTextContent();
+                filePath = filePath.replaceAll("\"", "");
+
+                // We're given the full URI of the object, but we only want the PID at the end
+                Pattern objectPattern = Pattern.compile("(?<=object/).*(?)");
+                Matcher m = objectPattern.matcher(parentURI);
+                if(m.find()) {
+                    // Save the file path for later when it gets written to disk
+                    filePathMap.put(m.group(0), filePath);
+                }
+                else {
+                    objectPattern = Pattern.compile("(?<=resolve/).*(?)");
+                    m = objectPattern.matcher(parentURI);
+                    if(m.find()) {
+                        // Save the file path for later when it gets written to disk
+                        filePathMap.put(m.group(0), filePath);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logMetacat.warn("There was an exception while searching for prov:atLocation.", e);
+        }
+    }
+
+    /*
      * Writes the resource map to disk. This file gets written to the metadata/ folder.
      *
      * @param resMap: The resource map that's being written to disk
@@ -2538,7 +2588,10 @@ public class MNodeService extends D1NodeService
 		
 		// track the temp files we use so we can delete them when finished
 		List<File> tempFiles = new ArrayList<File>();
-		
+
+        // Map of objects to filepaths
+        Map<String, String> filePathMap = new HashMap<String, String>();
+
 		// the pids to include in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
 
@@ -2583,6 +2636,8 @@ public class MNodeService extends D1NodeService
             try {
                 oreInputStream = this.get(session, pid);
                 resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
+                // Check for prov:atLocation and save them in filePathMap
+                this.documentObjectLocations(resMap, filePathMap);
                 // Write the resource map to disk
                 this.writeResourceMap(resMap, metadataRoot);
 
