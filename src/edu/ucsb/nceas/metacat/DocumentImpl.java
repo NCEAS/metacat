@@ -1566,7 +1566,7 @@ public class DocumentImpl
                         logMetacat.info("DocumentImple.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
                         fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
                     } else {
-                        logMetacat.info("DocumentImple.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API");
+                        logMetacat.info("DocumentImple.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API or the checksum has been verified.");
                         fos = new FileOutputStream(documentPath);
                     }
                     
