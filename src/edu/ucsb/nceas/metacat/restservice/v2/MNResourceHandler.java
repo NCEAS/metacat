@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -1567,8 +1568,10 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
+     * @throws FileUploadException 
+     * @throws NoSuchAlgorithmException 
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException {
+    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
        
     	// Read the incoming data from its Mime Multipart encoding
     MultipartRequestWithSysmeta multiparts = collectObjectFiles();
