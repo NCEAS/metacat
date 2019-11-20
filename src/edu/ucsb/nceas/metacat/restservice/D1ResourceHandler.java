@@ -421,6 +421,7 @@ public class D1ResourceHandler {
         StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver(tmpDir.getAbsolutePath(), MAX_UPLOAD_SIZE);
         MultipartRequestWithSysmeta mq = null;
         mq = (MultipartRequestWithSysmeta)resolver.resolveMultipart(request);
+        multipartparams = mq.getMultipartParameters();
         return mq;
     }
     
