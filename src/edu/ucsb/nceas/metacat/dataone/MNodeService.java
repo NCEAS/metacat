@@ -2832,10 +2832,6 @@ public class MNodeService extends D1NodeService
         // Do some checks to make sure this package can be exported
         validateExportPackage(formatId, pid);
 
-		InputStream bagInputStream = null;
-		BagFactory bagFactory = new BagFactory();
-		Bag bag = bagFactory.createBag();
-		
 		// track the temp files we use so we can delete them when finished
 		List<File> tempFiles = new ArrayList<File>();
 
