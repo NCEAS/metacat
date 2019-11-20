@@ -25,9 +25,11 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -54,6 +56,8 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.Result;
@@ -62,8 +66,11 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.DocumentBuilder;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
@@ -147,6 +154,7 @@ import org.ecoinformatics.datamanager.parser.Entity;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
@@ -2843,6 +2851,7 @@ public class MNodeService extends D1NodeService
 
 		// Container that holds the pids of all of the objects that are in a package
         List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
+
         // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
         File metadataRoot = null;
         // A temporary directory within metadataRoot that holds system metadata
