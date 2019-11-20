@@ -2589,6 +2589,10 @@ public class MNodeService extends D1NodeService
 		// track the temp files we use so we can delete them when finished
 		List<File> tempFiles = new ArrayList<File>();
 
+        // Holds any science metadata and resource map pids
+        List<Identifier> coreMetadataIdentifiers = new ArrayList<Identifier>();
+        coreMetadataIdentifiers.add(pid);
+
         // Map of objects to filepaths
         Map<String, String> filePathMap = new HashMap<String, String>();
 
@@ -2651,6 +2655,36 @@ public class MNodeService extends D1NodeService
             //throw an invalid request exception if there's just a single pid
             throw new InvalidRequest("2873", "The given pid " + pid.getValue() + " is not a package id (resource map id). Please use a package id instead.");
         }
+
+        // Use the list of pids to gather and store information about each corresponding sysmeta document
+        try {
+            for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+                Set<Identifier> metadataIdentifiers = entries.keySet();
+
+                pidsOfPackageObjects.addAll(entries.keySet());
+                for (List<Identifier> dataPids : entries.values()) {
+                    pidsOfPackageObjects.addAll(dataPids);
+                }
+
+                // Loop over each metadata document
+                for (Identifier metadataID : metadataIdentifiers) {
+                    //Get the system metadata for this metadata object
+                    SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
+                    // Handle any system metadata
+                    if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
+                        //If this is in eml format, write it to the temporary bag metadata directory
+                        String metadataType = metadataSysMeta.getFormatId().getValue();
+                        if (metadataType.startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
+                            // Add the ID to the list of metadata pids
+                            coreMetadataIdentifiers.add(metadataID);
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logMetacat.warn("There was an error while parsing the files in the resource map.", e);
+        }
+
         try {
 			//Create a temp file, then delete it and make a directory with that name
 			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
