@@ -2473,6 +2473,46 @@ public class MNodeService extends D1NodeService
     }
 
     /*
+     * Creates a bag file from a directory and returns a stream to it.
+     * @param bagFactory And instance of BagIt.BagFactory
+     * @param bag The bag instance being used for this export
+     * @param streamedBagFile The folder that holds the data being exported
+     * @param dataRoot The root data folder
+     * @param metadataRoot The root metadata directory
+     * @param pid The package pid
+     */
+    private InputStream createExportBagStream(BagFactory bagFactory,
+                                              Bag bag,
+                                              File streamedBagFile,
+                                              File dataRoot,
+                                              File metadataRoot,
+                                              Identifier pid) {
+        InputStream bagInputStream = null;
+        String bagName = pid.getValue().replaceAll("\\W", "_");
+        try {
+            File[] files = dataRoot.listFiles();
+            for (File fle : files) {
+                bag.addFileToPayload(fle);
+            }
+            bag.addFileAsTag(metadataRoot);
+            File bagFile = new File(streamedBagFile, bagName + ".zip");
+            bag.setFile(bagFile);
+            bag = bag.makeComplete();
+            ZipWriter zipWriter = new ZipWriter(bagFactory);
+            bag.write(zipWriter, bagFile);
+            // Make sure the bagFile is current
+            bagFile = bag.getFile();
+            // use custom FIS that will delete the file when closed
+            bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
+            // also mark for deletion on shutdown in case the stream is never closed
+            bagFile.deleteOnExit();
+        } catch (Exception e) {
+            logMetacat.error("There was an error creating the bag file.");
+        }
+        return bagInputStream;
+    }
+
+    /*
      * Writes an EML document to disk. In particular, it writes it to the metadata/ directory which eventually
      * gets added to the bag.
      *
@@ -2791,31 +2831,26 @@ public class MNodeService extends D1NodeService
             }
         }
 
-			bag = bag.makeComplete();
-			
-			///Now create the zip file
-			//Use the pid as the file name prefix, replacing all non-word characters
-			String zipName = pid.getValue().replaceAll("\\W", "_");
-			
-			File bagFile = new File(tempDir, zipName+".zip");
-			
-			bag.setFile(bagFile);
-			ZipWriter zipWriter = new ZipWriter(bagFactory);
-			bag.write(zipWriter, bagFile);
-			bagFile = bag.getFile();
-			// use custom FIS that will delete the file when closed
-			bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
-			// also mark for deletion on shutdown in case the stream is never closed
-			bagFile.deleteOnExit();
-			tempFiles.add(bagFile);
-			
-			// clean up other temp files
-			for (int i=tempFiles.size()-1; i>=0; i--){
-				tempFiles.get(i).delete();
-			}
-		
-		return bagInputStream;
-	}
+        BagFactory bagFactory = new BagFactory();
+        Bag bag = bagFactory.createBag();
+
+        // The directory where the actual bag zipfile is saved (and streamed from)
+        File streamedBagFile = new File("/var/tmp/exportedPackages/"+Long.toString(System.nanoTime()));
+
+        InputStream bagStream = createExportBagStream(bagFactory,
+                bag,
+                streamedBagFile,
+                dataRoot,
+                metadataRoot,
+                pid);
+        try {
+            FileUtils.deleteDirectory(tempBagRoot);
+            FileUtils.deleteDirectory(streamedBagFile);
+        } catch (IOException e) {
+            logMetacat.error("There was an error deleting the bag artifacts.", e);
+        }
+        return bagStream;
+    }
 	
 	 /**
 	   * Archives an object, where the object is either a 
