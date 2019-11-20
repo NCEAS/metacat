@@ -1706,7 +1706,6 @@ public abstract class D1NodeService {
     logMetacat.debug("Filename for write is: " + newFile.getAbsolutePath()+" for the data object pid "+pid.getValue());
 
     try {
-        if (newFile.createNewFile()) {
             String checksumValue = checksum.getValue();
             logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
             if(checksumValue == null || checksumValue.trim().equals("")) {
@@ -1760,11 +1759,6 @@ public abstract class D1NodeService {
               logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
           }
-          
-        } else {
-          logMetacat.debug("File creation failed, or file already exists.");
-          throw new ServiceFailure("1190", "File already exists: " + fileName);
-        }
     } catch (FileNotFoundException e) {
       logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);
       throw new ServiceFailure("1190", "File not found: " + fileName + " " 
