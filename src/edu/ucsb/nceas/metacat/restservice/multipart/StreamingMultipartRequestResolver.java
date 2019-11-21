@@ -139,27 +139,30 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     input.close();
                     multipartRequest.setSystemMetadata(sysMeta);
                 } else if (name.equals("object")){
-                    String algorithm = null;
-                    if (sysMeta != null && sysMeta.getChecksum() != null ) {
-                        //We are lucky and the system metadata has been processed
-                        algorithm = sysMeta.getChecksum().getAlgorithm();
+                    
+                    if (sysMeta != null && sysMeta.getChecksum() != null && sysMeta.getChecksum().getAlgorithm() != null && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
+                      //We are lucky and the system metadata has been processed.
+                        String algorithm = sysMeta.getChecksum().getAlgorithm();
+                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream AFTER handling the system metadata stream. StreamResolver will calculate the checksum using algorithm " + algorithm);
+                        //decide the pid for debug purpose
+                        String pid = null;
+                        if (sysMeta != null && sysMeta.getIdentifier() != null ) {
+                            pid = sysMeta.getIdentifier().getValue();
+                        }
+                        if(pid == null || pid.trim().equals("")) {
+                            pid = "UNKNOWN";
+                        }
+                        File newFile = generateTmpFile("checked-object");
+                        CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
+                        mpFiles.put(name, checkedFile);
+                    } else {
+                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. StreamResolver can NOT calculate the checksum since we don't know the algorithm.");
+                        File newFile = generateTmpFile("unchecked-object");
+                        writeStreamToFile(newFile, stream);
+                        Checksum checksum = null;//we don't have a checksum, so set it null.
+                        CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
+                        mpFiles.put(name, checkedFile);
                     }
-                    //if we haven't handle the system metadata part, we use the default algorithm.
-                    if(algorithm == null || algorithm.trim().equals("")) {
-                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. So we have to calculate the checksum by the default calgorithm " + defaultAlgorithm);
-                        algorithm = defaultAlgorithm;
-                    }
-                    //decide the pid for debug purpose
-                    String pid = null;
-                    if (sysMeta != null && sysMeta.getIdentifier() != null ) {
-                        pid = sysMeta.getIdentifier().getValue();
-                    }
-                    if(pid == null || pid.trim().equals("")) {
-                        pid = "UNKNOWN";
-                    }
-                    File newFile = generateTmpFile("upload");
-                    CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
-                    mpFiles.put(name, checkedFile);
                 } else {
                     File newFile = generateTmpFile("other");
                     writeStreamToFile(newFile, stream);
