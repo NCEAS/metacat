@@ -2481,9 +2481,9 @@ public class MNodeService extends D1NodeService
     }
 
     /*
-    * Gets the namespace prefix for the prov ontology.
-    * @param resourceMap: The resource map that is being checked
-    *
+      * Gets the namespace prefix for the prov ontology.
+      *
+      * @param resourceMap: The resource map that is being checked
      */
     public String getProvNamespacePrefix(String resourceMap) {
         // Pattern that searches for the text between the last occurance of 'xmlns and
@@ -2562,14 +2562,21 @@ public class MNodeService extends D1NodeService
      *
      * @param session: The current session
      * @param metadataIds: A list of metadata identifiers of objects that should be included in the table
+     * @param coreMetadataIdentifiers: A list of IDs for the eml and resource map
      */
-    public String createSysMetaTable(Session session, List<Identifier> metadataIds) {
+    public String createSysMetaTable(Session session,
+                                     List<Identifier> metadataIds,
+                                     List<Identifier> coreMetadataIdentifiers) {
 
         Hashtable<String, String[]> params = new Hashtable<String, String[]>();
 
         // Holds the HTML rows
         StringBuilder tableHTMLBuilder = new StringBuilder();
         for(Identifier metadataID: metadataIds) {
+            // Check to make sure the object is a data file that the user had uploaded.
+            if(coreMetadataIdentifiers.contains(metadataID)) {
+                continue;
+            }
             try {
                 SystemMetadata entrySysMeta = this.getSystemMetadata(session, metadataID);
                 Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
@@ -2616,7 +2623,6 @@ public class MNodeService extends D1NodeService
                 "<tr>"+
                 "<TD><B>Name</B></TD>"+
                 "<TD><B>Size (Bytes)</B></TD>"+
-                "<TD><B>Hash</B></TD>"+
                 "</tr>"+
                 "</th>";
         String closingHtml = "</table></td>";
@@ -2632,16 +2638,18 @@ public class MNodeService extends D1NodeService
      * table is then inserted into the html body.
      *
      * @param session: The current session
-     * @param metadataIds: A list of metadata identifiers that
+     * @param metadataIds: A list of metadata identifiers that represent objects in the package
+     * @param coreMetadataIdentifiers: A list of metadata IDs for the EML and resource map
      * @param tempBagRoot: The temporary directory where the unzipped-bag is being stored
      */
     public File generateReadmeHTMLFile(Session session,
                                        List<Identifier> metadataIds,
+                                       List<Identifier> coreMetadataIdentifiers,
                                        File tempBagRoot) {
         String readmeBody = "";
         File ReadmeFile = null;
         // Generate the file table
-        String sysmetaTable = this.createSysMetaTable(session, metadataIds);
+        String sysmetaTable = this.createSysMetaTable(session, metadataIds, coreMetadataIdentifiers);
 
         try {
             // The body of the README is generated from the primary system metadata document. Find this document, and
@@ -3037,7 +3045,10 @@ public class MNodeService extends D1NodeService
         Bag bag = bagFactory.createBag();
 
         // Create the README.html document
-        File ReadmeFile = this.generateReadmeHTMLFile(session, metadataIds, tempBagRoot);
+        File ReadmeFile = this.generateReadmeHTMLFile(session,
+                metadataIds,
+                coreMetadataIdentifiers,
+                tempBagRoot);
         bag.addFileAsTag(ReadmeFile);
 
         // The directory where the actual bag zipfile is saved (and streamed from)
