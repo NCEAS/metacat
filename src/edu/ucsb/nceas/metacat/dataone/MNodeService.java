@@ -2481,6 +2481,23 @@ public class MNodeService extends D1NodeService
     }
 
     /*
+    * Gets the namespace prefix for the prov ontology.
+    * @param resourceMap: The resource map that is being checked
+    *
+     */
+    public String getProvNamespacePrefix(String resourceMap) {
+        // Pattern that searches for the text between the last occurance of 'xmlns and
+        // the prov namepsace string
+        Pattern objectPattern = Pattern.compile("(xmlns:)(?!.*\\1)(.*)(\"http://www.w3.org/ns/prov#\")");
+        Matcher m = objectPattern.matcher(resourceMap);
+        if (m.find()) {
+            // Save the file path for later when it gets written to disk
+            return StringUtils.substringBetween(m.group(0), "xmlns:", "=\"http://www.w3.org/ns/prov#\"");
+        }
+        return "";
+    }
+
+    /*
      * Inserts a file table into the readme html. This works by searching for the
      * first table row in the first table group and pasting the table in front of it.
      * If for some reason the readme HTML is empty, just return the table.
@@ -2740,30 +2757,33 @@ public class MNodeService extends D1NodeService
             builder = factory.newDocumentBuilder();
             Document document = builder.parse(new InputSource(new StringReader(resMapString)));
 
-            org.w3c.dom.NodeList nodeList = document.getElementsByTagName("j.1:atLocation");
+            // Attempt to search for any atLocation references
+            String atLocationPrefix = getProvNamespacePrefix(resMapString);
+            if(atLocationPrefix.length()>0) {
+                org.w3c.dom.NodeList nodeList = document.getElementsByTagName(atLocationPrefix + ":atLocation");
 
-            // For each atLocation record, we want to save the location and the pid of the object
-            for (int i = 0; i < nodeList.getLength(); i++) {
-                org.w3c.dom.Node node = nodeList.item(i);
-                org.w3c.dom.NamedNodeMap parentAttributes = node.getParentNode().getAttributes();
-                String parentURI = parentAttributes.item(0).getTextContent();
-                logMetacat.info(parentURI);
-                String filePath = node.getTextContent();
-                filePath = filePath.replaceAll("\"", "");
+                // For each atLocation record, we want to save the location and the pid of the object
+                for (int i = 0; i < nodeList.getLength(); i++) {
+                    org.w3c.dom.Node node = nodeList.item(i);
+                    org.w3c.dom.NamedNodeMap parentAttributes = node.getParentNode().getAttributes();
+                    String parentURI = parentAttributes.item(0).getTextContent();
+                    logMetacat.info(parentURI);
+                    String filePath = node.getTextContent();
+                    filePath = filePath.replaceAll("\"", "");
 
-                // We're given the full URI of the object, but we only want the PID at the end
-                Pattern objectPattern = Pattern.compile("(?<=object/).*(?)");
-                Matcher m = objectPattern.matcher(parentURI);
-                if(m.find()) {
-                    // Save the file path for later when it gets written to disk
-                    filePathMap.put(m.group(0), filePath);
-                }
-                else {
-                    objectPattern = Pattern.compile("(?<=resolve/).*(?)");
-                    m = objectPattern.matcher(parentURI);
-                    if(m.find()) {
+                    // We're given the full URI of the object, but we only want the PID at the end
+                    Pattern objectPattern = Pattern.compile("(?<=object/).*(?)");
+                    Matcher m = objectPattern.matcher(parentURI);
+                    if (m.find()) {
                         // Save the file path for later when it gets written to disk
                         filePathMap.put(m.group(0), filePath);
+                    } else {
+                        objectPattern = Pattern.compile("(?<=resolve/).*(?)");
+                        m = objectPattern.matcher(parentURI);
+                        if (m.find()) {
+                            // Save the file path for later when it gets written to disk
+                            filePathMap.put(m.group(0), filePath);
+                        }
                     }
                 }
             }
