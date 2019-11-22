@@ -5,7 +5,6 @@
         <TR>
             <TD class="rowodd" width="40%"><xsl:value-of select="fileName" /></TD>
             <TD class="roweven" width="30%"><xsl:value-of select="size" /></TD>
-            <TD class="roweven" width="30%"><xsl:value-of select="checksum" /></TD>
         </TR>
     </xsl:template>
 </xsl:stylesheet>
