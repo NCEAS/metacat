@@ -997,12 +997,10 @@ public abstract class D1NodeService {
     }
  
     //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
+    File tempFile = null;
     if (xmlStream instanceof DetailedFileInputStream ) {
         DetailedFileInputStream stream = (DetailedFileInputStream) xmlStream;
-        File tempFile = stream.getFile();
-        if(tempFile != null) {
-            tempFile.deleteOnExit();
-        }
+        tempFile = stream.getFile();
         Checksum expectedChecksum = stream.getExpectedChecksum();
         if(expectedChecksum != null) {
             String expectedAlgorithm = expectedChecksum.getAlgorithm();
@@ -1108,7 +1106,9 @@ public abstract class D1NodeService {
           "Error inserting or updating document: " +pid.getValue()+" since "+ result);
     }
     logMetacat.info("D1NodeService.insertOrUpdateDocument - Finsished inserting xml document with local id " + localId +" and its pid is "+pid.getValue());
-    
+    if(tempFile != null) {
+        tempFile.deleteOnExit();
+    }
     return localId;
   }
   
@@ -1739,9 +1739,6 @@ public abstract class D1NodeService {
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
                           return newFile;
                       } else {
-                          if(tempFile != null) {
-                              tempFile.deleteOnExit();
-                          }
                           logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
                                                   ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
                           throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
@@ -1751,9 +1748,6 @@ public abstract class D1NodeService {
                       logMetacat.info("D1NodeService.writeStreamToFile - the checksum algorithm which the multipart handler used is " + expectedAlgorithm + " and it is different to one on the system metadata " + algorithm + ". So we have to calculate again.");
                   }
               } 
-          }
-          if(tempFile != null) {
-              tempFile.deleteOnExit();
           }
           //The input stream is not a DetaileFileInputStream or the algorithm doesn't match, we have to calculate the checksum.
           MessageDigest md = MessageDigest.getInstance(algorithm);
@@ -1769,6 +1763,9 @@ public abstract class D1NodeService {
               boolean success = newFile.delete();
               logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
+          }
+          if(tempFile != null) {
+              tempFile.deleteOnExit();
           }
     } catch (FileNotFoundException e) {
       logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);

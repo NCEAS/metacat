@@ -634,48 +634,55 @@ public class CNResourceHandler extends D1ResourceHandler {
             NotAuthorized, UnsupportedType, InsufficientResources,
             InvalidSystemMetadata, NotImplemented, IOException,
             InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
-    	
-        // Read the incoming data from its Mime Multipart encoding
-        MultipartRequestWithSysmeta multiparts = collectObjectFiles();
-        
-	    // get the encoded pid string from the body and make the object
-        String pidString = multipartparams.get("pid").get(0);
-        Identifier pid = new Identifier();
-        pid.setValue(pidString);
-        
-        logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
-        
-        SystemMetadata smd = multiparts.getSystemMetadata();
-        // ensure we have the system metadata
-        if  ( smd == null ) {
-            throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
-            
-        }
-        DetailedFileInputStream object = null;
-        Map<String, File> files = multiparts.getMultipartFiles();
-        CheckedFile objFile = (CheckedFile) files.get("object");
-        // ensure we have the object bytes
-        if  ( objFile == null ) {
-            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-        }
-        object = new DetailedFileInputStream(objFile, objFile.getChecksum());
+    	    CheckedFile objFile = null;
+    	    try {
+    	        // Read the incoming data from its Mime Multipart encoding
+    	        MultipartRequestWithSysmeta multiparts = collectObjectFiles();
+    	        
+    	        // get the encoded pid string from the body and make the object
+    	        String pidString = multipartparams.get("pid").get(0);
+    	        Identifier pid = new Identifier();
+    	        pid.setValue(pidString);
+    	        
+    	        logMetacat.debug("putObject: " + pid.getValue() + "/" + action);
+    	        
+    	        SystemMetadata smd = multiparts.getSystemMetadata();
+    	        // ensure we have the system metadata
+    	        if  ( smd == null ) {
+    	            throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
+    	            
+    	        }
+    	        DetailedFileInputStream object = null;
+    	        Map<String, File> files = multiparts.getMultipartFiles();
+    	        objFile = (CheckedFile) files.get("object");
+    	        // ensure we have the object bytes
+    	        if  ( objFile == null ) {
+    	            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
+    	        }
+    	        object = new DetailedFileInputStream(objFile, objFile.getChecksum());
 
-        if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
+    	        if (action.equals(FUNCTION_NAME_INSERT)) { // handle inserts
 
-            logMetacat.debug("Commence creation...");
-           
-            logMetacat.debug("creating object with pid " + pid.getValue());
-            Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
+    	            logMetacat.debug("Commence creation...");
+    	           
+    	            logMetacat.debug("creating object with pid " + pid.getValue());
+    	            Identifier rId = CNodeService.getInstance(request).create(session, pid, object, smd);
 
-            OutputStream out = response.getOutputStream();
-            response.setStatus(200);
-            response.setContentType("text/xml");
+    	            OutputStream out = response.getOutputStream();
+    	            response.setStatus(200);
+    	            response.setContentType("text/xml");
 
-            TypeMarshaller.marshalTypeToOutputStream(rId, out);
+    	            TypeMarshaller.marshalTypeToOutputStream(rId, out);
 
-        } else {
-            throw new InvalidRequest("1000", "Operation must be create.");
-        }
+    	        } else {
+    	            throw new InvalidRequest("1000", "Operation must be create.");
+    	        }
+    	    } catch (Exception e) {
+            if(objFile != null) {
+                objFile.deleteOnExit();
+            }
+            throw e;
+         }
     }
 
     /**
