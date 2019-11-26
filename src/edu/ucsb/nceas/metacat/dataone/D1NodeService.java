@@ -1727,6 +1727,7 @@ public abstract class D1NodeService {
           //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
           if (dataStream instanceof DetailedFileInputStream ) {
               DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
+              tempFile = stream.getFile();
               Checksum expectedChecksum = stream.getExpectedChecksum();
               if(expectedChecksum != null) {
                   String expectedAlgorithm = expectedChecksum.getAlgorithm();
@@ -1734,7 +1735,6 @@ public abstract class D1NodeService {
                   if(expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
                       //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
                       if (exprectedChecksumValue != null && exprectedChecksumValue.equalsIgnoreCase(checksumValue)) {
-                          tempFile = stream.getFile();
                           FileUtils.moveFile(tempFile, newFile);
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
                           return newFile;
