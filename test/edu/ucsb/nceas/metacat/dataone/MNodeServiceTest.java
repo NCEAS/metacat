@@ -665,6 +665,23 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       Identifier pid = 
         MNodeService.getInstance(request).create(session, guid, object, sysmeta);
       
+      //test the case that the new pid doesn't match the identifier on the system metadata
+      Identifier newPid_6 = new Identifier();
+      newPid_6.setValue("testUpdateFailed." + System.currentTimeMillis());
+      Identifier newPid_7 = new Identifier();
+      newPid_7.setValue("testUpdateFailedAnother." + System.currentTimeMillis());
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      SystemMetadata newMeta = createSystemMetadata(newPid_7, session.getSubject(), object);
+      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+      try {
+          MNodeService.getInstance(request).update(session, pid, object, newPid_6, newMeta);
+          fail("we shouldn't get here since the new pid doesn't match the identifier on the system metadata in the update method");
+      } catch (Exception e) {
+          assertTrue(e instanceof InvalidRequest);
+          assertTrue(e.getMessage().contains(newPid_6.getValue()));
+          assertTrue(e.getMessage().contains(newPid_7.getValue()));
+      }
+      
       object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
       newSysMeta.setArchived(true);
