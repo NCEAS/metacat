@@ -231,25 +231,25 @@
       <xs:complexContent>
         <xs:extension base="FilterType">
           <xs:choice>
-            <xs:sequence>
-            <xs:element name="min" type="xs:float" minOccurs="1" maxOccurs="1">
-              <xs:annotation>
-                <xs:appinfo>
-                  <doc:tooltip>Minimum number</doc:tooltip>
-                  <doc:description>The minimum number to display in a number input user interface tool.</doc:description>
-                  <doc:example>1.5</doc:example>
-                </xs:appinfo>
-              </xs:annotation>
-            </xs:element>
-            <xs:element name="max" type="xs:float" minOccurs="0" maxOccurs="1">
-              <xs:annotation>
-                <xs:appinfo>
-                  <doc:tooltip>Maximum number</doc:tooltip>
-                  <doc:description>The maximum number to display in a number input user interface tool.</doc:description>
-                  <doc:example>1.5</doc:example>
-                </xs:appinfo>
-              </xs:annotation>
-            </xs:element>
+            <xs:sequence minOccurs="1">
+              <xs:element name="min" type="xs:float" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                  <xs:appinfo>
+                    <doc:tooltip>Minimum number</doc:tooltip>
+                    <doc:description>The minimum number to display in a number input user interface tool.</doc:description>
+                    <doc:example>1.5</doc:example>
+                  </xs:appinfo>
+                </xs:annotation>
+              </xs:element>
+              <xs:element name="max" type="xs:float" minOccurs="0" maxOccurs="1">
+                <xs:annotation>
+                  <xs:appinfo>
+                    <doc:tooltip>Maximum number</doc:tooltip>
+                    <doc:description>The maximum number to display in a number input user interface tool.</doc:description>
+                    <doc:example>1.5</doc:example>
+                  </xs:appinfo>
+                </xs:annotation>
+              </xs:element>
           </xs:sequence>
           <xs:sequence>
             <xs:element name="value" type="xs:float" minOccurs="0" maxOccurs="1">
