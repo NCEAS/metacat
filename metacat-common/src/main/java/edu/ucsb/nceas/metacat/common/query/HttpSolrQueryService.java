@@ -39,11 +39,13 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.lucene.util.Version;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.schema.FieldType;
 import org.apache.solr.schema.IndexSchema;
@@ -63,6 +65,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
 
 
 
@@ -223,8 +226,8 @@ public class HttpSolrQueryService extends SolrQueryService {
      */
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         log.debug("get filed map from server (downloading files) ==========================");
-        SolrConfig config = new SolrConfig("dataone", new InputSource(getSolrConfig())); 
-        schema = new IndexSchema(config, "dataone", new InputSource(lookupSchema()));
+        SolrResourceLoader loader = new SolrResourceLoader();
+        schema = new IndexSchema("dataone", new InputSource(lookupSchema()), Version.LUCENE_8_3_0, loader);
         log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++"+schema);
         fieldMap = schema.getFields();
     }

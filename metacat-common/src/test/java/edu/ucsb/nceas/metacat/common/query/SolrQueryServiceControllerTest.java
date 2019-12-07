@@ -32,7 +32,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
         //System.out.println("version is ======================== "+version);
         assertTrue(version != null);
-        assertTrue("The version should be 7.3.0 rather than "+version, version.equals("7.3.0"));
+        assertTrue("The version should be 7.3.0 rather than "+version, version.equals("8.3.0"));
     }
 
 
