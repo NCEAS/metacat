@@ -28,6 +28,7 @@ package edu.ucsb.nceas.metacat.admin;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.FileSystem;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -39,6 +40,7 @@ import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.UserPrincipal;
 import java.nio.file.attribute.UserPrincipalLookupService;
 import java.util.HashSet;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.Vector;
 
@@ -117,6 +119,7 @@ public class SolrAdmin extends MetacatAdmin {
 	private static final String CONF = "conf";
 	private static final String DATA = "data";
 	private static final String CORE_PROPERTY = "core.properties";
+	private static final String SOLR_HOME = "SOLR_HOME";
 	
 	private SolrSchemaModificationException solrSchemaException = null;
 	private Vector<String> updateClassList = null;
@@ -642,6 +645,9 @@ public class SolrAdmin extends MetacatAdmin {
 	         logMetacat.error(error, e);
 	          throw new Exception(error);
 	     }
+	     //modify the default solr_home variable on the env script file
+	     String solrEnvScriptPath = PropertyService.getProperty("solr.env.script.path");
+	     modifySolrHomeInSolrEnvScript(instanceDir, solrEnvScriptPath);
      }
 	 
 	 /**
@@ -665,6 +671,55 @@ public class SolrAdmin extends MetacatAdmin {
 	                         + e.getMessage());
 	             }
 	         }
+	     }
+	 }
+	 
+	 /**
+	  * This method will set the solr home in the script file which sets the environment variables.
+	  * It will like: SOLR_HOME=/var/metacat/solr-home2 
+	  * @param solrHome  the solr home path will be set
+	  * @param envscriptPath the file path of the script file setting the environment variables
+	 * @throws Exception 
+	  */
+	 private void modifySolrHomeInSolrEnvScript(String solrHome, String envScriptPath) throws Exception {
+	     if(solrHome != null && !solrHome.trim().equals("")) {
+	         if(envScriptPath != null && !envScriptPath.trim().equals("")) {
+	             File envScriptFile = new File(envScriptPath);
+	             if(envScriptFile.exists()) {
+	                 if(envScriptFile.canWrite() && envScriptFile.canRead()) {
+	                     Scanner scanner = new Scanner(envScriptFile);
+	                     StringBuffer buffer = new StringBuffer();
+	                     while(scanner.hasNextLine()) {
+	                         String text = scanner.nextLine();
+	                         if(text.startsWith(SOLR_HOME)) {
+	                             //comment out the existing solr_home
+	                             buffer.append("#" + text);
+	                         } else {
+	                             buffer.append(text);
+	                         }
+	                         buffer.append("\n");
+	                     }
+	                     //add the solr_home line at the end
+	                     buffer.append(SOLR_HOME + "=" + solrHome);
+	                     scanner.close();
+	                     //write the string buffer with the new information back to the file
+	                     PrintWriter printer = new PrintWriter(envScriptFile);
+	                     printer.print(buffer);
+	                     printer.close();
+	                 } else {
+	                     throw new AdminException("Tomcat user doesn't have the write/read permission on the solr script file setting environment variables at this location " + envScriptPath +
+	                             ".\nPlease manually modify the file by adding a line - SOLR_HOME=" + solrHome);
+	                 }
+	             } else {
+	                 throw new AdminException("The solr script file setting environment variables doesn't exist at this path " + envScriptPath + 
+	                         ".\nPlease find the solr.in.sh file and manually modify the file by adding a line - SOLR_HOME=" + solrHome);
+	             }
+	         } else {
+	             logMetacat.error("SolrAdmin.modifySolrHomeInSolrEnvScript - the path of the solr script file setting environment variables shouldn't be null or blank");
+	         }
+	         
+	     } else {
+	         logMetacat.error("SolrAdmin.modifySolrHomeInSolrEnvScript - the solr home string shouldn't be null or blank.");
 	     }
 	 }
 }
