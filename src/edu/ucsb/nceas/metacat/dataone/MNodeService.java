@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
@@ -62,9 +63,12 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -153,6 +157,7 @@ import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
 import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
+
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
 
@@ -2480,6 +2485,104 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
+
+    /*
+    * Inserts a string into the head of an html document. In this case, it is most likely
+    * JSON-LD.
+    *
+    * @param jsonLd: The JSON that's being instered into the head
+    * @param fullHTML: The HTML document
+     */
+    private String insertJSONIntoHead(String jsonLd, String fullHTML)
+    {
+        if (fullHTML.length() >1) {
+            // Look for the first table within the first table group
+            String headTag = "<head>";
+            int headTagLocation = fullHTML.indexOf(headTag);
+            // Insert the file table above the table
+            int insertLocation = headTagLocation+headTag.length();
+            StringBuilder builder = new StringBuilder(fullHTML);
+
+            String fullInstertion = "<script type=\"application/ld+json\">" + jsonLd + "</script>";
+            builder.insert(insertLocation, fullInstertion);
+            return builder.toString();
+        }
+        return fullHTML;
+    }
+
+    /*
+     * Transform an XML document using an XSLT stylesheet to another format.
+     * In this case, the eml to json-ld xsl is used to transform the EML into
+     * JSON-LD
+     *
+     * @param doc: the document to be transformed
+     * @param xslSystemId: the system location of the stylesheet
+     * @param pw: the PrintWriter to which output is printed
+     */
+    private String emlToJson(String doc, String xslSystemId,
+                                  StringWriter pw)
+    {
+        try {
+            StreamSource xslSource =
+                    new StreamSource(xslSystemId);
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            Result outputTarget = new StreamResult(outputStream);
+
+            Transformer jsonTransformer = TransformerFactory.newInstance().newTransformer(xslSource);
+            StringReader strRdr = new StringReader(doc);
+            jsonTransformer.transform(new StreamSource(strRdr), outputTarget);
+            return outputStream.toString("UTF-8");
+        } catch (TransformerConfigurationException e) {
+            logMetacat.error("Failed to create the EML transformer", e);
+        } catch (TransformerException e) {
+            logMetacat.error("Failed to transform the EML into JSON-LD", e);
+        } catch (UnsupportedEncodingException e) {
+            logMetacat.error("Failed to convert the JSON-LD to a string", e);
+        }
+        return "";
+    }
+
+    /*
+     * Generates a schema.org compliant JSON-LD representation of the EML document
+     *
+     * @param session: The user's session
+     * @param emlDocId: The EML document being transformed into JSON-LD
+     */
+    public String generatePackageJSONLD(Session session, Identifier emlDocId) {
+        try
+        {
+            // Get a stream to the EML content
+            InputStream metadataStream = this.get(session, emlDocId);
+            // Turn the stream into a string for the xslt
+            String emlDoc = IOUtils.toString(metadataStream, "UTF-8");
+            String filePath = PropertyService.getProperty("application.deployDir")+"/"+PropertyService
+                    .getProperty("application.context")+ "/style/common/conversions/emltojson-ld.xsl";
+
+            StringWriter strWriter = new StringWriter();
+            return this.emlToJson(emlDoc, filePath, strWriter);
+        }
+        catch(InvalidToken e)
+        {
+            logMetacat.error("Invalid token.", e);
+        } catch(IOException e)
+        {
+            logMetacat.error("Failed to convert the metadata stream to a string.", e);
+        } catch(PropertyNotFoundException e)
+        {
+            logMetacat.error("Failed to locate the eml-json transformation file.", e);
+        } catch(ServiceFailure e)
+        {
+            logMetacat.error("Failed to retrive metadata.", e);
+        } catch(NotAuthorized e) {
+            logMetacat.error("Not authorized to retrive metadata.", e);
+        } catch(NotFound e) {
+            logMetacat.error("EML document not found.", e);
+        } catch(NotImplemented e) {
+            logMetacat.error("Failed to retrive metadata.", e);
+        }
+        return "";
+    }
+
     /*
       * Gets the namespace prefix for the prov ontology.
       *
@@ -2551,8 +2654,24 @@ public class MNodeService extends D1NodeService
                     null //sessionid
             );
             return baos.toString();
-        } catch(Exception e) {
-            logMetacat.error("Failed to generate the README body") ;
+        } catch(InvalidToken e) {
+            logMetacat.error("Invalid token.", e) ;
+        } catch(ServiceFailure e) {
+            logMetacat.error("Error getting a stream to the metadata.", e) ;
+        } catch(IOException e) {
+            logMetacat.error("Error converting the metadata to a string.", e) ;
+        } catch (NotAuthorized e) {
+            logMetacat.error("Not authorized to retrive the metadata.", e);
+        } catch (NotFound e) {
+            logMetacat.error("Metadata document not found.", e);
+        } catch(SQLException e) {
+            logMetacat.error("Error transforming the EML document.", e);
+        } catch (NotImplemented e) {
+            logMetacat.error("Error retrieving the EML document.", e);
+        } catch (ClassNotFoundException e) {
+            logMetacat.error("Error transforming the EML document.", e);
+        } catch (PropertyNotFoundException e){
+            logMetacat.error("Error transforming the EML document.", e);
         }
         return "";
     }
@@ -2633,9 +2752,11 @@ public class MNodeService extends D1NodeService
 
     /*
      * Generates the README.html file in the bag root. This is a partially hacky
-     * portion of code. To do this, a file table is generated via an xslt and system metadata
-     * documents. Then, the metacatui theme is used to generate a complete readme document. The
+     * portion of code. To do this, a file table is generated via an xslt that pareses system metadata
+     * documents. Then, the metacatui theme is used to generate an html document rendition of the EML. The
      * table is then inserted into the html body.
+     * The EML document is also fed to an xsl that returns a subset of it as json-ld. This is inserted
+     * into the head of the main HTML document.
      *
      * @param session: The current session
      * @param metadataIds: A list of metadata identifiers that represent objects in the package
@@ -2654,15 +2775,20 @@ public class MNodeService extends D1NodeService
         try {
             // The body of the README is generated from the primary system metadata document. Find this document, and
             // generate the body.
+            String jsonLD = "";
             for (Identifier metadataID : metadataIds) {
                 SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
                 // Look for the science metadata object
                 if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
                     readmeBody = this.generateReadmeBody(session, metadataID, metadataSysMeta);
+                    jsonLD = generatePackageJSONLD(session, metadataID);
+                    break;
                 }
             }
             // Now that we have the HTML table and the rest of the HTML body, we need to combine them
             String fullHTML = this.insertTableIntoReadme(sysmetaTable, readmeBody);
+            fullHTML = this.insertJSONIntoHead(jsonLD, fullHTML);
+
             ReadmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
             // Write the html to a stream
             ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(fullHTML.getBytes());
