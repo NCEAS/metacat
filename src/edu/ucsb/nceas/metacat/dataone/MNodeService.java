@@ -28,6 +28,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -72,6 +73,7 @@ import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.FileUtils;
@@ -88,6 +90,7 @@ import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.configuration.Settings;
+import org.dataone.exceptions.MarshallingException;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
@@ -160,6 +163,7 @@ import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
 import org.w3c.dom.Document;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
@@ -191,11 +195,11 @@ import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.writer.impl.ZipWriter;
 
 /**
- * Represents Metacat's implementation of the DataONE Member Node 
+ * Represents Metacat's implementation of the DataONE Member Node
  * service API. Methods implement the various MN* interfaces, and methods common
  * to both Member Node and Coordinating Node interfaces are found in the
  * D1NodeService base class.
- * 
+ *
  * Implements:
  * MNCore.ping()
  * MNCore.getLogRecords()
@@ -216,7 +220,7 @@ import gov.loc.repository.bagit.writer.impl.ZipWriter;
  * MNStorage.delete()
  * MNStorage.updateSystemMetadata()
  * MNReplication.replicate()
- * 
+ *
  */
 public class MNodeService extends D1NodeService 
     implements MNAuthorization, MNCore, MNRead, MNReplication, MNStorage, MNQuery, MNView, MNPackage {
@@ -2533,7 +2537,7 @@ public class MNodeService extends D1NodeService
             jsonTransformer.transform(new StreamSource(strRdr), outputTarget);
             return outputStream.toString("UTF-8");
         } catch (TransformerConfigurationException e) {
-            logMetacat.error("Failed to create the EML transformer", e);
+            logMetacat.error("There was an error in configuring the XML transformer.", e);
         } catch (TransformerException e) {
             logMetacat.error("Failed to transform the EML into JSON-LD", e);
         } catch (UnsupportedEncodingException e) {
@@ -2564,21 +2568,18 @@ public class MNodeService extends D1NodeService
         catch(InvalidToken e)
         {
             logMetacat.error("Invalid token.", e);
-        } catch(IOException e)
-        {
+        } catch(IOException e) {
             logMetacat.error("Failed to convert the metadata stream to a string.", e);
-        } catch(PropertyNotFoundException e)
-        {
-            logMetacat.error("Failed to locate the eml-json transformation file.", e);
-        } catch(ServiceFailure e)
-        {
-            logMetacat.error("Failed to retrive metadata.", e);
+        } catch(PropertyNotFoundException e) {
+            logMetacat.error("Failed to locate the eml-jsonld transformation file.", e);
+        } catch(ServiceFailure e) {
+            logMetacat.error("Failed to retrive the EML metadata.", e);
         } catch(NotAuthorized e) {
             logMetacat.error("Not authorized to retrive metadata.", e);
         } catch(NotFound e) {
             logMetacat.error("EML document not found.", e);
         } catch(NotImplemented e) {
-            logMetacat.error("Failed to retrive metadata.", e);
+            logMetacat.error("Feature is not implemented.", e);
         }
         return "";
     }
@@ -2657,21 +2658,21 @@ public class MNodeService extends D1NodeService
         } catch(InvalidToken e) {
             logMetacat.error("Invalid token.", e) ;
         } catch(ServiceFailure e) {
-            logMetacat.error("Error getting a stream to the metadata.", e) ;
+            logMetacat.error("Error getting a stream to the metadata document.", e) ;
         } catch(IOException e) {
             logMetacat.error("Error converting the metadata to a string.", e) ;
         } catch (NotAuthorized e) {
             logMetacat.error("Not authorized to retrive the metadata.", e);
         } catch (NotFound e) {
-            logMetacat.error("Metadata document not found.", e);
+            logMetacat.error("EML metadata document not found.", e);
         } catch(SQLException e) {
             logMetacat.error("Error transforming the EML document.", e);
         } catch (NotImplemented e) {
             logMetacat.error("Error retrieving the EML document.", e);
         } catch (ClassNotFoundException e) {
-            logMetacat.error("Error transforming the EML document.", e);
+            logMetacat.error("Failed to locate the xsl file to transform the EML document.", e);
         } catch (PropertyNotFoundException e){
-            logMetacat.error("Error transforming the EML document.", e);
+            logMetacat.error("Failed to locate the xsl file to transform the EML document.", e);
         }
         return "";
     }
@@ -2728,8 +2729,28 @@ public class MNodeService extends D1NodeService
 
                 // Write the table to our string builder
                 tableHTMLBuilder.append(baos.toString());
-            } catch (Exception e) {
-                logMetacat.error("There was an error while generating the README table.");
+            } catch (InvalidToken e) {
+                logMetacat.error("Invalid token.", e);
+            } catch (MarshallingException e) {
+                logMetacat.error("There was an error accessing the metadata document.", e);
+            } catch (UnsupportedEncodingException e) {
+                logMetacat.error("There was an error encoding the metadata document.", e);
+            } catch (ServiceFailure e) {
+                logMetacat.error("There was a service failure while transforming the EML document.", e);
+            } catch (IOException e) {
+                logMetacat.error("There was an error accessing the metadata document.", e);
+            } catch (NotAuthorized e) {
+                logMetacat.error("Not authorized to access the metadata document.", e);
+            } catch (SQLException e) {
+                logMetacat.error("Failed to create the xml transformer.", e);
+            } catch (NotFound e) {
+                logMetacat.error("Faield to find the metadata document.", e);
+            } catch (ClassNotFoundException e) {
+                logMetacat.error("Failed to locate the xsl for transforming the EML document.", e);
+            } catch (NotImplemented e) {
+                logMetacat.error("Not implemented.", e);
+            } catch (PropertyNotFoundException e){
+                logMetacat.error("Failed to locate the xsl for transforming the EML document.", e);
             }
         }
 
@@ -2794,8 +2815,20 @@ public class MNodeService extends D1NodeService
             ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(fullHTML.getBytes());
             // Copy the bytes to the html file
             IOUtils.copy(resultInputStream, new FileOutputStream(ReadmeFile, true));
-        } catch (Exception e) {
-            logMetacat.error("There was an error while writing README.html", e);
+        } catch (UnsupportedEncodingException e) {
+            logMetacat.error("There was an error encoding the system metadata", e);
+        } catch (IOException e) {
+            logMetacat.error("There was an error creating the xml transformer.", e);
+        } catch (InvalidToken e) {
+            logMetacat.error("Invalid token.", e);
+        } catch (NotFound e) {
+            logMetacat.error("Failed to locate the EML metadata document.", e);
+        }  catch (ServiceFailure e) {
+            logMetacat.error("Service failure while creating README.html.", e);
+        } catch (NotAuthorized e) {
+            logMetacat.error("Not authorized to access the EML metadata document.", e);
+        } catch (NotImplemented e) {
+            logMetacat.error("Not implemented.", e);
         }
         return ReadmeFile;
     }
@@ -2834,8 +2867,8 @@ public class MNodeService extends D1NodeService
             bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
             // also mark for deletion on shutdown in case the stream is never closed
             bagFile.deleteOnExit();
-        } catch (Exception e) {
-            logMetacat.error("There was an error creating the bag file.");
+        } catch (FileNotFoundException e) {
+            logMetacat.error("Failed to find a file to delete.", e);
         }
         return bagInputStream;
     }
@@ -2856,8 +2889,16 @@ public class MNodeService extends D1NodeService
         InputStream emlStream = null;
         try {
             emlStream = this.get(session, metadataID);
-        } catch (Exception e) {
-            logMetacat.error("Failed to retrieve the EML document.", e);
+        } catch (InvalidToken e) {
+            logMetacat.error("Invalid token.", e);
+        } catch (ServiceFailure e) {
+            logMetacat.error("Failed to retrive the EML metadata document.", e);
+        } catch (NotAuthorized e) {
+            logMetacat.error("Not authorized to retrive metadata.", e);
+        } catch (NotFound e) {
+            logMetacat.error("EML document not found.", e);
+        } catch (NotImplemented e) {
+            logMetacat.error("Not implemented.", e);
         }
         try {
             // Write the EML document to the bag zip
@@ -2867,9 +2908,8 @@ public class MNodeService extends D1NodeService
             BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
             writer.write(documentContent);
             writer.close();
-        }
-        catch (Exception e) {
-            logMetacat.warn("Failed to write the eml document.", e);
+        } catch (IOException e) {
+            logMetacat.error("Failed to write the EML document.", e);
         }
     }
 
@@ -2921,8 +2961,14 @@ public class MNodeService extends D1NodeService
                     }
                 }
             }
-        } catch (Exception e) {
-            logMetacat.warn("There was an exception while searching for prov:atLocation.", e);
+        } catch (ORESerialiserException e) {
+            logMetacat.warn("Failed to serialize the resource map.", e);
+        } catch (ParserConfigurationException e) {
+            logMetacat.warn("There was a configuration error in the XML parser.", e);
+        } catch (SAXException e) {
+            logMetacat.warn("SAX failed to parse the XML.", e);
+        } catch (IOException e) {
+            logMetacat.warn("Failed to parse the resource map.", e);
         }
     }
 
@@ -3058,8 +3104,14 @@ public class MNodeService extends D1NodeService
                 oreInputStream = this.get(session, pid);
                 resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
                 pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
-            } catch (Exception e) {
-                logMetacat.error("Error getting identifiers from the resource map.", e);
+            } catch (OREException e) {
+                logMetacat.error("Failed to parse the ORE.", e);
+            } catch (URISyntaxException e) {
+                logMetacat.error("Error with a URI in the ORE.", e);
+            } catch (UnsupportedEncodingException e) {
+                logMetacat.error("Unsupported encoding format.", e);
+            } catch (OREParserException e) {
+                logMetacat.error("Failed to parse the ORE.", e);
             }
         } else {
             //throw an invalid request exception if there's just a single pid
@@ -3096,8 +3148,16 @@ public class MNodeService extends D1NodeService
                     }
                 }
             }
-        } catch (Exception e) {
-            logMetacat.warn("There was an error while parsing the files in the resource map.", e);
+        } catch (InvalidToken e) {
+            logMetacat.error("Invalid token.", e);
+        } catch (NotFound e) {
+            logMetacat.error("Failed to locate the metadata.", e);
+        }  catch (ServiceFailure e) {
+            logMetacat.error("Service failure while writing the EML document to disk.", e);
+        } catch (NotAuthorized e) {
+            logMetacat.error("Not authorized to access the EML metadata document.", e);
+        } catch (NotImplemented e) {
+            logMetacat.error("Not implemented.", e);
         }
 
         List<Identifier> metadataIds = new ArrayList();
@@ -3119,8 +3179,12 @@ public class MNodeService extends D1NodeService
                 File systemMetadataDocument = new File(filename);
                 FileOutputStream sysMetaStream = new FileOutputStream(systemMetadataDocument);
                 TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
-            } catch (Exception e) {
-                logMetacat.warn("Error writing system metadata to disk.");
+            } catch (MarshallingException e) {
+                logMetacat.error("There was an error accessing the metadata document.", e);
+            } catch (FileNotFoundException e) {
+                logMetacat.error("Failed to create the document.", e);
+            } catch (IOException e) {
+                logMetacat.error("Failed to write to temporary file.", e);
             }
 
             // Skip the resource map and the science metadata so that we don't write them to the data direcotry
@@ -3162,8 +3226,20 @@ public class MNodeService extends D1NodeService
             try {
                 InputStream entryInputStream = this.get(session, entryPid);
                 IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-            } catch (Exception e) {
-                logMetacat.warn("There was an error while writing a data file", e);
+            } catch (InvalidToken e) {
+                logMetacat.error("Invalid token.", e);
+            } catch (ServiceFailure e) {
+                logMetacat.error("Failed to retrive data file.", e);
+            } catch (NotAuthorized e) {
+                logMetacat.error("Not authorized to the data file.", e);
+            } catch (NotFound e) {
+                logMetacat.error("Data file not found.", e);
+            } catch (NotImplemented e) {
+                logMetacat.error("Not implemented.", e);
+            } catch (FileNotFoundException e) {
+                logMetacat.error("Failed to find the temp file.", e);
+            } catch (IOException e) {
+                logMetacat.error("Failed to write to the temp file.", e);
             }
         }
 
