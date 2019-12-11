@@ -2533,8 +2533,8 @@ public class MNodeService extends D1NodeService
             Result outputTarget = new StreamResult(outputStream);
 
             Transformer jsonTransformer = TransformerFactory.newInstance().newTransformer(xslSource);
-            StringReader strRdr = new StringReader(doc);
-            jsonTransformer.transform(new StreamSource(strRdr), outputTarget);
+            StringReader strReader = new StringReader(doc);
+            jsonTransformer.transform(new StreamSource(strReader), outputTarget);
             return outputStream.toString("UTF-8");
         } catch (TransformerConfigurationException e) {
             logMetacat.error("There was an error in configuring the XML transformer.", e);
@@ -2789,7 +2789,7 @@ public class MNodeService extends D1NodeService
                                        List<Identifier> coreMetadataIdentifiers,
                                        File tempBagRoot) {
         String readmeBody = "";
-        File ReadmeFile = null;
+        File readmeFile = null;
         // Generate the file table
         String sysmetaTable = this.createSysMetaTable(session, metadataIds, coreMetadataIdentifiers);
 
@@ -2810,11 +2810,11 @@ public class MNodeService extends D1NodeService
             String fullHTML = this.insertTableIntoReadme(sysmetaTable, readmeBody);
             fullHTML = this.insertJSONIntoHead(jsonLD, fullHTML);
 
-            ReadmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
+            readmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
             // Write the html to a stream
             ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(fullHTML.getBytes());
             // Copy the bytes to the html file
-            IOUtils.copy(resultInputStream, new FileOutputStream(ReadmeFile, true));
+            IOUtils.copy(resultInputStream, new FileOutputStream(readmeFile, true));
         } catch (UnsupportedEncodingException e) {
             logMetacat.error("There was an error encoding the system metadata", e);
         } catch (IOException e) {
@@ -2830,7 +2830,7 @@ public class MNodeService extends D1NodeService
         } catch (NotImplemented e) {
             logMetacat.error("Not implemented.", e);
         }
-        return ReadmeFile;
+        return readmeFile;
     }
 
     /*
@@ -3247,11 +3247,11 @@ public class MNodeService extends D1NodeService
         Bag bag = bagFactory.createBag();
 
         // Create the README.html document
-        File ReadmeFile = this.generateReadmeHTMLFile(session,
+        File readmeFile = this.generateReadmeHTMLFile(session,
                 metadataIds,
                 coreMetadataIdentifiers,
                 tempBagRoot);
-        bag.addFileAsTag(ReadmeFile);
+        bag.addFileAsTag(readmeFile);
 
         // The directory where the actual bag zipfile is saved (and streamed from)
         File streamedBagFile = new File("/var/tmp/exportedPackages/"+Long.toString(System.nanoTime()));
