@@ -8,13 +8,13 @@
 	</group>
 	<group>
 		<index>2</index>
-		<name>SOLR Configuration (New)</name>
+		<name>Solr Configuration (New)</name>
 		<description>Server Configuration Values.</description>
 	</group>
 	<group>
         <index>3</index>
         <name>Server Configuration</name>
-        <description>SOLR Configuration Values.</description>
+        <description>Solr Configuration Values.</description>
     </group>
 	<group>
 		<index>4</index>
@@ -161,22 +161,22 @@
 	
 	<config>
         <key>solr.baseURL</key>
-        <label>SOLR BaseURL</label>
+        <label>Solr BaseURL</label>
         <group>2</group>
         <index>1</index>
         <description>
-            The base URL of the HTTP SOLR server
+            The base URL of the HTTP Solr server
         </description>
         <helpFile>docs/metacat-properties.html#solr-baseURL</helpFile>
     </config>
     
    <!-- <config>
         <key>solr.adminUser</key>
-        <label>SOLR Admin User</label>
+        <label>Solr Admin User</label>
         <group>2</group>
         <index>2</index>
         <description>
-            The admin user of the HTTP SOLR server
+            The admin user of the HTTP Solr server
         </description>
         <helpFile>docs/metacat-properties.html#solr-adminUser</helpFile>
     </config>
@@ -187,40 +187,40 @@
         <group>2</group>
         <index>3</index>
         <description>
-            The password of the admin user of the HTTP SOLR server
+            The password of the admin user of the HTTP Solr server
         </description>
         <helpFile>docs/metacat-properties.html#solr-password</helpFile>
     </config> -->
     
     <config>
         <key>solr.homeDir</key>
-        <label>SOLR Home Directory</label>
+        <label>Solr Home Directory</label>
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the SOLR core. If you are upgrading Metacat from version 2.12.1 or earlier, please choose a different directory rather than the old one.
+            The directory to hold the Solr core. If you are upgrading Metacat from version 2.12.1 or earlier, please choose a different directory rather than the old one.
         </description>
         <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
     </config>
     
     <config>
         <key>solr.coreName</key>
-        <label>SOLR Core Name</label>
+        <label>Solr Core Name</label>
         <group>2</group>
         <index>5</index>
         <description>
-            The name of the core storing Metacat SOLR index
+            The name of the core storing Metacat Solr index
         </description>
         <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
     </config>
 
     <config>
         <key>solr.osUser</key>
-        <label>OS SOLR User</label>
+        <label>OS Solr User</label>
         <group>2</group>
         <index>6</index>
         <description>
-            The operating system user who runs the SOLR service
+            The operating system user who runs the Solr service
         </description>
         <helpFile>docs/metacat-properties.html#solr-osUser</helpFile>
     </config>
@@ -421,7 +421,7 @@
 	
 	<!-- <config>
 		<key>solr.homeDir</key>
-		<label>SOLR Home directory</label>
+		<label>Solr Home directory</label>
 		<group>3</group>
 		<index>11</index>
 		<description>
