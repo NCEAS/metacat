@@ -2497,7 +2497,7 @@ public class MNodeService extends D1NodeService
     * @param jsonLd: The JSON that's being instered into the head
     * @param fullHTML: The HTML document
      */
-    private String insertJSONIntoHead(String jsonLd, String fullHTML)
+    private String insertJSONIntoReadme(String jsonLd, String fullHTML)
     {
         if (fullHTML.length() >1) {
             // Look for the first table within the first table group
@@ -2523,8 +2523,7 @@ public class MNodeService extends D1NodeService
      * @param xslSystemId: the system location of the stylesheet
      * @param pw: the PrintWriter to which output is printed
      */
-    private String emlToJson(String doc, String xslSystemId,
-                                  StringWriter pw)
+    private String emlToJson(String doc, String xslSystemId)
     {
         try {
             StreamSource xslSource =
@@ -2547,7 +2546,8 @@ public class MNodeService extends D1NodeService
     }
 
     /*
-     * Generates a schema.org compliant JSON-LD representation of the EML document
+     * Generates a schema.org compliant JSON-LD representation of the EML document. If the
+     * generation failed, an empty string is returned.
      *
      * @param session: The user's session
      * @param emlDocId: The EML document being transformed into JSON-LD
@@ -2562,8 +2562,7 @@ public class MNodeService extends D1NodeService
             String filePath = PropertyService.getProperty("application.deployDir")+"/"+PropertyService
                     .getProperty("application.context")+ "/style/common/conversions/emltojson-ld.xsl";
 
-            StringWriter strWriter = new StringWriter();
-            return this.emlToJson(emlDoc, filePath, strWriter);
+            return this.emlToJson(emlDoc, filePath);
         }
         catch(InvalidToken e)
         {
@@ -2620,7 +2619,7 @@ public class MNodeService extends D1NodeService
             builder.insert(insertLocation, table);
             return builder.toString();
         }
-        return table;
+        return htmlDoc;
     }
 
     /*
@@ -2754,6 +2753,12 @@ public class MNodeService extends D1NodeService
             }
         }
 
+        String htmlString = tableHTMLBuilder.toString();
+        // If the HTML body is empty, we should quit early
+        if (htmlString.isEmpty()) {
+            return "";
+        }
+
         // This is ugly, but we need to wrap the sysmeta file rows in a table
         String openingHtml ="<td class=\"fortyfive_percent\"><table class=\"subGroup subGroup_border onehundred_percent\">"+
                 "<tr>"+
@@ -2788,31 +2793,33 @@ public class MNodeService extends D1NodeService
                                        List<Identifier> metadataIds,
                                        List<Identifier> coreMetadataIdentifiers,
                                        File tempBagRoot) {
-        String readmeBody = "";
+        String readmeDoc = "";
         File readmeFile = null;
         // Generate the file table
         String sysmetaTable = this.createSysMetaTable(session, metadataIds, coreMetadataIdentifiers);
 
         try {
-            // The body of the README is generated from the primary system metadata document. Find this document, and
-            // generate the body.
+            // The body of the README is generated from the primary science metadata document. Find this document, and
+            // generate the body. Use coreMetadataIdentifiers since it's going to be shorter than metadataIds and contains
+            // the EML doc.
             String jsonLD = "";
-            for (Identifier metadataID : metadataIds) {
+            for (Identifier metadataID : coreMetadataIdentifiers) {
                 SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
                 // Look for the science metadata object
                 if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-                    readmeBody = this.generateReadmeBody(session, metadataID, metadataSysMeta);
+                    readmeDoc = this.generateReadmeBody(session, metadataID, metadataSysMeta);
                     jsonLD = generatePackageJSONLD(session, metadataID);
                     break;
                 }
             }
-            // Now that we have the HTML table and the rest of the HTML body, we need to combine them
-            String fullHTML = this.insertTableIntoReadme(sysmetaTable, readmeBody);
-            fullHTML = this.insertJSONIntoHead(jsonLD, fullHTML);
-
+            if (!readmeDoc.isEmpty()) {
+                // Now that we have the HTML table and the rest of the HTML body, we need to combine them
+                readmeDoc = this.insertTableIntoReadme(sysmetaTable, readmeDoc);
+                readmeDoc = this.insertJSONIntoReadme(jsonLD, readmeDoc);
+            }
             readmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
             // Write the html to a stream
-            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(fullHTML.getBytes());
+            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(readmeDoc.getBytes());
             // Copy the bytes to the html file
             IOUtils.copy(resultInputStream, new FileOutputStream(readmeFile, true));
         } catch (UnsupportedEncodingException e) {
@@ -3066,7 +3073,7 @@ public class MNodeService extends D1NodeService
 
         // Tie the File objects above to actual locations on the filesystem
         try {
-            tempBagRoot = new File("/var/tmp/exportedPackages/"+Long.toString(System.nanoTime()));
+            tempBagRoot = new File("/var/metacat/temporary/exportedPackages/"+Long.toString(System.nanoTime()));
             tempBagRoot.mkdirs();
 
             metadataRoot = new File(tempBagRoot.getAbsolutePath() + "/metadata");
