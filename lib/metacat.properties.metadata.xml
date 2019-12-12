@@ -8,12 +8,12 @@
 	</group>
 	<group>
 		<index>2</index>
-		<name>Server Configuration</name>
+		<name>SOLR Configuration (New)</name>
 		<description>Server Configuration Values.</description>
 	</group>
 	<group>
         <index>3</index>
-        <name>SOLR Configuration</name>
+        <name>Server Configuration</name>
         <description>SOLR Configuration Values.</description>
     </group>
 	<group>
@@ -157,11 +157,90 @@
 		<description>Database connection string.</description>
 		<helpFile>docs/metacat-properties.html#database-connectionURI</helpFile>
 	</config>
+	
+	
+	<config>
+        <key>solr.baseURL</key>
+        <label>SOLR BaseURL</label>
+        <group>2</group>
+        <index>1</index>
+        <description>
+            The base URL of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-baseURL</helpFile>
+    </config>
+    
+   <!-- <config>
+        <key>solr.adminUser</key>
+        <label>SOLR Admin User</label>
+        <group>2</group>
+        <index>2</index>
+        <description>
+            The admin user of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-adminUser</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.password</key>
+        <label>Password</label>
+        <group>2</group>
+        <index>3</index>
+        <description>
+            The password of the admin user of the HTTP SOLR server
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-password</helpFile>
+    </config> -->
+    
+    <config>
+        <key>solr.homeDir</key>
+        <label>SOLR Home Directory</label>
+        <group>2</group>
+        <index>4</index>
+        <description>
+            The directory to hold the SOLR core. If you are upgrading Metacat from version 2.12.1 or earlier, please choose a different directory rather than the old one.
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.coreName</key>
+        <label>SOLR Core Name</label>
+        <group>2</group>
+        <index>5</index>
+        <description>
+            The name of the core storing Metacat SOLR index
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
+    </config>
+
+    <config>
+        <key>solr.osUser</key>
+        <label>OS SOLR User</label>
+        <group>2</group>
+        <index>6</index>
+        <description>
+            The operating system user who runs the SOLR service
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-osUser</helpFile>
+    </config>
+    
+    <config>
+        <key>solr.env.script.path</key>
+        <label>Environment Variables File</label>
+        <group>2</group>
+        <index>7</index>
+        <description>
+            The path of the script file to set up Solr environment variables 
+        </description>
+        <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
+    </config>
+	
 
 	<config>
 		<key>server.name</key>
 		<label>Server Name</label>
-		<group>2</group>
+		<group>3</group>
 		<index>1</index>
 		<description>
 			Name of the server where Metacat will be available.
@@ -172,7 +251,7 @@
 	<config>
 		<key>server.httpPort</key>
 		<label>HTTP Port</label>
-		<group>2</group>
+		<group>3</group>
 		<index>2</index>
 		<description>
 			Non secure port where Metacat will be available.
@@ -183,7 +262,7 @@
 	<config>
 		<key>server.httpSSLPort</key>
 		<label>HTTP SSL Port</label>
-		<group>2</group>
+		<group>3</group>
 		<index>3</index>
 		<description>
 			Secure port where Metacat will be available.
@@ -194,7 +273,7 @@
   <config>
     <key>server.internalName</key>
     <label>Server Internal Name</label>
-    <group>2</group>
+    <group>3</group>
     <index>4</index>
     <description>
       Local name of the server. Usually it is localhost. 
@@ -205,7 +284,7 @@
   <config>
     <key>server.internalPort</key>
     <label>Internal Port</label>
-    <group>2</group>
+    <group>3</group>
     <index>5</index>
     <description>
       Internal port where Metacat will be available when the server local name is used.
@@ -217,81 +296,15 @@
 	<config>
 		<key>application.deployDir</key>
 		<label>Deploy Location</label>
-		<group>2</group>
-		<index>4</index>
+		<group>3</group>
+		<index>6</index>
 		<description>
 			The directory where the application is deployed.
 		</description>
 		<helpFile>docs/metacat-properties.html#application-deployDir</helpFile>
 	</config>
 	
-	<config>
-        <key>solr.baseURL</key>
-        <label>SOLR BaseURL</label>
-        <group>3</group>
-        <index>1</index>
-        <description>
-            The base URL of the HTTP SOLR server
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-baseURL</helpFile>
-    </config>
-    
-   <!-- <config>
-        <key>solr.adminUser</key>
-        <label>SOLR Admin User</label>
-        <group>3</group>
-        <index>2</index>
-        <description>
-            The admin user of the HTTP SOLR server
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-adminUser</helpFile>
-    </config>
-    
-    <config>
-        <key>solr.password</key>
-        <label>Password</label>
-        <group>3</group>
-        <index>3</index>
-        <description>
-            The password of the admin user of the HTTP SOLR server
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-password</helpFile>
-    </config> -->
-    
-    <config>
-        <key>solr.coreName</key>
-        <label>SOLR Core Name</label>
-        <group>3</group>
-        <index>4</index>
-        <description>
-            The name of the core storing Metacat SOLR index
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
-    </config>
-    
-    <config>
-        <key>solr.homeDir</key>
-        <label>SOLR Home Directory</label>
-        <group>3</group>
-        <index>5</index>
-        <description>
-            The directory to hold the SOLR core
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
-    </config>
-    
-    <config>
-        <key>solr.osUser</key>
-        <label>OS SOLR User  </label>
-        <group>3</group>
-        <index>6</index>
-        <description>
-            The operating system user who runs the SOLR service
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-osUser</helpFile>
-    </config>
-	
-	
+
 	<config>
 		<key>auth.allowedSubmitters</key>
 		<label>Allowed Submitters</label>

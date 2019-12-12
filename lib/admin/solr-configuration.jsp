@@ -75,7 +75,7 @@
 		<h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be created.<h3>
 		<div class="buttons-wrapper">
             <input class=button type="button" value="Create" onClick="forward('./admin?configureType=solrserver&processForm=true&action=create')">
-            <!-- <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
 		<%
@@ -89,7 +89,7 @@
         <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be registered in the SOLR server.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Register" onClick="forward('./admin?configureType=solrserver&processForm=true&action=register')">
-            <!-- <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
         <%
@@ -103,7 +103,7 @@
         <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be registered in the SOLR server. The index schema will be updated as well<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Register" onClick="forward('./admin?configureType=solrserver&processForm=true&action=registerAndUpdate')">
-            <!-- <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
         <%
@@ -145,7 +145,7 @@
             <input type="hidden" name="<%= SolrAdmin.SOLRCORENAME %>" value="<%= solrCoreName %>"/>
             <input type="hidden" name="action" value="<%= action %>"/>
             <input class=button type="submit" value="Create/Register">
-            <!--<input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
         <%
@@ -159,7 +159,7 @@
         <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> does exist and the schema does not need update. Please click the OK button.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="OK" onClick="forward('./admin?configureType=solrserver&processForm=true&action=KEEP')">
-            <!-- <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
         <%
@@ -173,7 +173,7 @@
         <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> does exist but the schema needs update. Please click the UPDATE button.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Update" onClick="forward('./admin?configureType=solrserver&processForm=true&action=update')">
-            <!-- <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')"> -->
+            <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
             <input class=button type="button" value="Cancel" onClick="forward('./admin')"> 
         </div>
         <%
