@@ -198,7 +198,7 @@
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. If you are upgrading Metacat from version 2.12.1 or earlier, please choose a different directory rather than the old one.
+            The directory to hold the Solr core. &lt;font color="red"&gt; If you are upgrading Metacat from version 2.12.2 or earlier, please choose a different directory rather than the old one.&lt;/font&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
     </config>
@@ -231,7 +231,7 @@
         <group>2</group>
         <index>7</index>
         <description>
-            The path of the script file to set up Solr environment variables. Make sure the Tomcat user has the write/read permission on this file. 
+            The path of the script file to set up Solr environment variables. &lt;font color="red"&gt; Make sure the Tomcat user has the write/read permission on this file.&lt;/font&gt; 
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
     </config>
