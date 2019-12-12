@@ -231,7 +231,7 @@
         <group>2</group>
         <index>7</index>
         <description>
-            The path of the script file to set up Solr environment variables 
+            The path of the script file to set up Solr environment variables. Make sure the Tomcat user has the write/read permission on this file. 
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
     </config>
@@ -500,7 +500,7 @@
 	<config>
 		<key>D1Client.CN_URL</key>
 		<label>Coordinating Node URL</label>
-		<group>7</group>
+		<group>8</group>
 		<index>1</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -509,7 +509,7 @@
 	<config>
 		<key>dataone.nodeName</key>
 		<label>Node Name</label>
-		<group>7</group>
+		<group>8</group>
 		<index>2</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -518,7 +518,7 @@
 	<config>
 		<key>dataone.nodeDescription</key>
 		<label>Node Description</label>
-		<group>7</group>
+		<group>8</group>
 		<index>3</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -527,7 +527,7 @@
 	<config>
 		<key>dataone.nodeId</key>
 		<label>Node Identifier</label>
-		<group>7</group>
+		<group>8</group>
 		<index>4</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -536,7 +536,7 @@
 	<config>
 		<key>dataone.subject</key>
 		<label>Node Subject</label>
-		<group>7</group>
+		<group>8</group>
 		<index>5</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -545,7 +545,7 @@
 	<config>
 	    <key>dataone.nodeSynchronize</key>
 	    <label>Synchronize?</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>6</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -554,7 +554,7 @@
 	<config>
 	    <key>dataone.nodeReplicate</key>
 	    <label>Replicate?</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>7</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -563,7 +563,7 @@
 	<config>
 	    <key>D1Client.certificate.file</key>
 	    <label>Certificate file</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>8</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -572,7 +572,7 @@
 	<config>
 	    <key>dataone.ore.generated</key>
 	    <label>Have the ORE maps been generated?</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>9</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -581,7 +581,7 @@
 	<config>
 	    <key>dataone.systemmetadata.generated</key>
 	    <label>Has System Metadata been generated?</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>10</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -590,7 +590,7 @@
 	<config>
 	    <key>dataone.mn.services.enabled</key>
 	    <label>Have D1 MN services been enabled</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>11</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -599,7 +599,7 @@
 	<config>
 	    <key>dataone.mn.registration.submitted</key>
 	    <label>Has the MN registration been submitted</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>12</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -608,7 +608,7 @@
 	<config>
 	    <key>D1Client.resourcesDir</key>
 	    <label>Configurable DataONE Resources Directory</label>
-	    <group>7</group>
+	    <group>8</group>
 	    <index>13</index>                
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -617,7 +617,7 @@
 	<config>
 		<key>dataone.contactSubject</key>
 		<label>Contact Subject</label>
-		<group>7</group>
+		<group>8</group>
 		<index>14</index>
 		<fieldType>hidden</fieldType>
 		<description> </description>
@@ -628,7 +628,7 @@
 	<config>
         <key>guid.ezid.enabled</key>
         <label>Enable EZID Service</label>
-        <group>7</group>
+        <group>8</group>
         <index>15</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -637,7 +637,7 @@
     <config>
         <key>guid.ezid.username</key>
         <label>User Name</label>
-        <group>7</group>
+        <group>8</group>
         <index>16</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -646,7 +646,7 @@
     <config>
         <key>guid.ezid.baseurl</key>
         <label>Service Base URL</label>
-        <group>7</group>
+        <group>8</group>
         <index>17</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -655,7 +655,7 @@
     <config>
         <key>guid.ezid.doishoulder.1</key>
         <label>DOI Shouder</label>
-        <group>7</group>
+        <group>8</group>
         <index>18</index>
         <fieldType>hidden</fieldType>
         <description> </description>
@@ -675,7 +675,7 @@
 				<name>Disabled</name>
 				<value>false</value>
 			</option>
-			<group>6</group>
+			<group>7</group>
 			<index>1</index>
 			<description>
 				Whether sitemaps are enabled or not.
@@ -685,7 +685,7 @@
 		<config>
 			<key>sitemap.interval</key>
 			<label>Interval</label>
-			<group>6</group>
+			<group>7</group>
 			<index>2</index>
 			<description>
 				How often sitemaps are generated. Enter an integer in milliseconds. 
@@ -696,7 +696,7 @@
 		<config>
 			<key>sitemap.location.base</key>
 			<label>Location Base</label>
-			<group>6</group>
+			<group>7</group>
 			<index>3</index>
 			<description>
 				Base URL for where the sitemap index and individual sitemap files are 
@@ -708,7 +708,7 @@
 		<config>
 			<key>sitemap.entry.base</key>
 			<label>Entry Base</label>
-			<group>6</group>
+			<group>7</group>
 			<index>4</index>
 			<description>
 				Base URL for each entry listed in each sitemap. The identifier of each
