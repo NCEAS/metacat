@@ -179,7 +179,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        while ( (resultStr == null || resultStr.contains("<bool name=\"archived\">")) && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -795,7 +795,6 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         String query = "q=id:"+guid.getValue();
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
-        resultStr = resultStr.replaceAll("\\s","");
         int account = 0;
         while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
             Thread.sleep(1000);
@@ -803,7 +802,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        System.out.println("the guid is "+guid.getValue());
+        resultStr = resultStr.replaceAll("\\s","");
+        //System.out.println("the guid is "+guid.getValue());
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<arrname=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
@@ -1043,12 +1043,12 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        System.out.println(resultStr);
-        assertTrue((resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>")) ||
-                   (resultStr.contains("<arr name=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue() + "</str></arr>")));
+        //System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>"));
         
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1063,9 +1063,10 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1080,9 +1081,10 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
     }
     
    
