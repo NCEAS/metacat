@@ -482,14 +482,20 @@ https://lucene.apache.org/solr/downloads.html
 ::
 
   sudo bash ./install_solr_service.sh solr-8.3.1.tgz
- 
-3. Check if the Solr service is running:
+
+3. Make the Solr environment overwrites include file being the group writable:
+
+::
+
+  chmod g+w /etc/default/solr.in.sh
+
+4. Check if the Solr service is running:
 
 ::
 
   sudo service solr status
 
-4. Make sure the firewall is running and the default port 8983 doesn't expose externally (assume you are using UFW):
+5. Make sure the firewall is running and the default port 8983 doesn't expose externally (assume you are using UFW):
 
 ::
 
