@@ -178,7 +178,6 @@ public class SolrAdmin extends MetacatAdmin {
 				//String password = PropertyService.getProperty("solr.password");
 				String coreName = PropertyService.getProperty("solr.coreName");
 				String solrHomePath = PropertyService.getProperty("solr.homeDir");
-				String osUser =  PropertyService.getProperty("solr.osUser");
 				if(coreName == null || coreName.trim().equals("")) {
 				    throw new AdminException("The slor core name shouldn't be null or blank. Please go back to the Metacat Global Properties admin page to configure again.");
 				}
@@ -527,7 +526,6 @@ public class SolrAdmin extends MetacatAdmin {
 	        // Try to create and initialize the solr-home directory if necessary.
             String solrHomePath = PropertyService.getProperty("solr.homeDir");
             String indexContext = PropertyService.getProperty("index.context");
-            String solrUser = PropertyService.getProperty("solr.osUser");
             boolean solrHomeExists = new File(solrHomePath).exists();
             boolean solrHomeConfExists = new File(solrHomePath + "/" + CONF).exists();
             boolean solrHomeDataExists = new File(solrHomePath + "/"+ DATA).exists();
@@ -552,7 +550,7 @@ public class SolrAdmin extends MetacatAdmin {
                         FileUtils.copyDirectory(new File(metacatIndexSolrHome), new File(solrHomePath), fileFilter );
                         //The solr home directory will be owned by the solr user, but the tomcat group has the permission to write
                         Path solrHomePathObj = Paths.get(solrHomePath);
-                        Set<PosixFilePermission> perms = new HashSet<>();
+                        final Set<PosixFilePermission> perms = new HashSet<>();
                         perms.add(PosixFilePermission.OWNER_READ);
                         perms.add(PosixFilePermission.OWNER_WRITE);
                         perms.add(PosixFilePermission.OWNER_EXECUTE);
@@ -561,36 +559,27 @@ public class SolrAdmin extends MetacatAdmin {
                         perms.add(PosixFilePermission.GROUP_EXECUTE);
                         perms.add(PosixFilePermission.OTHERS_READ);
                         perms.add(PosixFilePermission.OTHERS_EXECUTE);
-                        try {
-                            Files.setPosixFilePermissions(solrHomePathObj, perms);
-                        } catch (Exception e) {
-                            String errorString = "SolrAdmin.createSolrHome - the os doesn't support to give the group the write permission on the solr home directory -" +solrHomePath+"  Please manually do this action";
-                            logMetacat.error(errorString, e);
-                            throw new UnsupportedOperationException(errorString);
-                        }
                         //change the owner to solr
                         try {
                             FileSystem fileSystem = solrHomePathObj.getFileSystem();
-                            UserPrincipalLookupService service = fileSystem.getUserPrincipalLookupService();
-                            final UserPrincipal userPrincipal = service.lookupPrincipalByName(solrUser);
-                            //change the ownership recursively
+                            //change the file permission on the solr home directory recursively
                             Files.walkFileTree(solrHomePathObj, new SimpleFileVisitor<Path>() {
                                 @Override
                                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                                    Files.setOwner(file, userPrincipal);
+                                    Files.setPosixFilePermissions(file, perms);
                                     return FileVisitResult.CONTINUE;
                                 }
                                 @Override
                                 public FileVisitResult postVisitDirectory(Path dir, IOException e)
                                     throws IOException {
-                                    Files.setOwner(dir, userPrincipal);
+                                    Files.setPosixFilePermissions(dir, perms);
                                     return FileVisitResult.CONTINUE;
                                 }
                             });
                             
                         } catch (Exception e) {
-                            String errorString = "SolrAdmin.createSolrHome - Metacat can't change the owner of the solr home directory -"+solrHomePath+
-                                                " entirely to the solr user - "+solrUser+". Please manually do this action";
+                            String errorString = "SolrAdmin.createSolrHome - Metacat can't recursively set the user group the write permission on the solr home directory -"+solrHomePath+
+                                               ". Please manually do this action";
                             logMetacat.error(errorString, e);
                             throw new UnsupportedOperationException(errorString);
                         }

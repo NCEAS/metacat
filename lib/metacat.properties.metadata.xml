@@ -198,7 +198,7 @@
         <group>2</group>
         <index>4</index>
         <description>
-            The directory to hold the Solr core. &lt;font color="red"&gt; If you are upgrading Metacat from version 2.12.2 or earlier, please choose a different directory rather than the old one.&lt;/font&gt;
+            The directory to hold the Solr core. &lt;font color="red"&gt; If you are upgrading Metacat from version 2.12.2 or earlier, please choose a different directory rather than the old one. Make sure the Solr user has the write/read permission on this directory&lt;/font&gt;
         </description>
         <helpFile>docs/metacat-properties.html#solr-homeDir</helpFile>
     </config>
@@ -214,24 +214,14 @@
         <helpFile>docs/metacat-properties.html#solr-coreName</helpFile>
     </config>
 
-    <config>
-        <key>solr.osUser</key>
-        <label>OS Solr User</label>
-        <group>2</group>
-        <index>6</index>
-        <description>
-            The operating system user who runs the Solr service
-        </description>
-        <helpFile>docs/metacat-properties.html#solr-osUser</helpFile>
-    </config>
     
     <config>
         <key>solr.env.script.path</key>
-        <label>Environment Variables File</label>
+        <label>Environment Override File</label>
         <group>2</group>
-        <index>7</index>
+        <index>6</index>
         <description>
-            The path of the script file to set up Solr environment variables. &lt;font color="red"&gt; Make sure the Tomcat user has the write/read permission on this file.&lt;/font&gt; 
+            The path of the script file to overwrite the default Solr environment variables. &lt;font color="red"&gt; Make sure the Tomcat user has the write/read permission on this file.&lt;/font&gt; 
         </description>
         <helpFile>docs/metacat-properties.html#solr-env-script-path</helpFile>
     </config>
