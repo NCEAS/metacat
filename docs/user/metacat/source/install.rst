@@ -487,7 +487,7 @@ https://lucene.apache.org/solr/downloads.html
 
 ::
 
-  chmod g+w /etc/default/solr.in.sh
+  sudo chmod g+w /etc/default/solr.in.sh
 
 4. Check if the Solr service is running:
 
