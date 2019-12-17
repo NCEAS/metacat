@@ -19,6 +19,7 @@ running correctly:
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
 * `Java 8`_ (Note: Java 7 is deprecated)
+* `Solr 8.3`_
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -31,6 +32,9 @@ running correctly:
 .. _Apache HTTPD Server: http://httpd.apache.org/
 
 .. _Java 8: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
+
+.. _Solr 8.3: https://lucene.apache.org/solr/guide/8_3/getting-started.html
+
 
 System requirements for running Metacat:
 
@@ -167,6 +171,7 @@ robust Web-serving environment and is required by some Metacat functionality.
 * `Apache HTTPD Server`_ (Highly Recommended)
 * PostgreSQL_ Database 
 * `Apache Ant`_ (if building from Source)
+* `Solr 8.3`_
 
 Java 8
 ......
@@ -454,6 +459,61 @@ Currently Metacat only supports PostgreSQL_. You can choose the release versions
 The Metacat servlet automatically creates the required database schema. For
 more information about configuring the database, please see Database
 Configuration.
+
+
+Solr Server
+...........
+From version 2.13.0, Metacat starts to use the external Solr HTTP server as the 
+search engine. Unfortunately the Solr Debian packages coming with the Ubuntu operating 
+system are obsoleted and you have to install the binary packages by yourself. This section 
+provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
+
+Metacat support Solr 8.3 and newer versions. You might download the binary releases from:
+
+https://lucene.apache.org/solr/downloads.html
+
+1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.3.1.tgz):
+
+::
+
+  tar xzf solr-8.3.1.tgz solr-8.3.1/bin/install_solr_service.sh --strip-components=2
+
+2. Install Solr as the root user:
+
+::
+
+  sudo bash ./install_solr_service.sh solr-8.3.1.tgz
+ 
+3. Check if the Solr service is running:
+
+::
+
+  sudo service solr status
+
+4. Make sure the firewall is running and the default port 8983 doesn't expose externally (assume you are using UFW):
+
+::
+
+  sudo ufw status
+
+
+Tomcat and Solr User Management
+...............................
+The interaction of the Tomcat and Solr services will cause the file permission issues. 
+Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will fix the problems:
+
+::
+
+  sudo usermod -a -G solr tomcat8
+  sudo usermod -a -G tomcat8 solr
+
+You may check if the tomcat8 user and solr user have the groups by typing:
+
+::
+
+  sudo groups tomcat8
+  sudo groups solr
+
 
 Apache Ant (if building from Source)
 ....................................
