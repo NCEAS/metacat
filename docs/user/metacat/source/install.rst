@@ -460,7 +460,6 @@ The Metacat servlet automatically creates the required database schema. For
 more information about configuring the database, please see Database
 Configuration.
 
- .. _solr-server:
 Solr Server
 ...........
 From version 2.13.0, Metacat starts to use the external Solr HTTP server as the 
@@ -496,7 +495,6 @@ https://lucene.apache.org/solr/downloads.html
 
   sudo ufw status
 
- .. _tomcat-and-solr-user-management:
 Tomcat and Solr User Management
 ...............................
 The interaction of the Tomcat and Solr services will cause the file permission issues. 
