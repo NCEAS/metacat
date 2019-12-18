@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.12.2 Release
+Version: 2.12.3 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,11 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.12.3
+Bugs fixed in this release:
+* Return an invalid response to the call of cn.getLogRecords if some log records have a null ip address
+* Make the accounts of returned log records more accurate
 
 ### Release Notes for 2.12.2
 Bugs fixed in this release:
