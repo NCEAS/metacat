@@ -225,6 +225,7 @@ public class MNodeService extends D1NodeService
     private static ExecutorService executor = null;
     private boolean needSync = true;
 
+
     static {
         // use a shared executor service with nThreads == one less than available processors
         int availableProcessors = Runtime.getRuntime().availableProcessors();
@@ -236,12 +237,26 @@ public class MNodeService extends D1NodeService
 
 
     /**
-     * Singleton accessor to get an instance of MNodeService.
+     * Get an instance of MNodeService.
      * 
      * @return instance - the instance of MNodeService
      */
     public static MNodeService getInstance(HttpServletRequest request) {
         return new MNodeService(request);
+    }
+    
+    /**
+     * Get an instance of MNodeService.
+     * @param request  the servlet request associated with the MNodeService instance
+     * @param ipAddress  the ip address associated with the MNodeService instance
+     * @param userAgent  the user agent associated with the MNodeService instance
+     * @return the instance of MNodeService
+     */
+    public static MNodeService getInstance(HttpServletRequest request, String ipAddress, String userAgent) {
+        MNodeService mnService = new MNodeService(request);
+        mnService.setIpAddress(ipAddress);
+        mnService.setUserAgent(userAgent);
+        return mnService;
     }
 
     /**
@@ -1736,8 +1751,13 @@ public class MNodeService extends D1NodeService
                 
                 try {
                     String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-                    EventLog.getInstance().log(request.getRemoteAddr(), 
-                            request.getHeader("User-Agent"), session.getSubject().getValue(), 
+                    if (ipAddress == null) {
+                        request.getRemoteAddr();
+                    }
+                    if (userAgent == null) {
+                        userAgent = request.getHeader("User-Agent");
+                    }
+                    EventLog.getInstance().log(ipAddress, userAgent, session.getSubject().getValue(), 
                             localId, "updateSystemMetadata");
                 } catch (Exception e) {
                     // do nothing, no localId to log with
@@ -3026,4 +3046,5 @@ public class MNodeService extends D1NodeService
         return readOnly;
     }
     
+  
 }

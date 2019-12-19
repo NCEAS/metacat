@@ -800,12 +800,14 @@ public class MNResourceHandler extends D1ResourceHandler {
 //        }
         
         // run it in a thread to avoid connection timeout
+        final String ipAddress = request.getRemoteAddr();
+        final String userAgent = request.getHeader("User-Agent");
         Runnable runner = new Runnable() {
             @Override
             public void run() {
                 try {
                    // call the service
-                    MNodeService.getInstance(request).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
+                    MNodeService.getInstance(request, ipAddress, userAgent).systemMetadataChanged(session, pid, serialVersion, dateSysMetaLastModified);
                 } catch (Exception e) {
                     logMetacat.error("Error running replication: " + e.getMessage(), e);
                     throw new RuntimeException(e.getMessage(), e);
@@ -1084,11 +1086,13 @@ public class MNResourceHandler extends D1ResourceHandler {
         sourceNode.setValue(sn);
         
         // run it in a thread to avoid connection timeout
+        final String ipAddress = request.getRemoteAddr();
+        final String userAgent = request.getHeader("User-Agent");
         Runnable runner = new Runnable() {
 			@Override
 			public void run() {
 				try {
-			        MNodeService.getInstance(request).replicate(session, sysmeta, sourceNode);
+			        MNodeService.getInstance(request, ipAddress, userAgent).replicate(session, sysmeta, sourceNode);
 				} catch (Exception e) {
 					logMetacat.error("Error running replication: " + e.getMessage(), e);
 					throw new RuntimeException(e.getMessage(), e);

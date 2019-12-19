@@ -128,6 +128,8 @@ public abstract class D1NodeService {
 
   /** For logging the operations */
   protected HttpServletRequest request;
+  protected String ipAddress = null;
+  protected String userAgent = null;
   
   /* reference to the metacat handler */
   protected MetacatHandler handler;
@@ -1049,7 +1051,13 @@ public abstract class D1NodeService {
     
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
-    String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
+    if (ipAddress == null) {
+        ipAddress = request.getRemoteAddr();
+    }
+    if (userAgent == null) {
+        userAgent = request.getHeader("User-Agent");
+    }
+    String result = handler.handleInsertOrUpdateAction(ipAddress, userAgent, null, 
                         null, params, username, groupnames, false, false, xmlBytes, formatId, checksum);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
@@ -1184,8 +1192,19 @@ public abstract class D1NodeService {
             	e.getMessage());
           }
   
-          logMetacat.debug("Logging the creation event.");
-          EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), username, localId, "create");
+          try {
+              if (ipAddress == null) {
+                  ipAddress = request.getRemoteAddr();
+              }
+              if (userAgent == null) {
+                  userAgent = request.getHeader("User-Agent");
+              }
+              logMetacat.debug("Logging the creation event.");
+              EventLog.getInstance().log(ipAddress, userAgent, username, localId, "create");
+          } catch (Exception e) {
+              logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
+          }
+          
   
           // Schedule replication for this data file, the "insert" action is important here!
           logMetacat.debug("Scheduling replication.");
@@ -2326,5 +2345,38 @@ public abstract class D1NodeService {
       }
       return guid;
       
+  }
+  
+  
+  /**
+   * Get the ip address from the service
+   * @return the ip address
+   */
+  public String getIpAddress() {
+      return ipAddress;
+  }
+
+  /**
+   * Set the ip address for the service
+   * @param ipAddress  the address will be set
+   */
+  public void setIpAddress(String ipAddress) {
+      this.ipAddress = ipAddress;
+  }
+
+  /**
+   * Get the user agent from the service
+   * @return
+   */
+  public String getUserAgent() {
+      return userAgent;
+  }
+
+  /**
+   * Set the user agent for the service
+   * @param userAgent  the user agent will be set
+   */
+  public void setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
   }
 }
