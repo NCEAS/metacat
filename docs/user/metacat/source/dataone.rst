@@ -328,17 +328,60 @@ These Apache directives are crucial for Metacat to function as a Tier 2+ Member 
 ::
 
   ...
-  AllowEncodedSlashes On
-  AcceptPathInfo      On
-  JkOptions +ForwardURICompatUnparsed
-  SSLEngine on
-  SSLOptions +StrictRequire +StdEnvVars +ExportCertData
-  SSLVerifyClient optional
-  SSLVerifyDepth 10
-  SSLCertificateFile /etc/ssl/certs/<your_server_certificate>
-  SSLCertificateKeyFile /etc/ssl/private/<your_server_key>
-  SSLCertificateChainFile /etc/ssl/certs/<CA_chain_file>.crt
-  SSLCACertificatePath /etc/ssl/certs/
+  <VirtualHost XXX.XXX.XXX.XXX:443> 
+        DocumentRoot /var/www 
+        ServerName dev.nceas.ucsb.edu
+        ## Allow CORS requests from all origins to use cookies
+        SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+        Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+        Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
+        Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
+        Header set Access-Control-Allow-Credentials "true"
+        ErrorLog /var/log/httpd/error_log 
+        CustomLog /var/log/httpd/access_log common 
+        ScriptAlias /cgi-bin/ "/var/www/cgi-bin/" 
+        <Directory /var/www/cgi-bin/> 
+          AllowOverride None 
+          Options ExecCGI 
+          Require all granted
+        </Directory> 
+        ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/" 
+        <Directory "/var/www/webapps/metacat/cgi-bin/"> 
+          AllowOverride None 
+          Options ExecCGI 
+          Require all granted
+        </Directory> 
+        <IfModule mod_rewrite.c>
+                RewriteEngine on
+                RewriteCond %{HTTP:Authorization} ^(.*)
+                RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
+        </IfModule>
+        JkMount /metacat ajp13 
+        JkMount /metacat/* ajp13 
+        JkMount /metacat/metacat ajp13 
+        JkUnMount /metacat/cgi-bin/* ajp13 
+        JkMount /metacatui ajp13 
+        JkMount /metacatui/* ajp13 
+        JkMount /*.jsp ajp13 
+        AllowEncodedSlashes On
+        AcceptPathInfo      On
+        JkOptions +ForwardURICompatUnparsed
+        SSLEngine on
+        SSLOptions +StrictRequire +StdEnvVars +ExportCertData
+        SSLVerifyClient optional
+        SSLVerifyDepth 10
+        SSLCertificateFile /etc/ssl/certs/<your_server_certificate>
+        SSLCertificateKeyFile /etc/ssl/private/<your_server_key>
+        SSLCertificateChainFile /etc/ssl/certs/<CA_chain_file>.crt
+        SSLCACertificatePath /etc/ssl/certs/
+        <Location "/metacat/d1/mn">
+                #SSLRenegBufferSize 10000000
+                #SSLOptions +OptRenegotiate
+                <If " ! ( %{HTTP_USER_AGENT} =~ /(windows|chrome|mozilla|safari|webkit|httr|julia|python)/i )">
+                        SSLVerifyClient optional
+                </If>
+        </Location>
+  </VirtualHost> 
   ...
   
 Where ``<your_server_certificate>`` and ``<your_server_key>`` are the certificate/key pair used by Apache 

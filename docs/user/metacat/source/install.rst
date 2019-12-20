@@ -252,8 +252,8 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
         DocumentRoot /var/www 
         ServerName dev.nceas.ucsb.edu
         ## Allow CORS requests from all origins to use cookies
-        #SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
-        #Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
+        SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
+        Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
         Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
         Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
         Header set Access-Control-Allow-Credentials "true"
@@ -263,15 +263,13 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
         <Directory /var/www/cgi-bin/> 
           AllowOverride None 
           Options ExecCGI 
-          Order allow,deny 
-          Allow from all 
+          Require all granted
         </Directory> 
         ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/" 
         <Directory "/var/www/webapps/metacat/cgi-bin/"> 
           AllowOverride None 
           Options ExecCGI 
-          Order allow,deny 
-          Allow from all 
+          Require all granted
         </Directory> 
         JkMount /metacat ajp13 
         JkMount /metacat/* ajp13 
