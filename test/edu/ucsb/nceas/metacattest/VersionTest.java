@@ -23,6 +23,8 @@
  */
 package edu.ucsb.nceas.metacattest;
 
+import java.sql.SQLException;
+
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -62,8 +64,7 @@ public class VersionTest extends MCTestCase
     /**
      * Test the "printVersionAsXml" method by printing its output.
      */
-    public void testPrintVersionAsXml()
-    {
+    public void testPrintVersionAsXml() throws SQLException {
     	try {
         System.out.println(MetacatVersion.getVersionAsXml());
         assertTrue(MetacatVersion.getVersionAsXml().indexOf(
@@ -73,4 +74,13 @@ public class VersionTest extends MCTestCase
     	}
     }
 
+    /**
+     * Test the method of getVersionFromDB
+     * @throws SQLException
+     * @throws PropertyNotFoundException
+     */
+    public void testGetVersionFromDB() throws SQLException, PropertyNotFoundException {
+        assertTrue(MetacatVersion.getVersionFromDB().equals(
+                PropertyService.getProperty("application.metacatVersion")));
+    }
 }
