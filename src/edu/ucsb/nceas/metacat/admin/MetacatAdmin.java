@@ -67,10 +67,7 @@ public abstract class MetacatAdmin {
 	public static void updateUpgradeStatus(String propertyName, String status, boolean persist) throws GeneralPropertyException {
 	    PropertyService.setPropertyNoPersist(propertyName, status);
 	    //update the indicator of the whole upgrade process.
-	    if (status.equals(FAILURE)) {
-	        //this sub upgrade process failed, so the whole process fails as well
-	        PropertyService.setPropertyNoPersist("configutil.upgrade.status", FAILURE);
-	    } else if (status.equals(SUCCESS)) {
+	    if (status.equals(SUCCESS)) {
 	        // This sub upgrade process succeeded. If other sub process already succeeded, we need to set the whole process success; otherwise, we keep its original value (do nothing).
 	        Map<String, String> properties = PropertyService.getPropertiesByGroup("configutil.upgrade");
 	        Set<String> names = properties.keySet();
@@ -88,7 +85,10 @@ public abstract class MetacatAdmin {
 	        if (success) {
 	            PropertyService.setPropertyNoPersist("configutil.upgrade.status", SUCCESS);
 	        }
-	    }
+	    } else if (status.equals(FAILURE) || status.equals(IN_PROGRESS)) {
+            //this sub upgrade process failed or is in progress, so the whole process will have the same status as well
+            PropertyService.setPropertyNoPersist("configutil.upgrade.status", status);
+        } 
 	    if(persist) {
 	     // persist them all
 	        PropertyService.persistProperties();

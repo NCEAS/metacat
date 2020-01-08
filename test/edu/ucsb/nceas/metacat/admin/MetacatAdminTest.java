@@ -75,7 +75,7 @@ public class MetacatAdminTest extends MCTestCase {
       String status = PropertyService.getProperty("configutil.upgrade.status");
       MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status", MetacatAdmin.IN_PROGRESS, persist);
       assertTrue(PropertyService.getProperty("configutil.upgrade.database.status").equals(MetacatAdmin.IN_PROGRESS));
-      assertTrue(PropertyService.getProperty("configutil.upgrade.status").equals(status));
+      assertTrue(PropertyService.getProperty("configutil.upgrade.status").equals(MetacatAdmin.IN_PROGRESS));
       
       MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status", MetacatAdmin.FAILURE, persist);
       assertTrue(PropertyService.getProperty("configutil.upgrade.database.status").equals(MetacatAdmin.FAILURE));
