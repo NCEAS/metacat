@@ -106,6 +106,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
 import org.dataone.service.types.v2.OptionList;
+import org.dataone.service.types.v2.Property;
 import org.dataone.service.types.v1.MonitorInfo;
 import org.dataone.service.types.v1.MonitorList;
 import org.dataone.service.types.v2.Node;
@@ -154,6 +155,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
+import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
@@ -1401,6 +1403,27 @@ public class MNodeService extends D1NodeService
             node.setSynchronization(synchronization);
 
             node.setType(nodeType);
+            
+            //add properties such as the Metacat version and upgrade status
+            String upgradeStatus = Settings.getConfiguration().getString("configutil.upgrade.status");
+            if (upgradeStatus != null && !upgradeStatus.trim().equals("")) {
+                Property statusProperty = new Property();
+                statusProperty.setKey("upgrade_status");
+                statusProperty.setValue(upgradeStatus);
+                node.addProperty(statusProperty);
+            }
+            try {
+                String metacatVersion = MetacatVersion.getVersionFromDB();
+                if (metacatVersion != null && !metacatVersion.trim().equals("")) {
+                    Property versionProperty = new Property();
+                    versionProperty.setKey("metacat_version");
+                    versionProperty.setValue(metacatVersion);
+                    node.addProperty(versionProperty);
+                }
+            } catch (SQLException e) {
+                logMetacat.warn("MNodeService.getCapabilities - couldn't get the metacat version since " + e.getMessage());
+            }
+            
             return node;
 
         } catch (PropertyNotFoundException pnfe) {
