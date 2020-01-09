@@ -363,6 +363,14 @@ public class PropertiesAdmin extends MetacatAdmin {
 							dbVersion.compareTo(metacatVersion) == 0) {
 						PropertyService.setProperty("configutil.databaseConfigured", 
 								PropertyService.CONFIGURED);
+						//Also set the upgrade status to be success since the upgrade happened successfully at the previous upgrade
+						try {
+						    boolean persist = true;
+			                MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status", MetacatAdmin.SUCCESS, persist);
+			                MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status", MetacatAdmin.SUCCESS, persist);
+			            } catch (Exception e) {
+			                logMetacat.warn("PropertiesAdmin.configureProperties - couldn't update the status of the upgrading process since " + e.getMessage());
+			            }
 					}
 					
 					// Reload the main metacat configuration page

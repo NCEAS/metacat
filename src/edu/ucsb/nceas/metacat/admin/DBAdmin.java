@@ -463,52 +463,6 @@ public class DBAdmin extends MetacatAdmin {
 		}
 	}
 
-	/**
-	 * Updates the version of the database. Typically this is done in the update
-	 * scripts that get run when we upgrade the application. This method can be
-	 * used if you are automating a patch on the database internally.
-	 * 
-	 * @returns string representing the version of the database.
-	 */
-	public void updateDBVersion() throws SQLException {
-		DBConnection conn = null;
-		PreparedStatement pstmt = null;
-		int serialNumber = -1;
-		try {
-
-			// check out DBConnection
-			conn = DBConnectionPool.getDBConnection("DBAdmin.updateDBVersion()");
-			serialNumber = conn.getCheckOutSerialNumber();
-			conn.setAutoCommit(false);
-
-			pstmt = conn.prepareStatement("UPDATE db_version SET status = ?");
-			pstmt.setInt(1, VERSION_INACTIVE);
-			pstmt.execute();
-			pstmt.close();
-
-			pstmt = conn.prepareStatement("INSERT INTO db_version "
-					+ "(version, status, date_created) VALUES (?,?,?)");
-			pstmt.setString(1, MetacatVersion.getVersionID());
-			pstmt.setInt(2, VERSION_ACTIVE);
-			pstmt.setTimestamp(3, new Timestamp(new Date().getTime()));
-			pstmt.execute();
-
-			conn.commit();
-		} catch (SQLException e) {
-			conn.rollback();
-			throw new SQLException("DBAdmin.updateDBVersion - sql error: " + e.getMessage());
-		} catch (PropertyNotFoundException pnfe) {
-			conn.rollback();
-			throw new SQLException("DBAdmin.updateDBVersion - property error" + pnfe.getMessage());
-		}
-		finally {
-			try {
-				pstmt.close();
-			} finally {
-				DBConnectionPool.returnDBConnection(conn, serialNumber);
-			}
-		}
-	}
 
 	/**
 	 * Validate connectivity to the database. Validation methods return a string
@@ -808,6 +762,7 @@ public class DBAdmin extends MetacatAdmin {
 	 * the database and calls runSQLFile on each.
 	 */
 	public void upgradeDatabase() throws AdminException {
+	    boolean persist = true;
 		try {
 			// get a list of the script names that need to be run
 			Vector<String> updateScriptList = getUpdateScripts();
@@ -816,37 +771,61 @@ public class DBAdmin extends MetacatAdmin {
 			for (String updateScript : updateScriptList) {
 				runSQLFile(updateScript);
 			}
-			
-			// get the classes we need to execute in order to bring DB to current version
-			Vector<String> updateClassList = getUpdateClasses();
-			for (String className : updateClassList) {
-				UpgradeUtilityInterface utility = null;
-				try {
-					utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
-					utility.upgrade();
-				} catch (SolrSchemaModificationException e) {
-				    //don't throw the exception and continue 
-				    solrSchemaException = e;
-				    continue;
-				} catch (Exception e) {
-					throw new AdminException("DBAdmin.upgradeDatabase - error getting utility class: " 
-							+ className + ". Error message: "
-							+ e.getMessage());
-				}
+			try {
+			    MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status", MetacatAdmin.SUCCESS, persist);
+			} catch (Exception e) {
+			    logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of the upgrading database process since " + e.getMessage());
 			}
-
-			// update the db version to be the metacat version
-			databaseVersion = new DBVersion(SystemUtil.getMetacatVersion().getVersionString());
 		} catch (SQLException sqle) {
-			throw new AdminException("DBAdmin.upgradeDatabase - SQL error when running upgrade scripts: "
-					+ sqle.getMessage());
-		} catch (PropertyNotFoundException pnfe) {
-			throw new AdminException("DBAdmin.upgradeDatabase - SQL error when running upgrade scripts: "
-					+ pnfe.getMessage());
-		}catch (NumberFormatException nfe) {
-			throw new AdminException("DBAdmin.upgradeDatabase - Bad version format numbering: "
-					+ nfe.getMessage());
+            try {
+                MetacatAdmin.updateUpgradeStatus("configutil.upgrade.database.status", MetacatAdmin.FAILURE, persist);
+            } catch (Exception e) {
+                logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of the upgrading database process since " + e.getMessage());
+            }
+            throw new AdminException("DBAdmin.upgradeDatabase - SQL error when running upgrade scripts: "
+                    + sqle.getMessage());
+        } 
+			
+		// get the classes we need to execute in order to bring DB to current version
+		Vector<String> updateClassList = getUpdateClasses();
+		for (String className : updateClassList) {
+			UpgradeUtilityInterface utility = null;
+			try {
+				utility = (UpgradeUtilityInterface) Class.forName(className).newInstance();
+				utility.upgrade();
+			} catch (SolrSchemaModificationException e) {
+			    //don't throw the exception and continue 
+			    solrSchemaException = e;
+			    continue;
+			} catch (Exception e) {
+			    try {
+		            MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status", MetacatAdmin.FAILURE, persist);
+		        } catch (Exception ee) {
+		            logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of the upgrading database process since " + ee.getMessage());
+		        }
+				throw new AdminException("DBAdmin.upgradeDatabase - error getting utility class: " 
+						+ className + ". Error message: "
+						+ e.getMessage());
+			}
 		}
+		try {
+            MetacatAdmin.updateUpgradeStatus("configutil.upgrade.java.status", MetacatAdmin.SUCCESS, persist);
+        } catch (Exception e) {
+            logMetacat.warn("DBAdmin.upgradeDatabase - couldn't update the status of the upgrading database process since " + e.getMessage());
+        }
+		
+
+		// update the db version to be the metacat version
+		try {
+		    databaseVersion = new DBVersion(SystemUtil.getMetacatVersion().getVersionString());
+		} catch (PropertyNotFoundException pnfe) {
+            throw new AdminException("DBAdmin.upgradeDatabase - Couldn't set the database version since: "
+                    + pnfe.getMessage());
+        }catch (NumberFormatException nfe) {
+            throw new AdminException("DBAdmin.upgradeDatabase - Bad version format numbering: "
+                    + nfe.getMessage());
+        }
+		
 	}
 
 	/**

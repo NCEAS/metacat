@@ -153,6 +153,7 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
     TestSuite suite = new TestSuite();
     suite.addTest(new MNodeReplicationTest("initialize"));
     suite.addTest(new MNodeReplicationTest("testReplicate"));
+    suite.addTest(new MNodeReplicationTest("testReplicateData"));
     return suite;
     
   }
@@ -220,6 +221,57 @@ public class MNodeReplicationTest extends D1NodeServiceTest {
         MNode local = D1Client.getMN(localNode.getIdentifier());
         SystemMetadata sys = local.getSystemMetadata(session, guid);
         System.out.println("--------------The pid from the replica on the localhost is  "+sys.getIdentifier().getValue());
+        assertTrue(sys.getIdentifier().equals(guid));
+      } catch (Exception e) {
+        e.printStackTrace();
+        System.out.println("Failed to test the replicate method : " + e.getMessage());
+        fail("Failed to test the replicate method : " + e.getMessage());
+      }
+  }
+  
+  
+  /**
+   * Test to replicate a data object
+   */
+  public void testReplicateData() {
+      printTestHeader("testReplicateData");
+      try {
+          
+        //insert an object to the source node
+        Session session = null;
+        Identifier guid = new Identifier();
+        guid.setValue("testReplicateData." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
+        SystemMetadata sysmeta = createSystemMetadata(guid, subject, object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        //create a replication policy
+        Node localNode = MNodeService.getInstance(request).getCapabilities();
+        if(!localNode.isReplicate()) {
+            throw new Exception("The local node "+localNode.getIdentifier().getValue()+" is configured to not to accept replicas!");
+        }
+        ReplicationPolicy rePolicy = new ReplicationPolicy();
+        rePolicy.setReplicationAllowed(true);
+        rePolicy.setNumberReplicas(new Integer(3));
+        rePolicy.addPreferredMemberNode(localNode.getIdentifier());
+        sysmeta.setReplicationPolicy(rePolicy);
+        
+        NodeReference sourceNode = new NodeReference();
+        sourceNode.setValue(sourceMNodeId);
+        MNode sourceMN = D1Client.getMN(sourceNode);
+        Node source = sourceMN.getCapabilities();
+        if(!source.isSynchronize()) {
+            throw new Exception("The source node "+source.getIdentifier().getValue()+" is configured to not to be synchronized to the cn!");
+        }
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta.setAuthoritativeMemberNode(sourceNode);
+        System.out.println("------------------------before creating the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
+        sourceMN.create(session, guid, object, sysmeta);
+        System.out.println("scucessfully created the object into the source node "+sourceMNodeId+" with id "+guid.getValue());
+        Thread.sleep(waitTime);
+        MNode local = D1Client.getMN(localNode.getIdentifier());
+        SystemMetadata sys = local.getSystemMetadata(session, guid);
+        System.out.println("--------------The pid of DATA from the replica on the localhost is  "+sys.getIdentifier().getValue());
         assertTrue(sys.getIdentifier().equals(guid));
       } catch (Exception e) {
         e.printStackTrace();
