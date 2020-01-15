@@ -999,6 +999,8 @@ public abstract class D1NodeService {
     //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
     File tempFile = null;
     if (xmlStream instanceof DetailedFileInputStream ) {
+        logMetacat.info("D1NodeService.insertOrUpdateDocument - in the detailedFileInputstream branch");
+        boolean checksumMatched = false;
         DetailedFileInputStream stream = (DetailedFileInputStream) xmlStream;
         tempFile = stream.getFile();
         Checksum expectedChecksum = stream.getExpectedChecksum();
@@ -1009,7 +1011,7 @@ public abstract class D1NodeService {
                 //The algorithm is the same and the checksum is same, we don't need to check the checksum again
                 if (exprectedChecksumValue != null && exprectedChecksumValue.equalsIgnoreCase(checksumValue)) {
                     logMetacat.info("D1NodeService.insertOrUpdateDocument - Metacat already verified the checksum of the object " + pid.getValue());
-                    checksum = null;//setting it null will disable the checking of checksum again
+                    checksumMatched = true;
                 } else {
                     logMetacat.error("D1NodeService.insertOrUpdateDocument - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
                                             ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
@@ -1018,6 +1020,11 @@ public abstract class D1NodeService {
                 }
             } 
         } 
+        if (!checksumMatched && tempFile != null) {
+            logMetacat.info("D1NodeService.insertOrUpdateDocument - mark the temp file to be deleted on exist.");
+            tempFile.deleteOnExit(); //since we will write bytes from the stream to the disk in this case, the temp file can be deleted when the programm ends. 
+            tempFile = null; //tempFile being null implicitly means that Metacat will write the bytes to the final destination.
+        }
     }
     // generate pid/localId pair for sysmeta
     String localId = null;
@@ -1088,7 +1095,7 @@ public abstract class D1NodeService {
     // do the insert or update action
     handler = new MetacatHandler(new Timer());
     String result = handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), null, 
-                        null, params, username, groupnames, false, false, xmlBytes, formatId, checksum);
+                        null, params, username, groupnames, false, false, xmlBytes, formatId, checksum, tempFile);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
     	String detailCode = "";
@@ -1106,9 +1113,6 @@ public abstract class D1NodeService {
           "Error inserting or updating document: " +pid.getValue()+" since "+ result);
     }
     logMetacat.info("D1NodeService.insertOrUpdateDocument - Finsished inserting xml document with local id " + localId +" and its pid is "+pid.getValue());
-    if(tempFile != null) {
-        tempFile.deleteOnExit();
-    }
     return localId;
   }
   
