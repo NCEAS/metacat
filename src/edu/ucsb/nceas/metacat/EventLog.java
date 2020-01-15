@@ -642,13 +642,26 @@ public class EventLog
 	            //process the result and return it            
 	            while (rs.next()) {
 	            	LogEntry logEntry = new LogEntry();
-	            	logEntry.setEntryId(rs.getString(1));
+	            	String logId = rs.getString(1);
+	            	if (logId == null || logId.trim().equals("")) {
+	            	    logId = "N/A";
+	            	}
+	            	logEntry.setEntryId(logId);
 	            	
 	            	Identifier identifier = new Identifier();
-	            	identifier.setValue(rs.getString(2));
+	            	String id = rs.getString(2);
+	            	if (id == null || id.trim().equals("")) {
+	            	    id = "N/A";
+	            	}
+	            	identifier.setValue(id);
 					logEntry.setIdentifier(identifier);
 	
-	            	logEntry.setIpAddress(anonymous ? "N/A" : rs.getString(3));
+	            String ip = rs.getString(3);
+	            if (ip == null || ip.trim().equals("")) {
+	                ip = "N/A";
+	            }
+	            	logEntry.setIpAddress(anonymous ? "N/A" : ip);
+	            	
 	            	String userAgent = "N/A";
 	            	if (rs.getString(4) != null) {
 	            		userAgent = rs.getString(4);
@@ -656,7 +669,11 @@ public class EventLog
 	            	logEntry.setUserAgent(userAgent);
 	            	
 	            	Subject subject = new Subject();
-	            	subject.setValue(anonymous ? "N/A" : rs.getString(5));
+	            	String subjectStr = rs.getString(5);
+	            	if (subjectStr == null || subjectStr.trim().equals("")) {
+	            	    subjectStr = "N/A";
+	            	}
+	            	subject.setValue(anonymous ? "N/A" : subjectStr);
 					logEntry.setSubject(subject);
 					
 					String logEventString = rs.getString(6);
