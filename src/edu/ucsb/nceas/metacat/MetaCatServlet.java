@@ -1056,9 +1056,20 @@ public class MetaCatServlet extends HttpServlet {
 				out.close();
 			} else if (action.equals("getversion")) {
 				response.setContentType("text/xml");
-				PrintWriter out = response.getWriter();
-				out.println(MetacatVersion.getVersionAsXml());
-				out.close();
+				String version = null;
+				try {
+				    version = MetacatVersion.getVersionAsXml();
+				    PrintWriter out = response.getWriter();
+	                out.println(version);
+	                out.close();
+				} catch (SQLException e) {
+				    PrintWriter out = response.getWriter();
+				    out.println("<?xml version=\"1.0\"?>");
+                    out.println("<erorr>");
+                    out.println(StringEscapeUtils.escapeXml(e.getMessage()));
+                    out.println("</erorr>");
+                    out.close();
+				}
 			} else if (action.equals("getlog")) {
 				handler.handleGetLogAction(params, request, response, userName, groupNames, sessionId);
 			} else if (action.equals("getloggedinuserinfo")) {
