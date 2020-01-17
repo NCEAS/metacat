@@ -689,7 +689,7 @@ public class SolrAdmin extends MetacatAdmin {
 	                         buffer.append("\n");
 	                     }
 	                     //add the solr_home line at the end
-	                     buffer.append(SOLR_HOME + "=" + solrHome);
+	                     buffer.append(SOLR_HOME + "=\"" + solrHome + "\"");
 	                     scanner.close();
 	                     //write the string buffer with the new information back to the file
 	                     PrintWriter printer = new PrintWriter(envScriptFile);
