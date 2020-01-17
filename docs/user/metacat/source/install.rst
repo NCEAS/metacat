@@ -1,3 +1,5 @@
+.. role:: note2
+
 Downloading and Installing Metacat
 ==================================
 
@@ -499,6 +501,14 @@ https://lucene.apache.org/solr/downloads.html
 
   sudo ufw status
 
+6. Increase Memory
+
+By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values between 10 and 20 gigabytes are not uncommon for production servers. When you need to change the memory settings for your Solr server, use the ``SOLR_JAVA_MEM`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
+
+::
+
+  SOLR_JAVA_MEM="-Xms10g -Xmx10g"
+
 Tomcat and Solr User Management
 ...............................
 The interaction of the Tomcat and Solr services will cause the file permission issues. 
@@ -508,6 +518,13 @@ Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will 
 
   sudo usermod -a -G solr tomcat8
   sudo usermod -a -G tomcat8 solr
+
+Restart Solr server (:note2:`Important`) 
+
+::
+
+  service solr stop
+  service solr start
 
 You may check if the tomcat8 user and solr user have the groups by typing:
 
