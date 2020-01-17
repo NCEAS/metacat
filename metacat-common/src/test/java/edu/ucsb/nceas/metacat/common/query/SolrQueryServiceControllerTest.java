@@ -32,7 +32,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
         String version = SolrQueryServiceController.getInstance().getSolrSpecVersion();
         //System.out.println("version is ======================== "+version);
         assertTrue(version != null);
-        assertTrue("The version should be 3.6.2.2012.12.18.19.52.59 rather than "+version, version.equals("3.6.2.2012.12.18.19.52.59"));
+        assertTrue("The version should be 7.3.0 rather than "+version, version.equals("8.3.0"));
     }
 
 
@@ -48,7 +48,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     public void testgetIndexSchemaFields() throws Exception {
        Map<String, SchemaField> fields = SolrQueryServiceController.getInstance().getIndexSchemaFields();
        assertTrue(fields != null);
-       assertTrue("The number of index schema fields should be 155 rather than "+fields.size(), fields.size() == 156);
+       assertTrue("The number of index schema fields should be 159 rather than "+fields.size(), fields.size() == 159);
     }
 
     /**

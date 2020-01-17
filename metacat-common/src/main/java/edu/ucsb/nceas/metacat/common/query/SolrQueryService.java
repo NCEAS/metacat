@@ -157,7 +157,7 @@ public abstract class SolrQueryService {
                 NamedList fq = new NamedList();
                 fq.add(FILTERQUERY, query.toString());
                 SolrParams fqParam = SolrParams.toSolrParams(fq);
-                append = new AppendedSolrParams(solrParams, fqParam);
+                append = AppendedSolrParams.wrapAppended(solrParams, fqParam);
             } else {
                 append = solrParams;
             }

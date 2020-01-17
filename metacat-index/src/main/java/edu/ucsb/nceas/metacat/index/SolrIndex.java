@@ -48,8 +48,8 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
@@ -96,7 +96,7 @@ public class SolrIndex {
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
-    private SolrServer solrServer = null;
+    private SolrClient solrServer = null;
     private XMLNamespaceConfig xmlNamespaceConfig = null;
     private List<SolrField> sysmetaSolrFields = null;
 
@@ -1098,7 +1098,7 @@ public class SolrIndex {
      * Get the solrServer
      * @return
      */
-    public SolrServer getSolrServer() {
+    public SolrClient getSolrServer() {
         return solrServer;
     }
 
@@ -1106,7 +1106,7 @@ public class SolrIndex {
      * Set the solrServer. 
      * @param solrServer
      */
-    public void setSolrServer(SolrServer solrServer) {
+    public void setSolrServer(SolrClient solrServer) {
         this.solrServer = solrServer;
     }
     
@@ -1115,7 +1115,7 @@ public class SolrIndex {
      * @return an empty list if there is no index.
      * @throws SolrServerException
      */
-    public List<String> getSolrIds() throws SolrServerException {
+    public List<String> getSolrIds() throws SolrServerException, IOException {
         List<String> list = new ArrayList<String>();
         SolrQuery query = new SolrQuery(IDQUERY); 
         if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 

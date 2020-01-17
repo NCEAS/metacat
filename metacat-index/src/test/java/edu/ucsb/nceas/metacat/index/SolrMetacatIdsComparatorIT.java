@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.params.SolrParams;
@@ -83,7 +83,7 @@ public class SolrMetacatIdsComparatorIT {
         numberOfIdsFile.createNewFile();
         String query = "q=*:*";
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
-        SolrServer solrServer = SolrServerFactory.createSolrServer();
+        SolrClient solrServer = SolrServerFactory.createSolrServer();
         QueryResponse response = solrServer.query(solrParams);
         SolrDocumentList list = response.getResults();
         long number = list.getNumFound();

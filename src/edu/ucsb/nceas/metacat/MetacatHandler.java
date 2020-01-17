@@ -2779,43 +2779,11 @@ public class MetacatHandler {
            try {
                     Runnable indexAll = new Runnable () {
                        public void run() {
-                           List<String> allIdentifiers = IdentifierManager.getInstance().getAllSystemMetadataGUIDs();
-                           Iterator<String> it = allIdentifiers.iterator();
-                           List<Identifier> resourceMapIds = new ArrayList<Identifier> ();
-                           while (it.hasNext()) {
-                               String id = it.next();
-                               try { 
-                                   Identifier identifier = new Identifier();
-                                   identifier.setValue(id);
-                                   SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                                   if (sysMeta != null) {
-                                       // submit for indexing
-                                       ObjectFormatIdentifier formatId = sysMeta.getFormatId();
-                                       if(ResourceMapNamespaces.isResourceMap(formatId)) {
-                                           resourceMapIds.add(identifier);
-                                       } else {
-                                           Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                                           MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
-                                           //System.out.println("queued non-resourceMap systemMetadata for index on pid: " + id);
-                                       }
-                                   } 
-                               }catch (Exception e) {
-                                   System.out.println("we can't submit the id "+id+" to the index queue since "+e.getMessage());
-                               }
-                           }
-                           //queue the resourceMap objects
-                           for (Identifier identifier : resourceMapIds) {
-                               try { 
-                                   SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                                   if (sysMeta != null) {
-                                           Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                                           MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
-                                           //System.out.println("queued resourceMap systemMetadata for index on pid: " + identifier.getValue());
-                                   } 
-                               }catch (Exception e) {
-                                   System.out.println("we can't submit the id "+identifier.getValue()+" to the index queue since "+e.getMessage());
-                               }
-                           }
+                           List<String> resourceMapFormats = ResourceMapNamespaces.getNamespaces();
+                           //System.out.println("MetacatHandler.handleReindexAllAction - the resource map format list is "+resourceMapFormats);
+                           buildAllNonResourceMapIndex(resourceMapFormats);
+                           buildAllResourceMapIndex(resourceMapFormats);
+                          
                        }
                     };
                     Thread thread = new Thread(indexAll);
@@ -2851,6 +2819,100 @@ public class MetacatHandler {
         }
     }
     
+    
+    /*
+     * Index all non-resourcemap objects first. We don't put the list of pids in a vector anymore.
+     */
+    private void buildAllNonResourceMapIndex(List<String> resourceMapFormatList) {
+        boolean firstTime = true;
+        String sql = "select guid from systemmetadata";
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
+            for (String format :resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql = sql + " where object_format !='" + format + "'";
+                        firstTime = false;
+                    } else {
+                        sql = sql + " and object_format !='" + format + "'";
+                    }
+                }
+                
+            }
+        }
+        logMetacat.info("MetacatHandler.buildAllNonResourceMapIndex - the final query is " + sql);
+        try {
+             buildIndexFromQuery(sql);
+        } catch (Exception e) {
+            logMetacat.error("MetacatHandler.buildAllNonResourceMapIndex - can't index the objects since: " 
+                    + e.getMessage());
+        }
+    }
+    
+    /*
+     * Index all resource map objects. We don't put the list of pids in a vector anymore.
+     */
+    private void buildAllResourceMapIndex(List<String> resourceMapFormatList) {
+        String sql = "select guid from systemmetadata";
+        if (resourceMapFormatList != null && resourceMapFormatList.size() > 0) {
+            boolean firstTime = true;
+            for (String format :resourceMapFormatList) {
+                if (format != null && !format.trim().equals("")) {
+                    if (firstTime) {
+                        sql = sql + " where object_format ='" + format + "'";
+                        firstTime=false;
+                    } else {
+                        sql = sql + " or object_format ='" + format + "'";
+                    }   
+                }
+            }
+        }
+        logMetacat.info("MetacatHandler.buildAllResourceMapIndex - the final query is " + sql);
+        try {
+            buildIndexFromQuery(sql);
+       } catch (Exception e) {
+           logMetacat.error("MetacatHandler.buildAllResourceMapIndex - can't index the objects since: " 
+                   + e.getMessage());
+       }
+    }
+    
+    /*
+     * Build index of objects selecting from the given sql query.
+     */
+    private void buildIndexFromQuery(String sql) throws SQLException {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        try {
+            // Get a database connection from the pool
+            dbConn = DBConnectionPool.getDBConnection("MetacatHandler.buildIndexFromQuery");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            PreparedStatement stmt = dbConn.prepareStatement(sql);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String guid = rs.getString(1);
+                Identifier identifier = new Identifier();
+                identifier.setValue(guid);
+                SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                if (sysMeta != null) {
+                    // submit for indexing
+                    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                    try {
+                         MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                    } catch (Exception e) {
+                       logMetacat.warn("we can't submit the id "+guid+" to the index queue since "+e.getMessage());
+                    }
+                    //results.append("<pid>" + id + "</pid>\n");
+                    logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for index in the buildIndexFromQuery on pid: " + guid);
+                }
+            } 
+            rs.close();
+            stmt.close();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            // Return database connection to the pool
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+    }
     /**
      * Build the index for one document by reading the document and
      * calling its buildIndex() method.

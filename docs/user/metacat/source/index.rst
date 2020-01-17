@@ -15,6 +15,8 @@ Metacat Administrator's Guide
     
     Release Date: |today|
 
+.. role:: note2
+
 Metacat is a repository for data and metadata (documentation about data) that helps 
 scientists find, understand and effectively use data sets they manage or that 
 have been created by others. Thousands of data sets are currently documented in 
@@ -23,7 +25,13 @@ community with a broad range of science data that--because the data are well and
 consistently described--can be easily searched, compared, merged, or used 
 in other ways.  
 
-Note: If you upgrade your Metacat to the version 2.10.0 or newer, you need to re-index the solr server. The instruction can be found on the regenerating the index part.
+:note2:`Note:` 
+
+You should add the user ``tomcat8`` to the user group ``solr`` and the user ``solr`` to the user group ``tomcat8`` in order to avoid the file permission issues. The instruction can be found on the `Tomcat And Solr User Management`_ part of the installation page.
+
+An external Solr HTTP server is required since Metacat version 2.13.0. The details can be found on the `Solr Server`_ part of the installation page.
+
+If this is the first time you install an external Solr server, you need to re-index all existing objects in the Metacat instance. The instruction can be found on the `Regenerating The Index`_ part of the Metacat indexing page.
 
 - Download Metacat
 
@@ -74,6 +82,14 @@ Note: If you upgrade your Metacat to the version 2.10.0 or newer, you need to re
 .. _API documentation: ./api/index.html
 
 .. _Older versions: https://knb.ecoinformatics.org/software/dist/
+
+.. _Solr Server: ./install.html#solr-server
+
+.. _Tomcat And Solr User Management: ./install.html#tomcat-and-solr-user-management
+
+.. _Regenerating The Index: ./query-index.html#regenerating-the-index
+
+
 
 Contents
 ========
