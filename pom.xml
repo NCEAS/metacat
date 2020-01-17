@@ -33,6 +33,11 @@
             <name>OpenGeo Maven Repository</name>
             <url>http://download.osgeo.org/webdav/geotools</url>
         </repository>
+        <repository>
+            <id>central maven repo</id>
+             <name>central maven repo https</name>
+             <url>https://repo.maven.apache.org/maven2</url>
+        </repository>
     </repositories>
     <dependencies>
     	<dependency>
