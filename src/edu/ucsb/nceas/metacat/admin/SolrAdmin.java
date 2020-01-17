@@ -282,6 +282,13 @@ public class SolrAdmin extends MetacatAdmin {
 			try {
 				PropertyService.setProperty("configutil.solrserverConfigured",
 						PropertyService.BYPASSED);
+				//set the upgrade process to success even though we bypassed it.
+                try {
+                    boolean persist = true;
+                    MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status", MetacatAdmin.SUCCESS, persist);
+                } catch (Exception e) {
+                    logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of the upgrading Solr process since " + e.getMessage());
+                }
 				
 			} catch (GeneralPropertyException gpe) {
 				String errorMessage = "SolrAdmin.configureSolr - Problem getting or setting property while "
@@ -424,7 +431,14 @@ public class SolrAdmin extends MetacatAdmin {
 			}
 
 			try {
+			    boolean persist = true;
 				if (validationErrors.size() > 0 || processingErrors.size() > 0) {
+				    //set the upgrade process to failure
+                    try {
+                        MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status", MetacatAdmin.FAILURE, persist);
+                    } catch (Exception e) {
+                        logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of the upgrading Solr process since " + e.getMessage());
+                    }
 					RequestUtil.clearRequestMessages(request);
 					RequestUtil.setRequestFormErrors(request, validationErrors);
 					RequestUtil.setRequestErrors(request, processingErrors);
@@ -434,6 +448,12 @@ public class SolrAdmin extends MetacatAdmin {
                     // 'propertiesConfigured' option to 'true'
                     PropertyService.setProperty("configutil.solrserverConfigured",
                             PropertyService.CONFIGURED);
+                    //set the upgrade process to success
+                    try {
+                        MetacatAdmin.updateUpgradeStatus("configutil.upgrade.solr.status", MetacatAdmin.SUCCESS, persist);
+                    } catch (Exception e) {
+                        logMetacat.warn("SolrAdmin.configureSolr - couldn't update the status of the upgrading Solr process since " + e.getMessage());
+                    }
 				    if(solrSchemaException != null) {
 	                    //Show the warning message
 	                    Vector<String> errorVector = new Vector<String>();
