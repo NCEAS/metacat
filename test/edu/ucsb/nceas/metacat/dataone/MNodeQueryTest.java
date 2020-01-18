@@ -39,8 +39,11 @@ import java.util.UUID;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.dataone.client.rest.DefaultHttpMultipartRestClient;
 import org.dataone.configuration.Settings;
+import org.dataone.mimemultipart.SimpleMultipartEntity;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -63,6 +66,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 /**
  * A JUnit test to exercise the Metacat Member Node  query service implementation.
@@ -78,6 +82,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     
     private static final String collectionResult = "<str name=\"collectionQuery\">(((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA)))</str>";
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
+    private static final String longQueryFile = "test/test-queries/long-solr-query-partial.txt";
     
   /**
    * Set up the test fixtures
@@ -115,6 +120,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testISO211"));
     suite.addTest(new MNodeQueryTest("testPortalDocument"));
     suite.addTest(new MNodeQueryTest("testPackageWithParts"));
+    suite.addTest(new MNodeQueryTest("testPostLongQuery"));
     return suite;
     
   }
@@ -1088,6 +1094,72 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
     }
     
+    /**
+     * Test to post a long query 
+     * @throws Exception
+     */
+    public void testPostLongQuery() throws Exception {
+        printTestHeader("testPostQuery");
+  
+        String uuid_prefix = "urn:uuid:";
+        Session session = getTestSession();
+        Identifier guid3 = new Identifier();
+        UUID uuid = UUID.randomUUID();
+        guid3.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the new metadata object id is ==== " + guid3.getValue());
+        InputStream object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        SystemMetadata sysmeta5 = createSystemMetadata(guid3, session.getSubject(), object5);
+        object5.close();
+        ObjectFormatIdentifier formatId5 = new ObjectFormatIdentifier();
+        formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta5.setFormatId(formatId5);
+        object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        
+        String newId = guid3.getValue().replaceAll(":", "\\\\:");
+        String queryWithExtralSlash = "(id:(" + "\"" + newId + "\" OR " + "\"urn\\:uuid\\:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn\\:uuid\\:056be5dc-cbde-4a4d-9540-92e495b755d2\") OR seriesId:(\"urn\\:uuid\\:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn\\:uuid\\:056be5dc-cbde-4a4d-9540-92e495b755d2\")) AND (formatType:METADATA OR formatType:DATA) AND -obsoletedBy:*";
+        System.out.println("The query with the extral slash on the urn is " + queryWithExtralSlash);
+        String query2 = "(id:(" + "\"" + guid3.getValue() + "\" OR " + "\"urn:uuid:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn:uuid:056be5dc-cbde-4a4d-9540-92e495b755d2\") OR seriesId:(\"urn:uuid:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn:uuid:056be5dc-cbde-4a4d-9540-92e495b755d2\")) AND (formatType:METADATA OR formatType:DATA) AND -obsoletedBy:*";
+        System.out.println("The query without extra slash is " + query2);
+        
+        DefaultHttpMultipartRestClient multipartRestClient = new DefaultHttpMultipartRestClient();
+        String server = SystemUtil.getContextURL();
+        //System.out.println("the server url is " + server);
+        SimpleMultipartEntity params = new SimpleMultipartEntity();
+        params.addParamPart("q", queryWithExtralSlash);
+        InputStream stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+        
+        //query without the extra slash 
+        SimpleMultipartEntity params2 = new SimpleMultipartEntity();
+        params2.addParamPart("q", query2);
+        stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params2, 30000);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+        
+        //post a long query
+        File queryFile = new File(longQueryFile);
+        String longPartialQuery = FileUtils.readFileToString(queryFile);
+        String longQuery = "(id:(" + "\"" + newId + "\" OR " + longPartialQuery;
+        System.out.println("The long query is " + longQuery);
+        SimpleMultipartEntity params3 = new SimpleMultipartEntity();
+        params3.addParamPart("q", longQuery);
+        stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params3, 30000);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+    }
+
    
 
 }
