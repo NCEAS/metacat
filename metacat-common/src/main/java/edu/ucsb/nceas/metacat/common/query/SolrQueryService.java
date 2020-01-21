@@ -26,6 +26,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.AppendedSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
@@ -82,10 +83,11 @@ public abstract class SolrQueryService {
      * is null, there will be no access rules for the query. This is for the embedded solr server.
      * @param query the query params. 
      * @param subjects the user's identity which sent the query
+     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
      * @return the response
      * @throws Exception
      */
-    public abstract InputStream query(SolrParams query, Set<Subject>subjects) throws Exception;
+    public abstract InputStream query(SolrParams query, Set<Subject>subjects, SolrRequest.METHOD method) throws Exception;
     
     
   

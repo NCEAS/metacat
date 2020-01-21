@@ -40,6 +40,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.common.params.ModifiableSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -130,10 +131,11 @@ public class MetacatSolrIndex {
     }
     
     /**
-     * Handle the query when the query is on the key/value format
+     * Use the default GET method to handle the query when the query is on the key/value format
      * @param solrParams  the query with the key/value format
      * @param authorizedSubjects  the authorized subjects in this query session
      * @param isMNadmin  the indicator of the authorized subjects are the mn admin or not
+     * @param method  the method such as GET, POST and et al will be used in the query
      * @return the query result as the InputStream object
      * @throws SolrServerException
      * @throws IOException
@@ -147,6 +149,30 @@ public class MetacatSolrIndex {
      * @throws UnsupportedType
      */
     public InputStream query(SolrParams solrParams, Set<Subject>authorizedSubjects, boolean isMNadmin) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
+    ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
+        return query(solrParams, authorizedSubjects, isMNadmin, SolrRequest.METHOD.GET);
+        
+    }
+    
+    /**
+     * Handle the query when the query is on the key/value format
+     * @param solrParams  the query with the key/value format
+     * @param authorizedSubjects  the authorized subjects in this query session
+     * @param isMNadmin  the indicator of the authorized subjects are the mn admin or not
+     * @param method  the method such as GET, POST and et al will be used in the query
+     * @return the query result as the InputStream object
+     * @throws SolrServerException
+     * @throws IOException
+     * @throws PropertyNotFoundException
+     * @throws SQLException
+     * @throws ClassNotFoundException
+     * @throws ParserConfigurationException
+     * @throws SAXException
+     * @throws NotImplemented
+     * @throws NotFound
+     * @throws UnsupportedType
+     */
+    public InputStream query(SolrParams solrParams, Set<Subject>authorizedSubjects, boolean isMNadmin, SolrRequest.METHOD method) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
     ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
         if(authorizedSubjects == null || authorizedSubjects.isEmpty()) {
             //throw new SolrServerException("MetacatSolrIndex.query - There is no any authorized subjects(even the public user) in this query session.");
@@ -164,7 +190,7 @@ public class MetacatSolrIndex {
         // handle normal and skin-based queries
         if (SolrQueryService.isSupportedWT(wt)) {
             // just handle as normal solr query
-            inputStream = SolrQueryServiceController.getInstance().query(solrParams, authorizedSubjects);
+            inputStream = SolrQueryServiceController.getInstance().query(solrParams, authorizedSubjects, method);
         }
         else {
             // assume it is a skin name
@@ -174,7 +200,7 @@ public class MetacatSolrIndex {
             wt = SolrQueryResponseWriterFactory.XML;
             ModifiableSolrParams msp = new ModifiableSolrParams(solrParams);
             msp.set(SolrQueryService.WT, wt);
-            inputStream = SolrQueryServiceController.getInstance().query(msp, authorizedSubjects);
+            inputStream = SolrQueryServiceController.getInstance().query(msp, authorizedSubjects, method);
             
             // apply the stylesheet (XML->HTML)
             DBTransform transformer = new DBTransform();

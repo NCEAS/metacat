@@ -67,6 +67,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
@@ -2063,7 +2064,7 @@ public class MNodeService extends D1NodeService
             }
             try {
                 SolrParams solrParams = new MultiMapSolrParams(params);
-                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin);
+                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin, SolrRequest.METHOD.POST);
             } catch (Exception e) {
                 throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
             } 

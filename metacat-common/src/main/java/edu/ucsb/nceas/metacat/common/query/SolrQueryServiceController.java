@@ -33,6 +33,7 @@ import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.schema.IndexSchema;
@@ -99,6 +100,7 @@ public class SolrQueryServiceController {
      * @param query  query string. It is for the HttpSolrQueryService.
      * @param params the SolrParam. It is for the EmbeddedSolrQueryService.
      * @param subjects
+     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
      * @return
      * @throws NotImplemented
      * @throws NotFound
@@ -108,11 +110,11 @@ public class SolrQueryServiceController {
      * @throws ParserConfigurationException 
      * @throws UnsupportedType 
      */
-    public InputStream query(SolrParams params,Set<Subject>subjects) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
+    public InputStream query(SolrParams params,Set<Subject>subjects, SolrRequest.METHOD method) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
         if(isEmbeddedSolrServer) {
-            return embeddedQueryService.query(params, subjects);
+            return embeddedQueryService.query(params, subjects, method);
         } else {
-            return httpQueryService.query(params, subjects);
+            return httpQueryService.query(params, subjects, method);
         }
       
     }

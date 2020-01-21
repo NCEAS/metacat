@@ -8,6 +8,7 @@ import java.util.Map;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.schema.SchemaField;
 import org.apache.solr.servlet.SolrRequestParsers;
@@ -58,7 +59,7 @@ public class SolrQueryServiceControllerTest extends MetacatCommonTestBase {
     public void testQuery() throws Exception {
         String query = "q=*:*";
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
-        InputStream input = SolrQueryServiceController.getInstance().query(solrParams, null);
+        InputStream input = SolrQueryServiceController.getInstance().query(solrParams, null, SolrRequest.METHOD.GET);
         assertTrue(input != null);
     }
 }

@@ -28,6 +28,7 @@ import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -105,6 +106,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
      * is null, there will be no access rules for the query. This is for the embedded solr server.
      * @param query the query params. 
      * @param subjects the user's identity which sent the query
+     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
      * @return the response
      * @throws SAXException 
      * @throws IOException 
@@ -113,7 +115,7 @@ public class EmbeddedSolrQueryService extends SolrQueryService {
      * @throws UnsupportedType 
      * @throws Exception
      */
-    public  InputStream query(SolrParams query, Set<Subject>subjects) throws ParserConfigurationException, IOException, SAXException, SolrServerException, UnsupportedType {
+    public  InputStream query(SolrParams query, Set<Subject>subjects, SolrRequest.METHOD method) throws ParserConfigurationException, IOException, SAXException, SolrServerException, UnsupportedType {
         InputStream inputStream = null;
         String wt = query.get(WT);
         query = appendAccessFilterParams(query, subjects);

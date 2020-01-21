@@ -40,6 +40,7 @@ import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.lucene.util.Version;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
@@ -136,12 +137,13 @@ public class HttpSolrQueryService extends SolrQueryService {
      * since the transform needs the SolrCore. We have to open the solr url directly to get the InputStream.
      * @param query the query params. 
      * @param subjects the user's identity which sent the query. If the Subjects is null, there wouldn't be any access control.
+     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
      * @return the response
      * @throws IOException 
      * @throws NotFound 
      * @throws Exception
      */
-    public  InputStream query(SolrParams query, Set<Subject>subjects) throws IOException, NotFound, UnsupportedType, SolrServerException {
+    public  InputStream query(SolrParams query, Set<Subject>subjects, SolrRequest.METHOD method) throws IOException, NotFound, UnsupportedType, SolrServerException {
         /*boolean xmlFormat = false;
         String queryString = ClientUtils.toQueryString(query, xmlFormat);
         log.info("==========HttpSolrQueryService.query - the query string after transforming from the SolrParams to the string "+queryString);
@@ -170,7 +172,7 @@ public class HttpSolrQueryService extends SolrQueryService {
         if (isSupportedWT(wt)) {
             // just handle as normal solr query
             //reload the core before query. Only after reloading the core, the query result can reflect the change made in metacat-index module.
-            QueryResponse response = httpSolrServer.query(query);
+            QueryResponse response = httpSolrServer.query(query, method);
             inputStream = solrTransformer.transformResults(query, response, wt);
         } else {
             throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type "+wt+" in the solr query is not supported");
