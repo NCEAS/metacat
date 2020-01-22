@@ -134,6 +134,9 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
    -->
    <field name="_root_" type="string" indexed="true" stored="false"/>
 
+   <!-- the default search filed -->
+   <field name="_text_" type="text_general" multiValued="true" indexed="true" stored="false"/>
+   
    <!-- Only remove the "id" field if you have a very good reason to. While not strictly
      required, it is highly recommended. A <uniqueKey> is present in almost all Solr 
      installations. See the <uniqueKey> declaration below where <uniqueKey> is set to "id".
@@ -456,6 +459,9 @@ This schema is copied into the dataone-cn-index buildout for deployment on cn no
     <copyField source="pubDate" dest="datePublished" />
     <copyField source="dateUploaded" dest="updateDate" />
     <copyField source="contactOrganization" dest="contactOrganizationText"/>
+    
+    <!-- the default search filed -->
+    <copyField source="*" dest="_text_"/>
 	
    <!-- Above, multiple source fields are copied to the [text] field. 
 	  Another way to map multiple source fields to the same 
