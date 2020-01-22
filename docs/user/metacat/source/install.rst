@@ -21,7 +21,7 @@ running correctly:
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
 * `Java 8`_ (Note: Java 7 is deprecated)
-* `Solr 8.3`_
+* `Solr 8.4.1`_
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -35,7 +35,7 @@ running correctly:
 
 .. _Java 8: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 
-.. _Solr 8.3: https://lucene.apache.org/solr/guide/8_3/getting-started.html
+.. _Solr 8.4.1: https://lucene.apache.org/solr/guide/8_4/getting-started.html
 
 
 System requirements for running Metacat:
@@ -467,21 +467,21 @@ search engine. Unfortunately the Solr Debian packages coming with the Ubuntu ope
 system are obsoleted and you have to install the binary packages by yourself. This section 
 provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
 
-Metacat support Solr 8.3 and newer versions. You might download the binary releases from:
+Metacat support Solr 8.4.1 and newer versions. You might download the binary releases from:
 
 https://lucene.apache.org/solr/downloads.html
 
-1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.3.1.tgz):
+1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.4.1.tgz):
 
 ::
 
-  tar xzf solr-8.3.1.tgz solr-8.3.1/bin/install_solr_service.sh --strip-components=2
+  tar xzf solr-8.4.1.tgz solr-8.4.1/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
 ::
 
-  sudo bash ./install_solr_service.sh solr-8.3.1.tgz
+  sudo bash ./install_solr_service.sh solr-8.4.1.tgz
 
 3. Make the Solr environment overwrites include file being the group writable:
 

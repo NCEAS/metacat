@@ -46,7 +46,7 @@
 		<dependency>
 			<groupId>org.apache.solr</groupId>
 			<artifactId>solr-core</artifactId>
-			<version>8.3.0</version>
+			<version>8.4.1</version>
 			<exclusions>
                 <exclusion>
                   <groupId>org.slf4j</groupId>
@@ -77,7 +77,7 @@
 		<dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-solrj</artifactId>
-            <version>8.3.0</version>
+            <version>8.4.1</version>
             <exclusions>
                 <exclusion>
                     <groupId>junit</groupId>
@@ -97,7 +97,7 @@
 		<dependency>
 			<groupId>org.apache.solr</groupId>
 			<artifactId>solr-test-framework</artifactId>
-			<version>8.3.0</version>
+			<version>8.4.1</version>
 			<exclusions>
 			    <exclusion>
                     <groupId>org.apache.logging.log4j</groupId>
@@ -165,7 +165,7 @@
 		<dependency>
             <groupId>org.apache.solr</groupId>
             <artifactId>solr-langid</artifactId>
-            <version>8.3.0</version>
+            <version>8.4.1</version>
             <scope>runtime</scope>
             <exclusions>
                 <exclusion>
