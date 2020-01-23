@@ -229,7 +229,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         log.debug("get filed map from server (downloading files) ==========================");
         SolrResourceLoader loader = new SolrResourceLoader();
-        schema = new IndexSchema("dataone", new InputSource(lookupSchema()), Version.LUCENE_8_3_0, loader);
+        schema = new IndexSchema("dataone", new InputSource(lookupSchema()), Version.LUCENE_8_4_1, loader);
         log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++"+schema);
         fieldMap = schema.getFields();
     }
