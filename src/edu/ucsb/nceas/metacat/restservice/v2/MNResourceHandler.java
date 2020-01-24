@@ -407,8 +407,8 @@ public class MNResourceHandler extends D1ResourceHandler {
 			                    }
 			                }
 		                }
-		                
-		                query = decode(query);
+		                //the query shouldn't be decoded any more
+		                //query = decode(query);
 		                logMetacat.debug("query: " + query);
 
 	                }

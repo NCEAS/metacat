@@ -37,6 +37,7 @@ import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
+import java.net.URLDecoder;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -2013,7 +2014,7 @@ public class MNodeService extends D1NodeService
             }
 			try {
 				DBQuery queryobj = new DBQuery();
-				
+				query = URLDecoder.decode(query, "UTF-8");//the query haven't been decoded, so we need to decode it now.
 				String results = queryobj.performPathquery(query, user, groups);
 				ContentTypeByteArrayInputStream ctbais = new ContentTypeByteArrayInputStream(results.getBytes(MetaCatServlet.DEFAULT_ENCODING));
 				ctbais.setContentType("text/xml");
@@ -2027,10 +2028,10 @@ public class MNodeService extends D1NodeService
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
 		        throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
 		    }
-		    logMetacat.info("The query is ==================================== \n"+query);
+		    logMetacat.info("MNodeService.query - the encoded query is === " + query);
 		    try {
 		        
-                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
+                return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);//this method will decode the query string
             } catch (Exception e) {
                 // TODO Auto-generated catch block
                 e.printStackTrace();

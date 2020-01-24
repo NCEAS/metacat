@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.URLEncoder;
 import java.sql.SQLException;
 import java.util.HashSet;
 import java.util.Hashtable;
@@ -107,7 +108,7 @@ public class MetacatSolrIndex {
     
     /**
      * Query the solr server
-     * @param query  the solr query
+     * @param query  the solr query string (a url-encoded query string (UTF-8))
      * @param authorizedSubjects the authorized subjects in this query session
      * @param isMNadmin the indicator of the authorized subjects are the mn admin or not
      * @return the result as the InputStream
@@ -124,7 +125,8 @@ public class MetacatSolrIndex {
     public InputStream query(String query, Set<Subject>authorizedSubjects, boolean isMNadmin) throws SolrServerException, IOException, PropertyNotFoundException, SQLException, 
     ClassNotFoundException, ParserConfigurationException, SAXException, NotImplemented, NotFound, UnsupportedType {
         // allow "+" in query syntax, see: https://projects.ecoinformatics.org/ecoinfo/issues/6435
-        query = query.replaceAll("\\+", "%2B");
+        //query = query.replaceAll("\\+", "%2B");
+        //The method parseQueryString will handle encoded string, so we need to feed it a rough query.
         SolrParams solrParams = SolrRequestParsers.parseQueryString(query);
         return query(solrParams, authorizedSubjects, isMNadmin);
      

@@ -121,6 +121,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testPortalDocument"));
     suite.addTest(new MNodeQueryTest("testPackageWithParts"));
     suite.addTest(new MNodeQueryTest("testPostLongQuery"));
+    suite.addTest(new MNodeQueryTest("testChineseCharacters"));
     return suite;
     
   }
@@ -1158,6 +1159,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         //System.out.println("the result is \n" + resultStr);
         assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+    }
+    
+    /**
+     * Test any query it has the encoded Chinese characters.
+     */
+    public void testChineseCharacters() throws Exception {
+        String server = SystemUtil.getContextURL();
+        String query="q=%20-obsoletedBy:*%20AND%20%20-formatId:*dataone.org%2Fcollections*%20AND%20%20-formatId:*dataone.org%2Fportals*%20AND%20%E4%B8%AD%E6%96%87%20AND%20formatType:METADATA%20AND%20endDate:[1800-01-01T00:00:00Z%20TO%202020-01-24T21:56:15.422Z]%20AND%20-obsoletedBy:*&rows=1&fl=endDate&sort=endDate%20desc&wt=json";
+        DefaultHttpMultipartRestClient multipartRestClient = new DefaultHttpMultipartRestClient();
+        multipartRestClient.doGetRequest(server + "/d1/mn/v2/query/solr/?" + query, 1000);
+        assertTrue(1==1);
     }
 
    
