@@ -27,6 +27,7 @@
 
 package edu.ucsb.nceas.metacat;
 
+import java.io.File;
 import java.io.Reader;
 import java.util.Date;
 
@@ -61,9 +62,9 @@ public class DocumentImplWrapper {
 	}//Constructor
 
 	public String write(DBConnection conn, String xml, String pub, Reader dtd,
-			String action, String docid, String user, String[] groups, byte[]xmlBytes, String schemaLocalLocation, Checksum checksum) throws Exception {
+			String action, String docid, String user, String[] groups, byte[]xmlBytes, String schemaLocalLocation, Checksum checksum, File objectFile) throws Exception {
 		return DocumentImpl.write(conn, xml, pub, dtd, action, docid, user, groups,
-				ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocalLocation, checksum);
+				ruleBase, needValidation, writeAccessRules, xmlBytes, schemaLocalLocation, checksum, objectFile);
 	}
 
 	public String writeReplication(DBConnection conn, String xml, byte[]xmlBytes, String pub, Reader dtd,

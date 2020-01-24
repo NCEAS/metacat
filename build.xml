@@ -1262,6 +1262,7 @@
 					<exclude name="**/MultiThreadClientIT.class" />
 					<exclude name="**/MultiThreadClientIT$1.class" />
 					<exclude name="**/AuthUtilIT.class" />
+          <exclude name="**/WrappingServletInputStream.class" />
 				</fileset>
 			</batchtest>
 		</junit>

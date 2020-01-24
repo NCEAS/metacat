@@ -27,6 +27,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Map;
@@ -83,6 +84,9 @@ import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.v1.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
+import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -1313,85 +1317,86 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws IOException 
      * @throws IllegalAccessException 
      * @throws InstantiationException 
+     * @throws FileUploadException 
+     * @throws NoSuchAlgorithmException 
      */
-    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException {
-       
-    	// Read the incoming data from its Mime Multipart encoding
-    	Map<String, File> files = collectMultipartFiles();
+    protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
+        CheckedFile objFile = null;
+        try {
+            // Read the incoming data from its Mime Multipart encoding
+            MultipartRequestWithSysmeta multiparts = collectObjectFiles();
+                Identifier pid = new Identifier();
+                if (trailingPid == null) {
+                    // get the pid string from the body and set the value
+                    String pidString = multipartparams.get("pid").get(0);
+                    if (pidString != null) {
+                    pid.setValue(pidString);
+                    
+                  } else {
+                      throw new InvalidRequest("1102", "The pid param must be included and contain the identifier.");
+                      
+                  }
+                } else {
+                    // use the pid included in the URL
+                    pid.setValue(trailingPid);
+                }
+                logMetacat.debug("putObject with pid " + pid.getValue());
+                logMetacat.debug("Entering putObject: " + pid.getValue() + "/" + action);
+
+                SystemMetadata smd = multiparts.getSystemMetadata();
+                // ensure we have the system metadata
+                if  ( smd == null ) {
+                    throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
+                    
+                }
+                DetailedFileInputStream object = null;
+                Map<String, File> files = multiparts.getMultipartFiles();
+                objFile = (CheckedFile) files.get("object");
+                // ensure we have the object bytes
+                if  ( objFile == null ) {
+                    throw new InvalidRequest("1102", "The object param must contain the object bytes.");
+                }
+                object = new DetailedFileInputStream(objFile, objFile.getChecksum());
+                
                
-    	Identifier pid = new Identifier();
-        if (trailingPid == null) {
-	        // get the pid string from the body and set the value
-	        String pidString = multipartparams.get("pid").get(0);
-	        if (pidString != null) {
-            pid.setValue(pidString);
-            
-          } else {
-              throw new InvalidRequest("1102", "The pid param must be included and contain the identifier.");
-              
-          }
-        } else {
-        	// use the pid included in the URL
-        	pid.setValue(trailingPid);
-        }
-        logMetacat.debug("putObject with pid " + pid.getValue());
-        logMetacat.debug("Entering putObject: " + pid.getValue() + "/" + action);
+                
+                response.setStatus(200);
+                response.setContentType("text/xml");
+                OutputStream out = response.getOutputStream();
+                
+                if (action.equals(FUNCTION_NAME_INSERT)) { 
+                    // handle inserts
+                    logMetacat.debug("Commence creation...");
 
-        InputStream object = null;
-        InputStream sysmeta = null;
-        File smFile = files.get("sysmeta");
-        sysmeta = new FileInputStream(smFile);
-        File objFile = files.get("object");
-        object = new FileInputStream(objFile);
-        
-        // ensure we have the object bytes
-        if  ( objFile == null ) {
-            throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-            
+                    logMetacat.debug("creating object with pid " + pid.getValue());
+                    Identifier rId = MNodeService.getInstance(request).create(session, pid, object, smd);
+                    TypeMarshaller.marshalTypeToOutputStream(rId, out);
+                    
+                } else if (action.equals(FUNCTION_NAME_UPDATE)) {
+                    // handle updates
+                    
+                    // construct pids
+                    Identifier newPid = null;
+                    try {
+                        String newPidString = multipartparams.get("newPid").get(0);
+                        newPid = new Identifier();
+                        newPid.setValue(newPidString);
+                    } catch (Exception e) {
+                        logMetacat.error("Could not get newPid from request");
+                    }
+                    logMetacat.debug("Commence update...");
+                    
+                    Identifier rId = MNodeService.getInstance(request).update(session, pid, object, newPid, smd);
+                    TypeMarshaller.marshalTypeToOutputStream(rId, out);
+                } else {
+                    throw new InvalidRequest("1000", "Operation must be create or update.");
+                }
+        } catch (Exception e) {
+            if(objFile != null) {
+                objFile.deleteOnExit();
+            }
+            throw e;
         }
-        
-        // ensure we have the system metadata
-        if  ( smFile == null ) {
-            throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
-            
-        }
-        
-        response.setStatus(200);
-        response.setContentType("text/xml");
-        OutputStream out = response.getOutputStream();
-        
-        if (action.equals(FUNCTION_NAME_INSERT)) { 
-            // handle inserts
-            logMetacat.debug("Commence creation...");
-            SystemMetadata smd = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
-
-            logMetacat.debug("creating object with pid " + pid.getValue());
-            Identifier rId = MNodeService.getInstance(request).create(session, pid, object, smd);
-            TypeMarshaller.marshalTypeToOutputStream(rId, out);
-            
-        } else if (action.equals(FUNCTION_NAME_UPDATE)) {
-        	// handle updates
-        	
-            // construct pids
-            Identifier newPid = null;
-            try {
-            	String newPidString = multipartparams.get("newPid").get(0);
-            	newPid = new Identifier();
-            	newPid.setValue(newPidString);
-            } catch (Exception e) {
-				logMetacat.error("Could not get newPid from request");
-			}
-            logMetacat.debug("Commence update...");
-            
-            // get the systemmetadata object
-            SystemMetadata smd = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, sysmeta);
-
-            Identifier rId = MNodeService.getInstance(request).update(session, pid, object, newPid, smd);
-            TypeMarshaller.marshalTypeToOutputStream(rId, out);
-        } else {
-            throw new InvalidRequest("1000", "Operation must be create or update.");
-        }
-   
     }
 
     /**
