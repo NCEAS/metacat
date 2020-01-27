@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
+import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
@@ -282,6 +283,22 @@ class WrappingServletInputStream extends ServletInputStream {
     public void close() throws IOException {
         super.close();
         this.sourceStream.close();
+    }
+    
+   
+    @Override
+    public boolean isFinished() {
+        return true;
+    }
+    
+    @Override
+    public boolean isReady() {
+        return true;
+    }
+    
+    @Override
+    public void setReadListener(ReadListener listener) {
+        
     }
 
 }
