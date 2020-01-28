@@ -523,8 +523,8 @@ Restart Solr server (:note2:`Important`)
 
 ::
 
-  service solr stop
-  service solr start
+  sudo service solr stop
+  sudo service solr start
 
 You may check if the tomcat8 user and solr user have the groups by typing:
 
