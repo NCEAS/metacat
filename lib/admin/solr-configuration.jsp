@@ -47,12 +47,12 @@
 <%@ include file="./header-section.jsp"%>
 
 <div class="document">
-	<h2>SOLR Service Configuration</h2>
+	<h2>Solr Service Configuration</h2>
 	<p>
-        Configure the HTTP SOLR service to generate search indexes for objects
+        Configure the HTTP Solr service to generate search indexes for objects
     </p>
 	<div class="alert alert-warning">
-	Please keep your SOLR server running while configure it.
+	Please keep your Solr server running while configure it.
 	</div>
 	<div class="alert alert-warning">
     Please make sure the Tomcat user has the permission to create the instance directory <%= solrHomeValueInProp %> if it is a new installation.
@@ -67,12 +67,12 @@
 	<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
 	                                        onsubmit="return submitForm(this);">
 	
-		<!-- <h3>HTTP SOLR server Configuration</h3> -->
+		<!-- <h3>HTTP Solr server Configuration</h3> -->
 		<%
 		  //1. Create - create a new solr core and register it.
 		  if(action.equals(SolrAdmin.CREATE)) {
 		%>
-		<h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be created.<h3>
+		<h3>The Solr core - <%= solrCoreName %> with the Solr home directory <%= solrHomeValueInProp %> will be created.<h3>
 		<div class="buttons-wrapper">
             <input class=button type="button" value="Create" onClick="forward('./admin?configureType=solrserver&processForm=true&action=create')">
             <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
@@ -86,7 +86,7 @@
 		  //2. Register - core doesn't exist, but the solr-home directory does exist without schema update indication.
           if(action.equals(SolrAdmin.REGISTER)) {
         %>
-        <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be registered in the SOLR server.<h3>
+        <h3>The Solr core - <%= solrCoreName %> with the Solr home directory <%= solrHomeValueInProp %> will be registered in the Solr server.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Register" onClick="forward('./admin?configureType=solrserver&processForm=true&action=register')">
             <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
@@ -100,7 +100,7 @@
           //3. RegisterWithUpdate - core doesn't exist, but the solr-home directory does exist with schema update indication.
           if(action.equals(SolrAdmin.REGISTERANDUPDATE)) {
         %>
-        <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> will be registered in the SOLR server. The index schema will be updated as well<h3>
+        <h3>The Solr core - <%= solrCoreName %> with the Solr home directory <%= solrHomeValueInProp %> will be registered in the Solr server. The index schema will be updated as well<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Register" onClick="forward('./admin?configureType=solrserver&processForm=true&action=registerAndUpdate')">
             <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
@@ -120,14 +120,14 @@
           if(action.equals(SolrAdmin.REGISTERANDUPDATEWITHWARN) || action.equals(SolrAdmin.CREATEORUPDATEWITHWARN) || action.equals(SolrAdmin.CREATEWITHWARN) || action.equals(SolrAdmin.REGISTERWITHWARN)) {
         %>
         <div class="block">
-        The SOLR core - &quot;<%= solrCoreName %>&quot; does exist. However, its current home directory &quot;<%= solrCoreName %>&quot; is different to &quot;<%= solrHomeValueInProp %>&quot;  which you specified on the properties admin page.
+        The Solr core - &quot;<%= solrCoreName %>&quot; does exist. However, its current home directory &quot;<%= solrCoreName %>&quot; is different to &quot;<%= solrHomeValueInProp %>&quot;  which you specified on the properties admin page.
         </div>
         <div>
-        Please choose either to use its current SOLR home directory or a different core name.
+        Please choose either to use its current Solr home directory or a different core name.
         </div>
         <div class="radio-wrapper">
             <input class="checkradio" type="radio" name="<%= SolrAdmin.NEWSOLRCOREORNOT %>" id="<%= SolrAdmin.EXISTINGCORE %>" value="<%= SolrAdmin.EXISTINGCORE %>" onChange="toggleHiddenInputField('<%= SolrAdmin.NEWSOLRCORE %>', '<%= SolrAdmin.NEWSOLCORENAME %>)"/>
-            <label class="checkradio-label" > Use the current SOLR home directory &quot;<%= solrHomeForGivenCore %>&quot; associated with the core &quot;<%= solrCoreName %>&quot;</label>
+            <label class="checkradio-label" > Use the current Solr home directory &quot;<%= solrHomeForGivenCore %>&quot; associated with the core &quot;<%= solrCoreName %>&quot;</label>
             <div style="clear:both"></div>
         </div>
          <div class="radio-wrapper">
@@ -156,7 +156,7 @@
           //7. KEEP - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is no schema update indication
           if(action.equals(SolrAdmin.KEEP)) {
         %>
-        <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> does exist and the schema does not need update. Please click the OK button.<h3>
+        <h3>The Solr core - <%= solrCoreName %> with the Solr home directory <%= solrHomeValueInProp %> does exist and the schema does not need update. Please click the OK button.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="OK" onClick="forward('./admin?configureType=solrserver&processForm=true&action=KEEP')">
             <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">
@@ -170,7 +170,7 @@
           //8. Update - both core and solr-home does exist. And the core's instance directory is as same as the the solr-home. There is a schema update indication
           if(action.equals(SolrAdmin.UPDATE)) {
         %>
-        <h3>The SOLR core - <%= solrCoreName %> with the SOLR home directory <%= solrHomeValueInProp %> does exist but the schema needs update. Please click the UPDATE button.<h3>
+        <h3>The Solr core - <%= solrCoreName %> with the Solr home directory <%= solrHomeValueInProp %> does exist but the schema needs update. Please click the UPDATE button.<h3>
         <div class="buttons-wrapper">
             <input class=button type="button" value="Update" onClick="forward('./admin?configureType=solrserver&processForm=true&action=update')">
             <input class=button type="button" value="Bypass" onClick="forward('./admin?configureType=solrserver&bypass=true&processForm=true')">

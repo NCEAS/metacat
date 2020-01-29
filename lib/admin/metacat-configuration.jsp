@@ -158,7 +158,7 @@
     %>
             <tr>
             <td class="configured-tag"><i class="icon-ok"></i> configured </td>
-            <td class="property-title"> SOLR Server Configuration </td> 
+            <td class="property-title"> Solr Server Configuration </td> 
             <td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Reconfigure Now</a> </td>         
             </tr>
     <%
@@ -166,7 +166,7 @@
     %>          
             <tr>
             <td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
-            <td class="property-title"> SOLR Server Configuration </td>  
+            <td class="property-title"> Solr Server Configuration </td>  
     <%
             if (propsConfigured != null && propsConfigured) {
     %>
@@ -185,7 +185,7 @@
     %>          
             <tr>
             <td class="unconfigured-tag">unconfigured </td>  
-            <td class="property-title"> SORL Server Configuration </td>   
+            <td class="property-title"> Solr Server Configuration </td>   
     <%
             System.out.println("the dbconfigure value is "+dbConfigured);
             if (propsConfigured != null && propsConfigured ) {
