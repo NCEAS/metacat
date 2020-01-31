@@ -2838,10 +2838,12 @@ public class MetacatHandler {
                 }
                 
             }
+            sql = sql + " order by date_uploaded asc";
         }
         logMetacat.info("MetacatHandler.buildAllNonResourceMapIndex - the final query is " + sql);
         try {
-             buildIndexFromQuery(sql);
+            long size = buildIndexFromQuery(sql);
+            logMetacat.info("MetacatHandler.buildAllNonResourceMapIndex - the number of non-resource map objects is " + size + " being submitted to the index queue.");
         } catch (Exception e) {
             logMetacat.error("MetacatHandler.buildAllNonResourceMapIndex - can't index the objects since: " 
                     + e.getMessage());
@@ -2865,10 +2867,12 @@ public class MetacatHandler {
                     }   
                 }
             }
+            sql = sql + " order by date_uploaded asc";
         }
         logMetacat.info("MetacatHandler.buildAllResourceMapIndex - the final query is " + sql);
         try {
-            buildIndexFromQuery(sql);
+            long size = buildIndexFromQuery(sql);
+            logMetacat.info("MetacatHandler.buildAllResourceMapIndex - the number of resource map objects is " + size + " being submitted to the index queue.");
        } catch (Exception e) {
            logMetacat.error("MetacatHandler.buildAllResourceMapIndex - can't index the objects since: " 
                    + e.getMessage());
@@ -2878,8 +2882,9 @@ public class MetacatHandler {
     /*
      * Build index of objects selecting from the given sql query.
      */
-    private void buildIndexFromQuery(String sql) throws SQLException {
+    private long buildIndexFromQuery(String sql) throws SQLException {
         DBConnection dbConn = null;
+        long i = 0;
         int serialNumber = -1;
         try {
             // Get a database connection from the pool
@@ -2901,6 +2906,7 @@ public class MetacatHandler {
                        logMetacat.warn("we can't submit the id "+guid+" to the index queue since "+e.getMessage());
                     }
                     //results.append("<pid>" + id + "</pid>\n");
+                    i++;
                     logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for index in the buildIndexFromQuery on pid: " + guid);
                 }
             } 
@@ -2912,6 +2918,7 @@ public class MetacatHandler {
             // Return database connection to the pool
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
+        return i;
     }
     /**
      * Build the index for one document by reading the document and

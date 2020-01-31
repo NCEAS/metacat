@@ -507,13 +507,14 @@ public class SolrIndex {
 	        
 	        // insert the whole thing
 	        insertToIndex(doc);
+	        log.info("SolrIndex.insetFields - successfully added some extral solr index fields for the objec " + pid.getValue());
     	} catch (Exception e) {
     		String error = "SolrIndex.insetFields - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
     		    boolean deleteEvent = false;
             writeEventLog(null, pid, error, false);
             log.error(error, e);
     	}
-
+    	
     }
     
     /*
@@ -603,6 +604,7 @@ public class SolrIndex {
             writeEventLog(systemMetadata, pid, error, deleteEvent);
             log.error(error, e);
         }
+        log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
     }
    
     
@@ -690,7 +692,7 @@ public class SolrIndex {
                 writeEventLog(sysmeta, pid, error, deleteEvent);
                 log.error(error, e);
             }
-            
+            log.info("SorIndex.remove - successfully removeed the solr index for the pid " + pid.getValue());
         }
     }
     /**
