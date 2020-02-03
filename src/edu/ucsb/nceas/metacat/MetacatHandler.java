@@ -2893,21 +2893,21 @@ public class MetacatHandler {
             PreparedStatement stmt = dbConn.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                String guid = rs.getString(1);
-                Identifier identifier = new Identifier();
-                identifier.setValue(guid);
-                SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                if (sysMeta != null) {
-                    // submit for indexing
-                    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                    try {
-                         MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
-                    } catch (Exception e) {
-                       logMetacat.warn("we can't submit the id "+guid+" to the index queue since "+e.getMessage());
+                String guid = null;
+                try {
+                    guid = rs.getString(1);
+                    Identifier identifier = new Identifier();
+                    identifier.setValue(guid);
+                    SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                    if (sysMeta != null) {
+                        // submit for indexing
+                        Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                        i++;
+                        logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for indexing in the buildIndexFromQuery on pid: " + guid);
                     }
-                    //results.append("<pid>" + id + "</pid>\n");
-                    i++;
-                    logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for index in the buildIndexFromQuery on pid: " + guid);
+                } catch (Exception ee) {
+                    logMetacat.warn("MetacatHandler.buildIndexFromQuery - can't queue the object " + guid + " for indexing since: " + ee.getMessage());
                 }
             } 
             rs.close();
