@@ -132,14 +132,6 @@
     </servlet>
     -->
 
-  <servlet>
-    <servlet-name>AdminServlet</servlet-name>
-    <servlet-class>
-        org.apache.axis.transport.http.AdminServlet
-    </servlet-class>
-    <load-on-startup>100</load-on-startup>
-  </servlet>
-    
 	<!-- CN REST Servlet v1 -->
     <servlet>
       <servlet-name>CNRestServletV1</servlet-name>
@@ -281,12 +273,6 @@
     <url-pattern>/d1/mn</url-pattern>
   </servlet-mapping> 
 	
- <!-- uncomment this if you want the admin servlet -->
-  <servlet-mapping>
-    <servlet-name>AdminServlet</servlet-name>
-    <url-pattern>/servlet/AdminServlet</url-pattern>
-  </servlet-mapping>
-
   <!-- 
    <servlet-mapping>
     <servlet-name>DataProvider</servlet-name>
