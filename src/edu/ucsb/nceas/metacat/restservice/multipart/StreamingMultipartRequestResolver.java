@@ -72,6 +72,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
     private SystemMetadata sysMeta = null;
     private String defaultAlgorithm = Settings.getConfiguration().getString("multipartresolver.checksum.algorithm.default", "MD5");
     private File tempDir = null;
+    private static boolean deleteOnExit = Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit", false);
     
     /**
      * Constructor
@@ -251,6 +252,26 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      */
     public SystemMetadata getSystemMetadataPart() {
         return sysMeta;
+    }
+    
+    /**
+     * Delete a temp file either immediately or on program exists according to the configuration
+     * @param temp  the file will be deleted
+     */
+    public static void deleteTempFile(File temp) { 
+        if (temp != null) {
+            try {
+                if(deleteOnExit) {
+                    temp.deleteOnExit();
+                    log.debug("StreamingMultiPartHandler.deleteTempFile - marked the temp deleting on exit");
+                } else {
+                    temp.delete();
+                    log.debug("StreamingMultiPartHandler.deleteTempFile - deleted the temp file immediately");
+                }
+            } catch (Exception e) {
+                log.warn("StreamingMultiPartHandler.deleteTempFile - couldn't delete the temp file since " + e.getMessage());
+            }
+        }
     }
 
 }

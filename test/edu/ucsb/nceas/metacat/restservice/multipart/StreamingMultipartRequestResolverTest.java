@@ -53,6 +53,7 @@ import org.dataone.service.util.TypeMarshaller;
 import org.mockito.Mockito;
 
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -94,6 +95,7 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         suite.addTest(new StreamingMultipartRequestResolverTest("initialize"));
         suite.addTest(new StreamingMultipartRequestResolverTest("testV2ResolveMultipart"));
         suite.addTest(new StreamingMultipartRequestResolverTest("testV1ResolveMultipart"));
+        suite.addTest(new StreamingMultipartRequestResolverTest("testDeleteTempFile"));
         return suite;
     }
     
@@ -248,6 +250,28 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         assertTrue(savedChecksum.getAlgorithm().equals(algorithm));
         assertTrue(savedChecksum.getValue().equalsIgnoreCase(sysmeta.getChecksum().getValue()));
         assertTrue(savedChecksum.getValue().equalsIgnoreCase(calculatedChecksum.getValue()));
+    }
+    
+    /**
+     * Test the method of deleteTempFile
+     * @throws Exception
+     */
+    public void testDeleteTempFile() throws Exception {
+        boolean deleteOnExit = Settings.getConfiguration().getBoolean("multipart.tempFile.deleteOnExit");
+        if(!deleteOnExit) {
+            System.out.println("+++++++++++++ delete immediately");
+            //delete the file immediately
+            File tmp = File.createTempFile("testDeleteTempFile", "testtemp");
+            assertTrue(tmp.exists());
+            StreamingMultipartRequestResolver.deleteTempFile(tmp);
+            assertTrue(!tmp.exists());
+        } else {
+            System.out.println("============== delete on exit");
+            File tmp = File.createTempFile("testDeleteTempFile", "testtemp");
+            assertTrue(tmp.exists());
+            StreamingMultipartRequestResolver.deleteTempFile(tmp);
+            assertTrue(tmp.exists());
+        }
     }
  
 }
