@@ -117,6 +117,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -1024,7 +1025,8 @@ public abstract class D1NodeService {
         } 
         if (!checksumMatched && tempFile != null) {
             logMetacat.info("D1NodeService.insertOrUpdateDocument - mark the temp file to be deleted on exist.");
-            tempFile.deleteOnExit(); //since we will write bytes from the stream to the disk in this case, the temp file can be deleted when the programm ends. 
+            //tempFile.deleteOnExit(); //since we will write bytes from the stream to the disk in this case, the temp file can be deleted when the programm ends. 
+            StreamingMultipartRequestResolver.deleteTempFile(tempFile);
             tempFile = null; //tempFile being null implicitly means that Metacat will write the bytes to the final destination.
         }
     }
@@ -1788,7 +1790,8 @@ public abstract class D1NodeService {
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
           }
           if(tempFile != null) {
-              tempFile.deleteOnExit();
+              //tempFile.deleteOnExit();
+              StreamingMultipartRequestResolver.deleteTempFile(tempFile);
           }
     } catch (FileNotFoundException e) {
       logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);

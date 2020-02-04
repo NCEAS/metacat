@@ -87,6 +87,7 @@ import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
+import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -1392,7 +1393,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
         } catch (Exception e) {
             if(objFile != null) {
-                objFile.deleteOnExit();
+                //objFile.deleteOnExit();
+                StreamingMultipartRequestResolver.deleteTempFile(objFile);
             }
             throw e;
         }
