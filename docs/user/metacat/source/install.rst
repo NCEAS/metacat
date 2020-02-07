@@ -222,7 +222,17 @@ to include::
 
 	org.apache.tomcat.util.buf.UDecoder.ALLOW_ENCODED_SLASH=true
 	org.apache.catalina.connector.CoyoteAdapter.ALLOW_BACKSLASH=true
-	
+
+
+Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
+the directories it can write to and prevents Metacat from operating correctly.
+Ensure the following lines exist in the service file for Tomcat:
+
+::
+
+  ReadWritePaths=/var/metacat
+  ReadWritePaths=/etc/default/solr.in.sh
+
 Apache HTTPD Server (Highly Recommended)
 ........................................
 Although you have the option of running Metacat with only the Tomcat server, we
@@ -508,6 +518,15 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 ::
 
   SOLR_JAVA_MEM="-Xms10g -Xmx10g"
+
+Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
+the directories it can write to and prevents Metacat from operating correctly.
+Ensure the following lines exist in the service file for Tomcat:
+
+::
+
+  ReadWritePaths=/var/metacat
+  ReadWritePaths=/etc/default/solr.in.sh
 
 Tomcat and Solr User Management
 ...............................
