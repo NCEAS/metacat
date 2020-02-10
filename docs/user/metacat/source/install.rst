@@ -226,7 +226,7 @@ to include::
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
 the directories it can write to and prevents Metacat from operating correctly.
-Ensure the following lines exist in the service file for Tomcat:
+Ensure the following lines exist in the service file for Tomcat (paths may vary depending on your configuration):
 
 ::
 
@@ -521,7 +521,7 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
 the directories it can write to and prevents Metacat from operating correctly.
-Ensure the following lines exist in the service file for Tomcat:
+Ensure the following lines exist in the service file for Tomcat (paths may vary depending on your configuration):
 
 ::
 
