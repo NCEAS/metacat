@@ -263,41 +263,17 @@ source code is installed:
 2. Set the METACAT_HOME environment variable to the value of the Metacat 
    installation directory. Some examples follow: 
 
-   On Windows: 
-
-   ::
-   
-     set METACAT_HOME=C:\somePath\metacat
-
-   On Linux/Unix (bash shell): 
-   
    ::
    
      export METACAT_HOME=/home/somePath/metacat
 
 3. cd to the following directory: 
 
-   On Windows: 
-   
-   ::
-   
-     cd %METACAT_HOME%\lib\harvester
-
-   On Linux/Unix: 
-
    ::
    
      cd $METACAT_HOME/lib/harvester
 
 4. Run the appropriate Harvester shell script, as determined by the operating system: 
-
-   On Windows: 
-   
-   ::
-   
-     runHarvestListEditor.bat
-
-   On Linux/Unix: 
 
    ::
    
@@ -311,14 +287,6 @@ default values), create a file called .harvestListEditor (note the leading
 dot character). Use a plain text editor to create the file and place the file 
 in the Site Contact's home directory. To determine the home directory, open a 
 system command window or terminal window and type the following: 
-
-On Windows: 
-
-::
-
-  echo %USERPROFILE%
-
-On Linux/Unix: 
 
 ::
 
@@ -557,41 +525,17 @@ To run Harvester in a Command Window:
 2. Set the ``METACAT_HOME`` environment variable to the value of the 
    Metacat webapp deployment directory. 
 
-   On Windows: 
-
-   ::
-   
-     set METACAT_HOME=C:\somePath\metacat
-
-   On Linux/Unix (bash shell): 
-
    ::
    
      export METACAT_HOME=/home/somePath/metacat
 
 3. cd to the following directory: 
 
-   On Windows: 
-
-   ::
-   
-     cd %METACAT_HOME%\lib\harvester
-
-   On Linux/Unix: 
-
    ::
    
      cd $METACAT_HOME/lib/harvester
 
 4. Run the appropriate Harvester shell script, as determined by the operating system: 
-
-   On Windows: 
-
-   ::
-   
-     runHarvester.bat %METACAT_HOME%
-
-   On Linux/Unix: 
 
    ::
    

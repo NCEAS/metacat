@@ -42,10 +42,10 @@ upload the data set itself with the data documentation. Information providers
 can also edit the metadata or delete it from the repository, again using
 Metacat's straightforward Web interface.
 
-Metacat is a `Java servlet`_ application that runs on Linux, Mac OS, and
-Windows platforms in conjunction with a database, such as 
-PostgreSQL_ (or Oracle_), and a Web
-server. The Metacat application stores data in an XML_ format using `Ecological
+Metacat is a `Java servlet`_ application that runs on Linux and  Mac OS
+platforms in conjunction with a database, such as 
+PostgreSQL_, a Web server, and a Solr server. 
+The Metacat application stores data in an XML_ format using `Ecological
 Metadata Language`_ (EML) or other metadata standards such as `ISO 19139`_ or the
 `FGDC Biological Data Profile`_. For more
 information about Metacat or for examples of projects currently using Metacat,
@@ -68,9 +68,10 @@ please see http://knb.ecoinformatics.org.
 What's in this Guide
 --------------------
 This Administrator's guide includes information for installing, configuring,
-managing and extending Metacat for both Linux, Mac OS, and Windows systems. 
+managing and extending Metacat for Ubuntu and other Linux variants. Metacat
+can run on MacOS but it needs users' customized installation. 
 Chapter Four contains instructions for downloading and installing Metacat and the
-applications required to run the software on Linux and Microsoft platforms.
+applications required to run the software on Linux platform.
 Chapter Five covers how to configure Metacat, both for new and upgraded
 installations. Chapter Seven details the ways in which you can customize the
 Metacat interface so users can access and submit information easily: using
@@ -93,7 +94,7 @@ Metacat is a repository for data and metadata (documentation about data), that
 helps scientists find, understand and effectively use the data sets they manage or 
 that have been created by others. Specifically,
 
-* Metacat is an open source web application, which can run on Linux, MacOS, and Windows operating systems and is written in Java
+* Metacat is an open source web application, which can run on Linux and MacOS operating systems and is written in Java
 * Metacat's Web interface facilitates the input and retrieval of data 
 * Metacat's optional mapping functionality enables you to query and visualize the geographic coverage of stored data sets
 * Metacat's replication feature ensures that all Metacat data and metadata is stored safely on multiple Metacat servers

@@ -228,8 +228,7 @@ property is also included in the :doc:`metacat-properties`.
    The Metacat Global Properties editing screen.
    
 When you save global properties, Metacat also saves a back-up file that is 
-located in ``/var/metacat/.metacat`` (on Linux) or 
-``C:\Program Files\metacat\.metacat`` (on Windows). When you update Metacat, 
+located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
 the system automatically locates the back-up file so you do not have to re-enter 
 the configuration settings.
 

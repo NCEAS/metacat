@@ -280,45 +280,17 @@ The following example illustrates how the Metacat OAI-PMH Harvester is run from 
 2. Set the METACAT_HOME environment variable to the value of the Metacat 
    installation directory. Some examples follow: 
 
-   On Windows: 
-   
-   ::
-
-     set METACAT_HOME=C:\somePath\metacat
-
-   On Linux/Unix (bash shell): 
-
    ::
    
      export METACAT_HOME=/home/somePath/metacat
 
 3. cd to the following directory: 
 
-   On Windows: 
-   
-   ::
-
-     cd %METACAT_HOME%\lib\oaipmh
-
-   On Linux/Unix: 
-
    ::
    
      cd $METACAT_HOME/lib/oaipmh
 
 4. Run the appropriate Metacat OAI-PMH Harvester shell script, as determined by the operating system: 
-
-   On Windows: 
-
-   ::
-   
-     runHarvester.bat \
-         -dn uid=jdoe,o=myorg,dc=ecoinformatics,dc=org \
-         -password some_password \
-         -metadataPrefix oai_dc \
-         http://baseurl.repository.org/metacat/dataProvider
-
-   On Linux/Unix: 
 
    ::
    
