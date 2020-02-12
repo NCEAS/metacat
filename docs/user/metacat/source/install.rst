@@ -517,7 +517,31 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
 ::
 
-  SOLR_JAVA_MEM="-Xms10g -Xmx10g"
+  SOLR_JAVA_MEM="-Xms2g -Xmx2g"
+
+7. Tomcat and Solr User Management
+
+The interaction of the Tomcat and Solr services will cause the file permission issues. 
+Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will fix the problems:
+
+::
+
+  sudo usermod -a -G solr tomcat8
+  sudo usermod -a -G tomcat8 solr
+
+8. Restart Solr server to make the new group setting effective (:note2:`Important`) 
+
+::
+
+  sudo service solr stop
+  sudo service solr start
+
+9. You may check if the tomcat8 user and solr user have the groups by typing:
+
+::
+
+  sudo groups tomcat8
+  sudo groups solr
 
 Note: If you're running Tomcat using systemd, systemd sandboxes Tomcat limiting
 the directories it can write to and prevents Metacat from operating correctly.
@@ -527,31 +551,6 @@ Ensure the following lines exist in the service file for Tomcat (paths may vary 
 
   ReadWritePaths=/var/metacat
   ReadWritePaths=/etc/default/solr.in.sh
-
-Tomcat and Solr User Management
-...............................
-The interaction of the Tomcat and Solr services will cause the file permission issues. 
-Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will fix the problems:
-
-::
-
-  sudo usermod -a -G solr tomcat8
-  sudo usermod -a -G tomcat8 solr
-
-Restart Solr server (:note2:`Important`) 
-
-::
-
-  sudo service solr stop
-  sudo service solr start
-
-You may check if the tomcat8 user and solr user have the groups by typing:
-
-::
-
-  sudo groups tomcat8
-  sudo groups solr
-
 
 Apache Ant (if building from Source)
 ....................................

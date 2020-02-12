@@ -1,4 +1,5 @@
-.. _Tomcat And Solr User Management: ./install.html#tomcat-and-solr-user-management
+.. _Solr installation page: ./install.html#solr-server
+
 
 Configuring Metacat
 ===================
@@ -254,7 +255,7 @@ Deploy Location   The directory where the application is deployed.
   
   The Environment Overwrites File should be writable/readable by the user tomcat8.
   
-  The section of `Tomcat And Solr User Management`_ on the installation page will resolve this issue.
+  The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
 
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -392,9 +393,9 @@ Solr server is not running and you need to start it.
 If you click the Create button to create the Solr core and get the error message 
 like ``Couldn't persist core properties to /var/metacat/solr-home2/``, this means 
 the user solr doesn't have the write permission on the Solr Home directory. You need
-to add the user solr to the group tomcat, restart Solr Server and Tomcat, log in again
+to add the user solr to the group tomcat, restart Solr server and Tomcat, log in again
 and continue to configure Metacat. The instruction of adding users to groups can be found on the
-`Tomcat And Solr User Management`_ part of the installation page.
+Tomcat And Solr User Management part of the `Solr installation page`_.
 
 Geoserver Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~
