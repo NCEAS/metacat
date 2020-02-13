@@ -111,7 +111,7 @@ public class PropertiesAdmin extends MetacatAdmin {
 				
 				if (externalDir == null) {
 					throw new AdminException("Could not initialize property configuration "
-									+ "page recommended application backup directory was null");
+									+ "page recommended application external directory was null");
 				}
 				
 				// Attempt to discover the following properties.  These will show
