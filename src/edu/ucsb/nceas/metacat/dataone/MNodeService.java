@@ -403,7 +403,7 @@ public class MNodeService extends D1NodeService
             throw new InvalidRequest("1202", "The provided identifier on the system metadata is invalid.");
         }
         
-        if(!newPid.equals(sysmeta.getIdentifier())) {
+        if (!newPid.equals(sysmeta.getIdentifier())) {
             throw new InvalidRequest("1202", "The new identifier " + newPid.getValue() + " doesn't match the identifier " + sysmeta.getIdentifier().getValue() + " in the system metadata.");
         }
 

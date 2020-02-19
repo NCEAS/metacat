@@ -1539,55 +1539,55 @@ public class DocumentImpl
 					&& (FileUtil.getFileStatus(documentPath) == FileUtil.DOES_NOT_EXIST 
 							|| FileUtil.getFileSize(documentPath) == 0)) {
 			    if (objectFile != null && objectFile.exists()) {
-			        logMetacat.info("DocumentImple.writeToFileSystem - the object file already exists at the temp location and the checksum was checked. Metacat only needs to move it to the permanent position " + documentPath);
+			        logMetacat.info("DocumentImpl.writeToFileSystem - the object file already exists at the temp location and the checksum was checked. Metacat only needs to move it to the permanent position " + documentPath);
 			        File permanentFile = new File(documentPath);
 			        FileUtils.moveFile(objectFile, permanentFile);
 			    } else {
-			        logMetacat.info("DocumentImple.writeToFileSystem - Metacat needs to write the metadata bytes into the file  " + documentPath);
-			        if(checksum != null) {
+			        logMetacat.info("DocumentImpl.writeToFileSystem - Metacat needs to write the metadata bytes into the file  " + documentPath);
+			        if (checksum != null) {
 	                    needCalculateChecksum = true;
 	                    checksumValue = checksum.getValue();
-	                    logMetacat.info("DocumentImple.writeToFileSystem - the checksum from the system metadata is "+checksumValue);
-	                    if(checksumValue == null || checksumValue.trim().equals("")) {
-	                        logMetacat.error("DocumentImple.writeToFileSystem - the checksum value from the system metadata shouldn't be null or blank");
+	                    logMetacat.info("DocumentImpl.writeToFileSystem - the checksum from the system metadata is " + checksumValue);
+	                    if (checksumValue == null || checksumValue.trim().equals("")) {
+	                        logMetacat.error("DocumentImpl.writeToFileSystem - the checksum value from the system metadata shouldn't be null or blank");
 	                        throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
 	                    }
 	                    String algorithm = checksum.getAlgorithm();
-	                    logMetacat.info("DocumentImple.writeToFileSystem - the algorithm to calculate the checksum from the system metadata is "+algorithm);
-	                    if(algorithm == null || algorithm.trim().equals("")) {
-	                        logMetacat.error("DocumentImple.writeToFileSystem - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank");
+	                    logMetacat.info("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata is " + algorithm);
+	                    if (algorithm == null || algorithm.trim().equals("")) {
+	                        logMetacat.error("DocumentImpl.writeToFileSystem - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank");
 	                        throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
 	                    }
 	                    try {
 	                        md = MessageDigest.getInstance(algorithm);
 	                    } catch (NoSuchAlgorithmException ee) {
-	                        logMetacat.error("DocumentImple.writeToFileSystem - we don't support the algorithm "+algorithm+" to calculate the checksum.", ee);
-	                        throw new InvalidSystemMetadata("1180", "The algorithm "+algorithm+" to calculate the checksum is not supported: "+ee.getMessage());
+	                        logMetacat.error("DocumentImpl.writeToFileSystem - we don't support the algorithm " + algorithm + " to calculate the checksum.", ee);
+	                        throw new InvalidSystemMetadata("1180", "The algorithm " + algorithm + " to calculate the checksum is not supported: " + ee.getMessage());
 	                    }
 	                }
 
 	                OutputStream fos = null;
 	                try {
-	                    if(needCalculateChecksum) {
-	                        logMetacat.info("DocumentImple.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
+	                    if (needCalculateChecksum) {
+	                        logMetacat.info("DocumentImpl.writeToFileSystem - we need to compute the checksum since it is from DataONE API");
 	                        fos = new DigestOutputStream(new FileOutputStream(documentPath), md);
 	                    } else {
-	                        logMetacat.info("DocumentImple.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API or the checksum has been verified.");
+	                        logMetacat.info("DocumentImpl.writeToFileSystem - we don't need to compute the checksum since it is from Metacat API or the checksum has been verified.");
 	                        fos = new FileOutputStream(documentPath);
 	                    }
 	                    
 	                    IOUtils.write(xml, fos);
 	                    fos.flush();
 	                    fos.close();
-	                    if(needCalculateChecksum) {
+	                    if (needCalculateChecksum) {
 	                        String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-	                        logMetacat.info("DocumentImple.writeToFileSystem - the check sum calculated from the saved local file is "+localChecksum);
-	                        if(localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
-	                            logMetacat.error("DocumentImple.writeToFileSystem - the check sum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue);
+	                        logMetacat.info("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum);
+	                        if (localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
+	                            logMetacat.error("DocumentImpl.writeToFileSystem - the check sum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue);
 	                            File newFile = new File(documentPath);
 	                            boolean success = newFile.delete();
-	                            logMetacat.info("Delete the file "+newFile.getAbsolutePath()+" sucessfully? "+success);
-	                            throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
+	                            logMetacat.info("Delete the file " + newFile.getAbsolutePath() + " sucessfully? " + success);
+	                            throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is " + localChecksum + ". But it doesn't match the value from the system metadata " + checksumValue + ".");
 	                        }
 	                    }
 	                } catch (IOException ioe) {

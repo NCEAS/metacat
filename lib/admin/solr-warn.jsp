@@ -45,7 +45,7 @@
 <%@ include file="./header-section.jsp"%>
 
 <div class="document">
-	<h2>SOLR Service Configuration</h2>
+	<h2>Solr Service Configuration</h2>
 	
 	<p><%@ include file="page-message-section.jsp"%></p>
 	<input class="button" type="button" value="Okay" onClick="forward('./admin?configureType=configure&processForm=false')"> 

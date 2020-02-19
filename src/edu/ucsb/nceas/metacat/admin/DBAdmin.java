@@ -224,27 +224,14 @@ public class DBAdmin extends MetacatAdmin {
 				PropertyService.setProperty("configutil.databaseConfigured",
 						PropertyService.CONFIGURED);
 				PropertyService.persistMainBackupProperties();
-                /*if(solrSchemaException != null) {
-                    //Show the warning message
-                    Vector<String> errorVector = new Vector<String>();
-                    errorVector.add(solrSchemaException.getMessage());
-                    RequestUtil.clearRequestMessages(request);
-                    request.setAttribute("supportEmail", supportEmail);
-                    RequestUtil.setRequestErrors(request, errorVector);
-                    RequestUtil.forwardRequest(request, response,
-                                    "/admin/solr-schema-warn.jsp", null);
-                } else {*/
+               
                     // Reload the main metacat configuration page
                     processingSuccess.add("Database successfully upgraded");
                     RequestUtil.clearRequestMessages(request);
                     RequestUtil.setRequestSuccess(request, processingSuccess);
                     RequestUtil.forwardRequest(request, response,
                             "/admin?configureType=configure&processForm=false", null);
-                    // Write out the configurable properties to a backup file
-                    // outside the install directory.
-
-                    
-                //}
+                 
 			
 			} catch (GeneralPropertyException gpe) {
 				throw new AdminException("DBAdmin.configureDatabase - Problem getting or setting " +
@@ -357,7 +344,7 @@ public class DBAdmin extends MetacatAdmin {
 	}
 	
 	/**
-	 * Get the list of classes should be run for updating the solr server.
+	 * Get the list of classes that should be run to update the solr server.
 	 * @return the list of classes
 	 */
 	public Vector<String> getSolrUpdateClasses() {

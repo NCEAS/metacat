@@ -472,8 +472,8 @@ Configuration.
 
 Solr Server
 ...........
-From version 2.13.0, Metacat starts to use the external Solr HTTP server as the 
-search engine. Unfortunately the Solr Debian packages coming with the Ubuntu operating 
+From version 2.13.0, Metacat uses the external Solr HTTP server as the 
+search engine. Unfortunately the Solr Debian packages that come with the Ubuntu operating 
 system are obsoleted and you have to install the binary packages by yourself. This section 
 provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
 
@@ -493,7 +493,7 @@ https://lucene.apache.org/solr/downloads.html
 
   sudo bash ./install_solr_service.sh solr-8.4.1.tgz
 
-3. Make the Solr environment overwrites include file being the group writable:
+3. Ensure the Solr defaults file is group writable:
 
 ::
 
@@ -505,7 +505,7 @@ https://lucene.apache.org/solr/downloads.html
 
   sudo service solr status
 
-5. Make sure the firewall is running and the default port 8983 doesn't expose externally (assume you are using UFW):
+5. Make sure the firewall is running and the default port 8983 isn't exposed externally (assume you are using ufw):
 
 ::
 
@@ -521,8 +521,8 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
 7. Tomcat and Solr User Management
 
-The interaction of the Tomcat and Solr services will cause the file permission issues. 
-Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will fix the problems:
+The interaction of the Tomcat and Solr services can cause the file permission issues. 
+Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat8`` group to fix the problem:
 
 ::
 
@@ -536,7 +536,7 @@ Adding the Tomcat user to the Solr group and the Solr user to Tomcat group will 
   sudo service solr stop
   sudo service solr start
 
-9. You may check if the tomcat8 user and solr user have the groups by typing:
+9. Check that the ``tomcat8`` user and ``solr`` user are members of the appropriate groups with:
 
 ::
 

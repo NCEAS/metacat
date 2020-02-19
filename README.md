@@ -72,7 +72,7 @@ New features in this release:
 * Upgrade Solr to version 8 and use the external Solr server
 * Use the streaming HTTP multipart handler to improve performance
 Notice
-* Metacat Servlet APIs will be deprecated in near future and its client software, Morpho, will not work any more.
+* Metacat Servlet APIs will be deprecated in the near future and its client software, Morpho, will not work with future versions of Metacat.
 * Solr dynamic fields such as read_count_i will be deprecated.
 
 ### Release Notes for 2.12.3

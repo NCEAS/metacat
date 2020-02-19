@@ -142,27 +142,26 @@ public class MetacatSolrIndex {
      */
     private static MultiMapSolrParams parseQueryString(String queryString) {
       Map<String,String[]> map = new HashMap<String, String[]>();
-      if( queryString != null && queryString.length() > 0 ) {
+      if (queryString != null && queryString.length() > 0) {
         try {
-          for( String kv : queryString.split( "&" ) ) {
-            int idx = kv.indexOf( '=' );
-            if( idx > 0 ) {
-              String name = URLDecoder.decode( kv.substring( 0, idx ), "UTF-8");
-              String value = URLDecoder.decode( kv.substring( idx+1 ), "UTF-8");
-              log.debug("SolrIndex.parseQueryString - add the name " + name + " and value " + value +" pair to the pama map");
-              MultiMapSolrParams.addParam( name, value, map );
-            }
-            else {
-              String name = URLDecoder.decode( kv, "UTF-8" );
-              log.debug("SolrIndex.parseQueryString - add the name " + name + " to the pama map");
-              MultiMapSolrParams.addParam( name, "", map );
+          for (String kv : queryString.split("&")) {
+            int idx = kv.indexOf('=');
+            if (idx > 0) {
+              String name = URLDecoder.decode(kv.substring(0, idx), "UTF-8");
+              String value = URLDecoder.decode(kv.substring(idx+1), "UTF-8");
+              log.debug("SolrIndex.parseQueryString - add the name " + name + " and value " + value +" pair to the prama map");
+              MultiMapSolrParams.addParam(name, value, map);
+            } else {
+              String name = URLDecoder.decode(kv, "UTF-8");
+              log.debug("SolrIndex.parseQueryString - add the name " + name + " to the prama map");
+              MultiMapSolrParams.addParam(name, "", map);
             }
           }
-        } catch( UnsupportedEncodingException uex ) {
-          throw new SolrException( SolrException.ErrorCode.SERVER_ERROR, uex );
+        } catch (UnsupportedEncodingException uex) {
+          throw new SolrException(SolrException.ErrorCode.SERVER_ERROR, uex);
         }
       }
-      return new MultiMapSolrParams( map );
+      return new MultiMapSolrParams(map);
     }
     
     /**

@@ -110,7 +110,7 @@ public class SolrQueryServiceController {
      * @throws ParserConfigurationException 
      * @throws UnsupportedType 
      */
-    public InputStream query(SolrParams params,Set<Subject>subjects, SolrRequest.METHOD method) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
+    public InputStream query(SolrParams params,Set<Subject> subjects, SolrRequest.METHOD method) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
         if(isEmbeddedSolrServer) {
             return embeddedQueryService.query(params, subjects, method);
         } else {

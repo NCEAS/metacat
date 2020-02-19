@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.bind.DatatypeConverter;
@@ -107,74 +108,86 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
             FileItemStream item = iter.next();
             String name = item.getFieldName();
             InputStream stream = item.openStream();
-            if (item.isFormField()) {
-                //process form parts
-                String value = Streams.asString(stream);
-                log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field " + name + " with value "+ value + " detected.");
-                if (mpParams.containsKey(name)) {
-                    mpParams.get(name).add(value);
-                } else {
-                    List<String> values = new ArrayList<String>();
-                    values.add(value);
-                    mpParams.put(name, values);
-                }
-            } else {
-                log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field " + name + " with file name " + item.getName() + " detected.");
-                // Process the input stream
-                if (name.equals(SYSMETA)) {
-                    //copy the stream to a byte array output stream so we can read it multiple times. Since we don't know it is v1 or v2, we need to try two times.
-                    ByteArrayOutputStream os = new ByteArrayOutputStream();
-                    IOUtils.copy(stream, os);
-                    byte[] sysmetaBytes = os.toByteArray();
-                    os.close();
-                    ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes);
-                    try {
-                        org.dataone.service.types.v2.SystemMetadata sysMeta2 = TypeMarshaller.unmarshalTypeFromStream(org.dataone.service.types.v2.SystemMetadata.class, input);
-                        sysMeta = sysMeta2;
-                    } catch (Exception e) {
-                        //Transforming to the v2 systemmeta object failed. Try to transform to v1
-                        input.reset();
-                        sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
-                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
-                    }
-                    input.close();
-                    multipartRequest.setSystemMetadata(sysMeta);
-                } else if (name.equals("object")){
-                    
-                    if (sysMeta != null && sysMeta.getChecksum() != null && sysMeta.getChecksum().getAlgorithm() != null && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
-                      //We are lucky and the system metadata has been processed.
-                        String algorithm = sysMeta.getChecksum().getAlgorithm();
-                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream AFTER handling the system metadata stream. StreamResolver will calculate the checksum using algorithm " + algorithm);
-                        //decide the pid for debug purpose
-                        String pid = null;
-                        if (sysMeta != null && sysMeta.getIdentifier() != null ) {
-                            pid = sysMeta.getIdentifier().getValue();
-                        }
-                        if(pid == null || pid.trim().equals("")) {
-                            pid = "UNKNOWN";
-                        }
-                        File newFile = generateTmpFile("checked-object");
-                        CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
-                        mpFiles.put(name, checkedFile);
+            try {
+                if (item.isFormField()) {
+                    //process form parts
+                    String value = Streams.asString(stream);
+                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart - form field " + name + " with value "+ value + " detected.");
+                    if (mpParams.containsKey(name)) {
+                        mpParams.get(name).add(value);
                     } else {
-                        log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. StreamResolver can NOT calculate the checksum since we don't know the algorithm.");
-                        File newFile = generateTmpFile("unchecked-object");
-                        writeStreamToFile(newFile, stream);
-                        Checksum checksum = null;//we don't have a checksum, so set it null.
-                        CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
-                        mpFiles.put(name, checkedFile);
+                        List<String> values = new ArrayList<String>();
+                        values.add(value);
+                        mpParams.put(name, values);
                     }
                 } else {
-                    File newFile = generateTmpFile("other");
-                    writeStreamToFile(newFile, stream);
-                    mpFiles.put(name, newFile);
+                    log.debug("StreamingMultipartRequestResolver.resoloveMulitpart -File field " + name + " with file name " + item.getName() + " detected.");
+                    // Process the input stream
+                    if (name.equals(SYSMETA)) {
+                        //copy the stream to a byte array output stream so we can read it multiple times. Since we don't know it is v1 or v2, we need to try two times.
+                        ByteArrayOutputStream os = new ByteArrayOutputStream();
+                        IOUtils.copy(stream, os);
+                        byte[] sysmetaBytes = os.toByteArray();
+                        os.close();
+                        ByteArrayInputStream input = new ByteArrayInputStream(sysmetaBytes);
+                        try {
+                            org.dataone.service.types.v2.SystemMetadata sysMeta2 = TypeMarshaller.unmarshalTypeFromStream(org.dataone.service.types.v2.SystemMetadata.class, input);
+                            sysMeta = sysMeta2;
+                        } catch (Exception e) {
+                            //Transforming to the v2 systemmeta object failed. Try to transform to v1
+                            input.reset();
+                            sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
+                        }
+                        input.close();
+                        multipartRequest.setSystemMetadata(sysMeta);
+                    } else if (name.equals("object")){
+                        
+                        if (sysMeta != null && sysMeta.getChecksum() != null && sysMeta.getChecksum().getAlgorithm() != null && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
+                          //We are lucky and the system metadata has been processed.
+                            String algorithm = sysMeta.getChecksum().getAlgorithm();
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream AFTER handling the system metadata stream. StreamResolver will calculate the checksum using algorithm " + algorithm);
+                            //decide the pid for debug purpose
+                            String pid = null;
+                            if (sysMeta != null && sysMeta.getIdentifier() != null ) {
+                                pid = sysMeta.getIdentifier().getValue();
+                            }
+                            if(pid == null || pid.trim().equals("")) {
+                                pid = "UNKNOWN";
+                            }
+                            File newFile = generateTmpFile("checked-object");
+                            CheckedFile checkedFile = writeStreamToCheckedFile(newFile,  stream, algorithm, pid);
+                            mpFiles.put(name, checkedFile);
+                        } else {
+                            log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream before handling the system metadata stream. StreamResolver can NOT calculate the checksum since we don't know the algorithm.");
+                            File newFile = generateTmpFile("unchecked-object");
+                            writeStreamToFile(newFile, stream);
+                            Checksum checksum = null;//we don't have a checksum, so set it null.
+                            CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
+                            mpFiles.put(name, checkedFile);
+                        }
+                    } else {
+                        File newFile = generateTmpFile("other");
+                        writeStreamToFile(newFile, stream);
+                        mpFiles.put(name, newFile);
+                    }
                 }
-            }
-            if(stream != null) {
-                try {
-                    stream.close();
-                } catch (Exception e) {
-                    log.warn("Couldn't close the stream since" + e.getMessage());
+            } catch (Exception e) {
+                //if an exception happened, we need to delete those temporary files
+                Set<String> keys = mpFiles.keySet();
+                for (String key : keys) {
+                    File tempFile = mpFiles.get(key);
+                    deleteTempFile(tempFile);
+                    mpFiles.remove(key);
+                }
+                throw e;
+            } finally {
+                if(stream != null) {
+                    try {
+                        stream.close();
+                    } catch (Exception e) {
+                        log.warn("Couldn't close the stream since" + e.getMessage());
+                    }
                 }
             }
         }
@@ -217,10 +230,20 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         log.debug("StreamingMultipartRequestResolver.writeStreamToCheckedFile - filename for writting is: " + file.getAbsolutePath() + " for the pid " + pid + " by the algorithm " + checksumAlgorithm);
         MessageDigest md = MessageDigest.getInstance(checksumAlgorithm);
         // write data stream to desired file
-        DigestOutputStream os = new DigestOutputStream( new FileOutputStream(file), md);
-        long length = IOUtils.copyLarge(dataStream, os);
-        os.flush();
-        os.close();
+        DigestOutputStream os = null;
+        try {
+            os = new DigestOutputStream(new FileOutputStream(file), md);
+            long length = IOUtils.copyLarge(dataStream, os);
+        } finally {
+            if (os != null) {
+                try {
+                    os.flush();
+                    os.close();
+                } catch (Exception e) {
+                    log.warn("StreamingMultipartRequestResolver.writeStreamToCheckedFile - couldn't close the file output stream since " + e.getMessage());
+                }
+            }
+        }
         String localChecksum = DatatypeConverter.printHexBinary(md.digest());
         checksum = new Checksum();
         checksum.setAlgorithm(checksumAlgorithm);
@@ -238,12 +261,21 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
      * @throws IOException
      */
     private static File writeStreamToFile(File file, InputStream dataStream) throws IOException {
-        FileOutputStream os = new FileOutputStream(file);
-        long length = IOUtils.copyLarge(dataStream, os);
-        os.flush();
-        os.close();
+        FileOutputStream os = null;
+        try {
+            os = new FileOutputStream(file);
+            long length = IOUtils.copyLarge(dataStream, os);
+        } finally {
+            if (os != null) {
+                try {
+                    os.flush();
+                    os.close();
+                } catch (Exception e) {
+                    log.warn("StreamingMultipartRequestResolver.writeStreamToFile - couldn't close the file output stream since " + e.getMessage());
+                }
+            }
+        }
         return file;
-        
     }
     
     /**

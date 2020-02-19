@@ -87,7 +87,7 @@ public abstract class SolrQueryService {
      * @return the response
      * @throws Exception
      */
-    public abstract InputStream query(SolrParams query, Set<Subject>subjects, SolrRequest.METHOD method) throws Exception;
+    public abstract InputStream query(SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws Exception;
     
     
   

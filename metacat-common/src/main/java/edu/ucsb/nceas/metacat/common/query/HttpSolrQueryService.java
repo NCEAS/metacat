@@ -143,27 +143,7 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @throws NotFound 
      * @throws Exception
      */
-    public  InputStream query(SolrParams query, Set<Subject>subjects, SolrRequest.METHOD method) throws IOException, NotFound, UnsupportedType, SolrServerException {
-        /*boolean xmlFormat = false;
-        String queryString = ClientUtils.toQueryString(query, xmlFormat);
-        log.info("==========HttpSolrQueryService.query - the query string after transforming from the SolrParams to the string "+queryString);
-        StringBuffer accessFilter = generateAccessFilterParamsString(subjects);
-        if(accessFilter != null && accessFilter.length() != 0) {
-            String accessStr = accessFilter.toString();
-            log.debug("==========HttpSolrQueryService.query - the access string is "+accessStr);
-            URLCodec urlCodec = new URLCodec();
-            accessStr = urlCodec.encode(accessStr, "UTF-8");
-            log.debug("==========HttpSolrQueryService.query - the access string after escape special characters string "+accessStr);
-            queryString = queryString+"&"+FILTERQUERY+"="+accessStr;
-           
-        }
-        
-        
-        //queryString = ClientUtils.escapeQueryChars(queryString);
-        queryString = solrServerBaseURL+SELECTIONPHASE+queryString;
-        log.info("==========HttpSolrQueryService.query - the final url for querying the solr http server is "+queryString);
-        URL url = new URL(queryString);    
-        return url.openStream();*/
+    public  InputStream query(SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws IOException, NotFound, UnsupportedType, SolrServerException {
         InputStream inputStream = null;
         String wt = query.get(WT);
         query = appendAccessFilterParams(query, subjects);
@@ -175,7 +155,7 @@ public class HttpSolrQueryService extends SolrQueryService {
             QueryResponse response = httpSolrServer.query(query, method);
             inputStream = solrTransformer.transformResults(query, response, wt);
         } else {
-            throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type "+wt+" in the solr query is not supported");
+            throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type " + wt + " in the solr query is not supported");
         }
         return inputStream;
         //throw new NotImplemented("0000", "HttpSolrQueryService - the method of  query(SolrParams query, Set<Subject>subjects) is not for the HttpSolrQueryService. We donot need to implemente it");

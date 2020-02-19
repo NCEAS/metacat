@@ -1007,18 +1007,18 @@ public abstract class D1NodeService {
         DetailedFileInputStream stream = (DetailedFileInputStream) xmlStream;
         tempFile = stream.getFile();
         Checksum expectedChecksum = stream.getExpectedChecksum();
-        if(expectedChecksum != null) {
+        if (expectedChecksum != null) {
             String expectedAlgorithm = expectedChecksum.getAlgorithm();
-            String exprectedChecksumValue = expectedChecksum.getValue();
-            if(expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
+            String expectedChecksumValue = expectedChecksum.getValue();
+            if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
                 //The algorithm is the same and the checksum is same, we don't need to check the checksum again
-                if (exprectedChecksumValue != null && exprectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
                     logMetacat.info("D1NodeService.insertOrUpdateDocument - Metacat already verified the checksum of the object " + pid.getValue());
                     checksumMatched = true;
                 } else {
-                    logMetacat.error("D1NodeService.insertOrUpdateDocument - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                    logMetacat.error("D1NodeService.insertOrUpdateDocument - the check sum calculated from the saved local file is " + expectedChecksumValue + 
                                             ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
-                    throw new InvalidSystemMetadata("1180", "D1NodeService.insertOrUpdateDocument - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                    throw new InvalidSystemMetadata("1180", "D1NodeService.insertOrUpdateDocument - the check sum calculated from the saved local file is " + expectedChecksumValue + 
                             ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
                 }
             } 
@@ -1754,19 +1754,19 @@ public abstract class D1NodeService {
               DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
               tempFile = stream.getFile();
               Checksum expectedChecksum = stream.getExpectedChecksum();
-              if(expectedChecksum != null) {
+              if (expectedChecksum != null) {
                   String expectedAlgorithm = expectedChecksum.getAlgorithm();
-                  String exprectedChecksumValue = expectedChecksum.getValue();
-                  if(expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
+                  String expectedChecksumValue = expectedChecksum.getValue();
+                  if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
                       //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
-                      if (exprectedChecksumValue != null && exprectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                      if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
                           FileUtils.moveFile(tempFile, newFile);
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
                           return newFile;
                       } else {
-                          logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                          logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
                                                   ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
-                          throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + exprectedChecksumValue + 
+                          throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
                                   ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
                       }
                   } else {

@@ -390,11 +390,11 @@ If you click the Solr Configuration button and get the error message like
 ``Server refused connection at: http://localhost:8983/solr``, this means the 
 Solr server is not running and you need to start it.
 
-If you click the Create button to create the Solr core and get the error message 
+If you click the Create button to create the Solr core and get an error message 
 like ``Couldn't persist core properties to /var/metacat/solr-home2/``, this means 
-the user solr doesn't have the write permission on the Solr Home directory. You need
-to add the user solr to the group tomcat, restart Solr server and Tomcat, log in again
-and continue to configure Metacat. The instruction of adding users to groups can be found on the
+the solr user doesn't have the write permission to the Solr Home directory. You need
+to add the solr user to the tomcat group, restart Solr server and Tomcat, log in again
+and continue to configure Metacat. The instructions for adding users to groups can be found in the
 Tomcat And Solr User Management part of the `Solr installation page`_.
 
 Geoserver Configuration
