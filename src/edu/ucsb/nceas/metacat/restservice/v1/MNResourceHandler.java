@@ -1325,6 +1325,15 @@ public class MNResourceHandler extends D1ResourceHandler {
         try {
             // Read the incoming data from its Mime Multipart encoding
             MultipartRequestWithSysmeta multiparts = collectObjectFiles();
+            DetailedFileInputStream object = null;
+            Map<String, File> files = multiparts.getMultipartFiles();
+            objFile = (CheckedFile) files.get("object");
+            // ensure we have the object bytes
+            if (objFile == null) {
+                throw new InvalidRequest("1102", "The object param must contain the object bytes.");
+            }
+            object = new DetailedFileInputStream(objFile, objFile.getChecksum());
+            
                 Identifier pid = new Identifier();
                 if (trailingPid == null) {
                     // get the pid string from the body and set the value
@@ -1349,17 +1358,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1102", "The sysmeta param must contain the system metadata document.");
                     
                 }
-                DetailedFileInputStream object = null;
-                Map<String, File> files = multiparts.getMultipartFiles();
-                objFile = (CheckedFile) files.get("object");
-                // ensure we have the object bytes
-                if  ( objFile == null ) {
-                    throw new InvalidRequest("1102", "The object param must contain the object bytes.");
-                }
-                object = new DetailedFileInputStream(objFile, objFile.getChecksum());
-                
-               
-                
+
                 response.setStatus(200);
                 response.setContentType("text/xml");
                 OutputStream out = response.getOutputStream();
