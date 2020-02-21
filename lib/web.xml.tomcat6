@@ -212,6 +212,11 @@
         <servlet-name>MetacatAdmin</servlet-name>
         <url-pattern>/admin</url-pattern>
     </servlet-mapping>
+
+    <servlet-mapping>
+        <servlet-name>MetacatAdmin</servlet-name>
+        <url-pattern>/admin/</url-pattern>
+    </servlet-mapping>
     
     <servlet-mapping>
         <servlet-name>replication</servlet-name>
