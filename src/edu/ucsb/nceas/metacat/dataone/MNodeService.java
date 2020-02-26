@@ -25,23 +25,15 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -58,27 +50,17 @@ import java.util.UUID;
 import java.util.Vector;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
@@ -86,12 +68,8 @@ import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
-import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.configuration.Settings;
-import org.dataone.exceptions.MarshallingException;
-import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -152,22 +130,15 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
+
 import org.dspace.foresite.OREException;
-import org.dspace.foresite.OREParserException;
-import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
-import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
-import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
-import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
-import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
@@ -179,20 +150,15 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.download.*;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
-import edu.ucsb.nceas.utilities.export.HtmlToPdf;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.writer.impl.ZipWriter;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node
@@ -2489,791 +2455,62 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
-
-    /*
-    * Inserts a string into the head of an html document. In this case, it is most likely
-    * JSON-LD.
-    *
-    * @param jsonLd: The JSON that's being instered into the head
-    * @param fullHTML: The HTML document
-     */
-    private String insertJSONIntoReadme(String jsonLd, String fullHTML)
-    {
-        if (fullHTML.length() >1) {
-            // Look for the first table within the first table group
-            String headTag = "<head>";
-            int headTagLocation = fullHTML.indexOf(headTag);
-            // Insert the file table above the table
-            int insertLocation = headTagLocation+headTag.length();
-            StringBuilder builder = new StringBuilder(fullHTML);
-
-            String fullInstertion = "<script type=\"application/ld+json\">" + jsonLd + "</script>";
-            builder.insert(insertLocation, fullInstertion);
-            return builder.toString();
-        }
-        return fullHTML;
-    }
-
-    /*
-     * Transform an XML document using an XSLT stylesheet to another format.
-     * In this case, the eml to json-ld xsl is used to transform the EML into
-     * JSON-LD
-     *
-     * @param doc: the document to be transformed
-     * @param xslSystemId: the system location of the stylesheet
-     * @param pw: the PrintWriter to which output is printed
-     */
-    private String emlToJson(String doc, String xslSystemId)
-    {
-        try {
-            StreamSource xslSource =
-                    new StreamSource(xslSystemId);
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Result outputTarget = new StreamResult(outputStream);
-
-            Transformer jsonTransformer = TransformerFactory.newInstance().newTransformer(xslSource);
-            StringReader strReader = new StringReader(doc);
-            jsonTransformer.transform(new StreamSource(strReader), outputTarget);
-            return outputStream.toString("UTF-8");
-        } catch (TransformerConfigurationException e) {
-            logMetacat.error("There was an error in configuring the XML transformer.", e);
-        } catch (TransformerException e) {
-            logMetacat.error("Failed to transform the EML into JSON-LD", e);
-        } catch (UnsupportedEncodingException e) {
-            logMetacat.error("Failed to convert the JSON-LD to a string", e);
-        }
-        return "";
-    }
-
-    /*
-     * Generates a schema.org compliant JSON-LD representation of the EML document. If the
-     * generation failed, an empty string is returned.
-     *
-     * @param session: The user's session
-     * @param emlDocId: The EML document being transformed into JSON-LD
-     */
-    public String generatePackageJSONLD(Session session, Identifier emlDocId) {
-        try
-        {
-            // Get a stream to the EML content
-            InputStream metadataStream = this.get(session, emlDocId);
-            // Turn the stream into a string for the xslt
-            String emlDoc = IOUtils.toString(metadataStream, "UTF-8");
-            String filePath = PropertyService.getProperty("application.deployDir")+"/"+PropertyService
-                    .getProperty("application.context")+ "/style/common/conversions/emltojson-ld.xsl";
-
-            return this.emlToJson(emlDoc, filePath);
-        }
-        catch(InvalidToken e)
-        {
-            logMetacat.error("Invalid token.", e);
-        } catch(IOException e) {
-            logMetacat.error("Failed to convert the metadata stream to a string.", e);
-        } catch(PropertyNotFoundException e) {
-            logMetacat.error("Failed to locate the eml-jsonld transformation file.", e);
-        } catch(ServiceFailure e) {
-            logMetacat.error("Failed to retrive the EML metadata.", e);
-        } catch(NotAuthorized e) {
-            logMetacat.error("Not authorized to retrive metadata.", e);
-        } catch(NotFound e) {
-            logMetacat.error("EML document not found.", e);
-        } catch(NotImplemented e) {
-            logMetacat.error("Feature is not implemented.", e);
-        }
-        return "";
-    }
-
-    /*
-      * Gets the namespace prefix for the prov ontology.
-      *
-      * @param resourceMap: The resource map that is being checked
-     */
-    public String getProvNamespacePrefix(String resourceMap) {
-        // Pattern that searches for the text between the last occurance of 'xmlns and
-        // the prov namepsace string
-        Pattern objectPattern = Pattern.compile("(xmlns:)(?!.*\\1)(.*)(\"http://www.w3.org/ns/prov#\")");
-        Matcher m = objectPattern.matcher(resourceMap);
-        if (m.find()) {
-            // Save the file path for later when it gets written to disk
-            return StringUtils.substringBetween(m.group(0), "xmlns:", "=\"http://www.w3.org/ns/prov#\"");
-        }
-        return "";
-    }
-
-    /*
-     * Inserts a file table into the readme html. This works by searching for the
-     * first table row in the first table group and pasting the table in front of it.
-     * If for some reason the readme HTML is empty, just return the table.
-     *
-     * @param table: The HTML file table
-     * @param htmlDoc: The greater HTML document that the table goes in
-     */
-    public String insertTableIntoReadme(String table, String htmlDoc) {
-        if (htmlDoc.length() >1) {
-            // Look for the first table within the first table group
-            String bodyTag = "<table class=\"subGroup onehundred_percent\">\n";
-            int bodyTagLocation = htmlDoc.indexOf(bodyTag);
-            // Insert the file table above the table
-            int insertLocation = bodyTagLocation+bodyTag.length();
-            StringBuilder builder = new StringBuilder(htmlDoc);
-            builder.insert(insertLocation, table);
-            return builder.toString();
-        }
-        return htmlDoc;
-    }
-
-    /*
-     * Generates a basic readme file using the metacatui xslt.
-     *
-     * @param session: The current session
-     * @param metadataId: The EML metadata ID
-     * @param metadataSysMeta: The EML sysmeta document
-     */
-    public String generateReadmeBody(Session session, Identifier metadataId, SystemMetadata metadataSysMeta) {
-        String readmeBody = new String();
-        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-        try{
-            // Get a stream to the object
-            InputStream metadataStream = this.get(session, metadataId);
-            // Turn the stream into a string for the xslt
-            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
-            // Get the type so the xslt can properly parse it
-            String sourceType = metadataSysMeta.getFormatId().getValue();
-            // Holds the HTML that the transformer returns
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            // Handles writing the xslt response to the byte array
-            Writer writer = new OutputStreamWriter(baos, "UTF-8");
-
-            DBTransform transformer = new DBTransform();
-            transformer.transformXMLDocument(documentContent,
-                    sourceType,
-                    "-//W3C//HTML//EN",
-                    "default",
-                    writer,
-                    params,
-                    null //sessionid
-            );
-            return baos.toString();
-        } catch(InvalidToken e) {
-            logMetacat.error("Invalid token.", e) ;
-        } catch(ServiceFailure e) {
-            logMetacat.error("Error getting a stream to the metadata document.", e) ;
-        } catch(IOException e) {
-            logMetacat.error("Error converting the metadata to a string.", e) ;
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to retrive the metadata.", e);
-        } catch (NotFound e) {
-            logMetacat.error("EML metadata document not found.", e);
-        } catch(SQLException e) {
-            logMetacat.error("Error transforming the EML document.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Error retrieving the EML document.", e);
-        } catch (ClassNotFoundException e) {
-            logMetacat.error("Failed to locate the xsl file to transform the EML document.", e);
-        } catch (PropertyNotFoundException e){
-            logMetacat.error("Failed to locate the xsl file to transform the EML document.", e);
-        }
-        return "";
-    }
-
     /**
-     * Creates a table of filename, size, and hash for objects in a data package.
-     *
-     * @param session: The current session
-     * @param metadataIds: A list of metadata identifiers of objects that should be included in the table
-     * @param coreMetadataIdentifiers: A list of IDs for the eml and resource map
-     */
-    public String createSysMetaTable(Session session,
-                                     List<Identifier> metadataIds,
-                                     List<Identifier> coreMetadataIdentifiers) {
-
-        Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-
-        // Holds the HTML rows
-        StringBuilder tableHTMLBuilder = new StringBuilder();
-        for(Identifier metadataID: metadataIds) {
-            // Check to make sure the object is a data file that the user had uploaded.
-            if(coreMetadataIdentifiers.contains(metadataID)) {
-                continue;
-            }
-            try {
-                SystemMetadata entrySysMeta = this.getSystemMetadata(session, metadataID);
-                Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
-
-                // Holds the content of the system metadata document
-                ByteArrayOutputStream sysMetaStream = new ByteArrayOutputStream();
-
-                // Retrieve the sys meta document
-                TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
-
-                // Holds the HTML that the xslt returns
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-                // Handles writing the xslt response to the byte array
-                Writer writer = new OutputStreamWriter(baos, "UTF-8");
-
-                // The xslt requires the sysmeta document in string form
-                String documentContent = sysMetaStream.toString("UTF-8");
-                DBTransform transformer = new DBTransform();
-
-                // Transform the system metadocument using the 'export' xslt, targeting an HTML return type
-                transformer.transformXMLDocument(documentContent,
-                        "package-export",
-                        "-//W3C//HTML//EN",
-                        "package-export",
-                        writer,
-                        params,
-                        null //sessionid
-                );
-
-                // Write the table to our string builder
-                tableHTMLBuilder.append(baos.toString());
-            } catch (InvalidToken e) {
-                logMetacat.error("Invalid token.", e);
-            } catch (MarshallingException e) {
-                logMetacat.error("There was an error accessing the metadata document.", e);
-            } catch (UnsupportedEncodingException e) {
-                logMetacat.error("There was an error encoding the metadata document.", e);
-            } catch (ServiceFailure e) {
-                logMetacat.error("There was a service failure while transforming the EML document.", e);
-            } catch (IOException e) {
-                logMetacat.error("There was an error accessing the metadata document.", e);
-            } catch (NotAuthorized e) {
-                logMetacat.error("Not authorized to access the metadata document.", e);
-            } catch (SQLException e) {
-                logMetacat.error("Failed to create the xml transformer.", e);
-            } catch (NotFound e) {
-                logMetacat.error("Faield to find the metadata document.", e);
-            } catch (ClassNotFoundException e) {
-                logMetacat.error("Failed to locate the xsl for transforming the EML document.", e);
-            } catch (NotImplemented e) {
-                logMetacat.error("Not implemented.", e);
-            } catch (PropertyNotFoundException e){
-                logMetacat.error("Failed to locate the xsl for transforming the EML document.", e);
-            }
-        }
-
-        String htmlString = tableHTMLBuilder.toString();
-        // If the HTML body is empty, we should quit early
-        if (htmlString.isEmpty()) {
-            return "";
-        }
-
-        // This is ugly, but we need to wrap the sysmeta file rows in a table
-        String openingHtml ="<td class=\"fortyfive_percent\"><table class=\"subGroup subGroup_border onehundred_percent\">"+
-                "<tr>"+
-                "<th colspan=\"3\">"+
-                "<h4>Files in this downloaded dataset:</h4>"+
-                "</tr>"+
-                "<tr>"+
-                "<TD><B>Name</B></TD>"+
-                "<TD><B>Size (Bytes)</B></TD>"+
-                "</tr>"+
-                "</th>";
-        String closingHtml = "</table></td>";
-
-        // Wrap the table rows in a table
-        return openingHtml + htmlString + closingHtml;
-    }
-
-    /*
-     * Generates the README.html file in the bag root. This is a partially hacky
-     * portion of code. To do this, a file table is generated via an xslt that pareses system metadata
-     * documents. Then, the metacatui theme is used to generate an html document rendition of the EML. The
-     * table is then inserted into the html body.
-     * The EML document is also fed to an xsl that returns a subset of it as json-ld. This is inserted
-     * into the head of the main HTML document.
-     *
-     * @param session: The current session
-     * @param metadataIds: A list of metadata identifiers that represent objects in the package
-     * @param coreMetadataIdentifiers: A list of metadata IDs for the EML and resource map
-     * @param tempBagRoot: The temporary directory where the unzipped-bag is being stored
-     */
-    public File generateReadmeHTMLFile(Session session,
-                                       List<Identifier> metadataIds,
-                                       List<Identifier> coreMetadataIdentifiers,
-                                       File tempBagRoot) {
-        String readmeDoc = "";
-        File readmeFile = null;
-        // Generate the file table
-        String sysmetaTable = this.createSysMetaTable(session, metadataIds, coreMetadataIdentifiers);
-
-        try {
-            // The body of the README is generated from the primary science metadata document. Find this document, and
-            // generate the body. Use coreMetadataIdentifiers since it's going to be shorter than metadataIds and contains
-            // the EML doc.
-            String jsonLD = "";
-            for (Identifier metadataID : coreMetadataIdentifiers) {
-                SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
-                // Look for the science metadata object
-                if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-                    readmeDoc = this.generateReadmeBody(session, metadataID, metadataSysMeta);
-                    jsonLD = generatePackageJSONLD(session, metadataID);
-                    break;
-                }
-            }
-            if (!readmeDoc.isEmpty()) {
-                // Now that we have the HTML table and the rest of the HTML body, we need to combine them
-                readmeDoc = this.insertTableIntoReadme(sysmetaTable, readmeDoc);
-                readmeDoc = this.insertJSONIntoReadme(jsonLD, readmeDoc);
-            }
-            readmeFile = new File(tempBagRoot.getAbsolutePath() + "/" + "README.html");
-            // Write the html to a stream
-            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(readmeDoc.getBytes());
-            // Copy the bytes to the html file
-            IOUtils.copy(resultInputStream, new FileOutputStream(readmeFile, true));
-        } catch (UnsupportedEncodingException e) {
-            logMetacat.error("There was an error encoding the system metadata", e);
-        } catch (IOException e) {
-            logMetacat.error("There was an error creating the xml transformer.", e);
-        } catch (InvalidToken e) {
-            logMetacat.error("Invalid token.", e);
-        } catch (NotFound e) {
-            logMetacat.error("Failed to locate the EML metadata document.", e);
-        }  catch (ServiceFailure e) {
-            logMetacat.error("Service failure while creating README.html.", e);
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to access the EML metadata document.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Not implemented.", e);
-        }
-        return readmeFile;
-    }
-
-    /*
-     * Creates a bag file from a directory and returns a stream to it.
-     * @param bagFactory And instance of BagIt.BagFactory
-     * @param bag The bag instance being used for this export
-     * @param streamedBagFile The folder that holds the data being exported
-     * @param dataRoot The root data folder
-     * @param metadataRoot The root metadata directory
-     * @param pid The package pid
-     */
-    private InputStream createExportBagStream(BagFactory bagFactory,
-                                              Bag bag,
-                                              File streamedBagFile,
-                                              File dataRoot,
-                                              File metadataRoot,
-                                              Identifier pid) {
-        InputStream bagInputStream = null;
-        String bagName = pid.getValue().replaceAll("\\W", "_");
-        try {
-            File[] files = dataRoot.listFiles();
-            for (File fle : files) {
-                bag.addFileToPayload(fle);
-            }
-            bag.addFileAsTag(metadataRoot);
-            File bagFile = new File(streamedBagFile, bagName + ".zip");
-            bag.setFile(bagFile);
-            bag = bag.makeComplete();
-            ZipWriter zipWriter = new ZipWriter(bagFactory);
-            bag.write(zipWriter, bagFile);
-            // Make sure the bagFile is current
-            bagFile = bag.getFile();
-            // use custom FIS that will delete the file when closed
-            bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
-            // also mark for deletion on shutdown in case the stream is never closed
-            bagFile.deleteOnExit();
-        } catch (FileNotFoundException e) {
-            logMetacat.error("Failed to find a file to delete.", e);
-        }
-        return bagInputStream;
-    }
-
-    /*
-     * Writes an EML document to disk. In particular, it writes it to the metadata/ directory which eventually
-     * gets added to the bag.
-     *
-     * @param session: The current session
-     * @param metadataID: The ID of the EML document
-     * @param metadataRoot: The File that represents the metadata/ folder
-
-     */
-    private void writeEMLDocument(Session session,
-                                  Identifier metadataID,
-                                  File metadataRoot) {
-
-        InputStream emlStream = null;
-        try {
-            emlStream = this.get(session, metadataID);
-        } catch (InvalidToken e) {
-            logMetacat.error("Invalid token.", e);
-        } catch (ServiceFailure e) {
-            logMetacat.error("Failed to retrive the EML metadata document.", e);
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to retrive metadata.", e);
-        } catch (NotFound e) {
-            logMetacat.error("EML document not found.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Not implemented.", e);
-        }
-        try {
-            // Write the EML document to the bag zip
-            String documentContent = IOUtils.toString(emlStream, "UTF-8");
-            String filename = metadataRoot.getAbsolutePath() + "/" + "eml.xml";
-            File systemMetadataDocument = new File(filename);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
-            writer.write(documentContent);
-            writer.close();
-        } catch (IOException e) {
-            logMetacat.error("Failed to write the EML document.", e);
-        }
-    }
-
-    /*
-     * Searches through the resource map for any objects that have had their location specified with
-     * prov:atLocation. The filePathMap parameter is mutated with the file path and corresponding pid.
-     *
-     * @param resMap: The resource map that's being parsed
-     * @param filePathMap: Mapping between pid and file path. Should be empty when passed in
-
-     */
-    private void documentObjectLocations(ResourceMap resMap,
-                                         Map<String, String> filePathMap)
-    {
-        try {
-            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder;
-            builder = factory.newDocumentBuilder();
-            Document document = builder.parse(new InputSource(new StringReader(resMapString)));
-
-            // Attempt to search for any atLocation references
-            String atLocationPrefix = getProvNamespacePrefix(resMapString);
-            if(atLocationPrefix.length()>0) {
-                org.w3c.dom.NodeList nodeList = document.getElementsByTagName(atLocationPrefix + ":atLocation");
-
-                // For each atLocation record, we want to save the location and the pid of the object
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    org.w3c.dom.Node node = nodeList.item(i);
-                    org.w3c.dom.NamedNodeMap parentAttributes = node.getParentNode().getAttributes();
-                    String parentURI = parentAttributes.item(0).getTextContent();
-                    String filePath = node.getTextContent();
-                    filePath = filePath.replaceAll("\"", "");
-
-                    // We're given the full URI of the object, but we only want the PID at the end
-                    Pattern objectPattern = Pattern.compile("(?<=object/).*(?)");
-                    Matcher m = objectPattern.matcher(parentURI);
-                    if (m.find()) {
-                        // Save the file path for later when it gets written to disk
-                        filePathMap.put(m.group(0), filePath);
-                    } else {
-                        objectPattern = Pattern.compile("(?<=resolve/).*(?)");
-                        m = objectPattern.matcher(parentURI);
-                        if (m.find()) {
-                            // Save the file path for later when it gets written to disk
-                            filePathMap.put(m.group(0), filePath);
-                        }
-                    }
-                }
-            }
-        } catch (ORESerialiserException e) {
-            logMetacat.warn("Failed to serialize the resource map.", e);
-        } catch (ParserConfigurationException e) {
-            logMetacat.warn("There was a configuration error in the XML parser.", e);
-        } catch (SAXException e) {
-            logMetacat.warn("SAX failed to parse the XML.", e);
-        } catch (IOException e) {
-            logMetacat.warn("Failed to parse the resource map.", e);
-        }
-    }
-
-    /*
-     * Writes the resource map to disk. This file gets written to the metadata/ folder.
-     *
-     * @param resMap: The resource map that's being written to disk
-     * @param metadataRoot: The File that represents the metadata/ folder
-     *
-     */
-    private void writeResourceMap(ResourceMap resMap,
-                                  File metadataRoot) {
-
-        // Write the resource map to the metadata directory
-        String filename = metadataRoot.getAbsolutePath() + "/" + "oai-ore.xml";
-        try {
-            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
-            File systemMetadataDocument = new File(filename);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
-            writer.write(resMapString);
-            writer.close();
-        }
-        catch (IOException e) {
-            logMetacat.error("Failed to write resource map to the bag.", e);
-        } catch (ORESerialiserException e) {
-            logMetacat.error("Failed to de-serialize the resource map", e);
-        }
-    }
-
-    /*
      * Checks to see if the package can be exported based on the formatId
      *
      * @param formatId: The format ID of the package
-     * @param pid: The pid of the package
      *
      * @throws InvalidRequest
      * @throws NotImplemented
      * @throws ServiceFailure
 
      */
-    private void validateExportPackage(ObjectFormatIdentifier formatId, Identifier pid)
-            throws InvalidRequest, NotImplemented, ServiceFailure{
-        if(formatId == null) {
+    private void validateExportPackage(ObjectFormatIdentifier formatID)
+            throws InvalidRequest, NotImplemented, ServiceFailure {
+        if (formatID == null) {
             throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
-        } else if(!formatId.getValue().equals("application/bagit-097")) {
-            throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
-        }
-
-        String serviceFailureCode = "2871";
-        Identifier sid = getPIDForSID(pid, serviceFailureCode);
-        if(sid != null) {
-            pid = sid;
+        } else if (!formatID.getValue().equals("application/bagit-097")) {
+            throw new NotImplemented("", "The format " + formatID.getValue() + " is not supported in the getpackage method");
         }
     }
 
+    private Identifier getProperIdentifier(Identifier pid)
+            throws ServiceFailure {
+        String serviceFailureCode = "2871";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if (sid != null) {
+            return sid;
+        }
+        return pid;
+    }
+
+    /**
+
+     * @param session: The user's session
+     * @param formatId:
+     * @param pid: The package pid
+     *
+     * @return A stream to the bagged package
+     *
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotFound
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-
-        // Do some checks to make sure this package can be exported
-        validateExportPackage(formatId, pid);
-
-		// track the temp files we use so we can delete them when finished
-		List<File> tempFiles = new ArrayList<File>();
-
-        // Holds any science metadata and resource map pids
-        List<Identifier> coreMetadataIdentifiers = new ArrayList<Identifier>();
-        coreMetadataIdentifiers.add(pid);
-
-        // Map of objects to filepaths
-        Map<String, String> filePathMap = new HashMap<String, String>();
-
-		// the pids to include in the package
-		List<Identifier> packagePids = new ArrayList<Identifier>();
-
-		// Container that holds the pids of all of the objects that are in a package
-        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
-
-        /*
-           The bag has a few standard directories (metadata, metadata/sysmeta, data/). Create File objects
-           representing each of these directories so that the appropriate files can be added to them. Initialize them
-           to null so that they can be used outside of the try/catch block.
-         */
-
-        // A temporary directory where the non-zipped bag is formed
-        File tempBagRoot = null;
-        // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
-        File metadataRoot = null;
-        // A temporary directory within metadataRoot that holds system metadata
-        File systemMetadataDirectory = null;
-        // A temporary directory within tempBagRoot that holds data objects
-        File dataRoot = null;
-
-        // Tie the File objects above to actual locations on the filesystem
-        try {
-            tempBagRoot = new File("/var/metacat/temporary/exportedPackages/"+Long.toString(System.nanoTime()));
-            tempBagRoot.mkdirs();
-
-            metadataRoot = new File(tempBagRoot.getAbsolutePath() + "/metadata");
-            metadataRoot.mkdir();
-
-            systemMetadataDirectory = new File(metadataRoot.getAbsolutePath() + "/sysmeta");
-            systemMetadataDirectory.mkdir();
-
-            dataRoot = new File(tempBagRoot.getAbsolutePath() + "/data");
-            dataRoot.mkdir();
-        } catch (Exception e) {
-            logMetacat.warn("Error creating bag files", e);
-            throw new ServiceFailure("", "Metacat failed to create the temporary bag archive.");
-        }
-
-        // Get the system metadata for the package
-        SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
-        ResourceMap resMap = null;
-
-        // Maps a resource map to a list of aggregated identifiers. Use this to get the list of pids inside
-        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
-
-        if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
-            InputStream oreInputStream = null;
-
-            // Attempt to open/parse the resource map so that we can get a list of pids inside
-            try {
-                oreInputStream = this.get(session, pid);
-                resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
-                // Check for prov:atLocation and save them in filePathMap
-                this.documentObjectLocations(resMap, filePathMap);
-                // Write the resource map to disk
-                this.writeResourceMap(resMap, metadataRoot);
-
-                oreInputStream = this.get(session, pid);
-                resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-                pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
-            } catch (OREException e) {
-                logMetacat.error("Failed to parse the ORE.", e);
-            } catch (URISyntaxException e) {
-                logMetacat.error("Error with a URI in the ORE.", e);
-            } catch (UnsupportedEncodingException e) {
-                logMetacat.error("Unsupported encoding format.", e);
-            } catch (OREParserException e) {
-                logMetacat.error("Failed to parse the ORE.", e);
-            }
-        } else {
-            //throw an invalid request exception if there's just a single pid
-            throw new InvalidRequest("2873", "The given pid " + pid.getValue() + " is not a package id (resource map id). Please use a package id instead.");
-        }
-
-        // Use the list of pids to gather and store information about each corresponding sysmeta document
-        try {
-            for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
-                Set<Identifier> metadataIdentifiers = entries.keySet();
-
-                pidsOfPackageObjects.addAll(entries.keySet());
-                for (List<Identifier> dataPids : entries.values()) {
-                    pidsOfPackageObjects.addAll(dataPids);
-                }
-
-                // Loop over each metadata document
-                for (Identifier metadataID : metadataIdentifiers) {
-                    //Get the system metadata for this metadata object
-                    SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
-                    // Handle any system metadata
-                    if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-                        //If this is in eml format, write it to the temporary bag metadata directory
-                        String metadataType = metadataSysMeta.getFormatId().getValue();
-                        if (metadataType.startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
-                            // Add the ID to the list of metadata pids
-                            coreMetadataIdentifiers.add(metadataID);
-
-                            // Write the EML document to disk
-                            this.writeEMLDocument(session,
-                                    metadataID,
-                                    metadataRoot);
-                        }
-                    }
-                }
-            }
-        } catch (InvalidToken e) {
-            logMetacat.error("Invalid token.", e);
-        } catch (NotFound e) {
-            logMetacat.error("Failed to locate the metadata.", e);
-        }  catch (ServiceFailure e) {
-            logMetacat.error("Service failure while writing the EML document to disk.", e);
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to access the EML metadata document.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Not implemented.", e);
-        }
-
-        List<Identifier> metadataIds = new ArrayList();
-        /*
-		    Loop over each pid in the resource map. First, the system metadata gets written. Next, the data file that
-			corresponds to the system metadata gets written.
-		*/
-
-        // loop through the package contents
-        for (Identifier entryPid : pidsOfPackageObjects) {
-            //Get the system metadata for the objbect with pid entryPid
-            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
-
-            // Write its system metadata to disk
-            Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
-            metadataIds.add(objectSystemMetadataID);
-            try {
-                String filename = systemMetadataDirectory.getAbsolutePath() + "/sysmeta-" + objectSystemMetadataID.getValue() + ".xml";
-                File systemMetadataDocument = new File(filename);
-                FileOutputStream sysMetaStream = new FileOutputStream(systemMetadataDocument);
-                TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
-            } catch (MarshallingException e) {
-                logMetacat.error("There was an error accessing the metadata document.", e);
-            } catch (FileNotFoundException e) {
-                logMetacat.error("Failed to create the document.", e);
-            } catch (IOException e) {
-                logMetacat.error("Failed to write to temporary file.", e);
-            }
-
-            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
-            if (coreMetadataIdentifiers.contains(entryPid)) {
-                continue;
-            }
-
-            String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-            String fileName = null;
-
-            //TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
-            //Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
-            fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-
-            // ensure there is a file extension for the object
-            String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-            fileName += extension;
-
-            // if SM has the file name, ignore everything else and use that
-            if (entrySysMeta.getFileName() != null) {
-                fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-            }
-
-            // Create a new file for this data file. The default location is in the data diretory
-            File dataPath = dataRoot;
-
-            // Create the directory for the data file, if it was specified in the resource map
-            if (filePathMap.containsKey(entryPid.getValue())) {
-                dataPath = new File(dataRoot.getAbsolutePath() + "/" + filePathMap.get(entryPid.getValue()));
-            }
-            // We want to make sure that the directory exists before referencing it later
-            if (!dataPath.exists()) {
-                dataPath.mkdirs();
-            }
-
-            // Create a temporary file that will hold the bytes of the data object. This file will get
-            // placed into the bag
-            File tempFile = new File(dataPath, fileName);
-            try {
-                InputStream entryInputStream = this.get(session, entryPid);
-                IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-            } catch (InvalidToken e) {
-                logMetacat.error("Invalid token.", e);
-            } catch (ServiceFailure e) {
-                logMetacat.error("Failed to retrive data file.", e);
-            } catch (NotAuthorized e) {
-                logMetacat.error("Not authorized to the data file.", e);
-            } catch (NotFound e) {
-                logMetacat.error("Data file not found.", e);
-            } catch (NotImplemented e) {
-                logMetacat.error("Not implemented.", e);
-            } catch (FileNotFoundException e) {
-                logMetacat.error("Failed to find the temp file.", e);
-            } catch (IOException e) {
-                logMetacat.error("Failed to write to the temp file.", e);
-            }
-        }
-
-        BagFactory bagFactory = new BagFactory();
-        Bag bag = bagFactory.createBag();
-
-        // Create the README.html document
-        File readmeFile = this.generateReadmeHTMLFile(session,
-                metadataIds,
-                coreMetadataIdentifiers,
-                tempBagRoot);
-        bag.addFileAsTag(readmeFile);
-
-        // The directory where the actual bag zipfile is saved (and streamed from)
-        File streamedBagFile = new File("/var/metacat/temporary/exportedPackages/"+Long.toString(System.nanoTime()));
-
-        InputStream bagStream = createExportBagStream(bagFactory,
-                bag,
-                streamedBagFile,
-                dataRoot,
-                metadataRoot,
-                pid);
-        try {
-            FileUtils.deleteDirectory(tempBagRoot);
-            FileUtils.deleteDirectory(streamedBagFile);
-        } catch (IOException e) {
-            logMetacat.error("There was an error deleting the bag artifacts.", e);
-        }
-        return bagStream;
+        logMetacat.info("getPackage called. Validating....");
+	    this.validateExportPackage(formatId);
+        logMetacat.info("Validated. Getting PID....");
+        Identifier packageID = this.getProperIdentifier(pid);
+        logMetacat.info("Got PID. Creating downloader....");
+        PackageDownloader downloader = new PackageDownloader(this, session, formatId, packageID);
+        logMetacat.info("Created downloader. Streaming package....");
+        return downloader.getPackageStream();
     }
 	
 	 /**
