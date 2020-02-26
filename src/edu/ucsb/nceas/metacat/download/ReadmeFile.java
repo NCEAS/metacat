@@ -197,10 +197,11 @@ public class ReadmeFile {
                     new StreamSource(xslSystemId);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             Result outputTarget = new StreamResult(outputStream);
-
+            logMetacat.info("Creating transformer");
             Transformer jsonTransformer = TransformerFactory.newInstance().newTransformer(xslSource);
             StringReader strReader = new StringReader(doc);
             jsonTransformer.transform(new StreamSource(strReader), outputTarget);
+            logMetacat.info("Transformed");
             return outputStream.toString("UTF-8");
         } catch (TransformerConfigurationException e) {
             logMetacat.error("There was an error in configuring the XML transformer.", e);
@@ -219,12 +220,16 @@ public class ReadmeFile {
     public void generatePackageJSONLD() {
         try {
             // Get a stream to the EML content
+            logMetacat.info("Getting metadata stream");
             InputStream metadataStream = this._node.get(this._session, this.getScienceMetadataId());
             // Turn the stream into a string for the xslt
             String emlDoc = IOUtils.toString(metadataStream, "UTF-8");
+            logMetacat.info("Converted to EML doc");
             String filePath = PropertyService.getProperty("application.deployDir")+"/"+PropertyService
                     .getProperty("application.context")+ "/style/common/conversions/emltojson-ld.xsl";
+            logMetacat.info("Got file path");
             this._jsonld = this.emlToJson(emlDoc, filePath);
+            return;
         } catch(InvalidToken e)
         {
             logMetacat.error("Invalid token.", e);
@@ -446,6 +451,7 @@ public class ReadmeFile {
         if (!this._doc.isEmpty()) {
             // Now that we have the HTML table and the rest of the HTML body, we need to combine them
             this.insertTableIntoReadme();
+            logMetacat.info("Inserting JSON-LD into README");
             this.insertJSONIntoReadme();
         }
     }
