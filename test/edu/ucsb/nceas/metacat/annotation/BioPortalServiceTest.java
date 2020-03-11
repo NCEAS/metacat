@@ -68,7 +68,7 @@ public class BioPortalServiceTest extends MCTestCase {
 		
 		// look up the annotation recommendation from BioPortal
 		String text = "Air temperature";
-		Resource retClass = BioPortalService.lookupAnnotationClass(characteristicClass, text, DatapackageSummarizer.OBOE_SBC);
+		Resource retClass = BioPortalService.lookupAnnotationClass(characteristicClass, text, DatapackageSummarizer.OBOE);
 		assertEquals(DatapackageSummarizer.oboe_characteristics + "Temperature", retClass.getURI());
 	}
 
