@@ -469,6 +469,7 @@ public class DatapackageSummarizer {
 		*/
 		
 		// try to look it up from the service
+		return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE);
 	}
 	
 	private Resource lookupEntity(OntClass entityClass, Entity entity) {
