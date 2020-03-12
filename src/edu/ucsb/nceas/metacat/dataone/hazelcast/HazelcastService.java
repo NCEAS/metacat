@@ -590,8 +590,7 @@ public class HazelcastService extends BaseService
 		logMetacat.debug("Member added to cluster: " + member.getInetSocketAddress());
 		boolean isLocal = member.localMember();
 		if (isLocal) {
-			logMetacat.debug("Member islocal: " + member.getInetSocketAddress());
-			synchronizeLocalStore();
+			logMetacat.info("Member islocal: " + member.getInetSocketAddress());
 		}
 	}
 

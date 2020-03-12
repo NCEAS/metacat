@@ -64,9 +64,9 @@ public class DatapackageSummarizer {
 	public static String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 	public static String rdfs = "http://www.w3.org/2000/01/rdf-schema#";
 	public static String owl = "http://www.w3.org/2002/07/owl#";
-	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.0/oboe.owl#";
-	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-core.owl#";
-	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.0/oboe-characteristics.owl#";
+	public static String oboe = "http://ecoinformatics.org/oboe/oboe.1.2/oboe.owl#";
+	public static String oboe_core = "http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#";
+	public static String oboe_characteristics = "http://ecoinformatics.org/oboe/oboe.1.2/oboe-characteristics.owl#";
 	public static String oboe_sbc = "http://ecoinformatics.org/oboe-ext/sbclter.1.0/oboe-sbclter.owl#";
 	public static String oa = "http://www.w3.org/ns/oa#";
 	public static String oa_source = "http://www.w3.org/ns/oa.rdf";
@@ -77,9 +77,9 @@ public class DatapackageSummarizer {
     public static String prov = "http://www.w3.org/ns/prov#";
     public static String prov_source = "http://www.w3.org/ns/prov.owl";
     public static String cito =  "http://purl.org/spar/cito/";
-    
-	public static String OBOE_SBC = "OBOE-SBC";
-	
+
+	public static String OBOE = "OBOE";
+
 	private static boolean cacheInitialized;
 	
 	private static void initializeCache() {
@@ -438,7 +438,7 @@ public class DatapackageSummarizer {
 		*/
 		
 		// try to look it up if we got this far
-		return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE_SBC);
+		return BioPortalService.lookupAnnotationClass(standardClass, unit, OBOE);
 	}
 	
 	private Resource lookupCharacteristic(OntClass characteristicClass, Attribute attribute) {
@@ -469,8 +469,7 @@ public class DatapackageSummarizer {
 		*/
 		
 		// try to look it up from the service
-		return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE_SBC);
-		
+		return BioPortalService.lookupAnnotationClass(characteristicClass, text, OBOE);
 	}
 	
 	private Resource lookupEntity(OntClass entityClass, Entity entity) {
@@ -479,8 +478,8 @@ public class DatapackageSummarizer {
 		String definition = entity.getDefinition();
 		
 		// try to look it up if we got this far
-		return BioPortalService.lookupAnnotationClass(entityClass, definition, OBOE_SBC);
-		
+		return BioPortalService.lookupAnnotationClass(entityClass, definition, OBOE);
+
 	}
 	
 	private DataPackage getDataPackage(Identifier pid) throws Exception {
