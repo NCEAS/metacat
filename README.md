@@ -75,6 +75,10 @@ Notice
 * Metacat Servlet APIs will be deprecated in the near future and its client software, Morpho, will not work with future versions of Metacat.
 * Solr dynamic fields such as read_count_i will be deprecated.
 
+### Release Notes for 2.12.4
+Bugs fixed in this release:
+* Remove an unnecessary expensive query to synchronize the systemmetadata tables among DataONE coordinating nodes.
+
 ### Release Notes for 2.12.3
 New features and bugs fixed in this release:
 * Return an invalid response to the call of cn.getLogRecords if some log records have a null ip address
