@@ -121,7 +121,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     
 	public void entryUpdated(EntryEvent<Identifier, IndexTask> entryEvent) {
 	    //System.out.println("===================================calling entryUpdated method ");
-	    log.info("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
+	    log.debug("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
 		// add to the index
 		Identifier pid = entryEvent.getKey();
 		//System.out.println("===================================update the document "+pid.getValue());

@@ -27,11 +27,13 @@ import java.util.Set;
 
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.solr.client.solrj.SolrServer;
+
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.embedded.EmbeddedSolrServer;
-import org.apache.solr.client.solrj.impl.CommonsHttpSolrServer;
+import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
+import org.apache.solr.client.solrj.SolrClient;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
 import org.apache.solr.schema.IndexSchema;
@@ -61,7 +63,7 @@ public class SolrQueryServiceController {
      * Private consctructor
      */
     private SolrQueryServiceController() throws UnsupportedType, ParserConfigurationException, IOException, SAXException, NotFound {
-        SolrServer solrServer = SolrServerFactory.createSolrServer();
+        SolrClient solrServer = SolrServerFactory.createSolrServer();
         if(solrServer instanceof EmbeddedSolrServer) {
             isEmbeddedSolrServer = true;
             EmbeddedSolrServer embeddedServer = (EmbeddedSolrServer) solrServer;
@@ -70,7 +72,7 @@ public class SolrQueryServiceController {
             embeddedQueryService = new EmbeddedSolrQueryService(embeddedServer, coreContainer, collectionName);
         } else {
             isEmbeddedSolrServer = false;
-            CommonsHttpSolrServer httpServer = (CommonsHttpSolrServer)solrServer;
+            HttpSolrClient httpServer = (HttpSolrClient)solrServer;
             httpQueryService = new HttpSolrQueryService(httpServer);
         }
     }
@@ -98,6 +100,7 @@ public class SolrQueryServiceController {
      * @param query  query string. It is for the HttpSolrQueryService.
      * @param params the SolrParam. It is for the EmbeddedSolrQueryService.
      * @param subjects
+     * @param method  the method such as GET, POST and et al will be used in this query. This only works for the HTTP Solr server.
      * @return
      * @throws NotImplemented
      * @throws NotFound
@@ -107,11 +110,11 @@ public class SolrQueryServiceController {
      * @throws ParserConfigurationException 
      * @throws UnsupportedType 
      */
-    public InputStream query(SolrParams params,Set<Subject>subjects) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
+    public InputStream query(SolrParams params,Set<Subject> subjects, SolrRequest.METHOD method) throws NotImplemented, NotFound, IOException, UnsupportedType, ParserConfigurationException, SAXException, SolrServerException  {
         if(isEmbeddedSolrServer) {
-            return embeddedQueryService.query(params, subjects);
+            return embeddedQueryService.query(params, subjects, method);
         } else {
-            return httpQueryService.query(params, subjects);
+            return httpQueryService.query(params, subjects, method);
         }
       
     }

@@ -30,7 +30,7 @@ import javax.xml.xpath.XPathExpressionException;
 import org.apache.commons.codec.EncoderException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
@@ -73,7 +73,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     private static final String QUERY ="q=id:";
     private static final String QUERY2="q="+SolrElementField.FIELD_RESOURCEMAP+":";
     private static Log log = LogFactory.getLog(SolrIndex.class);
-    private static SolrServer solrServer =  null;
+    private static SolrClient solrServer =  null;
     static {
         try {
             solrServer = SolrServerFactory.createSolrServer();

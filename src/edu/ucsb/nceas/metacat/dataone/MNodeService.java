@@ -67,6 +67,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
@@ -396,6 +397,14 @@ public class MNodeService extends D1NodeService
         // verify the new pid is valid format
         if (!isValidIdentifier(newPid)) {
             throw new InvalidRequest("1202", "The provided identifier is invalid.");
+        }
+        
+        if (!isValidIdentifier(sysmeta.getIdentifier())) {
+            throw new InvalidRequest("1202", "The provided identifier on the system metadata is invalid.");
+        }
+        
+        if (!newPid.equals(sysmeta.getIdentifier())) {
+            throw new InvalidRequest("1202", "The new identifier " + newPid.getValue() + " doesn't match the identifier " + sysmeta.getIdentifier().getValue() + " in the system metadata.");
         }
 
         // make sure that the newPid doesn't exists
@@ -2012,7 +2021,6 @@ public class MNodeService extends D1NodeService
             }
 			try {
 				DBQuery queryobj = new DBQuery();
-				
 				String results = queryobj.performPathquery(query, user, groups);
 				ContentTypeByteArrayInputStream ctbais = new ContentTypeByteArrayInputStream(results.getBytes(MetaCatServlet.DEFAULT_ENCODING));
 				ctbais.setContentType("text/xml");
@@ -2026,12 +2034,13 @@ public class MNodeService extends D1NodeService
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
 		        throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
 		    }
-		    logMetacat.info("The query is ==================================== \n"+query);
+		    logMetacat.info("MNodeService.query - the solr query is === " + query);
 		    try {
 		        
                 return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
+                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             } 
 		}
@@ -2062,7 +2071,7 @@ public class MNodeService extends D1NodeService
             }
             try {
                 SolrParams solrParams = new MultiMapSolrParams(params);
-                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin);
+                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin, SolrRequest.METHOD.POST);
             } catch (Exception e) {
                 throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
             } 

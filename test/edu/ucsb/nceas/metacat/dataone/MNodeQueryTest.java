@@ -39,8 +39,11 @@ import java.util.UUID;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.dataone.client.rest.DefaultHttpMultipartRestClient;
 import org.dataone.configuration.Settings;
+import org.dataone.mimemultipart.SimpleMultipartEntity;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -63,6 +66,7 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 /**
  * A JUnit test to exercise the Metacat Member Node  query service implementation.
@@ -78,6 +82,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     
     private static final String collectionResult = "<str name=\"collectionQuery\">(((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA)))</str>";
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
+    private static final String longQueryFile = "test/test-queries/long-solr-query-partial.txt";
     
   /**
    * Set up the test fixtures
@@ -115,6 +120,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testISO211"));
     suite.addTest(new MNodeQueryTest("testPortalDocument"));
     suite.addTest(new MNodeQueryTest("testPackageWithParts"));
+    suite.addTest(new MNodeQueryTest("testPostLongQuery"));
+    suite.addTest(new MNodeQueryTest("testChineseCharacters"));
     return suite;
     
   }
@@ -179,7 +186,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        while ( (resultStr == null || resultStr.contains("<bool name=\"archived\">")) && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -802,14 +809,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+        resultStr = resultStr.replaceAll("\\s","");
+        //System.out.println("the guid is "+guid.getValue());
+        //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arrname=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"class\"><str>Class</str><str>class</str></arr>"));
         
         //post query
         params = new HashMap<String, String[]>();
@@ -817,15 +827,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         params.put("q", qValue);
         stream = MNodeService.getInstance(request).postQuery(session, "solr", params);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        resultStr = resultStr.replaceAll("\\s","");
         //System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
-        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
-        assertTrue(resultStr.contains("<arr name=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"family\"><str>Family</str><str>family</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"order\"><str>Order</str><str>order</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
-        assertTrue(resultStr.contains("<arr name=\"class\"><str>Class</str><str>class</str></arr>"));
+        assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<arrname=\"genus\"><str>Sarracenia</str><str>sarracenia</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"family\"><str>Family</str><str>family</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"species\"><str>Purpurea</str><str>purpurea</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"kingdom\"><str>Animal</str><str>animal</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"order\"><str>Order</str><str>order</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"phylum\"><str>Phylum</str><str>phylum</str></arr>"));
+        assertTrue(resultStr.contains("<arrname=\"class\"><str>Class</str><str>class</str></arr>"));
     }
     
     public void testISO211() throws Exception {
@@ -1039,12 +1050,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        System.out.println(resultStr);
-        assertTrue((resultStr.contains("<arr name=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>")) ||
-                   (resultStr.contains("<arr name=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue() + "</str></arr>")));
+        //System.out.println(resultStr);
         assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"hasPart\"><str>" + guid2.getValue() + "</str><str>" + guid3.getValue() + "</str></arr>") ||
+                   resultStr.contains("<arrname=\"hasPart\"><str>" + guid3.getValue() + "</str><str>" + guid2.getValue() + "</str></arr>") );
         
         query = "q=id:" + "\"" + guid2.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1059,9 +1071,10 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         
         query = "q=id:" + "\"" + guid3.getValue() + "\"";
         stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -1076,11 +1089,89 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.println(resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
-        assertTrue(resultStr.contains("<arr name=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
         assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
         assertTrue(resultStr.contains(resourceMapId.getValue()));
+        resultStr = resultStr.replaceAll("\\s","");
+        assertTrue(resultStr.contains("<arrname=\"isPartOf\"><str>" + seriesId.getValue() + "</str></arr>"));
     }
     
+    /**
+     * Test to post a long query 
+     * @throws Exception
+     */
+    public void testPostLongQuery() throws Exception {
+        printTestHeader("testPostQuery");
+  
+        String uuid_prefix = "urn:uuid:";
+        Session session = getTestSession();
+        Identifier guid3 = new Identifier();
+        UUID uuid = UUID.randomUUID();
+        guid3.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the new metadata object id is ==== " + guid3.getValue());
+        InputStream object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        SystemMetadata sysmeta5 = createSystemMetadata(guid3, session.getSubject(), object5);
+        object5.close();
+        ObjectFormatIdentifier formatId5 = new ObjectFormatIdentifier();
+        formatId5.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta5.setFormatId(formatId5);
+        object5 = new FileInputStream(new File("test/eml-2.2.0.xml"));
+        MNodeService.getInstance(request).create(session, guid3, object5, sysmeta5);
+        
+        String newId = guid3.getValue().replaceAll(":", "\\\\:");
+        String queryWithExtralSlash = "(id:(" + "\"" + newId + "\" OR " + "\"urn\\:uuid\\:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn\\:uuid\\:056be5dc-cbde-4a4d-9540-92e495b755d2\") OR seriesId:(\"urn\\:uuid\\:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn\\:uuid\\:056be5dc-cbde-4a4d-9540-92e495b755d2\")) AND (formatType:METADATA OR formatType:DATA) AND -obsoletedBy:*";
+        System.out.println("The query with the extral slash on the urn is " + queryWithExtralSlash);
+        String query2 = "(id:(" + "\"" + guid3.getValue() + "\" OR " + "\"urn:uuid:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn:uuid:056be5dc-cbde-4a4d-9540-92e495b755d2\") OR seriesId:(\"urn:uuid:0163b16e-4718-4e6c-89b4-42f6eb30c6cf\" OR \"urn:uuid:056be5dc-cbde-4a4d-9540-92e495b755d2\")) AND (formatType:METADATA OR formatType:DATA) AND -obsoletedBy:*";
+        System.out.println("The query without extra slash is " + query2);
+        
+        DefaultHttpMultipartRestClient multipartRestClient = new DefaultHttpMultipartRestClient();
+        String server = SystemUtil.getContextURL();
+        //System.out.println("the server url is " + server);
+        SimpleMultipartEntity params = new SimpleMultipartEntity();
+        params.addParamPart("q", queryWithExtralSlash);
+        InputStream stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params, 30000);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+        
+        //query without the extra slash 
+        SimpleMultipartEntity params2 = new SimpleMultipartEntity();
+        params2.addParamPart("q", query2);
+        stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params2, 30000);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+        
+        //post a long query
+        File queryFile = new File(longQueryFile);
+        String longPartialQuery = FileUtils.readFileToString(queryFile);
+        String longQuery = "(id:(" + "\"" + newId + "\" OR " + longPartialQuery;
+        System.out.println("The long query is " + longQuery);
+        SimpleMultipartEntity params3 = new SimpleMultipartEntity();
+        params3.addParamPart("q", longQuery);
+        stream = multipartRestClient.doPostRequest(server + "/d1/mn/v2/query/solr", params3, 30000);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        //System.out.println("the result is \n" + resultStr);
+        assertTrue(resultStr.contains("<str name=\"checksum\">f4ea2d07db950873462a064937197b0f</str>"));
+    }
+    
+    /**
+     * Test any query it has the encoded Chinese characters.
+     */
+    public void testChineseCharacters() throws Exception {
+        String server = SystemUtil.getContextURL();
+        String query="q=%20-obsoletedBy:*%20AND%20%20-formatId:*dataone.org%2Fcollections*%20AND%20%20-formatId:*dataone.org%2Fportals*%20AND%20%E4%B8%AD%E6%96%87%20AND%20formatType:METADATA%20AND%20endDate:[1800-01-01T00:00:00Z%20TO%202020-01-24T21:56:15.422Z]%20AND%20-obsoletedBy:*&rows=1&fl=endDate&sort=endDate%20desc&wt=json";
+        DefaultHttpMultipartRestClient multipartRestClient = new DefaultHttpMultipartRestClient();
+        multipartRestClient.doGetRequest(server + "/d1/mn/v2/query/solr/?" + query, 1000);
+        assertTrue(1==1);
+    }
+
    
 
 }

@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.12.4 Release
+Version: 2.13.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,14 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Rlease Notes for 2.13.0
+New features in this release:
+* Upgrade Solr to version 8 and use the external Solr server
+* Use the streaming HTTP multipart handler to improve performance
+Notice
+* Metacat Servlet APIs will be deprecated in the near future and its client software, Morpho, will not work with future versions of Metacat.
+* Solr dynamic fields such as read_count_i will be deprecated.
 
 ### Release Notes for 2.12.4
 Bugs fixed in this release:

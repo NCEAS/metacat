@@ -26,6 +26,7 @@
 
 package edu.ucsb.nceas.metacat;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -977,8 +978,9 @@ public class MetaCatServlet extends HttpServlet {
 				    //formatid will be set null here since this is metacat api
 				    String formatId = null;
 				    Checksum checksum = null;//for Metacat API, we don't calculate the checksum
+				    File file = null;
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null, formatId, checksum);
+							groupNames, true, true, null, formatId, checksum, file);
 				} else {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");

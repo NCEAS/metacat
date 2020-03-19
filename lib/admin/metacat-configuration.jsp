@@ -39,6 +39,7 @@
     Boolean dbConfigured = (Boolean)request.getAttribute("dbConfigured");
     Boolean replicationConfigured = (Boolean)request.getAttribute("replicationConfigured");
     String dataoneConfigured = (String)request.getAttribute("dataoneConfigured");
+    String solrserverConfigured = (String)request.getAttribute("solrserverConfigured");
     String geoserverConfigured = (String)request.getAttribute("geoserverConfigured");
     String ezidConfigured = (String)request.getAttribute("ezidConfigured");
     Boolean metacatConfigured = (Boolean)request.getAttribute("metacatConfigured");
@@ -145,12 +146,74 @@
 				        	%> 
 			<td class="configure-link inactive"> Configure Global Properties First </td>
 	<%
-		}
+		 }
 	%>     	
 	    	</tr>
 	<%
-		}
-	
+       }
+    %>   
+    
+    <%
+        if (solrserverConfigured != null && solrserverConfigured.equals(PropertyService.CONFIGURED)) {
+    %>
+            <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> configured </td>
+            <td class="property-title"> Solr Server Configuration </td> 
+            <td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Reconfigure Now</a> </td>         
+            </tr>
+    <%
+        } else if (solrserverConfigured != null && solrserverConfigured.equals(PropertyService.BYPASSED)){
+    %>          
+            <tr>
+            <td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
+            <td class="property-title"> Solr Server Configuration </td>  
+    <%
+            if (propsConfigured != null && propsConfigured) {
+    %>
+                
+            <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i>Reconfigure Now</a> </td>                   
+    <%
+            } else {
+    %> 
+            <td class="configure-link inactive"> Configure Global Properties First </td>
+    <%
+            }
+                %>      
+            </tr>
+    <%
+        } else {
+    %>          
+            <tr>
+            <td class="unconfigured-tag">unconfigured </td>  
+            <td class="property-title"> Solr Server Configuration </td>   
+    <%
+            System.out.println("the dbconfigure value is "+dbConfigured);
+            if (propsConfigured != null && propsConfigured ) {
+                 if ( (dbConfigured != null && dbConfigured) || (metacatVersion != null && databaseVersion != null && metacatVersion.compareTo(databaseVersion) == 0)) {
+    %>
+                    <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=solrserver"><i class="icon-cogs"></i> Configure Now</a> </td> 
+    <%           
+                } else {
+     %>
+                  <td class="configure-link inactive"> Configure Database Installation/Upgrade First </td>
+     <%           
+                }
+     %>      
+                
+    <%
+            } else {
+    %> 
+            <td class="configure-link inactive"> Configure Global Properties First </td>
+    <%
+            }
+    %>      
+            </tr>
+    <%
+        }
+    %>
+    
+     
+	<%
 	    if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.CONFIGURED)) {
 	%>
 	    	<tr>
@@ -348,7 +411,7 @@
 			} else {
 	%> 	
 				<div class="alert alert-success"><i class="icon-thumbs-up"></i>Configuration of Metacat is complete. Please restart Tomcat so that the webapps are initialized with these settings.
-				Note that this may take some time while the system initializes with the new configuration values.</div>
+				Note that this may take some time while the system initializes with the new configuration values. If this is the first time of the installation of the Solr server, please reindex all objects.</div>
 	<%
 			}
 		}
