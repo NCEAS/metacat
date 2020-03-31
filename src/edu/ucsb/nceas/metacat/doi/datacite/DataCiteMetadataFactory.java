@@ -79,6 +79,8 @@ public abstract class DataCiteMetadataFactory {
     public static final String FORMATS = "formats";
     public static final String DOI = "DOI";
     public static final String ABSTRACT = "Abstract";
+    public static final String  RELATEDIDENTIFIERS =  "relatedIdentifiers";
+    public static final String  RELATEDIDENTIFIER =  "relatedIdentifier";
     
     private static final int FIRST = 0;
     protected static final String INVALIDCODE = "1031";
@@ -424,6 +426,39 @@ public abstract class DataCiteMetadataFactory {
         }
         return doc;
     }
+    
+    
+    /**
+     * Append the relatedIdentifiers to the document. This method can be called multiple times.
+     * @param doc the doc needs to be modified
+     * @param relatedIdentifier  the related identifier itself
+     * @param relatedIdentifierType  the type of the related identifier
+     * @param relationType  the relationship of the related identifier to this object
+     * @return the modified document
+     * @throws XPathExpressionException
+     */
+    protected Document appendRelatedIdentifier(Document doc, String relatedIdentifier, String relatedIdentifierType, String relationType) throws XPathExpressionException {
+        if (relatedIdentifier != null && !relatedIdentifier.trim().equals("") && relatedIdentifierType != null && !relatedIdentifier.trim().equals("") && relationType != null && !relationType.trim().equals("")) {
+            Element relatedIdentifierEle = doc.createElement(RELATEDIDENTIFIER);
+            relatedIdentifierEle.setAttribute("relatedIdentifierType", relatedIdentifierType);
+            relatedIdentifierEle.setAttribute("relationType", relationType);
+            relatedIdentifierEle.appendChild(doc.createTextNode(relatedIdentifier));
+            String path = "//" + RELATEDIDENTIFIERS;
+            XPathExpression expr = xpath.compile(path);
+            NodeList relatedIdentifiersList = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+            if (relatedIdentifiersList == null || relatedIdentifiersList.getLength() == 0) {
+                //we need to create the relatedIdentifiers element since it doesn't exist
+                Element relatedIdentifiersEle = doc.createElement(RELATEDIDENTIFIERS);
+                doc.getFirstChild().appendChild(relatedIdentifiersEle);
+                relatedIdentifiersEle.appendChild(relatedIdentifierEle);
+            } else {
+                //we don't need to create the relatedIdentifiers since it exists
+                relatedIdentifiersList.item(FIRST).appendChild(relatedIdentifierEle);
+            }
+        }
+        return doc;
+    }
+    
     /**
      * Serialize the given doc object to a string
      * @param doc
