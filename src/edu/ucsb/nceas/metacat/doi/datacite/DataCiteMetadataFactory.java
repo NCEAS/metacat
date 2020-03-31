@@ -433,12 +433,17 @@ public abstract class DataCiteMetadataFactory {
      * @param doc the doc needs to be modified
      * @param relatedIdentifier  the related identifier itself
      * @param relatedIdentifierType  the type of the related identifier
-     * @param relationType  the relationship of the related identifier to this object
      * @return the modified document
      * @throws XPathExpressionException
      */
-    protected Document appendRelatedIdentifier(Document doc, String relatedIdentifier, String relatedIdentifierType, String relationType) throws XPathExpressionException {
-        if (relatedIdentifier != null && !relatedIdentifier.trim().equals("") && relatedIdentifierType != null && !relatedIdentifier.trim().equals("") && relationType != null && !relationType.trim().equals("")) {
+    protected Document appendRelatedIdentifier(Document doc, String relatedIdentifier, String relationType) throws XPathExpressionException {
+        if (relatedIdentifier != null && !relatedIdentifier.trim().equals("")  && relationType != null && !relationType.trim().equals("")) {
+            String relatedIdentifierType = determineRelatedIdType(relatedIdentifier);
+            if (relatedIdentifierType == null) {
+                //we don't the type, so we set it to URL and the relatedIdentifier add the prefix "https://dataone.org/datasets/"
+                relatedIdentifierType = "URL";
+                relatedIdentifier = "https://dataone.org/datasets/" + relatedIdentifier;
+            }
             Element relatedIdentifierEle = doc.createElement(RELATEDIDENTIFIER);
             relatedIdentifierEle.setAttribute("relatedIdentifierType", relatedIdentifierType);
             relatedIdentifierEle.setAttribute("relationType", relationType);
@@ -457,6 +462,28 @@ public abstract class DataCiteMetadataFactory {
             }
         }
         return doc;
+    }
+    
+    /**
+     * Determine the identifier type for a given identifier. 
+     * The type can be
+     * @param identifier
+     * @return the type of the identifier. It can be null
+     */
+    private String determineRelatedIdType(String identifier) {
+        String type = null;
+        if (identifier != null) {
+            if (identifier.startsWith(DOI) || identifier.startsWith("doi")) {
+                type = DOI;
+            } else if (identifier.startsWith("URN") || identifier.startsWith("urn")) {
+                type = "URN";
+            } else if (identifier.startsWith("HTTPS://") || identifier.startsWith("https://") || identifier.startsWith("HTTP://") || identifier.startsWith("http://")) {
+                type = "URL";
+            } else if (identifier.startsWith("ARK") || identifier.startsWith("ark") ) {
+                type = "ARK";
+            }
+        }
+        return type;
     }
     
     /**
