@@ -34,10 +34,10 @@ import java.util.Vector;;
 public interface RelationshipHandler {
     
     /**
-     * Method to get the relationship
+     * Method to get the relationships
      * @param identifier  the subject of the triple relationship
      * @return a vector of triple statements
      */
-    public Vector<Statement> getRelationship(String identifier);
+    public Vector<Statement> getRelationships(String identifier);
 
 }

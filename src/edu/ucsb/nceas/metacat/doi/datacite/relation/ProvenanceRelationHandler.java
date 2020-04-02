@@ -41,6 +41,8 @@ import com.hp.hpl.jena.rdf.model.SimpleSelector;
 import com.hp.hpl.jena.rdf.model.Statement;
 import com.hp.hpl.jena.rdf.model.StmtIterator;
 
+import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
+
 
 /**
  * A class to extract provenance relationship from a resource map
@@ -51,7 +53,7 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
     
     public final static String PROVNAMESPACE = "http://www.w3.org/ns/prov#";
     public final static String ISDERIVEDFROM = "IsDerivedFrom";
-    public final static String ISOURCEOF = "IsSourceOf";
+    public final static String ISSOURCEOF = "IsSourceOf";
     public final static String WASDERIVEDFROM = "wasDerivedFrom";
     public final static String USED = "used";
     private static Log log = LogFactory.getLog(ProvenanceRelationHandler.class);
@@ -70,8 +72,27 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
      * @param identifier  the subject of the triple relationship
      * @return a vector of triple statements
      */
-    public Vector<Statement> getRelationship(String identifier) {
+    public Vector<Statement> getRelationships(String identifier) {
         Vector<Statement> statementList = new Vector<Statement>();
+        //Get the statements of the predicate - wasDerivedFrom
+        Property derivedFromPredic = ResourceFactory.createProperty(PROVNAMESPACE, WASDERIVEDFROM);
+        Property isDerivedFromPredic = ResourceFactory.createProperty(DataCiteMetadataFactory.NAMESPACE +"/", ISDERIVEDFROM);
+        parseResourcemap(identifier, derivedFromPredic, isDerivedFromPredic, statementList);
+      //Get the statements of the predicate used
+        Property usedPredic = ResourceFactory.createProperty(PROVNAMESPACE, USED);
+        Property isSourcePreidc = ResourceFactory.createProperty(DataCiteMetadataFactory.NAMESPACE +"/", ISSOURCEOF);
+        parseResourcemap(identifier, usedPredic, isSourcePreidc, statementList);
+        return statementList;
+    }
+    
+    /**
+     * Parse the resource map with the given information
+     * @param identifier  the subject of the statement
+     * @param statementList  the statement will store the result
+     * @param oldPredic  the predicate will be selected
+     * @param newPredic  the new predicate will be used to replace the old one
+     */
+    private void parseResourcemap(String identifier, Property oldPredic, Property newPredic, Vector<Statement> statementList) {
         //Get the resource object whose id is the identifier
         Resource resource = null;
         //create a identifier property (statement)
@@ -88,11 +109,8 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
             }
         }
         
-        //Get the object of predication wasDerivedFrom
-        Property derivedFromPredic = ResourceFactory.createProperty(PROVNAMESPACE, WASDERIVEDFROM);
-        Property isDerivedFromProperty = ResourceFactory.createProperty(null, ISDERIVEDFROM);
         RDFNode nullNode = null;
-        selector = new SimpleSelector(resource, derivedFromPredic, nullNode);
+        selector = new SimpleSelector(resource, oldPredic, nullNode);
         iterator = model.listStatements(selector);
         while (iterator.hasNext()) {
             Statement statement = iterator.nextStatement();
@@ -114,12 +132,11 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
                }
                if (idLiteral != null) {
                    //create a new statement with the new predication isDerivedFrom and add it into the return list
-                   Statement newStatement = ResourceFactory.createStatement(resource, isDerivedFromProperty, idLiteral);
+                   Statement newStatement = ResourceFactory.createStatement(resource, newPredic, idLiteral);
                    statementList.add(newStatement);
                }
             }
         }
-        return statementList;
     }
 
 }
