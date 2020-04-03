@@ -55,7 +55,7 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
     public final static String ISDERIVEDFROM = "IsDerivedFrom";
     public final static String ISSOURCEOF = "IsSourceOf";
     public final static String WASDERIVEDFROM = "wasDerivedFrom";
-    public final static String USED = "used";
+    public final static String HADDERIVATION = "hadDerivation";
     private static Log log = LogFactory.getLog(ProvenanceRelationHandler.class);
     
     private Model model = ModelFactory.createDefaultModel();
@@ -79,7 +79,7 @@ public class ProvenanceRelationHandler implements RelationshipHandler {
         Property isDerivedFromPredic = ResourceFactory.createProperty(DataCiteMetadataFactory.NAMESPACE +"/", ISDERIVEDFROM);
         parseResourcemap(identifier, derivedFromPredic, isDerivedFromPredic, statementList);
       //Get the statements of the predicate used
-        Property usedPredic = ResourceFactory.createProperty(PROVNAMESPACE, USED);
+        Property usedPredic = ResourceFactory.createProperty(PROVNAMESPACE, HADDERIVATION);
         Property isSourcePreidc = ResourceFactory.createProperty(DataCiteMetadataFactory.NAMESPACE +"/", ISSOURCEOF);
         parseResourcemap(identifier, usedPredic, isSourcePreidc, statementList);
         return statementList;

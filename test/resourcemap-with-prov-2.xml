@@ -14,8 +14,8 @@
         <cito:isDocumentedBy rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ac0e0d342-7cc1-4eaa-9648-c6d9f7ed8b1f"/>
         <ter:isAggregatedBy rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae62c781c-643b-41f3-a0b0-9f6cbd80a708#aggregation"/>
         <prov:wasDerivedFrom rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3A326e21d5-c961-46ed-a85c-28eeedd980de"/>
-        <prov:used rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3A326e21d5-c961-46ed-a85c-28eeedd980de"/>
-        <prov:used rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae8960a65-8748-4552-b1cf-fdcab171540a"/>
+        <prov:hadDerivation rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3A326e21d5-c961-46ed-a85c-28eeedd980de"/>
+        <prov:hadDerivation rdf:resource="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae8960a65-8748-4552-b1cf-fdcab171540a"/>
     </rdf:Description>
     <rdf:Description rdf:about="https://cn.dataone.org/cn/v2/resolve/urn%3Auuid%3Ae8960a65-8748-4552-b1cf-fdcab171540a">
         <terms:identifier>urn:uuid:e8960a65-8748-4552-b1cf-fdcab171540a</terms:identifier>
