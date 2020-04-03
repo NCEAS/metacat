@@ -86,6 +86,9 @@ public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
                 //String resourceType = lookupResourceType(sysmeta);
                 String resourceType = null; //only set the attribute to "dataset"
                 addResourceType(doc, DataCiteProfileResourceTypeValues.DATASET.toString(), resourceType);
+                
+                //related identifiers
+                appendRelatedIdentifier(doc);
 
                 // format
                 String format = lookupFormat(sysmeta);

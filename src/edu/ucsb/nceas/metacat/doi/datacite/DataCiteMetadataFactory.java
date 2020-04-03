@@ -22,9 +22,11 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite;
 
+import java.io.InputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.Locale;
+import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -52,7 +54,13 @@ import org.w3c.dom.ls.DOMImplementationLS;
 import org.w3c.dom.ls.LSOutput;
 import org.w3c.dom.ls.LSSerializer;
 
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.Statement;
+
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
+import edu.ucsb.nceas.metacat.doi.datacite.relation.ProvenanceRelationHandler;
 
 
 
@@ -87,6 +95,8 @@ public abstract class DataCiteMetadataFactory {
 
     private static Logger logMetacat = Logger.getLogger(DataCiteMetadataFactory.class);
     protected static XPath xpath = null;
+    protected InputStream resourceMapInputStream = null;
+    protected String identifier = null;
     static {
         XPathFactory xPathfactory = XPathFactory.newInstance();
         xpath = xPathfactory.newXPath();
@@ -138,6 +148,11 @@ public abstract class DataCiteMetadataFactory {
         if(scheme == null || !scheme.equals(DOI)) {
             //now it only supports doi.
             throw new InvalidRequest(INVALIDCODE, "The scheme of the identifier element only can be " + DOI + " and the specified one " + scheme + " is not allowed.");
+        }
+        if(!identifier.startsWith(DOI)) {
+            this.identifier = DOI + ":" + identifier;
+        } else {
+            this.identifier = identifier;
         }
         Element identifierEle = doc.createElement("identifier");
         identifierEle.setAttribute("identifierType", scheme);
@@ -427,16 +442,41 @@ public abstract class DataCiteMetadataFactory {
         return doc;
     }
     
+    /**
+     * Append the relatedIdentifiers to the document. This method can be called only once
+     * @param doc  the original DataCite document
+     * @return the DataCite document with the related identifier information
+     * @throws XPathExpressionException
+     */
+    protected Document appendRelatedIdentifier(Document doc) throws XPathExpressionException {
+        if (resourceMapInputStream != null) {
+            ProvenanceRelationHandler provenanceHandler = new ProvenanceRelationHandler(resourceMapInputStream);
+            logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the identifier of the datacite document is " + identifier);
+            Vector<Statement> statements = provenanceHandler.getRelationships(identifier);
+            if (statements != null) {
+                for (Statement statement : statements) {
+                    Property predicate = statement.getPredicate();
+                    String relationType = predicate.getLocalName();
+                    logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the relationType is " + relationType);
+                    RDFNode object = statement.getObject();
+                    Literal idLiteral = (Literal) object;
+                    String relatedIdentifier = idLiteral.getString();
+                    logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the related identifier is " + relatedIdentifier);
+                    appendRelatedIdentifier(doc, relatedIdentifier, relationType);
+                }
+            }
+        }
+        return doc;
+    }
     
     /**
      * Append the relatedIdentifiers to the document. This method can be called multiple times.
      * @param doc the doc needs to be modified
      * @param relatedIdentifier  the related identifier itself
      * @param relatedIdentifierType  the type of the related identifier
-     * @return the modified document
      * @throws XPathExpressionException
      */
-    protected Document appendRelatedIdentifier(Document doc, String relatedIdentifier, String relationType) throws XPathExpressionException {
+    private void appendRelatedIdentifier(Document doc, String relatedIdentifier, String relationType) throws XPathExpressionException {
         if (relatedIdentifier != null && !relatedIdentifier.trim().equals("")  && relationType != null && !relationType.trim().equals("")) {
             String relatedIdentifierType = determineRelatedIdType(relatedIdentifier);
             if (relatedIdentifierType == null) {
@@ -461,7 +501,6 @@ public abstract class DataCiteMetadataFactory {
                 relatedIdentifiersList.item(FIRST).appendChild(relatedIdentifierEle);
             }
         }
-        return doc;
     }
     
     /**
@@ -549,6 +588,14 @@ public abstract class DataCiteMetadataFactory {
             id = id.replaceFirst(scheme + ":", "");
         }
         return id;
+    }
+    
+    /**
+     * Set the InputStream of the resource map
+     * @param resourceMapInputStream
+     */
+    public void setResourceMapInputStream(InputStream resourceMapInputStream) {
+        this.resourceMapInputStream = resourceMapInputStream;
     }
 
 }

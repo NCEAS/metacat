@@ -137,6 +137,9 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     }
                     //size
 
+                    //related identifiers
+                    appendRelatedIdentifier(doc);
+                    
                     // format
                     String format = lookupFormat(sysmeta);
                     if(format != null) {
