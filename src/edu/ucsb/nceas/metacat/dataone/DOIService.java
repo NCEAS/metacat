@@ -185,41 +185,49 @@ public class DOIService {
 	 * @throws InterruptedException 
 	 */
 	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, EZIDException, NotImplemented, ServiceFailure, InterruptedException {
-				
-		// only continue if we have the feature turned on
-		if (doiEnabled) {
-		    boolean identifierIsDOI = false;
-		    boolean sidIsDOI = false;
-			String identifier = sysMeta.getIdentifier().getValue();
-			String sid = null;
-			if(sysMeta.getSeriesId() != null) {
-			    sid = sysMeta.getSeriesId().getValue();
-			}
-            
-			// determine if this DOI identifier is in our configured shoulder
-			if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
-			    identifierIsDOI = true;
-			}
-			// determine if this DOI sid is in our configured shoulder
-            if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
-                sidIsDOI = true;
-            }
-			
-            // only continue if this DOI identifier or sid is in our configured shoulder
-			if(identifierIsDOI || sidIsDOI) {
-	            // finish the other part for the identifier if it is an DOI
-	            if(identifierIsDOI) {
-	                registerDOI(identifier, sysMeta);
-	            }
-	            // finish the other part for the sid if it is an DOI
-	            if(sidIsDOI) {
-	                registerDOI(sid, sysMeta);
-	            }
-			}
-			
-		}
-		
-		return true;
+	    return registerDOI(sysMeta, null);
+	}
+	
+	
+	/**
+	 * Submits DOI metadata information about the object to EZID
+	 * @param sysMeta  the system data associated with the object
+	 * @param resourceMapStream  the resource map aggregates the object with the given system metadata 
+	 * @return true if success;false otherwise
+	 */
+	public boolean registerDOI(SystemMetadata sysMeta, InputStream resourceMapStream) throws InvalidRequest, EZIDException, NotImplemented, ServiceFailure, InterruptedException {
+         // only continue if we have the feature turned on
+         if (doiEnabled) {
+             boolean identifierIsDOI = false;
+             boolean sidIsDOI = false;
+             String identifier = sysMeta.getIdentifier().getValue();
+             String sid = null;
+             if(sysMeta.getSeriesId() != null) {
+                 sid = sysMeta.getSeriesId().getValue();
+             }
+             
+             // determine if this DOI identifier is in our configured shoulder
+             if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
+                 identifierIsDOI = true;
+             }
+             // determine if this DOI sid is in our configured shoulder
+             if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
+                 sidIsDOI = true;
+             }
+             
+             // only continue if this DOI identifier or sid is in our configured shoulder
+             if (identifierIsDOI || sidIsDOI) {
+                 // finish the other part for the identifier if it is an DOI
+                 if( identifierIsDOI) {
+                     registerDOI(identifier, sysMeta, resourceMapStream);
+                 }
+                 // finish the other part for the sid if it is an DOI
+                 if (sidIsDOI) {
+                     registerDOI(sid, sysMeta, resourceMapStream);
+                 }
+             }
+         }
+         return true;
 	}
 	
 	/**
@@ -233,7 +241,7 @@ public class DOIService {
 	 * @throws EZIDException 
 	 * @throws InterruptedException 
 	 */
-	private void registerDOI(String identifier, SystemMetadata sysMeta) throws InvalidRequest, NotImplemented, ServiceFailure, EZIDException, InterruptedException {
+	private void registerDOI(String identifier, SystemMetadata sysMeta, InputStream resourceMapStream) throws InvalidRequest, NotImplemented, ServiceFailure, EZIDException, InterruptedException {
 	    // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
         Node node = MNodeService.getInstance(null).getCapabilities();
@@ -269,7 +277,7 @@ public class DOIService {
         }
         
         // set the datacite metadata fields
-        String dataCiteXML = generateDataCiteXML(identifier, sysMeta);
+        String dataCiteXML = generateDataCiteXML(identifier, sysMeta, resourceMapStream);
         metadata.put(DATACITE, dataCiteXML);
         metadata.put(InternalProfile.TARGET.toString(), target);
         metadata.put(InternalProfile.STATUS.toString(), status);
@@ -291,11 +299,14 @@ public class DOIService {
 	 * @return
 	 * @throws ServiceFailure 
 	 */
-	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws InvalidRequest, ServiceFailure {
+	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta, InputStream resourceMapStream) throws InvalidRequest, ServiceFailure {
 	    Identifier id = new Identifier();
         id.setValue(identifier);
 	    for(DataCiteMetadataFactory factory : dataCiteFactories) {
 	        if(factory != null && factory.canProcess(sysMeta.getFormatId().getValue())) {
+	            if(resourceMapStream != null) {
+	                factory.setResourceMapInputStream(resourceMapStream);
+	            }
 	            return factory.generateMetadata(id, sysMeta);
 	        }
 	    }
