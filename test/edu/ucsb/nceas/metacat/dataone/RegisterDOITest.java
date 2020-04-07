@@ -27,12 +27,14 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.HashMap;
+import java.util.UUID;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -44,18 +46,29 @@ import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.vocabulary.CITO;
 import org.junit.After;
 import org.junit.Before;
+
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
+import edu.ucsb.nceas.metacat.doi.datacite.relation.ProvenanceRelationHandler;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
@@ -69,6 +82,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
 	private static final String EMLFILEPATH = "test/tao.14563.1.xml";
 	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
+	private int tryAcccounts = 20;
 	
 	/**
 	 * Set up the test fixtures
@@ -111,6 +125,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
 		suite.addTest(new RegisterDOITest("testPublishEML220"));
+		suite.addTest(new RegisterDOITest("testPublishEML220WithRelatedIds"));
 		return suite;
 
 	}
@@ -923,6 +938,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             }
             count++;
         } while (metadata == null && count < 20);
+        System.out.println("the result is " + result);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
         assertTrue(resultStr.contains("<str>Funding is from a grant from the National Science Foundation.</str>"));
         assertTrue(resultStr.contains("<arr name=\"funderName\">"));
@@ -936,5 +952,165 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"sem_annotation\">"));
         assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
         assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
+    }
+    
+    /**
+     * Test to publish an eml 2.2.0 document with related ids
+     * @throws Exception
+     */
+    public void testPublishEML220WithRelatedIds() throws Exception {
+        String ezidUsername = PropertyService.getProperty("guid.ezid.username");
+        String ezidPassword = PropertyService.getProperty("guid.ezid.password");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        Session session = getTestSession();
+        
+        //insert the data object
+        String uuid_prefix = "urn:uuid:";
+        UUID uuid = UUID.randomUUID();
+        Identifier dataId = new Identifier();
+        dataId.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the data file id is ==== " + dataId.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmetaData = createSystemMetadata(dataId, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, dataId, object, sysmetaData);
+        
+        //insert the metadata object 
+        Identifier guid = new Identifier();
+        uuid = UUID.randomUUID();
+        guid.setValue(uuid.toString());
+        // use EML to test 
+        String emlFile = "test/eml-2.2.0.xml";
+        InputStream content = null;
+        content = new FileInputStream(emlFile);
+        // create the initial version without DOI
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), content);
+        content.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        content = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
+        content.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:" +  "\"" + guid.getValue()  + "\"";
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:" + "\""+ dataId.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //insert the resource map
+        Identifier resourceMapId = new Identifier();
+        uuid = UUID.randomUUID();
+        resourceMapId.setValue("testPackageWithParts_resourceMap_" + uuid_prefix + uuid.toString());
+        System.out.println("the resource map is " + resourceMapId.getValue());
+        Identifier isDerivatedFromId = new Identifier();
+        uuid = UUID.randomUUID();
+        isDerivatedFromId.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the isDerivatedFrom identifier is " + isDerivatedFromId.getValue());
+        Identifier isDerivatedFromId2 = new Identifier();
+        uuid = UUID.randomUUID();
+        isDerivatedFromId2.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the second isDerivatedFrom identifier is " + isDerivatedFromId2.getValue());
+        Identifier isSourceOfId = new Identifier();
+        uuid = UUID.randomUUID();
+        isSourceOfId.setValue(uuid_prefix + uuid.toString());
+        System.out.println("the isSource identifier is " + isSourceOfId.getValue());
+        Subject subject = new Subject();
+        subject.setValue("Jhon Smith");
+        Model model = ModelFactory.createDefaultModel();
+        //create a resourceMap resource
+        Resource resourceMap = ResourceMapModifier.generateNewOREResource(model, subject, resourceMapId);
+        //create an aggregation resource
+        Resource aggregation = ResourceFactory.createResource(resourceMap.getURI() + "#aggregation");
+        //create a metadata object resource 
+        Resource metadataResource = ResourceMapModifier.generateNewComponent(model, guid.getValue());
+        //create the data object resource 
+        Resource dataResource = ResourceMapModifier.generateNewComponent(model, dataId.getValue());
+        //create a isDerivatedFrom object resource
+        Resource isDerivatedFromResource = ResourceMapModifier.generateNewComponent(model, isDerivatedFromId.getValue());
+        //create the second isDerivatedFrom object resource
+        Resource isDerivatedFromResource2 = ResourceMapModifier.generateNewComponent(model, isDerivatedFromId2.getValue());
+        //crate a isSourceOf object resource
+        Resource isSourceOfResource = ResourceMapModifier.generateNewComponent(model, isSourceOfId.getValue());
+        //add relationships to the model
+        Property predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isDescribedBy");
+        model.add(model.createStatement(aggregation, predicate, resourceMap));
+        predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "aggregates");
+        model.add(model.createStatement(aggregation, predicate, metadataResource));
+        model.add(model.createStatement(aggregation, predicate, dataResource));
+        predicate = ResourceFactory.createProperty(ResourceMapModifier.ORE_TER_NAMESPACE, "isAggregatedBy");
+        model.add(model.createStatement(metadataResource, predicate, aggregation));
+        model.add(model.createStatement(dataResource, predicate, aggregation));
+        model.add(model.createStatement(metadataResource, CITO.isDocumentedBy, metadataResource));
+        model.add(model.createStatement(dataResource, CITO.isDocumentedBy, metadataResource));
+        model.add(model.createStatement(metadataResource, CITO.documents, dataResource));
+        model.add(model.createStatement(metadataResource, CITO.documents, metadataResource));
+        predicate = ResourceFactory.createProperty(ProvenanceRelationHandler.PROVNAMESPACE, ProvenanceRelationHandler.WASDERIVEDFROM);
+        model.add(model.createStatement(metadataResource, predicate, isDerivatedFromResource));
+        model.add(model.createStatement(metadataResource, predicate, isDerivatedFromResource2));
+        predicate = ResourceFactory.createProperty(ProvenanceRelationHandler.PROVNAMESPACE, ProvenanceRelationHandler.HADDERIVATION);
+        model.add(model.createStatement(metadataResource, predicate, isSourceOfResource));
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        model.write(System.out);
+        model.write(output);
+        InputStream object3 = new ByteArrayInputStream(output.toByteArray());
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        query = "q=id:" + "\""+ resourceMapId.getValue() + "\"";
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        // now publish it
+        Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
+        // check for the metadata explicitly, using ezid service
+        EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
+        ezid.login(ezidUsername, ezidPassword);
+        int count = 0;
+        HashMap<String, String> metadata = null;
+        do {
+            try {
+                metadata = ezid.getMetadata(publishedIdentifier.getValue());
+            } catch (Exception e) {
+                Thread.sleep(2000);
+            }
+            count++;
+        } while (metadata == null && count < 20);
+        assertNotNull(metadata);
+        String result = metadata.get(DOIService.DATACITE);
+        System.out.println("The datacite result is\n" + result);
+        assertTrue(result.contains("EML Annotation Example"));
+        assertTrue(result.contains("0000-0002-1209-5122"));
+        assertTrue(result.contains("It can include multiple paragraphs"));
+        content.close();
+        
+        //check if the package id was updated
+        InputStream emlObj = MNodeService.getInstance(request).get(session, publishedIdentifier);
+        String emlStr = IOUtils.toString(emlObj, "UTF-8");
+        assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
     }
 }
