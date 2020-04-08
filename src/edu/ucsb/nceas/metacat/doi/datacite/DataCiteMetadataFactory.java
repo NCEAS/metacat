@@ -444,11 +444,12 @@ public abstract class DataCiteMetadataFactory {
     
     /**
      * Append the relatedIdentifiers to the document. This method can be called only once
+     * @param identifier  the identifier of the DataCite document
      * @param doc  the original DataCite document
      * @return the DataCite document with the related identifier information
      * @throws XPathExpressionException
      */
-    protected Document appendRelatedIdentifier(Document doc) throws XPathExpressionException {
+    protected Document appendRelatedIdentifier(String identifier, Document doc) throws XPathExpressionException {
         if (resourceMapInputStream != null) {
             ProvenanceRelationHandler provenanceHandler = new ProvenanceRelationHandler(resourceMapInputStream);
             logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the identifier of the datacite document is " + identifier);

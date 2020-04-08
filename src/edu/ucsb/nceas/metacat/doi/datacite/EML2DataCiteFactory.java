@@ -138,7 +138,7 @@ public class EML2DataCiteFactory extends DataCiteMetadataFactory {
                     //size
 
                     //related identifiers
-                    appendRelatedIdentifier(doc);
+                    appendRelatedIdentifier(identifier.getValue(), doc);
                     
                     // format
                     String format = lookupFormat(sysmeta);

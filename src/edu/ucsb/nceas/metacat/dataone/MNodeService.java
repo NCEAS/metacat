@@ -2294,11 +2294,11 @@ public class MNodeService extends D1NodeService
 						new ByteArrayInputStream(resourceMapString.getBytes("UTF-8")), 
 						newOreIdentifier, 
 						oreSysMeta);
-				oreInputStream = this.get(session, potentialOreIdentifier);
+				oreInputStream = this.get(session, newOreIdentifier);
 				try {
 				    DOIService.getInstance().registerDOI(sysmeta, oreInputStream);
 				} catch (Exception e) {
-				    logMetacat.warn("MNodeService.publish - can't update the related ids information on the datacite document of the object " + sysmeta.getIdentifier().getValue());
+				    logMetacat.warn("MNodeService.publish - can't update the related ids information on the datacite document of the object " + sysmeta.getIdentifier().getValue() + " since " + e.getMessage());
 				}
 				
 				

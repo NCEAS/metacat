@@ -1106,6 +1106,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertTrue(result.contains("EML Annotation Example"));
         assertTrue(result.contains("0000-0002-1209-5122"));
         assertTrue(result.contains("It can include multiple paragraphs"));
+        assertTrue(result.contains("<relatedIdentifier relatedIdentifierType=\"URN\" relationType=\"IsDerivedFrom\">" + isDerivatedFromId.getValue()));
+        assertTrue(result.contains("<relatedIdentifier relatedIdentifierType=\"URN\" relationType=\"IsDerivedFrom\">" + isDerivatedFromId2.getValue()));
+        assertTrue(result.contains("<relatedIdentifier relatedIdentifierType=\"URN\" relationType=\"IsSourceOf\">" + isSourceOfId.getValue()));
         content.close();
         
         //check if the package id was updated
