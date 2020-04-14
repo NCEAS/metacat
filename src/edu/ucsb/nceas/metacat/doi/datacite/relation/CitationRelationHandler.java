@@ -22,11 +22,29 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.sun.scenario.Settings;
+
 /**
  *  A class to query the DataONE metrics service to get a list of known citations for a dataset.
  * @author tao
  *
  */
 public class CitationRelationHandler {
+    
+    private static String citationServerURL = null;
+    private static Log logMetacat  = LogFactory.getLog(CitationRelationHandler.class);
+    
+    /**
+     * Constructor
+     */
+    public CitationRelationHandler() {
+        if(citationServerURL == null) {
+            citationServerURL = Settings.get("dataone.metric.serviceUrl");
+            logMetacat.debug("CitationRelationHandler.CitationRelationHandler - the citation service url is " + citationServerURL);
+        }
+    }
 
 }

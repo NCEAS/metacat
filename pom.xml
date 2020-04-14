@@ -39,7 +39,7 @@
              <url>https://repo.maven.apache.org/maven2</url>
         </repository>
         <repository>
-            <id>central maven repo</id>
+            <id>central maven repo 2</id>
              <name>central maven repo https</name>
              <url>https://repo1.maven.org/maven2</url>
         </repository>
