@@ -34,6 +34,8 @@ import com.sun.scenario.Settings;
  */
 public class CitationRelationHandler {
     
+    public static final String CITATIONS = "citations";
+    public static final String QUERY = "query";
     private static String citationServerURL = null;
     private static Log logMetacat  = LogFactory.getLog(CitationRelationHandler.class);
     
