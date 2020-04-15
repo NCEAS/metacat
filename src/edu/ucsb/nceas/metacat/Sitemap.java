@@ -52,6 +52,9 @@ import org.apache.commons.lang.StringEscapeUtils;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.service.types.v2.ObjectFormatList;
+import org.dataone.service.types.v2.ObjectFormat;
 
 /**
  * A Sitemap represents a document that lists all of the content of the Metacat
@@ -188,24 +191,18 @@ public class Sitemap extends TimerTask {
         /**
          * Query the database for documents that are considered to be metadata
          * and iterate through them, generating sitemap index and sitemap files
-         * as we go
-         */
-
-        StringBuffer query = new StringBuffer();
-
-        /** Query for documents that are:
+         * as we go.
+         *
+         * Depends on ObjectFormatCache fetching a list of available format IDs.
+         *
+         * We query for documents that are:
+         *
          * - Metadata (their object_format is in the xml_catalog)
          * - Latest/head versions (their obsoleted_by field is NULL)
          * - Publicly readable (their access policy has a public + read perm)
          */
 
-        // We use a subquery to filter documents based upon whether they use
-        // a format ID in the xml_catalog table
-        String metadata_formats =
-                "SELECT public_id from xml_catalog " +
-                        "WHERE public_id is not NULL";
-
-        String entries =
+        String query =
             "SELECT " +
                 "identifier.guid as pid, " +
                 "systemmetadata.date_modified as lastmod " +
@@ -214,14 +211,14 @@ public class Sitemap extends TimerTask {
                     "identifier.guid = systemmetadata.guid " +
             "LEFT JOIN xml_access on identifier.guid = xml_access.guid " +
             "WHERE " +
-            "systemmetadata.object_format in (" + metadata_formats + ") AND " +
+            "systemmetadata.object_format in (" +
+                getMetadataFormatsQueryString() +
+            ") AND " +
             "systemmetadata.obsoleted_by is NULL AND " +
             "systemmetadata.archived = FALSE AND " +
             "xml_access.principal_name = 'public' AND " +
             "xml_access.perm_type = 'allow' " +
             "ORDER BY systemmetadata.date_uploaded ASC;";
-
-        query.append(entries);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -233,7 +230,7 @@ public class Sitemap extends TimerTask {
             serialNumber = dbConn.getCheckOutSerialNumber();
 
             // Execute the query statement
-            PreparedStatement stmt = dbConn.prepareStatement(query.toString());
+            PreparedStatement stmt = dbConn.prepareStatement(query);
             stmt.execute();
             ResultSet rs = stmt.getResultSet();
 
@@ -499,5 +496,35 @@ public class Sitemap extends TimerTask {
         }
 
         return lastmodDate;
+    }
+
+    /**
+     * Generate a comma-separated list of metadata format IDs so
+     * generateSitemaps can filter the available objects to just metadata
+     * objects.
+     *
+     * @return (string) List of metadata format ids as a comma-separated string
+     * suitable for including in an SQL query. Each value is wrapped in single
+     * quotes.
+     */
+    public String getMetadataFormatsQueryString() {
+        ObjectFormatList objectFormatList = ObjectFormatCache.getInstance().listFormats();
+        StringBuilder sb = new StringBuilder();
+
+        for (org.dataone.service.types.v2.ObjectFormat fmt : objectFormatList.getObjectFormatList()) {
+            if (!fmt.getFormatType().equals("METADATA")) {
+                continue;
+            }
+
+            sb.append("'");
+            sb.append(fmt.getFormatId().getValue());
+            sb.append("'");
+            sb.append(",");
+        }
+
+        // Remove final comma so we get valid SQL "in ( ... )"
+        sb.deleteCharAt(sb.lastIndexOf(","));
+
+        return sb.toString();
     }
 }
