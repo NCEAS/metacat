@@ -27,7 +27,7 @@ import java.util.Vector;
 
 
 /**
- * A class represents the citation JSON query
+ * A class represents the the filters in citation JSON query
  * @author tao
  *
  */
@@ -82,5 +82,13 @@ public class CitationsFilter {
      */
     public void setValues(List<String> values) {
         this.values = values;
+    }
+    
+    /**
+     * Add the given value to the value list
+     * @param value  the value will be added
+     */
+    public void addValue(String value) {
+        this.values.add(value);
     }
 }
