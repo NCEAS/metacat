@@ -33,8 +33,8 @@ import java.util.Vector;
  */
 public class CitationsFilter {
     private String filterType = "dataset";
-    private String interpretAs = "list";
     private List<String> values = new Vector<String>();
+    private String interpretAs = "list";
     
     /**
      * Get the filter type
@@ -52,21 +52,6 @@ public class CitationsFilter {
         this.filterType = filterType;
     }
     
-    /**
-     * Get the field of interpretAs
-     * @return  the field of interpretAs
-     */
-    public String getInterpretAs() {
-        return interpretAs;
-    }
-    
-    /**
-     * Set the the field of interpretAs
-     * @param interpretAs
-     */
-    public void setInterpretAs(String interpretAs) {
-        this.interpretAs = interpretAs;
-    }
     
     /**
      * Get the values of the filter
@@ -82,6 +67,22 @@ public class CitationsFilter {
      */
     public void setValues(List<String> values) {
         this.values = values;
+    }
+    
+    /**
+     * Get the field of interpretAs
+     * @return  the field of interpretAs
+     */
+    public String getInterpretAs() {
+        return interpretAs;
+    }
+    
+    /**
+     * Set the the field of interpretAs
+     * @param interpretAs
+     */
+    public void setInterpretAs(String interpretAs) {
+        this.interpretAs = interpretAs;
     }
     
     /**
