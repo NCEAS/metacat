@@ -30,21 +30,21 @@ import java.util.List;
  *
  */
 public class CitationsResponse {
-    private List<CitationsMetadata> citationMetadata = null;
+    private List<CitationsMetadata> citationsMetadata = null;
 
     /**
      * Get the citation metadata from the response
      * @return  the list of citation metadata objects
      */
-    public List<CitationsMetadata> getCitationMetadata() {
-        return citationMetadata;
+    public List<CitationsMetadata> getCitationsMetadata() {
+        return citationsMetadata;
     }
 
     /**
      * Set the list of the citation metadata in the response
      * @param citationMetadata  the list of citation metadata will be set
      */
-    public void setCitationMetadata(List<CitationsMetadata> citationMetadata) {
-        this.citationMetadata = citationMetadata;
+    public void setCitationMetadata(List<CitationsMetadata> citationsMetadata) {
+        this.citationsMetadata = citationsMetadata;
     }
 }

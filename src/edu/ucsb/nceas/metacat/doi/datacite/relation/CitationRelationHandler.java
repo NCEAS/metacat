@@ -22,13 +22,16 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.htrace.shaded.fasterxml.jackson.core.JsonParseException;
 import org.apache.htrace.shaded.fasterxml.jackson.core.JsonProcessingException;
+import org.apache.htrace.shaded.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.htrace.shaded.fasterxml.jackson.databind.ObjectMapper;
 import org.dataone.configuration.Settings;
 
@@ -111,6 +114,24 @@ public class CitationRelationHandler {
         }
         logMetacat.debug("CitationRelationHandler.buildQuery - the jason query string is " + query);
         return query;
+    }
+    
+    /**
+     * Parse the query response (the json string format) to an JAVA object
+     * @param jsonStr  the response needs to be parsed
+     * @return  the java object representation of the response. Null maybe returned if the json string is null or blank. 
+     * @throws JsonParseException
+     * @throws JsonMappingException
+     * @throws IOException
+     */
+    public CitationsResponse parseResponse(String jsonStr) throws JsonParseException, JsonMappingException, IOException {
+        CitationsResponse response = null;
+        if (jsonStr != null && !jsonStr.trim().equals("")) {
+            ObjectMapper mapper = new ObjectMapper();
+            response = mapper.readValue(jsonStr, CitationsResponse.class);
+        }
+        return response;
+        
     }
 
 }

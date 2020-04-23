@@ -39,7 +39,7 @@ public class CitationsMetadata {
     private String journal = null;
     private String volume = null;
     private String page = null;
-    private String year_of_publishing = null;
+    private int year_of_publishing;
     
     /**
      * Get the target id in the response
@@ -189,7 +189,7 @@ public class CitationsMetadata {
      * Get the year in which the object was published
      * @return  the publishing year
      */
-    public String getYear_of_publishing() {
+    public int getYear_of_publishing() {
         return year_of_publishing;
     }
     
@@ -197,7 +197,7 @@ public class CitationsMetadata {
      * Set the publishing year for the object
      * @param year_of_publishing  the year will be set
      */
-    public void setYear_of_publishing(String year_of_publishing) {
+    public void setYear_of_publishing(int year_of_publishing) {
         this.year_of_publishing = year_of_publishing;
     }
    
