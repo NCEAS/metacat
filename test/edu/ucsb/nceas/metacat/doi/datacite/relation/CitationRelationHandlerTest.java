@@ -22,8 +22,11 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Vector;
 
@@ -127,7 +130,9 @@ public class CitationRelationHandlerTest extends MCTestCase {
      */
     public void testParseResponse() throws Exception {
         CitationRelationHandler handler = new CitationRelationHandler();
-        CitationsResponse response = handler.parseResponse(JSONRESPONSE);
+        byte[] bytes = JSONRESPONSE.getBytes(StandardCharsets.UTF_8);
+        InputStream in = new ByteArrayInputStream(bytes);
+        CitationsResponse response = handler.parseResponse(in);
         List<CitationsMetadata> metadata = response.getCitationsMetadata();
         assertTrue(metadata.size() == 2);
         CitationsMetadata metadata1 = metadata.get(0);

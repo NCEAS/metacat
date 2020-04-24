@@ -23,8 +23,10 @@
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.logging.Log;
@@ -33,6 +35,11 @@ import org.apache.htrace.shaded.fasterxml.jackson.core.JsonParseException;
 import org.apache.htrace.shaded.fasterxml.jackson.core.JsonProcessingException;
 import org.apache.htrace.shaded.fasterxml.jackson.databind.JsonMappingException;
 import org.apache.htrace.shaded.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.dataone.configuration.Settings;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -65,6 +72,38 @@ public class CitationRelationHandler {
             }
         }
         logMetacat.debug("CitationRelationHandler.CitationRelationHandler - the server url is " + citationServerURL);
+    }
+    
+    /**
+     * Get the list of ids which cites the given identifier - the identifier isCitedBy id
+     * @param identifier  the identifier is the subject of the relation isCitedBy
+     * @return  the list of ids which cite the given identifier
+     * @throws ClientProtocolException
+     * @throws IOException
+     */
+    public List<String> getIsCitedBys(String identifier) throws ClientProtocolException, IOException {
+        List<String> ids = new Vector<String>();
+        String restStr = buildRestString(identifier);
+        HttpClient client = HttpClientBuilder.create().build();
+        // Send http GET request
+        HttpGet get = new HttpGet(restStr);
+        HttpResponse response = client.execute(get);
+        CitationsResponse citationsResponse = parseResponse(response.getEntity().getContent());
+        if(citationsResponse != null) {
+            List<CitationsMetadata> citationsMetadatas = citationsResponse.getCitationsMetadata();
+            if (citationsMetadatas != null) {
+                for (CitationsMetadata metadata : citationsMetadatas) {
+                    if (metadata != null && metadata.getSource_id() != null && !metadata.getSource_id().trim().equals("")) {
+                        logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + metadata.getSource_id() + " into the IsCitedBy list");
+                        ids.add(metadata.getSource_id());
+                    }
+                }
+            }
+        } else {
+            logMetacat.info("CitationRelationHandler.getIsCitedBys - Metacat didn't get the citations information from the json query response");
+        }
+        return ids;
+        
     }
     
     /**
@@ -124,11 +163,11 @@ public class CitationRelationHandler {
      * @throws JsonMappingException
      * @throws IOException
      */
-    public CitationsResponse parseResponse(String jsonStr) throws JsonParseException, JsonMappingException, IOException {
+    public CitationsResponse parseResponse(InputStream jsonStream) throws JsonParseException, JsonMappingException, IOException {
         CitationsResponse response = null;
-        if (jsonStr != null && !jsonStr.trim().equals("")) {
+        if (jsonStream != null) {
             ObjectMapper mapper = new ObjectMapper();
-            response = mapper.readValue(jsonStr, CitationsResponse.class);
+            response = mapper.readValue(jsonStream, CitationsResponse.class);
         }
         return response;
         
