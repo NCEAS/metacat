@@ -60,6 +60,7 @@ import com.hp.hpl.jena.rdf.model.RDFNode;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
+import edu.ucsb.nceas.metacat.doi.datacite.relation.CitationRelationHandler;
 import edu.ucsb.nceas.metacat.doi.datacite.relation.ProvenanceRelationHandler;
 
 
@@ -102,6 +103,7 @@ public abstract class DataCiteMetadataFactory {
         xpath = xPathfactory.newXPath();
     }
     
+    private CitationRelationHandler citationHandler = new CitationRelationHandler();
     
     /**
      * Method to generate the datacite meta data xml string for an object with the given system meta data.
@@ -465,6 +467,19 @@ public abstract class DataCiteMetadataFactory {
                     logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the related identifier is " + relatedIdentifier);
                     appendRelatedIdentifier(doc, relatedIdentifier, relationType);
                 }
+            }
+        }
+        Vector<Statement> citations = citationHandler.getRelationships(identifier);
+        if (citations != null) {
+            for (Statement citation : citations) {
+                Property predicate = citation.getPredicate();
+                String relationType = predicate.getLocalName();
+                logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the relationType is " + relationType);
+                RDFNode object = citation.getObject();
+                Literal idLiteral = (Literal) object;
+                String relatedIdentifier = idLiteral.getString();
+                logMetacat.debug("DataCiteMetadataFactory.appendRelatedIdentifier - the related identifier is " + relatedIdentifier);
+                appendRelatedIdentifier(doc, relatedIdentifier, relationType);
             }
         }
         return doc;

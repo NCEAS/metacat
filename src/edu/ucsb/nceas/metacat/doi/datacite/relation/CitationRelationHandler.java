@@ -42,6 +42,13 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.dataone.configuration.Settings;
 
+import com.hp.hpl.jena.rdf.model.Literal;
+import com.hp.hpl.jena.rdf.model.Property;
+import com.hp.hpl.jena.rdf.model.Resource;
+import com.hp.hpl.jena.rdf.model.ResourceFactory;
+import com.hp.hpl.jena.rdf.model.Statement;
+
+import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -51,8 +58,8 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author tao
  *
  */
-public class CitationRelationHandler {
-    
+public class CitationRelationHandler implements RelationshipHandler {
+    public static final String ISCITEDBY = "IsCitedBy";
     public static final String CITATIONS = "citations";
     public static final String QUERY = "query";
     private static String citationServerURL = null;
@@ -72,6 +79,36 @@ public class CitationRelationHandler {
             }
         }
         logMetacat.debug("CitationRelationHandler.CitationRelationHandler - the server url is " + citationServerURL);
+    }
+    
+    
+    /**
+     * Method to get the relationship. Now we only handle IsCitedBy
+     * @param identifier  the subject of the triple relationship
+     * @return a vector of triple statements
+     */
+    public Vector<Statement> getRelationships(String identifier) {
+        Vector<Statement> statementList = new Vector<Statement>();
+        //Get the statements of the predicate - IsCitedBy
+        Property isCitedByPredic = ResourceFactory.createProperty(DataCiteMetadataFactory.NAMESPACE +"/", ISCITEDBY);
+        Resource subject = ResourceFactory.createResource(identifier);
+        List<String> ids = null;
+        try {
+            ids = getIsCitedBys(identifier);
+        } catch (IOException e) {
+            ids = new Vector<String>();
+            logMetacat.error("CitationRelationHandler.getRelationships - can't get the citation relationship for id " + identifier + " since " + e.getMessage());
+            e.printStackTrace();
+        }
+        for (String id : ids) {
+            if (id != null && !id.trim().equals("")) {
+                Literal object =  ResourceFactory.createPlainLiteral(id);
+                Statement statement = ResourceFactory.createStatement(subject, isCitedByPredic, object);
+                statementList.add(statement);
+                logMetacat.debug("CitationRelationHandler.getRelationships - the id " + id + " was added to statement with the relationship IsCitedBy");
+            }
+        }
+        return statementList;
     }
     
     /**
