@@ -159,4 +159,19 @@ public class SitemapTest extends MCTestCase {
 			fail("General exception:\n" + e.getMessage());
 		}
     }
+
+		/**
+		 * Basic smoke test. This should always return a non-zero-length string
+		 * unless something is either very wrong with DataONE or we totally change
+		 * how we do formats so a broken test is useful.
+		 */
+		public void testGetMetadataFormatsQueryString() {
+			File directory = sitemapTempDir.toFile();
+			String locationBase = "http://foo.example.com/ctx/metacat";
+			String entryBase = "http://foo.example.com/ctx/metacat";
+
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+
+			assertTrue(smap.getMetadataFormatsQueryString().length() > 0);
+		}
 }
