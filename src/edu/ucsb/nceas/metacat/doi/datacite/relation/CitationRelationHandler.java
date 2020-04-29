@@ -49,7 +49,6 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import com.hp.hpl.jena.rdf.model.Statement;
 
 import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -63,7 +62,9 @@ public class CitationRelationHandler implements RelationshipHandler {
     public static final String CITATIONS = "citations";
     public static final String QUERY = "query";
     private static String citationServerURL = null;
+    private static HttpClient client = HttpClientBuilder.create().build();;
     private static Log logMetacat  = LogFactory.getLog(CitationRelationHandler.class);
+    
     
     /**
      * Constructor
@@ -121,7 +122,6 @@ public class CitationRelationHandler implements RelationshipHandler {
     public List<String> getIsCitedBys(String identifier) throws ClientProtocolException, IOException {
         List<String> ids = new Vector<String>();
         String restStr = buildRestString(identifier);
-        HttpClient client = HttpClientBuilder.create().build();
         // Send http GET request
         HttpGet get = new HttpGet(restStr);
         HttpResponse response = client.execute(get);
