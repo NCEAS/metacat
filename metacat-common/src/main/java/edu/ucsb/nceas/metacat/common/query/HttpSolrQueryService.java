@@ -20,8 +20,10 @@ package edu.ucsb.nceas.metacat.common.query;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -146,14 +148,16 @@ public class HttpSolrQueryService extends SolrQueryService {
     public  InputStream query(SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws IOException, NotFound, UnsupportedType, SolrServerException {
         InputStream inputStream = null;
         String wt = query.get(WT);
-        query = appendAccessFilterParams(query, subjects);
-        SolrQueryResponseTransformer solrTransformer = new SolrQueryResponseTransformer(null);
         // handle normal and skin-based queries
         if (isSupportedWT(wt)) {
-            // just handle as normal solr query
-            //reload the core before query. Only after reloading the core, the query result can reflect the change made in metacat-index module.
-            QueryResponse response = httpSolrServer.query(query, method);
-            inputStream = solrTransformer.transformResults(query, response, wt);
+            if (wt != null && wt.equalsIgnoreCase(SolrQueryResponseWriterFactory.CSV) && method.equals(SolrRequest.METHOD.GET)) {
+                inputStream = httpQuery(query, subjects);
+            } else {
+                query = appendAccessFilterParams(query, subjects);
+                SolrQueryResponseTransformer solrTransformer = new SolrQueryResponseTransformer(null);
+                QueryResponse response = httpSolrServer.query(query, method);
+                inputStream = solrTransformer.transformResults(query, response, wt);
+            }
         } else {
             throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type " + wt + " in the solr query is not supported");
         }
@@ -161,7 +165,36 @@ public class HttpSolrQueryService extends SolrQueryService {
         //throw new NotImplemented("0000", "HttpSolrQueryService - the method of  query(SolrParams query, Set<Subject>subjects) is not for the HttpSolrQueryService. We donot need to implemente it");
     }
     
-    
+    /**
+     * Use a http client to query the solr server directly
+     * @param query the query params.
+     * @param subjects  subjects the user's identity which sent the query. If the Subjects is null, there wouldn't be any access control.
+     * @return the response from the solr server
+     * @throws IOException
+     */
+    private InputStream httpQuery(SolrParams query, Set<Subject> subjects) throws IOException {
+        InputStream stream = null;
+        String queryStr = solrServerBaseURL+"/select" + query.toQueryString();
+        log.info("HttpSolrQueryService.httpQuery - the query string is " + queryStr);
+        String accessQuery = null;
+        if (subjects != null) {
+           //escape the subjects
+            for (Subject subject : subjects) {
+                String subjectStr = subject.getValue();
+                subjectStr = URLEncoder.encode(subjectStr, "UTF-8");
+                subject.setValue(subjectStr);
+            }
+            accessQuery = "&" + FILTERQUERY + "=" + generateAccessFilterParamsString(subjects).toString();
+        }
+        if (accessQuery != null) {
+          //append the filter for the access control
+            queryStr = queryStr + accessQuery;
+        }
+        log.info("HttpSolrQueryService.httpQuery - the final query string is " + queryStr);
+        URL url = new URL(queryStr);
+        stream = url.openStream();
+        return stream;
+    }
     
     
     /**
