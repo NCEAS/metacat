@@ -51,6 +51,7 @@ import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.SolrParams;
+import org.apache.solr.common.util.NamedList;
 import org.apache.solr.core.SolrResourceLoader;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
@@ -144,6 +145,10 @@ public class HttpSolrQueryService extends SolrQueryService {
         String wt = query.get(WT);
         if (wt == null) {
             wt = "xml"; //The http solr server default wt is json, but our server is xml. We have to set to xml so it wouldn't change the behavior of Metacat.
+            NamedList<String> list = new NamedList<String>();
+            list.add(WT, wt);
+            SolrParams wtParam = list.toSolrParams();
+            query = SolrParams.wrapAppended(query, wtParam);
         }
         if (isSupportedWT(wt)) {
             if (method.equals(SolrRequest.METHOD.GET)) {
