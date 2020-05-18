@@ -73,7 +73,9 @@ public class SolrQueryServiceController {
         } else {
             isEmbeddedSolrServer = false;
             HttpSolrClient httpServer = (HttpSolrClient)solrServer;
-            httpQueryService = new HttpSolrQueryService(httpServer);
+            String baseUrl = httpServer.getBaseURL();
+            httpServer = null;
+            httpQueryService = new HttpSolrQueryService(baseUrl);
         }
     }
     

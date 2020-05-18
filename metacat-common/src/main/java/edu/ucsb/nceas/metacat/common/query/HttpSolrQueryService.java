@@ -20,54 +20,52 @@ package edu.ucsb.nceas.metacat.common.query;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.Vector;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.lucene.util.Version;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.HttpSolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.SolrResourceLoader;
-import org.apache.solr.core.SolrConfig;
-import org.apache.solr.schema.FieldType;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.schema.SchemaField;
-import org.apache.solr.schema.TextField;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.NotFound;
-import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
-import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+
+import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeSolrResponseInputStream;
 
 
 
@@ -89,7 +87,7 @@ public class HttpSolrQueryService extends SolrQueryService {
     private static final String TRUE = "true";
     
     private String solrServerBaseURL = null;
-    private HttpSolrClient httpSolrServer = null;
+    private static HttpClient httpClient = HttpClientBuilder.create().build();
     private static Log log = LogFactory.getLog(HttpSolrQueryService.class);
     /**
      * Constructor
@@ -99,12 +97,8 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @throws ParserConfigurationException 
      * @throws MalformedURLException 
      */
-    public HttpSolrQueryService(HttpSolrClient httpSolrServer) throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
-        if(httpSolrServer == null) {
-            throw new NullPointerException("HttpSolrQueryService.constructor - The httpSolrServer parameter can't be null");
-        }
-        this.httpSolrServer = httpSolrServer;
-        this.solrServerBaseURL = httpSolrServer.getBaseURL();
+    public HttpSolrQueryService(String httpSolrServerBaseUrl) throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
+        this.solrServerBaseURL = httpSolrServerBaseUrl;
         getIndexSchemaFieldFromServer();
     }
     
@@ -148,51 +142,76 @@ public class HttpSolrQueryService extends SolrQueryService {
     public  InputStream query(SolrParams query, Set<Subject> subjects, SolrRequest.METHOD method) throws IOException, NotFound, UnsupportedType, SolrServerException {
         InputStream inputStream = null;
         String wt = query.get(WT);
-        // handle normal and skin-based queries
+        if (wt == null) {
+            wt = "xml"; //The http solr server default wt is json, but our server is xml. We have to set to xml so it wouldn't change the behavior of Metacat.
+        }
         if (isSupportedWT(wt)) {
-            if (wt != null && wt.equalsIgnoreCase(SolrQueryResponseWriterFactory.CSV) && method.equals(SolrRequest.METHOD.GET)) {
-                inputStream = httpQuery(query, subjects);
+            if (method.equals(SolrRequest.METHOD.GET)) {
+                inputStream = httpGetQuery(query, subjects);
             } else {
-                query = appendAccessFilterParams(query, subjects);
-                SolrQueryResponseTransformer solrTransformer = new SolrQueryResponseTransformer(null);
-                QueryResponse response = httpSolrServer.query(query, method);
-                inputStream = solrTransformer.transformResults(query, response, wt);
+                inputStream = httpPostQuery(query, subjects);
             }
         } else {
             throw new UnsupportedType("0000","HttpSolrQueryService.query - the wt type " + wt + " in the solr query is not supported");
         }
-        return inputStream;
-        //throw new NotImplemented("0000", "HttpSolrQueryService - the method of  query(SolrParams query, Set<Subject>subjects) is not for the HttpSolrQueryService. We donot need to implemente it");
+        ContentTypeSolrResponseInputStream responseStream = new ContentTypeSolrResponseInputStream(inputStream);
+        responseStream.setContentType(SolrQueryResponseWriterFactory.getContentType(wt));
+        return responseStream;
     }
     
     /**
-     * Use a http client to query the solr server directly
+     * Use a http client to query the solr server directly by the get method
      * @param query the query params.
      * @param subjects  subjects the user's identity which sent the query. If the Subjects is null, there wouldn't be any access control.
-     * @return the response from the solr server
+     * @return the response input stream from the solr server
      * @throws IOException
      */
-    private InputStream httpQuery(SolrParams query, Set<Subject> subjects) throws IOException {
+    private InputStream httpGetQuery(SolrParams query, Set<Subject> subjects) throws IOException {
         InputStream stream = null;
-        String queryStr = solrServerBaseURL+"/select" + query.toQueryString();
-        log.info("HttpSolrQueryService.httpQuery - the query string is " + queryStr);
-        String accessQuery = null;
-        if (subjects != null) {
-           //escape the subjects
-            for (Subject subject : subjects) {
-                String subjectStr = subject.getValue();
-                subjectStr = URLEncoder.encode(subjectStr, "UTF-8");
-                subject.setValue(subjectStr);
+        query = appendAccessFilterParams(query, subjects);
+        String queryStr = solrServerBaseURL + SELECTIONPHASE + query.toQueryString();
+        log.info("HttpSolrQueryService.httpGetQuery - the query string is " + queryStr);
+        HttpGet get = new HttpGet(queryStr);
+        HttpResponse response = httpClient.execute(get);
+        stream = response.getEntity().getContent();
+        return stream;
+    }
+    
+    /**
+     * Use a http client to query the solr server directly by the post method
+     * @param query the query params.
+     * @param subjects  subjects the user's identity which sent the query. If the Subjects is null, there wouldn't be any access control.
+     * @return the response input stream from the solr server
+     * @throws ClientProtocolException
+     * @throws IOException
+     */
+    private InputStream httpPostQuery(SolrParams query, Set<Subject> subjects) throws ClientProtocolException, IOException {
+        InputStream stream = null;
+        HttpPost httpPost = new HttpPost(solrServerBaseURL + SELECTIONPHASE);
+        List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
+        if (query != null) {
+            Iterator<String> paraNames = query.getParameterNamesIterator();
+            while (paraNames.hasNext()) {
+                String name = paraNames.next();
+                String[] values = query.getParams(name);
+                if (values != null) {
+                    for (int i=0; i<values.length; i++) {
+                        log.info("HttpSolrQueryService.httpPostQuery - add the param: " + name + " with value " + values[i] + " into the http name/value pair.");
+                        params.add(new BasicNameValuePair(name, values[i]));
+                    }
+                }
             }
-            accessQuery = "&" + FILTERQUERY + "=" + generateAccessFilterParamsString(subjects).toString();
         }
-        if (accessQuery != null) {
-          //append the filter for the access control
-            queryStr = queryStr + accessQuery;
+        //append the access
+        StringBuffer accessFilter = generateAccessFilterParamsString(subjects);
+        if (accessFilter != null && accessFilter.length() != 0) {
+            String accessStr = accessFilter.toString();
+            log.info("HttpSolrQueryService.httpPostQuery - the access  string is " + accessStr);
+            params.add(new BasicNameValuePair(FILTERQUERY, accessStr));
         }
-        log.info("HttpSolrQueryService.httpQuery - the final query string is " + queryStr);
-        URL url = new URL(queryStr);
-        stream = url.openStream();
+        httpPost.setEntity(new UrlEncodedFormEntity(params));
+        HttpResponse response = httpClient.execute(httpPost);
+        stream = response.getEntity().getContent();
         return stream;
     }
     
@@ -359,21 +378,4 @@ public class HttpSolrQueryService extends SolrQueryService {
         Document doc = dBuilder.parse(input);
         return doc;
     }
-    
-    /**
-     * If there is a solr doc for the given id.
-     * @param id - the specified id.
-     * @return true if there is a solr doc for this id.
-     */
-    public boolean hasSolrDoc(Identifier id) throws ParserConfigurationException, SolrServerException, IOException, SAXException {
-    	boolean hasIt = false;
-    	if(id != null && id.getValue() != null && !id.getValue().trim().equals("") ) {
-    		SolrParams query = EmbeddedSolrQueryService.buildIdQuery(id.getValue());
-            QueryResponse response = httpSolrServer.query(query);
-            hasIt = EmbeddedSolrQueryService.hasResult(response);
-    	}
-    	return hasIt;
-    }
-    
- 
 }
