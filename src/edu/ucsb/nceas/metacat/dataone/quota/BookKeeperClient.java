@@ -107,7 +107,7 @@ public class BookKeeperClient {
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public void updateUsage(String quotaId, int usage) throws ClientProtocolException, IOException {
+    public void updateUsage(String quotaId, long usage) throws ClientProtocolException, IOException {
         String restStr = bookKeeperURL + QUOTAS + "/" + quotaId + "/usage?usage=" + usage;
         logMetacat.debug("BookKeeperClient.updateUsage - the rest request to list the quotas is " + restStr);
         HttpPut put = new HttpPut(restStr);

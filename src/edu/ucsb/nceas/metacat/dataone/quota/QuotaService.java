@@ -58,5 +58,28 @@ public class QuotaService {
         return service;
     }
     
-
+    /**
+     * Check if the quota has enough space for this request
+     * @param submitterSubject  the subject of the submitter of the request
+     * @param quotaSubject  the subject of quota will be used in the request
+     * @param quotaName  the name of quota
+     * @param usage  the usage for the request
+     * @return true if the quota has the enough space;otherwise false
+     */
+    public boolean hasUsage(String submitterSubject, String quotaSubject, String quotaName, long usage) {
+        boolean has = false;
+        return has;
+    }
+    
+    
+    /**
+     * Update the quota with the usage
+     * @param submitterSubject  the subject of the submitter of the request
+     * @param quotaSubject  the subject of quota will be used in the request
+     * @param quotaName  the name of quota
+     * @param usage  the usage for the request
+     */
+    public void updateUsage(String submitterSubject, String quotaSubject, String quotaName, long usage) {
+        
+    }
 }
