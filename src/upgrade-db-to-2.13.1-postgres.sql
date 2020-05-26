@@ -1,18 +1,15 @@
 /*
- * Create the quotas table
+ * Create the usages table
  */
-CREATE SEQUENCE quotas_usage_id_seq;
-CREATE TABLE quotas (
-	usage_id INT8 default nextval('quotas_usage_id_seq'),  -- the unique usage id (pk)
-	guid TEXT,  -- the identifier of the object from the systemmetadata table (fkey)
-  quota_subject VARCHAR(250),  -- the subject of the user/group to report the quota for
-  quota_id VARCHAR(500),  -- the identifier of the quota
-  quota_name VARCHAR(100),  -- the name of the quota (can be storage or portals)
-  date_reported DATE,  -- the date that the quota usage was reported to the quota service 
-   CONSTRAINT quotas_pk PRIMARY KEY (usage_id),
-   CONSTRAINT quotas_guid_fk FOREIGN KEY (guid) REFERENCES systemmetadata
+CREATE SEQUENCE usages_usage_id_seq;
+CREATE TABLE usages (
+	usage_id INT8 default nextval('usages_usage_id_seq'),  -- the unique usage id (pk)
+  quota_id TEXT,  -- the identifier of the quota
+  instance_id TEXT,  -- storage - pid of object; portal - sid of portal document
+  quantity FLOAT8, -- the amount of the usage
+  date_reported TIMESTAMP,  -- the time stamp that the quota usage was reported to the quota service 
+   CONSTRAINT quotas_pk PRIMARY KEY (usage_id)
 );
-CREATE INDEX quotas_idx1 ON quotas(date_reported);
 
 /*
  * Ensure xml_catalog sequence is at table max
