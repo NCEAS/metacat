@@ -552,6 +552,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     private void doQuery(String engine, String query) {
     	
 		OutputStream out = null;
+		InputStream stream = null;
 
     	try {
     		// NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter			
@@ -569,7 +570,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	    		if (query != null) {
 	    			MNodeService mnode = MNodeService.getInstance(request);
 	    			mnode.setSession(session);
-	    			InputStream stream = mnode.query(session, engine, query);
+	    			stream = mnode.query(session, engine, query);
 
 	    			// set the content-type if we have it from the implementation
 	    			if (stream instanceof ContentTypeInputStream) {
@@ -613,14 +614,23 @@ public class MNResourceHandler extends D1ResourceHandler {
 			}
 			ServiceFailure se = new ServiceFailure("0000", e.getMessage());
             serializeException(se, out);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    logMetacat.warn("MNResourceHandler.doQuery - can't close the input stream from the MN.query method since " + e.getMessage());
+                }
+            }
         }
-    }
+    } 
     
     /*
      * Handle the solr query sent by the http post method
      */
     private void doPostQuery(String engine) {
         OutputStream out = null;
+        InputStream stream = null;
         try {
             // NOTE: we set the session explicitly for the MNode instance since these methods do not provide a parameter            
             collectMultipartParams();
@@ -638,7 +648,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
             }
             mnode.setSession(session);
-            InputStream stream = mnode.postQuery(session, engine, params);
+            stream = mnode.postQuery(session, engine, params);
             // set the content-type if we have it from the implementation
             if (stream instanceof ContentTypeInputStream) {
                 response.setContentType(((ContentTypeInputStream) stream).getContentType());
@@ -666,6 +676,14 @@ public class MNResourceHandler extends D1ResourceHandler {
             }
             ServiceFailure se = new ServiceFailure("0000", e.getMessage());
             serializeException(se, out);
+        } finally {
+            if (stream != null) {
+                try {
+                    stream.close();
+                } catch (IOException e) {
+                    logMetacat.warn("MNResourceHandler.doPostQuery - can't close the input stream from the MN.postQuery method since " + e.getMessage());
+                }
+            }
         }
     }
     
