@@ -19,6 +19,8 @@
  */
 package edu.ucsb.nceas.metacat.dataone.quota;
 
+import java.io.IOException;
+
 import org.dataone.configuration.Settings;
 
 /**
@@ -35,8 +37,9 @@ public class QuotaService {
     
     /**
      * Private default constructor
+     * @throws IOException 
      */
-    private QuotaService() {
+    private QuotaService() throws IOException {
         storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled");
         portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled");
         replicationEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.replication.enabled");
@@ -46,8 +49,9 @@ public class QuotaService {
     /**
      * Get the singleton instance of the service
      * @return the quota service instance
+     * @throws IOException 
      */
-    public static QuotaService getInstance() {
+    public static QuotaService getInstance() throws IOException {
         if (service == null) {
             synchronized (QuotaService.class) {
                 if (service == null) {
