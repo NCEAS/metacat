@@ -27,6 +27,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.message.BasicHeader;
+import org.apache.wicket.util.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -38,6 +39,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.dataone.bookkeeper.api.Quota;
 import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Subject;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -110,8 +113,10 @@ public class BookKeeperClient {
      * @return  the list of quotas associated with the subject. null may be returned if the subject is null.
      * @throws IOException 
      * @throws ClientProtocolException 
+     * @throws NotFound 
+     * @throws ServiceFailure 
      */
-    public List<Quota> listQuotas(Subject subscriptionSubject, String name, Subject proxySubject) throws ClientProtocolException, IOException {
+    public List<Quota> listQuotas(Subject subscriptionSubject, String name, Subject proxySubject) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
         List<Quota> result = null;
         if (subscriptionSubject != null && name != null && proxySubject != null) {
             String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIPTIONSUBJECT + "=" + subscriptionSubject.getValue() + "&" + NAME + "=" + name + "&" + PROXYSUBJECT + proxySubject.getValue();
@@ -121,7 +126,15 @@ public class BookKeeperClient {
             CloseableHttpResponse response = null;
             try {
                 response = httpClient.execute(get);
-                result = mapper.readValue(response.getEntity().getContent(), List.class);
+                int status = response.getStatusLine().getStatusCode();
+                if (status == 200) {
+                    result = mapper.readValue(response.getEntity().getContent(), List.class);
+                } else if (status == 404) {
+                    throw new NotFound("0000", "The quota with the subscription subject " + subscriptionSubject.getValue() + " is not found");
+                } else {
+                    String error = IOUtils.toString(response.getEntity().getContent());
+                    throw new ServiceFailure("0000", "Quota service can't fulfill to list quotas since " + error);
+                }
             } finally {
                 if (response != null) {
                     response.close();
@@ -135,10 +148,12 @@ public class BookKeeperClient {
      * Create a usage record for a given quota identifier in the book keeper service
      * @param quotaId  the id of the quota which the usage will belong to
      * @param usage  the object of the usage will be created
+     * @return true if the creation succeeded; otherwise, false
      * @throws ClientProtocolException
      * @throws IOException
      */
-    public void createUsage(String quotaId, Usage usage) throws ClientProtocolException, IOException {
+    public boolean createUsage(String quotaId, Usage usage) throws ClientProtocolException, IOException {
+        boolean success = false;
         String restStr = bookKeeperURL + QUOTAS + "/" + USAGE;
         logMetacat.debug("BookKeeperClient.updateUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 
@@ -151,11 +166,14 @@ public class BookKeeperClient {
         CloseableHttpResponse response = null;
         try {
             response = httpClient.execute(post);
+            if (response.getStatusLine().getStatusCode() == 200) {
+                success = true;
+            }
         } finally {
             if (response != null) {
                 response.close();
             }
         }
+        return success;
     }
-
 }
