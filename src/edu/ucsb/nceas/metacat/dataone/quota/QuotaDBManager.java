@@ -52,7 +52,7 @@ public class QuotaDBManager {
      * @param usageId  the id of the usage will be set
      * @param date  the date to report to the bookkeeper server
      */
-    public static void setReportedDate(String usageId, Date date) {
+    public static void setReportedDate(int usageId, Date date) {
         
     }
     

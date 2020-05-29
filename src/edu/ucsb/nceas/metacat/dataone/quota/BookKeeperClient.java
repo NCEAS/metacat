@@ -52,9 +52,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 public class BookKeeperClient {
-    
-    private String bookKeeperURL = null;
-    private CloseableHttpClient httpClient = null;
     private static final String QUOTAS = "quotas";
     private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
     private static BookKeeperClient bookKeeperClient = null;
@@ -62,6 +59,9 @@ public class BookKeeperClient {
     private static final String SUBSCRIBER = "subscriber";
     private static final String REQUESTOR = "requestor";
     private static final String USAGE = "usage";
+    
+    private String bookKeeperURL = null;
+    private CloseableHttpClient httpClient = null;
     private ObjectMapper mapper = new ObjectMapper();
     private BasicHeader header = null;
     
@@ -175,8 +175,7 @@ public class BookKeeperClient {
         CloseableHttpResponse response = null;
         try {
             response = httpClient.execute(post);
-            if (response.getStatusLine().getStatusCode() == 200) {
-            } else {
+            if (response.getStatusLine().getStatusCode() != 200) {
                 String error = IOUtils.toString(response.getEntity().getContent());
                 throw new ServiceFailure("0000", "Quota service can't create the usage since " + error);
             }
