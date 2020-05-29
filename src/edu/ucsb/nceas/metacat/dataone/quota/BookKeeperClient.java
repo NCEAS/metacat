@@ -58,9 +58,9 @@ public class BookKeeperClient {
     private static final String QUOTAS = "quotas";
     private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
     private static BookKeeperClient bookKeeperClient = null;
-    private static final String NAME = "name";
-    private static final String SUBSCRIPTIONSUBJECT = "subscriptionSubject";
-    private static final String PROXYSUBJECT= "proxySubject";
+    private static final String QUOTATYPE = "quotaType";
+    private static final String SUBSCRIBER = "subscriber";
+    private static final String REQUESTOR = "requestor";
     private static final String USAGE = "usage";
     private ObjectMapper mapper = new ObjectMapper();
     private BasicHeader header = null;
@@ -69,22 +69,30 @@ public class BookKeeperClient {
     /**
      * A private constructor
      * @throws IOException 
+     * @throws ServiceFailure 
      */
-    protected BookKeeperClient() throws IOException {
+    protected BookKeeperClient() throws IOException, ServiceFailure {
         if (bookKeeperURL == null) {
             bookKeeperURL = Settings.getConfiguration().getString("dataone.quotas.bookkeeper.serviceUrl");
-            logMetacat.debug("BookKeeperClient.BookKeeperClient - the bookkeeper service url is " + bookKeeperURL);
-            if (bookKeeperURL != null && !bookKeeperURL.endsWith("/")) {
+            logMetacat.debug("BookKeeperClient.BookKeeperClient - the bookkeeper service url from the metacat.properties file is " + bookKeeperURL);
+            if (bookKeeperURL == null || bookKeeperURL.trim().equals("")) {
+                throw new ServiceFailure("0000", "The quota service url can't be null or blank. Please ask the Metacat admin to check the property \"dataone.quotas.bookkeeper.serviceUrl\" in its metacat.properties file.");
+            }
+            if (!bookKeeperURL.endsWith("/")) {
                 bookKeeperURL = bookKeeperURL + "/";
             }
+            logMetacat.debug("BookKeeperClient.BookKeeperClient - the final bookkeeper service url is " + bookKeeperURL);
         }
         if (header == null) {
             String tokenFilePath = Settings.getConfiguration().getString("dataone.bearToken.file");
             File tokenFile = new File(tokenFilePath);
             String token = FileUtils.readFileToString(tokenFile, "UTF-8");
+            if (token == null || token.trim().equals("")) {
+                throw new ServiceFailure("0000", "The member node token can't be null or blank when it access the remote quota service. Please ask the Metacat admin to check the content of the token file with the path " + tokenFilePath + 
+                        ". If the token file path is null or blank, please ask the Metacat admin to set the proper token file path at the property \"dataone.bearToken.file\" in its metacat.properties file.");
+            }
             header = new BasicHeader("Authorization", "Beaer " + token);
         }
-        logMetacat.debug("BookKeeperClient.BookKeeperClient - the bookekeeper service final url is " + bookKeeperURL);
         httpClient = HttpClientBuilder.create().build();
     }
     
@@ -92,8 +100,9 @@ public class BookKeeperClient {
      * Get the singleton instance of the BookKeeplerClient class
      * @return  the instance of the class
      * @throws IOException 
+     * @throws ServiceFailure 
      */
-    public static BookKeeperClient getInstance() throws IOException {
+    public static BookKeeperClient getInstance() throws IOException, ServiceFailure {
         if (bookKeeperClient == null) {
             synchronized (BookKeeperClient.class) {
               if (bookKeeperClient == null) {
@@ -107,19 +116,20 @@ public class BookKeeperClient {
     
     /**
      * List the quotas associated with the given subject
-     * @param subject  the subject who owns the list of quotas
-     * @param name  the name of the quotas (storage or portal)
-     * @param proxySubject  the submitter's subject of this object 
+     * @param subscriber  the subject who owns the quotas
+     * @param quotaType  the type of the quotas (storage or portal)
+     * @param requestor  the subject of user who will request a usage 
      * @return  the list of quotas associated with the subject. null may be returned if the subject is null.
      * @throws IOException 
      * @throws ClientProtocolException 
      * @throws NotFound 
      * @throws ServiceFailure 
      */
-    public List<Quota> listQuotas(Subject subscriptionSubject, String name, Subject proxySubject) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
+    public List<Quota> listQuotas(Subject subscriber, String quotaType, Subject requestor) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
         List<Quota> result = null;
-        if (subscriptionSubject != null && name != null && proxySubject != null) {
-            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIPTIONSUBJECT + "=" + subscriptionSubject.getValue() + "&" + NAME + "=" + name + "&" + PROXYSUBJECT + proxySubject.getValue();
+        if (subscriber != null && subscriber.getValue() != null && !subscriber.getValue().trim().equals("") && quotaType != null && !quotaType.trim().equals("") && 
+                                                                            requestor != null && requestor.getValue() != null && !requestor.getValue().trim().equals("")) {
+            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber.getValue() + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor.getValue();
             logMetacat.debug("BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
             HttpGet get = new HttpGet(restStr);
             get.addHeader(header);
@@ -130,7 +140,7 @@ public class BookKeeperClient {
                 if (status == 200) {
                     result = mapper.readValue(response.getEntity().getContent(), List.class);
                 } else if (status == 404) {
-                    throw new NotFound("0000", "The quota with the subscription subject " + subscriptionSubject.getValue() + " is not found");
+                    throw new NotFound("0000", "The quota with the subscription subject " + subscriber.getValue() + " is not found");
                 } else {
                     String error = IOUtils.toString(response.getEntity().getContent());
                     throw new ServiceFailure("0000", "Quota service can't fulfill to list quotas since " + error);
@@ -145,16 +155,15 @@ public class BookKeeperClient {
     }
     
     /**
-     * Create a usage record for a given quota identifier in the book keeper service
+     * Create a usage record for a given quota identifier in the book keeper service. If it fails, an exception will be thrown
      * @param quotaId  the id of the quota which the usage will belong to
      * @param usage  the object of the usage will be created
-     * @return true if the creation succeeded; otherwise, false
      * @throws ClientProtocolException
      * @throws IOException
+     * @throws ServiceFailure
      */
-    public boolean createUsage(String quotaId, Usage usage) throws ClientProtocolException, IOException {
-        boolean success = false;
-        String restStr = bookKeeperURL + QUOTAS + "/" + USAGE;
+    public void createUsage(String quotaId, Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
+        String restStr = bookKeeperURL + USAGE;
         logMetacat.debug("BookKeeperClient.updateUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 
         logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
@@ -167,13 +176,14 @@ public class BookKeeperClient {
         try {
             response = httpClient.execute(post);
             if (response.getStatusLine().getStatusCode() == 200) {
-                success = true;
+            } else {
+                String error = IOUtils.toString(response.getEntity().getContent());
+                throw new ServiceFailure("0000", "Quota service can't create the usage since " + error);
             }
         } finally {
             if (response != null) {
                 response.close();
             }
         }
-        return success;
     }
 }
