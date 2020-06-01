@@ -21,11 +21,14 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.ClientProtocolException;
 import org.dataone.bookkeeper.api.Quota;
+import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
@@ -40,7 +43,9 @@ public class QuotaService {
     private static boolean storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled", false);
     private static boolean portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled", false);
     private static boolean replicationEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.replication.enabled", false);
+    private static int NUMOFTHREADS = Settings.getConfiguration().getInt("dataone.quotas.reportingThreadPoolSize", 5);
     private static boolean enabled = false; //If any of above variables are enabled, this variable will be true.
+    private static ExecutorService executor = null;
     private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
     
     private static QuotaService service = null;
@@ -54,6 +59,7 @@ public class QuotaService {
     private QuotaService() throws IOException, ServiceFailure {
         if (enabled) {
             client = BookKeeperClient.getInstance();
+            executor = Executors.newFixedThreadPool(NUMOFTHREADS);
         }
     }
     
@@ -116,13 +122,16 @@ public class QuotaService {
     
     
     /**
-     * Update the quota with the usage
+     * Update the quota with the usage. Metacat only executes it if the service is enabled
      * @param submitterSubject  the subject of the submitter of the request
      * @param quotaSubject  the subject of quota will be used in the request
      * @param quotaName  the name of quota
      * @param usage  the usage for the request
      */
     public void updateUsage(String submitterSubject, String quotaSubject, String quotaName, long usage) {
+        if(enabled) {
+            Usage usageObj = new Usage();
+        }
         
     }
 }

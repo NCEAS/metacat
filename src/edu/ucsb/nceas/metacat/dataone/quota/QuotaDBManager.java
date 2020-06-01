@@ -39,11 +39,12 @@ public class QuotaDBManager {
     private static final String DATEREPORTED = "date_reported";
     
     /**
-     * Create a usage record in the usages table. 
-     * However we don't specify the date_reported field here. It will be set when Metacat successfully reports the usage to the remote bookkeeper server.
+     * Create a usage record in the usages table with the given date as the reported date
+     * If the date is null, it will create a usage record without the reported date
      * @param usage  the usage will be record into the db table
+     * @param date  the reported date associated with the usage. If it is null, the reported date will be blank in the table
      */
-    public static void createUsage(Usage usage) {
+    public static void createUsage(Usage usage, Date date) {
         
     }
     

@@ -54,11 +54,17 @@ public class CreateUsageTask implements Runnable {
     public void run() {
         try {
             bookkeeperClient.createUsage(quotaId, usage);
-            Date now = new Date();
-            QuotaDBManager.setReportedDate(usage.getId(), now);
         } catch (Exception e) {
             logMetacat.warn("CreateUsageTask.run - can't report the usage to the remote server or can't set the reported date in the local usages table since " + e.getMessage());
+            //Reporting usage to the remote bookkeeper server failed. So we need to create a usage record without the reported date in the local database (by setting the date null).
+            //Another periodic thread will try to report the usage again some time later.
+            Date now = null;
+            QuotaDBManager.setReportedDate(usage.getId(), now);
+            return;
         }
+        //Reported the usage to the remote bookkeeper server succeeded. So we need to create a usage record with reported date in the local database.
+        Date now = new Date();
+        QuotaDBManager.setReportedDate(usage.getId(), now);
     }
 
 }
