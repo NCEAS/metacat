@@ -32,7 +32,7 @@ import org.dataone.bookkeeper.api.Usage;
  *
  */
 public class CreateUsageTask implements Runnable {
-    private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
+    private static Log logMetacat  = LogFactory.getLog(CreateUsageTask.class);
     
     private Usage usage = null;
     private String quotaId = null;

@@ -39,6 +39,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.dataone.bookkeeper.api.Quota;
 import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Subject;
@@ -53,12 +54,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class BookKeeperClient {
     private static final String QUOTAS = "quotas";
-    private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
-    private static BookKeeperClient bookKeeperClient = null;
     private static final String QUOTATYPE = "quotaType";
     private static final String SUBSCRIBER = "subscriber";
     private static final String REQUESTOR = "requestor";
     private static final String USAGE = "usage";
+    private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
+    private static BookKeeperClient bookKeeperClient = null;
     
     private String bookKeeperURL = null;
     private CloseableHttpClient httpClient = null;
@@ -117,19 +118,19 @@ public class BookKeeperClient {
     /**
      * List the quotas associated with the given subject
      * @param subscriber  the subject who owns the quotas
-     * @param quotaType  the type of the quotas (storage or portal)
      * @param requestor  the subject of user who will request a usage 
-     * @return  the list of quotas associated with the subject. null may be returned if the subject is null.
+     * @param quotaType  the type of the quotas (storage or portal)
+     * @return  the list of quotas associated with the subject.
      * @throws IOException 
      * @throws ClientProtocolException 
      * @throws NotFound 
      * @throws ServiceFailure 
+     * @throws InvalidRequest 
      */
-    public List<Quota> listQuotas(Subject subscriber, String quotaType, Subject requestor) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
+    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ClientProtocolException, IOException, NotFound, ServiceFailure, InvalidRequest {
         List<Quota> result = null;
-        if (subscriber != null && subscriber.getValue() != null && !subscriber.getValue().trim().equals("") && quotaType != null && !quotaType.trim().equals("") && 
-                                                                            requestor != null && requestor.getValue() != null && !requestor.getValue().trim().equals("")) {
-            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber.getValue() + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor.getValue();
+        if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
+            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor;
             logMetacat.debug("BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
             HttpGet get = new HttpGet(restStr);
             get.addHeader(header);
@@ -139,8 +140,13 @@ public class BookKeeperClient {
                 int status = response.getStatusLine().getStatusCode();
                 if (status == 200) {
                     result = mapper.readValue(response.getEntity().getContent(), List.class);
+                    if (result != null) {
+                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
+                    } else {
+                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null");
+                    }
                 } else if (status == 404) {
-                    throw new NotFound("0000", "The quota with the subscription subject " + subscriber.getValue() + " is not found");
+                    throw new NotFound("0000", "The quota with the subscription subject " + subscriber + " is not found");
                 } else {
                     String error = IOUtils.toString(response.getEntity().getContent());
                     throw new ServiceFailure("0000", "Quota service can't fulfill to list quotas since " + error);
@@ -150,6 +156,8 @@ public class BookKeeperClient {
                     response.close();
                 }
             }
+        } else {
+            throw new InvalidRequest("0000", "The quota subscriber, requestor and quota type can't be null or blank");
         }
         return result;
     }
