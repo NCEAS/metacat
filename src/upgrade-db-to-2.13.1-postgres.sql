@@ -4,7 +4,7 @@
 CREATE SEQUENCE quota_usages_usage_id_seq;
 CREATE TABLE quota_usages (
 	usage_id INT8 default nextval('quota_usages_usage_id_seq'),  -- the unique usage id (pk)
-  quota_id TEXT,  -- the identifier of the quota
+  quota_id INT,  -- the identifier of the quota
   instance_id TEXT,  -- storage - pid of object; portal - sid of portal document
   quantity FLOAT8, -- the amount of the usage
   date_reported TIMESTAMP,  -- the time stamp that the quota usage was reported to the quota service 
