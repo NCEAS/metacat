@@ -43,40 +43,22 @@ public class QuotaTypeDeterminer {
     public static final String STORAGE = "storage";
     public static final String PORTAL = "portal";
     
-    private static final String PROPERTYNAMEOFPORTALNAMESPACE = "dataone.quotas.portal.namespaces";
-    
     private static Log logMetacat  = LogFactory.getLog(QuotaTypeDeterminer.class);
-    private static QuotaTypeDeterminer determiner = null;
     private List<String> portalNameSpaces = null;
     private String quotaType = null;
     private String instanceId = null;
     
     
     /**
-     * Private constructor
+     * Constructor
+     * @param portalNameSpaces  list of portal objects' name space
      * @throws ServiceFailure 
      */
-    private QuotaTypeDeterminer() throws ServiceFailure {
-        portalNameSpaces = Settings.getConfiguration().getList(PROPERTYNAMEOFPORTALNAMESPACE);
-        if (portalNameSpaces == null || portalNameSpaces.isEmpty()) {
-            throw new ServiceFailure("4893", "The propery " + PROPERTYNAMEOFPORTALNAMESPACE + " in metacat.properties file can'be blank.");
+    public QuotaTypeDeterminer(List<String> portalNameSpaces) throws ServiceFailure {
+        this.portalNameSpaces = portalNameSpaces;
+        if (this.portalNameSpaces == null || this.portalNameSpaces.isEmpty()) {
+            throw new ServiceFailure("4893", "The propery " + QuotaService.PROPERTYNAMEOFPORTALNAMESPACE + " in metacat.properties file can'be blank.");
         }
-    }
-    
-    /**
-     * Get an instance of the determiner class
-     * @return  an instance of the determiner
-     * @throws ServiceFailure 
-     */
-    public static QuotaTypeDeterminer getInstance() throws ServiceFailure {
-        if (determiner == null) {
-            synchronized (QuotaTypeDeterminer.class) {
-                if (determiner == null) {
-                    determiner = new QuotaTypeDeterminer();
-                }
-            }
-        }
-        return determiner;
     }
     
     /**

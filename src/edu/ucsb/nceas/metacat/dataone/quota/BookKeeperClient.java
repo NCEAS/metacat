@@ -164,13 +164,12 @@ public class BookKeeperClient {
     
     /**
      * Create a usage record for a given quota identifier in the book keeper service. If it fails, an exception will be thrown
-     * @param quotaId  the id of the quota which the usage will belong to
      * @param usage  the object of the usage will be created
      * @throws ClientProtocolException
      * @throws IOException
      * @throws ServiceFailure
      */
-    public void createUsage(String quotaId, Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
+    public void createUsage(Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
         String restStr = bookKeeperURL + USAGE;
         logMetacat.debug("BookKeeperClient.updateUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 

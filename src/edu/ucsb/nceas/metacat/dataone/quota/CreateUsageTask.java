@@ -35,25 +35,22 @@ public class CreateUsageTask implements Runnable {
     private static Log logMetacat  = LogFactory.getLog(CreateUsageTask.class);
     
     private Usage usage = null;
-    private String quotaId = null;
     private BookKeeperClient bookkeeperClient = null;
     
     /**
      * Constructor
      * @param usage  the usage will be reported
-     * @param quotaId  the id of the quota which will be used
      * @param bookkeeperClient  the client to report the usage to the remote server
      */
-    public CreateUsageTask(Usage usage, String quotaId, BookKeeperClient bookkeeperClient) {
+    public CreateUsageTask(Usage usage, BookKeeperClient bookkeeperClient) {
         this.usage = usage;
-        this.quotaId = quotaId;
         this.bookkeeperClient = bookkeeperClient;
     }
     
     @Override
     public void run() {
         try {
-            bookkeeperClient.createUsage(quotaId, usage);
+            bookkeeperClient.createUsage(usage);
         } catch (Exception e) {
             logMetacat.warn("CreateUsageTask.run - can't report the usage to the remote server or can't set the reported date in the local usages table since " + e.getMessage());
             //Reporting usage to the remote bookkeeper server failed. So we need to create a usage record without the reported date in the local database (by setting the date null).
