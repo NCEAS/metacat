@@ -19,17 +19,15 @@
  */
 package edu.ucsb.nceas.metacat.dataone.quota;
 
-import java.io.IOException;
+
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v2.ObjectFormat;
 import org.dataone.service.types.v2.SystemMetadata;
 
 
@@ -67,6 +65,7 @@ public class QuotaTypeDeterminer {
      * @throws InvalidRequest
      */
     public void determine(SystemMetadata sysmeta) throws InvalidRequest {
+        quotaType = null;//reset the quota type to null
         if (sysmeta != null) {
             ObjectFormatIdentifier format = sysmeta.getFormatId();
             String formatId = format.getValue();

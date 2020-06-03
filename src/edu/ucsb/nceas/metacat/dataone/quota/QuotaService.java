@@ -70,8 +70,16 @@ public class QuotaService {
         if (enabled) {
             client = BookKeeperClient.getInstance();
             executor = Executors.newFixedThreadPool(NUMOFTHREADS);
-            portalNameSpaces = Settings.getConfiguration().getList(PROPERTYNAMEOFPORTALNAMESPACE);
+            portalNameSpaces = retrievePortalNameSpaces();
         }
+    }
+    
+    /**
+     * Retrieve the name space list of portal objects from settings
+     * @return  list of portal name space
+     */
+    static List<String> retrievePortalNameSpaces() {
+        return Settings.getConfiguration().getList(PROPERTYNAMEOFPORTALNAMESPACE);
     }
     
     /**
