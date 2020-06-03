@@ -52,16 +52,26 @@ public class CreateUsageTask implements Runnable {
         try {
             bookkeeperClient.createUsage(usage);
         } catch (Exception e) {
-            logMetacat.warn("CreateUsageTask.run - can't report the usage to the remote server or can't set the reported date in the local usages table since " + e.getMessage());
+            logMetacat.warn("CreateUsageTask.run - can't report the usage to the remote server since " + e.getMessage());
             //Reporting usage to the remote bookkeeper server failed. So we need to create a usage record without the reported date in the local database (by setting the date null).
             //Another periodic thread will try to report the usage again some time later.
-            Date now = null;
-            QuotaDBManager.setReportedDate(usage.getId(), now);
+            try {
+                Date now = null;
+                QuotaDBManager.createUsage(usage, now);
+            } catch (Exception ee) {
+                logMetacat.error("CreateUsageTask.run - can't save the usage with to the local usages table since " + ee.getMessage() + 
+                        " The usage is with the quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity());
+            }
             return;
         }
         //Reported the usage to the remote bookkeeper server succeeded. So we need to create a usage record with reported date in the local database.
         Date now = new Date();
-        QuotaDBManager.setReportedDate(usage.getId(), now);
+        try {
+            QuotaDBManager.createUsage(usage, now);
+        } catch (Exception ee) {
+            logMetacat.error("CreateUsageTask.run - can't save the usage with to the local usages table since " + ee.getMessage() +
+                    " The usage is with the quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " the reported date " + now.getTime());
+        }
     }
 
 }

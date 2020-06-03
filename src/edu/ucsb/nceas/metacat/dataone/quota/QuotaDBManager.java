@@ -40,12 +40,12 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
  *
  */
 public class QuotaDBManager {
-    private static final String TABLE = "quota_usages";
-    private static final String USAGEID = "usage_id";
-    private static final String QUOTAID = "quota_id";
-    private static final String INSTANCEID = "instance_id";
-    private static final String QUANTITY = "quantity";
-    private static final String DATEREPORTED = "date_reported";
+    public static final String TABLE = "quota_usages";
+    public static final String USAGEID = "usage_id";
+    public static final String QUOTAID = "quota_id";
+    public static final String INSTANCEID = "instance_id";
+    public static final String QUANTITY = "quantity";
+    public static final String DATEREPORTED = "date_reported";
     
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
     
