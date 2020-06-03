@@ -133,15 +133,13 @@ public class QuotaDBManager {
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.getUnReportedUsages - the update query is " + stmt.toString());
             rs = stmt.executeQuery();
-            boolean hasNext = rs.next();
-            while (hasNext) {
+            while (rs.next()) {
                 Usage usage = new Usage();
                 usage.setId(rs.getInt(1));
                 usage.setQuotaId(rs.getInt(2));
                 usage.setInstanceId(rs.getString(3));
                 usage.setQuantity(rs.getDouble(4));
                 list.add(usage);
-                hasNext = rs.next();
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
