@@ -52,6 +52,7 @@ public class QuotaService {
     private static boolean storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled", false);
     private static boolean portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled", false);
     private static boolean replicationEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.replication.enabled", false);
+    private static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     private static int NUMOFTHREADS = Settings.getConfiguration().getInt("dataone.quotas.reportingThreadPoolSize", 5);
     private static boolean enabled = false; //If any of above variables are enabled, this variable will be true.
     private static ExecutorService executor = null;
