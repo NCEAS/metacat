@@ -115,13 +115,13 @@ public class QuotaDBManager {
     }
     
     /**
-     * Get the list of usages which haven't been reprorted to the bookkeeper server.
+     * Get the result set from the table which haven't been reported to the bookkeeper server.
      * The indication is the reported date is null in the usages table
-     * @return  the list of usages which usages which haven't been reprorted to the bookkeeper server
+     * @return  the result set which usages which haven't been reported to the bookkeeper server
      * @throws SQLException 
      */
-    public static List<Usage> getUnReportedUsages() throws SQLException {
-        List<Usage> list = new ArrayList<Usage>();
+    public static ResultSet getUnReportedUsages() throws SQLException {
+        //List<Usage> list = new ArrayList<Usage>();
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;
@@ -133,24 +133,24 @@ public class QuotaDBManager {
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.getUnReportedUsages - the update query is " + stmt.toString());
             rs = stmt.executeQuery();
-            while (rs.next()) {
+            /*while (rs.next()) {
                 Usage usage = new Usage();
                 usage.setId(rs.getInt(1));
                 usage.setQuotaId(rs.getInt(2));
                 usage.setInstanceId(rs.getString(3));
                 usage.setQuantity(rs.getDouble(4));
                 list.add(usage);
-            }
+            }*/
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            if (rs != null) {
+            /*if (rs != null) {
                 rs.close();
             }
             if (stmt != null) {
                 stmt.close();
-            }
+            }*/
         }
-        return list;
+        return rs;
     }
     
 

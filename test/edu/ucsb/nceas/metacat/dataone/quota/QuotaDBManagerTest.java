@@ -104,11 +104,17 @@ public class QuotaDBManagerTest  extends MCTestCase {
      * @throws Exception
      */
     public void testGetUnReportedUsagesAndSetReportDate() throws Exception {
-        List<Usage> unReportedUsages = QuotaDBManager.getUnReportedUsages();
-        assertTrue(unReportedUsages.size() > 0);
-        Usage usage = unReportedUsages.get(0);
+        ResultSet rs = QuotaDBManager.getUnReportedUsages();
+        assertTrue(rs.next());
+        Usage usage = new Usage();
+        usage.setId(rs.getInt(1));
+        usage.setQuotaId(rs.getInt(2));
+        usage.setInstanceId(rs.getString(3));
+        usage.setQuantity(rs.getDouble(4));
+        rs.close();
+        
         int usageId = usage.getId();
-        ResultSet rs = getResultSet(usageId);
+        rs = getResultSet(usageId);
         assertTrue(rs.next());
         assertTrue(rs.getInt(1) == usageId);
         assertTrue(rs.getTimestamp(5) == null);
