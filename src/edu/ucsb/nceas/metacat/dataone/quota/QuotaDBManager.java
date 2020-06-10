@@ -45,6 +45,7 @@ public class QuotaDBManager {
     public static final String QUOTAID = "quota_id";
     public static final String INSTANCEID = "instance_id";
     public static final String QUANTITY = "quantity";
+    public static final String STATUTS = "status";
     public static final String DATEREPORTED = "date_reported";
     
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
@@ -115,6 +116,35 @@ public class QuotaDBManager {
     }
     
     /**
+     * Update the status of a usage matching the quota id and instance id
+     * @param status  the new status will be set
+     * @param quotaId  the quota id associated with the usage
+     * @param instanceId  the instance id associated with the usage
+     * @throws SQLException 
+     */
+    public static void updateUsageStatus(String status, int quotaId, String instanceId) throws SQLException {
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        try {
+            dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.updateUsageStatus");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query = "update " + TABLE + " set " + STATUTS + " = ? " + " where " + QUOTAID + "=? AND " + INSTANCEID + "=?" ;
+            stmt = dbConn.prepareStatement(query);
+            stmt.setString(1, status);
+            stmt.setInt(2, quotaId);
+            stmt.setString(3, instanceId);
+            logMetacat.debug("QuotaDBManager.updateUsageStatus - the update query is " + stmt.toString());
+            int rows = stmt.executeUpdate();
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+    
+    /**
      * Get the result set from the table which haven't been reported to the bookkeeper server.
      * The indication is the reported date is null in the usages table
      * @return  the result set which usages which haven't been reported to the bookkeeper server
@@ -133,14 +163,6 @@ public class QuotaDBManager {
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.getUnReportedUsages - the update query is " + stmt.toString());
             rs = stmt.executeQuery();
-            /*while (rs.next()) {
-                Usage usage = new Usage();
-                usage.setId(rs.getInt(1));
-                usage.setQuotaId(rs.getInt(2));
-                usage.setInstanceId(rs.getString(3));
-                usage.setQuantity(rs.getDouble(4));
-                list.add(usage);
-            }*/
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
             /*if (rs != null) {
