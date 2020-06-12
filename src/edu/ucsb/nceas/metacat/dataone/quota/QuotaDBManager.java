@@ -45,8 +45,9 @@ public class QuotaDBManager {
     public static final String QUOTAID = "quota_id";
     public static final String INSTANCEID = "instance_id";
     public static final String QUANTITY = "quantity";
-    public static final String STATUTS = "status";
+    public static final String STATUS = "status";
     public static final String DATEREPORTED = "date_reported";
+    public static final String OBJECT = "object";
     
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
     
@@ -64,8 +65,8 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.createUsage");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String fields = QUOTAID + "," + INSTANCEID + "," + QUANTITY;
-            String values = "?,?,?";
+            String fields = QUOTAID + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS;
+            String values = "?,?,?,?,?";
             if (date != null) {
                 fields = fields + "," + DATEREPORTED;
                 values = values + ",?";
@@ -75,8 +76,10 @@ public class QuotaDBManager {
             stmt.setInt(1, usage.getQuotaId());
             stmt.setString(2, usage.getInstanceId());
             stmt.setDouble(3, usage.getQuantity());
+            stmt.setString(4, usage.getObject());
+            stmt.setString(5, usage.getStatus());
             if (date != null) {
-                stmt.setTimestamp(4, new Timestamp(date.getTime()));
+                stmt.setTimestamp(6, new Timestamp(date.getTime()));
             }
             logMetacat.debug("QuotaDBManager.createUsage - the create usage query is " + stmt.toString());
             int rows = stmt.executeUpdate();
@@ -129,7 +132,7 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.updateUsageStatus");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "update " + TABLE + " set " + STATUTS + " = ? " + " where " + QUOTAID + "=? AND " + INSTANCEID + "=?" ;
+            String query = "update " + TABLE + " set " + STATUS + " = ? " + " where " + QUOTAID + "=? AND " + INSTANCEID + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setString(1, status);
             stmt.setInt(2, quotaId);

@@ -45,6 +45,8 @@ import org.dataone.service.types.v2.SystemMetadata;
 public class QuotaService {
     public static final String USAGE = "usage";
     public static final String ACTIVE = "active";
+    public static final String ARCHIVED = "archived";
+    public static final String DELETED = "deleted";
     public static final String CREATEMETHOD = "create";
     public static final String UPDATEMETHOD = "update";
     public static final String PROPERTYNAMEOFPORTALNAMESPACE = "dataone.quotas.portal.namespaces";

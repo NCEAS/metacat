@@ -48,7 +48,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new QuotaDBManagerTest("testCreateUsage"));
+        suite.addTest(new QuotaDBManagerTest("testCreateUsageAndUpdateStatus"));
         suite.addTest(new QuotaDBManagerTest("testGetUnReportedUsagesAndSetReportDate"));
         return suite;
     }
@@ -56,7 +56,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
     /**
      * Test the createUsage method
      */
-    public void testCreateUsage() throws Exception {
+    public void testCreateUsageAndUpdateStatus() throws Exception {
         //create a usage with the report date
         int quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() +  (new Double (Math.random() * 100000000)).intValue();
         String instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() * 10000;
@@ -76,6 +76,20 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(3).equals(instanceId));
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
+        assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
+        rs.close();
+        
+        //test to update the status of a usage
+        String status = QuotaService.ARCHIVED;
+        QuotaDBManager.updateUsageStatus(status, quotaId, instanceId);
+        rs = getResultSet(quotaId, instanceId);
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) > 0);
+        assertTrue(rs.getInt(2) == quotaId);
+        assertTrue(rs.getString(3).equals(instanceId));
+        assertTrue(rs.getDouble(4) == quantity);
+        assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
+        assertTrue(rs.getString(6).equals(status));
         rs.close();
         
         //create a usage without the report date
@@ -96,6 +110,20 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(3).equals(instanceId));
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5) == null);
+        assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
+        rs.close();
+        
+        //test to update the status of a usage
+        QuotaDBManager.updateUsageStatus(status, quotaId, instanceId);
+        rs = getResultSet(quotaId, instanceId);
+        rs = getResultSet(quotaId, instanceId);
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) > 0);
+        assertTrue(rs.getInt(2) == quotaId);
+        assertTrue(rs.getString(3).equals(instanceId));
+        assertTrue(rs.getDouble(4) == quantity);
+        assertTrue(rs.getTimestamp(5) == null);
+        assertTrue(rs.getString(6).equals(status));
         rs.close();
     }
     
@@ -144,7 +172,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
@@ -170,7 +198,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.USAGEID + "=?";
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, usageId);
