@@ -33,6 +33,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -174,9 +175,9 @@ public class BookKeeperClient {
      */
     public void createUsage(Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
         String restStr = bookKeeperURL + USAGES;
-        logMetacat.debug("BookKeeperClient.updateUsage - the rest request to create the usuage is " + restStr);
+        logMetacat.debug("BookKeeperClient.createUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 
-        logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
+        logMetacat.debug("BookKeeperClient.createUsage - the json string will be sent is " + jsonStr);
         StringEntity reqEntity = new StringEntity(jsonStr, ContentType.APPLICATION_JSON);
         reqEntity.setChunked(true);
         HttpPost post = new HttpPost(restStr);
@@ -188,6 +189,8 @@ public class BookKeeperClient {
             if (response.getStatusLine().getStatusCode() != 200) {
                 String error = IOUtils.toString(response.getEntity().getContent());
                 throw new ServiceFailure("0000", "Quota service can't create the usage since " + error);
+            } else {
+                logMetacat.info("BookKeeperClient.createUsage - successfully update the usage for quota id " + usage.getQuotaId() + " and the instance id " + usage.getInstanceId());
             }
         } finally {
             if (response != null) {
@@ -221,6 +224,7 @@ public class BookKeeperClient {
                     CloseableHttpResponse response = null;
                     try {
                         HttpDelete httpdelete = new HttpDelete(restStr);
+                        httpdelete.addHeader(header);
                         response = httpClient.execute(httpdelete);
                         int status = response.getStatusLine().getStatusCode();
                         if (status == 200) {
@@ -244,10 +248,67 @@ public class BookKeeperClient {
                             + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
                 }
             } catch (NotFound e) {
-                logMetacat.warn("BookKeeperClient.deleteUsage - the book keeper service don't find any usages " + e.getMessage());
+                logMetacat.error("BookKeeperClient.deleteUsage - the book keeper service don't find any usages " + e.getMessage());
             }
         } else {
-            throw new InvalidRequest("0000", "The quota type and instance id can't be null or blank when you try to delete a usage.");
+            throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to delete a usage.");
+        }
+    }
+    
+    /**
+     * Update an existing usage with the given quota id and instance id
+     * @param quotaId  the quota id which the existing usage matches
+     * @param instanceId  the instance id which the existing usage matches
+     * @param usage  the new usage value will be used
+     * @throws InvalidRequest
+     * @throws ClientProtocolException
+     * @throws ServiceFailure
+     * @throws IOException
+     */
+    public void updateUsage(int quotaId, String instanceId, Usage usage) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+        if (instanceId != null && !instanceId.trim().equals("")) {
+            List<Usage> usages = null;
+            try {
+                usages = listUsages(quotaId, instanceId);
+                if (usages == null || usages.size() == 0) {
+                    logMetacat.warn("BookKeeperClient.updateUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to update anything.");
+                } else if (usages.size() == 1) {
+                    Usage existedUsage = usages.get(0);
+                    int id = existedUsage.getId();
+                    logMetacat.debug("BookKeeperClient.updateUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
+                    String restStr = bookKeeperURL + USAGES + "/" + id;
+                    logMetacat.debug("BookKeeperClient.updateUsage - the delete rest command is " + restStr);
+                    CloseableHttpResponse response = null;
+                    try {
+                        String jsonStr = mapper.writeValueAsString(usage); 
+                        logMetacat.debug("BookKeeperClient.createUsage - the json string will be sent is " + jsonStr);
+                        StringEntity reqEntity = new StringEntity(jsonStr, ContentType.APPLICATION_JSON);
+                        reqEntity.setChunked(true);
+                        HttpPut put = new HttpPut(restStr);
+                        put.setEntity(reqEntity);
+                        put.addHeader(header);
+                        response = httpClient.execute(put);
+                        int status = response.getStatusLine().getStatusCode();
+                        if (status == 200) {
+                            logMetacat.info("BookKeeperClient.updateUsage - successfully update the usage with id " + id);
+                        } else {
+                            String error = IOUtils.toString(response.getEntity().getContent());
+                            throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - can't delete the usage with the id " + id + " since " + error);
+                        }
+                    } finally {
+                        if (response != null) {
+                            response.close();
+                        }
+                    }
+                } else {
+                    throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - the bookkeeper service should only send back one record with the given quota id "+ quotaId + " and instance id " + instanceId 
+                            + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
+                }
+            } catch (NotFound e) {
+                logMetacat.error("BookKeeperClient.updateUsage - the book keeper service don't find any usages " + e.getMessage());
+            }
+        } else {
+            throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to update a usage.");
         }
     }
     
