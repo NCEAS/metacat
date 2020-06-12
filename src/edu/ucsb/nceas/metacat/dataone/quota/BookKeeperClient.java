@@ -56,9 +56,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class BookKeeperClient {
     private static final String QUOTAS = "quotas";
     private static final String QUOTATYPE = "quotaType";
+    private static final String QUOTAID = "quotaId";
     private static final String SUBSCRIBER = "subscriber";
     private static final String REQUESTOR = "requestor";
-    private static final String USAGE = "usage";
+    private static final String USAGES = "usages";
     private static final String INSTNACEID = "instanceId";
     private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
     private static BookKeeperClient bookKeeperClient = null;
@@ -172,7 +173,7 @@ public class BookKeeperClient {
      * @throws ServiceFailure
      */
     public void createUsage(Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
-        String restStr = bookKeeperURL + USAGE;
+        String restStr = bookKeeperURL + USAGES;
         logMetacat.debug("BookKeeperClient.updateUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 
         logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
@@ -204,18 +205,18 @@ public class BookKeeperClient {
      * @throws ServiceFailure
      * @throws IOException
      */
-    public void deleteUsage(String quotaType, String instanceId) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
-        if (quotaType != null && !quotaType.trim().equals("") && instanceId != null && !instanceId.trim().equals("")) {
+    public void deleteUsage(int quotaId, String instanceId) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+        if (instanceId != null && !instanceId.trim().equals("")) {
             List<Usage> usages = null;
             try {
-                usages = listUsages(quotaType, instanceId);
+                usages = listUsages(quotaId, instanceId);
                 if (usages == null || usages.size() == 0) {
-                    logMetacat.warn("BookKeeperClient.deleteUsage - the book keeper service don't find any usages matching the quota type " + quotaType + " and instance id " + instanceId + ". So we don't need to delete anything.");
+                    logMetacat.warn("BookKeeperClient.deleteUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to delete anything.");
                 } else if (usages.size() == 1) {
                     Usage usage = usages.get(0);
                     int id = usage.getId();
-                    logMetacat.debug("BookKeeperClient.deleteUsage - the book keeper service find the usage with id " + id + " matching the quota type " + quotaType + " and instance id " + instanceId);
-                    String restStr = bookKeeperURL + USAGE + "/" + id;
+                    logMetacat.debug("BookKeeperClient.deleteUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
+                    String restStr = bookKeeperURL + USAGES + "/" + id;
                     logMetacat.debug("BookKeeperClient.deleteUsage - the delete rest command is " + restStr);
                     CloseableHttpResponse response = null;
                     try {
@@ -239,7 +240,7 @@ public class BookKeeperClient {
                         }
                     }
                 } else {
-                    throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - the bookkeeper service should only send back one record with the given quota type "+ quotaType + " and instance id " + instanceId 
+                    throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - the bookkeeper service should only send back one record with the given quota id "+ quotaId + " and instance id " + instanceId 
                             + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
                 }
             } catch (NotFound e) {
@@ -252,8 +253,8 @@ public class BookKeeperClient {
     
     
     /**
-     * Get the list of usage from the book keeper service with the given quota type and instance id
-     * @param quotaType  the quota type associated with the usage
+     * Get the list of usage from the book keeper service with the given quota id and instance id
+     * @param quotaId  the quota id associated with the usage
      * @param instanceId  the instance id associated with the usage
      * @return the list of usages matching the query 
      * @throws ClientProtocolException
@@ -261,8 +262,8 @@ public class BookKeeperClient {
      * @throws NotFound
      * @throws ServiceFailure
      */
-    private List<Usage> listUsages(String quotaType, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
-        String restStr = bookKeeperURL + USAGE + "/?" + QUOTATYPE + "=" + quotaType + "&" + INSTNACEID + "=" + instanceId;
+    private List<Usage> listUsages(int quotaId, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
+        String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTNACEID + "=" + instanceId;
         logMetacat.debug("BookKeeperClient.getUsageId - the rest request to get the usuage id is " + restStr);
         HttpGet get = new HttpGet(restStr);
         get.addHeader(header);
@@ -274,7 +275,7 @@ public class BookKeeperClient {
             if (status == 200) {
                 result = mapper.readValue(response.getEntity().getContent(), List.class);
             } else if (status == 404) {
-                throw new NotFound("0000", "BookKeeperClient.getUsageId - the usage with the quato type " + quotaType + " and instance id " + instanceId + "is not found");
+                throw new NotFound("0000", "BookKeeperClient.getUsageId - the usage with the quota id " + quotaId + " and instance id " + instanceId + "is not found");
             } else {
                 String error = IOUtils.toString(response.getEntity().getContent());
                 throw new ServiceFailure("0000", "BookKeeperClient.getUsageId - quota service can't fulfill to list usages since " + error);
