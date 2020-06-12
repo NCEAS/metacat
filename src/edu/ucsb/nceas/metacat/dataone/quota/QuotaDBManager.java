@@ -1,5 +1,4 @@
 /**
- *    Purpose: Implements a service for managing a Hazelcast cluster member
  *  Copyright: 2020 Regents of the University of California and the
  *             National Center for Ecological Analysis and Synthesis
  *
