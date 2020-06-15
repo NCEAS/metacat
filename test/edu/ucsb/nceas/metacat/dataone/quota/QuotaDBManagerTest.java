@@ -113,6 +113,18 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
         rs.close();
         
+        //add another unreported event
+        quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue();
+        instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() *10;
+        quantity = 100.11;
+        usage = new Usage();
+        usage.setObject(QuotaService.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaService.ACTIVE);
+        QuotaDBManager.createUsage(usage, null);
+        
         //test to update the status of a usage
         QuotaDBManager.updateUsageStatus(status, quotaId, instanceId);
         rs = getResultSet(quotaId, instanceId);
@@ -133,12 +145,21 @@ public class QuotaDBManagerTest  extends MCTestCase {
      */
     public void testGetUnReportedUsagesAndSetReportDate() throws Exception {
         ResultSet rs = QuotaDBManager.getUnReportedUsages();
-        assertTrue(rs.next());
         Usage usage = new Usage();
-        usage.setId(rs.getInt(1));
-        usage.setQuotaId(rs.getInt(2));
-        usage.setInstanceId(rs.getString(3));
-        usage.setQuantity(rs.getDouble(4));
+        int index = 0;
+        int previousUsageId = -1;
+        while (rs.next() && index < 500) {
+            int usageId = rs.getInt(1);
+            System.out.println("the usage id is " + usageId);
+            assertTrue(usageId > previousUsageId); //make sure the result set is ordered by the column usage_id  acs
+            usage.setId(usageId);
+            usage.setQuotaId(rs.getInt(2));
+            usage.setInstanceId(rs.getString(3));
+            usage.setQuantity(rs.getDouble(4));
+            previousUsageId = usageId;
+            index++;
+        }
+        assertTrue(index > 0);
         rs.close();
         
         int usageId = usage.getId();

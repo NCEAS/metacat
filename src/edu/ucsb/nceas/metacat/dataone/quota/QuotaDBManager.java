@@ -39,7 +39,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
  *
  */
 public class QuotaDBManager {
-    public static final String TABLE = "quota_usages";
+    public static final String TABLE = "quota_usage_events";
     public static final String USAGEID = "usage_id";
     public static final String QUOTAID = "quota_id";
     public static final String INSTANCEID = "instance_id";
@@ -161,7 +161,7 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + USAGEID + ", " + QUOTAID + "," + INSTANCEID + ", " + QUANTITY + " from " + TABLE + " where " + DATEREPORTED + " is null" ;
+            String query = "select " + USAGEID + ", " + QUOTAID + "," + INSTANCEID + ", " + QUANTITY + "," + OBJECT + "," + STATUS + " from " + TABLE + " where " + DATEREPORTED + " is null order by " + USAGEID + " ASC" ;
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.getUnReportedUsages - the update query is " + stmt.toString());
             rs = stmt.executeQuery();
