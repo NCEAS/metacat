@@ -48,7 +48,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new QuotaDBManagerTest("testCreateUsageAndUpdateStatus"));
+        suite.addTest(new QuotaDBManagerTest("testCreateUsage"));
         suite.addTest(new QuotaDBManagerTest("testGetUnReportedUsagesAndSetReportDate"));
         return suite;
     }
@@ -56,7 +56,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
     /**
      * Test the createUsage method
      */
-    public void testCreateUsageAndUpdateStatus() throws Exception {
+    public void testCreateUsage() throws Exception {
         //create a usage with the report date
         int quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() +  (new Double (Math.random() * 100000000)).intValue();
         String instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() * 10000;
@@ -79,18 +79,6 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
         rs.close();
         
-        //test to update the status of a usage
-        String status = QuotaService.ARCHIVED;
-        QuotaDBManager.updateUsageStatus(status, quotaId, instanceId);
-        rs = getResultSet(quotaId, instanceId);
-        assertTrue(rs.next());
-        assertTrue(rs.getInt(1) > 0);
-        assertTrue(rs.getInt(2) == quotaId);
-        assertTrue(rs.getString(3).equals(instanceId));
-        assertTrue(rs.getDouble(4) == quantity);
-        assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
-        assertTrue(rs.getString(6).equals(status));
-        rs.close();
         
         //create a usage without the report date
         quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue();
@@ -113,7 +101,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
         rs.close();
         
-        //add another unreported event
+        //create another unreported event
         quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue();
         instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() *10;
         quantity = 100.11;
@@ -125,18 +113,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         usage.setStatus(QuotaService.ACTIVE);
         QuotaDBManager.createUsage(usage, null);
         
-        //test to update the status of a usage
-        QuotaDBManager.updateUsageStatus(status, quotaId, instanceId);
-        rs = getResultSet(quotaId, instanceId);
-        rs = getResultSet(quotaId, instanceId);
-        assertTrue(rs.next());
-        assertTrue(rs.getInt(1) > 0);
-        assertTrue(rs.getInt(2) == quotaId);
-        assertTrue(rs.getString(3).equals(instanceId));
-        assertTrue(rs.getDouble(4) == quantity);
-        assertTrue(rs.getTimestamp(5) == null);
-        assertTrue(rs.getString(6).equals(status));
-        rs.close();
+
     }
     
     /**

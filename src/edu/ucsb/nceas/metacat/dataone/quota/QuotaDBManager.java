@@ -117,34 +117,6 @@ public class QuotaDBManager {
         }
     }
     
-    /**
-     * Update the status of a usage matching the quota id and instance id
-     * @param status  the new status will be set
-     * @param quotaId  the quota id associated with the usage
-     * @param instanceId  the instance id associated with the usage
-     * @throws SQLException 
-     */
-    public static void updateUsageStatus(String status, int quotaId, String instanceId) throws SQLException {
-        DBConnection dbConn = null;
-        int serialNumber = -1;
-        PreparedStatement stmt = null;
-        try {
-            dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.updateUsageStatus");
-            serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "update " + TABLE + " set " + STATUS + " = ? " + " where " + QUOTAID + "=? AND " + INSTANCEID + "=?" ;
-            stmt = dbConn.prepareStatement(query);
-            stmt.setString(1, status);
-            stmt.setInt(2, quotaId);
-            stmt.setString(3, instanceId);
-            logMetacat.debug("QuotaDBManager.updateUsageStatus - the update query is " + stmt.toString());
-            int rows = stmt.executeUpdate();
-        } finally {
-            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
-    }
     
     /**
      * Get the result set from the table which haven't been reported to the bookkeeper server.
@@ -167,12 +139,6 @@ public class QuotaDBManager {
             rs = stmt.executeQuery();
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
-            /*if (rs != null) {
-                rs.close();
-            }
-            if (stmt != null) {
-                stmt.close();
-            }*/
         }
         return rs;
     }
