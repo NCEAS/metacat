@@ -31,51 +31,21 @@ import org.dataone.bookkeeper.api.Usage;
  * @author tao
  *
  */
-public class UpdateUsageTask implements Runnable {
-    private Usage usage = null;
-    private BookKeeperClient bookkeeperClient = null;
+public class UpdateUsageTask extends UsageTask {
     private static Log logMetacat  = LogFactory.getLog(UpdateUsageTask.class);
-    
     /**
      * Constructor
      * @param usage  the usage will be reported
      * @param bookkeeperClient  the client to report the usage to the remote server
      */
     public UpdateUsageTask(Usage usage, BookKeeperClient bookkeeperClient) {
-        this.usage = usage;
-        this.bookkeeperClient = bookkeeperClient;
+        super(usage, bookkeeperClient);
     }
     
-    
-    /**
-     * Report the updated usage to the book keeper server and also log it in the local db.
-     */
-    public void run() {
-        if (usage != null) {
-            try {
-                bookkeeperClient.updateUsage(usage.getQuotaId(), usage.getInstanceId(), usage);
-            } catch (Exception e) {
-                logMetacat.warn("UpdateUsageTask.run - can't report the updated usage to the remote server since " + e.getMessage());
-                //Reporting usage to the remote bookkeeper server failed. So we need to create a usage record without the reported date in the local database (by setting the date null).
-                //Another periodic thread will try to report the usage again some time later.
-                try {
-                    Date now = null;
-                    QuotaDBManager.createUsage(usage, now);
-                } catch (Exception ee) {
-                    logMetacat.error("UpdateUsageTask.run - can't save the usage with to the local usages table since " + ee.getMessage() + 
-                            " The usage is with the quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity());
-                }
-                return;
-            }
-            //Reported the usage to the remote bookkeeper server succeeded. So we need to create a usage record with reported date in the local database.
-            Date now = new Date();
-            try {
-                QuotaDBManager.createUsage(usage, now);
-            } catch (Exception ee) {
-                logMetacat.error("UpdateUsageTask.run - can't save the usage with to the local usages table since " + ee.getMessage() +
-                        " The usage is with the quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " the reported date " + now.getTime());
-            }
-        }
+    @Override
+    protected void reportToBookKeeper() throws Exception {
+        logMetacat.debug("UpdateUsageTask.reportToBookeKeeper - update an existing usage in the remote book book with quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + 
+                " status " + usage.getStatus() + " quantity " + usage.getQuantity());
+        bookkeeperClient.updateUsage(usage.getQuotaId(), usage.getInstanceId(), usage);//This method will get the real usage id from the remote server.
     }
-    
 }
