@@ -273,7 +273,8 @@ public class BookKeeperClient {
                     logMetacat.warn("BookKeeperClient.updateUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to update anything.");
                 } else if (usages.size() == 1) {
                     Usage existedUsage = usages.get(0);
-                    int id = existedUsage.getId();
+                    int id = existedUsage.getId();//the usage id in the remote book keeper server for this usage
+                    usage.setId(id);//set the real usage id from the remote book keeper server for this usage
                     logMetacat.debug("BookKeeperClient.updateUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
                     String restStr = bookKeeperURL + USAGES + "/" + id;
                     logMetacat.debug("BookKeeperClient.updateUsage - the delete rest command is " + restStr);
