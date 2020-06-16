@@ -95,7 +95,7 @@ public abstract class UsageTask implements Runnable {
             } else {
                 logMetacat.debug("UsageTask.run - Metacat succeeded to report the usage with the quota id " + usage.getQuotaId() + 
                         " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " status " + usage.getStatus() + 
-                        " to the remote book keep server. Moreover, the local database already has the record and Metacat need to set the local reported date in this record.");
+                        " to the remote book keep server. Moreover, the local database already has the record and Metacat needs to set the local reported date in this record.");
                 try {
                     QuotaDBManager.setReportedDate(usage.getId(), now);
                 } catch (Exception ee) {

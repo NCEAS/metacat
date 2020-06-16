@@ -76,6 +76,7 @@ public class FailedReportingAttemptChecker implements Runnable {
                     } else {
                         throw new Exception("Doesn't support the status of the usage " + status);
                     }
+                    task.setIsLoggedLocally(true);//indicates that the local db have the record
                     executor.submit(task);
                 } catch (Exception ee) {
                     logMetacat.error("FailedReportingAttemptChecker.run - can't report the usage to the remote book server with the local id " + localId + " since " + 
