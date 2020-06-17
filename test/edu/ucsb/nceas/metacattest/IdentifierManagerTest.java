@@ -1990,6 +1990,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
         
         List<String> pids = IdentifierManager.getInstance().getAllPidsInChain(sid.getValue());
+        assertTrue(pids.size() == 2);
         assertTrue(pids.contains(guid.getValue()));
         assertTrue(pids.contains(guid2.getValue()));
     }
