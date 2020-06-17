@@ -148,6 +148,8 @@ import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
 
+import com.lmax.disruptor.InsufficientCapacityException;
+
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
@@ -161,6 +163,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaService;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -330,6 +333,16 @@ public class MNodeService extends D1NodeService
             na2.initCause(na);
             throw na2;
         }
+        
+        try {
+            String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
+            QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.DELETEMETHOD);
+        } catch (InvalidRequest e) {
+            throw new InvalidToken(invalidTokenCode, "The quota service found this is an invalid request " + e.getMessage() + " to delete the pid " + id.getValue());
+        } catch (InsufficientResources e) {
+            throw new ServiceFailure(serviceFailureCode, "The user doesn't have enough quota to delete the pid " + id.getValue() + " since " + e.getMessage());
+        }
+        
     	
     	   // defer to superclass implementation
         return super.delete(session.getSubject().getValue(), id);
@@ -485,6 +498,11 @@ public class MNodeService extends D1NodeService
 
         if (allowed) {
             long startTime3 = System.currentTimeMillis();
+            
+            //check the if it has enough quota if th quota service is enabled
+            String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
+            QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.UPDATEMETHOD);
+            
             // check quality of SM
             if (sysmeta.getObsoletedBy() != null) {
                 throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
@@ -766,6 +784,10 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
         }
         logMetacat.debug("Allowed to create: " + pid.getValue());
+        
+        //check the if it has enough quota if th quota service is enabled
+        String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
+        QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.CREATEMETHOD);
 
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
@@ -2802,9 +2824,16 @@ public class MNodeService extends D1NodeService
 	              HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
 	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	              SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	              //check the if it has enough quota if th quota service is enabled
+	              String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
+	              QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.ARCHIVEMETHOD);
 	              boolean needModifyDate = true;
 	              boolean logArchive = true;
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 
+	          } catch (InvalidRequest e) {
+	              throw new InvalidToken("2913", "The quota service found this is an invalid request " + e.getMessage());
+	          } catch (InsufficientResources e) {
+	              throw new ServiceFailure("2912", "The user doesn't have enough quota to perform this request " + e.getMessage());
 	          } finally {
 	              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	              logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");
