@@ -103,6 +103,7 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         suite.addTest(new IdentifierManagerTest("testExistsInIdentifierTable"));
         suite.addTest(new IdentifierManagerTest("testUpdateSystemmetadata"));
         suite.addTest(new IdentifierManagerTest("getGetGUIDs"));
+        suite.addTest(new IdentifierManagerTest("textGetAllPidsInChain"));
         return suite;
     }
     /**
@@ -1952,5 +1953,44 @@ public class IdentifierManagerTest extends D1NodeServiceTest {
         //System.out.println("========the ids is \n"+ids);
         assertTrue(ids.contains(guid.getValue()));
         assertTrue(ids.contains(guid2.getValue()));
+    }
+    
+    /**
+     * Test the method of 
+     * @throws Exception
+     */
+    public void textGetAllPidsInChain() throws Exception {
+        String urnScheme = "urn:uuid:";
+        Session session = getTestSession();
+        
+        //create an object whose identifier is a uuid
+        UUID uuid = UUID.randomUUID();
+        String str1 = uuid.toString();
+        Identifier guid = new Identifier();
+        guid.setValue(urnScheme+str1); 
+        
+        uuid = UUID.randomUUID();
+        String sidStr = uuid.toString();
+        Identifier sid = new Identifier();
+        sid.setValue(urnScheme+sidStr); 
+        
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setSeriesId(sid);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //create an object whose identifier is not a uuid, but its series id is
+        Identifier guid2 = new Identifier();
+        guid2.setValue(generateDocumentId());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        sysmeta2.setSeriesId(sid);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
+        
+        List<String> pids = IdentifierManager.getInstance().getAllPidsInChain(sid.getValue());
+        assertTrue(pids.contains(guid.getValue()));
+        assertTrue(pids.contains(guid2.getValue()));
     }
 }
