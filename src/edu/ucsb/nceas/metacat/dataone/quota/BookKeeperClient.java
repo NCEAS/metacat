@@ -75,7 +75,7 @@ public class BookKeeperClient {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    protected BookKeeperClient() throws IOException, ServiceFailure {
+    protected BookKeeperClient() throws ServiceFailure {
         if (bookKeeperURL == null) {
             bookKeeperURL = Settings.getConfiguration().getString("dataone.quotas.bookkeeper.serviceUrl");
             logMetacat.debug("BookKeeperClient.BookKeeperClient - the bookkeeper service url from the metacat.properties file is " + bookKeeperURL);
@@ -90,9 +90,14 @@ public class BookKeeperClient {
         if (header == null) {
             String tokenFilePath = Settings.getConfiguration().getString("dataone.bearToken.file");
             File tokenFile = new File(tokenFilePath);
-            String token = FileUtils.readFileToString(tokenFile, "UTF-8");
+            String token = null;
+            try {
+                FileUtils.readFileToString(tokenFile, "UTF-8");
+            } catch (IOException e) {
+                throw new ServiceFailure("1190", "The BookKeeper client can't read the token file since " +e.getMessage());
+            }
             if (token == null || token.trim().equals("")) {
-                throw new ServiceFailure("0000", "The member node token can't be null or blank when it access the remote quota service. Please ask the Metacat admin to check the content of the token file with the path " + tokenFilePath + 
+                throw new ServiceFailure("1190", "The member node token can't be null or blank when it access the remote quota service. Please ask the Metacat admin to check the content of the token file with the path " + tokenFilePath + 
                         ". If the token file path is null or blank, please ask the Metacat admin to set the proper token file path at the property \"dataone.bearToken.file\" in its metacat.properties file.");
             }
             header = new BasicHeader("Authorization", "Beaer " + token);
@@ -106,7 +111,7 @@ public class BookKeeperClient {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    public static BookKeeperClient getInstance() throws IOException, ServiceFailure {
+    public static BookKeeperClient getInstance() throws ServiceFailure {
         if (bookKeeperClient == null) {
             synchronized (BookKeeperClient.class) {
               if (bookKeeperClient == null) {
@@ -130,7 +135,7 @@ public class BookKeeperClient {
      * @throws ServiceFailure 
      * @throws InvalidRequest 
      */
-    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ClientProtocolException, IOException, NotFound, ServiceFailure, InvalidRequest {
+    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, InvalidRequest {
         List<Quota> result = null;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
             String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor;
@@ -149,18 +154,27 @@ public class BookKeeperClient {
                         logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null");
                     }
                 } else if (status == 404) {
-                    throw new NotFound("0000", "The quota with the subscription subject " + subscriber + " is not found");
+                    throw new InvalidRequest("1102", "The quota with the subscription subject " + subscriber + " is not found");
                 } else {
                     String error = IOUtils.toString(response.getEntity().getContent());
-                    throw new ServiceFailure("0000", "Quota service can't fulfill to list quotas since " + error);
+                    throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + error);
                 }
+            } catch (ClientProtocolException e) {
+                throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
+            } catch (IOException e) {
+                throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
             } finally {
                 if (response != null) {
-                    response.close();
+                    try {
+                        response.close();
+                    } catch (IOException ee) {
+                        logMetacat.warn("BookKeeperClient.listQuotas - can't close the reponse at the finally cluae since " + ee.getMessage());
+                    }
+                    
                 }
             }
         } else {
-            throw new InvalidRequest("0000", "The quota subscriber, requestor and quota type can't be null or blank");
+            throw new InvalidRequest("1102", "The quota subscriber, requestor and quota type can't be null or blank");
         }
         return result;
     }

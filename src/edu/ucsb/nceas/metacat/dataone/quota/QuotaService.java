@@ -57,6 +57,7 @@ public class QuotaService {
     public static final String ARCHIVEMETHOD = "archive";
     public static final String DELETEMETHOD = "delete";
     public static final String PROPERTYNAMEOFPORTALNAMESPACE = "dataone.quotas.portal.namespaces";
+    public static fianl String QUOTASUBSRIBERHEADER = "X-DataONE-subscriber";
     
     private static boolean storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled", false);
     private static boolean portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled", false);
@@ -76,7 +77,7 @@ public class QuotaService {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    private QuotaService() throws IOException, ServiceFailure {
+    private QuotaService() throws ServiceFailure {
         if (enabled) {
             client = BookKeeperClient.getInstance();
             executor = Executors.newFixedThreadPool(NUMOFTHREADS);
@@ -98,7 +99,7 @@ public class QuotaService {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    public static QuotaService getInstance() throws IOException, ServiceFailure {
+    public static QuotaService getInstance() throws ServiceFailure {
         enabled = storageEnabled || portalEnabled || replicationEnabled;
         if (service == null) {
             synchronized (QuotaService.class) {
@@ -124,7 +125,7 @@ public class QuotaService {
      * @throws ClientProtocolException 
      * @throws NotImplemented 
      */
-    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, ClientProtocolException, NotFound, InsufficientResources, IOException, NotImplemented {
+    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented {
         long start = System.currentTimeMillis();
         QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
         determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
@@ -165,7 +166,7 @@ public class QuotaService {
      * @throws NotImplemented
      */
     private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
-                                                                             ClientProtocolException, NotFound, ServiceFailure, InsufficientResources, IOException, NotImplemented {
+                                                                             ServiceFailure, InsufficientResources, NotImplemented {
         if (portalEnabled) {
             logMetacat.debug("QuotaService.enforcePortalQuota - checking both portal and storage quota types for the instance " + instanceId);
             //this is to create a portal object. We should check both portal and storage quota
@@ -299,7 +300,7 @@ public class QuotaService {
      * @throws ClientProtocolException 
      * @throws InsufficientResources 
      */
-     int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ClientProtocolException, NotFound, ServiceFailure, IOException, InsufficientResources {
+     int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources {
         int quotaId = -1;
         boolean hasSpace = false;
         if(enabled) {
