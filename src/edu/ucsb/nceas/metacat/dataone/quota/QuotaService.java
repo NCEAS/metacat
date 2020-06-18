@@ -20,7 +20,12 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.IOException;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Timer;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +46,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
 
 /**
  * A class represents the quota service for users
@@ -109,6 +115,35 @@ public class QuotaService {
             }
         }
         return service;
+    }
+    
+    /**
+     * Start a timer to check failed usage reporting and report them again in daily base.
+     */
+    public void startDailyCheck() {
+        if (enabled) {
+            String startTimeStr = Settings.getConfiguration().getString("dataone.quotas.dailyReportingUsagesTime");
+            logMetacat.debug("QuotaService.startDailCheck - the property value of dataone.quotas.dailyReportingUsagesTime is " + startTimeStr);
+            Date startTime = null;
+            try {
+                startTime = ReplicationHandler.combinateCurrentDateAndGivenTime(startTimeStr);
+            } catch (Exception e) {
+                logMetacat.error("QuotaService.startDailyCheck - Metacat can't figure out the time setting as the value of the property dataone.quotas.dailyReportingUsagesTime in the metacat.propertis since " +
+                                  e.getMessage() + " So Metacat will use the default time 11.00 PM for reporting usages to the book keeper server every day.");
+                Calendar date = new GregorianCalendar();
+                // reset hour, minutes, seconds and millis
+                date.set(Calendar.HOUR_OF_DAY, 23);
+                date.set(Calendar.MINUTE, 0);
+                date.set(Calendar.SECOND, 0);
+                date.set(Calendar.MILLISECOND, 0);
+                startTime = date.getTime();
+            }
+            SimpleDateFormat format = new SimpleDateFormat(); 
+            String date = format.format(startTime); 
+            logMetacat.info("The thread will start to check and report failed reporting usages at " + date + " at daily base.");
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(new FailedReportingAttemptChecker(executor, client), startTime, 24*3600*1000);//daily job
+        }
     }
     
     /**

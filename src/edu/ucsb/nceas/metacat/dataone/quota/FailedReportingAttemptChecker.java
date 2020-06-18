@@ -20,10 +20,13 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.sql.ResultSet;
 import java.util.concurrent.ExecutorService;
+import java.util.TimerTask;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.bookkeeper.api.Usage;
+
+
 
 /**
  * This class periodically gets reporting usages which were failed to be reported to the 
@@ -32,7 +35,7 @@ import org.dataone.bookkeeper.api.Usage;
  * @author tao
  *
  */
-public class FailedReportingAttemptChecker implements Runnable {
+public class FailedReportingAttemptChecker extends TimerTask {
     private static Log logMetacat  = LogFactory.getLog(FailedReportingAttemptChecker.class);
     
     private ExecutorService executor = null;
