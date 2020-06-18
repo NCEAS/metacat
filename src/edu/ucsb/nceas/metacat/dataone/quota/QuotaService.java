@@ -77,6 +77,7 @@ public class QuotaService {
     private static QuotaService service = null;
     private BookKeeperClient client = null;
     private List<String> portalNameSpaces = null;
+    private static boolean timerStarted = false;
     
     /**
      * Private default constructor. The instance will have a bookeeperClient if the quota service is enabled.
@@ -119,9 +120,11 @@ public class QuotaService {
     
     /**
      * Start a timer to check failed usage reporting and report them again in daily base.
+     * Metacat only needs one timer, but this method will be called on four different servlet init methods. 
+     * So the method has a indicator of already starting a timer and is synchronized to make sure only one timer will be started.
      */
-    public void startDailyCheck() {
-        if (enabled) {
+    public synchronized void startDailyCheck() {
+        if (enabled && !timerStarted) {
             String startTimeStr = Settings.getConfiguration().getString("dataone.quotas.dailyReportingUsagesTime");
             logMetacat.debug("QuotaService.startDailCheck - the property value of dataone.quotas.dailyReportingUsagesTime is " + startTimeStr);
             Date startTime = null;
@@ -140,9 +143,10 @@ public class QuotaService {
             }
             SimpleDateFormat format = new SimpleDateFormat(); 
             String date = format.format(startTime); 
-            logMetacat.info("The thread will start to check and report failed reporting usages at " + date + " at daily base.");
+            logMetacat.info("QuotaService.startDailyCheck------------------------the timer will start to check and report un-reported usages at " + date + " at daily base. This message should only be shown once.");
             Timer timer = new Timer();
             timer.scheduleAtFixedRate(new FailedReportingAttemptChecker(executor, client), startTime, 24*3600*1000);//daily job
+            timerStarted = true;//indicate that Metacat already started the timer and shouldn't start another one again.
         }
     }
     
