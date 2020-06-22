@@ -49,7 +49,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
 
 /**
- * A class represents the quota service for users
+ * A class manages the quota service for users
  * @author tao
  *
  */
@@ -75,7 +75,7 @@ public class QuotaServiceManager {
     private static Log logMetacat  = LogFactory.getLog(QuotaServiceManager.class);
     
     private static QuotaServiceManager service = null;
-    private BookKeeperClient client = null;
+    private static BookKeeperClient client = null;
     private List<String> portalNameSpaces = null;
     private static boolean timerStarted = false;
     
@@ -126,12 +126,12 @@ public class QuotaServiceManager {
     public synchronized void startDailyCheck() {
         if (enabled && !timerStarted) {
             String startTimeStr = Settings.getConfiguration().getString("dataone.quotas.dailyReportingUsagesTime");
-            logMetacat.debug("QuotaService.startDailCheck - the property value of dataone.quotas.dailyReportingUsagesTime is " + startTimeStr);
+            logMetacat.debug("QuotaServiceManager.startDailCheck - the property value of dataone.quotas.dailyReportingUsagesTime is " + startTimeStr);
             Date startTime = null;
             try {
                 startTime = ReplicationHandler.combinateCurrentDateAndGivenTime(startTimeStr);
             } catch (Exception e) {
-                logMetacat.error("QuotaService.startDailyCheck - Metacat can't figure out the time setting as the value of the property dataone.quotas.dailyReportingUsagesTime in the metacat.propertis since " +
+                logMetacat.error("QuotaServiceManager.startDailyCheck - Metacat can't figure out the time setting as the value of the property dataone.quotas.dailyReportingUsagesTime in the metacat.propertis since " +
                                   e.getMessage() + " So Metacat will use the default time 11.00 PM for reporting usages to the book keeper server every day.");
                 Calendar date = new GregorianCalendar();
                 // reset hour, minutes, seconds and millis
@@ -143,7 +143,7 @@ public class QuotaServiceManager {
             }
             SimpleDateFormat format = new SimpleDateFormat(); 
             String date = format.format(startTime); 
-            logMetacat.info("QuotaService.startDailyCheck------------------------the timer will start to check and report un-reported usages at " + date + " at daily base. This message should only be shown once.");
+            logMetacat.info("QuotaServiceManager.startDailyCheck------------------------the timer will start to check and report un-reported usages at " + date + " at daily base. This message should only be shown once.");
             Timer timer = new Timer();
             timer.scheduleAtFixedRate(new FailedReportingAttemptChecker(executor, client), startTime, 24*3600*1000);//daily job
             timerStarted = true;//indicate that Metacat already started the timer and shouldn't start another one again.
@@ -151,7 +151,7 @@ public class QuotaServiceManager {
     }
     
     /**
-     * 
+     * Enforce quota service
      * @param subscriber  the subject of subscriber of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param sysmeta  the system metadata of the object which will use the quota
@@ -182,11 +182,11 @@ public class QuotaServiceManager {
             } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
                 enforceStorageQuota(subscriber,requestor, sysmeta, method);
             } else {
-                throw new InvalidRequest("1102", "Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
+                throw new InvalidRequest("1102", "QuotaServiceManager.enforce - Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
             }
         }
         long end = System.currentTimeMillis();
-        logMetacat.info("QuotaService.enforce - checking quota and reporting usage took " + (end-start)/1000 + " seconds.");
+        logMetacat.info("QuotaServiceManager.enforce - checking quota and reporting usage took " + (end-start)/1000 + " seconds.");
     }
     
     /**
@@ -207,110 +207,11 @@ public class QuotaServiceManager {
     private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
                                                                              ServiceFailure, InsufficientResources, NotImplemented {
         if (portalEnabled) {
-            logMetacat.debug("QuotaService.enforcePortalQuota - checking both portal and storage quota types for the instance " + instanceId);
-            //this is to create a portal object. We should check both portal and storage quota
-            double portalQuantity = 1;
-            //double storageQuantity = sysmeta.getSize().doubleValue();
-            //int storageQuotaId = hasSpace(subscriber, requestor.getValue(), QuotaTypeDeterminer.STORAGE, storageQuantity, instanceId);
-            //report a portal usage in another thread
-            if (method != null && method.equals(CREATEMETHOD)) {
-                boolean checkSpace = true;
-                int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
-                createUsage(portalQuotaId, instanceId, portalQuantity);//report the usage in another thread
-            } else if (method != null && method.equals(ARCHIVEMETHOD)) {
-                if (isLastUnarchivedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
-                    //take action only we are archiving the last object which hasn't been archived in the sid chain
-                    boolean checkSpace = false;
-                    int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
-                    updateUsage(portalQuotaId, instanceId, portalQuantity);
-                } else {
-                    logMetacat.debug("QuotaService.enforcePortalQuota - Metacat is not archiving the last object which hasn't been archived in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
-                }
-             } else if (method != null && method.equals(DELETEMETHOD)) {
-                 if (isLastUnDletedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
-                     //take action only we are deleting the last object which hasn't been deleted in the sid chain
-                     boolean checkSpace = false;
-                     int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
-                     deleteUsage(portalQuotaId, instanceId, portalQuantity);
-                 } else {
-                     logMetacat.debug("QuotaService.enforcePortalQuota - Metacat is not deleting the last object in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
-                 }
-            } else if (method != null && method.equals(UPDATEMETHOD)) {
-                logMetacat.info("QuotaService.enforcePortalQuota - Metacat is updating an object in the series chain " + instanceId + ". It needs to do nothing for the portal quota.");
-            } else {
-                throw new InvalidRequest("1102", "In the portal quota checking process, Metacat doesn't support the method  " + method  + " for the pid " + sysmeta.getIdentifier().getValue());
-            }
-            enforceStorageQuota(subscriber, requestor, sysmeta, method);
-        }
-    }
-    
-    /**
-     * Checking if the given pid is last one in this series chain hasn't been archived
-     * @param pid  the pid of the object will be checked
-     * @param sid  the id of the series chain will be checked
-     * @return true if the pid is the last one hasn't been archived; otherwise fals.
-     * @throws SQLException 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
-     */
-    boolean isLastUnarchivedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
-        boolean lastOne = true;
-        if (sid != null && !sid.trim().equals("") && pid != null && !pid.trim().equals("")) {
-            try {
-                List<String> guids = IdentifierManager.getInstance().getAllPidsInChain(sid);
-                for (String guid : guids) {
-                    if (!guid.equals(pid)) {
-                        Identifier identifier = new Identifier();
-                        identifier.setValue(guid);
-                        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                        if(!sysmeta.getArchived()) {
-                            lastOne = false;//found one which is not archived and its guid doesn't equals the pid
-                            logMetacat.debug("QuotaService.isLastUnarchivedInChain - found the guid " + guid + " in the chain with sid " + sid +" hasn't been archived. So the whole chain hasn't been archived.");
-                            break;
-                        }
-                    }
-                }
-            } catch (SQLException e) {
-                throw new ServiceFailure("1104", "QuotaService.isLastUnarchivedInChain - Can't get the pids list in the chain with the sid " + sid + " since " + e.getMessage());
-            }
             
-        } else {
-            throw new InvalidRequest("1102", "QuotaService.isLastUnarchivedInChain - the pid or sid can't be null or blank for the portal quota.");
         }
-        return lastOne;
     }
     
-    /**
-     * Checking if the given pid is last one in this series chain hasn't been deleted
-     * @param pid  the pid of the object will be checked
-     * @param sid  the id of the series chain will be checked
-     * @return true if the pid is the last one hasn't been deleted; otherwise fals.
-     * @throws SQLException 
-     * @throws InvalidRequest 
-     * @throws ServiceFailure 
-     */
-    boolean isLastUnDletedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
-        boolean lastOne = false;
-        if (sid != null && !sid.trim().equals("") && pid != null && !pid.trim().equals("")) {
-            try {
-                List<String> guids = IdentifierManager.getInstance().getAllPidsInChain(sid);
-                if (guids.size() ==1) {
-                    String guid = guids.get(0);
-                    if (guid != null && guid.equals(pid)) {
-                        lastOne = true;//the series chain only has one element and it is the given pid
-                        logMetacat.debug("QuotaService.isLastUnDletedInChain - found the pid " + pid + " in the chain with sid " + sid +" is the only object which hasn't been deleted.");
-                    }
-                }
-            } catch (SQLException e) {
-                throw new ServiceFailure("1104", "QuotaService.isLastUnDletedInChain - Can't get the pids list in the chain with the sid " + sid + " since " + e.getMessage());
-            }
-            
-        } else {
-            throw new InvalidRequest("1102", "QuotaService.isLastUnDletedInChain - the pid or sid can't be null or blank for the portal quota.");
-        }
-        return lastOne;
-    }
-    
+   
     /**
      * Enforce the storage quota checking
      * @param subscriber  the subscriber of a quota
@@ -324,115 +225,5 @@ public class QuotaServiceManager {
             throw new NotImplemented("0000", "The storage quota service hasn't been implemented yet.");
         }
     }
-    /**
-     * Check if the quota has enough space for this request. If there is not enough space, an exception will be thrown
-     * @param checkEnoughSpace  indicator if we need to check if the found quota has enough space for this usage
-     * @param subscriber  the subject of subscriber of the quota which will be used 
-     * @param requestor  the subject of the user who requests the usage
-     * @param quotaType  the type of quota
-     * @param quantity  the amount of the usage for the request
-     * @return the quota id which will be used. -1 will be returned if the quota service is disabled
-     * @throws InvalidRequest 
-     * @throws IOException 
-     * @throws ServiceFailure 
-     * @throws NotFound 
-     * @throws ClientProtocolException 
-     * @throws InsufficientResources 
-     */
-     int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources {
-        int quotaId = -1;
-        boolean hasSpace = false;
-        if(enabled) {
-            if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
-                List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);
-                for (Quota quota : quotas) {
-                    if (quota != null) {
-                        if (checkEnoughSpace) {
-                            double hardLimit = quota.getHardLimit();
-                            logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota " + subscriber + " with type " + quotaType + "is " + hardLimit + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
-                            if (hardLimit >= quantity) {
-                                quotaId = quota.getId();
-                                hasSpace = true;
-                                logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + ". So the request is granted for the instance id " + instanceId);
-                                break;
-                            }
-                        } else {
-                            logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
-                            quotaId = quota.getId();
-                            hasSpace = true;//since we don't need to check if it has enough space, so hasSpace is always true
-                            logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota id " + quotaId + " subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
-                            break;
-                        }
-                    }
-                }
-            } else {
-                throw new InvalidRequest("1102", "The quota subscriber, requestor and quota type can't be null or blank for submit the instance " + instanceId);
-            }
-        } else {
-            hasSpace = true;//if the service is not enabled, it is always true
-            logMetacat.debug("QuotaService.lookUpQuotaId - the quota serive is disabled and the request is walways granted.");
-        }
-        if (!hasSpace) {
-            throw new InsufficientResources("1160", "The subscriber " + subscriber + " doesn't have enough " + quotaType + " quota to fullfill the request for the instance id " + instanceId + ". Please contact " + subscriber + " to request more quota.");
-        }
-        return quotaId;
-    }
     
-    
-    
-    /**
-     * Create a usage associated with the given quota id. It will create the usage by another thread.
-     * Metacat executes it without checking if the service is enabled. So the caller should check it.
-     * @param quotaId  the quota id which the usage will be associated with
-     * @param instanceId  the id of the usage instance (pid for the storage type, and sid for the portal type)  
-     * @param quantity  the amount of the usage
-     */
-    void createUsage(int quotaId, String instanceId, double quantity) {
-        Usage usage = new Usage();
-        usage.setObject(USAGE);
-        usage.setQuotaId(quotaId);
-        usage.setInstanceId(instanceId);
-        usage.setQuantity(quantity);
-        usage.setStatus(ACTIVE);
-        CreateUsageTask task = new CreateUsageTask(usage, client);
-        executor.submit(task);
-    }
-    
-    /**
-     * Update a usage with the archived status associated with the given quota id in the remote book keeper server. Locally we will add a new record with the archived status 
-     * in the table. It will be run by another thread.
-     * Metacat executes it without checking if the service is enabled. So the caller should check it.
-     * @param quotaId  the quota id which the usage will be associated with
-     * @param instanceId  the id of the usage instance (pid for the storage type, and sid for the portal type)  
-     * @param quantity  the amount of the usage
-     */
-    void updateUsage(int quotaId, String instanceId, double quantity) {
-        Usage usage = new Usage();
-        usage.setObject(USAGE);
-        usage.setQuotaId(quotaId);
-        usage.setInstanceId(instanceId);
-        usage.setQuantity(quantity);
-        usage.setStatus(ARCHIVED);
-        UpdateUsageTask task = new UpdateUsageTask(usage, client);
-        executor.submit(task);
-    }
-    
-    /**
-     * Delete a usage associated with the given quota id in the remote book keeper server. However, locally we will add a new record with the deleted status 
-     * in the table. It will be run by another thread.
-     * Metacat executes it without checking if the service is enabled. So the caller should check it.
-     * @param quotaId  the quota id which the usage will be associated with
-     * @param instanceId  the id of the usage instance (pid for the storage type, and sid for the portal type)  
-     * @param quantity  the amount of the usage
-     */
-    void deleteUsage(int quotaId, String instanceId, double quantity) {
-        Usage usage = new Usage();
-        usage.setObject(USAGE);
-        usage.setQuotaId(quotaId);
-        usage.setInstanceId(instanceId);
-        usage.setQuantity(quantity);
-        usage.setStatus(DELETED);
-        DeleteUsageTask task = new DeleteUsageTask(usage, client);
-        executor.submit(task);
-    }
 }
