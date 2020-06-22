@@ -166,8 +166,6 @@ public class QuotaServiceManager {
      */
     public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented {
         long start = System.currentTimeMillis();
-        QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
-        determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
         if (enabled) {
             if (requestor == null) {
                 throw new InvalidRequest("1102", "The quota subscriber, requestor can't be null");
@@ -175,10 +173,13 @@ public class QuotaServiceManager {
             if (subscriber == null || subscriber.trim().equals("")) {
                 subscriber = requestor.getValue();//if we didn't get the subscriber information for the request header, we just assign it as the request's subject
             }
+            QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
+            determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
             String quotaType = determiner.getQuotaType();
             if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.PORTAL)) {
                 String instanceId = determiner.getInstanceId();
                 enforcePortalQuota(subscriber,requestor, instanceId, sysmeta, method);
+                enforceStorageQuota(subscriber,requestor, sysmeta, method); //also enforce the storage quota service
             } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
                 enforceStorageQuota(subscriber,requestor, sysmeta, method);
             } else {
@@ -207,7 +208,7 @@ public class QuotaServiceManager {
     private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
                                                                              ServiceFailure, InsufficientResources, NotImplemented {
         if (portalEnabled) {
-            
+            PortalQuotaService.getInstance(executor, client).enforce(subscriber, requestor, instanceId, sysmeta, method);
         }
     }
     
