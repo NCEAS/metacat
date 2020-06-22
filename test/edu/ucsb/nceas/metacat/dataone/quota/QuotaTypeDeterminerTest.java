@@ -67,7 +67,7 @@ public class QuotaTypeDeterminerTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testDetermine() throws Exception {
-        List<String> portalNameSpaces = QuotaService.retrievePortalNameSpaces();
+        List<String> portalNameSpaces = QuotaServiceManager.retrievePortalNameSpaces();
         System.out.println("===============the list of portal name spaces " + portalNameSpaces);
         QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
         

@@ -62,11 +62,11 @@ public class QuotaDBManagerTest  extends MCTestCase {
         String instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() * 10000;
         double quantity = 1;
         Usage usage = new Usage();
-        usage.setObject(QuotaService.USAGE);
+        usage.setObject(QuotaServiceManager.USAGE);
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        usage.setStatus(QuotaService.ACTIVE);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
         Date now = new Date();
         QuotaDBManager.createUsage(usage, now);
         ResultSet rs = getResultSet(quotaId, instanceId);
@@ -76,7 +76,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(3).equals(instanceId));
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
-        assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
+        assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
         rs.close();
         
         
@@ -85,11 +85,11 @@ public class QuotaDBManagerTest  extends MCTestCase {
         instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() *10;
         quantity = 100.11;
         usage = new Usage();
-        usage.setObject(QuotaService.USAGE);
+        usage.setObject(QuotaServiceManager.USAGE);
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        usage.setStatus(QuotaService.ACTIVE);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
         QuotaDBManager.createUsage(usage, null);
         rs = getResultSet(quotaId, instanceId);
         assertTrue(rs.next());
@@ -98,7 +98,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getString(3).equals(instanceId));
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5) == null);
-        assertTrue(rs.getString(6).equals(QuotaService.ACTIVE));
+        assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
         rs.close();
         
         //create another unreported event
@@ -106,11 +106,11 @@ public class QuotaDBManagerTest  extends MCTestCase {
         instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() *10;
         quantity = 100.11;
         usage = new Usage();
-        usage.setObject(QuotaService.USAGE);
+        usage.setObject(QuotaServiceManager.USAGE);
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        usage.setStatus(QuotaService.ACTIVE);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
         QuotaDBManager.createUsage(usage, null);
         
 

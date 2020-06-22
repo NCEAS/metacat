@@ -54,7 +54,7 @@ public class QuotaTypeDeterminer {
     public QuotaTypeDeterminer(List<String> portalNameSpaces) throws ServiceFailure {
         this.portalNameSpaces = portalNameSpaces;
         if (this.portalNameSpaces == null || this.portalNameSpaces.isEmpty()) {
-            throw new ServiceFailure("4893", "The propery " + QuotaService.PROPERTYNAMEOFPORTALNAMESPACE + " in metacat.properties file can'be blank.");
+            throw new ServiceFailure("4893", "The propery " + QuotaServiceManager.PROPERTYNAMEOFPORTALNAMESPACE + " in metacat.properties file can'be blank.");
         }
     }
     

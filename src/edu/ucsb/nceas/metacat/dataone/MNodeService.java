@@ -163,7 +163,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaService;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -335,8 +335,8 @@ public class MNodeService extends D1NodeService
         }
         
         try {
-            String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
-            QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.DELETEMETHOD);
+            String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
         } catch (InvalidRequest e) {
             throw new InvalidToken(invalidTokenCode, "The quota service found this is an invalid request " + e.getMessage() + " to delete the pid " + id.getValue());
         } catch (InsufficientResources e) {
@@ -500,8 +500,8 @@ public class MNodeService extends D1NodeService
             long startTime3 = System.currentTimeMillis();
             
             //check the if it has enough quota if th quota service is enabled
-            String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
-            QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.UPDATEMETHOD);
+            String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.UPDATEMETHOD);
             
             // check quality of SM
             if (sysmeta.getObsoletedBy() != null) {
@@ -786,8 +786,8 @@ public class MNodeService extends D1NodeService
         logMetacat.debug("Allowed to create: " + pid.getValue());
         
         //check the if it has enough quota if th quota service is enabled
-        String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
-        QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.CREATEMETHOD);
+        String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+        QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
 
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
@@ -2825,8 +2825,8 @@ public class MNodeService extends D1NodeService
 	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	              SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	              //check the if it has enough quota if th quota service is enabled
-	              String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
-	              QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.ARCHIVEMETHOD);
+	              String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+	              QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
 	              boolean needModifyDate = true;
 	              boolean logArchive = true;
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 

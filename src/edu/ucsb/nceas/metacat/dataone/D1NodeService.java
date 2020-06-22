@@ -112,7 +112,7 @@ import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStrea
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.dataone.quota.QuotaService;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
@@ -1492,8 +1492,8 @@ public abstract class D1NodeService {
           } else {
               logMetacat.debug("D1Node.update - this is to archive a MN object "+pid.getValue());
               try {
-                  String subscriber = request.getHeader(QuotaService.QUOTASUBSRIBERHEADER);
-                  QuotaService.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaService.ARCHIVEMETHOD);
+                  String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+                  QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
                   archiveObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
               } catch (NotFound e) {
                   throw new InvalidRequest("4869", "Can't find the pid " + pid.getValue() + " for archive.");

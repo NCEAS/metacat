@@ -70,11 +70,11 @@ public class FailedReportingAttemptChecker extends TimerTask {
                     String status = rs.getString(6);
                     usage.setStatus(status);
                     UsageTask task = null;
-                    if (status != null && status.equals(QuotaService.ACTIVE)) {
+                    if (status != null && status.equals(QuotaServiceManager.ACTIVE)) {
                         task = new CreateUsageTask(usage, bookkeeperClient);
-                    } else if (status != null && status.equals(QuotaService.ARCHIVED)) {
+                    } else if (status != null && status.equals(QuotaServiceManager.ARCHIVED)) {
                         task = new UpdateUsageTask(usage, bookkeeperClient);
-                    } else if (status != null && status.equals(QuotaService.DELETED)) {
+                    } else if (status != null && status.equals(QuotaServiceManager.DELETED)) {
                         task = new DeleteUsageTask(usage, bookkeeperClient);
                     } else {
                         throw new Exception("Doesn't support the status of the usage " + status);

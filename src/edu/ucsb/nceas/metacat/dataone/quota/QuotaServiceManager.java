@@ -53,7 +53,7 @@ import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
  * @author tao
  *
  */
-public class QuotaService {
+public class QuotaServiceManager {
     public static final String USAGE = "usage";
     public static final String ACTIVE = "active";
     public static final String ARCHIVED = "archived";
@@ -72,9 +72,9 @@ public class QuotaService {
     private static int NUMOFTHREADS = Settings.getConfiguration().getInt("dataone.quotas.reportingThreadPoolSize", 5);
     private static boolean enabled = false; //If any of above variables are enabled, this variable will be true.
     private static ExecutorService executor = null;
-    private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
+    private static Log logMetacat  = LogFactory.getLog(QuotaServiceManager.class);
     
-    private static QuotaService service = null;
+    private static QuotaServiceManager service = null;
     private BookKeeperClient client = null;
     private List<String> portalNameSpaces = null;
     private static boolean timerStarted = false;
@@ -84,7 +84,7 @@ public class QuotaService {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    private QuotaService() throws ServiceFailure {
+    private QuotaServiceManager() throws ServiceFailure {
         if (enabled) {
             client = BookKeeperClient.getInstance();
             executor = Executors.newFixedThreadPool(NUMOFTHREADS);
@@ -106,12 +106,12 @@ public class QuotaService {
      * @throws IOException 
      * @throws ServiceFailure 
      */
-    public static QuotaService getInstance() throws ServiceFailure {
+    public static QuotaServiceManager getInstance() throws ServiceFailure {
         enabled = storageEnabled || portalEnabled || replicationEnabled;
         if (service == null) {
-            synchronized (QuotaService.class) {
+            synchronized (QuotaServiceManager.class) {
                 if (service == null) {
-                    service = new QuotaService();
+                    service = new QuotaServiceManager();
                 }
             }
         }
