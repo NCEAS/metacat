@@ -28,6 +28,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.client.ClientProtocolException;
 import org.dataone.bookkeeper.api.Quota;
 import org.dataone.bookkeeper.api.Usage;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
@@ -48,6 +49,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
  */
 public abstract class QuotaService {
     private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
+    private static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     
     protected static ExecutorService executor = null;
     protected static BookKeeperClient client = null;
@@ -200,6 +202,7 @@ public abstract class QuotaService {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ACTIVE);
+        //TODO - need to set the node id when the book keeper api is ready
         CreateUsageTask task = new CreateUsageTask(usage, client);
         executor.submit(task);
     }
@@ -220,6 +223,7 @@ public abstract class QuotaService {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ARCHIVED);
+        //TODO - need to set the node id when the book keeper api is ready
         UpdateUsageTask task = new UpdateUsageTask(usage, client);
         executor.submit(task);
     }
@@ -239,6 +243,7 @@ public abstract class QuotaService {
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
+        //TODO - need to set the node id when the book keeper api is ready
         usage.setStatus(QuotaServiceManager.DELETED);
         DeleteUsageTask task = new DeleteUsageTask(usage, client);
         executor.submit(task);
