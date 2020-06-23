@@ -162,7 +162,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
      * @return the result set after executing the query
      * @throws Exception
      */
-    private ResultSet getResultSet(int quotaId, String instanceId) throws Exception {
+     static ResultSet getResultSet(int quotaId, String instanceId) throws Exception {
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;

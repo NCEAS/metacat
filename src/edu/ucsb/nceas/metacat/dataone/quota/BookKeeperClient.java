@@ -337,7 +337,7 @@ public class BookKeeperClient {
      * @throws NotFound
      * @throws ServiceFailure
      */
-    private List<Usage> listUsages(int quotaId, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
+     List<Usage> listUsages(int quotaId, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
         String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTNACEID + "=" + instanceId;
         logMetacat.debug("BookKeeperClient.getUsageId - the rest request to get the usuage id is " + restStr);
         HttpGet get = new HttpGet(restStr);
