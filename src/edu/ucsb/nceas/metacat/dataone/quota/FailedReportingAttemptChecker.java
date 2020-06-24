@@ -20,6 +20,7 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.sql.ResultSet;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.TimerTask;
 
 import org.apache.commons.logging.Log;
@@ -37,6 +38,7 @@ import org.dataone.bookkeeper.api.Usage;
  */
 public class FailedReportingAttemptChecker extends TimerTask {
     private static Log logMetacat  = LogFactory.getLog(FailedReportingAttemptChecker.class);
+    private static final int MAXTIMES = 100;
     
     private ExecutorService executor = null;
     BookKeeperClient bookkeeperClient = null;
@@ -80,7 +82,15 @@ public class FailedReportingAttemptChecker extends TimerTask {
                         throw new Exception("Doesn't support the status of the usage " + status);
                     }
                     task.setIsLoggedLocally(true);//indicates that the local db have the record
-                    executor.submit(task);
+                    //We need to preserve the order of usages. So we have to wait the reporting process, which is in another thread, to be done.
+                    Future future = executor.submit(task);
+                    int times = 0;
+                    while (!future.isDone() && times <= MAXTIMES) {
+                        logMetacat.debug("FailedReportingAttemptChecker.run - wait for completing the report to the remote book keeper server for the instance id " + usage.getInstanceId() +
+                                " with the status " + status + ". This is " + times + " tries.");
+                        Thread.sleep(500);
+                        times ++;
+                    }
                 } catch (Exception ee) {
                     logMetacat.error("FailedReportingAttemptChecker.run - can't report the usage to the remote book server with the local id " + localId + " since " + 
                                      ee.getMessage() + ". If the local id is -1. It means the local id can't be got from the local db.");
