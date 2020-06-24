@@ -88,7 +88,7 @@ public class BookKeeperClient {
             logMetacat.debug("BookKeeperClient.BookKeeperClient - the final bookkeeper service url is " + bookKeeperURL);
         }
         if (header == null) {
-            String tokenFilePath = Settings.getConfiguration().getString("dataone.bearToken.file");
+            String tokenFilePath = Settings.getConfiguration().getString("dataone.nodeToken.file");
             File tokenFile = new File(tokenFilePath);
             String token = null;
             try {
