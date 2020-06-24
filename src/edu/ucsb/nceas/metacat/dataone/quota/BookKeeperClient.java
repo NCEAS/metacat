@@ -20,7 +20,10 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Date;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.logging.Log;
@@ -88,21 +91,46 @@ public class BookKeeperClient {
             logMetacat.debug("BookKeeperClient.BookKeeperClient - the final bookkeeper service url is " + bookKeeperURL);
         }
         if (header == null) {
-            String tokenFilePath = Settings.getConfiguration().getString("dataone.nodeToken.file");
-            File tokenFile = new File(tokenFilePath);
-            String token = null;
-            try {
-                FileUtils.readFileToString(tokenFile, "UTF-8");
-            } catch (IOException e) {
-                throw new ServiceFailure("1190", "The BookKeeper client can't read the token file since " +e.getMessage());
-            }
-            if (token == null || token.trim().equals("")) {
-                throw new ServiceFailure("1190", "The member node token can't be null or blank when it access the remote quota service. Please ask the Metacat admin to check the content of the token file with the path " + tokenFilePath + 
-                        ". If the token file path is null or blank, please ask the Metacat admin to set the proper token file path at the property \"dataone.bearToken.file\" in its metacat.properties file.");
-            }
+            String token = readTokenFromFile();
             header = new BasicHeader("Authorization", "Beaer " + token);
         }
+        //Since the token always expires every three months, we need reload it very two hours in case the token has been renewed.
+        Timer timer = new Timer("Signing Certificate Monitor");
+        long tokenMonitorPeriod = 120 * 60 * 1000;
+        timer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    String token = readTokenFromFile();
+                    header = new BasicHeader("Authorization", "Beaer " + token);
+                } catch (Exception e) {
+                    logMetacat.error("BookKeeperClient - the timer thread couldn't read the token from a file since " + e.getMessage());
+                }
+            }
+        }, new Date(), tokenMonitorPeriod);
         httpClient = HttpClientBuilder.create().build();
+    }
+    
+    /**
+     * Read the token from the token file
+     * @return  the token string
+     * @throws ServiceFailure
+     */
+    private String readTokenFromFile() throws ServiceFailure {
+        String tokenFilePath = Settings.getConfiguration().getString("dataone.nodeToken.file");
+        File tokenFile = new File(tokenFilePath);
+        String token = null;
+        try {
+            FileUtils.readFileToString(tokenFile, "UTF-8");
+        } catch (IOException e) {
+            throw new ServiceFailure("1190", "BookKeeperClient.readTokenFromFile - The BookKeeper client can't read the token file since " +e.getMessage());
+        }
+        if (token == null || token.trim().equals("")) {
+            throw new ServiceFailure("1190", "BookKeeperClient.readTokenFromFile - The member node token can't be null or blank when it access the remote quota service. Please ask the Metacat admin to check the content of the token file with the path " + tokenFilePath + 
+                    ". If the token file path is null or blank, please ask the Metacat admin to set the proper token file path at the property \"dataone.bearToken.file\" in its metacat.properties file.");
+        }
+        logMetacat.info("BookKeeperClient.readTokenFromFile - successfully read a token from the file " + tokenFilePath);
+        return token;
     }
     
     /**
