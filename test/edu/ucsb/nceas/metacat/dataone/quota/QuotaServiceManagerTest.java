@@ -51,6 +51,7 @@ import junit.framework.TestSuite;
  */
 public class QuotaServiceManagerTest extends D1NodeServiceTest {
     private final static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
+    private final static String SUBSCRIBERWITHOUTENOUGHQUOTA = "";
     private final static String SUBSCRIBER = "";
     private final static String REQUESTOR = "";
     
@@ -75,6 +76,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run2"));
         suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce"));
         suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce2"));
+        suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
+        suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
         return suite;
     }
     
@@ -1261,6 +1264,33 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         }
     }
     
+    /**
+     * Test a subscriber without enough quota
+     * @throws Exception
+     */
+    public void testNoEnoughQuota() throws Exception {
+        try {
+            Identifier guid = new Identifier();
+            guid.setValue("testPortal." + System.currentTimeMillis());
+            InputStream object = new FileInputStream(portalFilePath);
+            Subject submitter = new Subject();
+            submitter.setValue(REQUESTOR);
+            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("https://purl.dataone.org/portals-1.0.0");
+            sysmeta.setFormatId(formatId);
+            String sidStr = generateUUID();
+            Identifier sid = new Identifier();
+            sid.setValue(sidStr);
+            sysmeta.setSeriesId(sid);
+            object.close();
+            HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
+            fail("Test can't get here since the user doesn't have enough quota");
+        } catch (InsufficientResources e) {
+            assertTrue(e.getMessage().contains("doesn't have enough " + QuotaTypeDeterminer.PORTAL));
+        }
+    }
     
     /**
      * Create a usage object
