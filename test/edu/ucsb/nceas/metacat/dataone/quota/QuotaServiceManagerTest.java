@@ -447,9 +447,9 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota
             
-            //archiving the chain will release one from quota
+            //archiving the chain will not release one from quota
             QuotaServiceManager.getInstance().enforce(SUBSCRIBER, submitter, sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
             //local should have two usages and remote only have one usage with the archived status.
             int indexArchived = 0;
@@ -504,9 +504,9 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue(orginalHardLimit == newHardLimit);//we should release one from the quota
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//not quota account decrease
             
-            //delete the chain
+            //delete the chain and the quota account will increase 1
             QuotaServiceManager.getInstance().enforce(SUBSCRIBER, submitter, sysmeta, QuotaServiceManager.DELETEMETHOD);
             //local should have two usages and remote only have one usage with the archived status.
             int indexDeleted = 0;
@@ -656,7 +656,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota
             
             
             //delete the chain
@@ -873,7 +873,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
             
             //archive the first pid in the series chain. It wouldn't change anything in the quota usage.
             MNodeService.getInstance(request).archive(session, guid);
@@ -924,10 +924,10 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
             
             //Archive the second object in the series chain. Since the whole chain are archived, the local will have two records - one for active and one for archive.
-            //Remote the usage will have one record with status archive. The quota will restore one
+            //Remote the usage will have one record with status archive. The quota will not change either
             MNodeService.getInstance(request).archive(session, guid2);
             //local and remote server still has a record for the usage
             index = 0;
@@ -983,7 +983,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue(orginalHardLimit == newHardLimit);//we should restore one from the quota. Nothing change after the update method
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//not quota change
             
             /*********************************************************************
              *Another portal object chain. It will create, update, and updateSystemMetadata
@@ -1066,7 +1066,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             }
             assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota. Nothing change after the updateSystemmetadata method
             
-            //updateSystemMetadata on the second object in the chain. Since all object in the chain are archived, it should restore one quota back
+            //updateSystemMetadata on the second object in the chain. Since all object in the chain are archived, no quota change
             returnedSysmeta = MNodeService.getInstance(request).getSystemMetadata(session, guid4);
             returnedSysmeta.setArchived(true);
             MNodeService.getInstance(request).updateSystemMetadata(session, guid4, returnedSysmeta);
@@ -1125,7 +1125,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     break;
                 }
             }
-            assertTrue(orginalHardLimit == newHardLimit);//we should restore one quota back
+            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should restore one quota back
             
             /*********************************************************************
              *A portal object chain. It will create, update, and delete portal objects
