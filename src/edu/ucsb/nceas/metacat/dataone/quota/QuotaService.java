@@ -160,11 +160,12 @@ public abstract class QuotaService {
                 if (quota != null) {
                     if (checkEnoughSpace) {
                         double hardLimit = quota.getHardLimit();
-                        logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota " + subscriber + " with type " + quotaType + "is " + hardLimit + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
-                        if (hardLimit >= quantity) {
+                        double existedUsages = quota.getUsage();
+                        logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with subscriber " + subscriber + " with type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
+                        if (hardLimit  >= existedUsages + quantity) {
                             quotaId = quota.getId();
                             hasSpace = true;
-                            logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + ". So the request is granted for the instance id " + instanceId);
+                            logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + " plus existed usage " + existedUsages +". So the request is granted for the instance id " + instanceId);
                             break;
                         }
                     } else {
