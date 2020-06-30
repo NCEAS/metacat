@@ -18,6 +18,7 @@
  */
 package edu.ucsb.nceas.metacat.dataone.quota;
 
+import java.io.UnsupportedEncodingException;
 import java.util.concurrent.ExecutorService;
 
 import org.apache.commons.logging.Log;
@@ -69,7 +70,7 @@ public class PortalQuotaService extends QuotaService{
     }
     
     @Override
-    public void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound {
+    public void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
         logMetacat.debug("PortalQuotaService.enforce - checking both portal and storage quota types for the instance " + instanceId);
         //this is to create a portal object. We should check both portal and storage quota
         double portalQuantity = 1;

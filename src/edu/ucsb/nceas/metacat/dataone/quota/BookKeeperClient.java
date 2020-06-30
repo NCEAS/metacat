@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.Date;
 import java.util.List;
 import java.util.Timer;
@@ -165,11 +167,12 @@ public class BookKeeperClient {
      * @throws NotFound 
      * @throws ServiceFailure 
      * @throws InvalidRequest 
+     * @throws UnsupportedEncodingException 
      */
-    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest {
+    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest, UnsupportedEncodingException {
         List<Quota> result = null;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
-            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + "=" + requestor;
+            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + escapeURL(subscriber) + "&" + QUOTATYPE + "=" + escapeURL(quotaType) + "&" + REQUESTOR + "=" + escapeURL(requestor);
             logMetacat.debug("BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
             HttpGet get = new HttpGet(restStr);
             get.addHeader(header);
@@ -370,7 +373,7 @@ public class BookKeeperClient {
      * @throws ServiceFailure
      */
      List<Usage> listUsages(int quotaId, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
-        String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTNACEID + "=" + instanceId;
+        String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTNACEID + "=" + escapeURL(instanceId);
         logMetacat.debug("BookKeeperClient.getUsageId - the rest request to get the usuage id is " + restStr);
         HttpGet get = new HttpGet(restStr);
         get.addHeader(header);
@@ -393,5 +396,15 @@ public class BookKeeperClient {
             }
         }
         return result;
+    }
+    
+     /**
+      * Encode the str to be URL safe
+      * @param str  the original string will be encoded
+      * @return  the encoded str for URL
+      * @throws UnsupportedEncodingException
+      */
+    private String escapeURL(String str) throws UnsupportedEncodingException {
+        return URLEncoder.encode(str, "UTF-8");
     }
 }

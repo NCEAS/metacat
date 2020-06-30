@@ -19,6 +19,7 @@
 package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -67,7 +68,7 @@ public abstract class QuotaService {
      * @throws InsufficientResources
      * @throws NotImplemented
      */
-    public abstract void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound;
+    public abstract void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException ;
 
     /**
      * Checking if the given pid is last one in this series chain hasn't been archived
@@ -150,8 +151,9 @@ public abstract class QuotaService {
      * @throws NotFound 
      * @throws ClientProtocolException 
      * @throws InsufficientResources 
+     * @throws UnsupportedEncodingException 
      */
-     protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound {
+     protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
         int quotaId = -1;
         boolean hasSpace = false;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {

@@ -19,6 +19,7 @@
 package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -208,9 +209,10 @@ public class QuotaServiceManager {
      * @throws InsufficientResources
      * @throws IOException
      * @throws NotImplemented
+     * @throws UnsupportedEncodingException 
      */
     private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
-                                                                             ServiceFailure, InsufficientResources, NotImplemented, NotFound {
+                                                                             ServiceFailure, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
         if (portalEnabled) {
             PortalQuotaService.getInstance(executor, client).enforce(subscriber, requestor, instanceId, sysmeta, method);
         }
