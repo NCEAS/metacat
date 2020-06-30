@@ -1306,7 +1306,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        //usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(nodeId);
         usage.setStatus(status);
         return usage;
     }

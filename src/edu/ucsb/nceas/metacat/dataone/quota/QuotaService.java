@@ -203,7 +203,7 @@ public abstract class QuotaService {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ACTIVE);
-        //TODO - need to set the node id when the book keeper api is ready
+        usage.setNodeId(nodeId);
         CreateUsageTask task = new CreateUsageTask(usage, client);
         executor.submit(task);
     }
@@ -224,7 +224,7 @@ public abstract class QuotaService {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ARCHIVED);
-        //TODO - need to set the node id when the book keeper api is ready
+        usage.setNodeId(nodeId);
         UpdateUsageTask task = new UpdateUsageTask(usage, client);
         executor.submit(task);
     }
@@ -244,7 +244,7 @@ public abstract class QuotaService {
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        //TODO - need to set the node id when the book keeper api is ready
+        usage.setNodeId(nodeId);
         usage.setStatus(QuotaServiceManager.DELETED);
         DeleteUsageTask task = new DeleteUsageTask(usage, client);
         executor.submit(task);
