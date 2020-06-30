@@ -44,6 +44,8 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 
+import com.lmax.disruptor.InsufficientCapacityException;
+
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
@@ -154,35 +156,38 @@ public class QuotaServiceManager {
      * @param subscriber  the subject of subscriber of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param sysmeta  the system metadata of the object which will use the quota
-     * @param method  the method name which will call the createUsage method (create or update)
-     * @throws ServiceFailure
-     * @throws InvalidRequest
-     * @throws IOException 
+     * @param method  the method name which will call the createUsage method (create or update
      * @throws InsufficientResources 
-     * @throws NotFound 
-     * @throws ClientProtocolException 
-     * @throws NotImplemented 
      */
-    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented {
+    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources {
         long start = System.currentTimeMillis();
         if (enabled) {
-            if (requestor == null) {
-                throw new InvalidRequest("1102", "The quota subscriber, requestor can't be null");
-            }
-            if (subscriber == null || subscriber.trim().equals("")) {
-                subscriber = requestor.getValue();//if we didn't get the subscriber information for the request header, we just assign it as the request's subject
-            }
-            QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
-            determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
-            String quotaType = determiner.getQuotaType();
-            if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.PORTAL)) {
-                String instanceId = determiner.getInstanceId();
-                enforcePortalQuota(subscriber,requestor, instanceId, sysmeta, method);
-                enforceStorageQuota(subscriber,requestor, sysmeta, method); //also enforce the storage quota service
-            } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
-                enforceStorageQuota(subscriber,requestor, sysmeta, method);
-            } else {
-                throw new InvalidRequest("1102", "QuotaServiceManager.enforce - Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
+            try {
+                if (requestor == null) {
+                    throw new InvalidRequest("1102", "The quota subscriber, requestor can't be null");
+                }
+                if (subscriber == null || subscriber.trim().equals("")) {
+                    subscriber = requestor.getValue();//if we didn't get the subscriber information for the request header, we just assign it as the request's subject
+                }
+                QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
+                determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
+                String quotaType = determiner.getQuotaType();
+                if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.PORTAL)) {
+                    String instanceId = determiner.getInstanceId();
+                    enforcePortalQuota(subscriber,requestor, instanceId, sysmeta, method);
+                    enforceStorageQuota(subscriber,requestor, sysmeta, method); //also enforce the storage quota service
+                } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
+                    enforceStorageQuota(subscriber,requestor, sysmeta, method);
+                } else {
+                    throw new InvalidRequest("1102", "QuotaServiceManager.enforce - Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
+                }
+            } catch (InsufficientResources e) {
+                throw e;
+            } catch (NotFound e) {
+                throw new InsufficientResources("1160", "QuotaServiceManager.enforce - The requestor " + requestor + " doesn't have a quota  since " + e.getMessage());
+            } catch (Exception e) {
+                //swallow other exceptions so the MN.create/update methods can keep going
+                logMetacat.error("QuotaServiceManager.enforce - Metacat can't enforce the quota service since " + e.getMessage() +". However, the issue will be swallowed so the MN/CN process can keep going.");
             }
         }
         long end = System.currentTimeMillis();
@@ -205,7 +210,7 @@ public class QuotaServiceManager {
      * @throws NotImplemented
      */
     private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
-                                                                             ServiceFailure, InsufficientResources, NotImplemented {
+                                                                             ServiceFailure, InsufficientResources, NotImplemented, NotFound {
         if (portalEnabled) {
             PortalQuotaService.getInstance(executor, client).enforce(subscriber, requestor, instanceId, sysmeta, method);
         }

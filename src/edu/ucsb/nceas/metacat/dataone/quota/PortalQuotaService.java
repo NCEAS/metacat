@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Subject;
@@ -68,7 +69,7 @@ public class PortalQuotaService extends QuotaService{
     }
     
     @Override
-    public void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented {
+    public void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound {
         logMetacat.debug("PortalQuotaService.enforce - checking both portal and storage quota types for the instance " + instanceId);
         //this is to create a portal object. We should check both portal and storage quota
         double portalQuantity = 1;

@@ -337,8 +337,6 @@ public class MNodeService extends D1NodeService
         try {
             String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
             QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
-        } catch (InvalidRequest e) {
-            throw new InvalidToken(invalidTokenCode, "The quota service found this is an invalid request " + e.getMessage() + " to delete the pid " + id.getValue());
         } catch (InsufficientResources e) {
             throw new ServiceFailure(serviceFailureCode, "The user doesn't have enough quota to delete the pid " + id.getValue() + " since " + e.getMessage());
         }
@@ -2830,8 +2828,6 @@ public class MNodeService extends D1NodeService
 	              boolean needModifyDate = true;
 	              boolean logArchive = true;
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 
-	          } catch (InvalidRequest e) {
-	              throw new InvalidToken("2913", "The quota service found this is an invalid request " + e.getMessage());
 	          } catch (InsufficientResources e) {
 	              throw new ServiceFailure("2912", "The user doesn't have enough quota to perform this request " + e.getMessage());
 	          } finally {

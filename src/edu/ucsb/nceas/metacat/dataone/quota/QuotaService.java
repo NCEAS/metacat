@@ -67,7 +67,7 @@ public abstract class QuotaService {
      * @throws InsufficientResources
      * @throws NotImplemented
      */
-    public abstract void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented;
+    public abstract void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound;
 
     /**
      * Checking if the given pid is last one in this series chain hasn't been archived
@@ -151,7 +151,7 @@ public abstract class QuotaService {
      * @throws ClientProtocolException 
      * @throws InsufficientResources 
      */
-     protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources {
+     protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound {
         int quotaId = -1;
         boolean hasSpace = false;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {

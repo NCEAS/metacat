@@ -163,7 +163,7 @@ public class BookKeeperClient {
      * @throws ServiceFailure 
      * @throws InvalidRequest 
      */
-    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, InvalidRequest {
+    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest {
         List<Quota> result = null;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
             String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor;
@@ -176,13 +176,14 @@ public class BookKeeperClient {
                 int status = response.getStatusLine().getStatusCode();
                 if (status == 200) {
                     result = mapper.readValue(response.getEntity().getContent(), List.class);
-                    if (result != null) {
+                    if (result != null && !result.isEmpty()) {
                         logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
                     } else {
-                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null");
+                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null or empty");
+                        throw new NotFound("1103", "QuotaService didn't find a quota for subscriber " + subscriber + " with quota type " + quotaType + " for the requestor " + requestor);
                     }
                 } else if (status == 404) {
-                    throw new InvalidRequest("1102", "The quota with the subscription subject " + subscriber + " is not found");
+                    throw new NotFound("1103", "The quota with the subscription subject " + subscriber + " is not found");
                 } else {
                     String error = IOUtils.toString(response.getEntity().getContent());
                     throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + error);
