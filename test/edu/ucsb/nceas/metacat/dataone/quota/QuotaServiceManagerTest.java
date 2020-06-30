@@ -52,8 +52,12 @@ import junit.framework.TestSuite;
 public class QuotaServiceManagerTest extends D1NodeServiceTest {
     private final static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     private final static String SUBSCRIBERWITHOUTENOUGHQUOTA = "";
-    private final static String SUBSCRIBER = "";
-    private final static String REQUESTOR = "";
+    private final static String SUBSCRIBER = "CN=opc,DC=dataone,DC=org";
+    private final static String REQUESTOR = "http://orcid.org/0000-0003-1501-0861";
+    private final static String DELINGUENT_SUBSCRIBER = "http://orcid.org/0000-0003-1758-9950";
+    private final static String DELINGUENT_REQUESTOR = "http://orcid.org/0000-0003-1758-9950";
+    private final static String DEFICIT_SUBSCRIBER = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
+    private final static String DEFICIT_REQUESTOR = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
     
     private static int maxAttempt = 20;
     private static String portalFilePath = "test/example-portal.xml";
