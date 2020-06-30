@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.message.BasicHeader;
 import org.apache.wicket.util.io.IOUtils;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
@@ -108,7 +109,9 @@ public class BookKeeperClient {
                 }
             }
         }, new Date(), tokenMonitorPeriod);
-        httpClient = HttpClientBuilder.create().build();
+        //httpClient = HttpClientBuilder.create().build();
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5 * 1000).build();
+        httpClient = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
     }
     
     /**
