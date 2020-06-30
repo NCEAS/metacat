@@ -124,7 +124,7 @@ public class BookKeeperClient {
         File tokenFile = new File(tokenFilePath);
         String token = null;
         try {
-            FileUtils.readFileToString(tokenFile, "UTF-8");
+            token = FileUtils.readFileToString(tokenFile, "UTF-8");
         } catch (IOException e) {
             throw new ServiceFailure("1190", "BookKeeperClient.readTokenFromFile - The BookKeeper client can't read the token file since " +e.getMessage());
         }
