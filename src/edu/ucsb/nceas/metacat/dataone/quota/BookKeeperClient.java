@@ -169,7 +169,7 @@ public class BookKeeperClient {
     public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest {
         List<Quota> result = null;
         if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
-            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + requestor;
+            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + subscriber + "&" + QUOTATYPE + "=" + quotaType + "&" + REQUESTOR + "=" + requestor;
             logMetacat.debug("BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
             HttpGet get = new HttpGet(restStr);
             get.addHeader(header);
