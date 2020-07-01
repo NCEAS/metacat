@@ -44,7 +44,9 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.dataone.bookkeeper.api.Quota;
+import org.dataone.bookkeeper.api.QuotaList;
 import org.dataone.bookkeeper.api.Usage;
+import org.dataone.bookkeeper.api.UsageList;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
@@ -183,8 +185,9 @@ public class BookKeeperClient {
                 response = httpClient.execute(get);
                 int status = response.getStatusLine().getStatusCode();
                 if (status == 200) {
-                    result = mapper.readValue(response.getEntity().getContent(), List.class);
-                    if (result != null && !result.isEmpty()) {
+                    QuotaList list = mapper.readValue(response.getEntity().getContent(), QuotaList.class);
+                    if (list != null && list.getQuotas() != null && list.getQuotas().size() > 0) {
+                        result = list.getQuotas();
                         logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
                     } else {
                         logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null or empty");
@@ -385,7 +388,10 @@ public class BookKeeperClient {
             response = httpClient.execute(get);
             int status = response.getStatusLine().getStatusCode();
             if (status == 200) {
-                result = mapper.readValue(response.getEntity().getContent(), List.class);
+                UsageList list = mapper.readValue(response.getEntity().getContent(), UsageList.class);
+                if (list != null) {
+                    result = list.getUsages();
+                }
             } else if (status == 404) {
                 throw new NotFound("0000", "BookKeeperClient.getUsageId - the usage with the quota id " + quotaId + " and instance id " + instanceId + "is not found");
             } else {
