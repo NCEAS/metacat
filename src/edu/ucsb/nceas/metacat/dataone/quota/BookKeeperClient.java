@@ -67,6 +67,8 @@ public class BookKeeperClient {
     private static final String REQUESTOR = "requestor";
     private static final String USAGES = "usages";
     private static final String INSTNACEID = "instanceId";
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER= "Bearer";
     private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
     private static BookKeeperClient bookKeeperClient = null;
     
@@ -95,7 +97,7 @@ public class BookKeeperClient {
         }
         if (header == null) {
             String token = readTokenFromFile();
-            header = new BasicHeader("Authorization", "Beaer " + token);
+            header = new BasicHeader(AUTHORIZATION,  BEARER + " " + token);
         }
         //Since the token always expires every three months, we need reload it very two hours in case the token has been renewed.
         Timer timer = new Timer("Signing Certificate Monitor");
@@ -105,7 +107,7 @@ public class BookKeeperClient {
             public void run() {
                 try {
                     String token = readTokenFromFile();
-                    header = new BasicHeader("Authorization", "Beaer " + token);
+                    header = new BasicHeader(AUTHORIZATION,  BEARER + " " + token);
                 } catch (Exception e) {
                     logMetacat.error("BookKeeperClient - the timer thread couldn't read the token from a file since " + e.getMessage());
                 }
