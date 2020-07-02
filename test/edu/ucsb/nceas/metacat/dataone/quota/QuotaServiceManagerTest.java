@@ -32,6 +32,7 @@ import org.dataone.bookkeeper.api.Quota;
 import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InsufficientResources;
+import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
@@ -103,7 +104,23 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public void testBookKeeperClientMethods() throws Exception {
         //test to list quotas
-        List<Quota> quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
+        List<Quota> quotas = null;
+        try {
+            quotas = BookKeeperClient.getInstance().listQuotas("foo", "foo", QuotaTypeDeterminer.PORTAL);
+            fail("Should throw an exception and can't get here");
+        } catch (NotFound e) {
+            assertTrue(e.getMessage().contains("foo"));
+        }
+        try {
+            quotas = BookKeeperClient.getInstance().listQuotas(DELINGUENT_SUBSCRIBER, DELINGUENT_REQUESTOR, QuotaTypeDeterminer.PORTAL);
+            fail("Should throw an exception and can't get here");
+        } catch (NotFound e) {
+            assertTrue(e.getMessage().contains(DELINGUENT_SUBSCRIBER));
+        }
+        quotas = BookKeeperClient.getInstance().listQuotas(DEFICIT_SUBSCRIBER, DEFICIT_REQUESTOR, QuotaTypeDeterminer.PORTAL);
+        assertTrue(quotas.size() >= 1);
+        
+        quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
         assertTrue(quotas.size() >= 1);
         int portalQuotaId = quotas.get(0).getId();
         
