@@ -136,6 +136,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(returnedUsage.getInstanceId().equals(instanceId));
         assertTrue(returnedUsage.getStatus().equals(status));
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
+        assertTrue(returnedUsage.getNodeId().equals(nodeId));
         int remoteUsageId = returnedUsage.getId();
         
         //test to create a usage (local record two)
@@ -158,7 +159,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
         assertTrue(returnedUsage.getId() == remoteUsageId);
-        
+        assertTrue(returnedUsage.getNodeId().equals(nodeId));
         //test to delete a usage (local record three)
         BookKeeperClient.getInstance().deleteUsage(portalQuotaId, instanceId);
         while (times < maxAttempt) {
@@ -387,6 +388,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(returnedUsage.getInstanceId().equals(instanceId));
         assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
+        assertTrue(returnedUsage.getNodeId().equals(nodeId));
     }
     
 
@@ -468,6 +470,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             double newHardLimit = -2;
             for (Quota quota : quotas) {
@@ -525,6 +528,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
             for (Quota quota : quotas) {
@@ -677,6 +681,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             double newHardLimit = -2;
             for (Quota quota : quotas) {
@@ -833,6 +838,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             double newHardLimit = -2;
@@ -893,6 +899,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
@@ -944,6 +951,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
@@ -1003,6 +1011,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
@@ -1145,6 +1154,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr2));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
@@ -1222,6 +1232,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr3));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             newHardLimit = -2;
