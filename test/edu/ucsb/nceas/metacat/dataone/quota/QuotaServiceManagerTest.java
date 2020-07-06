@@ -106,7 +106,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         //test to list quotas
         List<Quota> quotas = null;
         try {
-            quotas = BookKeeperClient.getInstance().listQuotas("foo", "foo", QuotaTypeDeterminer.PORTAL);
+            quotas = BookKeeperClient.getInstance().listQuotas("foo", REQUESTOR, QuotaTypeDeterminer.PORTAL);
             fail("Should throw an exception and can't get here");
         } catch (NotFound e) {
             assertTrue(e.getMessage().contains("foo"));
