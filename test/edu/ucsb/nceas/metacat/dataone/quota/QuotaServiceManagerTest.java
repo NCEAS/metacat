@@ -163,6 +163,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         //test to delete a usage (local record three)
         BookKeeperClient.getInstance().deleteUsage(portalQuotaId, instanceId);
         boolean notFound = false;
+        times = 0;
         while (times < maxAttempt) {
             try {
                 usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
@@ -254,8 +255,23 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(indexArchived ==1);
         assertTrue(indexDeleted ==1);
         //check the usages in the remote the book keeper server to make sure we don't have those usages.
-        List<Usage> usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
-        assertTrue(usages == null || usages.isEmpty());
+        List<Usage> usages = null;
+        boolean notFound = false;
+        int times = 0;
+        while (times < maxAttempt) {
+            try {
+                usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
+            } catch (NotFound e) {
+                notFound = true;
+            }
+            if (!notFound) {
+                Thread.sleep(2000);
+                times ++;//The usage in the remote server hasn't been deleted, continue to try until it reaches the max attempt.
+            } else {
+                break;
+            }
+        }
+        assertTrue(notFound == true);
         
         //Start to run another thread to report those usages to the remote server.
         ExecutorService executor = Executors.newFixedThreadPool(2);
@@ -263,46 +279,72 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         thread.start();
         
         //check the three records in the local database already have the reported date
-        int times = 0;
+        times = 0;
+        boolean reportIsDone = false;
         while (times < maxAttempt) {
             rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
             //check local database to see if we have those records
-            index = 0;
-            indexActive = 0;
-            indexArchived = 0;
-            indexDeleted = 0;
-            try {
-                while (rs.next()) {
-                    assertTrue(rs.getInt(1) > 0);
-                    assertTrue(rs.getInt(2) == portalQuotaId);
-                    assertTrue(rs.getString(3).equals(instanceId));
-                    assertTrue(rs.getDouble(4) == quantity);
-                    assertTrue(rs.getTimestamp(5) != null);
-                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                        indexActive ++;
-                    } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
-                        indexArchived ++;
-                    } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
-                        indexDeleted ++;
-                    }
-                    index ++;
-                }
-                rs.close();
-                break;
-            } catch (Exception e) {
-                //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+            int number = 0;
+            while (rs.next() ) {
+               if (rs.getTimestamp(5) != null) {
+                   number ++;
+               }
+            }
+            rs.close();
+            if (number == 3) {
+                reportIsDone = true;
+                break;//all three usages are reported to the remote book keeper server.
+            } else {
+              //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
                 Thread.sleep(2000);
                 times ++;
             }
         }
+        assertTrue( reportIsDone == true);//make sure to check this variable.
+        //it is ready check local database to see if we have those records
+        rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
+        index = 0;
+        indexActive = 0;
+        indexArchived = 0;
+        indexDeleted = 0;
+        while (rs.next()) {
+            assertTrue(rs.getInt(1) > 0);
+            assertTrue(rs.getInt(2) == portalQuotaId);
+            assertTrue(rs.getString(3).equals(instanceId));
+            assertTrue(rs.getDouble(4) == quantity);
+            assertTrue(rs.getTimestamp(5) != null);
+            if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                indexActive ++;
+            } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                indexArchived ++;
+            } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
+                indexDeleted ++;
+            }
+            index ++;
+        }
+        rs.close();
         assertTrue(index == 3);
         assertTrue(indexActive ==1);
         assertTrue(indexArchived ==1);
         assertTrue(indexDeleted ==1);
         
         //now the remote usages should be deleted
-        usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
-        assertTrue(usages == null || usages.isEmpty());
+        notFound = false;
+        times = 0;
+        while (times < maxAttempt) {
+            try {
+                usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
+            } catch (NotFound e) {
+                notFound = true;
+            }
+            if (!notFound) {
+                Thread.sleep(2000);
+                times ++;//The usage in the remote server hasn't been deleted, continue to try until it reaches the max attempt.
+            } else {
+                break;
+            }
+        }
+        assertTrue(notFound == true);
     }
     
     /**
