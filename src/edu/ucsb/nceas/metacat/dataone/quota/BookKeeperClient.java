@@ -281,12 +281,7 @@ public class BookKeeperClient {
                         response = httpClient.execute(httpdelete);
                         int status = response.getStatusLine().getStatusCode();
                         if (status == 200) {
-                            boolean success = mapper.readValue(response.getEntity().getContent(), Boolean.class);
-                            if (success) {
-                                logMetacat.info("BookKeeperClient.deleteUsage - successfully delete the usage with id " + id);
-                            } else {
-                                throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - can't delete the usage with the id " + id);
-                            }
+                            logMetacat.info("BookKeeperClient.deleteUsage - successfully delete the usage with id " + id);
                         } else {
                             String error = IOUtils.toString(response.getEntity().getContent());
                             throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - can't delete the usage with the id " + id + " since " + error);
