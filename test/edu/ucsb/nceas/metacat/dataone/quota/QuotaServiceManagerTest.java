@@ -108,8 +108,8 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         try {
             quotas = BookKeeperClient.getInstance().listQuotas("foo", REQUESTOR, QuotaTypeDeterminer.PORTAL);
             fail("Should throw an exception and can't get here");
-        } catch (NotFound e) {
-            assertTrue(e.getMessage().contains("foo"));
+        } catch (Exception e) {
+           
         }
         try {
             quotas = BookKeeperClient.getInstance().listQuotas(DELINGUENT_SUBSCRIBER, DELINGUENT_REQUESTOR, QuotaTypeDeterminer.PORTAL);
@@ -162,18 +162,23 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(returnedUsage.getNodeId().equals(nodeId));
         //test to delete a usage (local record three)
         BookKeeperClient.getInstance().deleteUsage(portalQuotaId, instanceId);
+        boolean notFound = false;
         while (times < maxAttempt) {
-            usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
-            if (usages != null && !usages.isEmpty()) {
+            try {
+                usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
+            } catch (NotFound e) {
+                notFound = true;
+            }
+            if (!notFound) {
                 Thread.sleep(2000);
                 times ++;//The usage in the remote server hasn't been deleted, continue to try until it reaches the max attempt.
             } else {
                 break;
             }
         }
-        assertTrue(usages == null || usages.isEmpty());
+        assertTrue(notFound == true);
         
-        //check the local database which should have three records
+        //check the local database which should have zero record
         ResultSet rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
         int index = 0;
         int indexActive = 0;
@@ -195,10 +200,10 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             index ++;
         }
         rs.close();
-        assertTrue(index == 3);
-        assertTrue(indexActive ==1);
-        assertTrue(indexArchived ==1);
-        assertTrue(indexDeleted ==1);
+        assertTrue(index == 0);
+        assertTrue(indexActive == 0);
+        assertTrue(indexArchived == 0);
+        assertTrue(indexDeleted == 0);
     }
     
     /*************************************************************
