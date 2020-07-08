@@ -272,11 +272,17 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             }
         }
         assertTrue(notFound == true);
-        
+        Thread.sleep(1000);
         //Start to run another thread to report those usages to the remote server.
         ExecutorService executor = Executors.newFixedThreadPool(2);
         Thread thread = new Thread(new FailedReportingAttemptChecker(executor, BookKeeperClient.getInstance()));
         thread.start();
+        //waiting until it is done
+        times = 0;
+        while(thread.isAlive() && times < maxAttempt) {
+            Thread.sleep(1000);
+            times ++;
+        }
         
         //check the three records in the local database already have the reported date
         times = 0;
@@ -1393,6 +1399,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
+        System.out.println("set the node id to the usage " + nodeId);
         usage.setNodeId(nodeId);
         usage.setStatus(status);
         return usage;

@@ -101,6 +101,7 @@ public class FailedReportingAttemptChecker extends TimerTask {
                                      ee.getMessage() + ". If the local id is -1. It means the local id can't be got from the local db.");
                 }
             }
+            rs.close();
         } catch (Exception e) {
             logMetacat.error("FailedReportingAttemptChecker.run - can't get the result set of un-reported usages since " + e.getMessage());
         }
