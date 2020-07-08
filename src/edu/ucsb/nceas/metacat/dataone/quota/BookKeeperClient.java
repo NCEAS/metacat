@@ -268,6 +268,7 @@ public class BookKeeperClient {
                 usages = listUsages(quotaId, instanceId);
                 if (usages == null || usages.size() == 0) {
                     logMetacat.warn("BookKeeperClient.deleteUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to delete anything.");
+                    throw new InvalidRequest("0000", "Metacat tried to delete a none-existed usage  matching the quota id " + quotaId + " and instance id " + instanceId);
                 } else if (usages.size() == 1) {
                     Usage usage = usages.get(0);
                     int id = usage.getId();
@@ -297,6 +298,7 @@ public class BookKeeperClient {
                 }
             } catch (NotFound e) {
                 logMetacat.error("BookKeeperClient.deleteUsage - the book keeper service don't find any usages " + e.getMessage());
+                throw new InvalidRequest("0000", "Metacat tried to delete a none-existed usage - " + e.getMessage()); //NoFound exception will stop the mn.delete method, so we need to change the exception to InvalideRequest.
             }
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to delete a usage.");
@@ -320,6 +322,7 @@ public class BookKeeperClient {
                 usages = listUsages(quotaId, instanceId);
                 if (usages == null || usages.size() == 0) {
                     logMetacat.warn("BookKeeperClient.updateUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to update anything.");
+                    throw new InvalidRequest("0000", "Metacat tried to update a none-existed usage  matching the quota id " + quotaId + " and instance id " + instanceId);
                 } else if (usages.size() == 1) {
                     Usage existedUsage = usages.get(0);
                     int id = existedUsage.getId();//the usage id in the remote book keeper server for this usage
@@ -355,6 +358,7 @@ public class BookKeeperClient {
                 }
             } catch (NotFound e) {
                 logMetacat.error("BookKeeperClient.updateUsage - the book keeper service don't find any usages " + e.getMessage());
+                throw new InvalidRequest("0000", "Metacat tried to update a none-existed usage - " + e.getMessage()); //NoFound exception will stop the mn.update method, so we need to change the exception to InvalideRequest.
             }
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to update a usage.");
