@@ -50,7 +50,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
  */
 public abstract class QuotaService {
     private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
-    private static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
+    public static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
     
     protected static ExecutorService executor = null;
     protected static BookKeeperClient client = null;
