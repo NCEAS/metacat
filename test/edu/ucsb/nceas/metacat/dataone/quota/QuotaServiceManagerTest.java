@@ -392,16 +392,37 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(indexActive ==1);
         assertTrue(indexArchived ==1);
         //check the usages in the remote the book keeper server to make sure we don't have those usages.
-        List<Usage> usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
-        assertTrue(usages == null || usages.isEmpty());
+        List<Usage> usages = null;
+        boolean notFound = false;
+        int times = 0;
+        while (times < maxAttempt) {
+            try {
+                usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
+            } catch (NotFound e) {
+                notFound = true;
+            }
+            if (!notFound) {
+                Thread.sleep(2000);
+                times ++;//The usage in the remote server hasn't been deleted, continue to try until it reaches the max attempt.
+            } else {
+                break;
+            }
+        }
+        assertTrue(notFound == true);
         
         //Start to run another thread to report those usages to the remote server.
         ExecutorService executor = Executors.newFixedThreadPool(2);
         Thread thread = new Thread(new FailedReportingAttemptChecker(executor, BookKeeperClient.getInstance()));
         thread.start();
+        //waiting until it is done
+        times = 0;
+        while(thread.isAlive() && times < maxAttempt) {
+            Thread.sleep(1000);
+            times ++;
+        }
         
         //check the three records in the local database already have the reported date
-        int times = 0;
+        times = 0;
         while (times < maxAttempt) {
             rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
             //check local database to see if we have those records
