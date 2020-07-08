@@ -31,12 +31,16 @@ import org.dataone.bookkeeper.api.Usage;
  *
  */
 public abstract class UsageTask implements Runnable {
+    public static final int DEFAULTUSAGELOCALID = -1;
+    
     private static Log logMetacat  = LogFactory.getLog(UsageTask.class);
     
     protected Usage usage = null;
     protected BookKeeperClient bookkeeperClient = null;
     protected boolean isLoggedLocally = false;
+    protected int usageLocalId = DEFAULTUSAGELOCALID;
     
+
     /**
      * Constructor
      * @param usage  the usage will be reported
@@ -53,6 +57,22 @@ public abstract class UsageTask implements Runnable {
      */
     public void setIsLoggedLocally(boolean isLoggedLocally) {
         this.isLoggedLocally = isLoggedLocally;
+    }
+    
+    /**
+     * Get the local id of the usage.
+     * @return the local id of the usage
+     */
+    public int getUsageLocalId() {
+        return usageLocalId;
+    }
+
+    /**
+     * Set the local id of the usage as the given one.
+     * @param usageLocalId
+     */
+    public void setUsageLocalId(int usageLocalId) {
+        this.usageLocalId = usageLocalId;
     }
     
     @Override
@@ -97,7 +117,11 @@ public abstract class UsageTask implements Runnable {
                         " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " status " + usage.getStatus() + 
                         " to the remote book keep server. Moreover, the local database already has the record and Metacat needs to set the local reported date in this record.");
                 try {
-                    QuotaDBManager.setReportedDate(usage.getId(), now);
+                    if (usageLocalId == DEFAULTUSAGELOCALID) {
+                        QuotaDBManager.setReportedDate(usage.getId(), now);
+                    } else {
+                        QuotaDBManager.setReportedDate(usageLocalId, now);
+                    }
                 } catch (Exception ee) {
                     logMetacat.error("UsageTask.run - can't update the usage in the local quota_usage_event table since " + ee.getMessage() +
                             " The usage is with the with the local usage id " + usage.getId() + " quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " the reported date " + now.getTime());

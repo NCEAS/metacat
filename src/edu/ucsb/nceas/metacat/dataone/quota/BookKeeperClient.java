@@ -214,7 +214,7 @@ public class BookKeeperClient {
                 }
             }
         } else {
-            throw new InvalidRequest("1102", "The quota subscriber, requestor and quota type can't be null or blank");
+            throw new InvalidRequest("1102", "BookKeeperClient.listQuotas - the quota subscriber, requestor and quota type can't be null or blank");
         }
         return result;
     }
@@ -329,11 +329,11 @@ public class BookKeeperClient {
                     usage.setId(id);//set the real usage id from the remote book keeper server for this usage
                     logMetacat.debug("BookKeeperClient.updateUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
                     String restStr = bookKeeperURL + USAGES + "/" + id;
-                    logMetacat.debug("BookKeeperClient.updateUsage - the delete rest command is " + restStr);
+                    logMetacat.debug("BookKeeperClient.updateUsage - the update rest command is " + restStr);
                     CloseableHttpResponse response = null;
                     try {
                         String jsonStr = mapper.writeValueAsString(usage); 
-                        logMetacat.debug("BookKeeperClient.createUsage - the json string will be sent is " + jsonStr);
+                        logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
                         StringEntity reqEntity = new StringEntity(jsonStr, ContentType.APPLICATION_JSON);
                         reqEntity.setChunked(true);
                         HttpPut put = new HttpPut(restStr);

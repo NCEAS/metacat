@@ -59,7 +59,7 @@ public class FailedReportingAttemptChecker extends TimerTask {
     public void run() {
         try {
             ResultSet rs = QuotaDBManager.getUnReportedUsages();
-            int localId = -1;
+            int localId = UsageTask.DEFAULTUSAGELOCALID;
             while (rs.next()) {
                 try {
                     Usage usage = new Usage();
@@ -80,6 +80,7 @@ public class FailedReportingAttemptChecker extends TimerTask {
                         task = new CreateUsageTask(usage, bookkeeperClient);
                     } else if (status != null && status.equals(QuotaServiceManager.ARCHIVED)) {
                         task = new UpdateUsageTask(usage, bookkeeperClient);
+                        task.setUsageLocalId(localId);
                     } else if (status != null && status.equals(QuotaServiceManager.DELETED)) {
                         task = new DeleteUsageTask(usage, bookkeeperClient);
                     } else {
