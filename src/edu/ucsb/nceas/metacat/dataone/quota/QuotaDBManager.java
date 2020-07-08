@@ -135,7 +135,7 @@ public class QuotaDBManager {
             serialNumber = dbConn.getCheckOutSerialNumber();
             String query = "select " + USAGEID + ", " + QUOTAID + "," + INSTANCEID + ", " + QUANTITY + "," + OBJECT + "," + STATUS + " from " + TABLE + " where " + DATEREPORTED + " is null order by " + USAGEID + " ASC" ;
             stmt = dbConn.prepareStatement(query);
-            logMetacat.debug("QuotaDBManager.getUnReportedUsages - the update query is " + stmt.toString());
+            logMetacat.debug("QuotaDBManager.getUnReportedUsages - the select query is " + query);
             rs = stmt.executeQuery();
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);

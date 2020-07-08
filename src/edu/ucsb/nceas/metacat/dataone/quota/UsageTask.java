@@ -61,7 +61,7 @@ public abstract class UsageTask implements Runnable {
             try {
                 reportToBookKeeper();
             } catch (Exception e) {
-                logMetacat.warn("UsageTask.run - can't report the usage to the remote server since " + e.getMessage());
+                logMetacat.error("UsageTask.run - can't report the usage to the remote server since " + e.getMessage());
                 if (!isLoggedLocally) {
                     //Reporting usage to the remote bookkeeper server failed. So we need to create a usage record without the reported date in the local database (by setting the date null).
                     //Another periodic thread will try to report the usage again some time later.
