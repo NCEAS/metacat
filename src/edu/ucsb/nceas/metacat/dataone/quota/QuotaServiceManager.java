@@ -175,6 +175,7 @@ public class QuotaServiceManager {
                 String quotaType = determiner.getQuotaType();
                 if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.PORTAL)) {
                     String instanceId = determiner.getInstanceId();
+                    logMetacat.debug("QuotaServiceManager.enforce - handle the portal quota service with instance id " + instanceId + " and pid " + sysmeta.getIdentifier().getValue());
                     enforcePortalQuota(subscriber,requestor, instanceId, sysmeta, method);
                     enforceStorageQuota(subscriber,requestor, sysmeta, method); //also enforce the storage quota service
                 } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
@@ -187,9 +188,12 @@ public class QuotaServiceManager {
             } catch (NotFound e) {
                 throw new InsufficientResources("1160", "QuotaServiceManager.enforce - The requestor " + requestor + " doesn't have a quota  since " + e.getMessage());
             } catch (Exception e) {
+                e.printStackTrace();
                 //swallow other exceptions so the MN.create/update methods can keep going
                 logMetacat.error("QuotaServiceManager.enforce - Metacat can't enforce the quota service since " + e.getMessage() +". However, the issue will be swallowed so the MN/CN process can keep going.");
             }
+        } else {
+            logMetacat.info("QuotaServiceManager.enforce - the quota services are disabled");
         }
         long end = System.currentTimeMillis();
         logMetacat.info("QuotaServiceManager.enforce - checking quota and reporting usage took " + (end-start)/1000 + " seconds.");
@@ -215,6 +219,8 @@ public class QuotaServiceManager {
                                                                              ServiceFailure, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
         if (portalEnabled) {
             PortalQuotaService.getInstance(executor, client).enforce(subscriber, requestor, instanceId, sysmeta, method);
+        } else {
+            logMetacat.info("QuotaServiceManager.enforcePrtaolQuota - the portal quota service is disabled");
         }
     }
     
@@ -230,6 +236,8 @@ public class QuotaServiceManager {
     private void enforceStorageQuota(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws NotImplemented {
         if (storageEnabled) {
             throw new NotImplemented("0000", "The storage quota service hasn't been implemented yet.");
+        } else {
+            logMetacat.info("QuotaServiceManager.enforceStorageQuota - the storage quota service is disabled");
         }
     }
     

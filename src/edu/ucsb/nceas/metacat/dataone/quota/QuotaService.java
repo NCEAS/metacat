@@ -161,8 +161,16 @@ public abstract class QuotaService {
             for (Quota quota : quotas) {
                 if (quota != null) {
                     if (checkEnoughSpace) {
-                        double hardLimit = quota.getHardLimit();
-                        double existedUsages = quota.getUsage();
+                        double hardLimit = 0;
+                        double existedUsages = 0;
+                        Double hardLimitObj = quota.getHardLimit();
+                        if (hardLimitObj != null) {
+                            hardLimit = hardLimitObj.doubleValue();
+                        }
+                        Double existedUsagesObj = quota.getUsage();
+                        if (existedUsagesObj != null) {
+                            existedUsages = existedUsagesObj.doubleValue();
+                        }
                         logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with subscriber " + subscriber + " with type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
                         if (hardLimit  >= existedUsages + quantity) {
                             quotaId = quota.getId();
