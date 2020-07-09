@@ -225,7 +225,7 @@ public abstract class QuotaService {
         usage.setQuotaId(quotaId);
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
-        usage.setStatus(QuotaServiceManager.ARCHIVED);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
         usage.setNodeId(nodeId);
         UpdateUsageTask task = new UpdateUsageTask(usage, client);
         executor.submit(task);

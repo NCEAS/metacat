@@ -59,7 +59,7 @@ import edu.ucsb.nceas.metacat.replication.ReplicationHandler;
 public class QuotaServiceManager {
     public static final String USAGE = "usage";
     public static final String ACTIVE = "active";
-    public static final String ARCHIVED = "archived";
+    public static final String INACTIVE = "inactive";
     public static final String DELETED = "deleted";
     public static final String CREATEMETHOD = "create";
     public static final String UPDATEMETHOD = "update";

@@ -140,7 +140,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         int remoteUsageId = returnedUsage.getId();
         
         //test to create a usage (local record two)
-        returnedUsage.setStatus(QuotaServiceManager.ARCHIVED);
+        returnedUsage.setStatus(QuotaServiceManager.INACTIVE);
         BookKeeperClient.getInstance().updateUsage(portalQuotaId, instanceId, returnedUsage);
         //The above updateUsage method is asynchronized, so we should wait until the status changed in the remote server
         int times = 0;
@@ -148,7 +148,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             usages = BookKeeperClient.getInstance().listUsages(portalQuotaId, instanceId);
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
-            if (!returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED)) {
+            if (!returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE)) {
                 Thread.sleep(2000);
                 times ++;//The status hasn't been updated, continue to try until it reaches the max attempt.
             } else {
@@ -156,7 +156,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             }
         }
         assertTrue(returnedUsage.getInstanceId().equals(instanceId));
-        assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
+        assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE));
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
         assertTrue(returnedUsage.getId() == remoteUsageId);
         assertTrue(returnedUsage.getNodeId().equals(nodeId));
@@ -193,7 +193,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(rs.getTimestamp(5) != null);
             if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                 indexActive ++;
-            } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+            } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                 indexArchived ++;
             } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
                 indexDeleted ++;
@@ -224,7 +224,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         String instanceId = generateUUID();
         Usage usage = createUsage(portalQuotaId, instanceId, quantity, QuotaServiceManager.ACTIVE);
         QuotaDBManager.createUsage(usage, now);
-        usage.setStatus(QuotaServiceManager.ARCHIVED);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
         QuotaDBManager.createUsage(usage, now);
         usage.setStatus(QuotaServiceManager.DELETED);
         QuotaDBManager.createUsage(usage, now);
@@ -242,7 +242,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(rs.getTimestamp(5) == null);
             if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                 indexActive ++;
-            } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+            } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                 indexArchived ++;
             } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
                 indexDeleted ++;
@@ -321,7 +321,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(rs.getTimestamp(5) != null);
             if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                 indexActive ++;
-            } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+            } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                 indexArchived ++;
             } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
                 indexDeleted ++;
@@ -367,7 +367,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         String instanceId = generateUUID();
         Usage usage = createUsage(portalQuotaId, instanceId, quantity, QuotaServiceManager.ACTIVE);
         QuotaDBManager.createUsage(usage, now);
-        usage.setStatus(QuotaServiceManager.ARCHIVED);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
         QuotaDBManager.createUsage(usage, now);
         //check local database to see if we have those records
         ResultSet rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
@@ -382,7 +382,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(rs.getTimestamp(5) == null);
             if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                 indexActive ++;
-            } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+            } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                 indexArchived ++;
             } 
             index ++;
@@ -438,7 +438,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                     assertTrue(rs.getTimestamp(5) != null);
                     if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                         indexActive ++;
-                    } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                    } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                         indexArchived ++;
                     } 
                     index ++;
@@ -460,7 +460,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(usages.size() == 1);
         Usage returnedUsage = usages.get(0);
         assertTrue(returnedUsage.getInstanceId().equals(instanceId));
-        assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
+        assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE));
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
         assertTrue(returnedUsage.getNodeId().equals(nodeId));
     }
@@ -575,7 +575,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                         assertTrue(rs.getTimestamp(5) != null);
                         if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                             indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                             indexArchived ++;
                         } 
                         index ++;
@@ -600,7 +600,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
-            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
+            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
@@ -633,7 +633,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                         assertTrue(rs.getTimestamp(5) != null);
                         if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                             indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                             indexArchived ++;
                         } else if (rs.getString(6).equals(QuotaServiceManager.DELETED)) {
                             indexDeleted ++;
@@ -1059,7 +1059,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                         assertTrue(rs.getTimestamp(5) != null);
                         if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                             indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                             indexArchived ++;
                         }
                         index ++;
@@ -1083,7 +1083,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
             assertTrue(returnedUsage.getInstanceId().equals(sidStr));
-            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
+            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
@@ -1201,7 +1201,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                         assertTrue(rs.getTimestamp(5) != null);
                         if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
                             indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.ARCHIVED)) {
+                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
                             indexArchived ++;
                         }
                         index ++;
@@ -1226,7 +1226,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
             assertTrue(returnedUsage.getInstanceId().equals(sidStr2));
-            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ARCHIVED));
+            assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.INACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
