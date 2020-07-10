@@ -62,6 +62,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 public class BookKeeperClient {
+    public static final int DEFAULT_REMOTE_USAGE_ID = -1;
+    
     private static final String QUOTAS = "quotas";
     private static final String QUOTATYPE = "quotaType";
     private static final String QUOTAID = "quotaId";
@@ -222,11 +224,13 @@ public class BookKeeperClient {
     /**
      * Create a usage record for a given quota identifier in the book keeper service. If it fails, an exception will be thrown
      * @param usage  the object of the usage will be created
+     * @return  the usage id from the remote book keeper server
      * @throws ClientProtocolException
      * @throws IOException
      * @throws ServiceFailure
      */
-    public void createUsage(Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
+    public int createUsage(Usage usage) throws ClientProtocolException, IOException, ServiceFailure {
+        int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
         String restStr = bookKeeperURL + USAGES;
         logMetacat.debug("BookKeeperClient.createUsage - the rest request to create the usuage is " + restStr);
         String jsonStr = mapper.writeValueAsString(usage); 
@@ -243,13 +247,19 @@ public class BookKeeperClient {
                 String error = IOUtils.toString(response.getEntity().getContent());
                 throw new ServiceFailure("0000", "Quota service can't create the usage since " + error);
             } else {
-                logMetacat.info("BookKeeperClient.createUsage - successfully update the usage for quota id " + usage.getQuotaId() + " and the instance id " + usage.getInstanceId());
+                Usage returnedUsage = mapper.readValue(response.getEntity().getContent(), Usage.class);
+                if (returnedUsage != null && returnedUsage.getId() != null) {
+                    remoteUsageId = returnedUsage.getId();
+                    logMetacat.info("BookKeeperClient.createUsage - successfully create the usage for quota id " + usage.getQuotaId() + " and the instance id " + usage.getInstanceId() + " in the remote book keeper server with the remote usage id " + remoteUsageId);
+                }
             }
         } finally {
             if (response != null) {
                 response.close();
             }
         }
+        logMetacat.debug("BookKeeperClient.createUsage - the final remoteUsageId is "+ remoteUsageId);
+        return remoteUsageId;
     }
     
     /**
