@@ -320,12 +320,14 @@ public class BookKeeperClient {
      * @param quotaId  the quota id which the existing usage matches
      * @param instanceId  the instance id which the existing usage matches
      * @param usage  the new usage value will be used
+     * @return  the remote usage id which was updated
      * @throws InvalidRequest
      * @throws ClientProtocolException
      * @throws ServiceFailure
      * @throws IOException
      */
-    public void updateUsage(int quotaId, String instanceId, Usage usage) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+    public int updateUsage(int quotaId, String instanceId, Usage usage) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+        int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
         if (instanceId != null && !instanceId.trim().equals("")) {
             List<Usage> usages = null;
             try {
@@ -353,6 +355,7 @@ public class BookKeeperClient {
                         int status = response.getStatusLine().getStatusCode();
                         if (status == 200) {
                             logMetacat.info("BookKeeperClient.updateUsage - successfully update the usage with id " + id);
+                            remoteUsageId = id;
                         } else {
                             String error = IOUtils.toString(response.getEntity().getContent());
                             throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - can't delete the usage with the id " + id + " since " + error);
@@ -373,6 +376,8 @@ public class BookKeeperClient {
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to update a usage.");
         }
+        logMetacat.debug("BookKeeperClient.updateUsage - the final remoteUsageId is "+ remoteUsageId);
+        return remoteUsageId;
     }
     
     
