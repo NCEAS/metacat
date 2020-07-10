@@ -91,6 +91,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce2"));
         suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
         suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
+        suite.addTest(new QuotaServiceManagerTest("testNoSubscriberHeader"));
         return suite;
     }
     
@@ -906,12 +907,16 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     public void testMNodeMethodWithPortalQuota() throws Exception {
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
+        request.setHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER, SUBSCRIBER);
         int quotaId = 0;
-        double orginalHardLimit = -1;
+        double originalUsages = 0;
         for (Quota quota : quotas) {
             if (quota.getHardLimit() >= 1) {
                 quotaId = quota.getId();
-                orginalHardLimit = quota.getHardLimit();
+                Double originalUsagesObj = quota.getUsage();
+                if (originalUsagesObj != null) {
+                    originalUsages = originalUsagesObj.doubleValue();
+                }
                 break;
             }
         }
@@ -950,22 +955,25 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        }
-                        index ++;
+                if (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
+                        Thread.sleep(2000);
+                        times ++;
+                        continue;
                     }
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr));
+                    assertTrue(rs.getDouble(4) == 1);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    }
+                    index ++;
                     rs.close();
                     break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                } else {
+                  //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
                     Thread.sleep(2000);
                     times ++;
                 }
@@ -979,16 +987,20 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
-            //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            double newHardLimit = -2;
+            double newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue((originalUsages + 1) == newUsages);//we should add a new usage
             
             
             //Update the portal object. It wouldn't change anything in the quota usage.
@@ -1001,7 +1013,6 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             object.close();
             object = new FileInputStream(portalFilePath);
             MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta);
-            Thread.sleep(3000);
             //local and remote server still has a record for the usage
             index = 0;
             indexActive = 0;
@@ -1011,22 +1022,25 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        }
-                        index ++;
+                if (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
+                        Thread.sleep(2000);
+                        times ++;
+                        continue;
                     }
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr));
+                    assertTrue(rs.getDouble(4) == 1);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    }
+                    index ++;
                     rs.close();
                     break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                } else {
+                  //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
                     Thread.sleep(2000);
                     times ++;
                 }
@@ -1040,20 +1054,23 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
-            //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue((originalUsages + 1) == newUsages);//it doesn't change anything
             
             //archive the first pid in the series chain. It wouldn't change anything in the quota usage.
             MNodeService.getInstance(request).archive(session, guid);
-            Thread.sleep(5000);
             //local and remote server still has a record for the usage
             index = 0;
             indexActive = 0;
@@ -1063,22 +1080,25 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        }
-                        index ++;
+                if (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
+                        Thread.sleep(2000);
+                        times ++;
+                        continue;
                     }
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr));
+                    assertTrue(rs.getDouble(4) == 1);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    }
+                    index ++;
                     rs.close();
                     break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                } else {
+                  //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
                     Thread.sleep(2000);
                     times ++;
                 }
@@ -1092,19 +1112,24 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
-            //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should use one from the quota. Nothing change after the update method
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue((originalUsages + 1) == newUsages);//it doesn't change anything
             
             //Archive the second object in the series chain. Since the whole chain are archived, the local will have two records - one for active and one for archive.
-            //Remote the usage will have one record with status archive. The quota will not change either
+            //Remote the usage will have one record with status archive. The total usage will decrease one
+            Thread.sleep(2000);
             MNodeService.getInstance(request).archive(session, guid2);
             //local and remote server still has a record for the usage
             index = 0;
@@ -1116,35 +1141,37 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
-                            indexArchived ++;
-                        }
-                        index ++;
-                    }
-                    rs.close();
-                    if (index != 2) {
+                while (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
                         Thread.sleep(2000);
                         times ++;
                         continue;
                     }
-                    break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr));
+                    assertTrue(rs.getDouble(4) == 1);
+                    assertTrue(rs.getTimestamp(5) != null);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
+                        indexArchived ++;
+                    }
+                    index ++;
+                }
+                rs.close();
+                if (index != 2) {
                     Thread.sleep(2000);
                     times ++;
+                    continue;
                 }
+                break;
             }
             assertTrue(index == 2);
             assertTrue(indexActive == 1);
+            assertTrue(indexArchived == 1);
+            //check the remote usage
             usages = BookKeeperClient.getInstance().listUsages(quotaId, sidStr);
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
@@ -1154,14 +1181,19 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit - 1) == newHardLimit);//not quota change
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue(originalUsages == newUsages);//it doesn't change anything
             
             /*********************************************************************
              *Another portal object chain. It will create, update, and updateSystemMetadata
@@ -1179,6 +1211,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             MNodeService.getInstance(request).create(session, guid3, object, sysmeta);
             
             //update
+            Thread.sleep(2000);
             Identifier guid4 = new Identifier();
             guid4.setValue("testMNodeMethodWithPortalQuota4." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
@@ -1190,12 +1223,12 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             object = new FileInputStream(portalFilePath);
             MNodeService.getInstance(request).update(session, guid3, object, guid4, sysmeta);
             
+            Thread.sleep(2000);
             //updateSystemMetadata to set the archive true. The quota and usages would not change
             SystemMetadata returnedSysmeta = MNodeService.getInstance(request).getSystemMetadata(session, guid3);
             returnedSysmeta.setArchived(true);
             MNodeService.getInstance(request).updateSystemMetadata(session, guid3, returnedSysmeta);
        
-            Thread.sleep(5000);
             //local and remote server still has a record for the usage
             index = 0;
             indexActive = 0;
@@ -1205,22 +1238,25 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr2));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        }
-                        index ++;
+                if (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
+                        Thread.sleep(2000);
+                        times ++;
+                        continue;
                     }
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr2));
+                    assertTrue(rs.getDouble(4) == 1);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    }
+                    index ++;
                     rs.close();
                     break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                } else {
+                  //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
                     Thread.sleep(2000);
                     times ++;
                 }
@@ -1233,24 +1269,30 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getInstanceId().equals(sidStr2));
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
-            //check the quota
+            assertTrue(returnedUsage.getNodeId().equals(nodeId));
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota. Nothing change after the updateSystemmetadata method
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue((originalUsages + 1) == newUsages);//it doesn't change anything
             
-            //updateSystemMetadata on the second object in the chain. Since all object in the chain are archived, no quota change
+            //updateSystemMetadata on the second object in the chain. Since all object in the chain are archived, total usages of quota will be restored
             returnedSysmeta = MNodeService.getInstance(request).getSystemMetadata(session, guid4);
             returnedSysmeta.setArchived(true);
             MNodeService.getInstance(request).updateSystemMetadata(session, guid4, returnedSysmeta);
             //local has two records (one is active and the other is archived) and remote server still has one record for the usage with archived status
             index = 0;
             indexActive = 0;
+            indexArchived = 0;
             times = 0;
             while (times < maxAttempt) {
                 rs = QuotaDBManagerTest.getResultSet(quotaId, sidStr2);
@@ -1258,36 +1300,37 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 index = 0;
                 indexActive = 0;
                 indexArchived = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr2));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
-                            indexArchived ++;
-                        }
-                        index ++;
-                    }
-                    rs.close();
-                    if (index != 2) {
+                while (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
                         Thread.sleep(2000);
                         times ++;
                         continue;
                     }
-                    break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr2));
+                    assertTrue(rs.getDouble(4) == 1);
+                    assertTrue(rs.getTimestamp(5) != null);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    } else if (rs.getString(6).equals(QuotaServiceManager.INACTIVE)) {
+                        indexArchived ++;
+                    }
+                    index ++;
+                }
+                rs.close();
+                if (index != 2) {
                     Thread.sleep(2000);
                     times ++;
+                    continue;
                 }
+                break;
             }
             assertTrue(index == 2);
             assertTrue(indexActive == 1);
             assertTrue(indexArchived == 1);
+            //check the remote usage
             usages = BookKeeperClient.getInstance().listUsages(quotaId, sidStr2);
             assertTrue(usages.size() == 1);
             returnedUsage = usages.get(0);
@@ -1297,14 +1340,19 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit - 1) == newHardLimit);//we should restore one quota back
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue(originalUsages == newUsages);//restore the total usages.
             
             /*********************************************************************
              *A portal object chain. It will create, update, and delete portal objects
@@ -1322,6 +1370,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             MNodeService.getInstance(request).create(session, guid5, object, sysmeta);
             
             //update
+            Thread.sleep(2000);
             Identifier guid6 = new Identifier();
             guid6.setValue("testMNodeMethodWithPortalQuota6." + System.currentTimeMillis());
             object = new FileInputStream(portalFilePath);
@@ -1333,8 +1382,9 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             MNodeService.getInstance(request).update(session, guid5, object, guid6, sysmeta);
             
             //Delete the first object. The quota and usages would not change
-            MNodeService.getInstance(request).delete(session, guid5);
-            Thread.sleep(5000);
+            Thread.sleep(2000);
+            Session adminsession = getCNSession();
+            MNodeService.getInstance(request).delete(adminsession, guid5);
             //local and remote server still has a record for the usage
             index = 0;
             indexActive = 0;
@@ -1344,25 +1394,25 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 //check local database to see if we have those records
                 index = 0;
                 indexActive = 0;
-                try {
-                    while (rs.next()) {
-                        assertTrue(rs.getInt(1) > 0);
-                        assertTrue(rs.getInt(2) == quotaId);
-                        assertTrue(rs.getString(3).equals(sidStr3));
-                        assertTrue(rs.getDouble(4) == 1);
-                        assertTrue(rs.getTimestamp(5) != null);
-                        if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
-                            indexActive ++;
-                        }
-                        index ++;
+                while (rs.next()) {
+                    if (rs.getTimestamp(5) == null) {
+                        //make sure the usages has been reported to the remote server
+                        Thread.sleep(2000);
+                        times ++;
+                        continue;
                     }
-                    rs.close();
-                    break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
-                    Thread.sleep(2000);
-                    times ++;
+                    assertTrue(rs.getInt(1) > 0);
+                    assertTrue(rs.getInt(2) == quotaId);
+                    assertTrue(rs.getString(3).equals(sidStr3));
+                    assertTrue(rs.getDouble(4) == 1);
+                    assertTrue(rs.getTimestamp(5) != null);
+                    if (rs.getString(6).equals(QuotaServiceManager.ACTIVE)) {
+                        indexActive ++;
+                    }
+                    index ++;
                 }
+                rs.close();
+                break;
             }
             assertTrue(index == 1);
             assertTrue(indexActive ==1);
@@ -1375,17 +1425,22 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
             //check the quota
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
+            newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
                     break;
                 }
             }
-            assertTrue((orginalHardLimit -1) == newHardLimit);//we should use one from the quota. Nothing change after deleting the first object in the chain
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue(originalUsages + 1 == newUsages);//Nothing change after deleting the first object in the chain
             
             //Delete the second object in the chain. Since all object in the chain are deleted, it should restore one quota back
-            MNodeService.getInstance(request).delete(session, guid6);
+            MNodeService.getInstance(request).delete(adminsession, guid6);
             //local has two records (one is active and the other is deleted) and remote server will not have any usage
             index = 0;
             indexActive = 0;
@@ -1397,8 +1452,14 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 index = 0;
                 indexActive = 0;
                 indexArchived = 0;
-                try {
+                indexDeleted = 0;
                     while (rs.next()) {
+                        if (rs.getTimestamp(5) == null) {
+                            //make sure the usages has been reported to the remote server
+                            Thread.sleep(2000);
+                            times ++;
+                            continue;
+                        }
                         assertTrue(rs.getInt(1) > 0);
                         assertTrue(rs.getInt(2) == quotaId);
                         assertTrue(rs.getString(3).equals(sidStr3));
@@ -1418,27 +1479,41 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                         continue;
                     }
                     break;
-                } catch (Exception e) {
-                    //maybe the process hasn't done. Wait two seconds and try again. If the maxAttempt times reaches, the test will fail.
-                    Thread.sleep(2000);
-                    times ++;
-                }
             }
             assertTrue(index == 2);
             assertTrue(indexActive == 1);
             assertTrue(indexDeleted == 1);
-            usages = BookKeeperClient.getInstance().listUsages(quotaId, sidStr3);
-            assertTrue(usages == null || usages.isEmpty());
-            //check the quota
-            quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-            newHardLimit = -2;
-            for (Quota quota : quotas) {
-                if (quota.getId() == quotaId) {
-                    newHardLimit = quota.getHardLimit();
+            boolean notFound = false;
+            times = 0;
+            while (times < maxAttempt) {
+                try {
+                    usages = BookKeeperClient.getInstance().listUsages(quotaId, sidStr3);
+                } catch (NotFound e) {
+                    notFound = true;
+                }
+                if (!notFound) {
+                    Thread.sleep(2000);
+                    times ++;//The usage in the remote server hasn't been deleted, continue to try until it reaches the max attempt.
+                } else {
                     break;
                 }
             }
-            assertTrue(orginalHardLimit == newHardLimit);//we should restore one quota back
+            assertTrue(notFound == true);
+            //check the quota
+            quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
+            newUsages = 0;
+            for (Quota quota : quotas) {
+                if (quota.getId() == quotaId) {
+                    Double newUsagesObj = quota.getUsage();
+                    if (newUsagesObj != null) {
+                        newUsages = newUsagesObj.doubleValue();
+                    }
+                    break;
+                }
+            }
+            System.out.println("+++++++++++++++the new usages is " + newUsages);
+            System.out.println("+++++++++++++++the original usages is " + originalUsages);
+            assertTrue(originalUsages == newUsages);//restore the total usages.
         } else {
             
         }
@@ -1470,6 +1545,13 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         } catch (InsufficientResources e) {
             assertTrue(e.getMessage().contains("doesn't have enough " + QuotaTypeDeterminer.PORTAL));
         }
+    }
+    
+    /**
+     * Test the case there is not subscriber header in the request
+     */
+    public void testNoSubscriberHeader() throws Exception {
+        
     }
     
     /**
