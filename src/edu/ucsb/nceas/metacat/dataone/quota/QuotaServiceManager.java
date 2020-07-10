@@ -186,7 +186,7 @@ public class QuotaServiceManager {
             } catch (InsufficientResources e) {
                 throw e;
             } catch (NotFound e) {
-                throw new InsufficientResources("1160", "QuotaServiceManager.enforce - The requestor " + requestor + " doesn't have a quota  since " + e.getMessage());
+                throw new InsufficientResources("1160", "QuotaServiceManager.enforce - The requestor " + requestor.getValue() + " can't request quotas since " + e.getMessage());
             } catch (Exception e) {
                 e.printStackTrace();
                 //swallow other exceptions so the MN.create/update methods can keep going

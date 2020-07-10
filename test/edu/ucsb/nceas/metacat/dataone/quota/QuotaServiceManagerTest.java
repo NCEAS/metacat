@@ -92,6 +92,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
         suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
         suite.addTest(new QuotaServiceManagerTest("testNoSubscriberHeader"));
+        suite.addTest(new QuotaServiceManagerTest("testDelinquentUser"));
         return suite;
     }
     
@@ -1574,6 +1575,35 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             fail("Test can't get here since the user doesn't have enough quota");
         } catch (InsufficientResources e) {
             assertTrue(e.getMessage().contains("doesn't have enough " + QuotaTypeDeterminer.PORTAL));
+        }
+    }
+    
+    /**
+     * Test the delinquent user
+     * @throws Exception
+     */
+    public void testDelinquentUser() throws Exception {
+        try {
+            request.setHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER, DELINGUENT_SUBSCRIBER);
+            Identifier guid = new Identifier();
+            guid.setValue("testPortal." + System.currentTimeMillis());
+            InputStream object = new FileInputStream(portalFilePath);
+            Subject submitter = new Subject();
+            submitter.setValue(DELINGUENT_REQUESTOR);
+            SystemMetadata sysmeta = createSystemMetadata(guid, submitter, object);
+            ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+            formatId.setValue("https://purl.dataone.org/portals-1.0.0");
+            sysmeta.setFormatId(formatId);
+            String sidStr = generateUUID();
+            Identifier sid = new Identifier();
+            sid.setValue(sidStr);
+            sysmeta.setSeriesId(sid);
+            object.close();
+            HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
+            QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
+            fail("Test can't get here since the user doesn't have enough quota");
+        } catch (InsufficientResources e) {
+            assertTrue(e.getMessage().contains(DELINGUENT_REQUESTOR));
         }
     }
     
