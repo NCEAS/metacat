@@ -562,22 +562,25 @@ CREATE TABLE scheduled_job_params (
         FOREIGN KEY (job_id) REFERENCES scheduled_job(id)
 );
 
-/*                                                                                                                                                                                                                                                                                                                   
- * quota_usages -- table to store quota usages
+/*
+ * quota_usages_events -- table to store quota usage events
  */
-CREATE SEQUENCE quota_usage_events_usage_id_seq;
+CREATE SEQUENCE quota_usage_events_usage_local_id_seq;
 CREATE TABLE quota_usage_events (
-    usage_id INT8 default nextval('quota_usage_events_usage_id_seq'),  -- the unique usage id (pk)
+    usage_local_id INT8 default nextval('quota_usage_events_usage_local_id_seq'),  -- the unique usage local id (pk)
   object text NOT NULL,  -- it should always be usage
   quota_id INT NOT NULL,  -- the identifier of the quota
   instance_id TEXT NOT NULL,  -- storage - pid of object; portal - sid of portal document
   quantity FLOAT8 NOT NULL, -- the amount of the usage
   date_reported TIMESTAMP,  -- the time stamp that the quota usage was reported to the quota service
   status text, -- the status of the usage 
-   CONSTRAINT quota_usage_events_pk PRIMARY KEY (usage_id),
+  usage_remote_id INT8, -- the usage id in the remote book keeper server
+  node_id text, -- the id of the node which host the usage
+   CONSTRAINT quota_usage_events_pk PRIMARY KEY (usage_local_id),
    CONSTRAINT quota_usage_events_uk UNIQUE (quota_id, instance_id, status)
 );
 CREATE INDEX quota_usage_events_idx1 ON quota_usage_events (date_reported);
 CREATE INDEX quota_usage_events_idx2 ON quota_usage_events (quota_id);
 CREATE INDEX quota_usage_events_idx3 ON quota_usage_events (instance_id);
 CREATE INDEX quota_usage_events_idx4 ON quota_usage_events (status);
+CREATE INDEX quota_usage_events_idx5 ON quota_usage_events (usage_remote_id);

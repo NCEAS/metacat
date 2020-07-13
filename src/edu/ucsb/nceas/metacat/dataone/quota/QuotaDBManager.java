@@ -40,7 +40,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
  */
 public class QuotaDBManager {
     public static final String TABLE = "quota_usage_events";
-    public static final String USAGEID = "usage_id";
+    public static final String USAGEID = "usage_local_id";
     public static final String QUOTAID = "quota_id";
     public static final String INSTANCEID = "instance_id";
     public static final String QUANTITY = "quantity";
