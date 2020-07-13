@@ -177,46 +177,63 @@ public class BookKeeperClient {
      */
     public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest, UnsupportedEncodingException {
         List<Quota> result = null;
-        if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
-            String restStr = bookKeeperURL + QUOTAS + "?"+ SUBSCRIBER + "=" + escapeURL(subscriber) + "&" + QUOTATYPE + "=" + escapeURL(quotaType) + "&" + REQUESTOR + "=" + escapeURL(requestor);
-            logMetacat.debug("BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
-            HttpGet get = new HttpGet(restStr);
-            get.addHeader(header);
-            CloseableHttpResponse response = null;
-            try {
-                response = httpClient.execute(get);
-                int status = response.getStatusLine().getStatusCode();
-                if (status == 200) {
-                    QuotaList list = mapper.readValue(response.getEntity().getContent(), QuotaList.class);
-                    if (list != null && list.getQuotas() != null && list.getQuotas().size() > 0) {
-                        result = list.getQuotas();
-                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
-                    } else {
-                        logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null or empty");
-                        throw new NotFound("1103", "QuotaService didn't find a quota for subscriber " + subscriber + " with quota type " + quotaType + " for the requestor " + requestor);
-                    }
-                } else if (status == 404) {
-                    throw new NotFound("1103", "The quota with the subscription subject " + subscriber + " is not found");
-                } else {
-                    String error = IOUtils.toString(response.getEntity().getContent());
-                    throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + error);
-                }
-            } catch (ClientProtocolException e) {
-                throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
-            } catch (IOException e) {
-                throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
-            } finally {
-                if (response != null) {
-                    try {
-                        response.close();
-                    } catch (IOException ee) {
-                        logMetacat.warn("BookKeeperClient.listQuotas - can't close the reponse at the finally cluae since " + ee.getMessage());
-                    }
-                    
-                }
+        String restStr = bookKeeperURL + QUOTAS;
+        boolean hasQuestionMark = false;
+        if (subscriber != null && !subscriber.trim().equals("")) {
+            restStr = restStr + "?"+ SUBSCRIBER + "=" + escapeURL(subscriber);
+            hasQuestionMark = true;
+        }
+        if (quotaType != null && !quotaType.trim().equals("")) {
+            if (!hasQuestionMark) {
+                restStr = restStr + "?"+ QUOTATYPE + "=" + escapeURL(quotaType);
+                hasQuestionMark = true;
+            } else {
+                restStr = restStr + "&" + QUOTATYPE + "=" + escapeURL(quotaType);
             }
-        } else {
-            throw new InvalidRequest("1102", "BookKeeperClient.listQuotas - the quota subscriber, requestor and quota type can't be null or blank");
+        }
+        if (requestor != null && !requestor.trim().equals("")) {
+            if (!hasQuestionMark) {
+                restStr = restStr + "?" + REQUESTOR + "=" + escapeURL(requestor);
+                hasQuestionMark = true;
+            } else {
+                restStr = restStr + "&" + REQUESTOR + "=" + escapeURL(requestor);
+            }
+        }
+        logMetacat.debug("===========================BookKeeperClient.listQuotas - the rest request to list the quotas is " + restStr);
+        HttpGet get = new HttpGet(restStr);
+        get.addHeader(header);
+        CloseableHttpResponse response = null;
+        try {
+            response = httpClient.execute(get);
+            int status = response.getStatusLine().getStatusCode();
+            if (status == 200) {
+                QuotaList list = mapper.readValue(response.getEntity().getContent(), QuotaList.class);
+                if (list != null && list.getQuotas() != null && list.getQuotas().size() > 0) {
+                    result = list.getQuotas();
+                    logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
+                } else {
+                    logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null or empty");
+                    throw new NotFound("1103", "QuotaService didn't find a quota for subscriber " + subscriber + " with quota type " + quotaType + " for the requestor " + requestor);
+                }
+            } else if (status == 404) {
+                throw new NotFound("1103", "The quota with the subscription subject " + subscriber + " is not found");
+            } else {
+                String error = IOUtils.toString(response.getEntity().getContent());
+                throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + error);
+            }
+        } catch (ClientProtocolException e) {
+            throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
+        } catch (IOException e) {
+            throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + e.getMessage());
+        } finally {
+            if (response != null) {
+                try {
+                    response.close();
+                } catch (IOException ee) {
+                    logMetacat.warn("BookKeeperClient.listQuotas - can't close the reponse at the finally cluae since " + ee.getMessage());
+                }
+                
+            }
         }
         return result;
     }
