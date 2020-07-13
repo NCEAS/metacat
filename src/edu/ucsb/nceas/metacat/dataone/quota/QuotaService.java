@@ -156,39 +156,35 @@ public abstract class QuotaService {
      protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
         int quotaId = -1;
         boolean hasSpace = false;
-        if (subscriber != null && !subscriber.trim().equals("") && quotaType != null && !quotaType.trim().equals("") && requestor != null && !requestor.trim().equals("")) {
-            List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);
-            for (Quota quota : quotas) {
-                if (quota != null) {
-                    if (checkEnoughSpace) {
-                        double hardLimit = 0;
-                        double existedUsages = 0;
-                        Double hardLimitObj = quota.getHardLimit();
-                        if (hardLimitObj != null) {
-                            hardLimit = hardLimitObj.doubleValue();
-                        }
-                        Double existedUsagesObj = quota.getUsage();
-                        if (existedUsagesObj != null) {
-                            existedUsages = existedUsagesObj.doubleValue();
-                        }
-                        logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with subscriber " + subscriber + " with type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
-                        if (hardLimit  >= existedUsages + quantity) {
-                            quotaId = quota.getId();
-                            hasSpace = true;
-                            logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + " plus existed usage " + existedUsages +". So the request is granted for the instance id " + instanceId);
-                            break;
-                        }
-                    } else {
-                        logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+        List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);
+        for (Quota quota : quotas) {
+            if (quota != null) {
+                if (checkEnoughSpace) {
+                    double hardLimit = 0;
+                    double existedUsages = 0;
+                    Double hardLimitObj = quota.getHardLimit();
+                    if (hardLimitObj != null) {
+                        hardLimit = hardLimitObj.doubleValue();
+                    }
+                    Double existedUsagesObj = quota.getUsage();
+                    if (existedUsagesObj != null) {
+                        existedUsages = existedUsagesObj.doubleValue();
+                    }
+                    logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with subscriber " + subscriber + " with type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
+                    if (hardLimit  >= existedUsages + quantity) {
                         quotaId = quota.getId();
-                        hasSpace = true;//since we don't need to check if it has enough space, so hasSpace is always true
-                        logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota id " + quotaId + " subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+                        hasSpace = true;
+                        logMetacat.debug("QuotaService.lookUpQuotaId - the hardLimit in the quota is " + hardLimit + " and it is greater than or equals the request amount of usage " + quantity + " plus existed usage " + existedUsages +". So the request is granted for the instance id " + instanceId);
                         break;
                     }
+                } else {
+                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+                    quotaId = quota.getId();
+                    hasSpace = true;//since we don't need to check if it has enough space, so hasSpace is always true
+                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota id " + quotaId + " subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+                    break;
                 }
             }
-        } else {
-            throw new InvalidRequest("1102", "The quota subscriber, requestor and quota type can't be null or blank for submit the instance " + instanceId);
         }
         if (!hasSpace) {
             throw new InsufficientResources("1160", "The subscriber " + subscriber + " doesn't have enough " + quotaType + " quota to fullfill the request for the instance id " + instanceId + ". Please contact " + subscriber + " to request more quota.");

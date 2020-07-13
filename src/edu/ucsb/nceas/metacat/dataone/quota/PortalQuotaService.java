@@ -94,7 +94,8 @@ public class PortalQuotaService extends QuotaService{
              if (isLastUnDletedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
                  //take action only we are deleting the last object which hasn't been deleted in the sid chain
                  boolean checkSpace = false;
-                 int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
+                 String dummyRequestor = null; //the requestor is the cn or mn subject, we just set it to null to eliminate the requestor filer
+                 int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, dummyRequestor, QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
                  deleteUsage(portalQuotaId, instanceId, portalQuantity);
              } else {
                  logMetacat.debug("PortalQuotaService.enforce - Metacat is not deleting the last object in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
