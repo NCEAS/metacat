@@ -50,6 +50,8 @@ public class QuotaDBManager {
     public static final String OBJECT = "object";
     public static final String NODEID = "node_id";
     
+    public static final int DEFAULTREMOTEUSAGEID = -1;
+    
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
     
     /**
@@ -159,6 +161,38 @@ public class QuotaDBManager {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         return rs;
+    }
+    
+    /**
+     * Find the remote usage id in the local database for the given quota id and instance id
+     * @param quotaId  the quota id associated with the usage
+     * @param instanceId  the instance id associated with the usage
+     * @return  the remote usage id. If it is -1, which means there is no remote usage id found.
+     * @throws SQLException
+     */
+    public static int lookupRemoteUsageId(int quotaId, String instanceId) throws SQLException {
+        int remoteId = DEFAULTREMOTEUSAGEID;
+        DBConnection dbConn = null;
+        int serialNumber = -1;
+        PreparedStatement stmt = null;
+        ResultSet rs = null;
+        try {
+            dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.lookupRemoteUsageId");
+            serialNumber = dbConn.getCheckOutSerialNumber();
+            String query = "select " + USAGEREMOTEID + " from " + TABLE + " where " + QUOTAID + "=" + quotaId + " and " + INSTANCEID + "='" + instanceId + "'";
+            stmt = dbConn.prepareStatement(query);
+            logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the select query is " + query);
+            rs = stmt.executeQuery();
+            if (rs.next()) {
+                remoteId = rs.getInt(1);//It may have multiple rows. They all should have the same value. So we only choose the first one.
+                logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db find the remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
+            }
+        } finally {
+            DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+        }
+        logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the returned remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId + 
+                         ". If it is " + DEFAULTREMOTEUSAGEID + " which means we don't find one in the local database");
+        return remoteId;
     }
     
 

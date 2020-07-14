@@ -50,6 +50,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         TestSuite suite = new TestSuite();
         suite.addTest(new QuotaDBManagerTest("testCreateUsage"));
         suite.addTest(new QuotaDBManagerTest("testGetUnReportedUsagesAndSetReportDate"));
+        suite.addTest(new QuotaDBManagerTest("testLookupRemoteUsageId"));
         return suite;
     }
     
@@ -161,6 +162,54 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getInt(7) == remoteId);
         assertTrue(rs.getString(8).equals(QuotaService.nodeId));
         rs.close();
+    }
+    
+    /**
+     * Test the lookupRemoteUsageId method.
+     * @throws Exception
+     */
+    public void testLookupRemoteUsageId() throws Exception {
+        //create a usage with the report date
+        int quotaId =  (new Double (Math.random() * 100000000)).intValue() + (new Double (Math.random() * 100000000)).intValue() +  (new Double (Math.random() * 100000000)).intValue();
+        String instanceId = "testcreateusage" + System.currentTimeMillis() + Math.random() * 10000;
+        int remoteId = (new Double (Math.random() * 100000000)).intValue();
+        double quantity = 1;
+        Usage usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        usage.setId(remoteId);
+        Date now = new Date();
+        QuotaDBManager.createUsage(usage, now);
+        
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        usage.setId(remoteId);
+        now = new Date();
+        QuotaDBManager.createUsage(usage, now);
+        
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.DELETED);
+        usage.setNodeId(QuotaService.nodeId);
+        usage.setId(remoteId);
+        now = new Date();
+        QuotaDBManager.createUsage(usage, now);
+        
+        int remotedIdFromDB = QuotaDBManager.lookupRemoteUsageId(quotaId, instanceId);
+        assertTrue(remotedIdFromDB == remoteId);
+        
     }
     
     /**
