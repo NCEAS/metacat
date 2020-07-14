@@ -170,7 +170,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
@@ -196,8 +196,8 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGEID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
-                                            QuotaDBManager.USAGEID + "=?";
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
+                                            QuotaDBManager.USAGELOCALID + "=?";
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, usageId);
             rs = stmt.executeQuery();

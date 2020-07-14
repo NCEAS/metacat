@@ -40,7 +40,8 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
  */
 public class QuotaDBManager {
     public static final String TABLE = "quota_usage_events";
-    public static final String USAGEID = "usage_local_id";
+    public static final String USAGELOCALID = "usage_local_id";
+    public static final String USAGEREMOTEID = "usage_remote_id";
     public static final String QUOTAID = "quota_id";
     public static final String INSTANCEID = "instance_id";
     public static final String QUANTITY = "quantity";
@@ -103,7 +104,7 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.setReportedDate");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "update " + TABLE + " set " + DATEREPORTED + " = ? " + " where " + USAGEID + "=?" ;
+            String query = "update " + TABLE + " set " + DATEREPORTED + " = ? " + " where " + USAGELOCALID + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setTimestamp(1, new Timestamp(date.getTime()));
             stmt.setInt(2, usageId);
@@ -133,7 +134,7 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + USAGEID + ", " + QUOTAID + "," + INSTANCEID + ", " + QUANTITY + "," + OBJECT + "," + STATUS + " from " + TABLE + " where " + DATEREPORTED + " is null order by " + USAGEID + " ASC" ;
+            String query = "select " + USAGELOCALID + ", " + QUOTAID + "," + INSTANCEID + ", " + QUANTITY + "," + OBJECT + "," + STATUS + " from " + TABLE + " where " + DATEREPORTED + " is null order by " + USAGELOCALID + " ASC" ;
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.getUnReportedUsages - the select query is " + query);
             rs = stmt.executeQuery();
