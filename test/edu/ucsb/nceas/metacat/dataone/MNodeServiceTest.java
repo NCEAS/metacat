@@ -681,22 +681,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           assertTrue(e.getMessage().contains(newPid_6.getValue()));
           assertTrue(e.getMessage().contains(newPid_7.getValue()));
       }
-
+      
       object = new ByteArrayInputStream("test".getBytes("UTF-8"));
       SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
       newSysMeta.setArchived(true);
-
-      // Set parameters of the sys meta that should get overwritten by ::update
-      String fakeParameters = "1234";
-      Date fakeDate = new Date();
-      BigInteger fakeVersion = new BigInteger("10");
-      NodeReference fakeMemberNode = new NodeReference();
-      fakeMemberNode.setValue("urn:node:Fake_Member_Node_ID");
-      newSysMeta.setAuthoritativeMemberNode(fakeMemberNode);
-      newSysMeta.setOriginMemberNode(fakeMemberNode);
-      newSysMeta.setSerialVersion(fakeVersion);
-      newSysMeta.setDateSysMetadataModified(fakeDate);
-      newSysMeta.setDateUploaded(fakeDate);
+      System.out.println("the pid is =======!!!!!!!!!!!! "+pid.getValue());
       // do the update
       Identifier updatedPid = 
         MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -704,15 +693,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       // get the updated system metadata
       SystemMetadata updatedSysMeta = 
         MNodeService.getInstance(request).getSystemMetadata(session, updatedPid);
-      // Make sure that the MN updated the fields that users don't have access to
-      assertTrue(updatedSysMeta.getAuthoritativeMemberNode() != fakeMemberNode);
-      assertTrue(updatedSysMeta.getOriginMemberNode() != fakeMemberNode);
-      assertTrue(updatedSysMeta.getSerialVersion() != fakeVersion);
-      assertTrue(updatedSysMeta.getDateUploaded() != fakeDate);
-      assertTrue(updatedSysMeta.getDateSysMetadataModified() != fakeDate);
 
       assertEquals(updatedPid.getValue(), newPid.getValue());
-
+      //assertTrue(updatedSysMeta.getObsolete(0).getValue().equals(pid.getValue()));
+      //assertTrue(updatedSysMeta.getDerivedFrom(0).getValue().equals(pid.getValue())); 
+      
       //try to update an archived object and need to get an exception
       Identifier newPid2 = new Identifier();
       newPid2.setValue("testUpdate." + (System.currentTimeMillis() + 2)); // ensure it is different from original
