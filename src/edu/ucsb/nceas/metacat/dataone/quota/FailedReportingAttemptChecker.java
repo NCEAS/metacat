@@ -62,9 +62,9 @@ public class FailedReportingAttemptChecker extends TimerTask {
             int localId = UsageTask.DEFAULTUSAGELOCALID;
             while (rs.next()) {
                 try {
-                    Usage usage = new Usage();
+                    LocalUsage usage = new LocalUsage();
                     localId = rs.getInt(1);
-                    usage.setId(localId);//Note: this is the local usage id. It doesn't match the one in the remote book keeper server.
+                    usage.setLocalId(localId);
                     usage.setQuotaId(rs.getInt(2));
                     String instanceId = rs.getString(3);
                     logMetacat.debug("FailedReportingAttemptChecker.run - the instance id needed to report is " + instanceId);
@@ -80,7 +80,6 @@ public class FailedReportingAttemptChecker extends TimerTask {
                         task = new CreateUsageTask(usage, bookkeeperClient);
                     } else if (status != null && status.equals(QuotaServiceManager.INACTIVE)) {
                         task = new UpdateUsageTask(usage, bookkeeperClient);
-                        task.setUsageLocalId(localId);
                     } else if (status != null && status.equals(QuotaServiceManager.DELETED)) {
                         task = new DeleteUsageTask(usage, bookkeeperClient);
                     } else {

@@ -288,7 +288,8 @@ public class BookKeeperClient {
      * @throws ServiceFailure
      * @throws IOException
      */
-    public void deleteUsage(int quotaId, String instanceId) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+    public int deleteUsage(int quotaId, String instanceId) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
+        int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
         if (instanceId != null && !instanceId.trim().equals("")) {
             List<Usage> usages = null;
             try {
@@ -309,6 +310,7 @@ public class BookKeeperClient {
                         response = httpClient.execute(httpdelete);
                         int status = response.getStatusLine().getStatusCode();
                         if (status == 200) {
+                            remoteUsageId = id;
                             logMetacat.info("BookKeeperClient.deleteUsage - successfully delete the usage with id " + id);
                         } else {
                             String error = IOUtils.toString(response.getEntity().getContent());
@@ -330,6 +332,8 @@ public class BookKeeperClient {
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to delete a usage.");
         }
+        logMetacat.debug("BookKeeperClient.deleteUsage - the final deleted remoteUsageId is "+ remoteUsageId);
+        return remoteUsageId;
     }
     
     /**

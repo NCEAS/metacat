@@ -43,9 +43,9 @@ public class UpdateUsageTask extends UsageTask {
     }
     
     @Override
-    protected void reportToBookKeeper() throws Exception {
+    protected int reportToBookKeeper() throws Exception {
         logMetacat.debug("UpdateUsageTask.reportToBookeKeeper - update an existing usage in the remote book book with quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + 
                 " status " + usage.getStatus() + " quantity " + usage.getQuantity());
-        bookkeeperClient.updateUsage(usage.getQuotaId(), usage.getInstanceId(), usage);//This method will get the real usage id from the remote server.
+        return bookkeeperClient.updateUsage(usage.getQuotaId(), usage.getInstanceId(), usage);//This method will get the real usage id from the remote server.
     }
 }

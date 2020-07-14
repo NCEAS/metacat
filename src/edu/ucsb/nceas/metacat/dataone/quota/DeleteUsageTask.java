@@ -44,10 +44,10 @@ public class DeleteUsageTask extends UsageTask {
     }
     
     @Override
-    protected void reportToBookKeeper() throws Exception {
+    protected int reportToBookKeeper() throws Exception {
         logMetacat.debug("DeleteUsageTask.reportToBookeKeeper - delete an existing usage in the remote book keeper server with quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + 
                 " status " + usage.getStatus() + " quantity " + usage.getQuantity());
-        bookkeeperClient.deleteUsage(usage.getQuotaId(), usage.getInstanceId());
+        return bookkeeperClient.deleteUsage(usage.getQuotaId(), usage.getInstanceId());
     }
 
 }

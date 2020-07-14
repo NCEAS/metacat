@@ -43,10 +43,10 @@ public class CreateUsageTask extends UsageTask {
     }
     
     @Override
-    protected void reportToBookKeeper() throws Exception {
+    protected int reportToBookKeeper() throws Exception {
         logMetacat.debug("CreateUsageTask.reportToBookeKeeper - create a new usage in the remote book keeper server with quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + 
                 " status " + usage.getStatus() + " quantity " + usage.getQuantity());
-        bookkeeperClient.createUsage(usage);
+        return bookkeeperClient.createUsage(usage);
     }
     
 }

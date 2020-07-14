@@ -122,14 +122,14 @@ public class QuotaDBManagerTest  extends MCTestCase {
      */
     public void testGetUnReportedUsagesAndSetReportDate() throws Exception {
         ResultSet rs = QuotaDBManager.getUnReportedUsages();
-        Usage usage = new Usage();
+        LocalUsage usage = new LocalUsage();
         int index = 0;
         int previousUsageId = -1;
         while (rs.next() && index < 500) {
             int usageId = rs.getInt(1);
             System.out.println("the usage id is " + usageId);
             assertTrue(usageId > previousUsageId); //make sure the result set is ordered by the column usage_id  acs
-            usage.setId(usageId);
+            usage.setLocalId(usageId);
             usage.setQuotaId(rs.getInt(2));
             usage.setInstanceId(rs.getString(3));
             usage.setQuantity(rs.getDouble(4));
@@ -139,7 +139,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(index > 0);
         rs.close();
         
-        int usageId = usage.getId();
+        int usageId = usage.getLocalId();
         rs = getResultSet(usageId);
         assertTrue(rs.next());
         assertTrue(rs.getInt(1) == usageId);
