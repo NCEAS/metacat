@@ -74,7 +74,11 @@ public class FailedReportingAttemptChecker extends TimerTask {
                     String status = rs.getString(6);
                     logMetacat.debug("FailedReportingAttemptChecker.run - the status needed to report is " + status);
                     usage.setStatus(status);
-                    usage.setNodeId(QuotaService.nodeId);
+                    String nodeId = rs.getString(7);
+                    if (nodeId == null || nodeId.trim().equals("")) {
+                        nodeId = QuotaService.nodeId;
+                    }
+                    usage.setNodeId(nodeId);
                     UsageTask task = null;
                     if (status != null && status.equals(QuotaServiceManager.ACTIVE)) {
                         task = new CreateUsageTask(usage, bookkeeperClient);
