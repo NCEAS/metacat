@@ -67,6 +67,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
         Date now = new Date();
         QuotaDBManager.createUsage(usage, now);
         ResultSet rs = getResultSet(quotaId, instanceId);
@@ -77,6 +78,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
         assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
+        assertTrue(rs.getString(8).equals(QuotaService.nodeId));
         rs.close();
         
         
@@ -90,6 +92,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
         QuotaDBManager.createUsage(usage, null);
         rs = getResultSet(quotaId, instanceId);
         assertTrue(rs.next());
@@ -99,6 +102,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getDouble(4) == quantity);
         assertTrue(rs.getTimestamp(5) == null);
         assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
+        assertTrue(rs.getString(8).equals(QuotaService.nodeId));
         rs.close();
         
         //create another unreported event
@@ -111,6 +115,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         usage.setInstanceId(instanceId);
         usage.setQuantity(quantity);
         usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
         QuotaDBManager.createUsage(usage, null);
         
 
@@ -154,6 +159,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getInt(1) == usageId);
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
         assertTrue(rs.getInt(7) == remoteId);
+        assertTrue(rs.getString(8).equals(QuotaService.nodeId));
         rs.close();
     }
     
@@ -172,7 +178,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
@@ -198,7 +204,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.USAGELOCALID + "=?";
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, usageId);
