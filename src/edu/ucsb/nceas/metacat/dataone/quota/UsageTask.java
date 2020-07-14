@@ -62,8 +62,9 @@ public abstract class UsageTask implements Runnable {
     @Override
     public void run() {
         if (usage != null) {
+            int remoteUsageId = DEFAULTUSAGELOCALID;
             try {
-                int remoteUsageId = reportToBookKeeper();
+                remoteUsageId = reportToBookKeeper();
                 usage.setId(remoteUsageId);
             } catch (Exception e) {
                 logMetacat.error("UsageTask.run - can't report the usage to the remote server since " + e.getMessage());
@@ -103,7 +104,7 @@ public abstract class UsageTask implements Runnable {
                         " to the remote book keep server. Moreover, the local database already has the record and Metacat needs to set the local reported date in this record.");
                 try {
                     LocalUsage localUsage = (LocalUsage) usage;
-                    QuotaDBManager.setReportedDate(localUsage.getLocalId(), now);
+                    QuotaDBManager.setReportedDateAndRemoteId(localUsage.getLocalId(), now, remoteUsageId);
                 } catch (Exception ee) {
                     logMetacat.error("UsageTask.run - can't update the usage in the local quota_usage_event table since " + ee.getMessage() +
                             " The usage is with the with the local usage id " + usage.getId() + " quota id " + usage.getQuotaId() + " instance id " + usage.getInstanceId() + " the quantity " + usage.getQuantity() + " the reported date " + now.getTime());

@@ -107,22 +107,24 @@ public class QuotaDBManager {
     }
     
     /**
-     * Set the reported date for a given usage
-     * @param usageId  the id of the usage will be set
+     * Set the reported date and remote id for a given usage local id
+     * @param localId  the local id of the usage will be set
      * @param date  the date to report to the bookkeeper server
+     * @param remoteId  the remote id will be set
      * @throws SQLException 
      */
-    public static void setReportedDate(int usageId, Date date) throws SQLException {
+    public static void setReportedDateAndRemoteId(int localId, Date date, int remoteId) throws SQLException {
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.setReportedDate");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "update " + TABLE + " set " + DATEREPORTED + " = ? " + " where " + USAGELOCALID + "=?" ;
+            String query = "update " + TABLE + " set " + DATEREPORTED + " = ? " + "," + USAGEREMOTEID + "=?" + " where " + USAGELOCALID + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setTimestamp(1, new Timestamp(date.getTime()));
-            stmt.setInt(2, usageId);
+            stmt.setInt(2, remoteId);
+            stmt.setInt(3, localId);
             logMetacat.debug("QuotaDBManager.setReportedDate - the update query is " + stmt.toString());
             int rows = stmt.executeUpdate();
         } finally {

@@ -147,11 +147,13 @@ public class QuotaDBManagerTest  extends MCTestCase {
         rs.close();
         
         Date now = new Date();
-        QuotaDBManager.setReportedDate(usageId, now);
+        int remoteId = (new Double (Math.random() * 100000000)).intValue();
+        QuotaDBManager.setReportedDateAndRemoteId(usageId, now, remoteId);
         rs = getResultSet(usageId);
         assertTrue(rs.next());
         assertTrue(rs.getInt(1) == usageId);
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
+        assertTrue(rs.getInt(7) == remoteId);
         rs.close();
     }
     
@@ -170,7 +172,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
@@ -196,7 +198,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + " from " + QuotaDBManager.TABLE + " where " + 
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + " from " + QuotaDBManager.TABLE + " where " + 
                                             QuotaDBManager.USAGELOCALID + "=?";
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, usageId);
