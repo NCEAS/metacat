@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: edu.uiuc.ncsa.myproxy:oa4mp-client-oauth1:war:3.3">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/edu/uiuc/ncsa/myproxy/oa4mp-client-oauth1/3.3/oa4mp-client-oauth1-3.3.war!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/edu/uiuc/ncsa/myproxy/oa4mp-client-oauth1/3.3/oa4mp-client-oauth1-3.3-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/edu/uiuc/ncsa/myproxy/oa4mp-client-oauth1/3.3/oa4mp-client-oauth1-3.3-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

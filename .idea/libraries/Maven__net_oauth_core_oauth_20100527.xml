@@ -1,0 +1,13 @@
+<component name="libraryTable">
+  <library name="Maven: net.oauth.core:oauth:20100527">
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/oauth/core/oauth/20100527/oauth-20100527.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/net/oauth/core/oauth/20100527/oauth-20100527-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/net/oauth/core/oauth/20100527/oauth-20100527-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
