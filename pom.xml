@@ -37,6 +37,11 @@
              <name>central maven repo https</name>
              <url>https://repo.maven.apache.org/maven2</url>
         </repository>
+        <repository>
+            <id>central maven repo1</id>
+             <name>central maven repo1 https</name>
+             <url>https://repo1.maven.org/maven2</url>
+        </repository>
     </repositories>
     <dependencies>
     	<dependency>
@@ -403,6 +408,26 @@
                 <exclusion>
                      <groupId>org.flywaydb</groupId>
                      <artifactId>flyway-maven-plugin</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-core</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-json-logging</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-testing</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-jdbi3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.dropwizard</groupId>
+                    <artifactId>dropwizard-auth</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
