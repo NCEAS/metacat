@@ -50,8 +50,6 @@ public class QuotaDBManager {
     public static final String OBJECT = "object";
     public static final String NODEID = "node_id";
     
-    public static final int DEFAULTREMOTEUSAGEID = -1;
-    
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
     
     /**
@@ -171,7 +169,7 @@ public class QuotaDBManager {
      * @throws SQLException
      */
     public static int lookupRemoteUsageId(int quotaId, String instanceId) throws SQLException {
-        int remoteId = DEFAULTREMOTEUSAGEID;
+        int remoteId = BookKeeperClient.DEFAULT_REMOTE_USAGE_ID;
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;
@@ -191,7 +189,7 @@ public class QuotaDBManager {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
         logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the returned remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId + 
-                         ". If it is " + DEFAULTREMOTEUSAGEID + " which means we don't find one in the local database");
+                         ". If it is " + BookKeeperClient.DEFAULT_REMOTE_USAGE_ID + " which means we don't find one in the local database");
         return remoteId;
     }
     

@@ -283,6 +283,7 @@ public class BookKeeperClient {
      * Delete the usage with the given quota type and instance id in the remote book keeper service
      * @param quotaType  the quota type associated with the usage
      * @param instanceId  the instance id associated with the usage
+     * @return  the remote usage id which was deleted. If it returns the default value -1, it means there is no remote usage matching the quota id and instance id and Metacat did nothing.
      * @throws InvalidRequest
      * @throws ClientProtocolException
      * @throws ServiceFailure
@@ -291,43 +292,32 @@ public class BookKeeperClient {
     public int deleteUsage(int quotaId, String instanceId) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
         int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
         if (instanceId != null && !instanceId.trim().equals("")) {
-            List<Usage> usages = null;
-            try {
-                usages = listUsages(quotaId, instanceId);
-                if (usages == null || usages.size() == 0) {
-                    logMetacat.warn("BookKeeperClient.deleteUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to delete anything.");
-                    throw new InvalidRequest("0000", "Metacat tried to delete a none-existed usage  matching the quota id " + quotaId + " and instance id " + instanceId);
-                } else if (usages.size() == 1) {
-                    Usage usage = usages.get(0);
-                    int id = usage.getId();
-                    logMetacat.debug("BookKeeperClient.deleteUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
-                    String restStr = bookKeeperURL + USAGES + "/" + id;
-                    logMetacat.debug("BookKeeperClient.deleteUsage - the delete rest command is " + restStr);
-                    CloseableHttpResponse response = null;
-                    try {
-                        HttpDelete httpdelete = new HttpDelete(restStr);
-                        httpdelete.addHeader(header);
-                        response = httpClient.execute(httpdelete);
-                        int status = response.getStatusLine().getStatusCode();
-                        if (status == 200) {
-                            remoteUsageId = id;
-                            logMetacat.info("BookKeeperClient.deleteUsage - successfully delete the usage with id " + id);
-                        } else {
-                            String error = IOUtils.toString(response.getEntity().getContent());
-                            throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - can't delete the usage with the id " + id + " since " + error);
-                        }
-                    } finally {
-                        if (response != null) {
-                            response.close();
-                        }
+            int id = getRemoteUsageId(quotaId, instanceId);
+            if (id != DEFAULT_REMOTE_USAGE_ID) {
+                logMetacat.debug("BookKeeperClient.deleteUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
+                String restStr = bookKeeperURL + USAGES + "/" + id;
+                logMetacat.debug("BookKeeperClient.deleteUsage - the delete rest command is " + restStr);
+                CloseableHttpResponse response = null;
+                try {
+                    HttpDelete httpdelete = new HttpDelete(restStr);
+                    httpdelete.addHeader(header);
+                    response = httpClient.execute(httpdelete);
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 200) {
+                        remoteUsageId = id;
+                        logMetacat.info("BookKeeperClient.deleteUsage - successfully delete the usage with id " + id);
+                    } else {
+                        String error = IOUtils.toString(response.getEntity().getContent());
+                        throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - can't delete the usage with the id " + id + " since " + error);
                     }
-                } else {
-                    throw new ServiceFailure("0000", "BookKeeperClient.deleteUsage - the bookkeeper service should only send back one record with the given quota id "+ quotaId + " and instance id " + instanceId 
-                            + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
+                } finally {
+                    if (response != null) {
+                        response.close();
+                    }
                 }
-            } catch (NotFound e) {
-                logMetacat.error("BookKeeperClient.deleteUsage - the book keeper service don't find any usages " + e.getMessage());
-                throw new InvalidRequest("0000", "Metacat tried to delete a none-existed usage - " + e.getMessage()); //NoFound exception will stop the mn.delete method, so we need to change the exception to InvalideRequest.
+            } else {
+                logMetacat.info("BookKeeperClient.deleteUsage - the book keeper service can't find the usage matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to delete anything.");
+                remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
             }
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to delete a usage.");
@@ -341,7 +331,7 @@ public class BookKeeperClient {
      * @param quotaId  the quota id which the existing usage matches
      * @param instanceId  the instance id which the existing usage matches
      * @param usage  the new usage value will be used
-     * @return  the remote usage id which was updated
+     * @return  the remote usage id which was updated. If it returns the default value -1, it means there is no remote usage matching the quota id and instance id and Metacat did nothing.
      * @throws InvalidRequest
      * @throws ClientProtocolException
      * @throws ServiceFailure
@@ -350,49 +340,38 @@ public class BookKeeperClient {
     public int updateUsage(int quotaId, String instanceId, Usage usage) throws InvalidRequest, ClientProtocolException, ServiceFailure, IOException {
         int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
         if (instanceId != null && !instanceId.trim().equals("")) {
-            List<Usage> usages = null;
-            try {
-                usages = listUsages(quotaId, instanceId);
-                if (usages == null || usages.size() == 0) {
-                    logMetacat.warn("BookKeeperClient.updateUsage - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to update anything.");
-                    throw new InvalidRequest("0000", "Metacat tried to update a none-existed usage  matching the quota id " + quotaId + " and instance id " + instanceId);
-                } else if (usages.size() == 1) {
-                    Usage existedUsage = usages.get(0);
-                    int id = existedUsage.getId();//the usage id in the remote book keeper server for this usage
-                    usage.setId(id);//set the real usage id from the remote book keeper server for this usage
-                    logMetacat.debug("BookKeeperClient.updateUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
-                    String restStr = bookKeeperURL + USAGES + "/" + id;
-                    logMetacat.debug("BookKeeperClient.updateUsage - the update rest command is " + restStr);
-                    CloseableHttpResponse response = null;
-                    try {
-                        String jsonStr = mapper.writeValueAsString(usage); 
-                        logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
-                        StringEntity reqEntity = new StringEntity(jsonStr, ContentType.APPLICATION_JSON);
-                        reqEntity.setChunked(true);
-                        HttpPut put = new HttpPut(restStr);
-                        put.setEntity(reqEntity);
-                        put.addHeader(header);
-                        response = httpClient.execute(put);
-                        int status = response.getStatusLine().getStatusCode();
-                        if (status == 200) {
-                            logMetacat.info("BookKeeperClient.updateUsage - successfully update the usage with id " + id);
-                            remoteUsageId = id;
-                        } else {
-                            String error = IOUtils.toString(response.getEntity().getContent());
-                            throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - can't delete the usage with the id " + id + " since " + error);
-                        }
-                    } finally {
-                        if (response != null) {
-                            response.close();
-                        }
+            int id = getRemoteUsageId(quotaId, instanceId);//the usage id in the remote book keeper server for this usage
+            if (id != DEFAULT_REMOTE_USAGE_ID) {
+                usage.setId(id);//set the real usage id from the remote book keeper server for this usage
+                logMetacat.debug("BookKeeperClient.updateUsage - the book keeper service find the usage with id " + id + " matching the quota id " + quotaId + " and instance id " + instanceId);
+                String restStr = bookKeeperURL + USAGES + "/" + id;
+                logMetacat.debug("BookKeeperClient.updateUsage - the update rest command is " + restStr);
+                CloseableHttpResponse response = null;
+                try {
+                    String jsonStr = mapper.writeValueAsString(usage); 
+                    logMetacat.debug("BookKeeperClient.updateUsage - the json string will be sent is " + jsonStr);
+                    StringEntity reqEntity = new StringEntity(jsonStr, ContentType.APPLICATION_JSON);
+                    reqEntity.setChunked(true);
+                    HttpPut put = new HttpPut(restStr);
+                    put.setEntity(reqEntity);
+                    put.addHeader(header);
+                    response = httpClient.execute(put);
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 200) {
+                        logMetacat.info("BookKeeperClient.updateUsage - successfully update the usage with id " + id);
+                        remoteUsageId = id;
+                    } else {
+                        String error = IOUtils.toString(response.getEntity().getContent());
+                        throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - can't delete the usage with the id " + id + " since " + error);
                     }
-                } else {
-                    throw new ServiceFailure("0000", "BookKeeperClient.updateUsage - the bookkeeper service should only send back one record with the given quota id "+ quotaId + " and instance id " + instanceId 
-                            + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
+                } finally {
+                    if (response != null) {
+                        response.close();
+                    }
                 }
-            } catch (NotFound e) {
-                logMetacat.error("BookKeeperClient.updateUsage - the book keeper service don't find any usages " + e.getMessage());
-                throw new InvalidRequest("0000", "Metacat tried to update a none-existed usage - " + e.getMessage()); //NoFound exception will stop the mn.update method, so we need to change the exception to InvalideRequest.
+            } else {
+                logMetacat.info("BookKeeperClient.updateUsage - the book keeper service can't find the usage matching the quota id " + quotaId + " and instance id " + instanceId + ". So we don't need to update anything.");
+                remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
             }
         } else {
             throw new InvalidRequest("0000", "The instance id can't be null or blank when you try to update a usage.");
@@ -401,6 +380,45 @@ public class BookKeeperClient {
         return remoteUsageId;
     }
     
+    /**
+     * Get the remote usage id for the given quota id and instance id
+     * @param quotaId  the remote usage associated with the quota id
+     * @param instanceId  the remote usage associated with the instance id
+     * @return  the remote usage id. If there is no remote usage found, -1 will be returned
+     * @throws ClientProtocolException
+     * @throws ServiceFailure
+     * @throws IOException
+     */
+    int getRemoteUsageId(int quotaId, String instanceId) throws ClientProtocolException, ServiceFailure, IOException {
+        int remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
+        try {
+            remoteUsageId = QuotaDBManager.lookupRemoteUsageId(quotaId, instanceId);
+        } catch (Exception e) {
+            logMetacat.debug("BookKeeperClient.getRemoteUsageId - failed to get the remote usage id locally for the quota id " + quotaId + " and instance id " + instanceId + " since " +e.getMessage());
+        }
+        if (remoteUsageId == DEFAULT_REMOTE_USAGE_ID) {
+            logMetacat.debug("BookKeeperClient.getRemoteUsageId -  get the remote usage id from the remote book keeper server for the quota id " + quotaId + " and instance id " + instanceId);
+            List<Usage> usages = null;
+            try {
+                usages = listUsages(quotaId, instanceId);
+                if (usages == null || usages.size() == 0) {
+                    logMetacat.warn("BookKeeperClient.getRemoteUsageId - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we set the remote id to " + DEFAULT_REMOTE_USAGE_ID);
+                    remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
+                } else if (usages.size() == 1) {
+                    Usage existedUsage = usages.get(0);
+                    remoteUsageId= existedUsage.getId();//the usage id in the remote book keeper server for this usage
+                } else {
+                    throw new ServiceFailure("0000", "BookKeeperClient.getRemoteUsageId - the bookkeeper service should only send back one record with the given quota id "+ quotaId + " and instance id " + instanceId 
+                            + ". However, it sent back more than one. Something is wrong in the bookkeeper service.");
+                }
+            } catch (NotFound e) {
+                logMetacat.warn("BookKeeperClient.getRemoteUsageId - the book keeper service don't find any usages matching the quota id " + quotaId + " and instance id " + instanceId + ". So we set the remote id to " + DEFAULT_REMOTE_USAGE_ID);
+                remoteUsageId = DEFAULT_REMOTE_USAGE_ID;
+            }
+        }
+        logMetacat.debug("BookKeeperClient.getRemoteUsageId - the final returned remote usage id is " + remoteUsageId + " for the quota id " + quotaId + " and instance id " + instanceId);
+        return remoteUsageId;
+    }
     
     /**
      * Get the list of usage from the book keeper service with the given quota id and instance id
