@@ -21,9 +21,7 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -41,8 +39,6 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 
-import edu.ucsb.nceas.metacat.database.DBConnection;
-import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -215,6 +211,15 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(indexActive == 0);
         assertTrue(indexArchived == 0);
         assertTrue(indexDeleted == 0);
+        
+        //test the method listUsage to throw an NotFound exception when the instance id doesn't exist.
+        String foo = "foooo";
+        try {
+            BookKeeperClient.getInstance().listUsages(portalQuotaId, foo);
+            fail("We shouldn't get there since the above statement should throw an exception");
+        } catch (NotFound e) {
+            assertTrue(e.getMessage().contains(foo));
+        }
     }
     
     /*************************************************************

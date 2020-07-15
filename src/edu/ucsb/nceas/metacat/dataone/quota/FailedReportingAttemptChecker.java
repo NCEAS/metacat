@@ -59,7 +59,7 @@ public class FailedReportingAttemptChecker extends TimerTask {
     public void run() {
         try {
             ResultSet rs = QuotaDBManager.getUnReportedUsages();
-            int localId = UsageTask.DEFAULTUSAGELOCALID;
+            int localId = BookKeeperClient.DEFAULT_REMOTE_USAGE_ID;
             while (rs.next()) {
                 try {
                     LocalUsage usage = new LocalUsage();

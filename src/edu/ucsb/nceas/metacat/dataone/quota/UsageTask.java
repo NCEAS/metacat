@@ -31,8 +31,6 @@ import org.dataone.bookkeeper.api.Usage;
  *
  */
 public abstract class UsageTask implements Runnable {
-    public static final int DEFAULTUSAGELOCALID = -1;
-    
     private static Log logMetacat  = LogFactory.getLog(UsageTask.class);
     
     protected Usage usage = null;
@@ -62,7 +60,7 @@ public abstract class UsageTask implements Runnable {
     @Override
     public void run() {
         if (usage != null) {
-            int remoteUsageId = DEFAULTUSAGELOCALID;
+            int remoteUsageId = BookKeeperClient.DEFAULT_REMOTE_USAGE_ID;
             try {
                 remoteUsageId = reportToBookKeeper();
                 usage.setId(remoteUsageId);
