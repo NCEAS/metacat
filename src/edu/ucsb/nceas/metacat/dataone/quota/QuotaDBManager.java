@@ -183,13 +183,13 @@ public class QuotaDBManager {
             rs = stmt.executeQuery();
             if (rs.next()) {
                 remoteId = rs.getInt(1);//It may have multiple rows. They all should have the same value. So we only choose the first one.
-                logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db find the remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
+                logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db, Metacat find the cached remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
         }
-        logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the returned remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId + 
-                         ". If it is " + BookKeeperClient.DEFAULT_REMOTE_USAGE_ID + " which means we don't find one in the local database");
+        logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - From the local db, the cached remote usage id is " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId + 
+                         ". If it is " + BookKeeperClient.DEFAULT_REMOTE_USAGE_ID + ", which means we don't find one in the local database.");
         return remoteId;
     }
     

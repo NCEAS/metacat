@@ -21,7 +21,9 @@ package edu.ucsb.nceas.metacat.dataone.quota;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -39,6 +41,8 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
@@ -162,6 +166,10 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         assertTrue(returnedUsage.getQuotaId() == portalQuotaId);
         assertTrue(returnedUsage.getId() == remoteUsageId);
         assertTrue(returnedUsage.getNodeId().equals(nodeId));
+        
+        //test getRemoteUsageid method without an local cached remote usage id
+        assertTrue(BookKeeperClient.getInstance().getRemoteUsageId(portalQuotaId, instanceId) == remoteUsageId);
+        
         //test to delete a usage (local record three)
         BookKeeperClient.getInstance().deleteUsage(portalQuotaId, instanceId);
         boolean notFound = false;
@@ -552,6 +560,10 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             assertTrue(returnedUsage.getStatus().equals(QuotaServiceManager.ACTIVE));
             assertTrue(returnedUsage.getQuotaId() == quotaId);
             assertTrue(returnedUsage.getNodeId().equals(nodeId));
+            //test the getRemouteUsageId method when there is a local cached copy
+            int remoteId = BookKeeperClient.getInstance().getRemoteUsageId(quotaId, sidStr);
+            assertTrue(remoteId == returnedUsage.getId());
+            
             quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
             double newUsages = 0;
             for (Quota quota : quotas) {

@@ -397,7 +397,7 @@ public class BookKeeperClient {
             logMetacat.debug("BookKeeperClient.getRemoteUsageId - failed to get the remote usage id locally for the quota id " + quotaId + " and instance id " + instanceId + " since " +e.getMessage());
         }
         if (remoteUsageId == DEFAULT_REMOTE_USAGE_ID) {
-            logMetacat.debug("BookKeeperClient.getRemoteUsageId -  get the remote usage id from the remote book keeper server for the quota id " + quotaId + " and instance id " + instanceId);
+            logMetacat.debug("BookKeeperClient.getRemoteUsageId -  Metacat can't find the remote usage id locally. It will get the remote usage id from the remote book keeper server for the quota id " + quotaId + " and instance id " + instanceId);
             List<Usage> usages = null;
             try {
                 usages = listUsages(quotaId, instanceId);
