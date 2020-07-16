@@ -121,6 +121,14 @@ public class QuotaServiceManager {
     }
     
     /**
+     * Check if the quota service is enabled.
+     * @return true if it is enabled; otherwise false.
+     */
+    public boolean isEnabled() {
+        return enabled;
+    }
+    
+    /**
      * Start a timer to check failed usage reporting and report them again in daily base.
      * Metacat only needs one timer, but this method will be called on four different servlet init methods. 
      * So the method has a indicator of already starting a timer and is synchronized to make sure only one timer will be started.

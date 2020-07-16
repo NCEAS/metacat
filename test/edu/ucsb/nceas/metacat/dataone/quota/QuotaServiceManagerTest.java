@@ -33,6 +33,7 @@ import org.dataone.bookkeeper.api.Usage;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Session;
@@ -84,15 +85,21 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new QuotaServiceManagerTest("testBookKeeperClientMethods"));
-        suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run"));
-        suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run2"));
-        suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce"));
-        suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce2"));
-        suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
-        suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
-        suite.addTest(new QuotaServiceManagerTest("testNoSubscriberHeader"));
-        suite.addTest(new QuotaServiceManagerTest("testDelinquentUser"));
+        try {
+            if (QuotaServiceManager.getInstance().isEnabled()) {
+                suite.addTest(new QuotaServiceManagerTest("testBookKeeperClientMethods"));
+                suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run"));
+                suite.addTest(new QuotaServiceManagerTest("testFailedReportingAttemptChecker_Run2"));
+                suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce"));
+                suite.addTest(new QuotaServiceManagerTest("testQuotaServiceManagerQuotaEnforce2"));
+                suite.addTest(new QuotaServiceManagerTest("testMNodeMethodWithPortalQuota"));
+                suite.addTest(new QuotaServiceManagerTest("testNoEnoughQuota"));
+                suite.addTest(new QuotaServiceManagerTest("testNoSubscriberHeader"));
+                suite.addTest(new QuotaServiceManagerTest("testDelinquentUser"));
+            }
+        } catch (Exception e) {
+            fail("Can't run the junit test since Metacat can't check if the quota service is enabled " + e.getMessage());
+        }
         return suite;
     }
     
