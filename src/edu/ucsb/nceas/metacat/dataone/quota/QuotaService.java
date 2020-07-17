@@ -153,7 +153,7 @@ public abstract class QuotaService {
      * @throws InsufficientResources 
      * @throws UnsupportedEncodingException 
      */
-     protected int lookUpQuotaId(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
+     protected int checkQuota(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
         int quotaId = -1;
         boolean hasSpace = false;
         List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);

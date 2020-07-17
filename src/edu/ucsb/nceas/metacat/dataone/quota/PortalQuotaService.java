@@ -79,13 +79,13 @@ public class PortalQuotaService extends QuotaService{
         //report a portal usage in another thread
         if (method != null && method.equals(QuotaServiceManager.CREATEMETHOD)) {
             boolean checkSpace = true;
-            int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
+            int portalQuotaId = checkQuota(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
             createUsage(portalQuotaId, instanceId, portalQuantity);//report the usage in another thread
         } else if (method != null && method.equals(QuotaServiceManager.ARCHIVEMETHOD)) {
             if (isLastUnarchivedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
                 //take action only we are archiving the last object which hasn't been archived in the sid chain
                 boolean checkSpace = false;
-                int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
+                int portalQuotaId = checkQuota(checkSpace, subscriber, requestor.getValue(), QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
                 updateUsage(portalQuotaId, instanceId, portalQuantity);
             } else {
                 logMetacat.debug("PortalQuotaService.enforce - Metacat is not archiving the last object which hasn't been archived in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
@@ -95,7 +95,7 @@ public class PortalQuotaService extends QuotaService{
                  //take action only we are deleting the last object which hasn't been deleted in the sid chain
                  boolean checkSpace = false;
                  String dummyRequestor = null; //the requestor is the cn or mn subject, we just set it to null to eliminate the requestor filer
-                 int portalQuotaId = lookUpQuotaId(checkSpace, subscriber, dummyRequestor, QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
+                 int portalQuotaId = checkQuota(checkSpace, subscriber, dummyRequestor, QuotaTypeDeterminer.PORTAL, portalQuantity, instanceId);
                  deleteUsage(portalQuotaId, instanceId, portalQuantity);
              } else {
                  logMetacat.debug("PortalQuotaService.enforce - Metacat is not deleting the last object in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
