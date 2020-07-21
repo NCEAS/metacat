@@ -693,10 +693,6 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       NodeReference fakeMemberNode = new NodeReference();
       fakeMemberNode.setValue("urn:node:Fake_Member_Node_ID");
       newSysMeta.setAuthoritativeMemberNode(fakeMemberNode);
-      newSysMeta.setOriginMemberNode(fakeMemberNode);
-      newSysMeta.setSerialVersion(fakeVersion);
-      newSysMeta.setDateSysMetadataModified(fakeDate);
-      newSysMeta.setDateUploaded(fakeDate);
       // do the update
       Identifier updatedPid = 
         MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
@@ -704,13 +700,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       // get the updated system metadata
       SystemMetadata updatedSysMeta = 
         MNodeService.getInstance(request).getSystemMetadata(session, updatedPid);
-      // Make sure that the MN updated the fields that users don't have access to
-      assertTrue(updatedSysMeta.getAuthoritativeMemberNode() != fakeMemberNode);
-      assertTrue(updatedSysMeta.getOriginMemberNode() != fakeMemberNode);
-      assertTrue(updatedSysMeta.getSerialVersion() != fakeVersion);
-      assertTrue(updatedSysMeta.getDateUploaded() != fakeDate);
-      assertTrue(updatedSysMeta.getDateSysMetadataModified() != fakeDate);
-
+      assertTrue(updatedSysMeta.getAuthoritativeMemberNode() == fakeMemberNode);
       assertEquals(updatedPid.getValue(), newPid.getValue());
 
       //try to update an archived object and need to get an exception

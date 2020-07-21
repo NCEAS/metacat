@@ -448,7 +448,13 @@ public class MNodeService extends D1NodeService
         // set the originating node
         NodeReference originMemberNode = this.getCapabilities().getIdentifier();
         sysmeta.setOriginMemberNode(originMemberNode);
-        sysmeta.setAuthoritativeMemberNode(originMemberNode);
+
+        // if no authoritative MN, set it to the same
+        if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+                sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
+            sysmeta.setAuthoritativeMemberNode(originMemberNode);
+        }
+
         // set the submitter to match the certificate
         sysmeta.setSubmitter(subject);
         // set the dates
