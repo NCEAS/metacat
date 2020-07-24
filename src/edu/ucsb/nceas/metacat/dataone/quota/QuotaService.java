@@ -166,7 +166,7 @@ public abstract class QuotaService {
                     if (hardLimitObj != null) {
                         hardLimit = hardLimitObj.doubleValue();
                     }
-                    Double existedUsagesObj = quota.getUsage();
+                    Double existedUsagesObj = quota.getTotalUsage();
                     if (existedUsagesObj != null) {
                         existedUsages = existedUsagesObj.doubleValue();
                     }
