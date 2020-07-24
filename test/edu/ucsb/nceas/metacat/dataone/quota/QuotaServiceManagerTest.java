@@ -61,7 +61,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     private final static String DEFICIT_SUBSCRIBER = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
     private final static String DEFICIT_REQUESTOR = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
     
-    private static int maxAttempt = 20;
+    private static int maxAttempt = 30;
     private static String portalFilePath = "test/example-portal.xml";
     
     /**
@@ -327,7 +327,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
                 times ++;
             }
         }
-        assertTrue( reportIsDone == true);//make sure to check this variable.
+        assertTrue(reportIsDone == true);//make sure to check this variable.
         //it is ready check local database to see if we have those records
         rs = QuotaDBManagerTest.getResultSet(portalQuotaId, instanceId);
         index = 0;
@@ -519,7 +519,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         for (Quota quota : quotas) {
             if (quota.getHardLimit() >= 1) {
                 quotaId = quota.getId();
-                Double originalUsagesObj = quota.getUsage();
+                Double originalUsagesObj = quota.getTotalUsage();
                 if (originalUsagesObj != null) {
                     originalUsages = originalUsagesObj.doubleValue();
                 }
@@ -580,7 +580,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             double newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -642,7 +642,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -718,7 +718,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -769,7 +769,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         for (Quota quota : quotas) {
             if (quota.getHardLimit() >= 1) {
                 quotaId = quota.getId();
-                Double originalUsagesObj = quota.getUsage();
+                Double originalUsagesObj = quota.getTotalUsage();
                 if (originalUsagesObj != null) {
                     originalUsages = originalUsagesObj.doubleValue();
                 }
@@ -826,7 +826,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             double newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -899,7 +899,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -937,7 +937,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
         for (Quota quota : quotas) {
             if (quota.getHardLimit() >= 1) {
                 quotaId = quota.getId();
-                Double originalUsagesObj = quota.getUsage();
+                Double originalUsagesObj = quota.getTotalUsage();
                 if (originalUsagesObj != null) {
                     originalUsages = originalUsagesObj.doubleValue();
                 }
@@ -1015,7 +1015,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             double newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1082,7 +1082,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1140,7 +1140,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1208,7 +1208,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1298,7 +1298,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1367,7 +1367,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1452,7 +1452,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
@@ -1528,7 +1528,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             newUsages = 0;
             for (Quota quota : quotas) {
                 if (quota.getId() == quotaId) {
-                    Double newUsagesObj = quota.getUsage();
+                    Double newUsagesObj = quota.getTotalUsage();
                     if (newUsagesObj != null) {
                         newUsages = newUsagesObj.doubleValue();
                     }
