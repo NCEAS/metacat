@@ -61,7 +61,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     private final static String DEFICIT_SUBSCRIBER = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
     private final static String DEFICIT_REQUESTOR = "CN=Robert Nahf A579,O=Google,C=US,DC=cilogon,DC=org";
     
-    private static int maxAttempt = 30;
+    private static int maxAttempt = 50;
     private static String portalFilePath = "test/example-portal.xml";
     
     /**
@@ -1625,7 +1625,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
             HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysmeta);
             QuotaServiceManager.getInstance().enforce(SUBSCRIBERWITHOUTENOUGHQUOTA, submitter, sysmeta, QuotaServiceManager.CREATEMETHOD);
             fail("Test can't get here since the user doesn't have enough quota");
-        } catch (InsufficientResources e) {
+        } catch (Exception e) {
             assertTrue(e.getMessage().contains(DELINGUENT_REQUESTOR));
         }
     }

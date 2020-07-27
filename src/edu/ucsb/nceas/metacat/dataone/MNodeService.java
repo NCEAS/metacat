@@ -339,6 +339,8 @@ public class MNodeService extends D1NodeService
             QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
         } catch (InsufficientResources e) {
             throw new ServiceFailure(serviceFailureCode, "The user doesn't have enough quota to delete the pid " + id.getValue() + " since " + e.getMessage());
+        } catch (InvalidRequest e) {
+            throw new InvalidToken("2903", "The quota service in the delete action has an invalid request - " + e.getMessage());
         }
         
     	
@@ -785,8 +787,11 @@ public class MNodeService extends D1NodeService
         
         //check the if it has enough quota if th quota service is enabled
         String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
-        QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
-
+        try {
+            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
+        } catch (NotFound e) {
+            throw new InvalidRequest("1102", "Can't find the resource " + e.getMessage());
+        }
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
         
@@ -2830,6 +2835,8 @@ public class MNodeService extends D1NodeService
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 
 	          } catch (InsufficientResources e) {
 	              throw new ServiceFailure("2912", "The user doesn't have enough quota to perform this request " + e.getMessage());
+	          } catch (InvalidRequest ee) {
+                  throw new InvalidToken("2913", "The request is invalid - " + ee.getMessage());
 	          } finally {
 	              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	              logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");

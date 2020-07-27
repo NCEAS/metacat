@@ -167,11 +167,15 @@ public class QuotaServiceManager {
      * @param sysmeta  the system metadata of the object which will use the quota
      * @param method  the method name which will call the createUsage method (create or update
      * @throws InsufficientResources 
+     * @throws InvalidRequest 
+     * @throws ServiceFailure 
+     * @throws NotFound 
+     * @throws NotImplemented 
      */
-    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources {
+    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources, InvalidRequest, ServiceFailure, NotImplemented, NotFound {
         long start = System.currentTimeMillis();
         if (enabled) {
-            try {
+           try {
                 if (requestor == null) {
                     throw new InvalidRequest("1102", "The quota subscriber, requestor can't be null");
                 }
@@ -191,15 +195,9 @@ public class QuotaServiceManager {
                 } else {
                     throw new InvalidRequest("1102", "QuotaServiceManager.enforce - Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
                 }
-            } catch (InsufficientResources e) {
-                throw e;
-            } catch (NotFound e) {
-                throw new InsufficientResources("1160", "QuotaServiceManager.enforce - The requestor " + requestor.getValue() + " can't request quotas since " + e.getMessage());
-            } catch (Exception e) {
-                e.printStackTrace();
-                //swallow other exceptions so the MN.create/update methods can keep going
-                logMetacat.error("QuotaServiceManager.enforce - Metacat can't enforce the quota service since " + e.getMessage() +". However, the issue will be swallowed so the MN/CN process can keep going.");
-            }
+           } catch (UnsupportedEncodingException e) {
+               throw new ServiceFailure("1190", "QuotaServiceManager.enforce - Metacat doesn't support the encoding format " + e.getMessage() + " for the pid " + sysmeta.getIdentifier().getValue());
+           }
         } else {
             logMetacat.info("QuotaServiceManager.enforce - the quota services are disabled");
         }

@@ -89,7 +89,7 @@ public abstract class QuotaService {
                         Identifier identifier = new Identifier();
                         identifier.setValue(guid);
                         SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
-                        if(!sysmeta.getArchived()) {
+                        if(sysmeta.getArchived() == null || !sysmeta.getArchived()) {
                             lastOne = false;//found one which is not archived and its guid doesn't equals the pid
                             logMetacat.debug("QuotaService.isLastUnarchivedInChain - found the guid " + guid + " in the chain with sid " + sid +" hasn't been archived. So the whole chain hasn't been archived.");
                             break;
