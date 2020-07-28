@@ -3963,6 +3963,8 @@ public class MetacatHandler {
         String serverUrl = "";
         String locationBase = "";
         String entryBase = "";
+        String portalBase = "";
+        List<String> portalFormats = new ArrayList();
 
         try {
             serverUrl = SystemUtil.getSecureServerURL();
@@ -3974,6 +3976,16 @@ public class MetacatHandler {
                                 "could not be found: " + pnfe.getMessage());
         }
 
+        try {
+            portalBase = PropertyService.getProperty("sitemap.entry.portal.base");
+            portalFormats.addAll(
+                Arrays.asList(PropertyService.getProperty("sitemap.entry.portal.formats").split(";"))
+            );
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.info("MetacatHandler.scheduleSitemapGeneration - " +
+                            "Could not get portal-specific sitemap properties: " + pnfe.getMessage());
+        }
+
         // Prepend server URL to locationBase if needed
         if (!locationBase.startsWith("http")) {
             locationBase = serverUrl + locationBase;
@@ -3983,8 +3995,13 @@ public class MetacatHandler {
         if (!entryBase.startsWith("http")) {
             entryBase = serverUrl + entryBase;
         }
-        
-        Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+
+        // Prepend server URL to portalBase if needed
+        if (!portalBase.startsWith("http")) {
+            portalBase = serverUrl + portalBase;
+        }
+
+        Sitemap smap = new Sitemap(directory, locationBase, entryBase, portalBase, portalFormats);
         long firstDelay = 10000; // in milliseconds
 
         timer.schedule(smap, firstDelay, sitemapInterval);
