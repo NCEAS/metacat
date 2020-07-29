@@ -216,6 +216,7 @@ public class Sitemap extends TimerTask {
         String query =
             "SELECT " +
                 "identifier.guid as pid, " +
+                "systemmetadata.series_id as sid, " +
                 "systemmetadata.date_modified as lastmod, " +
                 "systemmetadata.object_format as format " +
             "FROM identifier " +
@@ -285,8 +286,8 @@ public class Sitemap extends TimerTask {
                     document.appendChild(rootNode);
                 }
 
-                Element urlElement = createSitemapEntry(document,
-                        rs.getString(1), rs.getString(2), rs.getString(3));
+                Element urlElement = createSitemapEntry(document, rs.getString(1), rs.getString(2), rs.getString(3),
+                        rs.getString(4));
                 rootNode.appendChild(urlElement);
                 counter++;
             }
@@ -345,13 +346,15 @@ public class Sitemap extends TimerTask {
      *                 element
      * @param pid      The identifier to be turned into a URL and written in the
      *                 sitemap file
+     * @param sid      The serids id to be turned into a URL and written in the
+     *                 sitemap file. Used for portals.
      * @param lastmod  The datetime at which the objec associated with `pid` was
      *                 last modified
      * @param format   The format of the object associated with `pid`
      *
      * @return The newly-created `url` element
      */
-    private Element createSitemapEntry(Document document, String pid, String lastmod, String format)
+    private Element createSitemapEntry(Document document, String pid, String sid, String lastmod, String format)
     {
         Element urlElement = document.createElement("url");
 
@@ -363,11 +366,20 @@ public class Sitemap extends TimerTask {
             // Dynamically generate the url text from the PID
             StringBuffer url = new StringBuffer();
 
+            // url
+            // Does different stuff depending on whether this is a portal or not
             if (portalFormats.contains(format)) {
                 url.append(portalBase);
 
                 if (!portalBase.endsWith("/")) {
                     url.append("/");
+                }
+
+                // Use a SID only if we have one (we should), otherwise use the pid
+                if (sid != null) {
+                    url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(sid, "UTF-8")));
+                } else {
+                    url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(pid, "UTF-8")));
                 }
             } else {
                 url.append(entryBase);
@@ -375,10 +387,9 @@ public class Sitemap extends TimerTask {
                 if (!entryBase.endsWith("/")) {
                     url.append("/");
                 }
-            }
 
-            url.append(StringEscapeUtils.escapeXml(
-                    URLEncoder.encode(pid, "UTF-8")));
+                url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(pid, "UTF-8")));
+            }
 
             // loc
             Element locElement = document.createElement("loc");
