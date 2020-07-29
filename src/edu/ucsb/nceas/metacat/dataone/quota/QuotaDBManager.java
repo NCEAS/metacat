@@ -49,6 +49,9 @@ public class QuotaDBManager {
     public static final String DATEREPORTED = "date_reported";
     public static final String OBJECT = "object";
     public static final String NODEID = "node_id";
+    public static final String SUBSCRIBER = "subscriber";
+    public static final String QUOTATYPE = "quota_type";
+    public static final String REQUESTOR = "requestor";
     
     private static Log logMetacat  = LogFactory.getLog(QuotaDBManager.class);
     
@@ -67,8 +70,8 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.createUsage");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String fields = QUOTAID + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID;
-            String values = "?,?,?,?,?,?";
+            String fields = QUOTAID + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID + "," + SUBSCRIBER + "," + QUOTATYPE + "," + REQUESTOR;
+            String values = "?,?,?,?,?,?,?,?,?";
             if (date != null) {
                 fields = fields + "," + DATEREPORTED;
                 values = values + ",?";
@@ -86,14 +89,27 @@ public class QuotaDBManager {
             stmt.setString(4, usage.getObject());
             stmt.setString(5, usage.getStatus());
             stmt.setString(6, usage.getNodeId());
+            
+            if (usage instanceof LocalUsage ) {
+                LocalUsage localUsage = (LocalUsage) usage;
+                stmt.setString(7, localUsage.getSubscriber());
+                stmt.setString(8, localUsage.getQuotaType());
+                stmt.setString(9, localUsage.getRequestor());
+                
+            } else {
+                stmt.setString(7, null);
+                stmt.setString(8, null);
+                stmt.setString(9, null);
+            }
+            
             if (date != null) {
-                stmt.setTimestamp(7, new Timestamp(date.getTime()));
+                stmt.setTimestamp(10, new Timestamp(date.getTime()));
             }
             if (usage.getId() != null && usage.getId().intValue() > 0) {
                 if (dateIsNull) {
-                    stmt.setInt(7, usage.getId());
+                    stmt.setInt(10, usage.getId());
                 } else {
-                    stmt.setInt(8, usage.getId());
+                    stmt.setInt(11, usage.getId());
                 }
             }
             logMetacat.debug("QuotaDBManager.createUsage - the create usage query is " + stmt.toString());

@@ -51,6 +51,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 public abstract class QuotaService {
     private static Log logMetacat  = LogFactory.getLog(QuotaService.class);
     public static String nodeId = Settings.getConfiguration().getString("dataone.nodeId");
+    public static int DEFAULT_QUOTA_ID = -1;
     
     protected static ExecutorService executor = null;
     protected static BookKeeperClient client = null;
@@ -154,7 +155,7 @@ public abstract class QuotaService {
      * @throws UnsupportedEncodingException 
      */
      protected int checkQuota(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
-        int quotaId = -1;
+        int quotaId = DEFAULT_QUOTA_ID;
         boolean hasSpace = false;
         List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);
         for (Quota quota : quotas) {
