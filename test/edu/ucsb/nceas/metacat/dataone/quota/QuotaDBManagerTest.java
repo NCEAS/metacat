@@ -210,6 +210,65 @@ public class QuotaDBManagerTest  extends MCTestCase {
         int remotedIdFromDB = QuotaDBManager.lookupRemoteUsageId(quotaId, instanceId);
         assertTrue(remotedIdFromDB == remoteId);
         
+        //test the case - there is no remote id saved locally
+        String instanceId2 = "testcreateusage2" + System.currentTimeMillis() + Math.random() * 10000;
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId2);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        QuotaDBManager.createUsage(usage, null);
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId2);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        QuotaDBManager.createUsage(usage, null);
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId2);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.DELETED);
+        usage.setNodeId(QuotaService.nodeId);
+        QuotaDBManager.createUsage(usage, null);
+        remotedIdFromDB = QuotaDBManager.lookupRemoteUsageId(quotaId, instanceId2);
+        assertTrue(remotedIdFromDB == BookKeeperClient.DEFAULT_REMOTE_USAGE_ID);
+        
+        // test the case - mixture of the records with/without remote id
+        String instanceId3 = "testcreateusage2" + System.currentTimeMillis() + Math.random() * 10000;
+        remoteId = (new Double (Math.random() * 100000000)).intValue();
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId3);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.ACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        QuotaDBManager.createUsage(usage, null);
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId3);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.INACTIVE);
+        usage.setNodeId(QuotaService.nodeId);
+        usage.setId(remoteId);
+        QuotaDBManager.createUsage(usage, now);
+        usage = new Usage();
+        usage.setObject(QuotaServiceManager.USAGE);
+        usage.setQuotaId(quotaId);
+        usage.setInstanceId(instanceId3);
+        usage.setQuantity(quantity);
+        usage.setStatus(QuotaServiceManager.DELETED);
+        usage.setNodeId(QuotaService.nodeId);
+        QuotaDBManager.createUsage(usage, null);
+        remotedIdFromDB = QuotaDBManager.lookupRemoteUsageId(quotaId, instanceId3);
+        assertTrue(remotedIdFromDB == remoteId);
     }
     
     /**

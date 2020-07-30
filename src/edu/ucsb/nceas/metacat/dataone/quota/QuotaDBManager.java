@@ -197,9 +197,13 @@ public class QuotaDBManager {
             stmt = dbConn.prepareStatement(query);
             logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - the select query is " + query);
             rs = stmt.executeQuery();
-            if (rs.next()) {
-                remoteId = rs.getInt(1);//It may have multiple rows. They all should have the same value. So we only choose the first one.
-                logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db, Metacat find the cached remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
+            while (rs.next()) {
+                //make sure it is greater than 0, so it is not empty.
+                if (rs.getInt(1) > 0) {
+                    remoteId = rs.getInt(1);//It may have multiple rows. They all should have the same value. So we only choose the first one.
+                    logMetacat.debug("QuotaDBManager.lookupRemoteUsageId - in the local db, Metacat find the cached remote usage id " + remoteId + " with quota id " + quotaId + " and instance id " + instanceId);
+                    break;
+                }
             }
         } finally {
             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
