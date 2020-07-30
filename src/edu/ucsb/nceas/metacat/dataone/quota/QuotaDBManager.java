@@ -66,16 +66,16 @@ public class QuotaDBManager {
         DBConnection dbConn = null;
         int serialNumber = -1;
         PreparedStatement stmt = null;
-        boolean dateIsNull = true;
+        boolean quotaIdExist = false;
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.createUsage");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String fields = QUOTAID + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID + "," + SUBSCRIBER + "," + QUOTATYPE + "," + REQUESTOR;
+            String fields = DATEREPORTED + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID + "," + SUBSCRIBER + "," + QUOTATYPE + "," + REQUESTOR;
             String values = "?,?,?,?,?,?,?,?,?";
-            if (date != null) {
-                fields = fields + "," + DATEREPORTED;
+            if (usage.getQuotaId() != null && usage.getQuotaId().intValue() > 0) {
+                fields = fields + "," + QUOTAID;
                 values = values + ",?";
-                dateIsNull = false;
+                quotaIdExist = true;
             } 
             if (usage.getId() != null && usage.getId().intValue() > 0) {
                 fields = fields + "," + USAGEREMOTEID;
@@ -84,6 +84,11 @@ public class QuotaDBManager {
             String query = "insert into " + TABLE + " ( " + fields + " ) values ( " + values + " )";
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, usage.getQuotaId());
+            if (date == null) {
+                stmt.setTimestamp(1, null);
+            } else {
+                stmt.setTimestamp(1, new Timestamp(date.getTime()));
+            }
             stmt.setString(2, usage.getInstanceId());
             stmt.setDouble(3, usage.getQuantity());
             stmt.setString(4, usage.getObject());
@@ -102,14 +107,14 @@ public class QuotaDBManager {
                 stmt.setString(9, null);
             }
             
-            if (date != null) {
-                stmt.setTimestamp(10, new Timestamp(date.getTime()));
+            if (quotaIdExist) {
+                stmt.setInt(10, usage.getQuotaId());
             }
             if (usage.getId() != null && usage.getId().intValue() > 0) {
-                if (dateIsNull) {
-                    stmt.setInt(10, usage.getId());
-                } else {
+                if (quotaIdExist) {
                     stmt.setInt(11, usage.getId());
+                } else {
+                    stmt.setInt(10, usage.getId());
                 }
             }
             logMetacat.debug("QuotaDBManager.createUsage - the create usage query is " + stmt.toString());
