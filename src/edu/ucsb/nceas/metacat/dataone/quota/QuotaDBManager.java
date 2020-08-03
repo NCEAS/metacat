@@ -83,7 +83,6 @@ public class QuotaDBManager {
             }
             String query = "insert into " + TABLE + " ( " + fields + " ) values ( " + values + " )";
             stmt = dbConn.prepareStatement(query);
-            stmt.setInt(1, usage.getQuotaId());
             if (date == null) {
                 stmt.setTimestamp(1, null);
             } else {
