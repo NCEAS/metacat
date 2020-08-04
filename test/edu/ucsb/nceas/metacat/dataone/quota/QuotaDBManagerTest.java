@@ -81,6 +81,9 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getTimestamp(5).compareTo((new Timestamp(now.getTime()))) == 0);
         assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
         assertTrue(rs.getString(8).equals(QuotaService.nodeId));
+        assertTrue(rs.getString(9) == null);
+        assertTrue(rs.getString(10) == null);
+        assertTrue(rs.getString(11) == null);
         rs.close();
         
         
@@ -105,6 +108,9 @@ public class QuotaDBManagerTest  extends MCTestCase {
         assertTrue(rs.getTimestamp(5) == null);
         assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
         assertTrue(rs.getString(8).equals(QuotaService.nodeId));
+        assertTrue(rs.getString(9) == null);
+        assertTrue(rs.getString(10) == null);
+        assertTrue(rs.getString(11) == null);
         rs.close();
         
         //create another unreported event
@@ -293,6 +299,19 @@ public class QuotaDBManagerTest  extends MCTestCase {
         QuotaDBManager.createUsage(usage, null);
         int remotedIdFromDB = QuotaDBManager.lookupRemoteUsageId(QuotaService.DEFAULT_QUOTA_ID, instanceId3);
         assertTrue(remotedIdFromDB == BookKeeperClient.DEFAULT_REMOTE_USAGE_ID);
+        ResultSet rs = getResultSet(subscriber, QuotaTypeDeterminer.PORTAL, instanceId3);
+        assertTrue(rs.next());
+        assertTrue(rs.getInt(1) > 0);
+        assertTrue(rs.getInt(2) == 0);
+        assertTrue(rs.getString(3).equals(instanceId3));
+        assertTrue(rs.getDouble(4) == quantity);
+        assertTrue(rs.getTimestamp(5) == null);
+        assertTrue(rs.getString(6).equals(QuotaServiceManager.ACTIVE));
+        assertTrue(rs.getString(8).equals(QuotaService.nodeId));
+        assertTrue(rs.getString(9).equals(subscriber));
+        assertTrue(rs.getString(10).equals(QuotaTypeDeterminer.PORTAL));
+        assertTrue(rs.getString(11).equals(requestor));
+        rs.close();
         
         usage = new LocalUsage();
         usage.setObject(QuotaServiceManager.USAGE);
@@ -336,8 +355,9 @@ public class QuotaDBManagerTest  extends MCTestCase {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + " from " + QuotaDBManager.TABLE + " where " + 
-                                            QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
+            String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," 
+                                     + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.SUBSCRIBER + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
+                                     + " from " + QuotaDBManager.TABLE + " where " + QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
             stmt.setString(2, instanceId);
@@ -347,6 +367,36 @@ public class QuotaDBManagerTest  extends MCTestCase {
         }
         return rs;
     }
+     
+     /**
+      * Get the result set from a query matching the given quota id and instance id.
+      * @param subscriber  the subscriber of the quota
+      * @param quotaType  the type of the quota
+      * @param instanceId  the instance id in the query
+      * @return the result set after executing the query
+      * @throws Exception
+      */
+      static ResultSet getResultSet(String subscriber, String quotaType, String instanceId) throws Exception {
+         DBConnection dbConn = null;
+         int serialNumber = -1;
+         PreparedStatement stmt = null;
+         ResultSet rs = null;
+         try {
+             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
+             serialNumber = dbConn.getCheckOutSerialNumber();
+             String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," 
+                                      + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.SUBSCRIBER + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
+                                      + " from " + QuotaDBManager.TABLE + " where " + QuotaDBManager.SUBSCRIBER + "=? AND " + QuotaDBManager.INSTANCEID  + "=? AND " + QuotaDBManager.QUOTATYPE + "=?" ;
+             stmt = dbConn.prepareStatement(query);
+             stmt.setString(1, subscriber);
+             stmt.setString(2, instanceId);
+             stmt.setString(3, quotaType);
+             rs = stmt.executeQuery();
+         } finally {
+             DBConnectionPool.returnDBConnection(dbConn, serialNumber);
+         }
+         return rs;
+     }
     
     /**
      * Get the result set from a query matching the given usage id
