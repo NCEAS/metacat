@@ -1051,7 +1051,7 @@
 		            	    <exclude name="solrconfig.xml" />
 		            </fileset>
 		        </copy>
-		<copy file="lib/log4j.properties" todir="${war.webinf}"
+		<copy file="lib/log4j2.properties" todir="${war.classes}"
 			filtering="yes" /> 
 		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
 			filtering="yes" />
