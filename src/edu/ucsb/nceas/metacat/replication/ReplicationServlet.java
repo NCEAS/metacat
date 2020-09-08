@@ -44,7 +44,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -55,8 +56,8 @@ public class ReplicationServlet extends HttpServlet {
 
 	private static final long serialVersionUID = -2898600143193513155L;
 
-	private static Logger logReplication = Logger.getLogger("ReplicationLogging");
-	private static Logger logMetacat = Logger.getLogger(ReplicationServlet.class);
+	private static Log logReplication = LogFactory.getLog("ReplicationLogging");
+	private static Log logMetacat = LogFactory.getLog(ReplicationServlet.class);
 
 	/**
 	 * Initialize the servlet by creating appropriate database connections

@@ -35,7 +35,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -48,7 +49,7 @@ import edu.ucsb.nceas.metacat.database.DatabaseService;
 public class ReplicationServerList
 {
   private static Vector<ReplicationServer> serverList = null; //Vector to store server list
-  private static Logger logMetacat = Logger.getLogger(ReplicationServerList.class);
+  private static Log logMetacat = LogFactory.getLog(ReplicationServerList.class);
 
   /**
    * constructor of ReplicationServerList
