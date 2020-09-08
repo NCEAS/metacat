@@ -13,7 +13,8 @@ import java.util.Map;
 import java.util.Vector;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
@@ -59,7 +60,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 
 public class DatapackageSummarizer {
 
-	private static Logger logMetacat = Logger.getLogger(DatapackageSummarizer.class);
+	private static Log logMetacat = LogFactory.getLog(DatapackageSummarizer.class);
 	
 	public static String rdf = "http://www.w3.org/1999/02/22-rdf-syntax-ns#";
 	public static String rdfs = "http://www.w3.org/2000/01/rdf-schema#";

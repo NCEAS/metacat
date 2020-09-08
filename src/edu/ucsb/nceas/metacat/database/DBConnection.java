@@ -30,7 +30,8 @@ package edu.ucsb.nceas.metacat.database;
 import java.io.*;
 import java.sql.*;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -61,7 +62,7 @@ public class DBConnection
   private static String  userName;
   private static String  passWord;
   
-  private static Logger logMetacat = Logger.getLogger(DBConnection.class);
+  private static Log logMetacat = LogFactory.getLog(DBConnection.class);
 
   /**
    * Default constructor of the DBConnection class 

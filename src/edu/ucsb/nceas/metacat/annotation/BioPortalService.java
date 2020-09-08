@@ -5,7 +5,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.net.URLEncoder;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
@@ -17,7 +18,7 @@ import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class BioPortalService {
 	
-	private static Logger logMetacat = Logger.getLogger(BioPortalService.class);
+	private static Log logMetacat = LogFactory.getLog(BioPortalService.class);
 	
     // for looking up concepts in BioPortal
     private static final String REST_URL = "http://data.bioontology.org";
