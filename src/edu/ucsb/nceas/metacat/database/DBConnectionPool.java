@@ -132,7 +132,7 @@ public class DBConnectionPool implements Runnable
   {
     if (instance == null) {
       instance = new DBConnectionPool();
-      Logger log = Logger.getLogger(DBConnectionPool.class);
+      Log log = LogFactory.getLog(DBConnectionPool.class);
       log.debug("DBConnectionPool.getInstance - MaximumConnectionNumber: " + MAXIMUMCONNECTIONNUMBER);
       log.debug("DBConnectionPool.getInstance - Intial connection number: " + INITIALCONNECTIONNUMBER);
       log.debug("DBConnectionPool.getInstance - Increated connection Number: " + INCREASECONNECTIONNUMBER);

@@ -56,7 +56,7 @@ import javax.xml.bind.DatatypeConverter;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.formats.ObjectFormatCache;
@@ -127,7 +127,7 @@ public abstract class D1NodeService {
     
   public static final String DELETEDMESSAGE = "The object with the PID has been deleted from the node.";
     
-  private static Logger logMetacat = Logger.getLogger(D1NodeService.class);
+  private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(D1NodeService.class);
 
   /** For logging the operations */
   protected HttpServletRequest request;

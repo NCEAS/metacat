@@ -31,7 +31,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -43,7 +43,7 @@ public abstract class BaseAccess {
     protected abstract BaseDAO populateDAO(ResultSet resultSet) throws SQLException ;
     
     protected void closeDBObjects(PreparedStatement pstmt, DBConnection conn,  
-    		int serialNumber, Logger logMetacat) {
+    		int serialNumber, Log logMetacat) {
 		try {
 			if (pstmt != null) {
 				pstmt.close();

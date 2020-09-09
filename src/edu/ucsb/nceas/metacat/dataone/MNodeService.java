@@ -66,7 +66,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -216,7 +216,7 @@ public class MNodeService extends D1NodeService
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
 
 	/* the logger instance */
-    private Logger logMetacat = null;
+    private org.apache.commons.logging.Log logMetacat = null;
     
     /* A reference to a remote Memeber Node */
     //private MNode mn;
@@ -267,7 +267,7 @@ public class MNodeService extends D1NodeService
      */
     private MNodeService(HttpServletRequest request) {
         super(request);
-        logMetacat = Logger.getLogger(MNodeService.class);
+        logMetacat = LogFactory.getLog(MNodeService.class);
         
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
