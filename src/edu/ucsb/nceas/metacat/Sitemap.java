@@ -37,7 +37,8 @@ import java.util.List;
 
 import java.net.URLEncoder;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -88,7 +89,7 @@ import org.dataone.service.types.v2.ObjectFormat;
  * @author Bryce Mecum
  */
 public class Sitemap extends TimerTask {
-    private static Logger logMetacat = Logger.getLogger(Sitemap.class);
+    private static Log logMetacat = LogFactory.getLog(Sitemap.class);
 
     /** Create just a single document builder factory and builder to be
      * re-used through this class.

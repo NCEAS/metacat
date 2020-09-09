@@ -34,7 +34,8 @@ import java.util.Iterator;
 import java.util.TreeSet;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A Class that represents an XML element and its contents,
@@ -42,7 +43,7 @@ import org.apache.log4j.Logger;
  */
 public class ElementNode extends BasicNode {
 
-  private static Logger logMetacat = Logger.getLogger(ElementNode.class);
+  private static Log logMetacat = LogFactory.getLog(ElementNode.class);
 
   /** 
    * Construct a new ElementNode instance, and recursively create its children

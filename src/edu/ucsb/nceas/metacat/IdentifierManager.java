@@ -37,7 +37,8 @@ import java.util.Hashtable;
 import java.util.List;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.BaseException;
@@ -93,7 +94,7 @@ public class IdentifierManager {
      * The single instance of the manager that is always returned.
      */
     private static IdentifierManager self = null;
-    private Logger logMetacat = Logger.getLogger(IdentifierManager.class);
+    private Log logMetacat = LogFactory.getLog(IdentifierManager.class);
 
     /**
      * A private constructor that initializes the class when getInstance() is

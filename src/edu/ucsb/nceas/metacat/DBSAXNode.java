@@ -32,7 +32,8 @@ import java.sql.SQLException;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -47,7 +48,7 @@ public class DBSAXNode extends BasicNode {
 
   private DBConnection	connection;
   private DBSAXNode	parentNode;
-  private Logger logMetacat = Logger.getLogger(DBSAXNode.class);
+  private Log logMetacat = LogFactory.getLog(DBSAXNode.class);
 
   /**
    * Construct a new node instance for DOCUMENT nodes
