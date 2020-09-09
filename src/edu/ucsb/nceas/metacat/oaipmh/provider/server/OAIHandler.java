@@ -37,7 +37,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
 
 import edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml2oai_dc;
@@ -67,7 +68,7 @@ public class OAIHandler extends HttpServlet {
    * Class fields
    */
   
-  private static final Logger log = Logger.getLogger(OAIHandler.class);
+  private static final Log log = LogFactory.getLog(OAIHandler.class);
   private static final long serialVersionUID = 1L;
   private static final String VERSION = "1.5.57";
   private static boolean debug = false;

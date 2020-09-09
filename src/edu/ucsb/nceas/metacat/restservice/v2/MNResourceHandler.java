@@ -44,7 +44,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
@@ -179,7 +179,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     public MNResourceHandler(ServletContext servletContext,
             HttpServletRequest request, HttpServletResponse response) {
     	super(servletContext, request, response);
-        logMetacat = Logger.getLogger(MNResourceHandler.class);
+        logMetacat = LogFactory.getLog(MNResourceHandler.class);
     }
     
     @Override

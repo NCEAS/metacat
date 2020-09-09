@@ -30,7 +30,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 /**
  * Metacat implemantation of Earthgrid (Ecogrid) REST API as a servlet. In each request
@@ -40,7 +42,7 @@ import org.apache.log4j.Logger;
  */
 public class D1RestServlet extends HttpServlet {
 
-    protected Logger logMetacat;
+    protected Log logMetacat;
     protected D1ResourceHandler handler;
 
     /**
@@ -62,7 +64,7 @@ public class D1RestServlet extends HttpServlet {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logMetacat = Logger.getLogger(this.getClass());
+        logMetacat = LogFactory.getLog(this.getClass());
         super.init(config);
     }
 

@@ -33,7 +33,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -71,7 +72,7 @@ public class PropertyService extends BaseService {
 
 	private static String RECOMMENDED_EXTERNAL_DIR = null;
 
-	private static Logger logMetacat = Logger.getLogger(PropertyService.class);
+	private static Log logMetacat = LogFactory.getLog(PropertyService.class);
 
 	/**
 	 * private constructor since this is a singleton

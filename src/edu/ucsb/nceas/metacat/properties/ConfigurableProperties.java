@@ -36,7 +36,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.TransformerException;
 
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
 
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -78,7 +79,7 @@ public class ConfigurableProperties extends BaseService implements PropertiesInt
 	
 	private static boolean bypassAlreadyChecked = false;
 	
-	private static Logger logMetacat = Logger.getLogger(ConfigurableProperties.class);
+	private static Log logMetacat = LogFactory.getLog(ConfigurableProperties.class);
 
 	/**
 	 * private constructor since this is a singleton
