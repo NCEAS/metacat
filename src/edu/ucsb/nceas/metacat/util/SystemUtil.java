@@ -34,7 +34,8 @@ import java.util.regex.Pattern;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.sun.net.ssl.HttpsURLConnection;
 
@@ -51,7 +52,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 
 public class SystemUtil {
 
-	private static Logger logMetacat = Logger.getLogger(SystemUtil.class);
+	private static Log logMetacat = LogFactory.getLog(SystemUtil.class);
 	private static String METACAT_SERVLET = "metacat";
 //	private static String METACAT_WEB_SERVLET = "metacatweb";
 	private static int OS_CLASS = 0;

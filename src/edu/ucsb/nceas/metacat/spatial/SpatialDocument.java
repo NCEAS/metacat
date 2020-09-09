@@ -44,7 +44,8 @@ import java.sql.ResultSet;
 import java.sql.PreparedStatement;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * 
@@ -55,7 +56,7 @@ public class SpatialDocument {
 
 	private DBConnection dbconn;
 
-	private static Logger log = Logger.getLogger(SpatialDocument.class.getName());
+	private static Log log = LogFactory.getLog(SpatialDocument.class.getName());
 
 	private SpatialFeatureSchema featureSchema = new SpatialFeatureSchema();
 

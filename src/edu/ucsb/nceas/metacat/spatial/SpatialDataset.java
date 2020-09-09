@@ -35,7 +35,8 @@ import org.geotools.feature.FeatureCollections;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,8 +65,8 @@ public class SpatialDataset {
   FeatureCollection polygonCollection = FeatureCollections.newCollection();
   FeatureCollection pointCollection = FeatureCollections.newCollection();
 
-  private static Logger log =
-      Logger.getLogger(SpatialDataset.class.getName());
+  private static Log log =
+      LogFactory.getLog(SpatialDataset.class.getName());
 
   /**
    *  empty constructor for SpatialDataset

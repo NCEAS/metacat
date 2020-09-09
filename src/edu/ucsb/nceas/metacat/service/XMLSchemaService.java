@@ -43,7 +43,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
@@ -66,7 +67,7 @@ public class XMLSchemaService extends BaseService {
 	
 	private static XMLSchemaService xmlSchemaService = null;
 	
-	private static Logger logMetacat = Logger.getLogger(XMLSchemaService.class);
+	private static Log logMetacat = LogFactory.getLog(XMLSchemaService.class);
 	
 	private static boolean useFullSchemaValidation = false;
 	

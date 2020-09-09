@@ -22,7 +22,8 @@
  */
 package edu.ucsb.nceas.metacat.spatial;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.geotools.feature.simple.SimpleFeatureTypeBuilder;
 import org.opengis.feature.simple.SimpleFeatureType;
 
@@ -36,7 +37,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class SpatialFeatureSchema {
 
-	private static Logger log = Logger.getLogger(SpatialFeatureSchema.class.getName());
+	private static Log log = LogFactory.getLog(SpatialFeatureSchema.class.getName());
 
 	public static String polygonShpUri = null;
 	public static String pointShpUri = null;
