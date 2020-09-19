@@ -51,8 +51,9 @@ public class HazelcastIndexEventLog implements IndexEventLog {
     /**
      * Constructor
      * @throws IOException
+     * @throws IndexEventLogException 
      */
-    public HazelcastIndexEventLog() throws IOException {
+    public HazelcastIndexEventLog() throws IOException, IndexEventLogException {
         String path = Settings.getConfiguration().getString("solr.homeDir");
         if(path == null || path.trim().equals("")) {
             path = System.getProperty("user.home");
@@ -61,6 +62,7 @@ public class HazelcastIndexEventLog implements IndexEventLog {
         lastProcessedDateFile = new File(pathDir, edu.ucsb.nceas.metacat.common.Settings.LASTPROCESSEDDATEFILENAME);
         if(!lastProcessedDateFile.exists()) {
             lastProcessedDateFile.createNewFile();
+            setLastProcessDate(new Date());
         }
     }
 
@@ -114,6 +116,10 @@ public class HazelcastIndexEventLog implements IndexEventLog {
             String dateStr = FileUtils.readFileToString(lastProcessedDateFile, "UTF-8");
             if(dateStr != null && !dateStr.trim().equals("")) {
                 date = format.parse(dateStr);
+            } else {
+                Date now = new Date();
+                setLastProcessDate(now);
+                return now;
             }
         } catch (IOException e) {
             throw new IndexEventLogException("HazelcastIndexEventLog.getLastProcessedDate - couldn't read the last processed date :", e);

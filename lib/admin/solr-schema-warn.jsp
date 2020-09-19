@@ -45,7 +45,7 @@
 <%@ include file="./header-section.jsp"%>
 
 <div class="document">
-	<h2>Database Install/Upgrade Utility</h2>
+	<h2>Solr Service Configuration</h2>
 	
 	<p><%@ include file="page-message-section.jsp"%></p>
     <p><div class="alert alert-error">

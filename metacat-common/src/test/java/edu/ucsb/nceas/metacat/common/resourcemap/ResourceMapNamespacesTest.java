@@ -31,7 +31,6 @@ import java.io.IOException;
 import java.util.List;
 
 import org.apache.commons.configuration.ConfigurationException;
-import org.apache.solr.client.solrj.SolrServer;
 import org.junit.Before;
 import org.junit.Test;
 

@@ -48,8 +48,8 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrQuery;
-import org.apache.solr.client.solrj.SolrServer;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
@@ -96,7 +96,7 @@ public class SolrIndex {
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
-    private SolrServer solrServer = null;
+    private SolrClient solrServer = null;
     private XMLNamespaceConfig xmlNamespaceConfig = null;
     private List<SolrField> sysmetaSolrFields = null;
 
@@ -507,13 +507,14 @@ public class SolrIndex {
 	        
 	        // insert the whole thing
 	        insertToIndex(doc);
+	        log.info("SolrIndex.insetFields - successfully added some extra solr index fields for the objec " + pid.getValue());
     	} catch (Exception e) {
     		String error = "SolrIndex.insetFields - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
     		    boolean deleteEvent = false;
             writeEventLog(null, pid, error, false);
             log.error(error, e);
     	}
-
+    	
     }
     
     /*
@@ -603,6 +604,7 @@ public class SolrIndex {
             writeEventLog(systemMetadata, pid, error, deleteEvent);
             log.error(error, e);
         }
+        log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
     }
    
     
@@ -690,7 +692,7 @@ public class SolrIndex {
                 writeEventLog(sysmeta, pid, error, deleteEvent);
                 log.error(error, e);
             }
-            
+            log.info("SorIndex.remove - successfully removed the solr index for the pid " + pid.getValue());
         }
     }
     /**
@@ -1098,7 +1100,7 @@ public class SolrIndex {
      * Get the solrServer
      * @return
      */
-    public SolrServer getSolrServer() {
+    public SolrClient getSolrServer() {
         return solrServer;
     }
 
@@ -1106,7 +1108,7 @@ public class SolrIndex {
      * Set the solrServer. 
      * @param solrServer
      */
-    public void setSolrServer(SolrServer solrServer) {
+    public void setSolrServer(SolrClient solrServer) {
         this.solrServer = solrServer;
     }
     
@@ -1115,7 +1117,7 @@ public class SolrIndex {
      * @return an empty list if there is no index.
      * @throws SolrServerException
      */
-    public List<String> getSolrIds() throws SolrServerException {
+    public List<String> getSolrIds() throws SolrServerException, IOException {
         List<String> list = new ArrayList<String>();
         SolrQuery query = new SolrQuery(IDQUERY); 
         if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 

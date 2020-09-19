@@ -160,12 +160,41 @@ others are managed with the properties configuration utility.
 |                                      |                                                                             |                               |
 |                                      | Default Value: /var/metacat/temporary                                       |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
-| .. _solr.homeDir:                    |                                                                             |                               |
+
+Solr Properties
+----------------------
+
+Metacat's Solr properties are described below. Properties that can only 
+be edited manually in the ``metacat.properties`` file are marked. All 
+others are managed with the properties configuration utility.
+
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| Property                             | Description                                                                 | Example                       |
++======================================+=============================================================================+===============================+
+| .. _solr-baseURL:                    |                                                                             |                               |
 |                                      |                                                                             |                               |
-| solr.homeDir                         | The directory where the Metacat index component stores the SOLR index.      | /var/metacat/solr-home        |
-|                                      | The directory must be writable by the user that starts Tomcat.              |                               |
 |                                      |                                                                             |                               |
-|                                      | Default Value: /var/metacat/solr-home                                       |                               |
+| solr.baseURL                         | The URL of the Solr server which Metacat can access.                        | http://localhost:8983/solr    |
+|                                      |                                                                             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _solr-homeDir       :             |                                                                             |                               |
+|                                      |                                                                             |                               |
+| solr.homeDir                         | The Solr home directory (not to be confused with the Solr installation      | /var/metacat/solr-home2       |
+|                                      | directory) is where Solr manages core directories with index files.         |                               |
+|                                      | The directory must be writable by the user that starts the Solr service.    |                               |
+|                                      |                                                                             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. _solr-coreName:                   |                                                                             |                               |
+|                                      |                                                                             |                               |
+| solr.coreName                        | The name of the Solr core which holds the index of the Metacat objects.     | metacat-index                 |
+|                                      |                                                                             |                               |
+|                                      |                                                                             |                               |
++--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
+| .. solr-env-script-path:             |                                                                             |                               |
+|                                      |                                                                             |                               |
+| solr.env.script.path                 | An environment specific include file overrides defaults used by the         |/etc/default/solr.in.sh        |
+|                                      | bin/solr script. Metacat modifies this file to add the solr.home as the     |                               |
+|                                      | default data directory. This file should be writable by the Tomcat user.    |                               |
 +--------------------------------------+-----------------------------------------------------------------------------+-------------------------------+
 
 Database Properties

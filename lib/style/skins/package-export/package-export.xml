@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<style-set name="knb">
+    <!-- general login & search -->
+    <default-style>/style/skins/package-export/package-export.xsl</default-style>
+
+</style-set>

@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="2.7.0" />
+	<property name="metacatui-tag" value="2.8.4" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
     <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
@@ -895,7 +895,10 @@
 			<property name="metacat.dir" value="${basedir}"/>
 		</ant>
 		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
-		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war" excludes="WEB-INF/lib/log4j-1.2.8.jar"/>
+		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war">
+		         <exclude name="WEB-INF/lib/log4j-1.2.8.jar"/>
+		    	     <exclude name="WEB-INF/classes/log4j.properties"/>
+		     </zipfileset>
 	   </jar>
 		<copy file="${ecogrid-dir}/build/${metacat.context}-new.war"
 			tofile="${dist.dir}/${metacat.context}.war" overwrite="true" />
@@ -971,6 +974,9 @@
 			webxml="${build.war}/web.xml">
 			<fileset dir="${war.context}" />
 			<lib dir="${war.lib}" />
+			<classes dir="${war.classes}">
+				<exclude name="log4j.properties"/>
+		    </classes>
 			<webinf dir="${war.webinf}" />
 		</war>
 	</target>
@@ -980,6 +986,7 @@
 		description="Prepare files for creating a web archive (WAR)">
 
 		<property name="war.lib" value="${build.war}/lib" />
+		<property name="war.classes" value="${build.war}/classes" />
 		<property name="war.webinf" value="${build.war}/WEB-INF" />
 		<property name="war.context"
 			value="${build.war}/${metacat.context}" />
@@ -992,6 +999,7 @@
 		<property name="war.context.templates"
 			value="${war.context}${style-common-relpath}/templates" />
 		<mkdir dir="${war.lib}" />
+		<mkdir dir="${war.classes}" />
 		<mkdir dir="${war.webinf}" />
 		<mkdir dir="${war.context}" />
 		<mkdir dir="${war.webinf.sql}" />
@@ -1037,6 +1045,12 @@
 				<include name="skin.configs/**" />
 			</fileset>
 		</copy>
+		<copy todir="${war.classes}" filtering="yes">
+		            <fileset dir="metacat-common/src/main/resources/solr-home/conf">
+		                <exclude name="schema.xml" />
+		            	    <exclude name="solrconfig.xml" />
+		            </fileset>
+		        </copy>
 		<copy file="lib/log4j.properties" todir="${war.webinf}"
 			filtering="yes" /> 
 		<copy file="lib/hazelcast.xml" todir="${war.webinf}"
@@ -1226,6 +1240,7 @@
 					<include name="harvester.jar" />
 					<include name="${name}-junittests.jar" />
 				</fileset>
+				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
 			</classpath>
 
 			<formatter type="plain" />
@@ -1247,6 +1262,7 @@
 					<exclude name="**/MultiThreadClientIT.class" />
 					<exclude name="**/MultiThreadClientIT$1.class" />
 					<exclude name="**/AuthUtilIT.class" />
+          <exclude name="**/WrappingServletInputStream.class" />
 				</fileset>
 			</batchtest>
 		</junit>
@@ -1273,6 +1289,7 @@
 					<include name="harvester.jar" />
 					<include name="${name}-junittests.jar" />
 				</fileset>
+				<pathelement location="metacat-common/src/main/resources/solr-home/conf"/>
 			</classpath>
 
 			<formatter type="plain" />

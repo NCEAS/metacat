@@ -82,7 +82,7 @@ public class XMLAccessAccess extends BaseAccess {
 			String sqlReport = "XMLAccessAccess.getXMLAccessForDoc - SQL: " + sql;
 			sqlReport += " [" + guid + "]";
 			
-			logMetacat.info(sqlReport);
+			logMetacat.debug(sqlReport);
 			
 			pstmt.execute();
 			

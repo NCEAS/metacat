@@ -1,3 +1,6 @@
+.. _Solr installation page: ./install.html#solr-server
+
+
 Configuring Metacat
 ===================
 
@@ -226,8 +229,7 @@ property is also included in the :doc:`metacat-properties`.
    The Metacat Global Properties editing screen.
    
 When you save global properties, Metacat also saves a back-up file that is 
-located in ``/var/metacat/.metacat`` (on Linux) or 
-``C:\Program Files\metacat\.metacat`` (on Windows). When you update Metacat, 
+located in ``/var/metacat/.metacat`` (on Linux). When you update Metacat, 
 the system automatically locates the back-up file so you do not have to re-enter 
 the configuration settings.
 
@@ -246,6 +248,14 @@ HTTP Port         The non-secure port where Metacat will be available.
 HTTP SSL Port     The secure port where Metacat will be available. 
 Deploy Location   The directory where the application is deployed. 
 ================  ============================================================
+
+.. Note:: 
+
+  The Solr Home directory you choose should be writable/readable by the user solr.
+  
+  The Environment Overwrites File should be writable/readable by the user tomcat8.
+  
+  The section of Tomcat And Solr User Management on the `Solr installation page`_ will resolve this issue.
 
 Authentication Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -356,10 +366,39 @@ scripts and updates the database schema.
 Additional upgrade tasks may also run after the database upgrade is complete.
 For systems hosting large amounts of data, these upgrade routines can take time to complete.
 It is important to let the process complete before using Metacat otherwise your deployment may become unstable.
-   
 
-Geoserver Configuration (Highly Recommended)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Solr Server Configuration
+~~~~~~~~~~~~~~~~~~~~~~~~~
+Because the Solr Server Configuration is dependent on values specified in the 
+Global Properties section, the link to these settings does not become active 
+until after the global settings have been saved. Once the global settings have 
+been saved, Metacat automatically detects the status of the Solr Core and creates 
+or upgrades it if necessary (and with your permission). 
+
+
+.. figure:: images/screenshots/image073.png
+   :align: center
+
+.. Note:: 
+
+  Solr server should be running when you configure Metacat.
+   
+Troubleshooting
+...............
+If you click the Solr Configuration button and get the error message like 
+``Server refused connection at: http://localhost:8983/solr``, this means the 
+Solr server is not running and you need to start it.
+
+If you click the Create button to create the Solr core and get an error message 
+like ``Couldn't persist core properties to /var/metacat/solr-home2/``, this means 
+the solr user doesn't have the write permission to the Solr Home directory. You need
+to add the solr user to the tomcat group, restart Solr server and Tomcat, log in again
+and continue to configure Metacat. The instructions for adding users to groups can be found in the
+Tomcat And Solr User Management part of the `Solr installation page`_.
+
+Geoserver Configuration
+~~~~~~~~~~~~~~~~~~~~~~~
 .. sidebar:: Manual Geoserver Update
 
   Alternatively, you can change the Geoserver username and password manually by 

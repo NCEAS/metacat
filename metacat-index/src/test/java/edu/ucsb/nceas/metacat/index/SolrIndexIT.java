@@ -4,6 +4,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
+
+import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.util.ArrayList;
@@ -11,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.SolrParams;
@@ -223,16 +225,16 @@ public class SolrIndexIT  {
     /**
      * Do query - with no additional params
      */
-    public static String doQuery(SolrServer server)
-                    throws SolrServerException {
+    public static String doQuery(SolrClient server)
+                    throws SolrServerException, IOException {
     	return doQuery(server, null);
     }
     
     /**
      * Do query, allowing additional parameters
      */
-    public static String doQuery(SolrServer server, String moreParams)
-                    throws SolrServerException {
+    public static String doQuery(SolrClient server, String moreParams)
+                    throws SolrServerException, IOException{
                 StringBuffer request = new StringBuffer();
                 request.append("q=" + "*:*");
                 if (moreParams != null) {

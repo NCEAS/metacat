@@ -933,7 +933,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<str>1546024</str>"));
         assertTrue(resultStr.contains("<arr name=\"awardTitle\">"));
         assertTrue(resultStr.contains("<str>Scientia Arctica: A Knowledge Archive for Discovery and Reproducible Science in the Arctic</str>"));
-        assertTrue(resultStr.contains("<arr name=\"sem_annotation\"><str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
+        assertTrue(resultStr.contains("<arr name=\"sem_annotation\">"));
+        assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
         assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
     }
 }

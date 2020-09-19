@@ -376,11 +376,36 @@ public class D1NodeServiceTest extends MCTestCase {
 	/**
 	 * create system metadata with a specified id
 	 */
-	public SystemMetadata createSystemMetadata(Identifier id, Subject owner, InputStream object)
-	  throws Exception
-	{
+	public SystemMetadata createSystemMetadata(Identifier id, Subject owner, InputStream object) throws Exception {
 	    SystemMetadata sm = new SystemMetadata();
-	    sm.setSerialVersion(BigInteger.valueOf(1));
+	    addSystemMetadataInfo(sm, id, owner, object);
+        return sm;
+	}
+	
+	/**
+	 * Create a system metadata object with the v1 version
+	 * @param id
+	 * @param owner
+	 * @param object
+	 * @return
+	 * @throws Exception
+	 */
+	public org.dataone.service.types.v1.SystemMetadata createV1SystemMetadata(Identifier id, Subject owner, InputStream object) throws Exception {
+	          org.dataone.service.types.v1.SystemMetadata sm = new org.dataone.service.types.v1.SystemMetadata();
+	          addSystemMetadataInfo(sm, id, owner, object);
+	          return sm;
+	}
+	
+	/**
+	 * Add the system metadata information to a given system metadata object.
+	 * @param id
+	 * @param owner
+	 * @param object
+	 * @return
+	 * @throws Exception
+	 */
+	private void addSystemMetadataInfo(org.dataone.service.types.v1.SystemMetadata sm, Identifier id, Subject owner, InputStream object) throws Exception {
+        sm.setSerialVersion(BigInteger.valueOf(1));
         // set the id
         sm.setIdentifier(id);
         sm.setFormatId(ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId());
@@ -408,18 +433,17 @@ public class D1NodeServiceTest extends MCTestCase {
         nr.setValue(currentNodeId);
         sm.setOriginMemberNode(nr);
         sm.setAuthoritativeMemberNode(nr);
-		// set the access to public read
+        // set the access to public read
         AccessPolicy accessPolicy = new AccessPolicy();
         AccessRule allow = new AccessRule();
         allow.addPermission(Permission.READ);
         Subject publicSubject = new Subject();
         publicSubject.setValue(Constants.SUBJECT_PUBLIC);
-		allow.addSubject(publicSubject);
-		accessPolicy.addAllow(allow);
+        allow.addSubject(publicSubject);
+        accessPolicy.addAllow(allow);
         sm.setAccessPolicy(accessPolicy);
-        
-        return sm;
-	}
+}
+	
 	
 	/**
 	 * For fresh Metacat installations without the Object Format List

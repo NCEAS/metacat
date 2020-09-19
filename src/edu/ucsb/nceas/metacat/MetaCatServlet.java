@@ -26,6 +26,7 @@
 
 package edu.ucsb.nceas.metacat;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
@@ -79,7 +80,6 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.ResponseUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.metacat.workflow.WorkflowSchedulerClient;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -977,8 +977,9 @@ public class MetaCatServlet extends HttpServlet {
 				    //formatid will be set null here since this is metacat api
 				    String formatId = null;
 				    Checksum checksum = null;//for Metacat API, we don't calculate the checksum
+				    File file = null;
 					handler.handleInsertOrUpdateAction(request.getRemoteAddr(), request.getHeader("User-Agent"), response, out, params, userName,
-							groupNames, true, true, null, formatId, checksum);
+							groupNames, true, true, null, formatId, checksum, file);
 				} else {
 					response.setContentType("text/xml");
 					out.println("<?xml version=\"1.0\"?>");
@@ -1144,68 +1145,6 @@ public class MetaCatServlet extends HttpServlet {
 				// to the MetacatAdminServlet
 				ServiceService.refreshService("XMLSchemaService");
 				return;
-			} else if (action.equals("scheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().scheduleJob(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.SCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("unscheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().unScheduleJob(request,
-							response, params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.UNSCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("rescheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().reScheduleJob(request,
-							response, params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.RESCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("getScheduledWorkflow")) {
-				try {
-					WorkflowSchedulerClient.getInstance().getJobs(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.GET_SCHEDULED_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("deleteScheduledWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().deleteJob(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.DELETE_SCHEDULED_WORKFLOW_ERROR, be);
-					return;
-				}
 			} else if (action.equals("shrink")) {
 			     // handle shrink DBConnection request
                 PrintWriter out = response.getWriter();

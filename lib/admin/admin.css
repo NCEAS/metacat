@@ -121,7 +121,7 @@ input[type="checkbox"] {
 }
 
 label {
-	font-size: 1.1em;
+	//font-size: 1.1em;
 	line-height: 1.1em;
 	display: block;
 	margin-top: 10px;
@@ -206,6 +206,19 @@ input[type="text"] {
 	-moz-border-radius: 5px;
 	-webkit-border-radius: 5px;
 	border: 1px solid #aaa;
+}
+
+.hiddenabletextinput {
+    vertical-align: middle;
+    width: 30em;
+    height: 2.2em;
+    font: 400 1em/2em Source Sans Pro;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    border: 1px solid #aaa;
+    display: none;
+    margin-top: 8;
 }
 
 .textinput-label {

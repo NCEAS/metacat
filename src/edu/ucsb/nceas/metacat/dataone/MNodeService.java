@@ -25,19 +25,15 @@ package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.net.URISyntaxException;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -58,25 +54,22 @@ import java.util.concurrent.Executors;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.Result;
 import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Logger;
+import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.v2.MNode;
-import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.auth.CertificateManager;
-import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.configuration.Settings;
-import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
@@ -137,19 +130,17 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dspace.foresite.OREException;
-import org.dspace.foresite.OREParserException;
-import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
-import org.ecoinformatics.datamanager.parser.DataPackage;
 import org.ecoinformatics.datamanager.parser.Entity;
-import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
-import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
+import org.dataone.ore.ResourceMapFactory;
+
 import org.w3c.dom.Document;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
-import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
@@ -161,27 +152,24 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.download.PackageDownloader;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
-import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
-import edu.ucsb.nceas.utilities.export.HtmlToPdf;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.writer.impl.ZipWriter;
+import org.dspace.foresite.OREException;
+import org.dspace.foresite.OREParserException;
 
 /**
- * Represents Metacat's implementation of the DataONE Member Node 
+ * Represents Metacat's implementation of the DataONE Member Node
  * service API. Methods implement the various MN* interfaces, and methods common
  * to both Member Node and Coordinating Node interfaces are found in the
  * D1NodeService base class.
- * 
+ *
  * Implements:
  * MNCore.ping()
  * MNCore.getLogRecords()
@@ -202,7 +190,7 @@ import gov.loc.repository.bagit.writer.impl.ZipWriter;
  * MNStorage.delete()
  * MNStorage.updateSystemMetadata()
  * MNReplication.replicate()
- * 
+ *
  */
 public class MNodeService extends D1NodeService 
     implements MNAuthorization, MNCore, MNRead, MNReplication, MNStorage, MNQuery, MNView, MNPackage {
@@ -365,7 +353,11 @@ public class MNodeService extends D1NodeService
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest 
     {
-        
+        logMetacat.error("Obsoleting...");
+        logMetacat.error(pid.getValue());
+        logMetacat.error("With.....");
+        logMetacat.error(newPid.getValue());
+
         long startTime = System.currentTimeMillis();
 
         if(isReadOnlyMode()) {
@@ -396,6 +388,14 @@ public class MNodeService extends D1NodeService
         // verify the new pid is valid format
         if (!isValidIdentifier(newPid)) {
             throw new InvalidRequest("1202", "The provided identifier is invalid.");
+        }
+        
+        if (!isValidIdentifier(sysmeta.getIdentifier())) {
+            throw new InvalidRequest("1202", "The provided identifier on the system metadata is invalid.");
+        }
+        
+        if (!newPid.equals(sysmeta.getIdentifier())) {
+            throw new InvalidRequest("1202", "The new identifier " + newPid.getValue() + " doesn't match the identifier " + sysmeta.getIdentifier().getValue() + " in the system metadata.");
         }
 
         // make sure that the newPid doesn't exists
@@ -480,7 +480,19 @@ public class MNodeService extends D1NodeService
             if (sysmeta.getObsoletedBy() != null) {
                 throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
             }
+
+
+            if (sysmeta.getAuthoritativeMemberNode() == null) {
+                logMetacat.error("No authoritativeMemberNode");
+            } else {
+                logMetacat.error(sysmeta.getAuthoritativeMemberNode().getValue());
+            }
+
+
+            logMetacat.error("UPDATINGGGGGGGGGGGGGGG");
+            logMetacat.error(pid.getValue());
             if (sysmeta.getObsoletes() != null && !sysmeta.getObsoletes().getValue().equals(pid.getValue())) {
+                logMetacat.error(sysmeta.getObsoletes().getValue());
                 throw new InvalidSystemMetadata("1300", "The identifier provided in obsoletes does not match old Identifier");
             }
 
@@ -666,7 +678,7 @@ public class MNodeService extends D1NodeService
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
-
+        logMetacat.error("CREATE CALLED");
         if(isReadOnlyMode()) {
             throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
         }
@@ -689,6 +701,10 @@ public class MNodeService extends D1NodeService
         // if no authoritative MN, set it to the same
         if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
                 sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
             sysmeta.setAuthoritativeMemberNode(originMemberNode);
         }
 
@@ -881,7 +897,6 @@ public class MNodeService extends D1NodeService
                         // NOTE: we may already know about this ID because it could be a data file described by a metadata file
                         // https://redmine.dataone.org/issues/2572
                         // TODO: fix this so that we don't prevent ourselves from getting replicas
-                        
                         // let the CN know that the replication failed
                         logMetacat.warn("Object content not found on this node despite having localId: " + localId);
                         String msg = "Can't read the object bytes properly, replica is invalid.";
@@ -2012,7 +2027,6 @@ public class MNodeService extends D1NodeService
             }
 			try {
 				DBQuery queryobj = new DBQuery();
-				
 				String results = queryobj.performPathquery(query, user, groups);
 				ContentTypeByteArrayInputStream ctbais = new ContentTypeByteArrayInputStream(results.getBytes(MetaCatServlet.DEFAULT_ENCODING));
 				ctbais.setContentType("text/xml");
@@ -2026,12 +2040,13 @@ public class MNodeService extends D1NodeService
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
 		        throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
 		    }
-		    logMetacat.info("The query is ==================================== \n"+query);
+		    logMetacat.info("MNodeService.query - the solr query is === " + query);
 		    try {
 		        
                 return MetacatSolrIndex.getInstance().query(query, subjects, isMNadmin);
             } catch (Exception e) {
                 // TODO Auto-generated catch block
+                e.printStackTrace();
                 throw new ServiceFailure("Solr server error", e.getMessage());
             } 
 		}
@@ -2062,7 +2077,7 @@ public class MNodeService extends D1NodeService
             }
             try {
                 SolrParams solrParams = new MultiMapSolrParams(params);
-                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin);
+                return MetacatSolrIndex.getInstance().query(solrParams, subjects, isMNadmin, SolrRequest.METHOD.POST);
             } catch (Exception e) {
                 throw new ServiceFailure("2821", "Solr server error: "+ e.getMessage());
             } 
@@ -2463,290 +2478,196 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
+    /**
+     * Checks to see if the package can be exported, based on the formatId
+     *
+     * @param formatId: The format ID of the package
+     *
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     */
+    private void validateExportPackage(ObjectFormatIdentifier formatID)
+            throws InvalidRequest, NotImplemented, ServiceFailure {
+        String bagVersion=null;
+        try {
+            bagVersion = PropertyService.getProperty("package.download.bag.version");
+        } catch (PropertyNotFoundException e) {
+            bagVersion = "application/bagit-097";
+        }
+        if (formatID == null) {
+            throw new InvalidRequest("2873", "The package format type was null.");
+        } else if (!formatID.getValue().equals(bagVersion)) {
+            throw new NotImplemented("", "The format " + formatID.getValue() + " is not supported.");
+        }
+    }
+
+    /**
+     * Given a pid/sid, returns the associated pid
+     *
+     * @param pid: The pid in question
+     *
+     * @throws ServiceFailure
+     */
+    private Identifier getVersionIdentifier(Identifier pid)
+            throws ServiceFailure {
+        String serviceFailureCode = "2871";
+        Identifier sid = getPIDForSID(pid, serviceFailureCode);
+        if (sid != null) {
+            return sid;
+        }
+        return pid;
+    }
+
+    /**
+     * Maps a resource map to a list to an object that contains all of the identifiers (objects+system metadata)
+     *
+     * @param session: The user's session
+     * @param orePid: The pid of the ORE document
+     *
+     * @throws ServiceFailure
+     */
+    private Map<Identifier, Map<Identifier, List<Identifier>>> parseResourceMap(Session session,
+                                                                                Identifier orePid) throws ServiceFailure {
+
+        // Container that holds the pids of all of the objects that are in a package
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
+        try {
+            InputStream oreInputStream = this.get(session, orePid);
+            resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream); //TODO: Check aggregates vs documents in parseResourceMap
+        } catch (OREException | OREParserException | UnsupportedEncodingException | NotImplemented e) {
+            throw new ServiceFailure("Failed to parse the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (InvalidToken | NotAuthorized e) {
+            logMetacat.error("Invalid token while parsing the resource map. Check that you have permissions.", e);
+        } catch (URISyntaxException e) {
+            throw new ServiceFailure("There was a malformation in the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (NotFound e) {
+            throw new ServiceFailure("Failed to locate the resource map. Check that the right pid was used.", e.getMessage());
+        }
+        if (resourceMapStructure == null) {
+            throw new ServiceFailure("", "There was an error while parsing the resource map.");
+        }
+        return resourceMapStructure;
+    }
+
+    /**
+     * Returns a stream to a resource map
+     *
+     * @param session: The user's session
+     * @param pid: The resource map PID
+     *
+     * @return A stream to the bagged package
+     *
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     */
+    private ResourceMap serializeResourceMap(Session session, Identifier pid)
+            throws InvalidToken, NotFound, InvalidRequest, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+        SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+        ResourceMap resMap = null;
+        try {
+            InputStream oreInputStream = this.get(session, pid);
+            resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
+        } catch (OREException | URISyntaxException e) {
+            logMetacat.error("There was problem with the resource map. Check that that the resource map is valid.", e);
+            throw new ServiceFailure("There was problem with the resource map. Check that that the resource map is valid.", e.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            logMetacat.error("The resource map has an unsupported encoding format.", e);
+            throw new ServiceFailure("The resource map has an unsupported encoding format.", e.getMessage());
+        } catch (OREParserException e) {
+            logMetacat.error("Failed to parse the ORE.", e);
+            throw new ServiceFailure("Failed to parse the ORE.", e.getMessage());
+        }
+        return resMap;
+    }
+
+
+    /**
+     * Streams a data package. Critical failures are propegated out of this method as
+     * exceptions.
+     *
+     * @param session: The user's session
+     * @param formatId:
+     * @param resourceMapPid: The package pid
+     *
+     * @return A stream to the bagged package
+     *
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotFound
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     */
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
-			Identifier pid) throws InvalidToken, ServiceFailure,
+			Identifier resourceMapPid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-	    if(formatId == null) {
-	        throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
-	    } else if(!formatId.getValue().equals("application/bagit-097")) {
-	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
-	    }
-	    String serviceFailureCode = "2871";
-	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
-	    if(sid != null) {
-	        pid = sid;
-	    }
-		InputStream bagInputStream = null;
-		BagFactory bagFactory = new BagFactory();
-		Bag bag = bagFactory.createBag();
-		
-		// track the temp files we use so we can delete them when finished
-		List<File> tempFiles = new ArrayList<File>();
-		
-		// the pids to include in the package
-		List<Identifier> packagePids = new ArrayList<Identifier>();
-		
-		// catch non-D1 service errors and throw as ServiceFailures
-		try {
-			//Create a map of dataone ids and file names
-			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
-			
-			// track the pid-to-file mapping
-			StringBuffer pidMapping = new StringBuffer();
-			
-			// find the package contents
-			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
-			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
-				//Get the resource map as a map of Identifiers
-				InputStream oreInputStream = this.get(session, pid);
-				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-				packagePids.addAll(resourceMapStructure.keySet());
-				//Loop through each object in this resource map
-				for (Map<Identifier, List<Identifier>> entries: resourceMapStructure.values()) {
-					//Loop through each metadata object in this entry
-					Set<Identifier> metadataIdentifiers = entries.keySet();
-					for(Identifier metadataID: metadataIdentifiers){
-						try{
-							//Get the system metadata for this metadata object
-							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
-							
-							// include user-friendly metadata
-							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-								InputStream metadataStream = this.get(session, metadataID);
-							
-								try {
-									// transform
-						            String format = "default";
+        logMetacat.debug("getPackage called. Validating....");
+        // Throws if the package fails to validate
+	    this.validateExportPackage(formatId);
+        Identifier packageID = this.getVersionIdentifier(resourceMapPid);
 
-									DBTransform transformer = new DBTransform();
-						            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
-						            String sourceType = metadataSysMeta.getFormatId().getValue();
-						            String targetType = "-//W3C//HTML//EN";
-						            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						            Writer writer = new OutputStreamWriter(baos , "UTF-8");
-						            // TODO: include more params?
-						            Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-						            String localId = null;
-									try {
-										localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-									} catch (McdbDocNotFoundException e) {
-										throw new NotFound("1020", e.getMessage());
-									}
-									params.put("qformat", new String[] {format});	            
-						            params.put("docid", new String[] {localId});
-						            params.put("pid", new String[] {pid.getValue()});
-						            params.put("displaymodule", new String[] {"printall"});
-						            
-						            transformer.transformXMLDocument(
-						                    documentContent , 
-						                    sourceType, 
-						                    targetType , 
-						                    format, 
-						                    writer, 
-						                    params, 
-						                    null //sessionid
-						                    );
-						            
-						            // finally, get the HTML back
-						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
-						            
-						            // write to temp file with correct css path
-						            File tmpDir = File.createTempFile("package_", "_dir");
-						            tmpDir.delete();
-						            tmpDir.mkdir();
-						            File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
-						            File cssDir = new File(tmpDir, format);
-						            cssDir.mkdir();
-						            File cssFile = new File(tmpDir, format + "/" + format + ".css");
-						            String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
-						            File pdfFile = new File(tmpDir, pdfFileName);
-						            //File pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
-						            
-						            // put the CSS file in place for the html to find it
-						            String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
-						            IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
-						            
-						            // write the HTML file
-						            IOUtils.copy(resultInputStream, new FileOutputStream(htmlFile));
-						            
-						            // convert to PDF
-						            HtmlToPdf.export(htmlFile.getAbsolutePath(), pdfFile.getAbsolutePath());
-						            
-						            //add to the package
-						            bag.addFileToPayload(pdfFile);
-									pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
-						            
-						            // mark for clean up after we are done
-									htmlFile.delete();
-									cssFile.delete();
-									cssDir.delete();
-						            tempFiles.add(tmpDir);
-									tempFiles.add(pdfFile); // delete this first later on
-						            
-								} catch (Exception e) {
-									logMetacat.warn("Could not transform metadata", e);
-								}
-							}
+        // Get the resource map. This is used various places downstream, which is why it's not a stream. Note that
+        // this throws if it can't be parsed because we depend on it for object pids.
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = parseResourceMap(session, resourceMapPid);
+        // Holds the PID of every object in the resource map
+        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
+        pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
 
-							
-							//If this is in eml format, extract the filename and GUID from each entity in its package
-							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
-								//Get the package
-								DataPackageParserInterface parser = new Eml200DataPackageParser();
-								InputStream emlStream = this.get(session, metadataID);
-								parser.parse(emlStream);
-								DataPackage dataPackage = parser.getDataPackage();
-								
-								//Get all the entities in this package and loop through each to extract its ID and file name
-								Entity[] entities = dataPackage.getEntityList();
-								for(Entity entity: entities){
-									try{
-										//Get the file name from the metadata
-										String fileNameFromMetadata = entity.getName();
-										
-										//Get the ecogrid URL from the metadata
-										String ecogridIdentifier = entity.getEntityIdentifier();
-										//Parse the ecogrid URL to get the local id
-										String idFromMetadata = DocumentUtil.getAccessionNumberFromEcogridIdentifier(ecogridIdentifier);
-										
-										//Get the docid and rev pair
-										String docid = DocumentUtil.getDocIdFromString(idFromMetadata);
-										String rev = DocumentUtil.getRevisionStringFromString(idFromMetadata);
-										
-										//Get the GUID
-										String guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(rev));
-										Identifier dataIdentifier = new Identifier();
-										dataIdentifier.setValue(guid);
-										
-										//Add the GUID to our GUID & file name map
-										fileNames.put(dataIdentifier, fileNameFromMetadata);
-									}
-									catch(Exception e){
-										//Prevent just one entity error
-										e.printStackTrace();
-										logMetacat.debug(e.getMessage(), e);
-									}
-								}
-							}
-						}
-						catch(Exception e){
-							//Catch errors that would prevent package download
-							logMetacat.debug(e.toString());
-						}
-					}
-					packagePids.addAll(entries.keySet());
-					for (List<Identifier> dataPids: entries.values()) {
-						packagePids.addAll(dataPids);
-					}
-				}
-			} else {
-				// just the lone pid in this package
-				//packagePids.add(pid);
-			    //throw an invalid request exception
-			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package id (resource map id). Please use a package id instead.");
-			}
-			
-			//Create a temp file, then delete it and make a directory with that name
-			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
-			tempDir.delete();
-			tempDir = new File(tempDir.getPath() + "_dir");
-			tempDir.mkdir();			
-			tempFiles.add(tempDir);
-			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
-			
-			// loop through the package contents
-			for (Identifier entryPid: packagePids) {
-				//Get the system metadata for each item
-				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
-				
-				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-				String fileName = null;
-				
-				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
-				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
-				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
+        for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+            pidsOfPackageObjects.addAll(entries.keySet());
+            for (List<Identifier> dataPids : entries.values()) {
+                pidsOfPackageObjects.addAll(dataPids);
+            }
+        }
 
-				if (fileNames.containsKey(entryPid)){
-					//Let's use the file name and extension from the metadata is we have it
-					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
-				
-				// ensure there is a file extension for the object
-				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-				fileName += extension;
-				
-				// if SM has the file name, ignore everything else and use that
-				if (entrySysMeta.getFileName() != null) {
-					fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
-				
-		        //Create a new file for this item and add to the list
-				File tempFile = new File(tempDir, fileName);
-				tempFiles.add(tempFile);
-				
-				InputStream entryInputStream = this.get(session, entryPid);			
-				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-				bag.addFileToPayload(tempFile);
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + tempFile.getName() + "\n");
-			}
-			
-			//add the the pid to data file map
-			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
-			bag.addFileAsTag(pidMappingFile);
-			tempFiles.add(pidMappingFile);
-			
-			bag = bag.makeComplete();
-			
-			///Now create the zip file
-			//Use the pid as the file name prefix, replacing all non-word characters
-			String zipName = pid.getValue().replaceAll("\\W", "_");
-			
-			File bagFile = new File(tempDir, zipName+".zip");
-			
-			bag.setFile(bagFile);
-			ZipWriter zipWriter = new ZipWriter(bagFactory);
-			bag.write(zipWriter, bagFile);
-			bagFile = bag.getFile();
-			// use custom FIS that will delete the file when closed
-			bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
-			// also mark for deletion on shutdown in case the stream is never closed
-			bagFile.deleteOnExit();
-			tempFiles.add(bagFile);
-			
-			// clean up other temp files
-			for (int i=tempFiles.size()-1; i>=0; i--){
-				tempFiles.get(i).delete();
-			}
-			
-		} catch (IOException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (URISyntaxException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREParserException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		}
-		
-		return bagInputStream;
-	}
+        // Get a ResourceMap object representing the resource map. Throw if we can't get it
+        ResourceMap resourceMap = serializeResourceMap(session, resourceMapPid);
+        SystemMetadata resourceMapSystemMetadata = this.getSystemMetadata(session, resourceMapPid);
+        // Create the downloader that's responsible for creating the readme and bag archive.
+        // Throws if something went wrong (we can't continue without a PackageDownloader)
+        PackageDownloader downloader = new PackageDownloader(packageID, resourceMap, resourceMapSystemMetadata);
+
+        List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
+        // Start writing data objects to the temporary bag archive
+        for (Identifier entryPid : pidsOfPackageObjects) {
+            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
+            if (metadataIdentifiers.contains(entryPid)) {
+                continue;
+            }
+            // Get the system metadata and a stream to the data file
+            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+            InputStream objectInputStream = this.get(session, entryPid);
+            downloader.writeDataObject(entrySysMeta, objectInputStream);
+            try {
+                objectInputStream.close();
+            } catch (IOException e) {
+                logMetacat.error("Failed to close the InputStream to " + entrySysMeta.getIdentifier().getValue());
+            }
+        }
+
+        // Create the README file if there's science metadata
+        List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
+        if (!scienceMetadataIdentifiers.isEmpty()) {
+            Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
+            SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
+            InputStream scienceMetadataStream = this.get(session, sciMetataId);
+            downloader.generateReadme(scienceMetadataStream, systemMetadata);
+        }
+
+        // Get a stream and system metadata for each science metadata object
+        for (Identifier scienceMetadataIdentifier: scienceMetadataIdentifiers) {
+            SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
+            InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
+            downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
+        }
+
+        logMetacat.debug("Streaming package....");
+        return downloader.download();
+    }
 	
 	 /**
 	   * Archives an object, where the object is either a 
@@ -2828,7 +2749,7 @@ public class MNodeService extends D1NodeService
 	      }
 
 	      if (session == null) {
-	          //TODO: many of the thrown exceptions do not use the correct error codes
+	          //todo: many of the thrown exceptions do not use the correct error codes
 	          //check these against the docs and correct them
 	          throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
 	                  "  If you are not logged in, please do so and retry the request.");

@@ -4,7 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 
-import org.apache.solr.client.solrj.SolrServer;
+import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.CoreContainer;
@@ -22,7 +22,7 @@ public class SolrQueryResponseTransformerTest extends MetacatCommonTestBase {
     @Test
     public void testTransformResults() throws Exception {
         
-        SolrServer solrServer = SolrServerFactory.createSolrServer();
+        SolrClient solrServer = SolrServerFactory.createSolrServer();
         CoreContainer coreContainer = SolrServerFactory.getCoreContainer();
         String collectionName = SolrServerFactory.getCollectionName();
         SolrQueryResponseTransformer solrTransformer = new SolrQueryResponseTransformer(coreContainer.getCore(collectionName));
