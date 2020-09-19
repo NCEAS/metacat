@@ -27,47 +27,41 @@
 package edu.ucsb.nceas.metacat.download;
 
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.download.ReadmeFile;
-import edu.ucsb.nceas.metacat.NodeRecord;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.utilities.FileUtil;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
+
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
 import gov.loc.repository.bagit.writer.impl.ZipWriter;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.MutablePair;
 import org.apache.log4j.Logger;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.ore.ResourceMapFactory;
 
-
-
 import org.dataone.service.exceptions.*;
 import org.dataone.service.types.v1.Identifier;
-import org.dataone.service.types.v1.ObjectFormatIdentifier;
-import org.dataone.service.types.v1.Session;
-import org.dataone.service.types.v2.Node;
-import org.dataone.service.types.v2.NodeList;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.TypeMarshaller;
-import org.dspace.foresite.OREException;
-import org.dspace.foresite.OREParserException;
 import org.dspace.foresite.ORESerialiserException;
 import org.dspace.foresite.ResourceMap;
-import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.*;
-import java.net.URISyntaxException;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.InputStream;
+
+import com.hp.hpl.jena.query.*;
+import com.hp.hpl.jena.rdf.model.RDFNode;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+import com.hp.hpl.jena.rdf.model.Model;
 
 /**
  * A class that abstracts the process of downloading a data package.
@@ -84,73 +78,91 @@ import java.util.regex.Pattern;
  *
  */
 public class PackageDownloader {
-    private Logger logMetacat = Logger.getLogger(NodeRecord.class);
-
-    private Identifier _pid;
-    private ObjectFormatIdentifier _formatId;
-    private List<Identifier> _coreMetadataIdentifiers;
-    private List<Identifier> _metadataIds;
-    private ResourceMap _resourceMap;
+    private Logger logMetacat = Logger.getLogger(PackageDownloader.class);
+    // The resource map pid
+    private Identifier pid;
+    // A list of science and resource map pids
+    private List<Identifier> coreMetadataIdentifiers;
+    //
+    private List<Identifier> scienceMetadataIdentifiers;
+    // The resource map describing the package
+    private ResourceMap resourceMap;
+    // The system metadata for the resource map
+    private SystemMetadata resourceMapSystemMetadata;
+    // A map between data object PID and the location where it should go on disk
+    private Map<String, String> _filePathMap;
+    private File tempBagRoot = null;
+    private File _metadataRoot = null;
+    private File _systemMetadataDirectory = null;
+    private File _dataRoot = null;
+    private List<Pair<SystemMetadata, InputStream>> scienceMetadatas;
+    private SystemMetadata _scienceSystemMetadata;
     private BagFactory _bagFactory;
     private Bag _bag;
-    private Session _session;
-    private MNodeService _node;
+
+
     /**
-     * Constructor
+     * Creates a PackageDownloader object. This initializes the member variables
+     * and creates the bag filesystem structure.
      *
-     * @param session: The user's session
-     * @param formatId:
-     * @param pid: The PID of the package
+     * @param pid:     The PID of the resource map
      */
-    public PackageDownloader(MNodeService node,
-                             Session session,
-                             ObjectFormatIdentifier formatId,
-                             Identifier pid)
-        throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, InvalidRequest, NotImplemented {
-        this._session = session;
-        this._node = node;
-        logMetacat.info("Setting format ID");
-        this.setFormatID(formatId);
-        logMetacat.info("Setting PID");
-        this.setPID(pid);
+    public PackageDownloader(Identifier pid, ResourceMap resourceMap, SystemMetadata resourceMapSystemMetadata)
+            throws InvalidToken, ServiceFailure, NotFound, NotAuthorized, InvalidRequest, NotImplemented {
 
-        logMetacat.info("Setting core metadata IDs");
-        this.setCoreMetadataIdentifiers(new ArrayList<Identifier>());
-        logMetacat.info("Setting metadata ids");
-        this.setMetadataIds(new ArrayList<Identifier>());
-        logMetacat.info("Setting resource map");
-        this.setResourceMap();
-        logMetacat.info("Setting bag factory");
-        this.setBagFactory(new BagFactory());
-        logMetacat.info("Setting bag");
-        this._bag = this.getBagFactory().createBag();
+        this.pid = pid;
+        this.resourceMap = resourceMap;
+        this.resourceMapSystemMetadata = resourceMapSystemMetadata;
+        this.coreMetadataIdentifiers = new ArrayList<Identifier>();
+        this._bagFactory = new BagFactory();
+        this._bag = this._bagFactory.createBag();
+        this._filePathMap =  new HashMap<String, String>();
+
+        /*
+           The bag has a few standard directories (metadata, metadata/sysmeta, data/). Create Java File objects
+           representing each of these directories so that the appropriate files can be added to them. Initialize them
+           to null so that they can be used outside of the try/catch block.
+         */
+        // A temporary directory where the non-zipped bag is formed
+        this.tempBagRoot = null;
+        // A temporary directory within the tempBagRoot that represents the metadata/ direcrory
+        this._metadataRoot = null;
+        // A temporary directory within metadataRoot that holds system metadata
+        this._systemMetadataDirectory = null;
+        // A temporary directory within tempBagRoot that holds data objects
+        this._dataRoot = null;
+
+        // Tie the File objects above to actual locations on the filesystem
+        try {
+            logMetacat.debug("Creating temporary bag directories");
+            this.tempBagRoot = new File(System.getProperty("java.io.tmpdir") + Long.toString(System.nanoTime()));
+            this.tempBagRoot.mkdirs();
+
+            this._metadataRoot = new File(this.tempBagRoot.getAbsolutePath(),
+                    PropertyService.getProperty("package.download.bag.directory.metadata"));
+            this._metadataRoot.mkdir();
+
+            this._systemMetadataDirectory = new File(this._metadataRoot.getAbsolutePath(),
+                    PropertyService.getProperty("package.download.bag.directory.sysmeta"));
+            this._systemMetadataDirectory.mkdir();
+
+            this._dataRoot = new File(this.tempBagRoot.getAbsolutePath(),
+                    PropertyService.getProperty("package.download.bag.directory.data"));
+            this._dataRoot.mkdir();
+        } catch (Exception e) {
+            logMetacat.warn("Error creating bag files", e);
+            throw new ServiceFailure("There was an error creating the temporary download directories.", e.getMessage());
+        }
+        this.addCoreMetadataIdentifier(pid);
+        this.getObjectLocations();
+        this.getScienceMetadataIds();
     }
-
-    private void setMetadataIds(ArrayList ids) { this._metadataIds=ids; }
-    private BagFactory getBagFactory() {
-        return this._bagFactory;
-    }
-
-    private void setBagFactory(BagFactory factory) {
-        this._bagFactory = factory;
-    }
-
-    public void setFormatID(ObjectFormatIdentifier formatId) { this._formatId=formatId; }
 
     /**
-     * Returns a list that has the ORE and science metadata pids.
+     * Returns the core metadata identifiers
      */
     public List<Identifier> getCoreMetadataIdentifiers() {
-        return _coreMetadataIdentifiers;
-    }
-
-    /** Setter methods **/
-
-    /**
-     * Sets the pid of the dataset being downloaded
-     */
-    public void setPID(Identifier pid) {
-        _pid = pid;
+        return coreMetadataIdentifiers;
     }
 
     /**
@@ -158,447 +170,409 @@ public class PackageDownloader {
      *
      * @param id: The Identifier that's being added
      */
-    public void addCoreMetadataIdentifiers(Identifier id) {
-        this._coreMetadataIdentifiers.add(id);
-    }
-
-    private void setResourceMap()
-    throws InvalidToken, NotFound, InvalidRequest, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
-        SystemMetadata sysMeta = this._node.getSystemMetadata(this._session, this._pid);
-        if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
-            // Attempt to open/parse the resource map so that we can get a list of pids inside
-            try {
-                InputStream oreInputStream = this._node.get(this._session, this._pid);
-                this._resourceMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
-                return;
-            } catch (OREException e) {
-                logMetacat.error("Failed to parse the ORE.", e);
-            } catch (URISyntaxException e) {
-                logMetacat.error("Error with a URI in the ORE.", e);
-            } catch (UnsupportedEncodingException e) {
-                logMetacat.error("Unsupported encoding format.", e);
-            } catch (OREParserException e) {
-                logMetacat.error("Failed to parse the ORE.", e);
-            }
-        } else {
-            //throw an invalid request exception if there's just a single pid
-            throw new InvalidRequest("2873", "The given pid " + this._pid.getValue() + " is not a package id (resource map id). Please use a package id instead.");
-        }
+    private void addCoreMetadataIdentifier(Identifier id) {
+        this.coreMetadataIdentifiers.add(id);
     }
 
     /**
-     * Sets the list of core Ids.
+     * Sets the science metadata
      *
-     * @param ids:
+     * @param scienceMetadataIdentifier: The science metadata identifier
      */
-    public void setCoreMetadataIdentifiers(List<Identifier> ids) {
-        this._coreMetadataIdentifiers = ids;
+    public void addScienceSystemMetadata(Identifier scienceMetadataIdentifier) {
+        this.scienceMetadataIdentifiers.add(scienceMetadataIdentifier);
     }
 
-    /**
-     * Gets the namespace prefix for the prov ontology.
-     *
-     * @param resourceMap: The resource map that is being checked.
-     */
-    public String getProvNamespacePrefix(String resourceMap) {
-        // Pattern that searches for the text between the last occurance of 'xmlns and
-        // the prov namepsace string
-        Pattern objectPattern = Pattern.compile("(xmlns:)(?!.*\\1)(.*)(\"http://www.w3.org/ns/prov#\")");
-        Matcher m = objectPattern.matcher(resourceMap);
-        if (m.find()) {
-            // Save the file path for later when it gets written to disk
-            return StringUtils.substringBetween(m.group(0), "xmlns:", "=\"http://www.w3.org/ns/prov#\"");
-        }
-        return "";
+    public List<Identifier> getScienceMetadataIdentifiers() {
+        return scienceMetadataIdentifiers;
+    }
+
+    public void addScienceMetadata(SystemMetadata sysMeta, InputStream inputStream) {
+
+        this.scienceMetadatas.add(new MutablePair<SystemMetadata, InputStream> (sysMeta, inputStream));
     }
 
     /**
      * Creates a bag file from a directory and returns a stream to it.
      *
-     * @param streamedBagFile: The folder that holds the data being exported
-     * @param dataRoot: The root data folder
-     * @param metadataRoot: The root metadata directory
-     * @param pid: The package pid
+     * @param streamedBagFile: The folder that holds the data being bagged
      */
-    private InputStream createExportBagStream(File streamedBagFile,
-                                              File dataRoot,
-                                              File metadataRoot,
-                                              Identifier pid) {
+    private InputStream createExportBagStream(File streamedBagFile) {
         InputStream bagInputStream = null;
-        String bagName = pid.getValue().replaceAll("\\W", "_");
+
+        // Set the name of the bag to the pid, with some filtering
+        String bagName = this.pid.getValue().replaceAll("\\W", "_");
+        //File[] dataFiles = this._dataRoot.listFiles();
+        for (File dataFile : this._dataRoot.listFiles()) {
+            this._bag.addFileToPayload(dataFile);
+        }
+        this._bag.addFileAsTag(this._metadataRoot);
+
+        File bagFile = null;
         try {
-            File[] files = dataRoot.listFiles();
-            for (File fle : files) {
-                this._bag.addFileToPayload(fle);
-            }
-            this._bag.addFileAsTag(metadataRoot);
-            File bagFile = new File(streamedBagFile, bagName + ".zip");
+            bagFile = new File(streamedBagFile,
+                    bagName + PropertyService.getProperty("package.download.file.bag-extension"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("Failed to find the bag extension property.", e);
+            // Fall back to .zip
+            bagFile = new File(streamedBagFile,
+                    bagName + ".zip");
+        }
+
+        try {
             this._bag.setFile(bagFile);
             this._bag = this._bag.makeComplete();
             ZipWriter zipWriter = new ZipWriter(this._bagFactory);
             this._bag.write(zipWriter, bagFile);
             // Make sure the bagFile is current
             bagFile = this._bag.getFile();
-            // use custom FIS that will delete the file when closed
+            // use custom File Input Stream that will delete the file when closed
             bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
             // also mark for deletion on shutdown in case the stream is never closed
+            // DEVNOTE: What if it's a large file?
             bagFile.deleteOnExit();
         } catch (FileNotFoundException e) {
-            logMetacat.error("Failed to find a file to delete.", e);
+            logMetacat.error("Failed to find the temporary bag file to delete.", e);
         }
         return bagInputStream;
     }
 
     /*
-     * Writes an EML document to disk. In particular, it writes it to the metadata/ directory which eventually
+     * Writes a science metadata document to disk. In particular, it writes it to the metadata/ directory which eventually
      * gets added to the bag.
      *
-     * @param metadataID: The ID of the EML document
-     * @param metadataRoot: The File that represents the metadata/ folder
-
      */
-    private void writeEMLDocument(Identifier metadataID,
-                                  File metadataRoot) {
-
-        InputStream emlStream = null;
-        try {
-            emlStream = this._node.get(this._session, metadataID);
-        } catch (InvalidToken e) {
-            logMetacat.error("Invalid token.", e);
-        } catch (ServiceFailure e) {
-            logMetacat.error("Failed to retrive the EML metadata document.", e);
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to retrive metadata.", e);
-        } catch (NotFound e) {
-            logMetacat.error("EML document not found.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Not implemented.", e);
-        }
-        try {
-            // Write the EML document to the bag zip
-            String documentContent = IOUtils.toString(emlStream, "UTF-8");
-            String filename = metadataRoot.getAbsolutePath() + "/" + "eml.xml";
-            File systemMetadataDocument = new File(filename);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
-            writer.write(documentContent);
-            writer.close();
-        } catch (IOException e) {
-            logMetacat.error("Failed to write the EML document.", e);
-        }
-    }
-
-    /**
-     * Searches through the resource map for any objects that have had their location specified with
-     * prov:atLocation. The filePathMap parameter is mutated with the file path and corresponding pid.
-     *
-     * @param resMap: The resource map that's being parsed
-     * @param filePathMap: Mapping between pid and file path. Should be empty when passed in
-
-     */
-    private void documentObjectLocations(ResourceMap resMap,
-                                         Map<String, String> filePathMap) {
-        try {
-            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder;
-            builder = factory.newDocumentBuilder();
-            Document document = builder.parse(new InputSource(new StringReader(resMapString)));
-
-            // Attempt to search for any atLocation references
-            String atLocationPrefix = getProvNamespacePrefix(resMapString);
-            if (atLocationPrefix.length() > 0) {
-                org.w3c.dom.NodeList nodeList = document.getElementsByTagName(atLocationPrefix + ":atLocation");
-
-                // For each atLocation record, we want to save the location and the pid of the object
-                for (int i = 0; i < nodeList.getLength(); i++) {
-                    org.w3c.dom.Node node = nodeList.item(i);
-                    org.w3c.dom.NamedNodeMap parentAttributes = node.getParentNode().getAttributes();
-                    String parentURI = parentAttributes.item(0).getTextContent();
-                    String filePath = node.getTextContent();
-                    filePath = filePath.replaceAll("\"", "");
-
-                    // We're given the full URI of the object, but we only want the PID at the end
-                    Pattern objectPattern = Pattern.compile("(?<=object/).*(?)");
-                    Matcher m = objectPattern.matcher(parentURI);
-                    if (m.find()) {
-                        // Save the file path for later when it gets written to disk
-                        filePathMap.put(m.group(0), filePath);
-                    } else {
-                        objectPattern = Pattern.compile("(?<=resolve/).*(?)");
-                        m = objectPattern.matcher(parentURI);
-                        if (m.find()) {
-                            // Save the file path for later when it gets written to disk
-                            filePathMap.put(m.group(0), filePath);
-                        }
-                    }
+    public void writeScienceMetadata() {
+        int metadata_count = 0;
+        for (Pair<SystemMetadata, InputStream> scienceMetadata: this.scienceMetadatas) {
+            File scienceMetadataDocument = null;
+            try {
+                String filename = PropertyService.getProperty("package.download.file.science-metadata");
+                // extension doesn't include the '.'
+                String extension = FilenameUtils.getExtension(filename);
+                String name = FilenameUtils.getName(filename);
+                if (metadata_count > 0) {
+                    // Append the count to the file name
+                    filename = FilenameUtils.getPath(filename) + name+'('+String.valueOf(metadata_count)+')'+'.'+extension;
                 }
+                // Write the EML document to the bag zip
+                scienceMetadataDocument = new File(this._metadataRoot.getAbsolutePath(),
+                        filename);
+            } catch (PropertyNotFoundException e) {
+                logMetacat.error("Failed to find the science metadata name property.", e);
+                scienceMetadataDocument = new File(this._metadataRoot.getAbsolutePath(),
+                        "science-metadata.xml");
             }
-        } catch (ORESerialiserException e) {
-            logMetacat.warn("Failed to serialize the resource map.", e);
-        } catch (ParserConfigurationException e) {
-            logMetacat.warn("There was a configuration error in the XML parser.", e);
-        } catch (SAXException e) {
-            logMetacat.warn("SAX failed to parse the XML.", e);
-        } catch (IOException e) {
-            logMetacat.warn("Failed to parse the resource map.", e);
+            try {
+                BufferedWriter writer = new BufferedWriter(new FileWriter(scienceMetadataDocument));
+                writer.write(IOUtils.toString(scienceMetadata.getValue(), "UTF-8"));
+                writer.close();
+            } catch (IOException e) {
+                // Log that we failed to write the EML, but don't kill the package download
+                logMetacat.error("Failed to write the EML document.", e);
+            }
+
+            this.writeSystemMetadataObject(scienceMetadata.getKey());
         }
     }
+
 
     /**
      * Writes the resource map to disk. This file gets written to the metadata/ folder.
      *
-     * @param resMap: The resource map that's being written to disk
-     * @param metadataRoot: The File that represents the metadata/ folder
-     *
      */
-    private void writeResourceMap(ResourceMap resMap,
-                                  File metadataRoot) {
+    public void writeResourceMap() {
 
+        this.writeSystemMetadataObject(this.resourceMapSystemMetadata);
         // Write the resource map to the metadata directory
-        String filename = metadataRoot.getAbsolutePath() + "/" + "oai-ore.xml";
+        String resMapString = "";
+        File resourceMapFile = null;
         try {
-            String resMapString = ResourceMapFactory.getInstance().serializeResourceMap(resMap);
-            File systemMetadataDocument = new File(filename);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(systemMetadataDocument));
+            resMapString = ResourceMapFactory.getInstance().serializeResourceMap(this.resourceMap);
+            resourceMapFile = new File(this._metadataRoot.getAbsolutePath(),
+                    PropertyService.getProperty("package.download.file.resource-map"));
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("Failed to find the resource map name property.", e);
+            resourceMapFile = new File(this._metadataRoot.getAbsolutePath(), "oai-ore.xml");
+        } catch (ORESerialiserException e) {
+            logMetacat.error("Failed to de-serialize the resource map and write it to disk.", e);
+        }
+        try{
+            BufferedWriter writer = new BufferedWriter(new FileWriter(resourceMapFile));
             writer.write(resMapString);
             writer.close();
         } catch (IOException e) {
             logMetacat.error("Failed to write resource map to the bag.", e);
-        } catch (ORESerialiserException e) {
-            logMetacat.error("Failed to de-serialize the resource map", e);
         }
     }
 
+    /**
+     * Writes a system metadata object to disk.
+     *
+     * @param systemMetadata: The system metadata object being written to disk
+     */
+    private void writeSystemMetadataObject(SystemMetadata systemMetadata) { //TODO :Make ticket for making change in bag library for streams
+        String systemMetadataFilename = null;
+        try {
+            systemMetadataFilename = PropertyService.getProperty("package.download.file.sysmeta-prepend") +
+                    systemMetadata.getIdentifier().getValue() + PropertyService.getProperty("package.download.file.sysmeta-extension");
+            systemMetadataFilename.replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+        } catch (PropertyNotFoundException e) {
+            // Give a best bet for the file extension
+            logMetacat.error("Failed to find the system metadata name property.", e);
+            systemMetadataFilename = "system-metadata-" + systemMetadata.getIdentifier().getValue() + ".xml";
+        }
+        try{
+            File systemMetadataDocument = new File(this._systemMetadataDirectory.getAbsolutePath(), systemMetadataFilename);
+            FileOutputStream sysMetaStream = new FileOutputStream(systemMetadataDocument);
+            TypeMarshaller.marshalTypeToOutputStream(systemMetadata, sysMetaStream);
+        } catch (MarshallingException e) {
+            logMetacat.error("There was an error converting the metadata document. ID: " +
+                    systemMetadata.getIdentifier().getValue(), e);
+        } catch (FileNotFoundException e) {
+            logMetacat.error("Failed to find the temporary file when writing object. ID: " +
+                    systemMetadata.getIdentifier().getValue(), e);
+        } catch (IOException e) {
+            logMetacat.error("Failed to write to temporary file when writing object. ID: " +
+                    systemMetadata.getIdentifier().getValue(), e);
+        }
+    }
+
+    /**
+     * Writes a data object to disk.
+     *
+     * @param systemMetadata: The object's system metadata
+     * @param entryInputStream: A stream to the object
+     */
+    public void writeDataObject(SystemMetadata systemMetadata, InputStream entryInputStream) {
+
+        // Write system metadata to disk
+        this.writeSystemMetadataObject(systemMetadata);
+        Identifier objectSystemMetadataID = systemMetadata.getIdentifier();
+
+        String dataObjectFileName = "";
+
+        // Some generic, default object format type
+        String objectFormatType = null;
+        try {
+            logMetacat.info("Getting object format type");
+            objectFormatType = ObjectFormatCache.getInstance().getFormat(systemMetadata.getFormatId()).getFormatType();
+        } catch (NotFound e) {
+            logMetacat.error("Failed to find the format type of the data object.", e);
+            objectFormatType = ".data";
+        }
+        //Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
+        dataObjectFileName = objectSystemMetadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
+
+        // ensure there is a file extension for the object
+        logMetacat.info("Getting object extension");
+        String extension = ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
+        dataObjectFileName += extension;
+
+        // if SM has the file name, ignore everything else and use that
+        if (systemMetadata.getFileName() != null) {
+            dataObjectFileName = systemMetadata.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+        }
+
+        // Create a new file for this data file. The default location is in the data diretory
+        File dataPath = this._dataRoot;
+
+        logMetacat.info("_filePathMap size: " + this._filePathMap.size());
+        if (this._filePathMap != null && this._filePathMap.size() > 0) {
+            logMetacat.info("Placing file in directory");
+            // Create the directory for the data file, if it was specified in the resource map
+            if (this._filePathMap.containsKey(objectSystemMetadataID.getValue())) {
+                logMetacat.info("Creating new object filepath");
+                logMetacat.info(dataObjectFileName);
+
+                dataPath = new File(this._dataRoot.getAbsolutePath() + FileUtil.getFS() +
+                        this._filePathMap.get(objectSystemMetadataID.getValue()));
+                logMetacat.info(this._filePathMap.get(objectSystemMetadataID.getValue()));
+                logMetacat.info(dataPath.getAbsolutePath());
+            }
+        }
+
+        // We want to make sure that the directory exists before referencing it later
+        if (!dataPath.exists()) {
+            dataPath.mkdirs();
+        }
+
+        // Create a temporary file that will hold the bytes of the data object. This file will get
+        // placed into the bag. If there's a failure, keep adding the rest of the files.
+        logMetacat.debug("Creating new File on disk for data object");
+        File tempFile = new File(dataPath, dataObjectFileName);
+        try {
+            logMetacat.info("Writing new data object");
+            IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
+        } catch (FileNotFoundException e) {
+            logMetacat.error("Failed to find the temp file.", e);
+        } catch (IOException e) {
+            logMetacat.error("Failed to write to the temp file.", e);
+        } // TODO: Bring up with other error handling
+    }
+
+    public void generateReadme(InputStream primaryScienceMetadata, SystemMetadata primaryScienceSystemMetadata) {
+        // Create the README.html document. If the readme fails to be be created, still
+        // serve the download (but without the README).
+        try {
+            ReadmeFile readme = new ReadmeFile(IOUtils.toString(primaryScienceMetadata, "UTF-8"),
+                    primaryScienceSystemMetadata);
+            File readmeFile = readme.writeToFile(this.tempBagRoot);
+            this._bag.addFileAsTag(readmeFile);
+        } catch (ServiceFailure | IOException e) {
+            logMetacat.error("Failed to create the readme file. " , e);
+        }
+    }
+
+    public InputStream download() throws ServiceFailure, InvalidToken,
+            NotAuthorized, NotFound, NotImplemented {
+        this.writeResourceMap();
+        this.writeScienceMetadata();
+
+        return getPackageStream();
+    }
+    /**
+     * Returns a stream to the bag archive.
+     *
+     */
     public InputStream getPackageStream()
             throws ServiceFailure, InvalidToken,
             NotAuthorized, NotFound, NotImplemented {
-        logMetacat.info("In getPackageStream");
-        // Holds any science metadata and resource map pids
-        this.addCoreMetadataIdentifiers(this._pid);
-
-        // Map of objects to filepaths
-        Map<String, String> filePathMap = new HashMap<String, String>();
-
-        // the pids to include in the package
-        List<Identifier> packagePids = new ArrayList<Identifier>();
-
-        // Container that holds the pids of all of the objects that are in a package
-        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
-
-        /*
-           The bag has a few standard directories (metadata, metadata/sysmeta, data/). Create File objects
-           representing each of these directories so that the appropriate files can be added to them. Initialize them
-           to null so that they can be used outside of the try/catch block.
-         */
-
-        // A temporary directory where the non-zipped bag is formed
-        File tempBagRoot = null;
-        // A temporary direcotry within the tempBagRoot that represents the metadata/ direcrory
-        File metadataRoot = null;
-        // A temporary directory within metadataRoot that holds system metadata
-        File systemMetadataDirectory = null;
-        // A temporary directory within tempBagRoot that holds data objects
-        File dataRoot = null;
-
-        // Tie the File objects above to actual locations on the filesystem
-        try {
-            logMetacat.info("Creating files");
-            tempBagRoot = new File(System.getProperty("java.io.tmpdir") + Long.toString(System.nanoTime()));
-            tempBagRoot.mkdirs();
-
-            metadataRoot = new File(tempBagRoot.getAbsolutePath() + "/metadata");
-            metadataRoot.mkdir();
-
-            systemMetadataDirectory = new File(metadataRoot.getAbsolutePath() + "/sysmeta");
-            systemMetadataDirectory.mkdir();
-
-            dataRoot = new File(tempBagRoot.getAbsolutePath() + "/data");
-            dataRoot.mkdir();
-        } catch (Exception e) {
-            logMetacat.warn("Error creating bag files", e);
-            throw new ServiceFailure("", "Metacat failed to create the temporary bag archive.");
-        }
-
-        logMetacat.info("Getting system metadata");
-        // Get the system metadata for the package
-        SystemMetadata sysMeta = this._node.getSystemMetadata(this._session, this._pid);
-
-        // Maps a resource map to a list of aggregated identifiers. Use this to get the list of pids inside
-        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
-
-        InputStream oreInputStream = null;
-
-        logMetacat.info("Getting ORE stream");
-        oreInputStream = this._node.get(this._session, this._pid);
-        logMetacat.info("Got ORE stream");
-        try {
-            resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-        } catch (OREException | OREParserException e) {
-            throw new ServiceFailure("", "Failed to parse the resource map during package download.");
-        } catch (URISyntaxException e) {
-            throw new ServiceFailure("", "There was a malformation in the resource map.");
-        } catch (UnsupportedEncodingException e) {
-            throw new ServiceFailure("", "There was an error decoding the resource map.");
-        }
-        pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
-
-        for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
-            Set<Identifier> metadataIdentifiers = entries.keySet();
-
-            pidsOfPackageObjects.addAll(entries.keySet());
-            for (List<Identifier> dataPids : entries.values()) {
-                pidsOfPackageObjects.addAll(dataPids);
-            }
-
-        }
-
-        // Attempt to open/parse the resource map so that we can get a list of pids inside
-        // Check for prov:atLocation and save them in filePathMap
-        this.documentObjectLocations(this._resourceMap, filePathMap);
-        // Write the resource map to disk
-        this.writeResourceMap(this._resourceMap, metadataRoot);
-
-        // Use the list of pids to gather and store information about each corresponding sysmeta document
-        try {
-            for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
-                Set<Identifier> metadataIdentifiers = entries.keySet();
-
-                // Loop over each metadata document
-                for (Identifier metadataID : metadataIdentifiers) {
-                    //Get the system metadata for this metadata object
-                    SystemMetadata metadataSysMeta = this._node.getSystemMetadata(this._session, metadataID);
-                    // Handle any system metadata
-                    if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-                        //If this is in eml format, write it to the temporary bag metadata directory
-                        String metadataType = metadataSysMeta.getFormatId().getValue();
-                        if (metadataType.startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
-                            // Add the ID to the list of metadata pids
-                            this.addCoreMetadataIdentifiers(metadataID);
-
-                            // Write the EML document to disk
-                            this.writeEMLDocument(metadataID, metadataRoot);
-                        }
-                    }
-                }
-            }
-        } catch (InvalidToken e) {
-            logMetacat.error("Invalid token.", e);
-        } catch (NotFound e) {
-            logMetacat.error("Failed to locate the metadata.", e);
-        } catch (ServiceFailure e) {
-            logMetacat.error("Service failure while writing the EML document to disk.", e);
-        } catch (NotAuthorized e) {
-            logMetacat.error("Not authorized to access the EML metadata document.", e);
-        } catch (NotImplemented e) {
-            logMetacat.error("Not implemented.", e);
-        }
-
-        List<Identifier> metadataIds = new ArrayList<Identifier>();
-        /*
-		    Loop over each pid in the resource map. First, the system metadata gets written. Next, the data file that
-			corresponds to the system metadata gets written.
-		*/
-
-        // loop through the package contents
-        for (Identifier entryPid : pidsOfPackageObjects) {
-            //Get the system metadata for the objbect with pid entryPid
-            SystemMetadata entrySysMeta = this._node.getSystemMetadata(this._session, entryPid);
-
-            // Write its system metadata to disk
-            Identifier objectSystemMetadataID = entrySysMeta.getIdentifier();
-            metadataIds.add(objectSystemMetadataID);
-            try {
-                String filename = systemMetadataDirectory.getAbsolutePath() + "/sysmeta-" + objectSystemMetadataID.getValue() + ".xml";
-                File systemMetadataDocument = new File(filename);
-                FileOutputStream sysMetaStream = new FileOutputStream(systemMetadataDocument);
-                TypeMarshaller.marshalTypeToOutputStream(entrySysMeta, sysMetaStream);
-            } catch (MarshallingException e) {
-                logMetacat.error("There was an error accessing the metadata document.", e);
-            } catch (FileNotFoundException e) {
-                logMetacat.error("Failed to create the document.", e);
-            } catch (IOException e) {
-                logMetacat.error("Failed to write to temporary file.", e);
-            }
-
-            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
-            if (this.getCoreMetadataIdentifiers().contains(entryPid)) {
-                continue;
-            }
-
-            String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-            String fileName = null;
-
-            //TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
-            //Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
-            fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-
-            // ensure there is a file extension for the object
-            String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-            fileName += extension;
-
-            // if SM has the file name, ignore everything else and use that
-            if (entrySysMeta.getFileName() != null) {
-                fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-            }
-
-            // Create a new file for this data file. The default location is in the data diretory
-            File dataPath = dataRoot;
-
-            // Create the directory for the data file, if it was specified in the resource map
-            if (filePathMap.containsKey(entryPid.getValue())) {
-                dataPath = new File(dataRoot.getAbsolutePath() + "/" + filePathMap.get(entryPid.getValue()));
-            }
-            // We want to make sure that the directory exists before referencing it later
-            if (!dataPath.exists()) {
-                dataPath.mkdirs();
-            }
-
-            // Create a temporary file that will hold the bytes of the data object. This file will get
-            // placed into the bag
-            File tempFile = new File(dataPath, fileName);
-            try {
-                InputStream entryInputStream = this._node.get(this._session, entryPid);
-                IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-            } catch (InvalidToken e) {
-                logMetacat.error("Invalid token.", e);
-            } catch (ServiceFailure e) {
-                logMetacat.error("Failed to retrive data file.", e);
-            } catch (NotAuthorized e) {
-                logMetacat.error("Not authorized to the data file.", e);
-            } catch (NotFound e) {
-                logMetacat.error("Data file not found.", e);
-            } catch (NotImplemented e) {
-                logMetacat.error("Not implemented.", e);
-            } catch (FileNotFoundException e) {
-                logMetacat.error("Failed to find the temp file.", e);
-            } catch (IOException e) {
-                logMetacat.error("Failed to write to the temp file.", e);
-            }
-        }
-
-        // Create the README.html document
-        ReadmeFile readme = new ReadmeFile(this._metadataIds,
-                this._coreMetadataIdentifiers,
-                this._session,
-                this._node);
-        File readmeFile = readme.createFile(tempBagRoot);
-        this._bag.addFileAsTag(readmeFile);
-
+        logMetacat.debug("In getPackageStream");
         // The directory where the actual bag zipfile is saved (and streamed from)
         File streamedBagFile = new File(System.getProperty("java.io.tmpdir") + Long.toString(System.nanoTime()));
-
-        InputStream bagStream = createExportBagStream(streamedBagFile,
-                dataRoot,
-                metadataRoot,
-                this._pid);
+        InputStream bagStream = createExportBagStream(streamedBagFile);
         try {
-            logMetacat.info("Deleting temp directories");
-            FileUtils.deleteDirectory(tempBagRoot);
+            FileUtils.deleteDirectory(this.tempBagRoot);
             FileUtils.deleteDirectory(streamedBagFile);
         } catch (IOException e) {
             logMetacat.error("There was an error deleting the bag artifacts.", e);
-        }
-        logMetacat.info("Returning bag");
+        } //TODO: Bring this up
+        logMetacat.debug("Returning bag stream");
         return bagStream;
+    }
+
+    public void getScienceMetadataIds () {
+        String rdfQuery = "      PREFIX cito:    <http://www.w3.org/ns/prov#>\n" +
+                "\n" +
+                "                SELECT ?subject\n" +
+                "                WHERE {\n" +
+                "\n" +
+                "                    ?science_metadata cito:documents ?data_object .\n" +
+                "                }";
+        try {
+            // Execute the SELECT query
+            ResultSet queryResults = selectQuery(rdfQuery);
+            // Stores a single result from the query
+            QuerySolution currentResult;
+            // Do as long as there's a result
+            while (queryResults.hasNext()) {
+                currentResult = queryResults.next();
+                // Get the atLocation and pid fields
+                RDFNode subjectNode = currentResult.get("science_metadata");
+
+                // Turn results into String
+                String subjectStr = subjectNode.toString();
+
+                // Check if we have any results
+                if (subjectStr == null) {
+                    logMetacat.warn("Failed to find any science metadata documents during package download.");
+                    continue;
+                }
+                Identifier identifier = new Identifier();
+                identifier.setValue(subjectStr);
+                this.addCoreMetadataIdentifier(identifier);
+                this.addScienceSystemMetadata(identifier);
+            }
+        } catch (Exception e) {
+            // I'm a bastard for this but there are a large number of exceptions that can be thrown from the above.
+            // In any case, they should be passed over.
+            logMetacat.error("There was an error while parsing an atLocation field.", e);
+        }
+    }
+
+    private ResultSet selectQuery(String rdfQuery) {
+        String resMapString = null;
+        InputStream targetStream = null;
+        // Try to get the resource map as a string for Jena
+        try {
+            resMapString = ResourceMapFactory.getInstance().serializeResourceMap(this.resourceMap);
+            targetStream = IOUtils.toInputStream(resMapString);
+        } catch (ORESerialiserException e) {
+            // Log that there was an error, but don't interrupt the download
+            logMetacat.error("There was an error while serializing the resource map.", e);
+        }
+
+        if (targetStream == null) {
+            try {
+                targetStream.close();
+            } catch (IOException e) {
+                logMetacat.error("Failed to close the resource map InputStream", e);
+            }
+            logMetacat.error("There was an error while serializing the resource map");
+        }
+        // Create a Jena model for the resource map
+        Model model = ModelFactory.createDefaultModel();
+        model.read(targetStream, null);
+        // Create the Jena Query object which holds our String
+        Query query = QueryFactory.create(rdfQuery);
+        // Connect the query with the rdf
+        QueryExecution qexec = QueryExecutionFactory.create(query, model);
+
+        ResultSet queryResults = qexec.execSelect();
+        return queryResults;
+    }
+
+
+    /**
+     * Queries the resource map for any pids that have an atLocation record. If found,
+     * it saves them.
+     *
+     */
+    private void getObjectLocations() {
+        String rdfQuery = "      PREFIX prov:    <http://www.w3.org/ns/prov#>\n" +
+                "                PREFIX dcterms: <http://purl.org/dc/terms/>\n" +
+                "\n" +
+                "                SELECT *\n" +
+                "                WHERE {\n" +
+                "\n" +
+                "                    ?subject prov:atLocation ?prov_atLocation .\n" +
+                "                    ?subject dcterms:identifier ?pidValue .\n" +
+                "                }";
+        try {
+            // Execute the SELECT query
+            ResultSet queryResults = selectQuery(rdfQuery);
+            // Stores a single result from the query
+            QuerySolution currentResult;
+            // Do as long as there's a result
+            while (queryResults.hasNext()) {
+                currentResult = queryResults.next();
+                // Get the atLocation and pid fields
+                RDFNode subjectNode = currentResult.get("pidValue");
+                RDFNode locationNode = currentResult.get("prov_atLocation");
+
+                // Turn results into String
+                String subjectStr = subjectNode.toString();
+                String locationStr = locationNode.toString();
+
+                // Check if we have any results
+                if (locationStr == null || subjectStr == null) {
+                    logMetacat.warn("Failed to find any locaton values");
+                    continue;
+                }
+
+                // Make sure that the directory separators will work on Windows or POSIX
+                locationStr = FilenameUtils.separatorsToSystem(locationNode.toString());
+                // Remove any . characters to prevent directory traversal
+                locationStr = locationStr.replace(".", "");
+                // The subject form is pid^^vocabword. Remove everything after ^^
+                subjectStr = StringUtils.substringBefore(subjectStr, "^^");
+                this._filePathMap.put(subjectStr, locationStr);
+            }
+        } catch (Exception e) {
+            // I'm a bastard for this but there are a large number of exceptions that can be thrown from the above.
+            // In any case, they should be passed over.
+            logMetacat.error("There was an error while parsing an atLocation field.", e);
+        }
     }
 }

@@ -130,10 +130,12 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
-
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.ResourceMap;
 import org.ecoinformatics.datamanager.parser.Entity;
+import org.dataone.ore.ResourceMapFactory;
 
 import org.w3c.dom.Document;
 
@@ -150,7 +152,7 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
-import edu.ucsb.nceas.metacat.download.*;
+import edu.ucsb.nceas.metacat.download.PackageDownloader;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -159,6 +161,8 @@ import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
+import org.dspace.foresite.OREException;
+import org.dspace.foresite.OREParserException;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node
@@ -349,7 +353,11 @@ public class MNodeService extends D1NodeService
         UnsupportedType, InsufficientResources, NotFound, 
         InvalidSystemMetadata, NotImplemented, InvalidRequest 
     {
-        
+        logMetacat.error("Obsoleting...");
+        logMetacat.error(pid.getValue());
+        logMetacat.error("With.....");
+        logMetacat.error(newPid.getValue());
+
         long startTime = System.currentTimeMillis();
 
         if(isReadOnlyMode()) {
@@ -472,7 +480,19 @@ public class MNodeService extends D1NodeService
             if (sysmeta.getObsoletedBy() != null) {
                 throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
             }
+
+
+            if (sysmeta.getAuthoritativeMemberNode() == null) {
+                logMetacat.error("No authoritativeMemberNode");
+            } else {
+                logMetacat.error(sysmeta.getAuthoritativeMemberNode().getValue());
+            }
+
+
+            logMetacat.error("UPDATINGGGGGGGGGGGGGGG");
+            logMetacat.error(pid.getValue());
             if (sysmeta.getObsoletes() != null && !sysmeta.getObsoletes().getValue().equals(pid.getValue())) {
+                logMetacat.error(sysmeta.getObsoletes().getValue());
                 throw new InvalidSystemMetadata("1300", "The identifier provided in obsoletes does not match old Identifier");
             }
 
@@ -658,7 +678,7 @@ public class MNodeService extends D1NodeService
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
-
+        logMetacat.error("CREATE CALLED");
         if(isReadOnlyMode()) {
             throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
         }
@@ -681,6 +701,10 @@ public class MNodeService extends D1NodeService
         // if no authoritative MN, set it to the same
         if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
                 sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
+            logMetacat.error("Setting authoratative member node from create");
             sysmeta.setAuthoritativeMemberNode(originMemberNode);
         }
 
@@ -873,7 +897,6 @@ public class MNodeService extends D1NodeService
                         // NOTE: we may already know about this ID because it could be a data file described by a metadata file
                         // https://redmine.dataone.org/issues/2572
                         // TODO: fix this so that we don't prevent ourselves from getting replicas
-                        
                         // let the CN know that the replication failed
                         logMetacat.warn("Object content not found on this node despite having localId: " + localId);
                         String msg = "Can't read the object bytes properly, replica is invalid.";
@@ -2456,25 +2479,37 @@ public class MNodeService extends D1NodeService
     }
 
     /**
-     * Checks to see if the package can be exported based on the formatId
+     * Checks to see if the package can be exported, based on the formatId
      *
      * @param formatId: The format ID of the package
      *
      * @throws InvalidRequest
      * @throws NotImplemented
      * @throws ServiceFailure
-
      */
     private void validateExportPackage(ObjectFormatIdentifier formatID)
             throws InvalidRequest, NotImplemented, ServiceFailure {
+        String bagVersion=null;
+        try {
+            bagVersion = PropertyService.getProperty("package.download.bag.version");
+        } catch (PropertyNotFoundException e) {
+            bagVersion = "application/bagit-097";
+        }
         if (formatID == null) {
-            throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
-        } else if (!formatID.getValue().equals("application/bagit-097")) {
-            throw new NotImplemented("", "The format " + formatID.getValue() + " is not supported in the getpackage method");
+            throw new InvalidRequest("2873", "The package format type was null.");
+        } else if (!formatID.getValue().equals(bagVersion)) {
+            throw new NotImplemented("", "The format " + formatID.getValue() + " is not supported.");
         }
     }
 
-    private Identifier getProperIdentifier(Identifier pid)
+    /**
+     * Given a pid/sid, returns the associated pid
+     *
+     * @param pid: The pid in question
+     *
+     * @throws ServiceFailure
+     */
+    private Identifier getVersionIdentifier(Identifier pid)
             throws ServiceFailure {
         String serviceFailureCode = "2871";
         Identifier sid = getPIDForSID(pid, serviceFailureCode);
@@ -2485,10 +2520,77 @@ public class MNodeService extends D1NodeService
     }
 
     /**
+     * Maps a resource map to a list to an object that contains all of the identifiers (objects+system metadata)
+     *
+     * @param session: The user's session
+     * @param orePid: The pid of the ORE document
+     *
+     * @throws ServiceFailure
+     */
+    private Map<Identifier, Map<Identifier, List<Identifier>>> parseResourceMap(Session session,
+                                                                                Identifier orePid) throws ServiceFailure {
 
+        // Container that holds the pids of all of the objects that are in a package
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
+        try {
+            InputStream oreInputStream = this.get(session, orePid);
+            resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream); //TODO: Check aggregates vs documents in parseResourceMap
+        } catch (OREException | OREParserException | UnsupportedEncodingException | NotImplemented e) {
+            throw new ServiceFailure("Failed to parse the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (InvalidToken | NotAuthorized e) {
+            logMetacat.error("Invalid token while parsing the resource map. Check that you have permissions.", e);
+        } catch (URISyntaxException e) {
+            throw new ServiceFailure("There was a malformation in the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (NotFound e) {
+            throw new ServiceFailure("Failed to locate the resource map. Check that the right pid was used.", e.getMessage());
+        }
+        if (resourceMapStructure == null) {
+            throw new ServiceFailure("", "There was an error while parsing the resource map.");
+        }
+        return resourceMapStructure;
+    }
+
+    /**
+     * Returns a stream to a resource map
+     *
+     * @param session: The user's session
+     * @param pid: The resource map PID
+     *
+     * @return A stream to the bagged package
+     *
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     */
+    private ResourceMap serializeResourceMap(Session session, Identifier pid)
+            throws InvalidToken, NotFound, InvalidRequest, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+        SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+        ResourceMap resMap = null;
+        try {
+            InputStream oreInputStream = this.get(session, pid);
+            resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
+        } catch (OREException | URISyntaxException e) {
+            logMetacat.error("There was problem with the resource map. Check that that the resource map is valid.", e);
+            throw new ServiceFailure("There was problem with the resource map. Check that that the resource map is valid.", e.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            logMetacat.error("The resource map has an unsupported encoding format.", e);
+            throw new ServiceFailure("The resource map has an unsupported encoding format.", e.getMessage());
+        } catch (OREParserException e) {
+            logMetacat.error("Failed to parse the ORE.", e);
+            throw new ServiceFailure("Failed to parse the ORE.", e.getMessage());
+        }
+        return resMap;
+    }
+
+
+    /**
+     * Streams a data package. Critical failures are propegated out of this method as
+     * exceptions.
+     *
      * @param session: The user's session
      * @param formatId:
-     * @param pid: The package pid
+     * @param resourceMapPid: The package pid
      *
      * @return A stream to the bagged package
      *
@@ -2501,16 +2603,70 @@ public class MNodeService extends D1NodeService
      */
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
-			Identifier pid) throws InvalidToken, ServiceFailure,
+			Identifier resourceMapPid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
-        logMetacat.info("getPackage called. Validating....");
+        logMetacat.debug("getPackage called. Validating....");
+        // Throws if the package fails to validate
 	    this.validateExportPackage(formatId);
-        logMetacat.info("Validated. Getting PID....");
-        Identifier packageID = this.getProperIdentifier(pid);
-        logMetacat.info("Got PID. Creating downloader....");
-        PackageDownloader downloader = new PackageDownloader(this, session, formatId, packageID);
-        logMetacat.info("Created downloader. Streaming package....");
-        return downloader.getPackageStream();
+        Identifier packageID = this.getVersionIdentifier(resourceMapPid);
+
+        // Get the resource map. This is used various places downstream, which is why it's not a stream. Note that
+        // this throws if it can't be parsed because we depend on it for object pids.
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = parseResourceMap(session, resourceMapPid);
+        // Holds the PID of every object in the resource map
+        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
+        pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
+
+        for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+            pidsOfPackageObjects.addAll(entries.keySet());
+            for (List<Identifier> dataPids : entries.values()) {
+                pidsOfPackageObjects.addAll(dataPids);
+            }
+        }
+
+        // Get a ResourceMap object representing the resource map. Throw if we can't get it
+        ResourceMap resourceMap = serializeResourceMap(session, resourceMapPid);
+        SystemMetadata resourceMapSystemMetadata = this.getSystemMetadata(session, resourceMapPid);
+        // Create the downloader that's responsible for creating the readme and bag archive.
+        // Throws if something went wrong (we can't continue without a PackageDownloader)
+        PackageDownloader downloader = new PackageDownloader(packageID, resourceMap, resourceMapSystemMetadata);
+
+        List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
+        // Start writing data objects to the temporary bag archive
+        for (Identifier entryPid : pidsOfPackageObjects) {
+            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
+            if (metadataIdentifiers.contains(entryPid)) {
+                continue;
+            }
+            // Get the system metadata and a stream to the data file
+            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+            InputStream objectInputStream = this.get(session, entryPid);
+            downloader.writeDataObject(entrySysMeta, objectInputStream);
+            try {
+                objectInputStream.close();
+            } catch (IOException e) {
+                logMetacat.error("Failed to close the InputStream to " + entrySysMeta.getIdentifier().getValue());
+            }
+        }
+
+        // Create the README file if there's science metadata
+        List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
+        if (!scienceMetadataIdentifiers.isEmpty()) {
+            Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
+            SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
+            InputStream scienceMetadataStream = this.get(session, sciMetataId);
+            downloader.generateReadme(scienceMetadataStream, systemMetadata);
+        }
+
+        // Get a stream and system metadata for each science metadata object
+        for (Identifier scienceMetadataIdentifier: scienceMetadataIdentifiers) {
+            SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
+            InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
+            downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
+        }
+
+        logMetacat.debug("Streaming package....");
+        return downloader.download();
     }
 	
 	 /**
@@ -2593,7 +2749,7 @@ public class MNodeService extends D1NodeService
 	      }
 
 	      if (session == null) {
-	          //TODO: many of the thrown exceptions do not use the correct error codes
+	          //todo: many of the thrown exceptions do not use the correct error codes
 	          //check these against the docs and correct them
 	          throw new NotAuthorized("4861", "No Session - could not authorize for updating system metadata." +
 	                  "  If you are not logged in, please do so and retry the request.");

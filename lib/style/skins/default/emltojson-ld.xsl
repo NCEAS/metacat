@@ -2,16 +2,17 @@
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
     <xsl:output method="text"/>
     <xsl:strip-space elements="*"/>
-    <xsl:template match="/*">
+    <xsl:template name="jsonld">
+        <xsl:param name="science-meta"/>
         {
         "@context": "http://schema.org/",
         "@type": "Dataset",
-        "@id": "<xsl:value-of select="@packageId" />",
-        "description": "<xsl:value-of select="dataset/abstract" />",
-        "name": "<xsl:value-of select="dataset/title" />",
+        "@id": "<xsl:value-of select="*/@packageId" />",
+        "description": "<xsl:value-of select="*/dataset/abstract" />",
+        "name": "<xsl:value-of select="*/dataset/title" />",
         "name": "DataONE Dataset Download",
         "creator": [
-        <xsl:for-each select="dataset/creator">
+        <xsl:for-each select="*/dataset/creator">
             {
             <xsl:if test="electronicMailAddress">
                 "@id": "<xsl:value-of select="electronicMailAddress" />",
@@ -36,7 +37,7 @@
         </xsl:for-each>
         ],
         "editor": [
-        <xsl:for-each select="dataset/metadataProvider">
+        <xsl:for-each select="*/dataset/metadataProvider">
             {
             <xsl:if test="electronicMailAddress">
                 "@id": "<xsl:value-of select="electronicMailAddress" />",
@@ -58,7 +59,7 @@
         </xsl:for-each>
         ],
         "contributor": [
-        <xsl:for-each select="dataset/associatedParty">
+        <xsl:for-each select="*/dataset/associatedParty">
             {
             <xsl:if test="electronicMailAddress">
                 "@id": "<xsl:value-of select="electronicMailAddress" />",
@@ -79,11 +80,11 @@
             }<xsl:if test="position() != last()">,</xsl:if>
         </xsl:for-each>
         ],
-        <xsl:if test="dataset/pubDate">
-            "datePublished": "<xsl:value-of select="dataset/pubDate" />",
+        <xsl:if test="*/dataset/pubDate">
+            "datePublished": "<xsl:value-of select="*/dataset/pubDate" />",
         </xsl:if>
-        <xsl:if test="dataset/intellectualRights/para">
-            "license":"<xsl:value-of select="dataset/intellectualRights/para" />"
+        <xsl:if test="*/dataset/intellectualRights/para">
+            "license":"<xsl:value-of select="*/dataset/intellectualRights/para" />"
         </xsl:if>
         }
     </xsl:template>

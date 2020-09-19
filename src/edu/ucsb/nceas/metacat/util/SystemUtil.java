@@ -631,6 +631,17 @@ public class SystemUtil {
 	}
 
 	/**
+	 * Get the style skins directory. This is made up of the tomcat directory
+	 * with context + file separator + "style" + file separator + "skins"
+	 *
+	 * @return string holding the style skins directory
+	 */
+	public static String getCommonSkinsDir() throws PropertyNotFoundException {
+		return getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS()
+				+ "common";
+	}
+
+	/**
 	 * Get the SQL directory. This is made up of the context directory + file
 	 * separator + sql
 	 * 
