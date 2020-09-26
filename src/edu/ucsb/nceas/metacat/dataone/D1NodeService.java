@@ -1104,8 +1104,11 @@ public abstract class D1NodeService {
     if (userAgent == null) {
         userAgent = request.getHeader("User-Agent");
     }
+    long start = System.currentTimeMillis();
     String result = handler.handleInsertOrUpdateAction(ipAddress, userAgent, null, 
                         null, params, username, groupnames, false, false, xmlBytes, formatId, checksum,tempFile);
+    long end = System.currentTimeMillis();
+    logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + pid.getValue() + " Parse and write the metadata object into database (if the multiparts handler hasn't calculated the checksum, it will write the content to the disk again)" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
     	String detailCode = "";
@@ -1748,7 +1751,7 @@ public abstract class D1NodeService {
                 logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
                 throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
             }
-          
+          long start = System.currentTimeMillis();
           //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
           if (dataStream instanceof DetailedFileInputStream ) {
               DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
@@ -1761,7 +1764,9 @@ public abstract class D1NodeService {
                       //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
                       if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
                           FileUtils.moveFile(tempFile, newFile);
+                          long end = System.currentTimeMillis();
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
+                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + pid.getValue() + " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
                           return newFile;
                       } else {
                           logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
@@ -1789,6 +1794,8 @@ public abstract class D1NodeService {
               logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
           }
+          long end = System.currentTimeMillis();
+          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + pid.getValue() + " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
           if(tempFile != null) {
               //tempFile.deleteOnExit();
               StreamingMultipartRequestResolver.deleteTempFile(tempFile);

@@ -90,6 +90,7 @@ import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
+import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
@@ -1578,6 +1579,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected void putObject(String trailingPid, String action) throws ServiceFailure, InvalidRequest, MarshallingException, InvalidToken, NotAuthorized, IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, NotFound, IOException, InstantiationException, IllegalAccessException, NoSuchAlgorithmException, FileUploadException {
         CheckedFile objFile = null;
         try {
+            long start = System.currentTimeMillis();
             // Read the incoming data from its Mime Multipart encoding
             MultipartRequestWithSysmeta multiparts = collectObjectFiles();
             Map<String, File> files = multiparts.getMultipartFiles();
@@ -1642,6 +1644,8 @@ public class MNResourceHandler extends D1ResourceHandler {
                 } else {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
                 }
+                long end = System.currentTimeMillis();
+                logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + pid.getValue() + " Total create/update method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
         } catch (Exception e) {
             if(objFile != null) {
                 //objFile.deleteOnExit();
