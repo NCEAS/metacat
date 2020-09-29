@@ -67,7 +67,7 @@ public class BookKeeperClient {
     private static final String QUOTAS = "quotas";
     private static final String QUOTATYPE = "quotaType";
     private static final String QUOTAID = "quotaId";
-    private static final String SUBSCRIBER = "subscriber";
+    private static final String QUOTASUBJECT = "subject";
     private static final String REQUESTOR = "requestor";
     private static final String USAGES = "usages";
     private static final String INSTNACEID = "instanceId";
@@ -164,7 +164,7 @@ public class BookKeeperClient {
     
     /**
      * List the quotas associated with the given subject
-     * @param subscriber  the subject who owns the quotas
+     * @param quotaSubject  the subject who owns the quotas
      * @param requestor  the subject of user who will request a usage 
      * @param quotaType  the type of the quotas (storage or portal)
      * @return  the list of quotas associated with the subject.
@@ -175,12 +175,12 @@ public class BookKeeperClient {
      * @throws InvalidRequest 
      * @throws UnsupportedEncodingException 
      */
-    public List<Quota> listQuotas(String subscriber, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest, UnsupportedEncodingException {
+    public List<Quota> listQuotas(String quotaSubject, String requestor, String quotaType) throws ServiceFailure, NotFound, InvalidRequest, UnsupportedEncodingException {
         List<Quota> result = null;
         String restStr = bookKeeperURL + QUOTAS;
         boolean hasQuestionMark = false;
-        if (subscriber != null && !subscriber.trim().equals("")) {
-            restStr = restStr + "?"+ SUBSCRIBER + "=" + escapeURL(subscriber);
+        if (quotaSubject != null && !quotaSubject.trim().equals("")) {
+            restStr = restStr + "?"+ QUOTASUBJECT + "=" + escapeURL(quotaSubject);
             hasQuestionMark = true;
         }
         if (quotaType != null && !quotaType.trim().equals("")) {
@@ -213,10 +213,10 @@ public class BookKeeperClient {
                     logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return a list of quotas with the size " + result.size());
                 } else {
                     logMetacat.debug("BookKeeperClient.listQuotas - the bookkeeper service return null or empty");
-                    throw new NotFound("1103", "QuotaService didn't find a quota for subscriber " + subscriber + " with quota type " + quotaType + " for the requestor " + requestor);
+                    throw new NotFound("1103", "QuotaService didn't find a quota for the quota subject " + quotaSubject + " with quota type " + quotaType + " for the requestor " + requestor);
                 }
             } else if (status == 404) {
-                throw new NotFound("1103", "The quota with the subscription subject " + subscriber + " is not found");
+                throw new NotFound("1103", "The quota with the quota subject " + quotaSubject + " is not found");
             } else {
                 String error = IOUtils.toString(response.getEntity().getContent());
                 throw new ServiceFailure("1190", "Quota service can't fulfill to list quotas since " + error);
