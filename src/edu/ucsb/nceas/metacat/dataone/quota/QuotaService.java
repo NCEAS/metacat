@@ -59,7 +59,7 @@ public abstract class QuotaService {
     
     /**
      * The method will be implemented by the child classes to enforce the quota service
-     * @param subscriber  the subject of subscriber of the quota which will be used
+     * @param quotaSubject  the subject of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param instanceId  the id of the object will be applied the quota
      * @param sysmeta  the system metadata of the object which will use the quota
@@ -69,7 +69,7 @@ public abstract class QuotaService {
      * @throws InsufficientResources
      * @throws NotImplemented
      */
-    public abstract void enforce(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException ;
+    public abstract void enforce(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException ;
 
     /**
      * Checking if the given pid is last one in this series chain hasn't been archived
@@ -141,7 +141,7 @@ public abstract class QuotaService {
     /**
      * Check if the quota has enough space for this request. If there is not enough space, an exception will be thrown
      * @param checkEnoughSpace  indicator if we need to check if the found quota has enough space for this usage
-     * @param subscriber  the subject of subscriber of the quota which will be used 
+     * @param quotaSubject  the subject of the quota which will be used 
      * @param requestor  the subject of the user who requests the usage
      * @param quotaType  the type of quota
      * @param quantity  the amount of the usage for the request
@@ -154,10 +154,10 @@ public abstract class QuotaService {
      * @throws InsufficientResources 
      * @throws UnsupportedEncodingException 
      */
-     protected int checkQuota(boolean checkEnoughSpace, String subscriber, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
+     protected int checkQuota(boolean checkEnoughSpace, String quotaSubject, String requestor, String quotaType, double quantity, String instanceId) throws InvalidRequest, ServiceFailure, InsufficientResources, NotFound, UnsupportedEncodingException {
         int quotaId = DEFAULT_QUOTA_ID;
         boolean hasSpace = false;
-        List<Quota> quotas = client.getInstance().listQuotas(subscriber, requestor, quotaType);
+        List<Quota> quotas = client.getInstance().listQuotas(quotaSubject, requestor, quotaType);
         for (Quota quota : quotas) {
             if (quota != null) {
                 if (checkEnoughSpace) {
@@ -171,7 +171,7 @@ public abstract class QuotaService {
                     if (existedUsagesObj != null) {
                         existedUsages = existedUsagesObj.doubleValue();
                     }
-                    logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with subscriber " + subscriber + " with type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
+                    logMetacat.debug("QuotaService.lookUpQuotaId - need to check space: the hardLimit in the quota with the quota subject " + quotaSubject + " with the type " + quotaType + "is " + hardLimit + ", the existed usages is " + existedUsages + " and the request amount of usage is " + quantity + " for the instance id " + instanceId);
                     if (hardLimit  >= existedUsages + quantity) {
                         quotaId = quota.getId();
                         hasSpace = true;
@@ -179,16 +179,16 @@ public abstract class QuotaService {
                         break;
                     }
                 } else {
-                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota subject " + quotaSubject + " with the type " + quotaType  + " for the instance id " + instanceId);
                     quotaId = quota.getId();
                     hasSpace = true;//since we don't need to check if it has enough space, so hasSpace is always true
-                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota id " + quotaId + " subscriber " + subscriber + " with type " + quotaType  + " for the instance id " + instanceId);
+                    logMetacat.debug("QuotaService.lookUpQuotaId - do NOT need to check space: found a quota with the quota id " + quotaId + " with the quota subject " + quotaSubject + " with the type " + quotaType  + " for the instance id " + instanceId);
                     break;
                 }
             }
         }
         if (!hasSpace) {
-            throw new InsufficientResources("1160", "The subscriber " + subscriber + " doesn't have enough " + quotaType + " quota to fullfill the request for the instance id " + instanceId + ". Please contact " + subscriber + " to request more quota.");
+            throw new InsufficientResources("1160", "The quota subject " + quotaSubject + " doesn't have enough " + quotaType + " quota to fullfill the request for the instance id " + instanceId + ". Please contact " + quotaSubject + " to request more quota.");
         }
         return quotaId;
     }

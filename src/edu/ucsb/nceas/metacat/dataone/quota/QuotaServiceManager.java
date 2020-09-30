@@ -162,7 +162,7 @@ public class QuotaServiceManager {
     
     /**
      * Enforce quota service
-     * @param subscriber  the subject of subscriber of the quota which will be used
+     * @param quotaSubject  the subject of the quota which will be used
      * @param requestor  the subject of the user who requests the usage
      * @param sysmeta  the system metadata of the object which will use the quota
      * @param method  the method name which will call the createUsage method (create or update
@@ -172,15 +172,15 @@ public class QuotaServiceManager {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    public void enforce(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources, InvalidRequest, ServiceFailure, NotImplemented, NotFound {
+    public void enforce(String quotaSubject, Subject requestor, SystemMetadata sysmeta, String method) throws InsufficientResources, InvalidRequest, ServiceFailure, NotImplemented, NotFound {
         long start = System.currentTimeMillis();
         if (enabled) {
            try {
                 if (requestor == null) {
-                    throw new InvalidRequest("1102", "The quota subscriber, requestor can't be null");
+                    throw new InvalidRequest("1102", "The quota requestor can't be null");
                 }
-                if (subscriber == null || subscriber.trim().equals("")) {
-                    subscriber = requestor.getValue();//if we didn't get the subscriber information for the request header, we just assign it as the request's subject
+                if (quotaSubject == null || quotaSubject.trim().equals("")) {
+                    quotaSubject = requestor.getValue();//if we didn't get the quota subject information for the request header, we just assign it as the request's subject
                 }
                 QuotaTypeDeterminer determiner = new QuotaTypeDeterminer(portalNameSpaces);
                 determiner.determine(sysmeta); //this method enforce the portal objects have the sid field in the system metadata
@@ -188,10 +188,10 @@ public class QuotaServiceManager {
                 if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.PORTAL)) {
                     String instanceId = determiner.getInstanceId();
                     logMetacat.debug("QuotaServiceManager.enforce - handle the portal quota service with instance id " + instanceId + " and pid " + sysmeta.getIdentifier().getValue());
-                    enforcePortalQuota(subscriber,requestor, instanceId, sysmeta, method);
-                    enforceStorageQuota(subscriber,requestor, sysmeta, method); //also enforce the storage quota service
+                    enforcePortalQuota(quotaSubject,requestor, instanceId, sysmeta, method);
+                    enforceStorageQuota(quotaSubject,requestor, sysmeta, method); //also enforce the storage quota service
                 } else if (quotaType != null && quotaType.equals(QuotaTypeDeterminer.STORAGE)) {
-                    enforceStorageQuota(subscriber,requestor, sysmeta, method);
+                    enforceStorageQuota(quotaSubject,requestor, sysmeta, method);
                 } else {
                     throw new InvalidRequest("1102", "QuotaServiceManager.enforce - Metacat doesn't support the quota type " + quotaType + " for the pid " + sysmeta.getIdentifier().getValue());
                 }
@@ -207,7 +207,7 @@ public class QuotaServiceManager {
     
     /**
      * Enforce the portal quota checking
-     * @param subscriber  the subscriber of a quota
+     * @param quotaSubject  the subject of a quota
      * @param requestor  the requestor which request the quota
      * @param instanceId  the sid of the portal object
      * @param sysmeta  the system metadata of the object will use the quota
@@ -221,10 +221,10 @@ public class QuotaServiceManager {
      * @throws NotImplemented
      * @throws UnsupportedEncodingException 
      */
-    private void enforcePortalQuota(String subscriber, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
+    private void enforcePortalQuota(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws InvalidRequest, 
                                                                              ServiceFailure, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
         if (portalEnabled) {
-            PortalQuotaService.getInstance(executor, client).enforce(subscriber, requestor, instanceId, sysmeta, method);
+            PortalQuotaService.getInstance(executor, client).enforce(quotaSubject, requestor, instanceId, sysmeta, method);
         } else {
             logMetacat.info("QuotaServiceManager.enforcePrtaolQuota - the portal quota service is disabled");
         }
@@ -233,13 +233,13 @@ public class QuotaServiceManager {
    
     /**
      * Enforce the storage quota checking
-     * @param subscriber  the subscriber of a quota
+     * @param quotaSubject  the subject of the quota
      * @param requestor  the requestor which request the quota
      * @param sysmeta  the system metadata of the object will use the quota
      * @param method  the dataone qpi method calls the checking
      * @throws NotImplemented
      */
-    private void enforceStorageQuota(String subscriber, Subject requestor, SystemMetadata sysmeta, String method) throws NotImplemented {
+    private void enforceStorageQuota(String quotaSubject, Subject requestor, SystemMetadata sysmeta, String method) throws NotImplemented {
         if (storageEnabled) {
             throw new NotImplemented("0000", "The storage quota service hasn't been implemented yet.");
         } else {
