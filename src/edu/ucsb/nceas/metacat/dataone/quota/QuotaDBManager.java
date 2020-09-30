@@ -49,7 +49,7 @@ public class QuotaDBManager {
     public static final String DATEREPORTED = "date_reported";
     public static final String OBJECT = "object";
     public static final String NODEID = "node_id";
-    public static final String SUBSCRIBER = "subscriber";
+    public static final String QUOTASUBJECT = "quota_subject";
     public static final String QUOTATYPE = "quota_type";
     public static final String REQUESTOR = "requestor";
     
@@ -70,7 +70,7 @@ public class QuotaDBManager {
         try {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.createUsage");
             serialNumber = dbConn.getCheckOutSerialNumber();
-            String fields = DATEREPORTED + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID + "," + SUBSCRIBER + "," + QUOTATYPE + "," + REQUESTOR;
+            String fields = DATEREPORTED + "," + INSTANCEID + "," + QUANTITY + "," + OBJECT + "," + STATUS + "," + NODEID + "," + QUOTASUBJECT + "," + QUOTATYPE + "," + REQUESTOR;
             String values = "?,?,?,?,?,?,?,?,?";
             if (usage.getQuotaId() != null && usage.getQuotaId().intValue() > 0) {
                 fields = fields + "," + QUOTAID;
