@@ -335,8 +335,8 @@ public class MNodeService extends D1NodeService
         }
         
         try {
-            String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
-            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
+            String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
         } catch (InsufficientResources e) {
             throw new ServiceFailure(serviceFailureCode, "The user doesn't have enough quota to delete the pid " + id.getValue() + " since " + e.getMessage());
         } catch (InvalidRequest e) {
@@ -500,8 +500,8 @@ public class MNodeService extends D1NodeService
             long startTime3 = System.currentTimeMillis();
             
             //check the if it has enough quota if th quota service is enabled
-            String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
-            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.UPDATEMETHOD);
+            String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.UPDATEMETHOD);
             
             // check quality of SM
             if (sysmeta.getObsoletedBy() != null) {
@@ -786,9 +786,9 @@ public class MNodeService extends D1NodeService
         logMetacat.debug("Allowed to create: " + pid.getValue());
         
         //check the if it has enough quota if th quota service is enabled
-        String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+        String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
         try {
-            QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
         } catch (NotFound e) {
             throw new InvalidRequest("1102", "Can't find the resource " + e.getMessage());
         }
@@ -2828,8 +2828,8 @@ public class MNodeService extends D1NodeService
 	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	              SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
 	              //check the if it has enough quota if th quota service is enabled
-	              String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
-	              QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
+	              String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+	              QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
 	              boolean needModifyDate = true;
 	              boolean logArchive = true;
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 

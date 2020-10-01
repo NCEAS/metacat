@@ -1492,8 +1492,8 @@ public abstract class D1NodeService {
           } else {
               logMetacat.debug("D1Node.update - this is to archive a MN object "+pid.getValue());
               try {
-                  String subscriber = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
-                  QuotaServiceManager.getInstance().enforce(subscriber, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
+                  String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+                  QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
                   archiveObject(logArchive, session, pid, sysmeta, needUpdateModificationDate);
               } catch (NotFound e) {
                   throw new InvalidRequest("4869", "Can't find the pid " + pid.getValue() + " for archive.");

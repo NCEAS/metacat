@@ -66,7 +66,7 @@ public class QuotaServiceManager {
     public static final String ARCHIVEMETHOD = "archive";
     public static final String DELETEMETHOD = "delete";
     public static final String PROPERTYNAMEOFPORTALNAMESPACE = "dataone.quotas.portal.namespaces";
-    public static final String QUOTASUBSRIBERHEADER = "X-DataONE-Quota-Subject";
+    public static final String QUOTASUBJECTHEADER = "X-DataONE-Quota-Subject";
     
     private static boolean storageEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.storage.enabled", false);
     private static boolean portalEnabled = Settings.getConfiguration().getBoolean("dataone.quotas.portals.enabled", false);
