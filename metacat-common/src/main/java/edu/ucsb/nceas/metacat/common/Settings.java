@@ -9,4 +9,5 @@ public class Settings {
     public static final String PERFORMANCELOG_CREATE_UPDATE_METHOD = " create/update method ";
     public static final String PERFORMANCELOG_QUERY_METHOD = " query method ";
     public static final String PERFORMANCELOG_GET_METHOD = " get method ";
+    public static final String PERFORMANCELOG_INDEX_METHOD = " index process ";
 }

@@ -32,6 +32,7 @@ import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.EntryListener;
 import com.hazelcast.core.IMap;
 
+import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 
 public class SystemMetadataEventListener implements EntryListener<Identifier, IndexTask>, Runnable {
@@ -120,6 +121,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     }
     
 	public void entryUpdated(EntryEvent<Identifier, IndexTask> entryEvent) {
+	    long start = System.currentTimeMillis();
 	    //System.out.println("===================================calling entryUpdated method ");
 	    log.debug("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
 		// add to the index
@@ -154,7 +156,13 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		if (fields != null) {
 			solrIndex.insertFields(pid, fields);
 		}
-		
+		long end = System.currentTimeMillis();
+        log.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_INDEX_METHOD + pid.getValue() + " Total time to process indexer" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+        long startFromQueuing = task.getTimeAddToQueque();
+        if (startFromQueuing != 0) {
+            log.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_INDEX_METHOD + pid.getValue() + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURASION + (end-startFromQueuing)/1000);
+        }
+
 	}
 	
 	
