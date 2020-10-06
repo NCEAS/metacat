@@ -1645,7 +1645,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
                 }
                 long end = System.currentTimeMillis();
-                logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + pid.getValue() + " Total create/update method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+                logMetacat.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Total create/update method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
         } catch (Exception e) {
             if(objFile != null) {
                 //objFile.deleteOnExit();

@@ -157,10 +157,10 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 			solrIndex.insertFields(pid, fields);
 		}
 		long end = System.currentTimeMillis();
-        log.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_INDEX_METHOD + pid.getValue() + " Total time to process indexer" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total time to process indexer" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
         long startFromQueuing = task.getTimeAddToQueque();
         if (startFromQueuing != 0) {
-            log.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_INDEX_METHOD + pid.getValue() + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURASION + (end-startFromQueuing)/1000);
+            log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURASION + (end-startFromQueuing)/1000);
         }
 
 	}
