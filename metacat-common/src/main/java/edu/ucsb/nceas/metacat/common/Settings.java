@@ -10,4 +10,9 @@ public class Settings {
     public static final String PERFORMANCELOG_QUERY_METHOD = " query method ";
     public static final String PERFORMANCELOG_GET_METHOD = " get method ";
     public static final String PERFORMANCELOG_INDEX_METHOD = " index process ";
+    public static final String PERFORMANCELOG_DELETE_METHOD = " delete method ";
+    public static final String PERFORMANCELOG_ARCHIVE_METHOD = " archive method ";
+    public static final String PERFORMANCELOG_VIEW_METHOD = " view method ";
+    public static final String PERFORMANCELOG_GET_PACKAGE_METHOD = " getPackage method ";
+    public static final String PEFORRMANCELOG_GET_METHOD = " get method ";
 }
