@@ -76,8 +76,8 @@ import edu.ucsb.nceas.metacat.doi.datacite.relation.ProvenanceRelationHandler;
 public abstract class DataCiteMetadataFactory {
     public static final String EN = "en";
     public static final String XML_LANG= "xml:lang";
-    public static final String NAMESPACE = "http://datacite.org/schema/kernel-3";
-    public static final String SCHEMALOCATION = "https://schema.datacite.org/meta/kernel-3.1/metadata.xsd";
+    public static final String NAMESPACE = "http://datacite.org/schema/kernel-4";
+    public static final String SCHEMALOCATION = "http://schema.datacite.org/meta/kernel-4.3/metadata.xsd";
     public static final String RESOURCE = "resource";
     public static final String CREATORS = "creators";
     public static final String CREATOR = "creator";
