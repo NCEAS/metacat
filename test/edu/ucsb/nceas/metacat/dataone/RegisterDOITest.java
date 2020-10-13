@@ -246,7 +246,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 					// check if the update thread finished yet, otherwise try again
 					if (metadata != null && isMetadata) {
 						String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-						if (!registeredTarget.endsWith("/#view/" + pid.getValue())) {
+						if (!registeredTarget.endsWith("/#view/" + pid.getValue()) && !registeredTarget.endsWith("/view/" + pid.getValue())) {
 							// try fetching it again
 							metadata = null;
 						}
@@ -262,7 +262,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			// check that the target URI was updated
 			if (isMetadata) {
 				String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-				assertTrue(registeredTarget.endsWith("/#view/" + pid.getValue()));
+				assertTrue(registeredTarget.endsWith("/#view/" + pid.getValue()) || registeredTarget.endsWith("/view/" + pid.getValue()));
 			}
 			if (isMetadata) {
 				String creator = metadata.get(DataCiteProfile.CREATOR.toString());
