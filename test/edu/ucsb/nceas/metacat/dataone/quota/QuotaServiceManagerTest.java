@@ -931,7 +931,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
     public void testMNodeMethodWithPortalQuota() throws Exception {
         //Check if we have enough portal quota space in the remote server
         List<Quota> quotas = BookKeeperClient.getInstance().listQuotas(SUBSCRIBER, REQUESTOR, QuotaTypeDeterminer.PORTAL);
-        request.setHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER, SUBSCRIBER);
+        request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, SUBSCRIBER);
         int quotaId = 0;
         double originalUsages = 0;
         for (Quota quota : quotas) {
@@ -1549,7 +1549,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public void testNoEnoughQuota() throws Exception {
         try {
-            request.setHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER, DEFICIT_SUBSCRIBER);
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, DEFICIT_SUBSCRIBER);
             Identifier guid = new Identifier();
             guid.setValue("testPortal." + System.currentTimeMillis());
             InputStream object = new FileInputStream(portalFilePath);
@@ -1577,7 +1577,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public void testNoSubscriberHeader() throws Exception {
         try {
-            String header = request.getHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER);
+            String header = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
             assertTrue(header == null);
             Identifier guid = new Identifier();
             guid.setValue("testPortal." + System.currentTimeMillis());
@@ -1607,7 +1607,7 @@ public class QuotaServiceManagerTest extends D1NodeServiceTest {
      */
     public void testDelinquentUser() throws Exception {
         try {
-            request.setHeader(QuotaServiceManager.QUOTASUBSRIBERHEADER, DELINGUENT_SUBSCRIBER);
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, DELINGUENT_SUBSCRIBER);
             Identifier guid = new Identifier();
             guid.setValue("testPortal." + System.currentTimeMillis());
             InputStream object = new FileInputStream(portalFilePath);

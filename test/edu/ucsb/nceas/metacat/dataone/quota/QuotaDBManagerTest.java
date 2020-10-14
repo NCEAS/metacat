@@ -356,7 +356,7 @@ public class QuotaDBManagerTest  extends MCTestCase {
             dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
             serialNumber = dbConn.getCheckOutSerialNumber();
             String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," 
-                                     + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.SUBSCRIBER + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
+                                     + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.QUOTASUBJECT + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
                                      + " from " + QuotaDBManager.TABLE + " where " + QuotaDBManager.QUOTAID + "=? AND " + QuotaDBManager.INSTANCEID  + "=?" ;
             stmt = dbConn.prepareStatement(query);
             stmt.setInt(1, quotaId);
@@ -385,8 +385,8 @@ public class QuotaDBManagerTest  extends MCTestCase {
              dbConn = DBConnectionPool.getDBConnection("QuotaDBManager.getUnReportedUsages");
              serialNumber = dbConn.getCheckOutSerialNumber();
              String query = "select " + QuotaDBManager.USAGELOCALID + ", " + QuotaDBManager.QUOTAID + "," + QuotaDBManager.INSTANCEID + ", " + QuotaDBManager.QUANTITY + "," + QuotaDBManager.DATEREPORTED + "," 
-                                      + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.SUBSCRIBER + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
-                                      + " from " + QuotaDBManager.TABLE + " where " + QuotaDBManager.SUBSCRIBER + "=? AND " + QuotaDBManager.INSTANCEID  + "=? AND " + QuotaDBManager.QUOTATYPE + "=?" ;
+                                      + QuotaDBManager.STATUS + "," + QuotaDBManager.USAGEREMOTEID + "," + QuotaDBManager.NODEID + "," + QuotaDBManager.QUOTASUBJECT + "," + QuotaDBManager.QUOTATYPE + "," + QuotaDBManager.REQUESTOR
+                                      + " from " + QuotaDBManager.TABLE + " where " + QuotaDBManager.QUOTASUBJECT + "=? AND " + QuotaDBManager.INSTANCEID  + "=? AND " + QuotaDBManager.QUOTATYPE + "=?" ;
              stmt = dbConn.prepareStatement(query);
              stmt.setString(1, subscriber);
              stmt.setString(2, instanceId);
