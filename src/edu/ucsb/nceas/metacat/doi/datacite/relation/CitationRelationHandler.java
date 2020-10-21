@@ -209,5 +209,13 @@ public class CitationRelationHandler implements RelationshipHandler {
         return response;
         
     }
+    
+    /**
+     * Get the citation server url
+     * @return  the url of the service
+     */
+    public String getCitationServerURL() {
+        return this.citationServerURL;
+    }
 
 }
