@@ -23,22 +23,11 @@
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Vector;
-
-import com.hp.hpl.jena.rdf.model.Literal;
-import com.hp.hpl.jena.rdf.model.Property;
-import com.hp.hpl.jena.rdf.model.RDFNode;
-import com.hp.hpl.jena.rdf.model.Resource;
-import com.hp.hpl.jena.rdf.model.Statement;
-import com.ibm.lsid.client.conf.castor.Properties;
 
 import edu.ucsb.nceas.MCTestCase;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -118,10 +107,10 @@ public class CitationRelationHandlerTest extends MCTestCase {
      * Test the method of buildRestString
      */
     public void testBuildRestString() throws Exception {
-       String url = PropertyService.getProperty("dataone.metric.serviceUrl");
        CitationRelationHandler handler = new CitationRelationHandler();
+       String url = handler.getCitationServerURL();
        String command= handler.buildRestString("doi:10.6085/AA/PTSXXX_015MTBD003R00_20040819.50.1");
-       assertTrue(command.equals("https://logproc-stage-ucsb-1.test.dataone.org/citations?query=%7B%22filterBy%22%3A%5B%7B%22filterType%22%3A%22dataset%22%2C%22values%22%3A%5B%22doi%3A10.6085%2FAA%2FPTSXXX_015MTBD003R00_20040819.50.1%22%5D%2C%22interpretAs%22%3A%22list%22%7D%5D%7D"));
+       assertTrue(command.equals(url + "citations?query=%7B%22filterBy%22%3A%5B%7B%22filterType%22%3A%22dataset%22%2C%22values%22%3A%5B%22doi%3A10.6085%2FAA%2FPTSXXX_015MTBD003R00_20040819.50.1%22%5D%2C%22interpretAs%22%3A%22list%22%7D%5D%7D"));
     }
     
     /**
