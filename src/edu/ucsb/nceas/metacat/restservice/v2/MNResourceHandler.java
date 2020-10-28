@@ -1384,11 +1384,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                 IOUtils.copyLarge(data, out);
             } finally {
                 if (data != null) {
-                    try {
-                        data.close();
-                    } catch (Exception e) {
-                        logMetacat.warn("MNResourceHandler.getObject - can't close the input stream which is used to read the object file since " + e.getMessage() );
-                    }
+                   IOUtils.closeQuietly(data);
                 }
             }
             
