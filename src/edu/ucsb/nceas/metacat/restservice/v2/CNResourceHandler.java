@@ -618,11 +618,22 @@ public class CNResourceHandler extends D1ResourceHandler {
         response.setContentType(mimeType);
         response.setHeader("Content-Disposition", "inline; filename=" + filename);
 
-        InputStream data = CNodeService.getInstance(request).get(session, id);
-
-        OutputStream out = response.getOutputStream();
-        response.setStatus(200);
-        IOUtils.copyLarge(data, out);
+        InputStream data = null;
+        try {
+            data = CNodeService.getInstance(request).get(session, id);
+            OutputStream out = response.getOutputStream();
+            response.setStatus(200);
+            IOUtils.copyLarge(data, out);
+        } finally {
+            if (data != null) {
+                try {
+                    data.close();
+                } catch (Exception e) {
+                    logMetacat.warn("CNResourceHandler.getObject - can't close the input stream which is used to read the object file since " + e.getMessage() );
+                }
+            }
+        }
+        
 
     }
 

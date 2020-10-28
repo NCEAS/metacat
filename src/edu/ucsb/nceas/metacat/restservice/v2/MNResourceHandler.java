@@ -1370,11 +1370,22 @@ public class MNResourceHandler extends D1ResourceHandler {
             }
             response.setContentType(mimeType);
             response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+            InputStream data = null;
+            try {
+                data = MNodeService.getInstance(request).get(session, id);
+                out = response.getOutputStream();  
+                response.setStatus(200);
+                IOUtils.copyLarge(data, out);
+            } finally {
+                if (data != null) {
+                    try {
+                        data.close();
+                    } catch (Exception e) {
+                        logMetacat.warn("MNResourceHandler.getObject - can't close the input stream which is used to read the object file since " + e.getMessage() );
+                    }
+                }
+            }
             
-            InputStream data = MNodeService.getInstance(request).get(session, id);
-
-            out = response.getOutputStream();  
-            IOUtils.copyLarge(data, out);
             
         }
         else
