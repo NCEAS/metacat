@@ -33,7 +33,8 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.ResultSet;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -52,7 +53,7 @@ public class SubTree implements Comparator
   protected long   endNodeId =   -1;
   private Stack<NodeRecord>  subTreeNodeStack = null;
   
-  private static Logger logMetacat = Logger.getLogger(SubTree.class);
+  private static Log logMetacat = LogFactory.getLog(SubTree.class);
 
     /**
      * Defualt constructor

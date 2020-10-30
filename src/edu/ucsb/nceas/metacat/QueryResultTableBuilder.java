@@ -27,7 +27,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.util.TimerTask;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  *  QueryResutlTableBuilder is class to build xml_queryresult table during metacat initialization.
@@ -44,7 +45,7 @@ public class QueryResultTableBuilder extends TimerTask
 	
 	private String[] docidList = null;
 	private String[] returnFieldList = null;
-	private Logger logMetacat = Logger.getLogger(QueryResultTableBuilder.class);
+	private Log logMetacat = LogFactory.getLog(QueryResultTableBuilder.class);
 	/**
 	 * Default the constructor.  It will get doc id list from current xml_table
 	 *

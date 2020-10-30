@@ -10,7 +10,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -70,7 +71,7 @@ import org.dataone.service.types.v2.util.NodelistUtil;
  */
 public class D1AuthHelper {
 
-    private static Logger logMetacat = Logger.getLogger(D1NodeService.class);
+    private static Log logMetacat = LogFactory.getLog(D1NodeService.class);
     
 
     private HttpServletRequest request;
@@ -738,7 +739,7 @@ public class D1AuthHelper {
         // defer to the shared util for recursively compiling the subjects   
         Set<Subject> sessionSubjects = AuthUtils.authorizedClientSubjects(session);
         
-        if(logMetacat.isEnabledFor(Level.DEBUG)) {
+        if(logMetacat.isDebugEnabled()) {
             if(sessionSubjects != null) {
                 for(Subject subject : sessionSubjects) {
                     logMetacat.debug("=================== The equalvent subject is "+subject.getValue());

@@ -28,7 +28,8 @@ package edu.ucsb.nceas.metacat.util;
 
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -37,7 +38,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
 
 public class SkinUtil {
 	
-	private static Logger logMetacat = Logger.getLogger(SkinUtil.class);
+	private static Log logMetacat = LogFactory.getLog(SkinUtil.class);
 	private static Vector<String> skinNames = null;
 
 	/**

@@ -27,7 +27,8 @@
 
 package edu.ucsb.nceas.metacat;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -63,7 +64,7 @@ public class DBEntityResolver implements EntityResolver
   private String doctype = null;
   private String systemid = null;
   private Reader dtdtext = null;
-  private static Logger logMetacat = Logger.getLogger(DBEntityResolver.class);
+  private static Log logMetacat = LogFactory.getLog(DBEntityResolver.class);
   
   /**
    * Construct an instance of the DBEntityResolver class

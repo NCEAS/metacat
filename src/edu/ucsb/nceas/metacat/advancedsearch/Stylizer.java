@@ -32,7 +32,8 @@ import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -45,7 +46,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class Stylizer {
 
-	private Logger logMetacat = Logger.getLogger(Stylizer.class);
+	private Log logMetacat = LogFactory.getLog(Stylizer.class);
 
 	/**
 	 * Applies the resultset.xsl stylesheet to the pathquery result string

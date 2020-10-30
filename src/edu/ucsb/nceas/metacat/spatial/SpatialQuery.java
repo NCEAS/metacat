@@ -58,7 +58,8 @@ import java.util.Vector;
 import java.util.Iterator; 
 import java.io.IOException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 
@@ -68,7 +69,7 @@ import edu.ucsb.nceas.metacat.util.MetacatUtil;
  */
 public class SpatialQuery {
  
-  private static Logger log = Logger.getLogger(SpatialQuery.class.getName());
+  private static Log log = LogFactory.getLog(SpatialQuery.class.getName());
  
   /** 
    * empty constructor to initialize spatial query

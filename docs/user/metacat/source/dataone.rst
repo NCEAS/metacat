@@ -46,7 +46,7 @@ federation. This service interface is divided into `four distinct tiers`_, with 
 intention that any given software system may implement only those tiers that are 
 relevant to their repository; for example, a data aggregator might only implement
 the Tier 1 interfaces that provide anonymous access to public data sets, while
-a complete data management system like Metacat can implement all four tiers:
+a complete data management system like Metacat implements all four tiers:
 
 1. **Tier 1:** Read-only, anonymous data access
 2. **Tier 2:** Read-only, with authentication and access control
@@ -101,7 +101,7 @@ without interruption.  The DataONE services expose their services at::
   
 And the DataONE search portal is available at:
 
-  https://cn.dataone.org/
+  https://search.dataone.org/
 
 .. _CILogon: http://www.cilogon.org
 
@@ -113,7 +113,7 @@ In order to provide scientists with convenient access to the data and metadata i
 DataONE, the third component represents a library of software tools that have been 
 adapted to work with DataONE via the service interface and can be used to
 discover, manage, analyze, and visualize data in DataONE.  For example, DataONE
-plans to release metadata editors (e.g., Morpho), data search tools (e.g., Mercury), 
+has released metadata editors (e.g., Morpho), data search tools (e.g., Mercury), 
 data access tools (e.g., ONEDrive), and data analysis tools (e.g., R) that all 
 know how to interact with DataONE Member Nodes and Coordinating Nodes.  Consequently,
 scientists will be able to access data from any DataONE Member Node, such as a Metacat
@@ -222,7 +222,7 @@ Coordinating Node registration service.  At that point, all that remains is to w
 the DataONE administrators to approve the node registration.  Details of the approval
 process can be found on the `DataONE web site`_.
 
-.. _DataONE web site: http://www.dataone.org
+.. _DataONE web site: https://dataone.org
 
 Access Control Policies
 -----------------------
@@ -323,72 +323,50 @@ generating System Metadata for replica content.
 
 Apache configuration details
 ----------------------------
-These Apache directives are crucial for Metacat to function as a Tier 2+ Member Node
+
+A number of Apache directives are required for a Member Node to function at Tier 2 or higher and various combinations of these directives may be required for your installation depending on which version of Apache you are running and other requirements detailed below.
+
+It's recommended to use LetsEncrypt_ to enable TLS (HTTPS) for your installation and ensure the following directives are set in your VirtualHost to set up both TLS across your host and also enable client certificate based authentication of requests from the Coordinating Node.
+
+Ensure your configuration has directives similar to the following at the VirtualHost level:
 
 ::
+    SSLEngine on
+    SSLOptions +StrictRequire +StdEnvVars +ExportCertData
+    SSLVerifyClient none # The default, but explicitly included here
+    SSLVerifyDepth 10
 
-  ...
-  <VirtualHost XXX.XXX.XXX.XXX:443> 
-        DocumentRoot /var/www 
-        ServerName dev.nceas.ucsb.edu
-        ## Allow CORS requests from all origins to use cookies
-        SetEnvIf Origin "^(.*)$" ORIGIN_DOMAIN=$1
-        Header set Access-Control-Allow-Origin "%{ORIGIN_DOMAIN}e" env=ORIGIN_DOMAIN
-        Header set Access-Control-Allow-Headers "Authorization, Content-Type, Origin, Cache-Control"
-        Header set Access-Control-Allow-Methods "GET, POST, PUT, OPTIONS"
-        Header set Access-Control-Allow-Credentials "true"
-        ErrorLog /var/log/httpd/error_log 
-        CustomLog /var/log/httpd/access_log common 
-        ScriptAlias /cgi-bin/ "/var/www/cgi-bin/" 
-        <Directory /var/www/cgi-bin/> 
-          AllowOverride None 
-          Options ExecCGI 
-          Require all granted
-        </Directory> 
-        ScriptAlias /metacat/cgi-bin/ "/var/www/webapps/metacat/cgi-bin/" 
-        <Directory "/var/www/webapps/metacat/cgi-bin/"> 
-          AllowOverride None 
-          Options ExecCGI 
-          Require all granted
-        </Directory> 
-        <IfModule mod_rewrite.c>
-                RewriteEngine on
-                RewriteCond %{HTTP:Authorization} ^(.*)
-                RewriteRule .* - [e=HTTP_AUTHORIZATION:%1]
-        </IfModule>
-        JkMount /metacat ajp13 
-        JkMount /metacat/* ajp13 
-        JkMount /metacat/metacat ajp13 
-        JkUnMount /metacat/cgi-bin/* ajp13 
-        JkMount /metacatui ajp13 
-        JkMount /metacatui/* ajp13 
-        JkMount /*.jsp ajp13 
-        AllowEncodedSlashes On
-        AcceptPathInfo      On
-        JkOptions +ForwardURICompatUnparsed
-        SSLEngine on
-        SSLOptions +StrictRequire +StdEnvVars +ExportCertData
-        SSLVerifyClient optional
-        SSLVerifyDepth 10
-        SSLCertificateFile /etc/ssl/certs/<your_server_certificate>
-        SSLCertificateKeyFile /etc/ssl/private/<your_server_key>
-        SSLCertificateChainFile /etc/ssl/certs/<CA_chain_file>.crt
-        SSLCACertificatePath /etc/ssl/certs/
-        <Location "/metacat/d1/mn">
-                #SSLRenegBufferSize 10000000
-                #SSLOptions +OptRenegotiate
-                <If " ! ( %{HTTP_USER_AGENT} =~ /(windows|chrome|mozilla|safari|webkit|httr|julia|python)/i )">
-                        SSLVerifyClient optional
-                </If>
-        </Location>
-  </VirtualHost> 
-  ...
+    SSLCertificateFile /etc/letsencrypt/live/<yourhost.org>/cert.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/<yourhost.org>/privkey.pem
+    SSLCertificateChainFile /etc/letsencrypt/live/<yourhost.org>/chain.pem
+    SSLCACertificatePath /etc/ssl/certs/
+
+    # Enable authentication with client certificates only for the REST API and 
+    # only when the request's user agent isn't a web brwoser or common programming 
+    # environment (i.e., is the DataONE Coordinating Node)
+    <Location "/<yourcontext>/d1/mn">
+        <If " ! ( %{HTTP_USER_AGENT} =~ /(windows|chrome|mozilla|safari|webkit|httr|julia|python)/i )">
+            SSLVerifyClient optional
+        </If>
+    </Location>
+    ...
+
+  Note: Setting `SSLVerifyClient none` and the `Location` block above is a workaround for two separate issues:
+
+  1. Safari 11 attempts to send a client certificate when `SSLVerifyClient` is set to `optional` even though other browsers do not. Without the above `Location` directive, Safari 11 users will be prompted to select a client certificate to authenticate with even when attempting to browse as a public (unauthenticated) user.
+  2. libcurl deprecated sending the HTTP `Expect` header with POST requests and programmatic uploads from clients such as the R dataone package will fail unless this `Location` directive is in place and `SSLVerifyClient` is set to `none`.
+
+  If you are running a version of Apache older than 2.4.29, the above set of directives should work fully.
   
-Where ``<your_server_certificate>`` and ``<your_server_key>`` are the certificate/key pair used by Apache 
-to identify the server to clients. The DataONE Certiciate Authority certificate - available from the DataONE administrators -  
+  If you are running a version of Apache between 2.4.29 and 2.4.39, omit the entire `Location` block in the above snippet and set `SSLVerifyClient optional` instead of `none` across your VirtualHost. Apache 2.4.29 introduced a bug which causes significant delays on TLS renegotiation when using the above `Location` block. But note that this will cause Safari 11 users to see the erroneous client certificate prompt mentioned above. Programmatic uploads from environments such as R will still work.
+
+  If you are running a version of Apache newer than or equal to 2.4.39, the above set of directives should work fully.
+
+The DataONE Certiciate Authority certificate - available from the DataONE administrators -  
 will also need to be added to the directory specified by ``SSLCACertificatePath`` 
 in order to validate client certificates signed by that authority. DataONE has also provided a CA chain file that may be used in lieu of directory-based CA 
-confinguration. The `SSLCACertificateFile`` directive should be used when configuring your member node with the DataONE CA chain.
+confinguration. The `SSLCACertificateFile` directive should be used when configuring your member node with the DataONE CA chain.
+
 When these changes have been applied, Apache should be restarted:
 
 ::
@@ -396,7 +374,8 @@ When these changes have been applied, Apache should be restarted:
   cd /etc/ssl/certs
   sudo c_rehash
   sudo /etc/init.d/apache2 restart
-  
+
+.. _LetsEncrypt: https://letsencrypt.org/
 
 Configure Tomcat to allow DataONE identifiers
 ----------------------------------------------

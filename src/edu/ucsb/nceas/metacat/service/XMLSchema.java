@@ -26,7 +26,8 @@
 
 package edu.ucsb.nceas.metacat.service;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -45,7 +46,7 @@ public class XMLSchema {
 	private static final String type = DocumentImpl.SCHEMA;
 	
 
-    private Logger logMetacat = Logger.getLogger(XMLSchema.class);
+    private Log logMetacat = LogFactory.getLog(XMLSchema.class);
 
 	/**
 	 * Constructor - the schema file name will be extracted from the external

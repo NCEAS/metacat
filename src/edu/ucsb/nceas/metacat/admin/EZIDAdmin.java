@@ -31,7 +31,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -49,7 +50,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 public class EZIDAdmin extends MetacatAdmin {
 
 	private static EZIDAdmin ezidAdmin = null;
-	private Logger logMetacat = Logger.getLogger(EZIDAdmin.class);
+	private Log logMetacat = LogFactory.getLog(EZIDAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton

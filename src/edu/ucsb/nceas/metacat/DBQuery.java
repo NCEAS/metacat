@@ -62,7 +62,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.NotImplemented;
 
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -104,7 +105,7 @@ public class DBQuery
     //private Connection conn = null;
     private String parserName = null;
 
-    private Logger logMetacat = Logger.getLogger(DBQuery.class);
+    private Log logMetacat = LogFactory.getLog(DBQuery.class);
 
     /** true if the metacat spatial option is installed **/
     private final boolean METACAT_SPATIAL = true;

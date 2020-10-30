@@ -32,7 +32,8 @@ import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 
 /**
@@ -43,7 +44,7 @@ import org.apache.log4j.Logger;
  */
 public class MetacatHelper {
 
-	private static Logger logMetacat = Logger.getLogger(AuthLdap.class);
+	private static Log logMetacat = LogFactory.getLog(AuthLdap.class);
 	
   /**
 	 * Constructs a DN (Distinguished Name) string for the ecoinformatics.org

@@ -31,7 +31,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -48,7 +49,7 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 public class GeoserverAdmin extends MetacatAdmin {
 
 	private static GeoserverAdmin geoserverAdmin = null;
-	private Logger logMetacat = Logger.getLogger(GeoserverAdmin.class);
+	private Log logMetacat = LogFactory.getLog(GeoserverAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton

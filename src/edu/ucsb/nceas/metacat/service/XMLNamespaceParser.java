@@ -25,7 +25,8 @@ package edu.ucsb.nceas.metacat.service;
 import java.io.IOException;
 import java.io.Reader;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -49,7 +50,7 @@ public class XMLNamespaceParser extends DefaultHandler {
     private Reader xml = null;
     private XMLReader parser = null;
     private boolean rootElement = true;
-    private static Logger logMetacat = Logger.getLogger(XMLNamespaceParser.class);
+    private static Log logMetacat = LogFactory.getLog(XMLNamespaceParser.class);
     private String namespace = null;
     private String noNamespaceSchemaLocation = null;
     

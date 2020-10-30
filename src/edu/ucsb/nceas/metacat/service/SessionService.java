@@ -34,7 +34,8 @@ import java.util.Hashtable;
 
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -47,7 +48,7 @@ public class SessionService extends BaseService {
 	private static SessionService sessionService = null;
 	private static int sessionTimeoutMinutes;
 	
-	private static Logger logMetacat = Logger.getLogger(SessionService.class);
+	private static Log logMetacat = LogFactory.getLog(SessionService.class);
 	private static Hashtable<String, SessionData> sessionHash = null;
 	
 	private static final String PUBLIC_SESSION_ID = "0";

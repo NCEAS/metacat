@@ -73,7 +73,8 @@ import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Event;
@@ -135,7 +136,7 @@ public class MetacatHandler {
 
     private static boolean _sitemapScheduled = false;
     
-    private static Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+    private static Log logMetacat = LogFactory.getLog(MetacatHandler.class);
 
     // Constants -- these should be final in a servlet    
     private static final String PROLOG = "<?xml version=\"1.0\"?>";
@@ -254,7 +255,7 @@ public class MetacatHandler {
             String username, String[] groupnames,
             String sess_id) throws PropertyNotFoundException, HandlerException {
         
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         
         if ( !PropertyService.getProperty("spatial.runSpatialOption").equals("true") ) {
             response.setContentType("text/html");
@@ -338,7 +339,7 @@ public class MetacatHandler {
      */
     public void handleLoginAction(Writer out, Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         AuthSession sess = null;
         
         if(params.get("username") == null){
@@ -435,7 +436,7 @@ public class MetacatHandler {
      */
     public void handleLogoutAction(Writer out, Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response) throws IOException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         String qformat = "xml";
         if(params.get("qformat") != null){
             qformat = params.get("qformat")[0];
@@ -496,7 +497,7 @@ public class MetacatHandler {
     protected void handleSQuery(Writer out, Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
             String sessionid) throws PropertyNotFoundException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         long squeryWarnLimit = Long.parseLong(PropertyService.getProperty("database.squeryTimeWarnLimit"));
         
         long startTime = System.currentTimeMillis();
@@ -526,7 +527,7 @@ public class MetacatHandler {
     protected void handleQuery(Writer out, Hashtable<String, String[]> params,
             HttpServletResponse response, String user, String[] groups,
             String sessionid) throws PropertyNotFoundException, UnsupportedEncodingException, IOException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         long queryWarnLimit = Long.parseLong(PropertyService.getProperty("database.queryTimeWarnLimit"));
         
         //create the query and run it
@@ -562,7 +563,7 @@ public class MetacatHandler {
     protected void handleExportAction(Hashtable<String, String[]> params,
             HttpServletResponse response,
             String user, String[] groups, String passWord) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         // Output stream
         ServletOutputStream out = null;
         // Zip output stream
@@ -658,7 +659,7 @@ public class MetacatHandler {
     protected void handleReadInlineDataAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
             String user, String passWord, String[] groups) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         String[] docs = new String[10];
         String inlineDataId = null;
         String docId = "";
@@ -762,7 +763,7 @@ public class MetacatHandler {
     public void handleReadAction(Hashtable<String, String[]> params, HttpServletRequest request,
             HttpServletResponse response, String user, String passWord,
             String[] groups) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         ServletOutputStream out = null;
         ZipOutputStream zout = null;
         PrintWriter pw = null;
@@ -1225,7 +1226,7 @@ public class MetacatHandler {
             IOException, SQLException, McdbException, PropertyNotFoundException, 
             ParseLSIDException, InsufficientKarmaException {
         
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         try {
             
             if (docid.startsWith("urn:")) {
@@ -1579,7 +1580,7 @@ public class MetacatHandler {
     public String handleInsertOrUpdateAction(String ipAddress, String userAgent,
             HttpServletResponse response, PrintWriter out, Hashtable<String, String[]> params,
             String user, String[] groups, boolean generateSystemMetadata, boolean writeAccessRules, byte[] xmlBytes, String formatId, Checksum checksum, File objectFile) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         DBConnection dbConn = null;
         int serialNumber = -1;
         String output = "";
@@ -1922,7 +1923,7 @@ public class MetacatHandler {
      */
     private static boolean needDTDValidation(StringReader xmlreader)
     throws IOException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         StringBuffer cbuff = new StringBuffer();
         java.util.Stack<String> st = new java.util.Stack<String>();
         boolean validate = false;
@@ -1990,7 +1991,7 @@ public class MetacatHandler {
       HttpServletRequest request, HttpServletResponse response,
       String user, String[] groups) {
       
-      Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+      Log logMetacat = LogFactory.getLog(MetacatHandler.class);
       String[] docid = params.get("docid");
       
       if(docid == null){
@@ -2208,7 +2209,7 @@ public class MetacatHandler {
             Hashtable<String,String[]> params, HttpServletResponse response, String username,
             String[] groupnames) {
         
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
 
         String docid = params.get("docid")[0];
         if (docid.startsWith("urn:")) {
@@ -2422,7 +2423,7 @@ public class MetacatHandler {
     protected void handleGetLogAction(Hashtable<String, String[]> params, 
     		HttpServletRequest request, HttpServletResponse response, 
     		String username, String[] groups, String sessionId) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         try {
         	// figure out the output as part of the action
             PrintWriter out = null;
@@ -2548,7 +2549,7 @@ public class MetacatHandler {
     protected void handleBuildIndexAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
             String username, String[] groups) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         
         // Get all of the parameters in the correct formats
         String[] docid = params.get("docid");
@@ -2631,7 +2632,7 @@ public class MetacatHandler {
     protected void handleReindexAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
             String username, String[] groups) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         
         // Get all of the parameters in the correct formats
         String[] pid = params.get("pid");
@@ -2752,7 +2753,7 @@ public class MetacatHandler {
     protected void handleReindexAllAction(Hashtable<String, String[]> params,
             HttpServletRequest request, HttpServletResponse response,
             String username, String[] groups) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         
       
         
@@ -2951,7 +2952,7 @@ public class MetacatHandler {
      */
     protected void handleMultipartForm(HttpServletRequest request,
             HttpServletResponse response) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         PrintWriter out = null;
         String action = null;
         File tempFile = null;
@@ -3142,7 +3143,7 @@ public class MetacatHandler {
             PrintWriter out, Hashtable<String,String[]> params, Hashtable<String,String> fileList,
             String username, String[] groupnames)
     {
-      Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+      Log logMetacat = LogFactory.getLog(MetacatHandler.class);
       String action = null;
       String docid = null;
       String qformat = null;
@@ -3328,7 +3329,7 @@ public class MetacatHandler {
             PrintWriter out, Hashtable<String, String[]> params, 
             Hashtable<String,String> fileList, String username, String[] groupnames, 
             HttpServletResponse response) {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         //PrintWriter out = null;
         //Connection conn = null;
         //        String action = null;
@@ -3848,7 +3849,7 @@ public class MetacatHandler {
      * @ returns the array of identifiers
      */
     private Vector<String> getDocumentList() throws SQLException {
-        Logger logMetacat = Logger.getLogger(MetacatHandler.class);
+        Log logMetacat = LogFactory.getLog(MetacatHandler.class);
         Vector<String> docList = new Vector<String>();
         PreparedStatement pstmt = null;
         ResultSet rs = null;
@@ -3963,6 +3964,8 @@ public class MetacatHandler {
         String serverUrl = "";
         String locationBase = "";
         String entryBase = "";
+        String portalBase = "";
+        List<String> portalFormats = new ArrayList();
 
         try {
             serverUrl = SystemUtil.getSecureServerURL();
@@ -3974,6 +3977,16 @@ public class MetacatHandler {
                                 "could not be found: " + pnfe.getMessage());
         }
 
+        try {
+            portalBase = PropertyService.getProperty("sitemap.entry.portal.base");
+            portalFormats.addAll(
+                Arrays.asList(PropertyService.getProperty("sitemap.entry.portal.formats").split(";"))
+            );
+        } catch (PropertyNotFoundException pnfe) {
+            logMetacat.info("MetacatHandler.scheduleSitemapGeneration - " +
+                            "Could not get portal-specific sitemap properties: " + pnfe.getMessage());
+        }
+
         // Prepend server URL to locationBase if needed
         if (!locationBase.startsWith("http")) {
             locationBase = serverUrl + locationBase;
@@ -3983,8 +3996,13 @@ public class MetacatHandler {
         if (!entryBase.startsWith("http")) {
             entryBase = serverUrl + entryBase;
         }
-        
-        Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+
+        // Prepend server URL to portalBase if needed
+        if (!portalBase.startsWith("http")) {
+            portalBase = serverUrl + portalBase;
+        }
+
+        Sitemap smap = new Sitemap(directory, locationBase, entryBase, portalBase, portalFormats);
         long firstDelay = 10000; // in milliseconds
 
         timer.schedule(smap, firstDelay, sitemapInterval);

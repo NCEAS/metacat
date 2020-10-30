@@ -28,7 +28,10 @@
 package edu.ucsb.nceas.metacat.accesscontrol;
 
 import java.util.Vector;
-import org.apache.log4j.Logger;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * A Class that represents an XML access rule. It include principal and 
  * permission
@@ -38,7 +41,7 @@ public class AccessRule
   private String permissionType = null;
   private Vector<String> principal = new Vector<String>();
   private int permission = 0;
-  private Logger logMetacat = Logger.getLogger(AccessRule.class);
+  private Log logMetacat = LogFactory.getLog(AccessRule.class);
   
   /** Set the permssionType */
   public void setPermissionType(String type)

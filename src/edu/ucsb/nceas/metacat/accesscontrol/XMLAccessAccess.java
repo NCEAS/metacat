@@ -33,7 +33,8 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -44,7 +45,7 @@ import edu.ucsb.nceas.utilities.access.XMLAccessDAO;
 
 public class XMLAccessAccess extends BaseAccess {
 	
-	private Logger logMetacat = Logger.getLogger(XMLAccessAccess.class);
+	private Log logMetacat = LogFactory.getLog(XMLAccessAccess.class);
 			
 	// Constructor
 	public XMLAccessAccess() throws AccessException {}

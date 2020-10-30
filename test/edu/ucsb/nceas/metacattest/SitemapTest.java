@@ -117,7 +117,7 @@ public class SitemapTest extends MCTestCase {
 
 			String locationBase = "http://foo.example.com/ctx/metacat";
 			String entryBase = "http://foo.example.com/ctx/metacat";
-			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase, null, null);
 			smap.generateSitemaps();
 
 			File sitemap1 = new File(directory, "sitemap1.xml");
@@ -170,7 +170,7 @@ public class SitemapTest extends MCTestCase {
 			String locationBase = "http://foo.example.com/ctx/metacat";
 			String entryBase = "http://foo.example.com/ctx/metacat";
 
-			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase, null, null);
 
 			assertTrue(smap.getMetadataFormatsQueryString().length() > 0);
 		}

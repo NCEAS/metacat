@@ -13,7 +13,8 @@ package edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import ORG.oclc.oai.server.crosswalk.Crosswalk;
 import ORG.oclc.oai.server.verb.CannotDisseminateFormatException;
@@ -28,7 +29,7 @@ public class Eml201 extends Crosswalk {
   
   /* Class fields */
 
-  private static final Logger logger = Logger.getLogger(Eml201.class);
+  private static final Log logger = LogFactory.getLog(Eml201.class);
   
   private static final String SCHEMA_LOCATION =
     "eml://ecoinformatics.org/eml-2.0.1 " +

@@ -33,7 +33,8 @@ import java.sql.SQLException;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.objects.XObject;
 import org.apache.xpath.XPathAPI;
 import org.apache.xerces.parsers.DOMParser;
@@ -117,7 +118,7 @@ public class ContentTypeProvider
   private String BINARYRASTERFORMAT = "binaryRasterFormat";
 
   private String DATAFILEPATH ="//physical/distribution/online/url";
-  private static Logger logMetacat = Logger.getLogger(ContentTypeProvider.class);
+  private static Log logMetacat = LogFactory.getLog(ContentTypeProvider.class);
 
   /**
    * Constructor of ContentTypeProvider

@@ -54,7 +54,8 @@ import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.NotFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrClient;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.request.CoreAdminRequest;
@@ -82,7 +83,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 public class SolrAdmin extends MetacatAdmin {
 
 	private static SolrAdmin solrAdmin = null;
-	private Logger logMetacat = Logger.getLogger(SolrAdmin.class);
+	private Log logMetacat = LogFactory.getLog(SolrAdmin.class);
 	//possibilities:
     //1. Create - both core and solr-home doesn't exist. Create solr-home and register the core.
 	public static final String CREATE = "create";

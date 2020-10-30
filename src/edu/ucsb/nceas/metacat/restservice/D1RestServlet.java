@@ -30,7 +30,9 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 
@@ -42,7 +44,7 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
  */
 public class D1RestServlet extends HttpServlet {
 
-    protected Logger logMetacat;
+    protected Log logMetacat;
     protected D1ResourceHandler handler;
 
     /**
@@ -64,7 +66,7 @@ public class D1RestServlet extends HttpServlet {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logMetacat = Logger.getLogger(this.getClass());
+        logMetacat = LogFactory.getLog(this.getClass());
         try {
             QuotaServiceManager.getInstance().startDailyCheck();//four children servlet classes (cn/mn v2, v1) will call this method
         } catch (Exception e) {

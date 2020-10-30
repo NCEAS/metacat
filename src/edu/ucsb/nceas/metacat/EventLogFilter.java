@@ -25,7 +25,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -40,7 +41,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class EventLogFilter {
     private Vector<String> blackIPList = null;
     private Vector<String> blackSubjectList = null;
-    private Logger logMetacat = Logger.getLogger(EventLogFilter.class);
+    private Log logMetacat = LogFactory.getLog(EventLogFilter.class);
     
     /**
      * Default Construct

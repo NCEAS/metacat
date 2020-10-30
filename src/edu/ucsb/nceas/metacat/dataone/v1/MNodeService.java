@@ -31,7 +31,7 @@ import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -83,7 +83,7 @@ public class MNodeService
 	edu.ucsb.nceas.metacat.dataone.MNodeService impl = null;
 	
 	/* the logger instance */
-    private Logger logMetacat = null;
+    private org.apache.commons.logging.Log logMetacat = null;
 
     /**
      * Singleton accessor to get an instance of MNodeService.
@@ -98,7 +98,7 @@ public class MNodeService
      * Constructor, private for singleton access
      */
     private MNodeService(HttpServletRequest request) {
-        logMetacat = Logger.getLogger(MNodeService.class);
+        logMetacat = LogFactory.getLog(MNodeService.class);
         impl = edu.ucsb.nceas.metacat.dataone.MNodeService.getInstance(request);
     }
     

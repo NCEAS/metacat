@@ -36,7 +36,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
@@ -54,7 +55,7 @@ import edu.ucsb.nceas.metacat.util.SessionData;
 public class ReplicationAdmin extends MetacatAdmin {
 
 	private static ReplicationAdmin instance = null;
-	private Logger logMetacat = Logger.getLogger(ReplicationAdmin.class);
+	private Log logMetacat = LogFactory.getLog(ReplicationAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton
