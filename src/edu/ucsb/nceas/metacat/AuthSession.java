@@ -33,7 +33,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -51,7 +52,7 @@ public class AuthSession {
 	private HttpSession session = null;
 	private AuthInterface authService = null;
 	private String statusMessage = null;
-	private static Logger logMetacat = Logger.getLogger(AuthSession.class);
+	private static Log logMetacat = LogFactory.getLog(AuthSession.class);
 
 	/**
 	 * Construct an AuthSession

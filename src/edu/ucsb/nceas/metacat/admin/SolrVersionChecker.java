@@ -38,7 +38,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -61,7 +62,7 @@ public class SolrVersionChecker {
     private static final String VERSION34 = "LUCENE_34";
     
     private DocumentBuilder builder = null;
-    private Logger logMetacat = Logger.getLogger(SolrVersionChecker.class);
+    private Log logMetacat = LogFactory.getLog(SolrVersionChecker.class);
     
     /**
      * Default constructor to initialize the parser factory.

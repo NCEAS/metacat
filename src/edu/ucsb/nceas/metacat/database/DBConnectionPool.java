@@ -30,7 +30,8 @@ package edu.ucsb.nceas.metacat.database;
 import java.util.Vector;
 import java.sql.*;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -49,7 +50,7 @@ public class DBConnectionPool implements Runnable
   private static Vector<DBConnection> connectionPool;
   private static Thread runner;
   private static int _countOfReachMaximum = 0;
-  private static Logger logMetacat = Logger.getLogger(DBConnectionPool.class);
+  private static Log logMetacat = LogFactory.getLog(DBConnectionPool.class);
 
   private static int _maxConnNum;
   private static int _initConnNum;
@@ -131,7 +132,7 @@ public class DBConnectionPool implements Runnable
   {
     if (instance == null) {
       instance = new DBConnectionPool();
-      Logger log = Logger.getLogger(DBConnectionPool.class);
+      Log log = LogFactory.getLog(DBConnectionPool.class);
       log.debug("DBConnectionPool.getInstance - MaximumConnectionNumber: " + MAXIMUMCONNECTIONNUMBER);
       log.debug("DBConnectionPool.getInstance - Intial connection number: " + INITIALCONNECTIONNUMBER);
       log.debug("DBConnectionPool.getInstance - Increated connection Number: " + INCREASECONNECTIONNUMBER);

@@ -34,7 +34,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -83,7 +84,7 @@ public abstract class DataCiteMetadataFactory {
     private static final int FIRST = 0;
     protected static final String INVALIDCODE = "1031";
 
-    private static Logger logMetacat = Logger.getLogger(DataCiteMetadataFactory.class);
+    private static Log logMetacat = LogFactory.getLog(DataCiteMetadataFactory.class);
     protected static XPath xpath = null;
     static {
         XPathFactory xPathfactory = XPathFactory.newInstance();

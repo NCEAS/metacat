@@ -34,7 +34,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
@@ -54,7 +55,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 public class SkinsAdmin extends MetacatAdmin {
 
 	private static SkinsAdmin skinsAdmin = null;
-	private static Logger logMetacat = Logger.getLogger(SkinsAdmin.class);
+	private static Log logMetacat = LogFactory.getLog(SkinsAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton

@@ -26,7 +26,8 @@
 
 package edu.ucsb.nceas.metacat.database;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.dbadapter.AbstractDatabase;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -37,7 +38,7 @@ public class DatabaseService extends BaseService {
 	
 	private static DatabaseService databaseService = null;
 	private static AbstractDatabase dbAdapter;	
-	private static Logger logMetacat = Logger.getLogger(DatabaseService.class);
+	private static Log logMetacat = LogFactory.getLog(DatabaseService.class);
 
 	/**
 	 * private constructor since this is a singleton

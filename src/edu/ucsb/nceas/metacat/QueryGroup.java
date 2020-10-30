@@ -34,7 +34,8 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -51,7 +52,7 @@ public  class QueryGroup {
     private Vector<QueryTerm> queryTerms = null;//this vector only holds query terms without same search value.
                                                              // and search path is NOT in path index.
     private Vector queryGroupsChildren = null;
-    private static Logger logMetacat = Logger.getLogger(QueryGroup.class);
+    private static Log logMetacat = LogFactory.getLog(QueryGroup.class);
     public static String UNION = "UNION";
     public static String INTERSECT = "INTERSECT";
 

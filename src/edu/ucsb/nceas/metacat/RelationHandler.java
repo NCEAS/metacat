@@ -25,7 +25,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -42,7 +43,7 @@ public class RelationHandler //implements Runnable
   private DBConnection connection = null;
   private String docid = null;
   private String docType = null;
-  private static Logger logMetacat = Logger.getLogger(RelationHandler.class);
+  private static Log logMetacat = LogFactory.getLog(RelationHandler.class);
 
   TripleCollection tripleForPackage = null;
    

@@ -47,7 +47,8 @@ import javax.xml.xpath.XPathExpressionException;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.eml.DataoneEMLParser;
@@ -98,7 +99,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public class SystemMetadataFactory {
 
 	public static final String RESOURCE_MAP_PREFIX = "resourceMap_";
-	private static Logger logMetacat = Logger.getLogger(SystemMetadataFactory.class);
+	private static Log logMetacat = LogFactory.getLog(SystemMetadataFactory.class);
 	/**
 	 * use this flag if you want to update any existing system metadata values with generated content
 	 */

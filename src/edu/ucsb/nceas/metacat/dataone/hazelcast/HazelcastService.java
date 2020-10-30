@@ -39,7 +39,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.Lock;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -82,7 +83,7 @@ public class HazelcastService extends BaseService
   private static final String MISSING_PID_PREFIX = "missing-";
 
 /* The instance of the logging class */
-  private static Logger logMetacat = Logger.getLogger(HazelcastService.class);
+  private static Log logMetacat = LogFactory.getLog(HazelcastService.class);
   
   /* The singleton instance of the hazelcast service */
   private static HazelcastService hzService = null;

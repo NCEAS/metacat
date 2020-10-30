@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.Log;
 import org.dataone.service.types.v2.LogEntry;
@@ -82,7 +82,7 @@ public class EventLog
      * The single instance of the event log that is always returned.
      */
     private static EventLog self = null;
-    private Logger logMetacat = Logger.getLogger(EventLog.class);
+    private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(EventLog.class);
     private static final int USERAGENTLENGTH = 512;
     private EventLogFilter filter = null;
     private boolean enableEvenLogIndex= false;

@@ -30,7 +30,8 @@ import java.util.Map;
 import java.util.TreeSet;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBVersion;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -39,7 +40,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class DatabaseUtil {
 	
-	private static Logger logMetacat = Logger.getLogger(DatabaseUtil.class);
+	private static Log logMetacat = LogFactory.getLog(DatabaseUtil.class);
 
 	/**
 	 * private constructor - all methods are static so there is no no need to

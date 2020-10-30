@@ -34,7 +34,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -53,7 +54,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
 public class AuthAdmin extends MetacatAdmin {
 
 	private static AuthAdmin authAdmin = null;
-	private static Logger logMetacat = Logger.getLogger(AuthAdmin.class);
+	private static Log logMetacat = LogFactory.getLog(AuthAdmin.class);
 	private static final String AUTHCLASSKEY = "auth.class";
 	public static final String FILECLASS = "edu.ucsb.nceas.metacat.authentication.AuthFile";
     public static final String LDAPCLASS = "edu.ucsb.nceas.metacat.AuthLdap";

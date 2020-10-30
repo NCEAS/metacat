@@ -143,7 +143,7 @@ public class D1NodeServiceTest extends MCTestCase {
 	       rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
 	       Subject user = new Subject();
 	       
-	       user.setValue("CN=Christopher Jones A2108,O=Google,C=US,DC=cilogon,DC=org");
+	       user.setValue("http://orcid.org/0000-0003-3515-6710");
 	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       user.setValue("uid=foo");

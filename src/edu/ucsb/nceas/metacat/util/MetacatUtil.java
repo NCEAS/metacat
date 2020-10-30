@@ -38,7 +38,8 @@ import java.util.Vector;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.oreilly.servlet.multipart.FilePart;
 
@@ -58,7 +59,7 @@ public class MetacatUtil
     
     private static boolean debugErrorDisplayed = false;
     
-    private static Logger logMetacat = Logger.getLogger(MetacatUtil.class);
+    private static Log logMetacat = LogFactory.getLog(MetacatUtil.class);
 
     /**
      * Utility method to parse the query part of a URL into parameters. This

@@ -43,7 +43,8 @@ import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 //import edu.ucsb.nceas.utilities.UtilException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -135,7 +136,7 @@ public class QuerySpecification extends DefaultHandler
     private StringBuffer textBuffer = new StringBuffer();
     
    
-    private static Logger logMetacat = Logger.getLogger(QuerySpecification.class);
+    private static Log logMetacat = LogFactory.getLog(QuerySpecification.class);
 
     /**
      * construct an instance of the QuerySpecification class

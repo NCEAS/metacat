@@ -54,7 +54,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.TransformerException;
 
 import org.apache.log4j.BasicConfigurator;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
@@ -93,7 +94,7 @@ public class OaipmhHarvester {
   private static Metacat metacatClient = null;
   private static String metacatURL = null;
 
-  private static Logger logger = Logger.getLogger(OaipmhHarvester.class);
+  private static Log logger = LogFactory.getLog(OaipmhHarvester.class);
   static {
     BasicConfigurator.configure();
   }

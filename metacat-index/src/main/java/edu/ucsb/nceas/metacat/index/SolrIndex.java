@@ -79,6 +79,7 @@ import org.dspace.foresite.OREParserException;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
+import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.index.event.EventlogFactory;
@@ -423,10 +424,13 @@ public class SolrIndex {
                     XPathExpressionException, SolrServerException, MarshallingException, EncoderException, NotImplemented, NotFound, UnsupportedType {
         checkParams(pid, systemMetadata, objectPath);
         log.debug("SolrIndex.insert - trying to insert the solrDoc for object "+pid.getValue());
+        long start = System.currentTimeMillis();
         Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, objectPath);
-        
+        long end = System.currentTimeMillis();
+        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Index subprocessors process" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
         //transform the Map to the SolrInputDocument which can be used by the solr server
         if(docs != null) {
+            start = System.currentTimeMillis();
             Set<String> ids = docs.keySet();
             for(String id : ids) {
                 if(id != null) {
@@ -436,6 +440,8 @@ public class SolrIndex {
                 }
                 
             }
+            end = System.currentTimeMillis();
+            log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Sending solr docs to the server" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
             log.debug("SolrIndex.insert - finished to insert the solrDoc for object "+pid.getValue());
         } else {
             log.debug("SolrIndex.insert - the genered solrDoc is null. So we will not index the object "+pid.getValue());

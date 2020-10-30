@@ -45,7 +45,8 @@ import java.util.TimerTask;
 import java.util.Vector;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
@@ -94,8 +95,8 @@ public class ReplicationHandler extends TimerTask
   ReplicationServerList serverList = null;
   //PrintWriter out;
 //  private static final AbstractDatabase dbAdapter = MetacatUtil.dbAdapter;
-  private static Logger logReplication = Logger.getLogger("ReplicationLogging");
-  private static Logger logMetacat = Logger.getLogger(ReplicationHandler.class);
+  private static Log logReplication = LogFactory.getLog("ReplicationLogging");
+  private static Log logMetacat = LogFactory.getLog(ReplicationHandler.class);
   
   private static int DOCINSERTNUMBER = 1;
   private static int DOCERRORNUMBER  = 1;

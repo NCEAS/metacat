@@ -30,7 +30,9 @@ package edu.ucsb.nceas.metacat.accesscontrol;
 import java.util.Vector;
 import java.util.Stack;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 import edu.ucsb.nceas.metacat.NodeRecord;
 import edu.ucsb.nceas.metacat.SubTree;
@@ -50,7 +52,7 @@ public class AccessSection extends SubTree
   private Vector<String> describedIdList = new Vector<String>();
   private long startedDescribesNodeId = -1;
   private String dataFileName = null;
-  private Logger logMetacat = Logger.getLogger(AccessSection.class);
+  private Log logMetacat = LogFactory.getLog(AccessSection.class);
 
 
     /**

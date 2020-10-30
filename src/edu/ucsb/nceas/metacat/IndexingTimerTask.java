@@ -40,11 +40,12 @@ import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class IndexingTimerTask extends TimerTask{
 
-	 private Logger logMetacat = Logger.getLogger(IndexingTimerTask.class);
+	 private Log logMetacat = LogFactory.getLog(IndexingTimerTask.class);
 
 	 int count = 0;
 	 

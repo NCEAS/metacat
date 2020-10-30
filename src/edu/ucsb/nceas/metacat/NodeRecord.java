@@ -28,7 +28,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.sql.Timestamp;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * A utility class that encapsulates a node and its data
@@ -44,7 +45,7 @@ public class NodeRecord {
   private float _nodedatanumerical = -1;
   private Timestamp _nodedatadate = null;
 
-  private Logger logMetacat = Logger.getLogger(NodeRecord.class);
+  private Log logMetacat = LogFactory.getLog(NodeRecord.class);
 
   /**
    * Constructor

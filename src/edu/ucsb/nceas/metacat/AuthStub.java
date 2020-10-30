@@ -30,7 +30,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.net.ConnectException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -48,7 +49,7 @@ import java.util.Vector;
 public class AuthStub implements AuthInterface {
 	
 
-  private static Logger logMetacat = Logger.getLogger(AuthTest.class);
+  private static Log logMetacat = LogFactory.getLog(AuthTest.class);
   
     /**
 	 * Construct an AuthTest

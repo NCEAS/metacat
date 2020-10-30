@@ -30,7 +30,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author berkley
@@ -38,7 +39,7 @@ import org.apache.log4j.Logger;
  */
 public class D1HttpRequest extends HttpServletRequestWrapper
 {   
-    private static Logger logMetacat = Logger.getLogger(D1HttpRequest.class);
+    private static Log logMetacat = LogFactory.getLog(D1HttpRequest.class);
     /**
      * HttpServletRequestWrapper(HttpServletRequest request) 
      */

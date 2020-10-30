@@ -32,7 +32,8 @@ import java.util.Hashtable;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -49,7 +50,7 @@ public class ArchiveHandler  {
 	
 	private static ArchiveHandler archiveHandler = null;
 	
-	private static Logger logMetacat = Logger.getLogger(ArchiveHandler.class);
+	private static Log logMetacat = LogFactory.getLog(ArchiveHandler.class);
 
 	/**
 	 * private constructor since this is a singleton

@@ -25,7 +25,9 @@ package edu.ucsb.nceas.metacat.restservice;
 
 import javax.servlet.*;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 import java.io.*;
 
@@ -36,7 +38,7 @@ import java.io.*;
 public class D1URLFilter implements Filter
 {
     ServletContext context;
-    private static Logger logMetacat = Logger.getLogger(D1URLFilter.class);
+    private static Log logMetacat = LogFactory.getLog(D1URLFilter.class);
     
     public void init(FilterConfig filterConfig) 
     {

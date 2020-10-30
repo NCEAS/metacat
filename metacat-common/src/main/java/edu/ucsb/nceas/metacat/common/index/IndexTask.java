@@ -14,7 +14,25 @@ public class IndexTask implements Serializable {
 	
 	private boolean isDeleteing = false; // default is not deleting task
 	
-	public SystemMetadata getSystemMetadata() {
+	private long timeAddToQueque = 0; // the time when the task is added to the index queue
+	
+	/**
+	 * Get the time when the task was added to the index queue
+	 * @return  the time (long)
+	 */
+	public long getTimeAddToQueque() {
+        return timeAddToQueque;
+    }
+
+	/**
+	 * Set the time when the task was added to the queue
+	 * @param timeAddToQueque  the time when the task is added to the index queue
+	 */
+    public void setTimeAddToQueque(long timeAddToQueque) {
+        this.timeAddToQueque = timeAddToQueque;
+    }
+
+    public SystemMetadata getSystemMetadata() {
 		return systemMetadata;
 	}
 
