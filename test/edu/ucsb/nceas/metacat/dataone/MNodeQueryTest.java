@@ -64,7 +64,8 @@ import com.hp.hpl.jena.rdf.model.Property;
 import com.hp.hpl.jena.rdf.model.Resource;
 import com.hp.hpl.jena.rdf.model.ResourceFactory;
 
-
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerTest;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 
@@ -78,7 +79,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "test/example-portal.xml";
-    private int tryAcccounts = 20;
+    private int tryAcccounts = 50;
     
     private static final String collectionResult = "<str name=\"collectionQuery\">(((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA)))</str>";
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
@@ -871,7 +872,10 @@ public class MNodeQueryTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testPortalDocument() throws Exception {
-        Session session = getTestSession();
+        Session session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(QuotaServiceManagerTest.REQUESTOR);
+        session.setSubject(subject);
         Identifier guid = new Identifier();
         guid.setValue("testPortal." + System.currentTimeMillis());
         InputStream object = new FileInputStream(portalFilePath);
@@ -880,10 +884,14 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         formatId.setValue("https://purl.dataone.org/portals-1.0.0");
         sysmeta.setFormatId(formatId);
         System.out.println("the checksum is "+sysmeta.getChecksum().getValue());
+        Identifier sid = new Identifier();
+        sid.setValue("testPortal-sid" + System.currentTimeMillis());
+        sysmeta.setSeriesId(sid);
         object.close();
         InputStream object2 = new FileInputStream(portalFilePath);
         System.out.println("before insert the object +++++++++++++++++++++ " +guid.getValue());
         try {
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
             Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
         } catch (Exception e) {
             System.out.println("the error is " + e.getMessage());
@@ -915,7 +923,10 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         String uuid_prefix = "urn:uuid:";
         UUID uuid = UUID.randomUUID();
         //insert a portal object with series id
-        Session session = getTestSession();
+        Session session = new Session();
+        Subject subject1 = new Subject();
+        subject1.setValue(QuotaServiceManagerTest.REQUESTOR);
+        session.setSubject(subject1);
         Identifier guid = new Identifier();
         guid.setValue(uuid_prefix + uuid.toString());
         System.out.println("the collection file id is ==== "+guid.getValue());
@@ -930,6 +941,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         ObjectFormatIdentifier formatId4 = new ObjectFormatIdentifier();
         formatId4.setValue("https://purl.dataone.org/portals-1.0.0");
         sysmeta.setFormatId(formatId4);
+        request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
         MNodeService.getInstance(request).create(session, guid, object8, sysmeta);
         object8.close();
         
