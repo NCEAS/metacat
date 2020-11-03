@@ -463,7 +463,7 @@
                 </exclusion>
                 <exclusion>
                    <groupId>org.hibernate.validator</groupId>
-                    <artifactId>hibernate-validator-parent</artifactId>
+                    <artifactId>hibernate-validator</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
