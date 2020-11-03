@@ -872,10 +872,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testPortalDocument() throws Exception {
-        Session session = new Session();
-        Subject subject = new Subject();
-        subject.setValue(QuotaServiceManagerTest.REQUESTOR);
-        session.setSubject(subject);
+        Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testPortal." + System.currentTimeMillis());
         InputStream object = new FileInputStream(portalFilePath);
@@ -890,6 +887,30 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         object.close();
         InputStream object2 = new FileInputStream(portalFilePath);
         System.out.println("before insert the object +++++++++++++++++++++ " +guid.getValue());
+        if (QuotaServiceManager.getInstance().isEnabled()) {
+            try {
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                fail("We shouldn't get there since the test session doesn't have a portal quota.");
+            } catch (Exception e) {
+                System.out.println("the error is " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
+        session = new Session();
+        Subject subject = new Subject();
+        subject.setValue(QuotaServiceManagerTest.REQUESTOR);
+        session.setSubject(subject);
+        if (QuotaServiceManager.getInstance().isEnabled()) {
+            try {
+                Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+                fail("We shouldn't get there since the quota subject header hasn't been set.");
+            } catch (Exception e) {
+                System.out.println("the error is " + e.getMessage());
+                e.printStackTrace();
+            }
+        }
+        
         try {
             request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
             Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
