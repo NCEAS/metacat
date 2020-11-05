@@ -182,6 +182,10 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process replication config
                 EZIDAdmin.getInstance().configureEZID(request, response);
                 return; 
+			} else if (action.equals("quota")) {
+                // process the quota config
+                QuotaAdmin.getInstance().configureQuota(request, response);
+                return;
 			} else if (action.equals("solrserver")) {
                 // process replication config
                 SolrAdmin.getInstance().configureSolr(request, response);
@@ -269,6 +273,8 @@ public class MetacatAdminServlet extends HttpServlet {
                     PropertyService.getProperty("configutil.dataoneConfigured"));
             request.setAttribute("ezidConfigured", 
                     PropertyService.getProperty("configutil.ezidConfigured"));
+            request.setAttribute("quotaConfigured", 
+                    PropertyService.getProperty("configutil.quotaConfigured"));
             request.setAttribute("solrserverConfigured", 
                     PropertyService.getProperty("configutil.solrserverConfigured"));
             request.setAttribute("metcatServletInitialized", MetaCatServlet.isFullyInitialized());
