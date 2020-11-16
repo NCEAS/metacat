@@ -35,7 +35,9 @@ import java.sql.SQLException;
 import java.util.Stack;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
@@ -104,7 +106,7 @@ public class AccessControlList extends DefaultHandler
   private boolean instarttag = true;
   private String tagName = "";
   
-  private static Logger logMetacat = Logger.getLogger(AccessControlList.class);
+  private static Log logMetacat = LogFactory.getLog(AccessControlList.class);
   /**
    * Construct an instance of the AccessControlList class.
    * It is used by the permission check up from DBQuery or DocumentImpl

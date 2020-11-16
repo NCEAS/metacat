@@ -34,7 +34,8 @@ import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -67,8 +68,8 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 public abstract class DataCiteMetadataFactory {
     public static final String EN = "en";
     public static final String XML_LANG= "xml:lang";
-    public static final String NAMESPACE = "http://datacite.org/schema/kernel-3";
-    public static final String SCHEMALOCATION = "https://schema.datacite.org/meta/kernel-3.1/metadata.xsd";
+    public static final String NAMESPACE = "http://datacite.org/schema/kernel-4";
+    public static final String SCHEMALOCATION = "https://schema.datacite.org/meta/kernel-4.3/metadata.xsd";
     public static final String RESOURCE = "resource";
     public static final String CREATORS = "creators";
     public static final String CREATOR = "creator";
@@ -83,7 +84,7 @@ public abstract class DataCiteMetadataFactory {
     private static final int FIRST = 0;
     protected static final String INVALIDCODE = "1031";
 
-    private static Logger logMetacat = Logger.getLogger(DataCiteMetadataFactory.class);
+    private static Log logMetacat = LogFactory.getLog(DataCiteMetadataFactory.class);
     protected static XPath xpath = null;
     static {
         XPathFactory xPathfactory = XPathFactory.newInstance();

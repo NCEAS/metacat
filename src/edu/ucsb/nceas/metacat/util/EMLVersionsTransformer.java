@@ -33,7 +33,8 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.DocumentImplWrapper;
@@ -60,7 +61,7 @@ import org.ecoinformatics.eml.EMLParser;
  */
 public class EMLVersionsTransformer {
 	
-	private static org.apache.log4j.Logger logMetacat = Logger.getLogger(EMLVersionsTransformer.class);
+	private static Log logMetacat = LogFactory.getLog(EMLVersionsTransformer.class);
 	private static String eml210StyleFile = null;
 	static{
 		try

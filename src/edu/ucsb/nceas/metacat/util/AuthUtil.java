@@ -33,7 +33,8 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.AuthSession;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -44,7 +45,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class AuthUtil {
 	
-    public static Logger logMetacat = Logger.getLogger(AuthUtil.class);
+    public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
     public static String DELIMITER=":";
     public static String ESCAPECHAR="\\";
 

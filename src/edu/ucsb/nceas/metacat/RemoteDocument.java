@@ -32,7 +32,8 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import javax.servlet.ServletOutputStream;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 import java.net.*;
@@ -63,7 +64,7 @@ public class RemoteDocument
   private String passWord = null; // The user's passwd
   private String zipEntry = null; // For zip entry
   private String revisionAndDocType; // String to store this info
-  private Logger logMetacat = Logger.getLogger(RemoteDocument.class);
+  private Log logMetacat = LogFactory.getLog(RemoteDocument.class);
   
   /**
    * Constructor of RemoteDcoument

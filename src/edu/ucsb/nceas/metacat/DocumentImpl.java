@@ -92,7 +92,8 @@ import edu.ucsb.nceas.utilities.UtilException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.XmlStreamReader;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
@@ -202,8 +203,8 @@ public class DocumentImpl
     
     private Vector<String> pathsForIndexing = null;
   
-    private static Logger logMetacat = Logger.getLogger(DocumentImpl.class);
-    private static Logger logReplication = Logger.getLogger("ReplicationLogging");
+    private static Log logMetacat = LogFactory.getLog(DocumentImpl.class);
+    private static Log logReplication = LogFactory.getLog("ReplicationLogging");
 
     /**
      * Default constructor

@@ -39,11 +39,12 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 public class IndexingQueue {
 
-	private static Logger logMetacat = Logger.getLogger(IndexingQueue.class);
+	private static Log logMetacat = LogFactory.getLog(IndexingQueue.class);
 	//	 Map used to keep tracks of docids to be indexed
 	private HashMap<String, IndexingQueueObject> indexingMap = new HashMap<String, IndexingQueueObject>();     
 	private Vector<IndexingTask> currentThreads = new Vector<IndexingTask>();
@@ -167,7 +168,7 @@ public class IndexingQueue {
 }
 
 class IndexingTask extends Thread {
-  	  private Logger logMetacat = Logger.getLogger(IndexingTask.class);
+  	  private Log logMetacat = LogFactory.getLog(IndexingTask.class);
   	  
   	  
       protected final static long MAXIMUMINDEXDELAY;

@@ -27,7 +27,8 @@
 package edu.ucsb.nceas.metacat.service;
 
 import javax.servlet.ServletContext;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.util.Hashtable;
 import java.util.Set;
@@ -50,7 +51,7 @@ public class ServiceService {
 	
 	private static String REAL_APPLICATION_CONTEXT = null;
 	
-	private static Logger logMetacat = Logger.getLogger(ServiceService.class);
+	private static Log logMetacat = LogFactory.getLog(ServiceService.class);
 	private static Hashtable<String, BaseService> serviceList = new Hashtable<String, BaseService>();
 	
 	/**

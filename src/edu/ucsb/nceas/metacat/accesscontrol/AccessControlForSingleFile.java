@@ -34,7 +34,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -68,7 +70,7 @@ public class AccessControlForSingleFile implements AccessControlInterface
 
   private String _guid;
   
-  private Logger logMetacat = Logger.getLogger(AccessControlForSingleFile.class);
+  private Log logMetacat = LogFactory.getLog(AccessControlForSingleFile.class);
  
     /**
 	 * Construct an instance of the AccessControlForSingleFile class.  This

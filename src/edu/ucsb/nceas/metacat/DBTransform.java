@@ -49,7 +49,8 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xerces.parsers.DOMParser;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
@@ -109,7 +110,7 @@ public class DBTransform {
 	 
   private String 	configDir = null;
   private String	defaultStyle = null;
-  private static Logger logMetacat = Logger.getLogger(DBTransform.class);
+  private static Log logMetacat = LogFactory.getLog(DBTransform.class);
   private String httpServer = null;
   private String contextURL = null;
   private String servletURL = null;

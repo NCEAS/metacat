@@ -27,7 +27,8 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.HashMap;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.service.exceptions.NotFound;
@@ -51,7 +52,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class ObjectFormatService {
 
-	private Logger logMetacat = Logger.getLogger(ObjectFormatService.class);
+	private Log logMetacat = LogFactory.getLog(ObjectFormatService.class);
 
 	/* The scope of the object formats docid used as the metacat identifier */
 	public static final String OBJECT_FORMAT_DOCID = "OBJECT_FORMAT_LIST.1";

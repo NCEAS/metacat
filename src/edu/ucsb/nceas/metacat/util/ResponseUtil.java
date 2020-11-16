@@ -38,7 +38,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.shared.BaseException;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -77,7 +78,7 @@ public class ResponseUtil {
 		errorCodes.put(DELETE_SCHEDULED_WORKFLOW_ERROR, "Delete scheduled workflow error");
 	}
 	
-	private static Logger logMetacat = Logger.getLogger(ResponseUtil.class);
+	private static Log logMetacat = LogFactory.getLog(ResponseUtil.class);
 	
 	private static int DEFAULT_BUFFER_SIZE = 4 * 1024; // 4K buffer
 	

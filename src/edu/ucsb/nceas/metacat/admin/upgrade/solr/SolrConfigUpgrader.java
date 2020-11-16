@@ -30,7 +30,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 
@@ -49,7 +50,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
  *
  */
 public class SolrConfigUpgrader {
-    private static Logger logMetacat = Logger.getLogger(SolrSchemaUpgrader.class);
+    private static Log logMetacat = LogFactory.getLog(SolrSchemaUpgrader.class);
     private static final String CONFIGFILERELATIVEPATH = "/conf/solrconfig.xml";
     private static final String MD5 = "MD5";
     private Vector<String> releasedConfigHashList = new Vector<String>();

@@ -70,7 +70,8 @@ import org.apache.http.client.HttpResponseException;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.auth.CertificateManager;
 import org.dataone.client.rest.RestClient;
 import org.dataone.client.types.AutoCloseHttpClientInputStream;
@@ -143,8 +144,8 @@ public class ReplicationService extends BaseService {
 
 	private static String DATA_FILE_FLAG = null;
 	public static String METACAT_REPL_ERROR_MSG = null;
-	private static Logger logReplication = Logger.getLogger("ReplicationLogging");
-	private static Logger logMetacat = Logger.getLogger(ReplicationService.class);
+	private static Log logReplication = LogFactory.getLog("ReplicationLogging");
+	private static Log logMetacat = LogFactory.getLog(ReplicationService.class);
 
 	static {
 		// lookup the client timeout

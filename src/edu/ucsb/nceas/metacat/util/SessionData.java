@@ -29,7 +29,8 @@ package edu.ucsb.nceas.metacat.util;
 import java.util.Calendar;
 import java.util.Date;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.cart.DocumentCart;
 
@@ -44,7 +45,7 @@ public class SessionData {
 	private Calendar lastAccessedTime = Calendar.getInstance();
 	private DocumentCart documentCart = null;
 	
-	private Logger logMetacat = Logger.getLogger(SessionData.class);
+	private Log logMetacat = LogFactory.getLog(SessionData.class);
 	
 	/**
 	 * 

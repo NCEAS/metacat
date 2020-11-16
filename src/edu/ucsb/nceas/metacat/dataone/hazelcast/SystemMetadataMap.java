@@ -6,7 +6,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
@@ -25,7 +26,7 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 public class SystemMetadataMap 
     implements MapStore<Identifier, SystemMetadata>, MapLoader<Identifier, SystemMetadata> {
 
-  private Logger logMetacat = Logger.getLogger(SystemMetadataMap.class);
+  private Log logMetacat = LogFactory.getLog(SystemMetadataMap.class);
 
 	@Override
 	public void delete(Identifier arg0) {

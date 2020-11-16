@@ -26,7 +26,8 @@
 
 package edu.ucsb.nceas.metacat.util;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.StringReader;
 
@@ -40,7 +41,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 
 public class GeoserverUtil {
 	
-	private static Logger logMetacat = Logger.getLogger(GeoserverUtil.class);
+	private static Log logMetacat = LogFactory.getLog(GeoserverUtil.class);
 	
 	/**
 	 * private constructor - all methods are static so there is no
