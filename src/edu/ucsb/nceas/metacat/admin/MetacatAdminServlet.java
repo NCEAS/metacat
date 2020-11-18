@@ -37,7 +37,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -60,7 +61,7 @@ public class MetacatAdminServlet extends HttpServlet {
 
 	private static final long serialVersionUID = 1L;
 	
-	private Logger logMetacat = Logger.getLogger(MetacatAdminServlet.class);
+	private Log logMetacat = LogFactory.getLog(MetacatAdminServlet.class);
 	
     /**
 	 * Initialize the servlet
@@ -181,6 +182,10 @@ public class MetacatAdminServlet extends HttpServlet {
                 // process replication config
                 EZIDAdmin.getInstance().configureEZID(request, response);
                 return; 
+			} else if (action.equals("quota")) {
+                // process the quota config
+                QuotaAdmin.getInstance().configureQuota(request, response);
+                return;
 			} else if (action.equals("solrserver")) {
                 // process replication config
                 SolrAdmin.getInstance().configureSolr(request, response);
@@ -268,6 +273,8 @@ public class MetacatAdminServlet extends HttpServlet {
                     PropertyService.getProperty("configutil.dataoneConfigured"));
             request.setAttribute("ezidConfigured", 
                     PropertyService.getProperty("configutil.ezidConfigured"));
+            request.setAttribute("quotaConfigured", 
+                    PropertyService.getProperty("configutil.quotaConfigured"));
             request.setAttribute("solrserverConfigured", 
                     PropertyService.getProperty("configutil.solrserverConfigured"));
             request.setAttribute("metcatServletInitialized", MetaCatServlet.isFullyInitialized());

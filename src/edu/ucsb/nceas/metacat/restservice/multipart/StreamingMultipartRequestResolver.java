@@ -103,7 +103,11 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
         if (!isMultipartContent(request)) {
             return multipartRequest;
         }
+        long start = 0;
+        long end = 0;
+        String pid = null;
         FileItemIterator iter = upload.getItemIterator(request);
+        boolean sysmetaFirst = false;
         while (iter.hasNext()) {
             FileItemStream item = iter.next();
             String name = item.getFieldName();
@@ -139,16 +143,19 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                             sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class, input);
                             log.info("StreamingMultipartRequestResolver.resoloveMulitpart - the system metadata is v1 for the pid " + sysMeta.getIdentifier().getValue());
                         }
+                        if (sysMeta != null && sysMeta.getIdentifier() != null ) {
+                            pid = sysMeta.getIdentifier().getValue();
+                        }
                         input.close();
                         multipartRequest.setSystemMetadata(sysMeta);
                     } else if (name.equals("object")){
-                        
+                        start = System.currentTimeMillis();
                         if (sysMeta != null && sysMeta.getChecksum() != null && sysMeta.getChecksum().getAlgorithm() != null && !sysMeta.getChecksum().getAlgorithm().trim().equals("")) {
-                          //We are lucky and the system metadata has been processed.
+                            sysmetaFirst = true;
+                            //We are lucky and the system metadata has been processed.
                             String algorithm = sysMeta.getChecksum().getAlgorithm();
                             log.info("StreamingMultipartRequestResolver.resoloveMulitpart - Metacat is handling the object stream AFTER handling the system metadata stream. StreamResolver will calculate the checksum using algorithm " + algorithm);
                             //decide the pid for debug purpose
-                            String pid = null;
                             if (sysMeta != null && sysMeta.getIdentifier() != null ) {
                                 pid = sysMeta.getIdentifier().getValue();
                             }
@@ -166,6 +173,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                             CheckedFile checkedFile = new CheckedFile(newFile.getCanonicalPath(), checksum);
                             mpFiles.put(name, checkedFile);
                         }
+                        end = System.currentTimeMillis();
                     } else {
                         File newFile = generateTmpFile("other");
                         writeStreamToFile(newFile, stream);
@@ -190,6 +198,15 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
                     }
                 }
             }
+        }
+        if (end > start && pid != null) {
+            String predicate = null;
+            if (sysmetaFirst) {
+                predicate = "with";
+            } else {
+                predicate = "without";
+            }
+            log.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Write the object file from the http multipart to the disk " + predicate + " calculating the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
         }
         return multipartRequest;
     }

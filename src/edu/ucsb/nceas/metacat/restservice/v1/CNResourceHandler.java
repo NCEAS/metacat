@@ -39,7 +39,7 @@ import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatInfo;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.exceptions.BaseException;
@@ -133,7 +133,7 @@ public class CNResourceHandler extends D1ResourceHandler {
     public CNResourceHandler(ServletContext servletContext,
             HttpServletRequest request, HttpServletResponse response) {
         super(servletContext, request, response);
-        logMetacat = Logger.getLogger(CNResourceHandler.class);
+        logMetacat = LogFactory.getLog(CNResourceHandler.class);
     }
 
     /**

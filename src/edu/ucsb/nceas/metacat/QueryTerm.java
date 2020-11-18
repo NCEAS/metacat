@@ -36,7 +36,8 @@ import java.util.Vector;
 
 import javax.xml.bind.DatatypeConverter;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -44,7 +45,7 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
 /** a utility class that represents a single term in a query */
 public class QueryTerm
 {
-    private static Logger log = Logger.getLogger(QueryTerm.class);
+    private static Log log = LogFactory.getLog(QueryTerm.class);
 
     private boolean casesensitive = false;
 

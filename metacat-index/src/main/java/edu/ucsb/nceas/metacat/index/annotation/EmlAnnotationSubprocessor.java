@@ -15,7 +15,9 @@ import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.codec.EncoderException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.dataone.cn.index.util.PerformanceLogger;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.ISolrField;
@@ -37,7 +39,7 @@ import org.w3c.dom.Document;
  *
  */
 public class EmlAnnotationSubprocessor implements IDocumentSubprocessor {
-    private static Logger log = Logger.getLogger(EmlAnnotationSubprocessor.class.getName());
+    private static Log log = LogFactory.getLog(EmlAnnotationSubprocessor.class.getName());
 
     private PerformanceLogger perfLog = PerformanceLogger.getInstance();
 

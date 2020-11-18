@@ -31,7 +31,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.BaseException;
@@ -84,7 +85,7 @@ public class DOIService {
     
     public static final String DATACITE = "datacite";
 
-	private Logger logMetacat = Logger.getLogger(DOIService.class);
+	private Log logMetacat = LogFactory.getLog(DOIService.class);
 
 	private boolean doiEnabled = false;
 	

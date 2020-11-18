@@ -66,7 +66,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.apache.solr.client.solrj.SolrRequest;
 import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
@@ -148,6 +148,8 @@ import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
 
+import com.lmax.disruptor.InsufficientCapacityException;
+
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
@@ -161,6 +163,7 @@ import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -216,7 +219,7 @@ public class MNodeService extends D1NodeService
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
 
 	/* the logger instance */
-    private Logger logMetacat = null;
+    private org.apache.commons.logging.Log logMetacat = null;
     
     /* A reference to a remote Memeber Node */
     //private MNode mn;
@@ -267,7 +270,7 @@ public class MNodeService extends D1NodeService
      */
     private MNodeService(HttpServletRequest request) {
         super(request);
-        logMetacat = Logger.getLogger(MNodeService.class);
+        logMetacat = LogFactory.getLog(MNodeService.class);
         
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
@@ -330,6 +333,16 @@ public class MNodeService extends D1NodeService
             na2.initCause(na);
             throw na2;
         }
+        
+        try {
+            String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.DELETEMETHOD);
+        } catch (InsufficientResources e) {
+            throw new ServiceFailure(serviceFailureCode, "The user doesn't have enough quota to delete the pid " + id.getValue() + " since " + e.getMessage());
+        } catch (InvalidRequest e) {
+            throw new InvalidToken("2903", "The quota service in the delete action has an invalid request - " + e.getMessage());
+        }
+        
     	
     	   // defer to superclass implementation
         return super.delete(session.getSubject().getValue(), id);
@@ -485,6 +498,11 @@ public class MNodeService extends D1NodeService
 
         if (allowed) {
             long startTime3 = System.currentTimeMillis();
+            
+            //check the if it has enough quota if th quota service is enabled
+            String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.UPDATEMETHOD);
+            
             // check quality of SM
             if (sysmeta.getObsoletedBy() != null) {
                 throw new InvalidSystemMetadata("1300", "Cannot include obsoletedBy when updating object");
@@ -766,7 +784,14 @@ public class MNodeService extends D1NodeService
             throw new NotAuthorized("1100", "Provited Identity doesn't have the WRITE permission on the pid "+pid.getValue());
         }
         logMetacat.debug("Allowed to create: " + pid.getValue());
-
+        
+        //check the if it has enough quota if th quota service is enabled
+        String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+        try {
+            QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.CREATEMETHOD);
+        } catch (NotFound e) {
+            throw new InvalidRequest("1102", "Can't find the resource " + e.getMessage());
+        }
         // call the shared impl
         Identifier resultPid = super.create(session, pid, object, sysmeta);
         
@@ -2809,9 +2834,16 @@ public class MNodeService extends D1NodeService
 	              HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
 	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
 	              SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	              //check the if it has enough quota if th quota service is enabled
+	              String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
+	              QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
 	              boolean needModifyDate = true;
 	              boolean logArchive = true;
 	              super.archiveObject(logArchive, session, pid, sysmeta, needModifyDate); 
+	          } catch (InsufficientResources e) {
+	              throw new ServiceFailure("2912", "The user doesn't have enough quota to perform this request " + e.getMessage());
+	          } catch (InvalidRequest ee) {
+                  throw new InvalidToken("2913", "The request is invalid - " + ee.getMessage());
 	          } finally {
 	              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	              logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");

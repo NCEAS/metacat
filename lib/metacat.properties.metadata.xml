@@ -709,4 +709,42 @@
 			</description>
 			<helpFile>docs/metacat-properties.html#sitemap-entry-base</helpFile>
 		</config>
+		
+		<!-- quota configurations -->
+    <config>
+        <key>dataone.quotas.portals.enabled</key>
+        <label>Enable Portal Quota</label>
+        <group>9</group>
+        <index>19</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.quotas.storage.enabled</key>
+        <label>Enable Storage Quota</label>
+        <group>9</group>
+        <index>20</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.quotas.replication.enabled</key>
+        <label>Enable Replication Quota</label>
+        <group>9</group>
+        <index>21</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+    </config>
+    <config>
+        <key>dataone.quotas.bookkeeper.serviceUrl</key>
+        <label>Bookkeeper Service URL</label>
+        <group>9</group>
+        <index>22</index>
+        <fieldType>hidden</fieldType>
+        <description> </description>
+        <helpFile> </helpFile>
+        </config>
 </metadataConfig>

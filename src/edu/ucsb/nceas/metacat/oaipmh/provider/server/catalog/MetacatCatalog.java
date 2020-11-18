@@ -31,7 +31,8 @@ import java.util.Properties;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.client.DocumentNotFoundException;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
@@ -65,7 +66,7 @@ public class MetacatCatalog extends AbstractCatalog {
   
   /* Class fields */
   
-  private static final Logger logger = Logger.getLogger(MetacatCatalog.class);
+  private static final Log logger = LogFactory.getLog(MetacatCatalog.class);
   private static String refreshDate = null;
 
   /** Database connection */

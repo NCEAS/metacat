@@ -79,7 +79,8 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
  *
  */
 public class RegisterDOITest extends D1NodeServiceTest {
-
+    private static final int MAX_TIMES = 50;
+    private static final int SLEEP_TIME = 3000;
 	private static final String EMLFILEPATH = "test/tao.14563.1.xml";
 	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
 	private int tryAcccounts = 20;
@@ -212,10 +213,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				try {
 					metadata = ezid.getMetadata(guid.getValue());
 				} catch (Exception e) {
-					Thread.sleep(1000);
+					Thread.sleep(SLEEP_TIME);
 				}
 				count++;
-			} while (metadata == null && count < 10);
+			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
 
 			// add the actual object for the newly-minted DOI
@@ -252,10 +253,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 						}
 					}
 				} catch (Exception e) {
-					Thread.sleep(1000);
+					Thread.sleep(SLEEP_TIME);
 				}
 				count++;
-			} while (metadata == null && count < 10);
+			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
 			
@@ -307,10 +308,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				try {
 					metadata = ezid.getMetadata(pid.getValue());
 				} catch (Exception e) {
-					Thread.sleep(1000);
+					Thread.sleep(SLEEP_TIME);
 				}
 				count++;
-			} while (metadata == null && count < 10);
+			} while (metadata == null && count < MAX_TIMES);
 			
 			assertNotNull(metadata);
 			assertTrue(metadata.containsKey(DOIService.DATACITE));
@@ -373,10 +374,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
 					try {
 						metadata = ezid.getMetadata(publishedIdentifier.getValue());
 					} catch (Exception e) {
-						Thread.sleep(2000);
+						Thread.sleep(SLEEP_TIME);
 					}
 					count++;
-				} while (metadata == null && count < 20);
+				} while (metadata == null && count < MAX_TIMES);
 	            
 	            assertNotNull(metadata);
 	            String result = metadata.get(DOIService.DATACITE);
@@ -445,10 +446,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(2000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata == null && count < 10);
+                } while (metadata == null && count < MAX_TIMES);
                 System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
                 assertNotNull(metadata);
                 String result = metadata.get(DOIService.DATACITE);
@@ -496,10 +497,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(2000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata == null && count < 10);
+                } while (metadata == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
                 String result = metadata.get(DOIService.DATACITE);
@@ -546,10 +547,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata == null && count < 10);
+                } while (metadata == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
                 String result = metadata.get(DOIService.DATACITE);
@@ -570,10 +571,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata2 = ezid.getMetadata(doiSid.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata2 == null && count < 10);
+                } while (metadata2 == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata2);
                 result = metadata.get(DOIService.DATACITE);
@@ -621,20 +622,20 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(guid.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata == null && count < 10);
+                } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is "+metadata);
                 assertNull(metadata);
                 do {
                     try {
                         metadata = ezid.getMetadata(sid.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(1000);
+                        Thread.sleep(SLEEP_TIME);
                     }
                     count++;
-                } while (metadata == null && count < 10);
+                } while (metadata == null && count < MAX_TIMES);
                 assertNull(metadata);
                 content.close();
             } catch (FileNotFoundException e) {
@@ -896,7 +897,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         Identifier pid = MNodeService.getInstance(request).create(session, guid, content, sysmeta);
         content.close();
         assertEquals(guid.getValue(), pid.getValue());
-        Thread.sleep(1000);
+        Thread.sleep(5000);
         // now publish it
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
         // check for the metadata explicitly, using ezid service
@@ -908,10 +909,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
             try {
                 metadata = ezid.getMetadata(publishedIdentifier.getValue());
             } catch (Exception e) {
-                Thread.sleep(2000);
+                Thread.sleep(SLEEP_TIME);
             }
             count++;
-        } while (metadata == null && count < 20);
+        } while (metadata == null && count < MAX_TIMES);
         assertNotNull(metadata);
         String result = metadata.get(DOIService.DATACITE);
         assertTrue(result.contains("EML Annotation Example"));
@@ -925,7 +926,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
         
         //check the query
-        String query = "q=id:"+guid.getValue();
+        String query = "q=id:" + "\"" + publishedIdentifier.getValue() + "\"";
         InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
         String resultStr = IOUtils.toString(stream, "UTF-8");
         do {
@@ -934,11 +935,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                    break;
                }
             } catch (Exception e) {
-                Thread.sleep(2000);
+                Thread.sleep(SLEEP_TIME);
             }
             count++;
-        } while (metadata == null && count < 20);
-        System.out.println("the result is " + result);
+        } while (metadata == null && count < MAX_TIMES);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
         assertTrue(resultStr.contains("<str>Funding is from a grant from the National Science Foundation.</str>"));
         assertTrue(resultStr.contains("<arr name=\"funderName\">"));

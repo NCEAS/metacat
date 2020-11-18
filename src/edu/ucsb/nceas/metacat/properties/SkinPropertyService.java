@@ -37,7 +37,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.transform.TransformerException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -68,7 +69,7 @@ public class SkinPropertyService extends BaseService {
 	private static HashMap<String, SortedProperties> skinBackupPropertiesMap = null;
 	private static HashMap<String, PropertiesMetaData> skinMetaDataMap = null;
 
-	private static Logger logMetacat = Logger.getLogger(SkinPropertyService.class);
+	private static Log logMetacat = LogFactory.getLog(SkinPropertyService.class);
 
 	/**
 	 * private constructor since this is a singleton

@@ -31,7 +31,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 
 import com.hazelcast.core.MapLoader;
@@ -41,7 +42,7 @@ import edu.ucsb.nceas.metacat.common.index.event.IndexEvent;
 
 public class IndexEventMapStore implements MapStore<Identifier, IndexEvent>, MapLoader<Identifier, IndexEvent> {
 
-	private Logger logMetacat = Logger.getLogger(IndexEventMapStore.class);
+	private Log logMetacat = LogFactory.getLog(IndexEventMapStore.class);
 
 	/**
 	 * The map store/loader methods

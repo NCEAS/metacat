@@ -59,7 +59,8 @@ import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.params.CoreProtocolPNames;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.portal.PortalCertificateManager;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -72,7 +73,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class RequestUtil {
 	
-	private static Logger logMetacat = Logger.getLogger(RequestUtil.class);
+	private static Log logMetacat = LogFactory.getLog(RequestUtil.class);
 	private static String encoding = "UTF-8";
 	
 	/**

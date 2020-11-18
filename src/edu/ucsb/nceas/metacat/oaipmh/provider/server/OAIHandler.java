@@ -37,7 +37,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.PropertyConfigurator;
 
 import edu.ucsb.nceas.metacat.oaipmh.provider.server.crosswalk.Eml2oai_dc;
@@ -67,7 +68,7 @@ public class OAIHandler extends HttpServlet {
    * Class fields
    */
   
-  private static final Logger log = Logger.getLogger(OAIHandler.class);
+  private static final Log log = LogFactory.getLog(OAIHandler.class);
   private static final long serialVersionUID = 1L;
   private static final String VERSION = "1.5.57";
   private static boolean debug = false;
@@ -108,7 +109,6 @@ public class OAIHandler extends HttpServlet {
   protected HashMap attributesMap = new HashMap();
   private final String CONFIG_DIR = "WEB-INF";
   private final String CONFIG_NAME = "metacat.properties";
-  private final String LOG4J_NAME = "log4j.properties";
   private final String XSLT_DIR = "oaipmh";
 
   
@@ -540,10 +540,6 @@ public class OAIHandler extends HttpServlet {
         ServletContext servletContext = config.getServletContext();
         String configDirPath = servletContext.getRealPath(CONFIG_DIR);
         String configPath = configDirPath + "/" + CONFIG_NAME;
-
-        // Initialize the properties file for log4j
-        String log4jPath = configDirPath + "/" + LOG4J_NAME;
-        PropertyConfigurator.configureAndWatch(log4jPath);
 
         // Initialize the directory path to the crosswalk XSLT files
         String xsltDirPath = servletContext.getRealPath(XSLT_DIR);

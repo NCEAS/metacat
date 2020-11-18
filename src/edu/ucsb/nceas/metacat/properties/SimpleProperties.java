@@ -33,7 +33,8 @@ import java.util.Vector;
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
@@ -49,7 +50,7 @@ public class SimpleProperties extends BaseService implements PropertiesInterface
 	
 	private static SortedProperties sortedProperties = null;
 	
-	private static Logger logMetacat = Logger.getLogger(SimpleProperties.class);
+	private static Log logMetacat = LogFactory.getLog(SimpleProperties.class);
 
 	/**
 	 * private constructor since this is a singleton

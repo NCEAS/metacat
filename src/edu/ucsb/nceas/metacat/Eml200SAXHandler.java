@@ -48,7 +48,8 @@ import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -314,7 +315,7 @@ public class Eml200SAXHandler extends DBSAXHandler implements
 
     private static final String DISTRIBUTION = "distribution";
 
-    private Logger logMetacat = Logger.getLogger(Eml200SAXHandler.class);   	   	
+    private Log logMetacat = LogFactory.getLog(Eml200SAXHandler.class);   	   	
     
     /**
      * Construct an instance of the handler class In this constructor, user can

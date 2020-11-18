@@ -24,7 +24,8 @@ package edu.ucsb.nceas.metacat.doi.datacite;
 
 import java.text.SimpleDateFormat;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -46,7 +47,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
  *
  */
 public class DefaultDataCiteFactory extends DataCiteMetadataFactory {
-    private static Logger logMetacat = Logger.getLogger(DefaultDataCiteFactory.class);
+    private static Log logMetacat = LogFactory.getLog(DefaultDataCiteFactory.class);
     
     
     /**

@@ -30,7 +30,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.itk.D1Client;
 import org.dataone.client.auth.CertificateManager;
@@ -57,7 +58,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
 public class D1Admin extends MetacatAdmin {
 
 	private static D1Admin instance = null;
-	private Logger logMetacat = Logger.getLogger(D1Admin.class);
+	private Log logMetacat = LogFactory.getLog(D1Admin.class);
 
 	/**
 	 * private constructor since this is a singleton

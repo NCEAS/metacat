@@ -9,7 +9,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 
 import com.hp.hpl.jena.ontology.OntModel;
 import com.hp.hpl.jena.ontology.OntDocumentManager;
@@ -26,7 +28,7 @@ import org.dataone.cn.indexer.annotation.SparqlField;
 import org.dataone.configuration.Settings;
 
 public class OntologyModelService {
-    private static Logger log = Logger.getLogger(OntologyModelService.class);
+    private static Log log = LogFactory.getLog(OntologyModelService.class);
 
     private static OntologyModelService instance = null;
 

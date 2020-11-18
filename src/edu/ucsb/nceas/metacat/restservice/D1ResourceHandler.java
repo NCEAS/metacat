@@ -43,7 +43,8 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
@@ -113,7 +114,7 @@ public class D1ResourceHandler {
     protected static final String FUNCTION_NAME_UPDATE = "update";
     
     protected ServletContext servletContext;
-    protected static Logger logMetacat;
+    protected static Log logMetacat;
     protected MetacatHandler handler;
     protected HttpServletRequest request;
     protected HttpServletResponse response;
@@ -130,7 +131,7 @@ public class D1ResourceHandler {
         this.servletContext = servletContext;
         this.request = request;
         this.response = response;
-        logMetacat = Logger.getLogger(D1ResourceHandler.class);
+        logMetacat = LogFactory.getLog(D1ResourceHandler.class);
 		try {
 			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
 		} catch (PropertyNotFoundException e) {
@@ -146,7 +147,7 @@ public class D1ResourceHandler {
      * @param httpVerb (GET, POST, PUT or DELETE)
      */
     public void handle(byte httpVerb) {
-        logMetacat = Logger.getLogger(D1ResourceHandler.class);
+        logMetacat = LogFactory.getLog(D1ResourceHandler.class);
         try {
   
         	// first try the usual methods
@@ -515,7 +516,7 @@ public class D1ResourceHandler {
     protected static File getTempDirectory()
     {
         File tmpDir = null;
-        Logger logMetacat = Logger.getLogger(D1ResourceHandler.class);
+        Log logMetacat = LogFactory.getLog(D1ResourceHandler.class);
         try {
             tmpDir = new File(PropertyService.getProperty("application.tempDir"));
         }

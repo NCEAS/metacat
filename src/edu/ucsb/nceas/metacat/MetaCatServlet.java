@@ -50,8 +50,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -270,7 +270,6 @@ public class MetaCatServlet extends HttpServlet {
     public static final String EML2KEYWORD = ":eml";
     private static final String FALSE = "false";
     private static final String TRUE  = "true";
-    private static String LOG_CONFIG_NAME = null;
     public static final String APPLICATION_NAME = "metacat";
 	public static final String DEFAULT_ENCODING = "UTF-8";
     
@@ -278,7 +277,7 @@ public class MetaCatServlet extends HttpServlet {
      * Initialize the servlet by creating appropriate database connections
      */
     public void init(ServletConfig config) throws ServletException {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
     	try {
     		if(_firstHalfInitialized) {
     			return;
@@ -294,9 +293,6 @@ public class MetaCatServlet extends HttpServlet {
             
             // Initialize the properties file
             String dirPath = ServiceService.getRealConfigDir();
-            
-            LOG_CONFIG_NAME = dirPath + "/log4j.properties";
-            PropertyConfigurator.configureAndWatch(LOG_CONFIG_NAME);
             
             // Register preliminary services
             ServiceService.registerService("PropertyService", PropertyService.getInstance(context));         
@@ -337,7 +333,7 @@ public class MetaCatServlet extends HttpServlet {
 	 */
 	public void initSecondHalf(ServletContext context) throws ServletException {
 		
-		Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+		Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
 
 		try {			
 			ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
@@ -427,7 +423,6 @@ public class MetaCatServlet extends HttpServlet {
 			}
 			
 			System.setProperty("replication.logfile.name", replicationLogPath);			
-			PropertyConfigurator.configureAndWatch(LOG_CONFIG_NAME);
 			
 			SessionService.getInstance().unRegisterAllSessions();
 			
@@ -480,7 +475,7 @@ public class MetaCatServlet extends HttpServlet {
 	 * Close all db connections from the pool
 	 */
     public void destroy() {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    	Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
     	
     	ServiceService.stopAllServices();
     	
@@ -511,7 +506,7 @@ public class MetaCatServlet extends HttpServlet {
 	 * Index the paths specified in the metacat.properties
 	 */
     private void checkIndexPaths() {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    	Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
     	logMetacat.debug("MetaCatServlet.checkIndexPaths - starting....");
     	boolean needCheck = false;
     	try {
@@ -663,7 +658,7 @@ public class MetaCatServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	private void handleGetOrPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-		Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+		Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
 
 		String requestEncoding = request.getCharacterEncoding();
 		if (requestEncoding == null) {
@@ -1240,7 +1235,7 @@ public class MetaCatServlet extends HttpServlet {
 		}
 		
 		public static void initializeSitemapTask(MetacatHandler handler) {
-			Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+			Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
 			Boolean sitemap_enabled = false;
 
 			try {
