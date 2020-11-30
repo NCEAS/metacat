@@ -59,6 +59,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public class CitationRelationHandler implements RelationshipHandler {
     public static final String ISCITEDBY = "IsCitedBy";
+    public static final String CITES = "Cites";
     public static final String CITATIONS = "citations";
     public static final String QUERY = "query";
     private static String citationServerURL = null;

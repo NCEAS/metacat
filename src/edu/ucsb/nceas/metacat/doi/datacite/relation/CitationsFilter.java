@@ -34,7 +34,7 @@ import java.util.Vector;
 public class CitationsFilter {
     private String filterType = "dataset";
     private List<String> values = new Vector<String>();
-    private String interpretAs = "list";
+    private String interpretAs = CitationRelationHandler.CITES;
     
     /**
      * Get the filter type
