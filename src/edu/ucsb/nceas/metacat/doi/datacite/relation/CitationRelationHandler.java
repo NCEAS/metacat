@@ -128,9 +128,9 @@ public class CitationRelationHandler implements RelationshipHandler {
         HttpResponse response = client.execute(get);
         CitationsResponse citationsResponse = parseResponse(response.getEntity().getContent());
         if(citationsResponse != null) {
-            List<CitationsMetadata> citationsMetadatas = citationsResponse.getCitationsMetadata();
+            List<Citation> citationsMetadatas = citationsResponse.getCitationsMetadata();
             if (citationsMetadatas != null) {
-                for (CitationsMetadata metadata : citationsMetadatas) {
+                for (Citation metadata : citationsMetadatas) {
                     if (metadata != null && metadata.getSource_id() != null && !metadata.getSource_id().trim().equals("")) {
                         logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + metadata.getSource_id() + " into the IsCitedBy list");
                         ids.add(metadata.getSource_id());

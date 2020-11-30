@@ -29,7 +29,7 @@ import java.util.List;
  * @author tao
  *
  */
-public class CitationsMetadata {
+public class Citation {
     private String target_id = null;
     private String source_id = null;
     private String source_url = null;

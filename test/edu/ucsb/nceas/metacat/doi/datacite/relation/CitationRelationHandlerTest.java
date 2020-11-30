@@ -122,9 +122,9 @@ public class CitationRelationHandlerTest extends MCTestCase {
         byte[] bytes = JSONRESPONSE.getBytes(StandardCharsets.UTF_8);
         InputStream in = new ByteArrayInputStream(bytes);
         CitationsResponse response = handler.parseResponse(in);
-        List<CitationsMetadata> metadata = response.getCitationsMetadata();
+        List<Citation> metadata = response.getCitationsMetadata();
         assertTrue(metadata.size() == 2);
-        CitationsMetadata metadata1 = metadata.get(0);
+        Citation metadata1 = metadata.get(0);
         assertTrue(metadata1.getJournal().equals("Deep Sea Research Part I: Oceanographic Research Papers"));
         assertTrue(metadata1.getPage().equals("57--65"));
         assertTrue(metadata1.getPublisher().equals("Elsevier"));
@@ -141,7 +141,7 @@ public class CitationRelationHandlerTest extends MCTestCase {
         assertTrue(origins.get(2).getName().equals("S.R. Okkonen"));
         assertTrue(origins.get(3).getName().equals("R.S. Suydam"));
         
-        CitationsMetadata metadata2 = metadata.get(1);
+        Citation metadata2 = metadata.get(1);
         assertTrue(metadata2.getJournal().equals("test journal"));
         assertTrue(metadata2.getPage().equals("55"));
         assertTrue(metadata2.getPublisher().equals("test publisher"));
