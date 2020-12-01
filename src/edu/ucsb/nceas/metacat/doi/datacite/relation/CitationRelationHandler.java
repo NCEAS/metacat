@@ -128,12 +128,22 @@ public class CitationRelationHandler implements RelationshipHandler {
         HttpResponse response = client.execute(get);
         CitationsResponse citationsResponse = parseResponse(response.getEntity().getContent());
         if(citationsResponse != null) {
-            List<Citation> citationsMetadatas = citationsResponse.getCitationsMetadata();
-            if (citationsMetadatas != null) {
-                for (Citation metadata : citationsMetadatas) {
-                    if (metadata != null && metadata.getSource_id() != null && !metadata.getSource_id().trim().equals("")) {
-                        logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + metadata.getSource_id() + " into the IsCitedBy list");
-                        ids.add(metadata.getSource_id());
+             CitationsResultDetails resultDetails = citationsResponse.getResultDetails();
+             if (resultDetails != null) {
+                 List<Citation> citations = resultDetails.getCitations();
+                 if (citations != null) {
+                    for (Citation citation : citations) {
+                        if (citation != null) {
+                            List<CitationRelatedIdentifier> relatedIdentifiers = citation.getRelated_identifiers();
+                            if (relatedIdentifiers != null) {
+                                for (CitationRelatedIdentifier relatedIdentifier : relatedIdentifiers) {
+                                    if (relatedIdentifier != null && relatedIdentifier.getRelation_type() != null && relatedIdentifier.getRelation_type().equalsIgnoreCase(CITES) && relatedIdentifier.getIdentifiier() != null && !relatedIdentifier.getIdentifiier().trim().equals("")) {
+                                        logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + relatedIdentifier.getIdentifiier() + " into the IsCitedBy list");
+                                        ids.add(relatedIdentifier.getIdentifiier());
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
