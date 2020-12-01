@@ -137,9 +137,9 @@ public class CitationRelationHandler implements RelationshipHandler {
                             List<CitationRelatedIdentifier> relatedIdentifiers = citation.getRelated_identifiers();
                             if (relatedIdentifiers != null) {
                                 for (CitationRelatedIdentifier relatedIdentifier : relatedIdentifiers) {
-                                    if (relatedIdentifier != null && relatedIdentifier.getRelation_type() != null && relatedIdentifier.getRelation_type().equalsIgnoreCase(CITES) && relatedIdentifier.getIdentifiier() != null && !relatedIdentifier.getIdentifiier().trim().equals("")) {
-                                        logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + relatedIdentifier.getIdentifiier() + " into the IsCitedBy list");
-                                        ids.add(relatedIdentifier.getIdentifiier());
+                                    if (relatedIdentifier != null && relatedIdentifier.getRelation_type() != null && relatedIdentifier.getRelation_type().equalsIgnoreCase(CITES) && relatedIdentifier.getIdentifier() != null && !relatedIdentifier.getIdentifier().trim().equals("")) {
+                                        logMetacat.debug("CitationRelationHandler.getIsCitedBys - add the source id " + relatedIdentifier.getIdentifier() + " into the IsCitedBy list");
+                                        ids.add(relatedIdentifier.getIdentifier());
                                     }
                                 }
                             }

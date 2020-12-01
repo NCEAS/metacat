@@ -28,23 +28,23 @@ package edu.ucsb.nceas.metacat.doi.datacite.relation;
  *
  */
 public class CitationRelatedIdentifier {
-    private String identifiier = null;
+    private String identifier = null;
     private String relation_type = null;
     
     /**
      * Get the related identifier 
      * @return  the identifier of the relationship 
      */
-    public String getIdentifiier() {
-        return identifiier;
+    public String getIdentifier() {
+        return identifier;
     }
     
     /**
      * Set the related identifier
      * @param identifiier  the identifier will be set
      */
-    public void setIdentifiier(String identifiier) {
-        this.identifiier = identifiier;
+    public void setIdentifier(String identifiier) {
+        this.identifier = identifiier;
     }
     
     /**

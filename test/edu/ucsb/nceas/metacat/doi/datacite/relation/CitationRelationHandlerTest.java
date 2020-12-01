@@ -41,52 +41,29 @@ public class CitationRelationHandlerTest extends MCTestCase {
     private static String FILEPATH = "test/resourcemap-with-prov-2.xml";
     private static String IDENTIFIER = "urn:uuid:c0e0d342-7cc1-4eaa-9648-c6d9f7ed8b1f";
     private static final String JSONRESPONSE = "{\n" + 
-            "        \"citationsMetadata\": [\n" + 
-            "             {\n" + 
-            "                  \"target_id\": \"https://doi.org/10.5065/D65T3HGC\",\n" + 
-            "                  \"source_id\": \"https://doi.org/10.1016/j.dsr.2016.10.006\",\n" + 
-            "                  \"source_url\": \"https://doi.org/10.1016%2Fj.dsr.2016.10.006\",\n" + 
-            "                  \"origin\": [\n" + 
-            "                    {\n" + 
-            "                      \"name\": \"K.M. Stafford\"\n" + 
-            "                    },\n" + 
-            "                    {\n" + 
-            "                      \"name\": \"J.J. Citta\"\n" + 
-            "                    },\n" + 
-            "                    {\n" + 
-            "                      \"name\": \"S.R. Okkonen\"\n" + 
-            "                    },\n" + 
-            "                    {\n" + 
-            "                      \"name\": \"R.S. Suydam\"\n" + 
-            "                    }\n" + 
-            "                  ],\n" + 
-            "                  \n" + 
-            "                  \"title\": \"Wind-dependent beluga whale dive behavior in Barrow Canyon, Alaska\",\n" + 
-            "                  \"publisher\": \"Elsevier\",\n" + 
-            "                  \"journal\": \"Deep Sea Research Part I: Oceanographic Research Papers\",\n" + 
-            "                  \"volume\": \"118\",\n" + 
-            "                  \"page\": \"57--65\",\n" + 
-            "                  \"year_of_publishing\": 2016\n" + 
-            "            },\n" + 
+            "    \"resultDetails\": {\n" + 
+            "        \"citations\": [\n" + 
             "            {\n" + 
-            "                  \"target_id\": \"https://doi.org/10.5065/D65T3HGM\",\n" + 
-            "                  \"source_id\": \"https://doi.org/10.1016/j.dsr.2016.10.007\",\n" + 
-            "                  \"source_url\": \"https://doi.org/10.1016%2Fj.dsr.2016.10.007\",\n" + 
-            "                  \"origin\": [\n" + 
+            "                \"page\": \"154-164\",\n" + 
+            "                \"title\": \"Surface water mass composition changes captured by cores of Arctic land-fast sea ice\",\n" + 
+            "                \"volume\": \"118\",\n" + 
+            "                \"origin\": \"I.J. Smith, H. Eicken, A.R. Mahoney, R. Van Hale, A.J. Gough, Y. Fukamachi, J. Jones\",\n" + 
+            "                \"journal\": \"Continental Shelf Research\",\n" + 
+            "                \"source_id\": \"doi:10.2174/1874252101004010115\",\n" + 
+            "                \"source_url\": \"https://doi.org/10.2174/1874252101004010115\",\n" + 
+            "                \"publisher\": \"Elsevier BV\",\n" + 
+            "                \"related_identifiers\": [\n" + 
             "                    {\n" + 
-            "                      \"name\": \"John Smith\"\n" + 
+            "                        \"identifier\": \"doi:10.18739/A2CZ3244X\",\n" + 
+            "                        \"relation_type\" : \"references\"\n" + 
             "                    }\n" + 
-            "                  ],\n" + 
-            "                  \n" + 
-            "                  \"title\": \"test\",\n" + 
-            "                  \"publisher\": \"test publisher\",\n" + 
-            "                  \"journal\": \"test journal\",\n" + 
-            "                  \"volume\": \"110\",\n" + 
-            "                  \"page\": \"55\",\n" + 
-            "                  \"year_of_publishing\": 2017\n" + 
+            "                ],\n" + 
+            "                \"year_of_publishing\": 2016,\n" + 
+            "                \"link_publication_date\": \"2017-05-31\"\n" + 
             "            }\n" + 
             "        ]\n" + 
-            "    }";
+            "    }\n" + 
+            "}";
    
     /**
      * Constructor
@@ -122,38 +99,25 @@ public class CitationRelationHandlerTest extends MCTestCase {
         byte[] bytes = JSONRESPONSE.getBytes(StandardCharsets.UTF_8);
         InputStream in = new ByteArrayInputStream(bytes);
         CitationsResponse response = handler.parseResponse(in);
-        List<Citation> metadata = response.getCitationsMetadata();
-        assertTrue(metadata.size() == 2);
+        List<Citation> metadata = response.getResultDetails().getCitations();
+        assertTrue(metadata.size() == 1);
         Citation metadata1 = metadata.get(0);
-        assertTrue(metadata1.getJournal().equals("Deep Sea Research Part I: Oceanographic Research Papers"));
-        assertTrue(metadata1.getPage().equals("57--65"));
-        assertTrue(metadata1.getPublisher().equals("Elsevier"));
-        assertTrue(metadata1.getSource_id().equals("https://doi.org/10.1016/j.dsr.2016.10.006"));
-        assertTrue(metadata1.getSource_url().equals("https://doi.org/10.1016%2Fj.dsr.2016.10.006"));
-        assertTrue(metadata1.getTarget_id().equals("https://doi.org/10.5065/D65T3HGC"));
-        assertTrue(metadata1.getTitle().equals("Wind-dependent beluga whale dive behavior in Barrow Canyon, Alaska"));
+        assertTrue(metadata1.getPage().equals("154-164"));
+        assertTrue(metadata1.getTitle().equals("Surface water mass composition changes captured by cores of Arctic land-fast sea ice"));
         assertTrue(metadata1.getVolume().equals("118"));
+        assertTrue(metadata1.getOrigin().equals("I.J. Smith, H. Eicken, A.R. Mahoney, R. Van Hale, A.J. Gough, Y. Fukamachi, J. Jones"));
+        assertTrue(metadata1.getJournal().equals("Continental Shelf Research"));
+        assertTrue(metadata1.getSource_id().equals("doi:10.2174/1874252101004010115"));
+        assertTrue(metadata1.getSource_url().equals("https://doi.org/10.2174/1874252101004010115"));
+        assertTrue(metadata1.getPublisher().equals("Elsevier BV"));
+        List<CitationRelatedIdentifier> relatedIdentifiers = metadata1.getRelated_identifiers();
+        assertTrue(relatedIdentifiers.size() == 1);
+        CitationRelatedIdentifier identifier = relatedIdentifiers.get(0);
+        assertTrue(identifier.getIdentifier().equals("doi:10.18739/A2CZ3244X"));
+        assertTrue(identifier.getRelation_type().equals("references"));
         assertTrue(metadata1.getYear_of_publishing() == 2016);
-        List<CitationsOrigin> origins = metadata1.getOrigin();
-        assertTrue(origins.size() == 4);
-        assertTrue(origins.get(0).getName().equals("K.M. Stafford"));
-        assertTrue(origins.get(1).getName().equals("J.J. Citta"));
-        assertTrue(origins.get(2).getName().equals("S.R. Okkonen"));
-        assertTrue(origins.get(3).getName().equals("R.S. Suydam"));
-        
-        Citation metadata2 = metadata.get(1);
-        assertTrue(metadata2.getJournal().equals("test journal"));
-        assertTrue(metadata2.getPage().equals("55"));
-        assertTrue(metadata2.getPublisher().equals("test publisher"));
-        assertTrue(metadata2.getSource_id().equals("https://doi.org/10.1016/j.dsr.2016.10.007"));
-        assertTrue(metadata2.getSource_url().equals("https://doi.org/10.1016%2Fj.dsr.2016.10.007"));
-        assertTrue(metadata2.getTarget_id().equals("https://doi.org/10.5065/D65T3HGM"));
-        assertTrue(metadata2.getTitle().equals("test"));
-        assertTrue(metadata2.getVolume().equals("110"));
-        assertTrue(metadata2.getYear_of_publishing() == 2017);
-        List<CitationsOrigin> origins1 = metadata2.getOrigin();
-        assertTrue(origins1.size() == 1);
-        assertTrue(origins1.get(0).getName().equals("John Smith"));
+        assertTrue(metadata1.getLink_publication_date().equals("2017-05-31"));
+     
     }
 
 }
