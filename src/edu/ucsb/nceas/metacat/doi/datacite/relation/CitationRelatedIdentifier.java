@@ -22,29 +22,45 @@
  */
 package edu.ucsb.nceas.metacat.doi.datacite.relation;
 
-
 /**
- * A class represents the originator of the object in the citation
+ * A class represents other identifiers relating to the citation
  * @author tao
  *
  */
-public class CitationsOrigin {
-    private String name = null;
-
+public class CitationRelatedIdentifier {
+    private String identifiier = null;
+    private String relation_type = null;
+    
     /**
-     * Get the name of the originator
-     * @return  the name of originator
+     * Get the related identifier 
+     * @return  the identifier of the relationship 
      */
-    public String getName() {
-        return name;
+    public String getIdentifiier() {
+        return identifiier;
     }
-
+    
     /**
-     * Set the name of the originator
-     * @param name  the name will be set
+     * Set the related identifier
+     * @param identifiier  the identifier will be set
      */
-    public void setName(String name) {
-        this.name = name;
+    public void setIdentifiier(String identifiier) {
+        this.identifiier = identifiier;
+    }
+    
+    /**
+     * Get the relationship of the identifier to the citation
+     * @return relation_type 
+     */
+    public String getRelation_type() {
+        return relation_type;
+    }
+    
+    /**
+     * Set the relationship for the identifiers
+     * @param relation_type  the relationship will be set
+     */
+    public void setRelation_type(String relation_type) {
+        this.relation_type = relation_type;
     }
 
 }

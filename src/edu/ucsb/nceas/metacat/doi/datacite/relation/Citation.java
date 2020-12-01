@@ -30,33 +30,19 @@ import java.util.List;
  *
  */
 public class Citation {
-    private String target_id = null;
+    private String page = null;
+    private String title = null;
+    private String volume = null;
+    private String origin = null;
+    private String journal = null;
     private String source_id = null;
     private String source_url = null;
-    private List<CitationsOrigin> origin = null;
-    private String title = null;
     private String publisher = null;
-    private String journal = null;
-    private String volume = null;
-    private String page = null;
+    private List<CitationRelatedIdentifier> related_identifiers = null;
     private int year_of_publishing;
+    private String link_publication_date = null;
     
-    /**
-     * Get the target id in the response
-     * @return  the target id
-     */
-    public String getTarget_id() {
-        return target_id;
-    }
-    
-    /**
-     * Set the target id in the response
-     * @param target_id the id will be set
-     */
-    public void setTarget_id(String target_id) {
-        this.target_id = target_id;
-    }
-    
+  
     /**
      * Get the source id in the response
      * @return  the source id
@@ -93,7 +79,7 @@ public class Citation {
      * Get the list of originators in the response
      * @return  the list of originators
      */
-    public List<CitationsOrigin> getOrigin() {
+    public String getOrigin() {
         return origin;
     }
     
@@ -101,7 +87,7 @@ public class Citation {
      * Set the originators in the response
      * @param origin  the list of originators will be set
      */
-    public void setOrigin(List<CitationsOrigin> origin) {
+    public void setOrigin(String origin) {
         this.origin = origin;
     }
     
@@ -200,7 +186,38 @@ public class Citation {
     public void setYear_of_publishing(int year_of_publishing) {
         this.year_of_publishing = year_of_publishing;
     }
+
+    /**
+     * Get the list of the related identifiers
+     * @return  the list of the related identifiers
+     */
+    public List<CitationRelatedIdentifier> getRelated_identifiers() {
+        return related_identifiers;
+    }
+
+    /**
+     * Set the the list of the related identifiers
+     * @param related_identifiers  the list of identifiers will be set
+     */
+    public void setRelated_identifiers(
+            List<CitationRelatedIdentifier> related_identifiers) {
+        this.related_identifiers = related_identifiers;
+    }
+
+    /**
+     * Get the linked publication date
+     * @return the linked publication date
+     */
+    public String getLink_publication_date() {
+        return link_publication_date;
+    }
+
+    /**
+     * Set the linked publication date
+     * @param link_publication_date  the date will be set
+     */
+    public void setLink_publication_date(String link_publication_date) {
+        this.link_publication_date = link_publication_date;
+    }
    
-
-
 }
