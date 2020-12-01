@@ -25,27 +25,28 @@ package edu.ucsb.nceas.metacat.doi.datacite.relation;
 import java.util.List;
 
 /**
- * The class represents the response for the citation query
+ * A class represents the citation resultDetails property in the json code response from the metric server.
+ * It contains a list of citations. 
  * @author tao
  *
  */
-public class CitationsResponse {
-    private CitationsResultDetails resultDetails = null;
+public class CitationsResultDetails {
+    private List<Citation> citations = null;
 
     /**
-     * Get the resultDetails from the response
-     * @return  the resultDetails
+     * Get the list of citations in the result details property
+     * @return  the list of citations
      */
-    public CitationsResultDetails getResultDetails() {
-        return resultDetails;
+    public List<Citation> getCitations() {
+        return citations;
     }
 
     /**
-     * Set the resultDetails to the response
-     * @param resultDetails  the resultDetails will be set
+     * Set the list the citations to the result details property
+     * @param citations  the list will be set
      */
-    public void setResultDetails(CitationsResultDetails resultDetails) {
-        this.resultDetails = resultDetails;
+    public void setCitations(List<Citation> citations) {
+        this.citations = citations;
     }
 
 }
