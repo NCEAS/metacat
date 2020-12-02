@@ -471,7 +471,7 @@ public abstract class DataCiteMetadataFactory {
             }
         }
         Vector<Statement> citations = citationHandler.getRelationships(identifier);
-        if (citations != null) {
+        if (citations != null && !citations.isEmpty()) {
             for (Statement citation : citations) {
                 Property predicate = citation.getPredicate();
                 String relationType = predicate.getLocalName();
