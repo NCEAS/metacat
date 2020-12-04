@@ -206,7 +206,7 @@ public class StreamingMultipartRequestResolver extends MultipartRequestResolver 
             } else {
                 predicate = "without";
             }
-            log.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Write the object file from the http multipart to the disk " + predicate + " calculating the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+            log.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Write the object file from the http multipart to the disk " + predicate + " calculating the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         }
         return multipartRequest;
     }

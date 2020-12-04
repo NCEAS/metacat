@@ -1109,7 +1109,7 @@ public abstract class D1NodeService {
     String result = handler.handleInsertOrUpdateAction(ipAddress, userAgent, null, 
                         null, params, username, groupnames, false, false, xmlBytes, formatId, checksum,tempFile);
     long end = System.currentTimeMillis();
-    logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Parse and write the metadata object into database (if the multiparts handler hasn't calculated the checksum, it will write the content to the disk again)" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+    logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Parse and write the metadata object into database (if the multiparts handler hasn't calculated the checksum, it will write the content to the disk again)" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
     	String detailCode = "";
@@ -1771,7 +1771,7 @@ public abstract class D1NodeService {
                           FileUtils.moveFile(tempFile, newFile);
                           long end = System.currentTimeMillis();
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
-                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
                           return newFile;
                       } else {
                           logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
@@ -1800,7 +1800,7 @@ public abstract class D1NodeService {
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
           }
           long end = System.currentTimeMillis();
-          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
           if(tempFile != null) {
               //tempFile.deleteOnExit();
               StreamingMultipartRequestResolver.deleteTempFile(tempFile);
