@@ -724,7 +724,7 @@ public class IdentifierManager {
         int serialNumber = -1;
         try {
             // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.etAllPidsInChain");
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getAllPidsInChain");
             serialNumber = dbConn.getCheckOutSerialNumber();
             // Execute the insert statement
             PreparedStatement stmt = dbConn.prepareStatement(sql);
