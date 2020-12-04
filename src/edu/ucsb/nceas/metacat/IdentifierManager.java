@@ -712,7 +712,7 @@ public class IdentifierManager {
     }
     
     /**
-     * Get all pis in the series chain
+     * Get all pids in the series chain
      * @param sid  the id of the series chain
      * @return  a list of pid in the chain
      * @throws SQLException
@@ -2636,4 +2636,3 @@ public class IdentifierManager {
         return exists;
     }
 }
-
