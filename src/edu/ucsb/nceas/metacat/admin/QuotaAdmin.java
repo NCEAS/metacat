@@ -150,7 +150,7 @@ public class QuotaAdmin extends MetacatAdmin {
             Vector<String> processingErrors = new Vector<String>();
             Vector<String> processingSuccess = new Vector<String>();
             
-            // Bypass the geoserver configuration. This will not keep
+            // Bypass the quota service configuration. This will not keep
             // Metacat from running.
             try {
                 PropertyService.setProperty("configutil.quotaConfigured",
