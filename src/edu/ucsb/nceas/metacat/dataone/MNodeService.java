@@ -148,8 +148,6 @@ import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
 
-import com.lmax.disruptor.InsufficientCapacityException;
-
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
@@ -219,7 +217,7 @@ public class MNodeService extends D1NodeService
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
 
 	/* the logger instance */
-    private org.apache.commons.logging.Log logMetacat = null;
+    private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
     
     /* A reference to a remote Memeber Node */
     //private MNode mn;
@@ -270,8 +268,6 @@ public class MNodeService extends D1NodeService
      */
     private MNodeService(HttpServletRequest request) {
         super(request);
-        logMetacat = LogFactory.getLog(MNodeService.class);
-        
         // set the Member Node certificate file location
         CertificateManager.getInstance().setCertificateLocation(Settings.getConfiguration().getString("D1Client.certificate.file"));
 
