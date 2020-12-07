@@ -44,7 +44,7 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
  */
 public class D1RestServlet extends HttpServlet {
 
-    protected Log logMetacat;
+    protected Log logMetacat = LogFactory.getLog(this.getClass());;
     protected D1ResourceHandler handler;
 
     /**
@@ -66,7 +66,6 @@ public class D1RestServlet extends HttpServlet {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logMetacat = LogFactory.getLog(this.getClass());
         try {
             QuotaServiceManager.getInstance().startDailyCheck();//four children servlet classes (cn/mn v2, v1) will call this method
         } catch (Exception e) {
