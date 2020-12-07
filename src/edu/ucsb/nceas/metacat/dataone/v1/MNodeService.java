@@ -83,7 +83,7 @@ public class MNodeService
 	edu.ucsb.nceas.metacat.dataone.MNodeService impl = null;
 	
 	/* the logger instance */
-    private org.apache.commons.logging.Log logMetacat = null;
+    private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
 
     /**
      * Singleton accessor to get an instance of MNodeService.
@@ -98,7 +98,6 @@ public class MNodeService
      * Constructor, private for singleton access
      */
     private MNodeService(HttpServletRequest request) {
-        logMetacat = LogFactory.getLog(MNodeService.class);
         impl = edu.ucsb.nceas.metacat.dataone.MNodeService.getInstance(request);
     }
     
