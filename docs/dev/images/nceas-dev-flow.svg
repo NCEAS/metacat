@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="377px" height="454px" viewBox="0 0 377 454" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>nceas-dev-flow</title>
+    <defs>
+        <filter id="filter-1">
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0.786526 0 0 0 0 0.749235 0 0 0 0 0.654571 0 0 0 1.000000 0"></feColorMatrix>
+        </filter>
+    </defs>
+    <g id="nceas-dev-flow" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <path id="Line" d="M219,40.8764368 L219,425.123 L223,425.123563 L218.5,434.123563 L214,425.123563 L218,425.123 L218,40.8764368 L219,40.8764368 Z" fill="#877D63" fill-rule="nonzero"></path>
+        <path id="Line" d="M57,56 L57,60 L122,60 L122,61 L57,61 L57,65 L48,60.5 L57,56 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M147,56 L147,60 L212,60 L212,61 L147,61 L147,65 L138,60.5 L147,56 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M48.2727108,114.830418 L48.7211462,115.051565 L114.097,147.291 L115.866914,143.704595 L121.948435,151.721146 L111.886281,151.776433 L113.655,148.188 L48.2788538,115.948435 L47.8304183,115.727289 L48.2727108,114.830418 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M47.2727108,276.830418 L47.7211462,277.051565 L113.097,309.291 L114.866914,305.704595 L120.948435,313.721146 L110.886281,313.776433 L112.655,310.188 L47.2788538,277.948435 L46.8304183,277.727289 L47.2727108,276.830418 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M121.73051,177.83152 L122.16848,178.73051 L121.718985,178.949495 L51.36,213.226 L53.1122763,216.822714 L43.0505051,216.718985 L49.1705515,208.731805 L50.922,212.327 L121.281015,178.050505 L121.73051,177.83152 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M136.272711,315.830418 L136.721146,316.051565 L202.097,348.291 L203.866914,344.704595 L209.948435,352.721146 L199.886281,352.776433 L201.655,349.188 L136.278854,316.948435 L135.830418,316.727289 L136.272711,315.830418 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M225.272711,357.830418 L225.721146,358.051565 L291.097,390.291 L292.866914,386.704595 L298.948435,394.721146 L288.886281,394.776433 L290.655,391.188 L225.278854,358.948435 L224.830418,358.727289 L225.272711,357.830418 Z" fill="#7BA27D" fill-rule="nonzero"></path>
+        <path id="Line" d="M130,40.8764368 L130,425.123 L134,425.123563 L129.5,434.123563 L125,425.123563 L129,425.123 L129,40.8764368 L130,40.8764368 Z" fill="#877D63" fill-rule="nonzero"></path>
+        <path id="Line" d="M308,40.8764368 L308,425.123 L312,425.123563 L307.5,434.123563 L303,425.123563 L307,425.123 L307,40.8764368 L308,40.8764368 Z" fill="#877D63" fill-rule="nonzero"></path>
+        <text id="master" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="196.041504" y="24">master</tspan>
+        </text>
+        <text id="develop" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="106.04834" y="24">develop</tspan>
+        </text>
+        <path id="Line" d="M39,41 L39,143 L43,143 L38.5,152 L34,143 L38,143 L38,41 L39,41 Z" fill="#877D63" fill-rule="nonzero"></path>
+        <text id="feature-A" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="12.2724609" y="24">feature-A</tspan>
+        </text>
+        <text id="releases" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="279.472656" y="24">releases</tspan>
+        </text>
+        <text id="1.0.0" font-family="Arial-BoldMT, Arial" font-size="10" font-weight="bold" fill="#877D63">
+            <tspan x="340.379395" y="402">1.0.0</tspan>
+        </text>
+        <g id="Oval" transform="translate(211.000000, 52.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(31.000000, 52.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(32.000000, 79.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(32.000000, 107.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <path id="Line" d="M39,200 L39,302 L43,302 L38.5,311 L34,302 L38,302 L38,200 L39,200 Z" fill="#877D63" fill-rule="nonzero"></path>
+        <text id="feature-B" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="11.7724609" y="183">feature-B</tspan>
+        </text>
+        <g id="Oval" transform="translate(31.000000, 211.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(32.000000, 238.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(32.000000, 266.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(122.000000, 52.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(121.000000, 143.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(122.000000, 170.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(121.000000, 306.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(210.000000, 346.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g id="Oval" transform="translate(298.000000, 389.000000)" fill="#61AB66">
+            <circle cx="8" cy="8" r="8"></circle>
+        </g>
+        <g filter="url(#filter-1)" id="tag">
+            <g transform="translate(321.000000, 392.000000)">
+                <path d="M0,6.89385493 L0,1.31250064 C0,0.587617474 0.587617474,0 1.31250064,0 L6.89385493,0 C7.24195104,0 7.57578939,0.138283934 7.8219296,0.384425969 L13.6155809,6.17807724 C14.1281397,6.69063608 14.1281397,7.52166774 13.6155809,8.03422658 L8.03422658,13.6155809 C7.52166774,14.1281397 6.69063608,14.1281397 6.17807724,13.6155809 L0.384425969,7.8219296 C0.138283934,7.57578939 0,7.24195104 0,6.89385493 Z M3.0625015,1.75000085 C2.33761833,1.75000085 1.75000085,2.33761833 1.75000085,3.0625015 C1.75000085,3.78738466 2.33761833,4.37500214 3.0625015,4.37500214 C3.78738466,4.37500214 4.37500214,3.78738466 4.37500214,3.0625015 C4.37500214,2.33761833 3.78738466,1.75000085 3.0625015,1.75000085 Z" id="Shape" fill="#000000" fill-rule="nonzero"></path>
+            </g>
+        </g>
+    </g>
+</svg>
