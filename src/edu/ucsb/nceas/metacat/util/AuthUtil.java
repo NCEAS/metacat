@@ -148,7 +148,7 @@ public class AuthUtil {
 	 * Get the vector of allowed submitter credentials from metacat.properties
 	 * and put into global allowedSubmitters list
 	 */
-	private static void populateAllowedSubmitters() throws MetacatUtilException {
+	public static void populateAllowedSubmitters() throws MetacatUtilException {
 		String allowedSubmitterString = null;
 		try {
 			allowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
