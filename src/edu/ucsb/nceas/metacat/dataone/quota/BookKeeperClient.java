@@ -70,7 +70,7 @@ public class BookKeeperClient {
     private static final String QUOTASUBJECT = "subject";
     private static final String REQUESTOR = "requestor";
     private static final String USAGES = "usages";
-    private static final String INSTNACEID = "instanceId";
+    private static final String INSTANCEID = "instanceId";
     private static final String AUTHORIZATION = "Authorization";
     private static final String BEARER= "Bearer";
     private static Log logMetacat  = LogFactory.getLog(BookKeeperClient.class);
@@ -431,7 +431,7 @@ public class BookKeeperClient {
      * @throws ServiceFailure
      */
      List<Usage> listUsages(int quotaId, String instanceId) throws ClientProtocolException, IOException, NotFound, ServiceFailure {
-        String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTNACEID + "=" + escapeURL(instanceId);
+        String restStr = bookKeeperURL + USAGES + "/?" + QUOTAID + "=" + quotaId + "&" + INSTANCEID + "=" + escapeURL(instanceId);
         logMetacat.debug("BookKeeperClient.getUsageId - the rest request to get the usuage id is " + restStr);
         HttpGet get = new HttpGet(restStr);
         get.addHeader(header);
