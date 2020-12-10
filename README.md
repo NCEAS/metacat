@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.13.0 Release
+Version: 2.14.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -67,7 +67,14 @@ for the next release.
 
 ## Release Notes
 
-### Rlease Notes for 2.13.0
+### Release Notes for 2.14.0
+New features and bugs fixed in this release:
+* Support the quota service for portals
+* Upgrade the namespace of the datacite schema to 4.3
+* Upgrade the version of log4j from 1.2 to 2.11
+* Upgrade some library jar files to fix security threats
+
+### Release Notes for 2.13.0
 New features in this release:
 * Upgrade Solr to version 8 and use the external Solr server
 * Use the streaming HTTP multipart handler to improve performance

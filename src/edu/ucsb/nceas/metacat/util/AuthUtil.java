@@ -33,9 +33,17 @@ import java.util.regex.Pattern;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.dataone.service.exceptions.ServiceFailure;
+import org.dataone.service.types.v1.Group;
+import org.dataone.service.types.v1.Person;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
+import org.dataone.service.types.v1.SubjectInfo;
 
 import edu.ucsb.nceas.metacat.AuthSession;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
@@ -44,7 +52,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 public class AuthUtil {
 	
-    public static Logger logMetacat = Logger.getLogger(AuthUtil.class);
+    public static Log logMetacat = LogFactory.getLog(AuthUtil.class);
     public static String DELIMITER=":";
     public static String ESCAPECHAR="\\";
 
@@ -140,7 +148,7 @@ public class AuthUtil {
 	 * Get the vector of allowed submitter credentials from metacat.properties
 	 * and put into global allowedSubmitters list
 	 */
-	private static void populateAllowedSubmitters() throws MetacatUtilException {
+	public static void populateAllowedSubmitters() throws MetacatUtilException {
 		String allowedSubmitterString = null;
 		try {
 			allowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
@@ -411,7 +419,18 @@ public class AuthUtil {
 			// hence everyone should be allowed
 			return true;
 		}
-		return (onAccessList(getAllowedSubmitters(), username, groups));
+		boolean allow = onAccessList(getAllowedSubmitters(), username, groups);
+		if (!allow) {
+		    //check if it is the mn subject
+		    D1AuthHelper helper = new D1AuthHelper(null, null, null, null);
+		    Session session = buildSession(username, groups);
+		    try {
+		        allow = helper.isLocalMNAdmin(session);
+		    } catch (ServiceFailure e) {
+		        throw new MetacatUtilException(e.getMessage());
+		    }
+		}
+		return allow;
 	}
 
 	/**
@@ -522,6 +541,36 @@ public class AuthUtil {
             }
         }
         return results;
+    }
+    
+    /**
+     * Construct a session object base the given user and group name
+     * @param user  the user name for the session
+     * @param groups  the groups name for the session
+     * @return  a session object
+     */
+    private static Session buildSession(String user, String[] groups) {
+        Session session = new Session();
+        Subject userSubject = new Subject();
+        userSubject.setValue(user);
+        session.setSubject(userSubject);
+        SubjectInfo subjectInfo = new SubjectInfo();
+        Person person = new Person();
+        person.setSubject(userSubject);
+        if (groups != null && groups.length > 0) {
+            for (String groupName: groups) {
+                Group group = new Group();
+                group.setGroupName(groupName);
+                Subject groupSubject = new Subject();
+                groupSubject.setValue(groupName);
+                group.setSubject(groupSubject);
+                subjectInfo.addGroup(group);
+                person.addIsMemberOf(groupSubject);
+            }
+        }
+        subjectInfo.addPerson(person);
+        session.setSubjectInfo(subjectInfo);
+        return session;
     }
 
 }

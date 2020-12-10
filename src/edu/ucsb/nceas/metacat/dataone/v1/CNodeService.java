@@ -32,7 +32,7 @@ import java.util.List;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.cn.v1.CNAuthorization;
 import org.dataone.service.cn.v1.CNCore;
 import org.dataone.service.cn.v1.CNRead;
@@ -93,7 +93,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	private edu.ucsb.nceas.metacat.dataone.CNodeService impl = null;
 
 	/* the logger instance */
-	private Logger logMetacat = null;
+	private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(CNodeService.class);
 
 	/**
 	 * singleton accessor
@@ -106,8 +106,6 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	 * Constructor, private for singleton access
 	 */
 	private CNodeService(HttpServletRequest request) {
-
-		logMetacat = Logger.getLogger(CNodeService.class);
 
 		impl = edu.ucsb.nceas.metacat.dataone.CNodeService.getInstance(request);
 

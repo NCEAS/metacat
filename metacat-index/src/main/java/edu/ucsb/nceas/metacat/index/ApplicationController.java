@@ -142,11 +142,6 @@ public class ApplicationController implements Runnable {
         }
         if(foundProperty) {
             period = Settings.getConfiguration().getLong("index.regenerate.interval");
-            String log4jPropFile =  Settings.getConfiguration().getString("application.deployDir") + "/" +
-                    Settings.getConfiguration().getString("index.context") + "/WEB-INF/classes/log4j.properties";
-            log.info("ApplicationController.initializeSharedConfiguration - the log4j.properties file is "+log4jPropFile);
-            //When the log4j.properties is changed, it will reload the properties without restart tomcat
-            PropertyConfigurator.configureAndWatch(log4jPropFile);
         }
         
         try {

@@ -30,7 +30,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.opengis.feature.simple.SimpleFeature;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
@@ -41,7 +42,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
  */
 public class SpatialHarvester {
  
-  private static Logger log = Logger.getLogger(SpatialHarvester.class.getName());
+  private static Log log = LogFactory.getLog(SpatialHarvester.class.getName());
  
   private DBConnection dbconn;
  

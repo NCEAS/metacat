@@ -50,8 +50,8 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Checksum;
 
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
@@ -80,7 +80,6 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 import edu.ucsb.nceas.metacat.util.ResponseUtil;
 import edu.ucsb.nceas.metacat.util.SessionData;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
-import edu.ucsb.nceas.metacat.workflow.WorkflowSchedulerClient;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -264,6 +263,7 @@ public class MetaCatServlet extends HttpServlet {
     private static boolean _firstHalfInitialized = false;
     private static boolean _fullyInitialized = false;
     private MetacatHandler handler = null;
+    private static Log logMetacat = LogFactory.getLog(MetaCatServlet.class);
     
     // Constants -- these should be final in a servlet
     public static final String SCHEMALOCATIONKEYWORD = ":schemaLocation";
@@ -271,7 +271,6 @@ public class MetaCatServlet extends HttpServlet {
     public static final String EML2KEYWORD = ":eml";
     private static final String FALSE = "false";
     private static final String TRUE  = "true";
-    private static String LOG_CONFIG_NAME = null;
     public static final String APPLICATION_NAME = "metacat";
 	public static final String DEFAULT_ENCODING = "UTF-8";
     
@@ -279,7 +278,7 @@ public class MetaCatServlet extends HttpServlet {
      * Initialize the servlet by creating appropriate database connections
      */
     public void init(ServletConfig config) throws ServletException {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
+    
     	try {
     		if(_firstHalfInitialized) {
     			return;
@@ -295,9 +294,6 @@ public class MetaCatServlet extends HttpServlet {
             
             // Initialize the properties file
             String dirPath = ServiceService.getRealConfigDir();
-            
-            LOG_CONFIG_NAME = dirPath + "/log4j.properties";
-            PropertyConfigurator.configureAndWatch(LOG_CONFIG_NAME);
             
             // Register preliminary services
             ServiceService.registerService("PropertyService", PropertyService.getInstance(context));         
@@ -337,9 +333,6 @@ public class MetaCatServlet extends HttpServlet {
 	 *            the servlet context of MetaCatServlet
 	 */
 	public void initSecondHalf(ServletContext context) throws ServletException {
-		
-		Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
-
 		try {			
 			ServiceService.registerService("DatabaseService", DatabaseService.getInstance());
 			
@@ -428,7 +421,6 @@ public class MetaCatServlet extends HttpServlet {
 			}
 			
 			System.setProperty("replication.logfile.name", replicationLogPath);			
-			PropertyConfigurator.configureAndWatch(LOG_CONFIG_NAME);
 			
 			SessionService.getInstance().unRegisterAllSessions();
 			
@@ -481,8 +473,6 @@ public class MetaCatServlet extends HttpServlet {
 	 * Close all db connections from the pool
 	 */
     public void destroy() {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
-    	
     	ServiceService.stopAllServices();
     	
         // Close all db connection
@@ -512,7 +502,6 @@ public class MetaCatServlet extends HttpServlet {
 	 * Index the paths specified in the metacat.properties
 	 */
     private void checkIndexPaths() {
-    	Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
     	logMetacat.debug("MetaCatServlet.checkIndexPaths - starting....");
     	boolean needCheck = false;
     	try {
@@ -664,8 +653,6 @@ public class MetaCatServlet extends HttpServlet {
 	@SuppressWarnings("unchecked")
 	private void handleGetOrPost(HttpServletRequest request,
 			HttpServletResponse response) throws ServletException, IOException {
-		Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
-
 		String requestEncoding = request.getCharacterEncoding();
 		if (requestEncoding == null) {
 			logMetacat.debug("null requestEncoding, setting to application default: " + DEFAULT_ENCODING);
@@ -1146,68 +1133,6 @@ public class MetaCatServlet extends HttpServlet {
 				// to the MetacatAdminServlet
 				ServiceService.refreshService("XMLSchemaService");
 				return;
-			} else if (action.equals("scheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().scheduleJob(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.SCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("unscheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().unScheduleJob(request,
-							response, params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.UNSCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("rescheduleWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().reScheduleJob(request,
-							response, params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.RESCHEDULE_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("getScheduledWorkflow")) {
-				try {
-					WorkflowSchedulerClient.getInstance().getJobs(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.GET_SCHEDULED_WORKFLOW_ERROR, be);
-					return;
-				}
-			} else if (action.equals("deleteScheduledWorkflow")) {
-			    if(isReadOnly(response)) {
-                    return;
-                }
-				try {
-					WorkflowSchedulerClient.getInstance().deleteJob(request, response,
-							params, userName, groupNames);
-					return;
-				} catch (BaseException be) {
-					ResponseUtil.sendErrorXML(response,
-							ResponseUtil.DELETE_SCHEDULED_WORKFLOW_ERROR, be);
-					return;
-				}
 			} else if (action.equals("shrink")) {
 			     // handle shrink DBConnection request
                 PrintWriter out = response.getWriter();
@@ -1303,7 +1228,6 @@ public class MetaCatServlet extends HttpServlet {
 		}
 		
 		public static void initializeSitemapTask(MetacatHandler handler) {
-			Logger logMetacat = Logger.getLogger(MetaCatServlet.class);
 			Boolean sitemap_enabled = false;
 
 			try {

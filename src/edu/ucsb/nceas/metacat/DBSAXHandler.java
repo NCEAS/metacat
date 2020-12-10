@@ -47,7 +47,8 @@ import edu.ucsb.nceas.utilities.triple.TripleCollection;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.StringUtil;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -148,7 +149,7 @@ public class DBSAXHandler extends DefaultHandler implements LexicalHandler,
 
     public static final String ECOGRID = "ecogrid://";
 
-    private Logger logMetacat = Logger.getLogger(DBSAXHandler.class);
+    private Log logMetacat = LogFactory.getLog(DBSAXHandler.class);
 
     /**
      * Construct an instance of the handler class

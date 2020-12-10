@@ -30,7 +30,11 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+
+import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 
 /**
  * Metacat implemantation of Earthgrid (Ecogrid) REST API as a servlet. In each request
@@ -40,7 +44,7 @@ import org.apache.log4j.Logger;
  */
 public class D1RestServlet extends HttpServlet {
 
-    protected Logger logMetacat;
+    protected Log logMetacat = LogFactory.getLog(this.getClass());;
     protected D1ResourceHandler handler;
 
     /**
@@ -62,7 +66,13 @@ public class D1RestServlet extends HttpServlet {
      */
     @Override
     public void init(ServletConfig config) throws ServletException {
-        logMetacat = Logger.getLogger(this.getClass());
+        try {
+            QuotaServiceManager.getInstance().startDailyCheck();//four children servlet classes (cn/mn v2, v1) will call this method
+        } catch (Exception e) {
+            String error = "D1RestServlet.init - can't start the timer task to checking un-reported usages in the quota service: " + e.getMessage();
+            logMetacat.error(error);
+            throw new ServletException(error);
+        }
         super.init(config);
     }
 

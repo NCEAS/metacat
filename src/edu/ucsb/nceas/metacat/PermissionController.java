@@ -35,7 +35,8 @@ import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
@@ -72,7 +73,7 @@ public class PermissionController
    private static final long TOPLEVELSTARTNODEID = 0; //if start node is 0, means it is top
                                          //level document
 
-   private static Logger logMetacat = Logger.getLogger(PermissionController.class);
+   private static Log logMetacat = LogFactory.getLog(PermissionController.class);
 
    /**
 	 * Constructor for PermissionController

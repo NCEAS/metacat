@@ -41,7 +41,8 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.CNode;
 import org.dataone.client.v2.MNode;
 import org.dataone.client.v2.itk.D1Client;
@@ -109,7 +110,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     CNCore, CNRead, CNReplication, CNView {
 
   /* the logger instance */
-  private Logger logMetacat = null;
+  private Log logMetacat = LogFactory.getLog(CNodeService.class);
   public final static String V2V1MISSMATCH = "The Coordinating Node is not authorized to make systemMetadata changes on this object. Please make changes directly on the authoritative Member Node.";
 
   /**
@@ -124,8 +125,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    */
   private CNodeService(HttpServletRequest request) {
     super(request);
-    logMetacat = Logger.getLogger(CNodeService.class);
-        
   }
     
   /**

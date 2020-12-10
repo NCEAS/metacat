@@ -67,7 +67,8 @@ import edu.ucsb.nceas.utilities.GeneralPropertyException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * Control the display of the database configuration page and the processing
@@ -87,7 +88,7 @@ public class DBAdmin extends MetacatAdmin {
 	private TreeSet<DBVersion> versionSet = null;
 
 	private static DBAdmin dbAdmin = null;
-	private Logger logMetacat = Logger.getLogger(DBAdmin.class);
+	private Log logMetacat = LogFactory.getLog(DBAdmin.class);
 	private HashSet<String> sqlCommandSet = new HashSet<String>();
 	private Map<String, String> scriptSuffixMap = new HashMap<String, String>();
 	private static DBVersion databaseVersion = null;

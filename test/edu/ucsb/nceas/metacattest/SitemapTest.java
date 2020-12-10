@@ -27,10 +27,14 @@ package edu.ucsb.nceas.metacattest;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Vector;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.Sitemap;
 import edu.ucsb.nceas.metacat.client.MetacatAuthException;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
@@ -117,7 +121,10 @@ public class SitemapTest extends MCTestCase {
 
 			String locationBase = "http://foo.example.com/ctx/metacat";
 			String entryBase = "http://foo.example.com/ctx/metacat";
-			Sitemap smap = new Sitemap(directory, locationBase, entryBase);
+			 List<String> portalFormats = new ArrayList();
+			portalFormats.addAll(Arrays.asList(PropertyService.getProperty("sitemap.entry.portal.formats").split(";")));
+			String portalBase = PropertyService.getProperty("sitemap.entry.portal.base");
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase, portalBase, portalFormats);
 			smap.generateSitemaps();
 
 			File sitemap1 = new File(directory, "sitemap1.xml");
@@ -159,4 +166,19 @@ public class SitemapTest extends MCTestCase {
 			fail("General exception:\n" + e.getMessage());
 		}
     }
+
+		/**
+		 * Basic smoke test. This should always return a non-zero-length string
+		 * unless something is either very wrong with DataONE or we totally change
+		 * how we do formats so a broken test is useful.
+		 */
+		public void testGetMetadataFormatsQueryString() {
+			File directory = sitemapTempDir.toFile();
+			String locationBase = "http://foo.example.com/ctx/metacat";
+			String entryBase = "http://foo.example.com/ctx/metacat";
+
+			Sitemap smap = new Sitemap(directory, locationBase, entryBase, null, null);
+
+			assertTrue(smap.getMetadataFormatsQueryString().length() > 0);
+		}
 }

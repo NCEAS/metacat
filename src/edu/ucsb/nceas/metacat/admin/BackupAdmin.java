@@ -31,7 +31,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
@@ -49,7 +50,7 @@ import edu.ucsb.nceas.utilities.UtilException;
 public class BackupAdmin extends MetacatAdmin {
 
 	private static BackupAdmin Admin = null;
-	private static Logger logMetacat = Logger.getLogger(BackupAdmin.class);
+	private static Log logMetacat = LogFactory.getLog(BackupAdmin.class);
 	
 	// <base_dir>/metacat/.metacat/metacat.properties.backup exists
 	public static final String HIDDEN_EXISTS_POPULATED = "hiddenExistsPopulated";

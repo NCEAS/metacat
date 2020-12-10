@@ -2,7 +2,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.sql.PreparedStatement;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -23,7 +24,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
  */
 public class EML201DocumentCorrector  
 {
-	private Logger logMetacat = Logger.getLogger(EML201DocumentCorrector.class);
+	private Log logMetacat = LogFactory.getLog(EML201DocumentCorrector.class);
 	
 	/**
 	 * Default constructor

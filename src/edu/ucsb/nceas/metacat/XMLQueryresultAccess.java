@@ -31,7 +31,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -41,7 +42,7 @@ import edu.ucsb.nceas.utilities.BaseDAO;
 
 public class XMLQueryresultAccess extends BaseAccess {
 	
-	private Logger logMetacat = Logger.getLogger(XMLQueryresultAccess.class);
+	private Log logMetacat = LogFactory.getLog(XMLQueryresultAccess.class);
 	
 	// Constructor
 	public XMLQueryresultAccess() throws AccessException {}

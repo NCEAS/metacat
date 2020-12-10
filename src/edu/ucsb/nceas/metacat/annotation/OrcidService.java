@@ -13,7 +13,8 @@ import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -23,7 +24,7 @@ import edu.ucsb.nceas.utilities.XMLUtilities;
 
 public class OrcidService {
 	
-	private static Logger logMetacat = Logger.getLogger(OrcidService.class);
+	private static Log logMetacat = LogFactory.getLog(OrcidService.class);
 	
     //private static final String REST_URL = "http://pub.sandbox.orcid.org/v1.1/search/orcid-bio";
     private static final String REST_URL = "https://pub.orcid.org/v2.0/search";

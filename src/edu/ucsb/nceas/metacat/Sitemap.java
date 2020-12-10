@@ -33,10 +33,12 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimerTask;
+import java.util.List;
 
 import java.net.URLEncoder;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.DocumentBuilder;
@@ -52,6 +54,9 @@ import org.apache.commons.lang.StringEscapeUtils;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.service.types.v2.ObjectFormatList;
+import org.dataone.service.types.v2.ObjectFormat;
 
 /**
  * A Sitemap represents a document that lists all of the content of the Metacat
@@ -84,7 +89,7 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
  * @author Bryce Mecum
  */
 public class Sitemap extends TimerTask {
-    private static Logger logMetacat = Logger.getLogger(Sitemap.class);
+    private static Log logMetacat = LogFactory.getLog(Sitemap.class);
 
     /** Create just a single document builder factory and builder to be
      * re-used through this class.
@@ -98,8 +103,14 @@ public class Sitemap extends TimerTask {
     /** The root url for constructing sitemap location URLs. */
     private String locationBase;
 
-    /** The root url for constructing sitemap entry URLs. */
+    /** The root url for constructing sitemap entry URLs for any metadata records. */
     private String entryBase;
+
+    /** The root url for constructing sitemap entry URLs for portals. */
+    private String portalBase;
+
+    /** Set of format IDs to determine whether a record is a portal or not. */
+    private List<String> portalFormats;
 
     /** Maximum number of URLs to write to a single sitemap file */
     static final int MAX_URLS_IN_FILE = 50000; // 50,000 according to Google
@@ -117,16 +128,20 @@ public class Sitemap extends TimerTask {
     /**
      * Construct a new instance of the Sitemap class.
      *
-     * @param directory    The location to store sitemap files
-     * @param locationBase The base URL for constructing sitemap location URLs
-     * @param entryBase    The base URL for constructing sitemap entry URLs
+     * @param directory      The location to store sitemap files
+     * @param locationBase   The base URL for constructing sitemap location URLs
+     * @param entryBase      The base URL for constructing sitemap entry URLs any metadata records
+     * @param portalBase     The base URL for constructing sitemap entry URLs for portals
+     * @param portalFormats  Set of format IDs to determine whether a record is a portal or not
      */
-    public Sitemap(File directory, String locationBase, String entryBase) {
+    public Sitemap(File directory, String locationBase, String entryBase, String portalBase, List<String> portalFormats) {
         super();
 
         this.directory = directory;
         this.locationBase = locationBase;
         this.entryBase = entryBase;
+        this.portalBase = portalBase;
+        this.portalFormats = portalFormats;
 
         this.documentBuilderFactory = DocumentBuilderFactory.newInstance();
         try {
@@ -188,40 +203,36 @@ public class Sitemap extends TimerTask {
         /**
          * Query the database for documents that are considered to be metadata
          * and iterate through them, generating sitemap index and sitemap files
-         * as we go
-         */
-
-        StringBuffer query = new StringBuffer();
-
-        /** Query for documents that are:
+         * as we go.
+         *
+         * Depends on ObjectFormatCache fetching a list of available format IDs.
+         *
+         * We query for documents that are:
+         *
          * - Metadata (their object_format is in the xml_catalog)
          * - Latest/head versions (their obsoleted_by field is NULL)
          * - Publicly readable (their access policy has a public + read perm)
          */
 
-        // We use a subquery to filter documents based upon whether they use
-        // a format ID in the xml_catalog table
-        String metadata_formats =
-                "SELECT public_id from xml_catalog " +
-                        "WHERE public_id is not NULL";
-
-        String entries =
+        String query =
             "SELECT " +
                 "identifier.guid as pid, " +
-                "systemmetadata.date_modified as lastmod " +
+                "systemmetadata.series_id as sid, " +
+                "systemmetadata.date_modified as lastmod, " +
+                "systemmetadata.object_format as format " +
             "FROM identifier " +
             "LEFT JOIN systemmetadata on " +
                     "identifier.guid = systemmetadata.guid " +
             "LEFT JOIN xml_access on identifier.guid = xml_access.guid " +
             "WHERE " +
-            "systemmetadata.object_format in (" + metadata_formats + ") AND " +
+            "systemmetadata.object_format in (" +
+                getMetadataFormatsQueryString() +
+            ") AND " +
             "systemmetadata.obsoleted_by is NULL AND " +
             "systemmetadata.archived = FALSE AND " +
             "xml_access.principal_name = 'public' AND " +
             "xml_access.perm_type = 'allow' " +
             "ORDER BY systemmetadata.date_uploaded ASC;";
-
-        query.append(entries);
 
         DBConnection dbConn = null;
         int serialNumber = -1;
@@ -233,7 +244,7 @@ public class Sitemap extends TimerTask {
             serialNumber = dbConn.getCheckOutSerialNumber();
 
             // Execute the query statement
-            PreparedStatement stmt = dbConn.prepareStatement(query.toString());
+            PreparedStatement stmt = dbConn.prepareStatement(query);
             stmt.execute();
             ResultSet rs = stmt.getResultSet();
 
@@ -276,8 +287,8 @@ public class Sitemap extends TimerTask {
                     document.appendChild(rootNode);
                 }
 
-                Element urlElement = createSitemapEntry(document,
-                        rs.getString(1), rs.getString(2));
+                Element urlElement = createSitemapEntry(document, rs.getString(1), rs.getString(2), rs.getString(3),
+                        rs.getString(4));
                 rootNode.appendChild(urlElement);
                 counter++;
             }
@@ -336,10 +347,15 @@ public class Sitemap extends TimerTask {
      *                 element
      * @param pid      The identifier to be turned into a URL and written in the
      *                 sitemap file
+     * @param sid      The serids id to be turned into a URL and written in the
+     *                 sitemap file. Used for portals.
+     * @param lastmod  The datetime at which the objec associated with `pid` was
+     *                 last modified
+     * @param format   The format of the object associated with `pid`
+     *
      * @return The newly-created `url` element
      */
-    private Element createSitemapEntry(Document document, String pid,
-                                       String lastmod)
+    private Element createSitemapEntry(Document document, String pid, String sid, String lastmod, String format)
     {
         Element urlElement = document.createElement("url");
 
@@ -350,14 +366,31 @@ public class Sitemap extends TimerTask {
         try {
             // Dynamically generate the url text from the PID
             StringBuffer url = new StringBuffer();
-            url.append(entryBase);
 
-            if (!entryBase.endsWith("/")) {
-                url.append("/");
+            // url
+            // Does different stuff depending on whether this is a portal or not
+            if (portalFormats.contains(format)) {
+                url.append(portalBase);
+
+                if (!portalBase.endsWith("/")) {
+                    url.append("/");
+                }
+
+                // Use a SID only if we have one (we should), otherwise use the pid
+                if (sid != null) {
+                    url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(sid, "UTF-8")));
+                } else {
+                    url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(pid, "UTF-8")));
+                }
+            } else {
+                url.append(entryBase);
+
+                if (!entryBase.endsWith("/")) {
+                    url.append("/");
+                }
+
+                url.append(StringEscapeUtils.escapeXml(URLEncoder.encode(pid, "UTF-8")));
             }
-
-            url.append(StringEscapeUtils.escapeXml(
-                    URLEncoder.encode(pid, "UTF-8")));
 
             // loc
             Element locElement = document.createElement("loc");
@@ -499,5 +532,35 @@ public class Sitemap extends TimerTask {
         }
 
         return lastmodDate;
+    }
+
+    /**
+     * Generate a comma-separated list of metadata format IDs so
+     * generateSitemaps can filter the available objects to just metadata
+     * objects.
+     *
+     * @return (string) List of metadata format ids as a comma-separated string
+     * suitable for including in an SQL query. Each value is wrapped in single
+     * quotes.
+     */
+    public String getMetadataFormatsQueryString() {
+        ObjectFormatList objectFormatList = ObjectFormatCache.getInstance().listFormats();
+        StringBuilder sb = new StringBuilder();
+
+        for (org.dataone.service.types.v2.ObjectFormat fmt : objectFormatList.getObjectFormatList()) {
+            if (!fmt.getFormatType().equals("METADATA")) {
+                continue;
+            }
+
+            sb.append("'");
+            sb.append(fmt.getFormatId().getValue());
+            sb.append("'");
+            sb.append(",");
+        }
+
+        // Remove final comma so we get valid SQL "in ( ... )"
+        sb.deleteCharAt(sb.lastIndexOf(","));
+
+        return sb.toString();
     }
 }

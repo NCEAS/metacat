@@ -34,6 +34,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
@@ -198,6 +199,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testInvalidIds"));
     suite.addTest(new MNodeServiceTest("testPublishPackage"));
     suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
+    suite.addTest(new MNodeServiceTest("testAllowList"));
     return suite;
     
   }
@@ -3492,5 +3494,44 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         
        
       
+    }
+    
+    /**
+     * Test if the allow submitter list works.
+     * @throws Exception
+     */
+    public void testAllowList() throws Exception {
+        printTestHeader("testAllowList");
+        //Get original value of allow list
+        String originalAllowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
+        String group = "CN=knb-data-admins,DC=dataone,DC=org";
+        PropertyService.setPropertyNoPersist("auth.allowedSubmitters", group);
+        String newAllowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
+        AuthUtil.populateAllowedSubmitters();
+        //Using test session should fail
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testAllowList." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("testAllowList - the test session shouldn't be allowed to create an object");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("does not have permission to WRITE to the Node"));
+        }
+        
+        //use a session with the subject of the MN to create an object
+        String mnSubject = PropertyService.getProperty("dataone.subject");
+        Subject subject = new Subject();
+        subject.setValue(mnSubject);
+        session.setSubject(subject);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue(pid.getValue().equals(guid.getValue()));
+        
+        //restore the original setting
+        PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originalAllowedSubmitterString);
+        AuthUtil.populateAllowedSubmitters();
     }
 }

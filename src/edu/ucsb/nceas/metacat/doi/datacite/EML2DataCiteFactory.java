@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPathExpressionException;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidToken;
@@ -59,7 +60,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
  *
  */
 public class EML2DataCiteFactory extends DataCiteMetadataFactory {
-    private static Logger logMetacat = Logger.getLogger(EML2DataCiteFactory.class);
+    private static Log logMetacat = LogFactory.getLog(EML2DataCiteFactory.class);
     
     
     /**

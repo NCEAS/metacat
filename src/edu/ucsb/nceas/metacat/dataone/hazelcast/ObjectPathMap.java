@@ -9,7 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Identifier;
 import org.xml.sax.SAXException;
@@ -44,7 +45,7 @@ public class ObjectPathMap implements MapLoader<Identifier, String> {
 	private static IdentifierManager im;
 	private static String dataPath;
 	private static String metadataPath;
-  private Logger logMetacat = Logger.getLogger(ObjectPathMap.class);
+  private Log logMetacat = LogFactory.getLog(ObjectPathMap.class);
 
 	
 	/**

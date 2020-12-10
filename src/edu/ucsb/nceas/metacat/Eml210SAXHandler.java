@@ -42,7 +42,8 @@ import java.util.Hashtable;
 import java.util.Stack;
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 
@@ -167,7 +168,7 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 
 	private static final String RELATION = "Provides info for";
 
-	private Logger logMetacat = Logger.getLogger(Eml210SAXHandler.class);
+	private Log logMetacat = LogFactory.getLog(Eml210SAXHandler.class);
 
 	/**
 	 * Construct an instance of the handler class In this constructor, user can

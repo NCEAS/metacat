@@ -62,7 +62,8 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.xpath.XPathAPI;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
@@ -82,7 +83,7 @@ public abstract class HarvesterVerb {
   
   /* Class variables */
 
-  private static Logger logger = Logger.getLogger(HarvesterVerb.class);
+  private static Log logger = LogFactory.getLog(HarvesterVerb.class);
   
   public static final String SCHEMA_LOCATION_V2_0 = 
     "http://www.openarchives.org/OAI/2.0/ " +

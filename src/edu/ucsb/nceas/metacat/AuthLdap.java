@@ -47,7 +47,8 @@ import javax.naming.ldap.StartTlsRequest;
 import javax.naming.ldap.StartTlsResponse;
 import javax.net.ssl.SSLSession;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.commons.lang.StringEscapeUtils;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -84,7 +85,7 @@ public class AuthLdap implements AuthInterface {
 	private String userPassword;
 	ReferralException refExc;
 
-	private static Logger logMetacat = Logger.getLogger(AuthLdap.class);
+	private static Log logMetacat = LogFactory.getLog(AuthLdap.class);
 
 	/**
 	 * Construct an AuthLdap

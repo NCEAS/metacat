@@ -38,7 +38,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.DirectoryFileFilter;
 import org.apache.commons.io.filefilter.OrFileFilter;
 import org.apache.commons.io.filefilter.WildcardFileFilter;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.database.DBVersion;
@@ -63,7 +64,7 @@ public class PropertiesAdmin extends MetacatAdmin {
     private static String DEFAULTMETACATCONTEXT = "metacat";
     private static String METACATPROPERTYAPPENDIX = "/WEB-INF/metacat.properties";
 	private static PropertiesAdmin propertiesAdmin = null;
-	private static Logger logMetacat = Logger.getLogger(PropertiesAdmin.class);
+	private static Log logMetacat = LogFactory.getLog(PropertiesAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton

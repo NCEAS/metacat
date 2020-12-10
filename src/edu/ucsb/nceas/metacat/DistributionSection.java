@@ -29,7 +29,8 @@ package edu.ucsb.nceas.metacat;
 
 import java.util.Vector;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.accesscontrol.AccessSection;
 
@@ -53,7 +54,7 @@ public class DistributionSection {
 	private int distributionType;
 	private String dataFileName;
 	private AccessSection accessSection = null;
-	private Logger logMetacat = Logger.getLogger(DistributionSection.class);
+	private Log logMetacat = LogFactory.getLog(DistributionSection.class);
 
 
 	public DistributionSection(int id) {

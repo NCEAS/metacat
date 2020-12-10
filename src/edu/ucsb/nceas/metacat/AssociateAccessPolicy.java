@@ -47,7 +47,8 @@ import java.util.Hashtable;
 import java.util.Enumeration;
 import java.io.BufferedWriter;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -72,7 +73,7 @@ public class AssociateAccessPolicy {
   private Vector notFoundDataSetId=null;
   private Vector itsDataSetIdWithouAccessEntry=null;
   private Hashtable docIdMapDataSetId=null; 
-  private Logger logMetacat = Logger.getLogger(AssociateAccessPolicy.class);
+  private Log logMetacat = LogFactory.getLog(AssociateAccessPolicy.class);
   
   /**
    * the main routine used to associate access policy

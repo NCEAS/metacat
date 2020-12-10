@@ -282,12 +282,14 @@ public class MetacatSolrIndex {
     }
     
     public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
-    	IndexTask task = new IndexTask();
-    	task.setSystemMetadata(systemMetadata);
-    	task.setFields(fields);
-    	if(pid != null) {
-    	    log.debug("MetacatSolrIndex.submit - will put the pid "+pid.getValue()+" into the index queue on hazelcast service.");
-    	}
+        	IndexTask task = new IndexTask();
+        	task.setSystemMetadata(systemMetadata);
+        	task.setFields(fields);
+        	long start = System.currentTimeMillis();
+        	task.setTimeAddToQueque(start);
+        	if(pid != null) {
+        	    log.debug("MetacatSolrIndex.submit - will put the pid " + pid.getValue() + " into the index queue on hazelcast service.");
+        	}
     	
 		HazelcastService.getInstance().getIndexQueue().put(pid, task);
 		

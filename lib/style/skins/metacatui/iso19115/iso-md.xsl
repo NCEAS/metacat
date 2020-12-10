@@ -280,6 +280,7 @@
                         </td>
                         <td>
                             <xsl:element name="button">
+                                <xsl:attribute name="type">button</xsl:attribute>
                                 <xsl:attribute name="class">btn btn-small copy</xsl:attribute>
                                 <xsl:attribute name="data-clipboard-text">
                                     <xsl:value-of select="$url" />

@@ -31,7 +31,8 @@ import java.util.Vector;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
@@ -43,7 +44,7 @@ import edu.ucsb.nceas.metacat.util.RequestUtil;
 public class LoginAdmin extends MetacatAdmin {
 
 	private static LoginAdmin Admin = null;
-	private static Logger logMetacat = Logger.getLogger(LoginAdmin.class);
+	private static Log logMetacat = LogFactory.getLog(LoginAdmin.class);
 
 	/**
 	 * private constructor since this is a singleton
