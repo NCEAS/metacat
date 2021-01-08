@@ -2566,8 +2566,7 @@ public abstract class D1NodeService {
                           for (Permission permission : permissions) {
                               if (permission != null && !permission.toString().trim().equals("")) {
                                   List<Permission> expandedPermissions = expandPermissions(permission);
-                                  logMetacat.debug("D1NodeService.consolidateAccessRules - the expanded permission is " + 
-                                              expandedPermissions + " and the size of expanded permission is " + expandedPermissions.size() + " for the permission " + permission);
+                                  logMetacat.debug("D1NodeService.consolidateAccessRules - the expanded permission is " + expandedPermissions + " for the permission " + permission);
                                   if (!consolidatedMap.containsKey(subject.getValue())) {
                                       consolidatedMap.put(subject.getValue(), expandedPermissions);
                                       logMetacat.debug("D1NodeService.consolidateAccessRules - put the subject " + subject.getValue() + " and the permissions " + expandedPermissions + " into the map");
@@ -2576,7 +2575,7 @@ public abstract class D1NodeService {
                                       for (Permission expandedPermission : expandedPermissions) {
                                           if (!existedPermissions.contains(expandedPermission)) {
                                               existedPermissions.add(expandedPermission);
-                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject.getValue() + "into the map ") ;
+                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject.getValue() + " into the map ") ;
                                           }
                                       }
                                   }
