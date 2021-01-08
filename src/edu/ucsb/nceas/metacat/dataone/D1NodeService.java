@@ -2501,7 +2501,7 @@ public abstract class D1NodeService {
           }
       } else {
           List<AccessRule> list1 = ap1.getAllowList();
-          List<AccessRule> list2 = ap1.getAllowList();
+          List<AccessRule> list2 = ap2.getAllowList();
           if (list1 == null && list2 == null) {
               equal = true;
           } else if (list1 == null && list2 != null) {
@@ -2550,7 +2550,7 @@ public abstract class D1NodeService {
   
   /**
    * Consolidate a list of AccessRule objects to a map object, which key is the subject value and value is
-   * a list of permissions. There are no duplicate values in the permission list which is the value.
+   * a list of permissions. There are no duplicate values in the permission list.
    * @param rules  the AccessRule list will be consolidated
    * @return  the map of subjects and permissions
    */
@@ -2566,15 +2566,17 @@ public abstract class D1NodeService {
                           for (Permission permission : permissions) {
                               if (permission != null && !permission.toString().trim().equals("")) {
                                   List<Permission> expandedPermissions = expandPermissions(permission);
+                                  logMetacat.debug("D1NodeService.consolidateAccessRules - the expanded permission is " + 
+                                              expandedPermissions + " and the size of expanded permission is " + expandedPermissions.size() + " for the permission " + permission);
                                   if (!consolidatedMap.containsKey(subject.getValue())) {
                                       consolidatedMap.put(subject.getValue(), expandedPermissions);
-                                      logMetacat.debug("D1NodeService.consolidateAccessRules - put the subject " + subject + " and the permissions " + expandedPermissions + " into the map");
+                                      logMetacat.debug("D1NodeService.consolidateAccessRules - put the subject " + subject.getValue() + " and the permissions " + expandedPermissions + " into the map");
                                   } else {
                                       List<Permission> existedPermissions = consolidatedMap.get(subject.getValue());
                                       for (Permission expandedPermission : expandedPermissions) {
                                           if (!existedPermissions.contains(expandedPermission)) {
                                               existedPermissions.add(expandedPermission);
-                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject + "into the map ") ;
+                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject.getValue() + "into the map ") ;
                                           }
                                       }
                                   }

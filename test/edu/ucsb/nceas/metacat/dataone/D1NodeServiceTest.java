@@ -61,6 +61,7 @@ import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.types.v1.util.AccessUtil;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.util.ObjectFormatServiceImpl;
 import org.dataone.service.util.Constants;
@@ -98,6 +99,7 @@ public class D1NodeServiceTest extends MCTestCase {
         suite.addTest(new D1NodeServiceTest("testExpandRighsHolder"));
         suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
         suite.addTest(new D1NodeServiceTest("testAddParaFromSkinProperties"));
+        suite.addTest(new D1NodeServiceTest("testAccessPolicyEqual"));
         
         return suite;
     }
@@ -497,6 +499,40 @@ public class D1NodeServiceTest extends MCTestCase {
 	    System.out.println("*************** " + testName + " ***************");
 	}
 	
-	
+	/**
+	 * Test the method if two AccessPolicy objects equal
+	 * @throws Exception
+	 */
+	public void testAccessPolicyEqual() throws Exception {
+	    printTestHeader("testAccessPolicyEqual");
+	    //some edge cases
+	    AccessPolicy ap1 = null;
+	    AccessPolicy ap2 = null;
+	    assertTrue(D1NodeService.equals(ap1, ap2));
+	    assertTrue(D1NodeService.equals(ap2, ap1));
+	    ap2 = new AccessPolicy();
+	    assertTrue(D1NodeService.equals(ap1, ap2));
+	    assertTrue(D1NodeService.equals(ap2, ap1));
+	    Vector<AccessRule> rules20 = new Vector<AccessRule>();
+	    ap2.setAllowList(rules20);
+	    assertTrue(D1NodeService.equals(ap1, ap2));
+        assertTrue(D1NodeService.equals(ap2, ap1));
+        //same subject, but different permission
+        String[] subjects11 = {"test"};
+        Permission[] permissions11 = {Permission.READ};
+        ap1 = AccessUtil.createSingleRuleAccessPolicy(subjects11, permissions11);
+        Permission[] permissions21 = {Permission.WRITE};
+        ap2 = AccessUtil.createSingleRuleAccessPolicy(subjects11, permissions21);
+        assertTrue(!D1NodeService.equals(ap1, ap2));
+        assertTrue(!D1NodeService.equals(ap2, ap1));
+        assertTrue(ap1.getAllowList().size() == 1);
+        assertTrue(ap1.getAllow(0).getSubject(0).getValue().equals("test"));
+        assertTrue(ap1.getAllow(0).getPermission(0).equals(Permission.READ));
+        assertTrue(ap2.getAllowList().size() == 1);
+        assertTrue(ap2.getAllow(0).getSubject(0).getValue().equals("test"));
+        assertTrue(ap2.getAllow(0).getPermission(0).equals(Permission.WRITE));
+        
+        
+	}
     
 }
