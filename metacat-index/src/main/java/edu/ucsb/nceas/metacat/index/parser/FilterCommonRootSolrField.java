@@ -1,6 +1,9 @@
 package edu.ucsb.nceas.metacat.index.parser;
 
+import edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor;
 import edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.parser.utility.LogicalOrPostProcessor;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;

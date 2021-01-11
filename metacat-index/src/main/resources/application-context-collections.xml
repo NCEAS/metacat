@@ -12,6 +12,7 @@
 		<property name="matchDocuments">
 	   		<list>
 				<value>https://purl.dataone.org/collections-1.0.0</value>
+				<value>https://purl.dataone.org/collections-1.1.0</value>
 			</list>
 	   	</property>
 	  	<property name="fieldList">
@@ -57,9 +58,10 @@
            (id:urn\:uuid\:53154666-03db-4252-ae01-993a02df6099)
 
     -->
+
 	<bean id="collection.filterFields" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement"
 		  p:name="collectionQuery"
-		  p:xPath="//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
+		  p:xPath=".//definition/booleanFilter | .//definition/dateFilter | .//definition/filter | .//definition/numericFilter | .//definition/filterGroup | booleanFilter | dateFilter | filter | numericFilter | filterGroup"
 		  p:prefixMatch="isPartOf,seriesId"
 		  p:fixedTerm="(-obsoletedBy:* AND formatType:METADATA)"
 	      p:postfixMatch="id">
@@ -70,6 +72,9 @@
 				<ref bean="collection.numericFilter"/>
 				<ref bean="collection.textFilter"/>
 			</list>
+		</property>
+		<property name="filterGroup">
+			<ref bean="collection.filterGroup"/>
 		</property>
 	</bean>
 
@@ -115,6 +120,7 @@
 				<ref bean="collection.filterMinLeaf"/>
 				<ref bean="collection.filterMaxLeaf"/>
 				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterFieldsOperatorLeaf"/>
 				<ref bean="collection.filterValueLeaf"/>
 				<ref bean="collection.filterExclude"/>
 			</list>
@@ -131,6 +137,7 @@
 			<list>
 				<ref bean="collection.filterFieldLeaf"/>
 				<ref bean="collection.filterOperatorLeaf"/>
+				<ref bean="collection.filterFieldsOperatorLeaf"/>
 				<ref bean="collection.filterValueLeaf"/>
 				<ref bean="collection.filterExclude"/>
 				<ref bean="collection.filterMatchSubstring"/>
@@ -138,8 +145,13 @@
 		</property>
 	</bean>
 
+	<bean id="collection.filterGroup" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterGroupProcessor"
+		  p:name="filterGroup"
+		  p:matchElement="filterGroup">
+	</bean>
+
 	<!-- Currently 'field' is the only element in the collection.xsd that is allowed repeat,
-         so only need a delimeter for this, to dermine if multiple values have been specified. -->
+         so only need a delimeter for this, to determine if multiple values have been specified. -->
 	<bean id="collection.filterFieldLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
 		  p:name="field"
 		  p:delimiter="--"
@@ -165,6 +177,10 @@
 	<bean id="collection.filterOperatorLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
 		  p:name="operator"
 		  p:xPath="operator/text()" />
+
+	<bean id="collection.filterFieldsOperatorLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
+		  p:name="fieldsOperator"
+		  p:xPath="fieldsOperator/text()" />
 
 	<bean id="collection.filterExclude" class="org.dataone.cn.indexer.parser.utility.LeafElement"
 		  p:name="exclude"
