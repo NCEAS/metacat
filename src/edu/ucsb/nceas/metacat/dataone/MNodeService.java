@@ -483,6 +483,17 @@ public class MNodeService extends D1NodeService
             D1AuthHelper authDel = new D1AuthHelper(request,pid,"1200","1310");
             authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
             allowed = true;
+            //only the users who have the the change_permission can change access rules
+            try {
+                authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
+            } catch(ServiceFailure e) {
+                throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id " + pid.getValue() + " since "+e.getDescription());
+            } catch(NotAuthorized e) {
+                //now the user doesn't have the change the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
+                if (!D1NodeService.equals(sysmeta.getAccessPolicy(), existingSysMeta.getAccessPolicy())) {
+                    throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
+                }
+            }
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         } catch(NotAuthorized e) {

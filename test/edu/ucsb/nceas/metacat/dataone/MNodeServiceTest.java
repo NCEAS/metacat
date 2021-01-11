@@ -746,6 +746,57 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      } catch (InvalidRequest ee) {
          //assertTrue(ee.getMessage().contains(newPid.getValue()));
      }
+     
+     //test update an object with new access rules
+     Subject write = new Subject();
+     write.setValue("Write");
+     Session writeSession = new Session();
+     writeSession.setSubject(write);
+     Subject change = new Subject();
+     change.setValue("Change");
+     Session changeSession = new Session();
+     changeSession.setSubject(change);
+     
+     Identifier guid20 = new Identifier();
+     guid20.setValue("testUpdatewithAccessChange." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     sysmeta = createSystemMetadata(guid20, session.getSubject(), object);
+     AccessRule writeRule = new AccessRule();
+     writeRule.addSubject(write);
+     writeRule.addPermission(Permission.WRITE);
+     sysmeta.getAccessPolicy().addAllow(writeRule);
+     AccessRule changeRule = new AccessRule();
+     changeRule.addSubject(change);
+     changeRule.addPermission(Permission.CHANGE_PERMISSION);
+     sysmeta.getAccessPolicy().addAllow(changeRule);
+     MNodeService.getInstance(request).create(session, guid20, object, sysmeta);
+     
+     //the write user fails to update the object since it modified the access rules of the original one
+     Identifier guid21 = new Identifier();
+     guid21.setValue("testUpdatewithAccessChange2." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid21, session.getSubject(), object);
+     try {
+         MNodeService.getInstance(request).update(writeSession, guid20, object, guid21, updatedSysMeta);
+         fail("The write-permission-only user can't change the access rules");
+    } catch (Exception ee) {
+        assertTrue( ee instanceof NotAuthorized);
+    }
+    
+     //the write user can update the object without modifying access rules
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid21, session.getSubject(), object);
+     updatedSysMeta.getAccessPolicy().addAllow(writeRule);
+     updatedSysMeta.getAccessPolicy().addAllow(changeRule);
+     MNodeService.getInstance(request).update(writeSession, guid20, object, guid21, updatedSysMeta);
+     
+     //the change user can update the object even with the modified access rules
+     Identifier guid22 = new Identifier();
+     guid22.setValue("testUpdatewithAccessChange3." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid22, session.getSubject(), object);
+     MNodeService.getInstance(request).update(changeSession, guid21, object, guid22, updatedSysMeta);
+    
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
