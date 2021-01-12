@@ -796,7 +796,34 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
      updatedSysMeta = createSystemMetadata(guid22, session.getSubject(), object);
      MNodeService.getInstance(request).update(changeSession, guid21, object, guid22, updatedSysMeta);
-    
+     
+     //test update an object with modified authoritative member node
+     guid.setValue("testUpdate2." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+     MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+     newPid = new Identifier();
+     newPid.setValue("testUpdate3." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     SystemMetadata newSysmeta321 = createSystemMetadata(newPid, session.getSubject(), object);
+     NodeReference node = new NodeReference();
+     node.setValue("foo");
+     newSysmeta321.setAuthoritativeMemberNode(node);
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     try {
+         MNodeService.getInstance(request).update(session, guid, object, newPid, newSysmeta321);
+         fail("It can't reach here since it tried to update an object with different authoritative member node");
+     } catch (Exception e) {
+         assertTrue(e instanceof InvalidRequest);
+     }
+     //test when the authoritative member node to be null
+     newSysmeta321.setAuthoritativeMemberNode(null);
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     MNodeService.getInstance(request).update(session, guid, object, newPid, newSysmeta321);
+     SystemMetadata retrive1 = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+     NodeReference originMemberNode = MNodeService.getInstance(request).getCapabilities().getIdentifier();
+     assertTrue(retrive1.getAuthoritativeMemberNode().getValue().equals(originMemberNode.getValue()));
+     
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());

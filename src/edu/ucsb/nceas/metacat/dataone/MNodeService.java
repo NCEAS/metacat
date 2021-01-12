@@ -535,6 +535,16 @@ public class MNodeService extends D1NodeService
                 throw new InvalidRequest("1202", 
                         "The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
             }
+            
+            //check the if client change the authoritative member node.
+            if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+                    sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
+                sysmeta.setAuthoritativeMemberNode(originMemberNode);
+            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && !sysmeta.getAuthoritativeMemberNode().getValue().equals(existingSysMeta.getAuthoritativeMemberNode().getValue())){
+                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + existingSysMeta.getAuthoritativeMemberNode().getValue() + " and new authoriativeMemberNode is " + 
+                                        sysmeta.getAuthoritativeMemberNode().getValue() + ". They don't match. Clients don't have the permission to change it.");
+            }
+            
             end =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on checking the quality of the system metadata of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" is "+(end- startTime3)+ " milli seconds.");
 
