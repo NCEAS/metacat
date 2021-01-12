@@ -33,6 +33,7 @@ public class PortalSubprocessorTest {
 
         // Three different portal documents will be processed
         ArrayList<String> portalFiles = new ArrayList<String>();
+        portalFiles.add("src/test/resources/collection/portal-1.1.0-example.xml");
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example-filterGroup.xml");
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example2-filterGroup.xml");
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml");
@@ -46,6 +47,7 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/collection/portal-example-multiple-fields-values.xml");
         // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-portal-1.1.0.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-filterGroup.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example2-filterGroup.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt");
@@ -60,6 +62,7 @@ public class PortalSubprocessorTest {
 
         // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
+        portalNames.add("portal-1.1.0-example");
         portalNames.add("filterGroup-example");
         portalNames.add("filterGroup-example2");
         portalNames.add("filterGroup-operator-example");
@@ -98,7 +101,7 @@ public class PortalSubprocessorTest {
                 String queryStr = myDoc.getField("collectionQuery").getValue();
                 queryStr = queryStr.trim();
 
-                //System.out.println("collectionQuery: " + myDoc.getField("collectionQuery").getValue());
+                System.out.println("collectionQuery: " + myDoc.getField("collectionQuery").getValue());
 
                 // Did the index sub processor correctly extract the 'title' field from the portal document?
                 assertTrue("The portalSubprocessor correctly build the document with the correct value in the title field.", title.equalsIgnoreCase(portalNames.get(i)));
