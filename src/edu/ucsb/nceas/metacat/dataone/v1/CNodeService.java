@@ -93,7 +93,7 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	private edu.ucsb.nceas.metacat.dataone.CNodeService impl = null;
 
 	/* the logger instance */
-	private org.apache.commons.logging.Log logMetacat = null;
+	private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(CNodeService.class);
 
 	/**
 	 * singleton accessor
@@ -106,8 +106,6 @@ public class CNodeService implements CNAuthorization, CNCore, CNRead,
 	 * Constructor, private for singleton access
 	 */
 	private CNodeService(HttpServletRequest request) {
-
-		logMetacat = LogFactory.getLog(CNodeService.class);
 
 		impl = edu.ucsb.nceas.metacat.dataone.CNodeService.getInstance(request);
 

@@ -110,7 +110,7 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
     CNCore, CNRead, CNReplication, CNView {
 
   /* the logger instance */
-  private Log logMetacat = null;
+  private Log logMetacat = LogFactory.getLog(CNodeService.class);
   public final static String V2V1MISSMATCH = "The Coordinating Node is not authorized to make systemMetadata changes on this object. Please make changes directly on the authoritative Member Node.";
 
   /**
@@ -125,8 +125,6 @@ public class CNodeService extends D1NodeService implements CNAuthorization,
    */
   private CNodeService(HttpServletRequest request) {
     super(request);
-    logMetacat = LogFactory.getLog(CNodeService.class);
-        
   }
     
   /**

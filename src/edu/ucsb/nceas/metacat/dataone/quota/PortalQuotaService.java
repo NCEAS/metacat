@@ -70,7 +70,8 @@ public class PortalQuotaService extends QuotaService{
     }
     
     @Override
-    public void enforce(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
+    public void enforce(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) 
+            throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException {
         logMetacat.debug("PortalQuotaService.enforce - checking both portal and storage quota types for the instance " + instanceId);
         //this is to create a portal object. We should check both portal and storage quota
         double portalQuantity = 1;
@@ -91,7 +92,7 @@ public class PortalQuotaService extends QuotaService{
                 logMetacat.debug("PortalQuotaService.enforce - Metacat is not archiving the last object which hasn't been archived in the series chain " + instanceId + ". It needs to do nothing for the portal quota");
             }
          } else if (method != null && method.equals(QuotaServiceManager.DELETEMETHOD)) {
-             if (isLastUnDletedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
+             if (isLastUndeletedInChain(sysmeta.getIdentifier().getValue(), instanceId)) {
                  //take action only we are deleting the last object which hasn't been deleted in the sid chain
                  boolean checkSpace = false;
                  String dummyRequestor = null; //the requestor is the cn or mn subject, we just set it to null to eliminate the requestor filer

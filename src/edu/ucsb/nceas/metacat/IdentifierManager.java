@@ -712,7 +712,7 @@ public class IdentifierManager {
     }
     
     /**
-     * Get all pis in the series chain
+     * Get all pids in the series chain
      * @param sid  the id of the series chain
      * @return  a list of pid in the chain
      * @throws SQLException
@@ -724,7 +724,7 @@ public class IdentifierManager {
         int serialNumber = -1;
         try {
             // Get a database connection from the pool
-            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.etAllPidsInChain");
+            dbConn = DBConnectionPool.getDBConnection("IdentifierManager.getAllPidsInChain");
             serialNumber = dbConn.getCheckOutSerialNumber();
             // Execute the insert statement
             PreparedStatement stmt = dbConn.prepareStatement(sql);
@@ -2636,4 +2636,3 @@ public class IdentifierManager {
         return exists;
     }
 }
-

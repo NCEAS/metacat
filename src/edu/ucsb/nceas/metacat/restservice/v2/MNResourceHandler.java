@@ -585,7 +585,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	                // write the results to the output stream
 	                IOUtils.copyLarge(stream, out);
 	                long end = System.currentTimeMillis();
-	                logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_QUERY_METHOD + query + " Total query method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+	                logMetacat.info(Settings.PERFORMANCELOG + Settings.PERFORMANCELOG_QUERY_METHOD + query + " Total query method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
 	                return;
 	    		} else {
 	    			MNodeService mnode = MNodeService.getInstance(request);
@@ -719,7 +719,7 @@ public class MNResourceHandler extends D1ResourceHandler {
     			    }
     			}
             long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_VIEW_METHOD + " Total view method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_VIEW_METHOD + " Total view method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
             return;
     		} else {
     			// TODO: list the registered views
@@ -1414,7 +1414,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                 }
             }
             long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_METHOD + " Total get method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_METHOD + " Total get method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         }
         else
         { //call listObjects with specified params
@@ -1546,7 +1546,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         // write it to the output stream
         IOUtils.copyLarge(is, out);
         long end = System.currentTimeMillis();
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
    }
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
@@ -1685,7 +1685,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                     throw new InvalidRequest("1000", "Operation must be create or update.");
                 }
                 long end = System.currentTimeMillis();
-                logMetacat.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Total create/update method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+                logMetacat.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Total create/update method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         } catch (Exception e) {
             if(objFile != null) {
                 //objFile.deleteOnExit();
@@ -1721,7 +1721,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         MNodeService.getInstance(request).delete(session, id);
         TypeMarshaller.marshalTypeToOutputStream(id, out);
         long end = System.currentTimeMillis();
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_DELETE_METHOD + " Total delete method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_DELETE_METHOD + " Total delete method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
 
     }
     
@@ -1750,7 +1750,7 @@ public class MNResourceHandler extends D1ResourceHandler {
         
         TypeMarshaller.marshalTypeToOutputStream(id, out);
         long end = System.currentTimeMillis();
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_ARCHIVE_METHOD + " Total archive method" + Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_ARCHIVE_METHOD + " Total archive method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
     }
 
 	protected SynchronizationFailed collectSynchronizationFailed() throws IOException, ServiceFailure, InvalidRequest, MarshallingException, InstantiationException, IllegalAccessException, ParserConfigurationException, SAXException  {

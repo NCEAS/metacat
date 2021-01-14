@@ -288,7 +288,7 @@ public class MetacatSolrIndex {
         	long start = System.currentTimeMillis();
         	task.setTimeAddToQueque(start);
         	if(pid != null) {
-        	    log.debug("MetacatSolrIndex.submit - will put the pid "+pid.getValue()+" into the index queue on hazelcast service.");
+        	    log.debug("MetacatSolrIndex.submit - will put the pid " + pid.getValue() + " into the index queue on hazelcast service.");
         	}
     	
 		HazelcastService.getInstance().getIndexQueue().put(pid, task);

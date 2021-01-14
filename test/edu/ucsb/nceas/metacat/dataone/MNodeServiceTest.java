@@ -34,6 +34,7 @@ import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
 import gov.loc.repository.bagit.Bag;
 import gov.loc.repository.bagit.BagFactory;
@@ -198,6 +199,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testInvalidIds"));
     suite.addTest(new MNodeServiceTest("testPublishPackage"));
     suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
+    suite.addTest(new MNodeServiceTest("testAllowList"));
     return suite;
     
   }
@@ -744,6 +746,84 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      } catch (InvalidRequest ee) {
          //assertTrue(ee.getMessage().contains(newPid.getValue()));
      }
+     
+     //test update an object with new access rules
+     Subject write = new Subject();
+     write.setValue("Write");
+     Session writeSession = new Session();
+     writeSession.setSubject(write);
+     Subject change = new Subject();
+     change.setValue("Change");
+     Session changeSession = new Session();
+     changeSession.setSubject(change);
+     
+     Identifier guid20 = new Identifier();
+     guid20.setValue("testUpdatewithAccessChange." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     sysmeta = createSystemMetadata(guid20, session.getSubject(), object);
+     AccessRule writeRule = new AccessRule();
+     writeRule.addSubject(write);
+     writeRule.addPermission(Permission.WRITE);
+     sysmeta.getAccessPolicy().addAllow(writeRule);
+     AccessRule changeRule = new AccessRule();
+     changeRule.addSubject(change);
+     changeRule.addPermission(Permission.CHANGE_PERMISSION);
+     sysmeta.getAccessPolicy().addAllow(changeRule);
+     MNodeService.getInstance(request).create(session, guid20, object, sysmeta);
+     
+     //the write user fails to update the object since it modified the access rules of the original one
+     Identifier guid21 = new Identifier();
+     guid21.setValue("testUpdatewithAccessChange2." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid21, session.getSubject(), object);
+     try {
+         MNodeService.getInstance(request).update(writeSession, guid20, object, guid21, updatedSysMeta);
+         fail("The write-permission-only user can't change the access rules");
+    } catch (Exception ee) {
+        assertTrue( ee instanceof NotAuthorized);
+    }
+    
+     //the write user can update the object without modifying access rules
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid21, session.getSubject(), object);
+     updatedSysMeta.getAccessPolicy().addAllow(writeRule);
+     updatedSysMeta.getAccessPolicy().addAllow(changeRule);
+     MNodeService.getInstance(request).update(writeSession, guid20, object, guid21, updatedSysMeta);
+     
+     //the change user can update the object even with the modified access rules
+     Identifier guid22 = new Identifier();
+     guid22.setValue("testUpdatewithAccessChange3." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid22, session.getSubject(), object);
+     MNodeService.getInstance(request).update(changeSession, guid21, object, guid22, updatedSysMeta);
+     
+     //test update an object with modified authoritative member node
+     guid.setValue("testUpdate2." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+     MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+     newPid = new Identifier();
+     newPid.setValue("testUpdate3." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     SystemMetadata newSysmeta321 = createSystemMetadata(newPid, session.getSubject(), object);
+     NodeReference node = new NodeReference();
+     node.setValue("foo");
+     newSysmeta321.setAuthoritativeMemberNode(node);
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     try {
+         MNodeService.getInstance(request).update(session, guid, object, newPid, newSysmeta321);
+         fail("It can't reach here since it tried to update an object with different authoritative member node");
+     } catch (Exception e) {
+         assertTrue(e instanceof InvalidRequest);
+     }
+     //test when the authoritative member node to be null
+     newSysmeta321.setAuthoritativeMemberNode(null);
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     MNodeService.getInstance(request).update(session, guid, object, newPid, newSysmeta321);
+     SystemMetadata retrive1 = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+     NodeReference originMemberNode = MNodeService.getInstance(request).getCapabilities().getIdentifier();
+     assertTrue(retrive1.getAuthoritativeMemberNode().getValue().equals(originMemberNode.getValue()));
+     
     } catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       fail("Unexpected error: " + e.getMessage());
@@ -3492,5 +3572,44 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         
        
       
+    }
+    
+    /**
+     * Test if the allow submitter list works.
+     * @throws Exception
+     */
+    public void testAllowList() throws Exception {
+        printTestHeader("testAllowList");
+        //Get original value of allow list
+        String originalAllowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
+        String group = "CN=knb-data-admins,DC=dataone,DC=org";
+        PropertyService.setPropertyNoPersist("auth.allowedSubmitters", group);
+        String newAllowedSubmitterString = PropertyService.getProperty("auth.allowedSubmitters");
+        AuthUtil.populateAllowedSubmitters();
+        //Using test session should fail
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testAllowList." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        try {
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            fail("testAllowList - the test session shouldn't be allowed to create an object");
+        } catch (Exception e) {
+            assertTrue(e.getMessage().contains("does not have permission to WRITE to the Node"));
+        }
+        
+        //use a session with the subject of the MN to create an object
+        String mnSubject = PropertyService.getProperty("dataone.subject");
+        Subject subject = new Subject();
+        subject.setValue(mnSubject);
+        session.setSubject(subject);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertTrue(pid.getValue().equals(guid.getValue()));
+        
+        //restore the original setting
+        PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originalAllowedSubmitterString);
+        AuthUtil.populateAllowedSubmitters();
     }
 }

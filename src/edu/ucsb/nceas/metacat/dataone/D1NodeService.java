@@ -42,9 +42,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
 import java.util.Vector;
@@ -72,6 +74,7 @@ import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
+import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.DescribeResponse;
@@ -1109,7 +1112,12 @@ public abstract class D1NodeService {
     String result = handler.handleInsertOrUpdateAction(ipAddress, userAgent, null, 
                         null, params, username, groupnames, false, false, xmlBytes, formatId, checksum,tempFile);
     long end = System.currentTimeMillis();
-    logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Parse and write the metadata object into database (if the multiparts handler hasn't calculated the checksum, it will write the content to the disk again)" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+    logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
+            pid.getValue() + 
+            edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
+            " Parse and write the metadata object into database (if the multiparts handler hasn't calculated the checksum, it will write the content to the disk again)" + 
+            edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
+            (end-start)/1000);
     boolean isScienceMetadata = true;
     if(result.indexOf("<error>") != -1 || !IdentifierManager.getInstance().objectFileExists(localId, isScienceMetadata)) {
     	String detailCode = "";
@@ -1771,7 +1779,12 @@ public abstract class D1NodeService {
                           FileUtils.moveFile(tempFile, newFile);
                           long end = System.currentTimeMillis();
                           logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
-                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
+                                  pid.getValue() + 
+                                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
+                                  " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + 
+                                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
+                                  (end-start)/1000);
                           return newFile;
                       } else {
                           logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
@@ -1800,7 +1813,11 @@ public abstract class D1NodeService {
               throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
           }
           long end = System.currentTimeMillis();
-          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURASION + (end-start)/1000);
+          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
+                  pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
+                  " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + 
+                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
+                  (end-start)/1000);
           if(tempFile != null) {
               //tempFile.deleteOnExit();
               StreamingMultipartRequestResolver.deleteTempFile(tempFile);
@@ -2462,5 +2479,113 @@ public abstract class D1NodeService {
    */
   public void setUserAgent(String userAgent) {
       this.userAgent = userAgent;
+  }
+  
+  /**
+   * Compare two AccessPolicy objects
+   * @param ap1
+   * @param ap2
+   * @return true if they are same; false otherwise
+   */
+  public static boolean equals(AccessPolicy ap1, AccessPolicy ap2) {
+      boolean equal = false;
+      if (ap1 == null && ap2 == null) {
+          equal = true;
+      } else if (ap1 == null && ap2 != null) {
+          if (ap2.getAllowList() == null || ap2.getAllowList().isEmpty()) {
+              equal = true;
+          }
+      } else if (ap2 == null && ap1 != null) {
+          if (ap1.getAllowList() == null || ap1.getAllowList().isEmpty()) {
+              equal = true;
+          }
+      } else {
+          List<AccessRule> list1 = ap1.getAllowList();
+          List<AccessRule> list2 = ap2.getAllowList();
+          if (list1 == null && list2 == null) {
+              equal = true;
+          } else if (list1 == null && list2 != null) {
+              if (list2.isEmpty()) {
+                  equal = true;
+              }
+          } else if (list2 == null && list1 != null) {
+              if (list1.isEmpty()) {
+                  equal = true;
+              }
+          } else {
+              Map<String, List<Permission>> map1 = consolidateAccessRules(list1);
+              Map<String, List<Permission>> map2 = consolidateAccessRules(list2);
+              if (map1.size() == map2.size()) {
+                  outerLoop:
+                  for (String subject : map1.keySet()) {
+                      if (map2.get(subject) == null) {
+                          logMetacat.debug("D1NodeService.equals - found the subject " + subject + " does exist in the first AccessPolicy but doesnot exist in the second AccessPolicy. So they donot equal.");
+                          break;//find a subject doesn't exist on the the second map. So they don't equal.
+                      } else {
+                          List<Permission> permissions1 = map1.get(subject);
+                          List<Permission> permissions2 = map2.get(subject);
+                          for (Permission permission1 : permissions1) {
+                              if (!permissions2.contains(permission1)) {
+                                  break outerLoop;
+                              } else {
+                                  permissions2.remove(permission1);
+                              }
+                          }
+                          if (!permissions2.isEmpty()) {
+                              break;//some permissions were left, so they don't equal
+                          } else {
+                              map2.remove(subject);//we are done for this subject and delete it from the second map
+                          }
+                      }
+                  }
+                  if (map2.isEmpty()) {
+                      equal = true;
+                      logMetacat.debug("D1NodeService.equals - all access rules are matched. So they equal.");
+                  }
+              }
+          }
+      }
+      return equal;
+  }
+  
+  /**
+   * Consolidate a list of AccessRule objects to a map object, which key is the subject value and value is
+   * a list of permissions. There are no duplicate values in the permission list.
+   * @param rules  the AccessRule list will be consolidated
+   * @return  the map of subjects and permissions
+   */
+  private static Map<String, List<Permission>> consolidateAccessRules(List<AccessRule> rules) {
+      Map<String, List<Permission>> consolidatedMap = new HashMap<String, List<Permission>>();
+      for (AccessRule rule : rules) {
+          if (rule != null) {
+              List<Subject> subjects = rule.getSubjectList();
+              List<Permission> permissions = rule.getPermissionList();
+              if (subjects != null && permissions != null) {
+                  for (Subject subject : subjects) {
+                      if (subject != null && subject.getValue() != null && !subject.getValue().trim().equals("")) {
+                          for (Permission permission : permissions) {
+                              if (permission != null && !permission.toString().trim().equals("")) {
+                                  List<Permission> expandedPermissions = expandPermissions(permission);
+                                  logMetacat.debug("D1NodeService.consolidateAccessRules - the expanded permission is " + expandedPermissions + " for the permission " + permission);
+                                  if (!consolidatedMap.containsKey(subject.getValue())) {
+                                      consolidatedMap.put(subject.getValue(), expandedPermissions);
+                                      logMetacat.debug("D1NodeService.consolidateAccessRules - put the subject " + subject.getValue() + " and the permissions " + expandedPermissions + " into the map");
+                                  } else {
+                                      List<Permission> existedPermissions = consolidatedMap.get(subject.getValue());
+                                      for (Permission expandedPermission : expandedPermissions) {
+                                          if (!existedPermissions.contains(expandedPermission)) {
+                                              existedPermissions.add(expandedPermission);
+                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject.getValue() + " into the map ") ;
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+                      }
+                  }
+              }
+          }
+      }
+      return consolidatedMap;
   }
 }

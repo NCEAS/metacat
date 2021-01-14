@@ -69,7 +69,8 @@ public abstract class QuotaService {
      * @throws InsufficientResources
      * @throws NotImplemented
      */
-    public abstract void enforce(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException ;
+    public abstract void enforce(String quotaSubject, Subject requestor, String instanceId, SystemMetadata sysmeta, String method) 
+                throws ServiceFailure, InvalidRequest, InsufficientResources, NotImplemented, NotFound, UnsupportedEncodingException ;
 
     /**
      * Checking if the given pid is last one in this series chain hasn't been archived
@@ -116,7 +117,7 @@ public abstract class QuotaService {
      * @throws InvalidRequest 
      * @throws ServiceFailure 
      */
-    protected boolean isLastUnDletedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
+    protected boolean isLastUndeletedInChain(String pid, String sid) throws InvalidRequest, ServiceFailure {
         boolean lastOne = false;
         if (sid != null && !sid.trim().equals("") && pid != null && !pid.trim().equals("")) {
             try {
