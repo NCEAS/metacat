@@ -270,6 +270,15 @@
                 <constructor-arg name="namespace" value="https://purl.dataone.org/collections-1.0.0" />
        </bean>
 
+       <bean class="org.dataone.cn.indexer.XMLNamespace">
+           <constructor-arg name="prefix" value="portals110" />
+           <constructor-arg name="namespace" value="https://purl.dataone.org/portals-1.1.0" />
+       </bean>
+       <bean class="org.dataone.cn.indexer.XMLNamespace">
+           <constructor-arg name="prefix" value="collections110" />
+           <constructor-arg name="namespace" value="https://purl.dataone.org/collections-1.1.0" />
+       </bean>
+
    </list>
   </constructor-arg>
  </bean>
