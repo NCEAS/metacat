@@ -38,6 +38,7 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example2-filterGroup.xml");
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml");
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example-fieldsOperator.xml");
+        portalFiles.add("src/test/resources/collection/portal-1.1.0-example-negation-only.xml");
         portalFiles.add("src/test/resources/collection/collection-example.xml");
         portalFiles.add("src/test/resources/collection/portal-example-full.xml");
         portalFiles.add("src/test/resources/collection/portal-example-seriesId.xml");
@@ -52,6 +53,7 @@ public class PortalSubprocessorTest {
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example2-filterGroup.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-fieldsOperator.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-portal-1.1.0-example-negation-only.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-full.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-seriesId.txt");
@@ -67,6 +69,7 @@ public class PortalSubprocessorTest {
         portalNames.add("filterGroup-example2");
         portalNames.add("filterGroup-operator-example");
         portalNames.add("fieldsOperator-example");
+        portalNames.add("portal-1.1.0-negation-only");
         portalNames.add("My saved search");
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
@@ -92,7 +95,7 @@ public class PortalSubprocessorTest {
                 // Read in the query string that the processor should create. This is read in
                 // from disk so that we don't have to bother with special character escaping.
                 File file = new File(collectionQueryResultFiles.get(i));
-                collectionQuery = FileUtils.readFileToString(file);
+                collectionQuery = FileUtils.readFileToString(file).trim();
                 docs = processor.processDocument(id, docs, is);
                 // Extract the processed document we just created
                 SolrDoc myDoc = docs.get("urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708i");
@@ -101,12 +104,13 @@ public class PortalSubprocessorTest {
                 String queryStr = myDoc.getField("collectionQuery").getValue();
                 queryStr = queryStr.trim();
 
-                System.out.println("collectionQuery: " + myDoc.getField("collectionQuery").getValue());
+                System.out.println("correct collectionQuery: " + collectionQuery);
+                System.out.println("actual collectionQuery: " + queryStr);
 
                 // Did the index sub processor correctly extract the 'title' field from the portal document?
                 assertTrue("The portalSubprocessor correctly build the document with the correct value in the title field.", title.equalsIgnoreCase(portalNames.get(i)));
                 // Did the index sub processor correctly extract the 'collectionQuery' field from the portal document?
-                assertTrue("The portalSubprocessor correctly built the document with the correct value in the \"collectionQuery\" field.", queryStr.equalsIgnoreCase(collectionQuery.trim()));
+                assertTrue("The portalSubprocessor correctly built the document with the correct value in the \"collectionQuery\" field.", queryStr.equalsIgnoreCase(collectionQuery));
 
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());

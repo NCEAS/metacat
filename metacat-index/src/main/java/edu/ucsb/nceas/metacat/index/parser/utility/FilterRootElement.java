@@ -110,6 +110,20 @@ public class FilterRootElement {
         log.trace("getRootValues, xpath: " + getxPath());
         completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, prefixMatch, postfixMatch, xPath);
 
+        log.error("completedFilterValue: " + completeFilterValue);
+        // Make sure that the only query term is a negation query, e.g. "-abstract:*fish*". This is a bit of a strange query, and
+        // would return many documents, but this is possible, so handle it.
+        if (completeFilterValue.matches("(^\\(*\\-\\w+:\\w+\\)*$)|(^\\(*\\-\\w+:\\*\\w+\\*\\)*$)")) {
+            completeFilterValue = completeFilterValue.replaceAll("^\\(", "");
+            completeFilterValue = completeFilterValue.replaceAll("\\)$", "");
+            completeFilterValue = "(" + completeFilterValue + " AND *:*" + ")";
+        }
+
+        // This case shouldn't happen (no terms found or specified), but check anyway
+        if(completeFilterValue == null) {
+            completeFilterValue = "(id:*)";
+        }
+
         // Don't include the 'fixed' filter if there are no pre or main filters. The fixed filter
         // is usually something like '(-obsoletedBy:* AND formatType:METADATA)', which will return ALL
         // unobsoleted metadata pids if there is no pre or main filters to constrain it.
@@ -119,11 +133,6 @@ public class FilterRootElement {
             } else {
                 completeFilterValue = "(" + fixedTerm + ")";
             }
-        }
-
-        // This cause shouldn't happen (no terms found or specified), but check anyway
-        if(completeFilterValue == null) {
-            completeFilterValue = "(id:*)";
         }
 
         return completeFilterValue;
