@@ -137,6 +137,9 @@ public class FilterGroupProcessor {
         Boolean exclude = false;
 
         // Find elements '<operator>', '<fieldsOperator>' // and '<exclude>' elements.
+        // Note: LeafElement.getValue(node) doesn't support scanning the entire document, i.e.
+        // the 'docOrNode' value passed in, so the mechanism using in 'FilterProcessor.getFilterValue()'
+        // to get leaf nodes cannot be used.
         XPath xpath2 = xpathFactory.newXPath();
 
         XPathExpression xPathExpression2 = xpath2.compile(".//definition/operator | operator");
