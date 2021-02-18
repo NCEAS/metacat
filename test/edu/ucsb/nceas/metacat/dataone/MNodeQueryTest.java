@@ -46,12 +46,15 @@ import org.dataone.configuration.Settings;
 import org.dataone.mimemultipart.SimpleMultipartEntity;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.AccessPolicy;
+import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Identifier;
 
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
 import org.dataone.vocabulary.CITO;
 import org.dspace.foresite.ResourceMap;
@@ -123,6 +126,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testPackageWithParts"));
     suite.addTest(new MNodeQueryTest("testPostLongQuery"));
     suite.addTest(new MNodeQueryTest("testChineseCharacters"));
+    suite.addTest(new MNodeQueryTest("testAccess"));
     return suite;
     
   }
@@ -1203,6 +1207,221 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         DefaultHttpMultipartRestClient multipartRestClient = new DefaultHttpMultipartRestClient();
         multipartRestClient.doGetRequest(server + "/d1/mn/v2/query/solr/?" + query, 1000);
         assertTrue(1==1);
+    }
+    
+    /**
+     * 
+     * @throws Exception
+     */
+    public void testAccess() throws Exception {
+        printTestHeader("testAccess");
+        String rightsHolder = "rightsHolder";
+        Subject rightsHolderSubject = new Subject();
+        rightsHolderSubject.setValue(rightsHolder);
+        Session rightsHolderSession = new Session();
+        rightsHolderSession.setSubject(rightsHolderSubject);
+        
+        String hasPermission = "hasPermission";
+        Subject hasPermissionSubject = new Subject();
+        hasPermissionSubject.setValue(hasPermission);
+        Session hasPermissionSession = new Session();
+        hasPermissionSession.setSubject(hasPermissionSubject);
+        
+        String noPermission = "noPermission";
+        Subject noPermissionSubject = new Subject();
+        noPermissionSubject.setValue(noPermission);
+        Session noPermissionSession = new Session();
+        noPermissionSession.setSubject(noPermissionSubject);
+        
+        String publicUser = "public";
+        Subject publicUserSubject = new Subject();
+        publicUserSubject.setValue(publicUser);
+        Session publicUserSession = new Session();
+        publicUserSession.setSubject(publicUserSubject);
+        
+        // a public readable document can be read by any user.
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testAccess." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        
+        // a document without access rules
+        guid = new Identifier();
+        guid.setValue("testAccess0." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
+        sysmeta.setAccessPolicy(null);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8"); 
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        
+        
+        // a document with the access rules that hasPermission can write it
+        guid = new Identifier();
+        guid.setValue("testAccess2." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
+        AccessPolicy accessPolicy = new AccessPolicy();
+        AccessRule allow = new AccessRule();
+        allow.addPermission(Permission.WRITE);
+        allow.addSubject(hasPermissionSubject);
+        accessPolicy.addAllow(allow);
+        sysmeta.setAccessPolicy(accessPolicy);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        
+        
+         // a document with the access rules that hasPermission can read it
+        guid = new Identifier();
+        guid.setValue("testAccess1." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
+        accessPolicy = new AccessPolicy();
+        allow = new AccessRule();
+        allow.addPermission(Permission.READ);
+        allow.addSubject(hasPermissionSubject);
+        accessPolicy.addAllow(allow);
+        sysmeta.setAccessPolicy(accessPolicy);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        
+       
+        
+        // a document with the access rules that hasPermission can change it
+        guid = new Identifier();
+        guid.setValue("testAccess3." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        sysmeta = createSystemMetadata(guid, rightsHolderSubject, object);
+        accessPolicy = new AccessPolicy();
+        allow = new AccessRule();
+        allow.addPermission(Permission.CHANGE_PERMISSION);
+        allow.addSubject(hasPermissionSubject);
+        accessPolicy.addAllow(allow);
+        sysmeta.setAccessPolicy(accessPolicy);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(rightsHolderSession, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(noPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(publicUserSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(hasPermissionSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("checksum"));
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(!resultStr.contains("checksum"));
+        
     }
 
    

@@ -50,6 +50,8 @@ public abstract class SolrQueryService {
     protected static final String FILTERQUERY = "fq";
     protected static final String UNKNOWN = "Unknown";
     private static final String READPERMISSION = "readPermission";
+    private static final String CHANGEPERMISSION = "changePermission";
+    private static final String WRITEPERMISSION = "writePermission";
     private static final String IS_PUBLIC = "isPublic";
     private static final String RIGHTSHOLDER = "rightsHolder";
     private static final String OPENPARENTHESE = "(";
@@ -178,6 +180,8 @@ public abstract class SolrQueryService {
                         if(first) {
                             first = false;
                             query.append(OPENPARENTHESE+READPERMISSION+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
+                            query.append(OR + OPENPARENTHESE + WRITEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESE);
+                            query.append(OR + OPENPARENTHESE + CHANGEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESE);
                             if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
                                 query.append(OR+OPENPARENTHESE+RIGHTSHOLDER+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
@@ -185,6 +189,8 @@ public abstract class SolrQueryService {
                             }
                         } else {
                             query.append(OR + OPENPARENTHESE+READPERMISSION+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
+                            query.append(OR + OPENPARENTHESE + WRITEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESE);
+                            query.append(OR + OPENPARENTHESE + CHANGEPERMISSION + COLON + "\"" + subjectName + "\"" + CLOSEPARENTHESE);
                             if(!subjectName.equals(Constants.SUBJECT_PUBLIC) && !subjectName.equals(Constants.SUBJECT_AUTHENTICATED_USER)) {
                                 query.append(OR + OPENPARENTHESE+RIGHTSHOLDER+COLON+"\""+subjectName+"\""+CLOSEPARENTHESE);
                             } else if (subjectName.equals(Constants.SUBJECT_PUBLIC)) {
