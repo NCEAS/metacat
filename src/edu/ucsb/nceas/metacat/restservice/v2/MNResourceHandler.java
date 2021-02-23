@@ -100,7 +100,6 @@ import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -1504,7 +1503,8 @@ public class MNResourceHandler extends D1ResourceHandler {
 
     /**
      * Retrieve data package as Bagit zip
-     * @param pid
+     * @param format
+     * @param pid The pid of the resource map defining the pacakage
      * @throws NotImplemented 
      * @throws NotFound 
      * @throws NotAuthorized 
@@ -1514,40 +1514,35 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest 
      */
     protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
-        long start = System.currentTimeMillis();
-        Identifier id = new Identifier();
-        id.setValue(pid);
-        ObjectFormatIdentifier formatId = null;
-        if (format != null) {
-        	formatId = new ObjectFormatIdentifier();
-        	formatId.setValue(format);
-        }
-        InputStream is = null;
-        try {
-            is = MNodeService.getInstance(request).getPackage(session, formatId , id);
-            
-            // use the provided filename
-            String filename = null;
-            if (is instanceof DeleteOnCloseFileInputStream) {
-                filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
-            } else {
-                filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
-            }
-            response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
-            response.setContentType("application/zip");
-            response.setStatus(200);
-            OutputStream out = response.getOutputStream();
-            
-            // write it to the output stream
-            IOUtils.copyLarge(is, out);
-            IOUtils.closeQuietly(out);
-            long end = System.currentTimeMillis();
-            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
-            
-        } finally {
-            IOUtils.closeQuietly(is);
-        }
-   }
+	    long start = System.currentTimeMillis();
+	    Identifier id = new Identifier();
+	    id.setValue(pid);
+	    ObjectFormatIdentifier formatId = null;
+	    if (format != null) {
+		    formatId = new ObjectFormatIdentifier();
+		    formatId.setValue(format);
+	    }
+	    InputStream is = null;
+	    try {
+		    is = MNodeService.getInstance(request).getPackage(session, formatId, id);
+
+		    //Use the pid as the file name prefix, replacing all non-word characters
+		    String filename = pid.replaceAll("\\W", "_") + ".zip";
+
+		    response.setHeader("Content-Disposition", "inline; filename=\"" + filename + "\"");
+		    response.setContentType("application/zip");
+		    response.setStatus(200);
+		    OutputStream out = response.getOutputStream();
+
+		    // write it to the output stream
+		    IOUtils.copyLarge(is, out);
+		    IOUtils.closeQuietly(out);
+		    long end = System.currentTimeMillis();
+		    logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end - start) / 1000);
+	    } finally {
+		    IOUtils.closeQuietly(is);
+	    }
+    }
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotFound, NotImplemented, IOException,

@@ -1237,13 +1237,9 @@ public class MNResourceHandler extends D1ResourceHandler {
         id.setValue(pid);
         InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
         
-        // use the provided filename
-        String filename = null;
-        if (is instanceof DeleteOnCloseFileInputStream) {
-            filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
-        } else {
-        	filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
-        }
+		//Use the pid as the file name prefix, replacing all non-word characters
+		String filename = pid.getValue().replaceAll("\\W", "_");
+
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
         response.setStatus(200);
