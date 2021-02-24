@@ -175,9 +175,6 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
 import edu.ucsb.nceas.utilities.export.HtmlToPdf;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.writer.impl.ZipWriter;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node 
