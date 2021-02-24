@@ -38,6 +38,8 @@ import java.io.Writer;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
@@ -2551,7 +2553,7 @@ public class MNodeService extends D1NodeService
      * @throws NotFound
      */
 	@Override
-	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
+	public SpeedBagIt getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    if(formatId == null) {
@@ -2566,7 +2568,7 @@ public class MNodeService extends D1NodeService
 	        pid = sid;
 	    }
 	    // Create a bag that is version 0.97 and has tag files that contain MD5 checksums
-        SpeedBagIt speedBag = new SpeedBagIt("0.97", "MD5");
+        SpeedBagIt speedBag = new SpeedBagIt(0.97, "MD5");
 
 		// The pids of all of the objects in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
@@ -2652,7 +2654,7 @@ public class MNodeService extends D1NodeService
 						            // Create the pdf File that HtmlToPdf will write to
                                     String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
                                     File pdfFile = new File(tmpDir, pdfFileName);
-                                    File pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
+                                    pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
 
 						            // write the HTML file
                                     File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
@@ -2676,7 +2678,7 @@ public class MNodeService extends D1NodeService
                                     tmpDir.delete();
 
                                     // Add the pdf to the bag
-                                    speedBag.addFile(pdfInputStream, Paths.get("data", pdfFileName));
+                                    speedBag.addFile(pdfInputStream, Paths.get("data", pdfFileName), false);
 
                                     // Create a record in the pid mapping file
                                     pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
@@ -2779,7 +2781,7 @@ public class MNodeService extends D1NodeService
 		        // Add the stream of the file to the bag object & write to the pid mapping file
 				InputStream entryInputStream = this.get(session, entryPid);
                 speedBag.addFile(entryInputStream, Paths.get("data", filename));
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + tempFile.getName() + "\n");
+				pidMapping.append(entryPid.getValue() + "\t" + "data/" + filename + "\n");
 			}
 			
 			// Get a stream to the pid mapping file and add it as a tag file, in the bag root

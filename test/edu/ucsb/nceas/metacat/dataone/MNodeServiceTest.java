@@ -100,6 +100,7 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
@@ -1756,7 +1757,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 			Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
 			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
 			format.setValue("application/bagit-097");
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
+			SpeedBagIt bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
 			/*File bagFile = File.createTempFile("bagit.", ".zip");
 			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
 			BagFactory bagFactory = new BagFactory();

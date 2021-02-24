@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -86,6 +87,7 @@ import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -1514,21 +1516,20 @@ public class MNResourceHandler extends D1ResourceHandler {
      * @throws InvalidRequest 
      */
     protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
-	    long start = System.currentTimeMillis();
-	    Identifier id = new Identifier();
-	    id.setValue(pid);
-	    ObjectFormatIdentifier formatId = null;
-	    if (format != null) {
-		    formatId = new ObjectFormatIdentifier();
-		    formatId.setValue(format);
-	    }
-	    InputStream is = null;
-	    try {
-		    is = MNodeService.getInstance(request).getPackage(session, formatId, id);
+
+        long start = System.currentTimeMillis();
+        Identifier id = new Identifier();
+        id.setValue(pid);
+        ObjectFormatIdentifier formatId = null;
+        if (format != null) {
+        	formatId = new ObjectFormatIdentifier();
+        	formatId.setValue(format);
+        }
+        try{
+		    SpeedBagIt speedBag = MNodeService.getInstance(request).getPackage(session, formatId , id);
 
 		    //Use the pid as the file name prefix, replacing all non-word characters
 		    String filename = pid.replaceAll("\\W", "_") + ".zip";
-
 		    response.setHeader("Content-Disposition", "inline; filename=\"" + filename + "\"");
 		    response.setContentType("application/zip");
 		    response.setStatus(200);
@@ -1543,6 +1544,18 @@ public class MNResourceHandler extends D1ResourceHandler {
 		    IOUtils.closeQuietly(is);
 	    }
     }
+=======
+        response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+        response.setContentType("application/zip");
+        response.setStatus(200);
+	    ZipOutputStream out = response.getOutputStream();
+        
+        // write it to the output stream
+	    speedBag.stream(out);
+        long end = System.currentTimeMillis();
+        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+   }
+>>>>>>> Replace InputStream references with SpeedBagIt and use ZipOutputStream for client request
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotFound, NotImplemented, IOException,

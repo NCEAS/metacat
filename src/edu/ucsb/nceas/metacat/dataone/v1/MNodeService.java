@@ -64,6 +64,7 @@ import org.dataone.service.types.v1.SystemMetadata;
 import org.dataone.service.types.v1_1.QueryEngineDescription;
 import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v2.TypeFactory;
+import org.dataone.speedbagit.SpeedBagIt;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.convert.LogV2toV1Converter;
@@ -572,7 +573,7 @@ public class MNodeService
 		return impl.view(session, format, pid);
 	}
 	
-	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
+	public SpeedBagIt getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    String serviceFailure = "2871";
