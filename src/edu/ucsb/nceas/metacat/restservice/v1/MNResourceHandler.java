@@ -1239,12 +1239,12 @@ public class MNResourceHandler extends D1ResourceHandler {
         SpeedBagIt speedBag = MNodeService.getInstance(request).getPackage(session, null, id);
         
 		//Use the pid as the file name prefix, replacing all non-word characters
-		String filename = pid.getValue().replaceAll("\\W", "_");
+		String filename = pid.replaceAll("\\W", "_");
 
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
         response.setStatus(200);
-	    ZipOutputStream out = response.getOutputStream();
+	    ZipOutputStream out = new ZipOutputStream(response.getOutputStream());
         
         // write it to the output stream
         speedBag.stream(out);

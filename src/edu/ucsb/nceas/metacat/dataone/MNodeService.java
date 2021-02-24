@@ -2670,7 +2670,7 @@ public class MNodeService extends D1NodeService
                                     cssDir.delete();
 
                                     // Load the PDF file into memory so that it can be deleted from disk
-                                    byte[] pdfMetadata = Files.readAllBytes(pdfFile.getAbsolutePath());
+                                    byte[] pdfMetadata = Files.readAllBytes(Paths.get(pdfFile.getAbsolutePath()));
                                     InputStream pdfInputStream = new ByteArrayInputStream(pdfMetadata);
 
                                     // Now that the PDF file has been loaded into memory, delete it from disk
@@ -2678,7 +2678,7 @@ public class MNodeService extends D1NodeService
                                     tmpDir.delete();
 
                                     // Add the pdf to the bag
-                                    speedBag.addFile(pdfInputStream, Paths.get("data", pdfFileName), false);
+                                    speedBag.addFile(pdfInputStream, Paths.get("data/"+ pdfFileName).toString(), false);
 
                                     // Create a record in the pid mapping file
                                     pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
@@ -2780,12 +2780,12 @@ public class MNodeService extends D1NodeService
 				
 		        // Add the stream of the file to the bag object & write to the pid mapping file
 				InputStream entryInputStream = this.get(session, entryPid);
-                speedBag.addFile(entryInputStream, Paths.get("data", filename));
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + filename + "\n");
+                speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+				pidMapping.append(entryPid.getValue() + "\t" + "data" + fileName + "\n");
 			}
 			
 			// Get a stream to the pid mapping file and add it as a tag file, in the bag root
-            ByteArrayInputStream pidFile = ByteArrayInputStream(pidMapping.toString().getBytes(StandardCharsets.UTF_8));
+            ByteArrayInputStream pidFile = new ByteArrayInputStream(pidMapping.toString().getBytes(StandardCharsets.UTF_8));
             speedBag.addFile(pidFile, "pid-mapping.txt", true);
 		} catch (IOException e) {
 			// report as service failure
