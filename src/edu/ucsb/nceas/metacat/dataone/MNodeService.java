@@ -719,21 +719,6 @@ public class MNodeService extends D1NodeService
         }
     }
 
-
-    public Identifier create(Session session,, InputStream object) throws InvalidToken, ServiceFailure, NotAuthorized,
-            IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
-
-        if (isReadOnlyMode()) {
-            throw new ServiceFailure("1190", ReadOnlyChecker.DATAONEERROR);
-        }
-        // check for null session
-        if (session == null) {
-            throw new InvalidToken("1110", "The session in the request was null. Ensure that your credentials " +
-                    "were included in the request.");
-        }
-
-    }
-
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
 
