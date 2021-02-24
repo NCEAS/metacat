@@ -64,7 +64,7 @@
 			<artifactId>datamanager</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-    	<dependenc
+    	<dependency>
             <artifactId>d1_portal</artifactId>
             <groupId>org.dataone</groupId>
             <version>${d1_portal_version}</version>
