@@ -2695,7 +2695,7 @@ public class MNodeService extends D1NodeService
                                     tmpDir.delete();
 
                                     // Add the pdf to the bag
-                                    speedBag.addFile(pdfInputStream, Paths.get("data", pdfFileName);
+                                    speedBag.addFile(pdfInputStream, Paths.get("data", pdfFileName));
 
                                     // Create a record in the pid mapping file
                                     pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
