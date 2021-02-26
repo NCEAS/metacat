@@ -139,7 +139,7 @@ public abstract class D1NodeService {
   protected String userAgent = null;
   
   /* reference to the metacat handler */
-  protected MetacatHandler handler;
+  protected static MetacatHandler handler = new MetacatHandler();
   
   /* parameters set in the incoming request */
   //private Hashtable<String, String[]> params;
@@ -1101,7 +1101,6 @@ public abstract class D1NodeService {
     }
     
     // do the insert or update action
-    handler = new MetacatHandler(new Timer());
     if (ipAddress == null) {
         ipAddress = request.getRemoteAddr();
     }

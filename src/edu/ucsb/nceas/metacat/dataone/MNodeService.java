@@ -1569,7 +1569,6 @@ public class MNodeService extends D1NodeService
              "\tIdentifier           = " + pid.getValue());
 
         InputStream inputStream = null; // bytes to be returned
-        handler = new MetacatHandler(new Timer());
         boolean allowed = false;
         String localId; // the metacat docid for the pid
 
