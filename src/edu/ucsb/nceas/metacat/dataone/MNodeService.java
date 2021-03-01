@@ -35,6 +35,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.lang.NullPointerException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
@@ -2567,15 +2568,17 @@ public class MNodeService extends D1NodeService
 	    if(sid != null) {
 	        pid = sid;
 	    }
-	    // Create a bag that is version 0.97 and has tag files that contain MD5 checksums
-        SpeedBagIt speedBag = new SpeedBagIt(0.97, "MD5");
 
 		// The pids of all of the objects in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
 		
 		// catch non-D1 service errors and throw as ServiceFailures
+        SpeedBagIt speedBag = null;
 		try {
-			//Create a map of dataone ids and file names
+            // Create a bag that is version 0.97 and has tag files that contain MD5 checksums
+            speedBag = new SpeedBagIt(0.97, "MD5");
+
+            //Create a map of dataone ids and file names
 			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
 			
 			// track the pid-to-file mapping
@@ -2813,11 +2816,30 @@ public class MNodeService extends D1NodeService
                     "for the package is valid. " + e.getMessage());
 			sf.initCause(e);
 			throw sf;
-		}
+		} catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                    "error while adding a file to the archive. Please ensure that the " +
+                    "checksumming algorithm is supported." + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
 
-		// Now that all of the files have been added to speedBag,
-
-		return speedBag.stream();
+        try {
+            return speedBag.stream();
+        } catch (NullPointerException | IOException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                    "error while streaming the downloaded data package. " + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "While creating the package " +
+                    "download, an unsupported checksumming algorithm was encountered. " + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
 	}
 
 	 /**

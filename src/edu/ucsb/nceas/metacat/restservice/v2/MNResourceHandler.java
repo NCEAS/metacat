@@ -1332,9 +1332,14 @@ public class MNResourceHandler extends D1ResourceHandler {
 		response.setStatus(200);
 		response.setContentType("text/xml");
 
+<<<<<<< HEAD
 		TypeMarshaller.marshalTypeToOutputStream(log, out);
 		IOUtils.closeQuietly(out);
 	}
+=======
+	    IOUtils.copyLarge(speedBag, response.getOutputStream());
+        // write it to the output stream
+>>>>>>> Improve exception handling
 
 
 	/**
