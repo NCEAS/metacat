@@ -573,7 +573,7 @@ public class MNodeService
 		return impl.view(session, format, pid);
 	}
 	
-	public SpeedBagIt getPackage(Session session, ObjectFormatIdentifier formatId,
+	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    String serviceFailure = "2871";
