@@ -1294,11 +1294,36 @@ public class MNResourceHandler extends D1ResourceHandler {
 			logMetacat.warn("Could not parse count: " + e.getMessage());
 		}
 
+<<<<<<< HEAD
 		try {
 			pidFilter = params.get("idFilter")[0];
 		} catch (Exception e) {
 			logMetacat.warn("Could not parse pidFilter: " + e.getMessage());
 		}
+=======
+    /**
+     * Retrieve data package as Bagit zip
+     * @param format
+     * @param pid The pid of the resource map defining the pacakage
+     * @throws NotImplemented 
+     * @throws NotFound 
+     * @throws NotAuthorized 
+     * @throws ServiceFailure 
+     * @throws InvalidToken 
+     * @throws IOException 
+     * @throws InvalidRequest 
+     */
+    protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
+        long start = System.currentTimeMillis();
+        Identifier id = new Identifier();
+        id.setValue(pid);
+        ObjectFormatIdentifier formatId = null;
+        if (format != null) {
+        	formatId = new ObjectFormatIdentifier();
+        	formatId.setValue(format);
+        }
+	    InputStream speedBag = MNodeService.getInstance(request).getPackage(session, formatId , id);
+>>>>>>> Revert to using InputStream in getPackage
 
 		logMetacat.debug("calling getLogRecords");
 		Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
@@ -1524,7 +1549,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 			IOUtils.closeQuietly(is);
 		}
 	}
-
+    
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotFound, NotImplemented, IOException,
 			MarshallingException, InvalidRequest, IdentifierNotUnique,

@@ -2553,7 +2553,7 @@ public class MNodeService extends D1NodeService
      * @throws NotFound
      */
 	@Override
-	public SpeedBagIt getPackage(Session session, ObjectFormatIdentifier formatId,
+	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    if(formatId == null) {
@@ -2781,7 +2781,7 @@ public class MNodeService extends D1NodeService
 		        // Add the stream of the file to the bag object & write to the pid mapping file
 				InputStream entryInputStream = this.get(session, entryPid);
                 speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
-				pidMapping.append(entryPid.getValue() + "\t" + "data" + fileName + "\n");
+				pidMapping.append(entryPid.getValue() + "\t" + "data/" + fileName + "\n");
 			}
 			
 			// Get a stream to the pid mapping file and add it as a tag file, in the bag root
@@ -2815,8 +2815,9 @@ public class MNodeService extends D1NodeService
 			throw sf;
 		}
 
-		// Now that all of the files have been added to speedBag, return the InputStream
-		return speedBag;
+		// Now that all of the files have been added to speedBag,
+
+		return speedBag.stream();
 	}
 
 	 /**

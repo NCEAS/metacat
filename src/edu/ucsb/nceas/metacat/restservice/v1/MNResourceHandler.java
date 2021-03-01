@@ -1236,7 +1236,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 
         Identifier id = new Identifier();
         id.setValue(pid);
-        SpeedBagIt speedBag = MNodeService.getInstance(request).getPackage(session, null, id);
+	    InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
         
 		//Use the pid as the file name prefix, replacing all non-word characters
 		String filename = pid.replaceAll("\\W", "_");
@@ -1244,10 +1244,10 @@ public class MNResourceHandler extends D1ResourceHandler {
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
         response.setStatus(200);
-	    ZipOutputStream out = new ZipOutputStream(response.getOutputStream());
-        
-        // write it to the output stream
-        speedBag.stream(out);
+	    OutputStream out = response.getOutputStream();
+
+	    // write it to the output stream
+	    IOUtils.copyLarge(is, out);
    }
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
