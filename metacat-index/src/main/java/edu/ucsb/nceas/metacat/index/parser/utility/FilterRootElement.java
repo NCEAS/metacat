@@ -20,19 +20,15 @@ package edu.ucsb.nceas.metacat.index.parser.utility;
  */
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathExpressionException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.cn.indexer.parser.utility.LeafElement;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 /**
  *
@@ -53,9 +49,11 @@ public class FilterRootElement {
     private List<LeafElement> leafs = new ArrayList<LeafElement>();
     private List<FilterRootElement> subRoots = new ArrayList<FilterRootElement>();
     private List<FilterProcessor> filters = null;
+    private FilterGroupProcessor filterGroup = null;
     private String prefixMatch = null;
     private String fixedTerm = null;
     private String postfixMatch = null;
+    private Log log = LogFactory.getLog(FilterRootElement.class);
 
     public FilterRootElement() {
     }
@@ -82,13 +80,11 @@ public class FilterRootElement {
     public String getRootValues(Object docOrNode)
             throws XPathExpressionException {
 
-        NodeList nodeList = (NodeList) getxPathExpression().evaluate(docOrNode,
-                XPathConstants.NODESET);
-
         String prefilterValue = null;
         String postfilterValue = null;
         String filterValue = null;
-        List<FilterProcessor> filters = getFilters();
+        filters = getFilters();
+        filterGroup = getFilterGroup();
         prefixMatch = getPrefixMatch();
         fixedTerm = getFixedTerm();
         postfixMatch = getPostfixMatch();
@@ -100,26 +96,6 @@ public class FilterRootElement {
         // These are concatenated together to arrive at the full query:
         //     (((<prefix filter) OR (<main filter>)) AND (<fixed filter>)) OR (<postfix filter)
 
-        // Collect the terms that are used to identify a 'prefilter' item. These terms will be added to
-        // the front of the complete query and 'OR'd together
-        HashSet<String> prefixMatchingFields = new HashSet<String>();
-        if(prefixMatch != null && !prefixMatch.isEmpty()) {
-            String tokens[] = prefixMatch.split(",");
-            for (String token : tokens) {
-                prefixMatchingFields.add(token);
-            }
-        }
-
-        // Collect the terms that are used to identify a 'postfilter' item. These terms will be added to
-        // the front of the complete query and 'OR'd together
-        HashSet<String> postfixMatchingFields = new HashSet<String>();
-        if(postfixMatch != null && !postfixMatch.isEmpty()) {
-            String tokens[] = postfixMatch.split(",");
-            for (String token : tokens) {
-                postfixMatchingFields.add(token);
-            }
-        }
-
         String mainFilterValue = null;
         String completeFilterValue = null;
         String operator = "AND";
@@ -128,130 +104,36 @@ public class FilterRootElement {
         int nFilters = filters.size();
         int iFilter;
 
-        // Loop through the nodes that match the filter xpath, for example "//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
-        for (int i = 0; i < nodeList.getLength(); i++) {
-            Node node = nodeList.item(i);
+        FilterGroupProcessor fgp = new FilterGroupProcessor();
+        // This call processess all '<filterGroup> elements, in addition to all root level
+        // filter definitions.
+        log.trace("getRootValues, xpath: " + getxPath());
+        completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, prefixMatch, postfixMatch, xPath);
 
-            // For each node, search for a matching filter that can process that filter type
-            // Only the first filter that matches is used
-            for (FilterProcessor filterProcessor : filters) {
-                if (node.getNodeName().equalsIgnoreCase(filterProcessor.getMatchElement())) {
-                    //System.out.println("Running Filter processor name: " + filterProcessor.getName());
-                    filterProcessor.initXPathExpressions();
-                    filterValue = filterProcessor.getFilterValue(node);
-                    break;
-                }
-            }
-
-            // If no value was returned from the filter, then go to the next node;
-            if(filterValue == null)
-                continue;
-
-            prefilter = false;
-            postfilter = false;
-            // See if this filter value matches one of the 'prefix' filters, that will be 'OR'd
-            // with the other filters. The 'prefilters' will be accumulated and prepended to the query
-            // string, to be in sync with the way metacatui does things, and to make it easy to apply
-            // the correct logical operators.
-            if(!prefixMatchingFields.isEmpty()) {
-                for(String term : prefixMatchingFields) {
-                    // Only match the term if it is preceded by a "(" or " " and followed by a ":"
-                    // Example: 'id' matches '(id:10)' or 'id:10', but doesn't match 'myId:10'
-                    Pattern p = Pattern.compile("[(-]" + term + ":" + "|" + "^" + term + ":");
-                    Matcher m1 = null;
-                    m1 = p.matcher(filterValue);
-                    if(m1.find()) {
-                        prefilter = true;
-                        if(prefilterValue == null) {
-                            prefilterValue = filterValue;
-                        } else {
-                            prefilterValue += " OR " + filterValue;
-                        }
-                        continue;
-                    }
-                }
-            }
-
-            // Check this filter for a match with the 'postfix' filter pattern.
-            if(!postfixMatchingFields.isEmpty()) {
-                for(String term : postfixMatchingFields) {
-                    // Only match the term if it is surrounded by non-alpha characters, i.e.
-                    // term to match "id" is not embedded in another string such as "myId". That
-                    // doesn't match, but "(id:1234)" does.
-                    Pattern p = Pattern.compile("[(-]" + term + ":" + "|" + "^" + term + ":");
-                    Matcher m1 = null;
-                    m1 = p.matcher(filterValue);
-                    if(m1.find()) {
-                        postfilter = true;
-                        if(postfilterValue == null) {
-                            postfilterValue = filterValue;
-                        } else {
-                            postfilterValue += " OR " + filterValue;
-                        }
-                        continue;
-                    }
-                }
-            }
-
-            // If we found a prefilter item, don't add this portion to the completed query string yet. It
-            // will be added after all other filters are processed.
-            if(prefilter || postfilter) {
-                continue;
-            }
-
-            // Add this search term to the complete filter
-            if(mainFilterValue == null) {
-                mainFilterValue = filterValue;
-            } else {
-                mainFilterValue += " " + operator + " " + filterValue;
-            }
+        log.error("completedFilterValue: " + completeFilterValue);
+        // Make sure that the only query term is a negation query, e.g. "-abstract:*fish*". This is a bit of a strange query, and
+        // would return many documents, but this is possible, so handle it.
+        if (completeFilterValue.matches("(^\\(*\\-\\w+:\\w+\\)*$)|(^\\(*\\-\\w+:\\*\\w+\\*\\)*$)")) {
+            completeFilterValue = completeFilterValue.replaceAll("^\\(", "");
+            completeFilterValue = completeFilterValue.replaceAll("\\)$", "");
+            completeFilterValue = "(" + completeFilterValue + " AND *:*" + ")";
         }
 
-        // Now assemble the complete query
-        // (((prefilter) OR (main filters)) AND (fixedTerm)) OR (postfilter)
-        // Add the prefilter value, if defined.
-        if(prefilterValue != null) {
-            completeFilterValue = "(" + prefilterValue + ")";
-        }
-
-        // Next add the main filter value, if defined.
-        if(mainFilterValue != null) {
-            if(completeFilterValue != null) {
-                completeFilterValue = "(" + completeFilterValue + " OR " + "(" + mainFilterValue + "))";
-            } else {
-                completeFilterValue = "(" + mainFilterValue + ")";
-            }
+        // This case shouldn't happen (no terms found or specified), but check anyway
+        if(completeFilterValue == null) {
+            completeFilterValue = "(id:*)";
         }
 
         // Don't include the 'fixed' filter if there are no pre or main filters. The fixed filter
         // is usually something like '(-obsoletedBy:* AND formatType:METADATA)', which will return ALL
         // unobsoleted metadata pids if there is no pre or main filters to constrain it.
-        if(prefilterValue != null || mainFilterValue != null) {
-            // Add the fixed terms
-            if (fixedTerm != null) {
-                if (completeFilterValue != null) {
-                    completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
-                } else {
-                    completeFilterValue = "(" + fixedTerm + ")";
-                }
-            }
-        }
-
-        // Add the postfix terms
-        if(postfilterValue != null && !postfilterValue.isEmpty()) {
-            if(completeFilterValue != null) {
-                completeFilterValue = completeFilterValue + " OR " + "(" + postfilterValue + ")";
+        if (fixedTerm != null) {
+            if (completeFilterValue != null) {
+                completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
             } else {
-                completeFilterValue = postfilterValue;
+                completeFilterValue = "(" + fixedTerm + ")";
             }
         }
-
-        // This cause shouldn't happen (no terms found or specified), but check anyway
-        if(completeFilterValue == null) {
-            completeFilterValue = "(id:*)";
-        }
-
-        completeFilterValue = "(" + completeFilterValue + ")";
 
         return completeFilterValue;
     }
@@ -441,6 +323,24 @@ public class FilterRootElement {
      */
     public void setFilters(List<FilterProcessor> filters) {
         this.filters = filters;
+    }
+
+    /**
+     * Get defined filter group processor
+     * @return defined filter group processor
+     * @see "application-context-collection.xml"
+     */
+    public FilterGroupProcessor getFilterGroup() {
+        return filterGroup;
+    }
+
+    /**
+     * Get defined filter group processor
+     * @param filterGroup defined filter group processor
+     * @see "application-context-collection.xml"
+     */
+    public void setFilterGroup(FilterGroupProcessor filterGroup) {
+        this.filterGroup = filterGroup;
     }
 }
 

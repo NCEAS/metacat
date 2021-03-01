@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns="https://purl.dataone.org/collections-1.1.0"
+  targetNamespace="https://purl.dataone.org/collections-1.1.0"
+  xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:doc="https://eml.ecoinformatics.org/documentation-2.2.0">
+
+  <xs:import namespace="https://eml.ecoinformatics.org/documentation-2.2.0"
+    schemaLocation="https://eml.ecoinformatics.org/eml-2.2.0/eml-documentation.xsd"/>
+
+  <xs:element name="collection" type="CollectionType"/>
+
+  <xs:complexType name="CollectionType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>Collection</doc:tooltip>
+        <doc:summary>A collection of related datasets</doc:summary>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="label" type="NoWhitespaceStringType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Label</doc:tooltip>
+            <doc:description>A short name that uniquely identifies this data set
+              collection.</doc:description>
+            <doc:example>NCEAS-datasets</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="name" type="NonEmptyStringType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Name</doc:tooltip>
+            <doc:description>Full title/label that describes the collection</doc:description>
+            <doc:example>NCEAS datasets</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="description" type="NonEmptyStringType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Description</doc:tooltip>
+            <doc:description>Brief description of the purpose of the collection</doc:description>
+            <doc:example>All datasets from the KNB repository that were produced by or are related
+              to an NCEAS working group.</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="definition" type="FilterGroupType" minOccurs="1" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Definition</doc:tooltip>
+            <doc:description>Defines which datasets are a part of this collection.</doc:description>
+            <doc:example>See the individual sub-elements for specific examples.</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="FilterGroupType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>Filter Group</doc:tooltip>
+        <doc:description>A filter group comprises filters that specify a query to perform that will
+          result in a defined collection of data</doc:description>
+        <doc:example>See the individual sub-elements for specific examples.</doc:example>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:choice minOccurs="1" maxOccurs="unbounded">
+        <xs:element name="filter" type="TextFilterType" minOccurs="1" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:appinfo>
+              <doc:tooltip>Filter</doc:tooltip>
+              <doc:description>Defines a basic text search filter to apply to the query used to get
+                the datasets in this collection.</doc:description>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="dateFilter" type="DateFilterType" minOccurs="1" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:appinfo>
+              <doc:tooltip>Date filter</doc:tooltip>
+              <doc:description>Defines a date range to apply to the query used to get the datasets
+                in this collection.</doc:description>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="numericFilter" type="NumericFilterType" minOccurs="1"
+          maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:appinfo>
+              <doc:tooltip>Numeric filter</doc:tooltip>
+              <doc:description>Defines a numeric range to apply to the query used to get the
+                datasets in this collection.</doc:description>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="booleanFilter" type="BooleanFilterType" minOccurs="1"
+          maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:appinfo>
+              <doc:tooltip>Boolean filter</doc:tooltip>
+              <doc:summary>A simple boolean filter to apply to the query used to get the datasets in
+                this collection.</doc:summary>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:element>
+        <xs:element name="filterGroup" type="FilterGroupType" minOccurs="1" maxOccurs="unbounded">
+          <xs:annotation>
+            <xs:appinfo>
+              <doc:tooltip>Nested Filter Group</doc:tooltip>
+              <doc:description>A filter group within a filter group is used to set an operator and
+                exclude option within the group that may differ from those set outside of the
+                group</doc:description>
+            </xs:appinfo>
+          </xs:annotation>
+        </xs:element>
+      </xs:choice>
+      <xs:element name="operator" type="operatorType" minOccurs="0" maxOccurs="1" default="AND">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Operator</doc:tooltip>
+            <doc:description>An operator that specifies whether filters within this filter group are
+              AND'ed or OR'ed together</doc:description>
+            <doc:example>AND</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="exclude" type="xs:boolean" minOccurs="0" maxOccurs="1" default="false">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Exclude</doc:tooltip>
+            <doc:description>If set to true, this filter group will be used to exclude (rather than
+              include) datasets from the query results. In other words, the query that results from
+              this group of filters will be negated.</doc:description>
+            <doc:example>true</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:simpleType name="operatorType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="AND"/>
+      <xs:enumeration value="OR"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:complexType name="FilterType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>Filter</doc:tooltip>
+        <doc:description>Defines a search filter to apply to the query used to get the datasets in
+          this collection.</doc:description>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:sequence>
+      <xs:element name="label" type="NonEmptyStringType" minOccurs="0" maxOccurs="1">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Label</doc:tooltip>
+            <doc:summary>A short 1-2 word label to display for this filter.</doc:summary>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="field" type="NoWhitespaceStringType" minOccurs="1" maxOccurs="unbounded">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Search field</doc:tooltip>
+            <doc:description>The name of the search field/attribute to query.</doc:description>
+            <doc:example>site</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="operator" type="operatorType" minOccurs="0" maxOccurs="1" default="AND">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Operator</doc:tooltip>
+            <doc:description>If more than one value in set on this FilterType, operator specifies if
+              they are AND'ed or OR'ed together</doc:description>
+            <doc:example>AND</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="exclude" type="xs:boolean" minOccurs="0" maxOccurs="1" default="false">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Exclude</doc:tooltip>
+            <doc:description>If set to true, this filter will be used to exclude (rather than
+              include) datasets from the query results.</doc:description>
+            <doc:example>true</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+      <xs:element name="fieldsOperator" type="operatorType" minOccurs="0" maxOccurs="1"
+        default="AND">
+        <xs:annotation>
+          <xs:appinfo>
+            <doc:tooltip>Operator</doc:tooltip>
+            <doc:description>If more than one field in set on this FilterType, operator specifies if
+              they are AND'ed or OR'ed together</doc:description>
+            <doc:example>AND</doc:example>
+          </xs:appinfo>
+        </xs:annotation>
+      </xs:element>
+    </xs:sequence>
+  </xs:complexType>
+
+  <xs:complexType name="TextFilterType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>Text Filter</doc:tooltip>
+        <doc:description>Defines a basic text filter to apply to the query used to get the datasets
+          in this collection.</doc:description>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:complexContent>
+      <xs:extension base="FilterType">
+        <xs:sequence>
+          <xs:element name="matchSubstring" type="xs:boolean" minOccurs="0" maxOccurs="1"
+            default="true">
+            <xs:annotation>
+              <xs:appinfo>
+                <doc:tooltip>Match substring</doc:tooltip>
+                <doc:description>If true, this filter's value will be wrapped in wildcard characters
+                  so that substrings are matched.</doc:description>
+                <doc:example>true</doc:example>
+              </xs:appinfo>
+            </xs:annotation>
+          </xs:element>
+          <xs:element name="value" type="NonEmptyStringType" minOccurs="1" maxOccurs="unbounded">
+            <xs:annotation>
+              <xs:appinfo>
+                <doc:tooltip>Value</doc:tooltip>
+                <doc:description>Value to query for the corresponding field(s)</doc:description>
+                <doc:example>California</doc:example>
+              </xs:appinfo>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="DateFilterType">
+    <xs:complexContent>
+      <xs:extension base="FilterType">
+        <xs:choice>
+          <xs:sequence>
+            <xs:element name="min" type="xs:dateTime" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Minimum date</doc:tooltip>
+                  <doc:description>The minimum date to display in a date picker user interface
+                    tool.</doc:description>
+                  <doc:example>1980-03-23T10:20:15</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="max" type="xs:dateTime" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Maximum date</doc:tooltip>
+                  <doc:description>The maximum date to display in a date picker user interface
+                    tool.</doc:description>
+                  <doc:example>1980-03-23T10:20:15</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element name="value" type="xs:dateTime" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Exact date</doc:tooltip>
+                  <doc:description>If a value is set on a DateFilter, the query will filter by
+                    datasets whose given field(s) match this specific date-time.</doc:description>
+                  <doc:example>1980-03-23T10:20:15</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:choice>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="NumericFilterType">
+    <xs:complexContent>
+      <xs:extension base="FilterType">
+        <xs:choice>
+          <xs:sequence minOccurs="1">
+            <xs:element name="min" type="xs:float" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Minimum number</doc:tooltip>
+                  <doc:description>The minimum number to display in a number input user interface
+                    tool.</doc:description>
+                  <doc:example>1.5</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+            <xs:element name="max" type="xs:float" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Maximum number</doc:tooltip>
+                  <doc:description>The maximum number to display in a number input user interface
+                    tool.</doc:description>
+                  <doc:example>1.5</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+          <xs:sequence>
+            <xs:element name="value" type="xs:float" minOccurs="0" maxOccurs="1">
+              <xs:annotation>
+                <xs:appinfo>
+                  <doc:tooltip>Exact date</doc:tooltip>
+                  <doc:description>If a value is set on a NumericFilter, the query will filter by
+                    datasets whose given field(s) match this specific number or numbers.</doc:description>
+                  <doc:example>123.456</doc:example>
+                </xs:appinfo>
+              </xs:annotation>
+            </xs:element>
+          </xs:sequence>
+        </xs:choice>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:complexType name="BooleanFilterType">
+    <xs:complexContent>
+      <xs:extension base="FilterType">
+        <xs:sequence>
+          <xs:element name="value" type="xs:boolean" minOccurs="0" maxOccurs="1">
+            <xs:annotation>
+              <xs:appinfo>
+                <doc:tooltip>Boolean Value</doc:tooltip>
+                <doc:description>The boolean value to include in the search query - can only be
+                  either true or false.</doc:description>
+                <doc:example>true</doc:example>
+              </xs:appinfo>
+            </xs:annotation>
+          </xs:element>
+        </xs:sequence>
+      </xs:extension>
+    </xs:complexContent>
+  </xs:complexType>
+
+  <xs:simpleType name="NonEmptyStringType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>Non Empty String Type</doc:tooltip>
+        <doc:summary>Non Empty String Type</doc:summary>
+        <doc:description>This type specifies a content pattern for all elements that are required by
+          this schema to ensure that there is actual content (i.e., not just whitespace). The
+          pattern described can be interpreted as "at least one non-whitespace character, followed
+          by any number of whitespace plus not-whitespace characters. " Leading and/or trailing
+          whitespace is allowed, and whitespace may include carriage returns and
+          newlines.</doc:description>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:pattern value="[\s]*[\S][\s\S]*"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:simpleType name="NoWhitespaceStringType">
+    <xs:annotation>
+      <xs:appinfo>
+        <doc:tooltip>No Whitespace String Type</doc:tooltip>
+        <doc:summary>No Whitespace String Type</doc:summary>
+        <doc:description>This type specifies a content pattern for elements whose string value
+          should not contain any whitespace characters. The pattern described can be interpreted as
+          "at least one non-whitespace character, followed by any number of non-whitespace
+          characters." Whitespace may include carriage returns and newlines.</doc:description>
+      </xs:appinfo>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:minLength value="1"/>
+      <xs:pattern value="\S*"/>
+    </xs:restriction>
+  </xs:simpleType>
+</xs:schema>

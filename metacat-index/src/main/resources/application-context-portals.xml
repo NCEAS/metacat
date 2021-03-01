@@ -12,6 +12,7 @@
 		<property name="matchDocuments">
 	   		<list>
 				<value>https://purl.dataone.org/portals-1.0.0</value>
+				<value>https://purl.dataone.org/portals-1.1.0</value>
 			</list>
 	   	</property>
 	  	<property name="fieldList">
