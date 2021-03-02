@@ -82,11 +82,16 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
     private static String portalFilePath = "test/example-portal.xml";
+    private static String portal110FilePath = "metacat-index/src/test/resources/collection/portal-1.1.0-example.xml";
+    private static String collection110FilePath = "metacat-index/src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml";
     private int tryAcccounts = 50;
     
     private static final String collectionResult = "<str name=\"collectionQuery\">((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA))</str>";
+    private static final String collectionQueryPortal110 = "((text:\"*soil carbon*\" AND ((keywords:soil AND keywords:nitrogen) OR (attribute:soil AND attribute:nitrogen)) AND (dateUploaded:[2000-01-01T00:00:00Z TO 2018-01-01T00:00:00Z] AND beginDate:[2000-01-01T00:00:00Z TO 2018-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *] AND -(datasource:urn\\:node\\:TERN OR datasource:urn\\:node\\:ARCTIC)) AND (-obsoletedBy:* AND formatType:METADATA))";
+    private static final String collectionQueryCollection110 = "<str name=\"collectionQuery\">(((authorLastName:Kim AND -(identifier:urn\\:uuid\\:a843239b-6d04-4019-9835-6e3c8e3418c8 OR identifier:urn\\:uuid\\:30a28104-6814-497a-8f72-7fecb36cb721 OR identifier:urn\\:uuid\\:83b718dd-d709-466e-bf0d-0710a71e7a20)) OR (projectText:\"My Project\" AND keywordsText:\"Special Word\") OR (awardNumber:123 AND (beginDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z] AND endDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z]))) AND (-obsoletedBy:* AND formatType:METADATA))</str>";
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
     private static final String longQueryFile = "test/test-queries/long-solr-query-partial.txt";
+    
     
   /**
    * Set up the test fixtures
@@ -127,6 +132,8 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testPostLongQuery"));
     suite.addTest(new MNodeQueryTest("testChineseCharacters"));
     suite.addTest(new MNodeQueryTest("testAccess"));
+    suite.addTest(new MNodeQueryTest("testPortal110"));
+    suite.addTest(new MNodeQueryTest("testCollectionl110"));
     return suite;
     
   }
@@ -1422,6 +1429,100 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(!resultStr.contains("checksum"));
         
+    }
+    
+    
+    /**
+     * Test insert a portal-1.1.0 document
+     * @throws Exception
+     */
+    public void testPortal110() throws Exception {
+        printTestHeader("testPortal110");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testPortal101." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(portal110FilePath);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://purl.dataone.org/portals-1.1.0");
+        sysmeta.setFormatId(formatId);
+        System.out.println("the checksum is "+sysmeta.getChecksum().getValue());
+        Identifier sid = new Identifier();
+        sid.setValue("testPortal-sid" + System.currentTimeMillis());
+        sysmeta.setSeriesId(sid);
+        object.close();
+        InputStream object2 = new FileInputStream(portal110FilePath);
+        System.out.println("before insert the object +++++++++++++++++++++ " +guid.getValue());
+        try {
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+        } catch (Exception e) {
+            System.out.println("the error is " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        System.out.println("After insert the object =========================");
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue(resultStr.contains("<str name=\"label\">portal-1.1.0-example</str>"));
+        assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
+        assertTrue(resultStr.contains(collectionQueryPortal110));
+    }
+    
+    
+    /**
+     * Test insert a collection-1.1.0 document
+     * @throws Exception
+     */
+    public void testCollectionl110() throws Exception {
+        printTestHeader("testCollectionl110");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCollectionl101." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(collection110FilePath);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://purl.dataone.org/collections-1.1.0");
+        sysmeta.setFormatId(formatId);
+        System.out.println("the checksum is "+sysmeta.getChecksum().getValue());
+        Identifier sid = new Identifier();
+        sid.setValue("testPortal-sid" + System.currentTimeMillis());
+        sysmeta.setSeriesId(sid);
+        object.close();
+        InputStream object2 = new FileInputStream(collection110FilePath);
+        System.out.println("before insert the object +++++++++++++++++++++ " +guid.getValue());
+        try {
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object2, sysmeta);
+        } catch (Exception e) {
+            System.out.println("the error is " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        System.out.println("After insert the object =========================");
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println(resultStr);
+        assertTrue(resultStr.contains("<str name=\"label\">filterGroup-operator-example</str>"));
+        //assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
+        assertTrue(resultStr.contains(collectionQueryCollection110));
     }
 
    
