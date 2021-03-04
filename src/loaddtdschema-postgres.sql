@@ -133,9 +133,9 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@portals1_0_0namespace@', '/schema/portals-1.0.0/portals.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
-  VALUES ('Schema', '@collections1_1_0namespace@', '/schema/collections-1.1.0/collections.xsd');
+  VALUES ('Schema', 'https://purl.dataone.org/collections-1.1.0', '/schema/collections-1.1.0/collections.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
-  VALUES ('Schema', '@portals1_1_0namespace@', '/schema/portals-1.1.0/portals.xsd');
+  VALUES ('Schema', 'https://purl.dataone.org/portals-1.1.0', '/schema/portals-1.1.0/portals.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gco', '/schema/isotc211/gco/gco.xsd');
 
