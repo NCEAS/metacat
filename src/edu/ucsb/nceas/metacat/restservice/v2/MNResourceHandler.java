@@ -1522,25 +1522,31 @@ public class MNResourceHandler extends D1ResourceHandler {
         	formatId = new ObjectFormatIdentifier();
         	formatId.setValue(format);
         }
-		InputStream is = MNodeService.getInstance(request).getPackage(session, formatId , id);
-        
-        // use the provided filename
-        String filename = null;
-        if (is instanceof DeleteOnCloseFileInputStream) {
-            filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
-        } else {
-        	filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
+        InputStream is = null;
+        try {
+            is = MNodeService.getInstance(request).getPackage(session, formatId , id);
+            
+            // use the provided filename
+            String filename = null;
+            if (is instanceof DeleteOnCloseFileInputStream) {
+                filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
+            } else {
+                filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
+            }
+            response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+            response.setContentType("application/zip");
+            response.setStatus(200);
+            OutputStream out = response.getOutputStream();
+            
+            // write it to the output stream
+            IOUtils.copyLarge(is, out);
+            IOUtils.closeQuietly(out);
+            long end = System.currentTimeMillis();
+            logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+            
+        } finally {
+            IOUtils.closeQuietly(is);
         }
-        response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
-        response.setContentType("application/zip");
-        response.setStatus(200);
-        OutputStream out = response.getOutputStream();
-        
-        // write it to the output stream
-        IOUtils.copyLarge(is, out);
-        IOUtils.closeQuietly(out);
-        long end = System.currentTimeMillis();
-        logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
    }
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
