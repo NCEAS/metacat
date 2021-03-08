@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.14.0 Release
+Version: 2.14.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,20 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.14.1
+New features and bugs fixed in this release:
+* Support XML new schemas for collections-portals-1.1.0
+* Metacat creating too many Timer objects leads the out of memory issue
+* Unauthorized user can change access policy on update
+* Close OutputStream objects after fulfilling DataONE API requests
+* Fix how exclude filters are translated in the collectionQuery
+* Update Apache setup docs to match current practice
+* Update documentation build to Python3
+* Editor days "Nothing was found" despite having all permissions
+* Project abstract displays oddly
+* View service rendering EML project abstract incorrectly
+* Add Methods section heading to metadata view
 
 ### Release Notes for 2.14.0
 New features and bugs fixed in this release:
