@@ -482,7 +482,8 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = null;
         try {
             authDel = new D1AuthHelper(request,pid,"1200","1310");
-            authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());//if the user has the change permission, it will be all set; otherwise, we need to check more.
+            //if the user has the change permission, it will be all set; otherwise, we need to check more.
+            authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
             allowed = true;
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
@@ -537,12 +538,18 @@ public class MNodeService extends D1NodeService
             }
             
             //check the if client change the authoritative member node.
-            if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+            if (sysmeta.getAuthoritativeMemberNode() == null ||
+                    sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
                     sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
                 sysmeta.setAuthoritativeMemberNode(originMemberNode);
-            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && !sysmeta.getAuthoritativeMemberNode().getValue().equals(existingSysMeta.getAuthoritativeMemberNode().getValue())){
-                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + existingSysMeta.getAuthoritativeMemberNode().getValue() + " and new authoriativeMemberNode is " + 
-                                        sysmeta.getAuthoritativeMemberNode().getValue() + ". They don't match. Clients don't have the permission to change it.");
+            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && 
+                        !sysmeta.getAuthoritativeMemberNode().getValue().equals(
+                        existingSysMeta.getAuthoritativeMemberNode().getValue())){
+                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + 
+                            existingSysMeta.getAuthoritativeMemberNode().getValue() + 
+                            " and new authoriativeMemberNode is " + 
+                            sysmeta.getAuthoritativeMemberNode().getValue() + 
+                            ". They don't match. Clients don't have the permission to change it.");
             }
             
             end =System.currentTimeMillis();
