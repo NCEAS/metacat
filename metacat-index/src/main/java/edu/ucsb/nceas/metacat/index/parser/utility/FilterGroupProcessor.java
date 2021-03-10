@@ -25,7 +25,11 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.xml.xpath.*;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,7 +39,7 @@ import org.w3c.dom.NodeList;
 
 /**
  *
- * Assembled a query string based on a set of filters in a DataONE collection document.
+ * Assemble a query string based on a set of filters in a DataONE collection document.
  * <p>
  * Used by FilterCommonRootSolrField.
  * Based on CommonRootSolrField by sroseboo
