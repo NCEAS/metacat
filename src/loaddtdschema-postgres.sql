@@ -130,9 +130,12 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://purl.org/ornl/schema/mercury/terms/v1.0', '/schema/ornl/ornl-mercury-v1.0.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@collections1_0_0namespace@', '/schema/collections-1.0.0/collections.xsd');
-  INSERT INTO xml_catalog (entry_type, public_id, system_id)
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', '@portals1_0_0namespace@', '/schema/portals-1.0.0/portals.xsd');
-  
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'https://purl.dataone.org/collections-1.1.0', '/schema/collections-1.1.0/collections.xsd');
+INSERT INTO xml_catalog (entry_type, public_id, system_id)
+  VALUES ('Schema', 'https://purl.dataone.org/portals-1.1.0', '/schema/portals-1.1.0/portals.xsd');
 INSERT INTO xml_catalog (entry_type, public_id, system_id)
   VALUES ('Schema', 'http://www.isotc211.org/2005/gco', '/schema/isotc211/gco/gco.xsd');
 
@@ -212,4 +215,4 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
 INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'http://www.openarchives.org/OAI/2.0/oai_dc/', '/schema/oai_dc/oai_dc.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://www.openarchives.org/OAI/2.0/oai_dc/');
 
 INSERT INTO db_version (version, status, date_created) 
-  VALUES ('2.14.0',1,CURRENT_DATE);
+  VALUES ('2.14.1',1,CURRENT_DATE);

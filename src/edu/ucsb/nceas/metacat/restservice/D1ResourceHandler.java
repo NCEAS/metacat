@@ -35,7 +35,6 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -60,7 +59,6 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
 import edu.ucsb.nceas.metacat.AuthSession;
-import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
@@ -115,7 +113,6 @@ public class D1ResourceHandler {
     
     protected ServletContext servletContext;
     protected static Log logMetacat;
-    protected MetacatHandler handler;
     protected HttpServletRequest request;
     protected HttpServletResponse response;
 
@@ -263,11 +260,6 @@ public class D1ResourceHandler {
             // initialize the parameters
             params = new Hashtable<String, String[]>();
             initParams();
-
-            // create the handler for interacting with Metacat
-            Timer timer = new Timer();
-            handler = new MetacatHandler(timer);
-
         } catch (Exception e) {
         	// TODO: more D1 structure when failing here
         	response.setStatus(400);
@@ -569,6 +561,8 @@ public class D1ResourceHandler {
         } catch (IOException e1) {
             logMetacat.error("Error writing exception to stream. " 
                     + e1.getMessage());
+        } finally {
+            IOUtils.closeQuietly(out);
         }
     }
     
