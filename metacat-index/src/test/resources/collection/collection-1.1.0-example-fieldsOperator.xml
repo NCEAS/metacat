@@ -9,9 +9,9 @@
             <field>abstract</field>
             <field>keywordsText</field>
             <operator>AND</operator>
+            <fieldsOperator>OR</fieldsOperator>
             <value>salmon</value>
             <value>climate</value>
-            <fieldsOperator>OR</fieldsOperator>
         </filter>
     </definition>
 </col:collection>
