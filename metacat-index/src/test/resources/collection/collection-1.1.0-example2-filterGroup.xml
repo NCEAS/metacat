@@ -6,8 +6,8 @@
     <definition>
         <filter>
             <field>siteText</field>
-            <value>America</value>
             <matchSubstring>true</matchSubstring>
+            <value>America</value>
         </filter>
         <filter>
             <field>keywordsText</field>
@@ -30,8 +30,8 @@
                 <field>westBoundCoord</field>
                 <max>-79</max>
             </numericFilter>
-            <exclude>true</exclude>
             <operator>AND</operator>
+            <exclude>true</exclude>
         </filterGroup>
         <operator>AND</operator>
     </definition>

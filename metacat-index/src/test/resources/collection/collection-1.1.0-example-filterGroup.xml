@@ -14,15 +14,15 @@
         <filter>
             <field>keywords</field>
             <field>attribute</field>
-            <value>soil layer</value>
             <fieldsOperator>AND</fieldsOperator>
+            <value>soil layer</value>
         </filter>
         <dateFilter>
             <field>dateUploaded</field>
             <field>beginDate</field>
+            <fieldsOperator>AND</fieldsOperator>
             <min>1800-01-01T00:00:00Z</min>
             <max>2009-01-01T00:00:00Z</max>
-            <fieldsOperator>AND</fieldsOperator>
         </dateFilter>
         <booleanFilter>
             <field>isPublic</field>
