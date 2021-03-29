@@ -42,6 +42,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  *
  */
 public class NodeReplicationPolicyChecker {
+    private static final String DELIMITER = ";";
     private static Log logMetacat = LogFactory.getLog(NodeReplicationPolicyChecker.class);
     private static Vector<NodeReference> allowedNodes = null;
     private static Vector<ObjectFormatIdentifier> allowedFormats = null;
@@ -49,61 +50,8 @@ public class NodeReplicationPolicyChecker {
     private static long spaceAllocated = -1;
     
     static {
-        try {
-            maxObjectSize = (new Long(PropertyService.getProperty("dataone.node.replicationpolicy.maxObjectSize"))).longValue();
-        } catch (NumberFormatException e) {
-           logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the max object size since " + e.getMessage());
-        } catch (PropertyNotFoundException e) {
-            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the max object size since " + e.getMessage());
-        }
-        
-        try {
-            spaceAllocated = (new Long(PropertyService.getProperty("dataone.node.replicationpolicy.spaceAllocated"))).longValue();
-        } catch (NumberFormatException e) {
-            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allocated space since " + e.getMessage());
-        } catch (PropertyNotFoundException e) {
-            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allocated space since " + e.getMessage());
-        }
-        
-        String allowedNodeString = null;
-        try {
-            allowedNodeString = PropertyService.getProperty("dataone.node.replicationpolicy.allowedNode");
-        } catch (PropertyNotFoundException e) {
-            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allowed node list since " + e.getMessage());
-        }       
-        Vector<String > allowedNodeStrs = AuthUtil.split(allowedNodeString, AuthUtil.DELIMITER, AuthUtil.ESCAPECHAR);
-        if (allowedNodeStrs != null && !allowedNodeStrs.isEmpty()) {
-            allowedNodes = new Vector<NodeReference>();
-            for (String nodeValue : allowedNodeStrs) {
-                NodeReference node = new NodeReference();
-                node.setValue(nodeValue);
-                logMetacat.debug("NodeReplicationPolicyChecker.static.block - add " + nodeValue + " to the allowed replication node list");
-                allowedNodes.add(node);
-            }
-        }
-        
-        String allowedFormatString = null;
-        try {
-            allowedFormatString = PropertyService.getProperty("dataone.node.replicationpolicy.allowedObjectFormat");
-        } catch (PropertyNotFoundException e) {
-            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allowed format list since " + e.getMessage());
-        }       
-        Vector<String > allowedFormatStrs = AuthUtil.split(allowedFormatString, AuthUtil.DELIMITER, AuthUtil.ESCAPECHAR);
-        if (allowedFormatStrs != null && !allowedFormatStrs.isEmpty()) {
-            allowedFormats = new Vector<ObjectFormatIdentifier>();
-            for (String formatValue : allowedFormatStrs) {
-                ObjectFormatIdentifier format = new ObjectFormatIdentifier();
-                format.setValue(formatValue);
-                try {
-                    ObjectFormatIdentifier fmtid = ObjectFormatCache.getInstance().getFormat(format).getFormatId();
-                    logMetacat.debug("NodeReplicationPolicyChecker.static.block - add " + fmtid.getValue() + " to the allowed replication format list");
-                    allowedFormats.add(fmtid);
-                } catch (NotFound e) {
-                    logMetacat.error("NodeReplicationPolicyChecker.static.block - can't add the " + formatValue +  
-                            " into the allowed replication format list since " + e.getMessage());
-                }
-            }
-        }
+        //get the properties related to the node replication policy
+        refresh();
     }
 
     /**
@@ -157,5 +105,66 @@ public class NodeReplicationPolicyChecker {
             return allow;
         }
         return allow;
+    }
+    
+    /**
+     * Refresh those properties from the metacat.peroperties file
+     */
+    public static void refresh() {
+        try {
+            maxObjectSize = (new Long(PropertyService.getProperty("dataone.node.replicationpolicy.maxObjectSize"))).longValue();
+        } catch (NumberFormatException e) {
+           logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the max object size since " + e.getMessage());
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the max object size since " + e.getMessage());
+        }
+        
+        try {
+            spaceAllocated = (new Long(PropertyService.getProperty("dataone.node.replicationpolicy.spaceAllocated"))).longValue();
+        } catch (NumberFormatException e) {
+            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allocated space since " + e.getMessage());
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allocated space since " + e.getMessage());
+        }
+        
+        String allowedNodeString = null;
+        try {
+            allowedNodeString = PropertyService.getProperty("dataone.node.replicationpolicy.allowedNode");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allowed node list since " + e.getMessage());
+        }       
+        Vector<String > allowedNodeStrs = AuthUtil.split(allowedNodeString, DELIMITER, AuthUtil.ESCAPECHAR);
+        if (allowedNodeStrs != null && !allowedNodeStrs.isEmpty()) {
+            allowedNodes = new Vector<NodeReference>();
+            for (String nodeValue : allowedNodeStrs) {
+                NodeReference node = new NodeReference();
+                node.setValue(nodeValue);
+                logMetacat.debug("NodeReplicationPolicyChecker.static.block - add " + nodeValue + " to the allowed replication node list");
+                allowedNodes.add(node);
+            }
+        }
+        
+        String allowedFormatString = null;
+        try {
+            allowedFormatString = PropertyService.getProperty("dataone.node.replicationpolicy.allowedObjectFormat");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("NodeReplicationPolicyChecker.static.block - can't get the allowed format list since " + e.getMessage());
+        }       
+        Vector<String > allowedFormatStrs = AuthUtil.split(allowedFormatString, DELIMITER, AuthUtil.ESCAPECHAR);
+        if (allowedFormatStrs != null && !allowedFormatStrs.isEmpty()) {
+            allowedFormats = new Vector<ObjectFormatIdentifier>();
+            for (String formatValue : allowedFormatStrs) {
+                ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+                format.setValue(formatValue);
+                try {
+                    ObjectFormatIdentifier fmtid = ObjectFormatCache.getInstance().getFormat(format).getFormatId();
+                    logMetacat.debug("NodeReplicationPolicyChecker.static.block - add " + fmtid.getValue() + " to the allowed replication format list");
+                    allowedFormats.add(fmtid);
+                } catch (NotFound e) {
+                    logMetacat.error("NodeReplicationPolicyChecker.static.block - can't add the " + formatValue +  
+                            " into the allowed replication format list since " + e.getMessage());
+                }
+            }
+        }
     }
 }
