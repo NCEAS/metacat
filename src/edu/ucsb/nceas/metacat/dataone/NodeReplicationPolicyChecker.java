@@ -114,6 +114,48 @@ public class NodeReplicationPolicyChecker {
      */
     public static boolean check(NodeReference sourceNode, SystemMetadata sysmeta) {
         boolean allow = false;
+        //check allowed node
+        if (allowedNodes == null || allowedNodes.isEmpty()) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the allowed nodes is empty so any nodes are allowed.");
+            allow = true;
+        } else if (allowedNodes.contains(sourceNode)) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the node " + sourceNode.getValue() + " is in the allowed list.");
+            allow = true;
+        } else {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the node " + sourceNode.getValue() + 
+                    " is NOT in the allowed list and the replication is denied.");
+            allow = false;
+            return allow;
+        }
+        
+        //check the object size
+        if (maxObjectSize < 0) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the max object size is less than 0 so any sizes are allowed.");
+            allow = true;
+        } else if (maxObjectSize >= sysmeta.getSize().longValue()) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the max object size " + maxObjectSize + 
+                    " is greater than or equals the object size " + sysmeta.getSize().longValue());
+            allow = true;
+        } else {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the max object size " + maxObjectSize + 
+                    " is less than the object size " + sysmeta.getSize().longValue() + ". So the replication request is denied.");
+            allow = false;
+            return allow;
+        }
+        
+        //check the format id list
+        if (allowedFormats == null || allowedFormats.isEmpty()) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the allowed formats is empty so any formats are allowed.");
+            allow = true;
+        } else if (allowedFormats.contains(sysmeta.getFormatId())) {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the object format " + sysmeta.getFormatId().getValue() + " is in the allowed list.");
+            allow = true;
+        } else {
+            logMetacat.info("NodeReplicationPolicyChecker.check - the object format " + sysmeta.getFormatId().getValue() + 
+                            " is NOT in the allowed list so the replication request is denied.");
+            allow = false;
+            return allow;
+        }
         return allow;
     }
 }
