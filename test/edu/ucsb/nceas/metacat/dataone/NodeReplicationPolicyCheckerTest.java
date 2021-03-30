@@ -26,6 +26,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.util.HashMap;
 
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -103,8 +104,14 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             PropertyService.setProperty("dataone.node.replicationpolicy.allowedNode", nodeStr1 + ";" + nodeStr3);
             PropertyService.persistProperties();
             NodeReplicationPolicyChecker.refresh();
-            assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
-            
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the the node is not allowed");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(nodeStr2));
+            }
+
             //set the allowed nodes which include the source node
             PropertyService.setProperty("dataone.node.replicationpolicy.allowedNode", nodeStr1 + ";" + nodeStr2 + ";" + nodeStr3);
             PropertyService.persistProperties();
@@ -115,7 +122,13 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             PropertyService.setProperty("dataone.node.replicationpolicy.maxObjectSize", "500000");
             PropertyService.persistProperties();
             NodeReplicationPolicyChecker.refresh();
-            assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the the size is too big");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(one_mega));
+            }
             
             //set the object size greater than the current object
             PropertyService.setProperty("dataone.node.replicationpolicy.maxObjectSize", two_mega);
@@ -127,9 +140,15 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             PropertyService.setProperty("dataone.node.replicationpolicy.allowedObjectFormat", eml200 + ";" + text);
             PropertyService.persistProperties();
             NodeReplicationPolicyChecker.refresh();
-            assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the the format is not allowed");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(eml210));
+            }
             
-          //set the allowed format list including the eml210
+            //set the allowed format list including the eml210
             PropertyService.setProperty("dataone.node.replicationpolicy.allowedObjectFormat", eml200 + ";" + text + ";" + eml210);
             PropertyService.persistProperties();
             NodeReplicationPolicyChecker.refresh();
@@ -141,7 +160,13 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             PropertyService.setProperty("dataone.node.replicationpolicy.allowedObjectFormat", text);
             PropertyService.persistProperties();
             NodeReplicationPolicyChecker.refresh();
-            assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the the node is not allowed");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(nodeStr2));
+            }
             
             
         } finally {

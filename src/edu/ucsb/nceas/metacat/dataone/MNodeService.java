@@ -885,6 +885,11 @@ public class MNodeService extends D1NodeService
         if (!isValidIdentifier(pid)) {
             throw new InvalidRequest("2153", "The provided identifier in the system metadata is invalid.");
         }
+        
+        if (!NodeReplicationPolicyChecker.check(sourceNode, sysmeta)) {
+            throw new InvalidRequest("2153", "The object " + pid.getValue() + " from sourceNode" + sourceNode.getValue() + 
+                     " is not allowed to replicate to this node based on the node replication policy.");
+        }
 
         // get from the membernode
         // TODO: switch credentials for the server retrieval?

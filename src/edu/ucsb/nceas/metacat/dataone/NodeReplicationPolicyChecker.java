@@ -24,6 +24,7 @@ import java.util.Vector;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.types.v1.NodeReference;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
@@ -60,7 +61,20 @@ public class NodeReplicationPolicyChecker {
      * @param sysmeta  the system meta data of the replica
      * @return true if the object is allowed to be stored as a replica; otherwise false.
      */
-    public static boolean check(NodeReference sourceNode, SystemMetadata sysmeta) {
+    public static boolean check(NodeReference sourceNode, SystemMetadata sysmeta) throws InvalidRequest {
+        if (sourceNode == null || sourceNode.getValue() == null || sourceNode.getValue().trim().equals("")) {
+            throw new InvalidRequest("2153", "NodeReplicationPolicyChecker.check - the source node must not be blank");
+        }
+        
+        if (sysmeta == null || sysmeta.getSize() == null) {
+            throw new InvalidRequest("2153", "NodeReplicationPolicyChecker.check - the size the object must not be blank");
+        }
+        
+        if (sysmeta == null || sysmeta.getFormatId() == null || sysmeta.getFormatId().getValue() == null || 
+                sysmeta.getFormatId().getValue().trim().equals("")) {
+            throw new InvalidRequest("2153", "NodeReplicationPolicyChecker.check - the object format id must not be blank");
+        }
+        
         boolean allow = false;
         //check allowed node
         if (allowedNodes == null || allowedNodes.isEmpty()) {
@@ -70,10 +84,11 @@ public class NodeReplicationPolicyChecker {
             logMetacat.info("NodeReplicationPolicyChecker.check - the node " + sourceNode.getValue() + " is in the allowed list.");
             allow = true;
         } else {
-            logMetacat.info("NodeReplicationPolicyChecker.check - the node " + sourceNode.getValue() + 
-                    " is NOT in the allowed list and the replication is denied.");
+            String error = "NodeReplicationPolicyChecker.check - the node " + sourceNode.getValue() + 
+                         " is NOT in the allowed list and the replication is denied.";
+            logMetacat.error(error);
             allow = false;
-            return allow;
+            throw new InvalidRequest("2153", error);
         }
         
         //check the object size
@@ -85,10 +100,11 @@ public class NodeReplicationPolicyChecker {
                     " is greater than or equals the object size " + sysmeta.getSize().longValue());
             allow = true;
         } else {
-            logMetacat.info("NodeReplicationPolicyChecker.check - the max object size " + maxObjectSize + 
-                    " is less than the object size " + sysmeta.getSize().longValue() + ". So the replication request is denied.");
+            String error = "NodeReplicationPolicyChecker.check - the max object size " + maxObjectSize + 
+                    " is less than the object size " + sysmeta.getSize().longValue() + ". So the replication request is denied.";
+            logMetacat.error(error);
             allow = false;
-            return allow;
+            throw new InvalidRequest("2153", error);
         }
         
         //check the format id list
@@ -99,10 +115,11 @@ public class NodeReplicationPolicyChecker {
             logMetacat.info("NodeReplicationPolicyChecker.check - the object format " + sysmeta.getFormatId().getValue() + " is in the allowed list.");
             allow = true;
         } else {
-            logMetacat.info("NodeReplicationPolicyChecker.check - the object format " + sysmeta.getFormatId().getValue() + 
-                            " is NOT in the allowed list so the replication request is denied.");
+            String error = "NodeReplicationPolicyChecker.check - the object format " + sysmeta.getFormatId().getValue() + 
+                    " is NOT in the allowed list so the replication request is denied.";
+            logMetacat.error(error);
             allow = false;
-            return allow;
+            throw new InvalidRequest("2153", error);
         }
         return allow;
     }
