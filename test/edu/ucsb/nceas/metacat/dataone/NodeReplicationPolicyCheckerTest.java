@@ -128,6 +128,7 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
                 assertTrue(e.getMessage().contains(one_mega));
+                assertTrue(e.getMessage().contains(guid.getValue()));
             }
             
             //set the object size greater than the current object
@@ -146,6 +147,7 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
             } catch (Exception e) {
                 assertTrue(e instanceof InvalidRequest);
                 assertTrue(e.getMessage().contains(eml210));
+                assertTrue(e.getMessage().contains(guid.getValue()));
             }
             
             //set the allowed format list including the eml210
@@ -168,6 +170,37 @@ public class NodeReplicationPolicyCheckerTest extends D1NodeServiceTest {
                 assertTrue(e.getMessage().contains(nodeStr2));
             }
             
+            //set guid to null in sysmeta
+            sysmeta.setIdentifier(null);
+            NodeReplicationPolicyChecker.refresh();
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the identifier is null");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+            }
+            
+            //set the source node to null
+            sysmeta.setIdentifier(guid);
+            NodeReplicationPolicyChecker.refresh();
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(null, sysmeta));
+                fail("We can't get here since the identifier is null");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(guid.getValue()));
+            }
+            
+            //set the object format id to null
+            sysmeta.setFormatId(null);
+            NodeReplicationPolicyChecker.refresh();
+            try {
+                assertTrue(!NodeReplicationPolicyChecker.check(sourceNode, sysmeta));
+                fail("We can't get here since the format id is null");
+            } catch (Exception e) {
+                assertTrue(e instanceof InvalidRequest);
+                assertTrue(e.getMessage().contains(guid.getValue()));
+            }
             
         } finally {
             //reset those original values back to the metacat.properties file
