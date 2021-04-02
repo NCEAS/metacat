@@ -37,8 +37,10 @@ import org.w3c.dom.NodeList;
  *
  * Assembled a query string based on a set of filters in a DataONE collection document.
  * <p>
- * Used by FilterCommonRootSolrField.
- * Based on CommonRootSolrField by sroseboo
+ *   This class handles converting each <filterGroup> element of a portal filter <definition>,
+ *   including the top level filters that are not actually enclosed in a '<filterGroup>' element,
+ *   but are essential a top level filterGroup. The 'getFilterGroupValue' method therefore can
+ *   be called recursively.
  * </p>
  * @author slaughter
  *
