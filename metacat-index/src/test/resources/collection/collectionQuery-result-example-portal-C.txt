@@ -1,0 +1,1 @@
+((((keywordsText:polar)) OR id:urn\:uuid\:4852b15a-9c05-480b-b91d-fa34a59ce073 OR identifier:urn\:uuid\:aa80a1a5-b1bc-4788-9ca6-76c77247593b OR seriesId:S1_201628322590140) OR isPartOf:urn\:uuid\:1a0fc71f-2d4b-404b-9cf5-aa82db18479c) AND (-obsoletedBy:* AND formatType:METADATA)
