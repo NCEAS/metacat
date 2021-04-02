@@ -1743,7 +1743,7 @@ public abstract class D1NodeService {
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream dataStream, Checksum checksum, Identifier pid) 
+  public static File writeStreamToFile(File dir, String fileName, InputStream dataStream, Checksum checksum, Identifier pid) 
     throws ServiceFailure, InvalidSystemMetadata {
     
     File newFile = new File(dir, fileName);
