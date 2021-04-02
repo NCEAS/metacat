@@ -66,12 +66,13 @@ public abstract class NonXMLMetadataHandler {
      * @param source  the input stream contains the content of the meta data object
      * @param pid  the identifier associated with the input stream
      * @param expectedChecksum  the expected checksum for the saved file
+     * @return  the saved file. It can be null.
      * @throws UnsupportedType
      * @throws ServiceFailure
      * @throws InvalidRequest
      * @throws InvalidSystemMetadata
      */
-    public void save(InputStream source, Identifier pid, Checksum expectedChecksum) throws UnsupportedType, ServiceFailure, 
+    public File save(InputStream source, Identifier pid, Checksum expectedChecksum) throws UnsupportedType, ServiceFailure, 
                                                                                     InvalidRequest, InvalidSystemMetadata {
         if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
@@ -80,31 +81,40 @@ public abstract class NonXMLMetadataHandler {
             throw new UnsupportedType("1140", "NonXMLMetadataHandler.save - Metacat only supports the DetailedFileInputStream object for saving " 
                                     + pid.getValue() +" into disk");
         }
+        File savedFile = null;
         DetailedFileInputStream input = (DetailedFileInputStream) source;
         File sourceFile = input.getFile();
+        boolean valid = false;
         try {
-            if (!validate(new FileInputStream(sourceFile))) {
-                throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + " is invalid.");
-            } else {
-                if (metadataStoragePath == null) {
-                    throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
-                            " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
-                }
-                //Save the meta data object to disk using "localId" as the name
-                IdentifierManager im = IdentifierManager.getInstance();
-                String localId = im.generateLocalId(pid.getValue(), 1);
-                D1NodeService.writeStreamToFile(metadataStoragePath, localId, input, expectedChecksum, pid); 
-            }
-        } catch (FileNotFoundException ee) {
-            throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - can't find the file associated with the detailed file input stream " + 
-                                    " for the object " + pid.getValue() + " since " + ee.getMessage());
+           valid = validate(new FileInputStream(sourceFile));
+        } catch (FileNotFoundException e) {
+            throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot valid the meta data object " + 
+                                    " because cannot find the file associated with the detailed file input stream " + 
+                                    " for the object " + pid.getValue() + " since " + e.getMessage());
+        } catch (InvalidRequest e) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + " is invalid: " + e.getMessage());
         }
+        
+        if (!valid) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + " is invalid.");
+        } else {
+            if (metadataStoragePath == null) {
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
+                        " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
+            }
+            //Save the meta data object to disk using "localId" as the name
+            IdentifierManager im = IdentifierManager.getInstance();
+            String localId = im.generateLocalId(pid.getValue(), 1);
+            savedFile = D1NodeService.writeStreamToFile(metadataStoragePath, localId, input, expectedChecksum, pid); 
+        }
+        return savedFile;
     }
     
     /**
      *The abstract method to validate the non-xml object 
      * @param source  the input stream contains the content of the meta data object
      * @return true if the content is valid; false otherwise.
+     * @throws InvalidRequest  when the content is not valid
      */
-    protected abstract boolean validate(InputStream source);
+    public abstract boolean validate(InputStream source) throws InvalidRequest;
 }
