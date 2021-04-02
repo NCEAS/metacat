@@ -109,16 +109,9 @@ public class FilterRootElement {
         // This call processess all '<filterGroup> elements, in addition to all root level
         // filter definitions.
         log.trace("getRootValues, xpath: " + getxPath());
-        completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, prefixMatch, postfixMatch, xPath);
+        completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, idFilterMatch, isPartOfMatch, xPath);
 
-        log.error("completedFilterValue: " + completeFilterValue);
-        // Make sure that the only query term is a negation query, e.g. "-abstract:*fish*". This is a bit of a strange query, and
-        // would return many documents, but this is possible, so handle it.
-        if (completeFilterValue.matches("(^\\(*\\-\\w+:\\w+\\)*$)|(^\\(*\\-\\w+:\\*\\w+\\*\\)*$)")) {
-            completeFilterValue = completeFilterValue.replaceAll("^\\(", "");
-            completeFilterValue = completeFilterValue.replaceAll("\\)$", "");
-            completeFilterValue = "(" + completeFilterValue + " AND *:*" + ")";
-        }
+        log.trace("completeFilterValue: " + completeFilterValue);
 
         // This case shouldn't happen (no terms found or specified), but check anyway
         if(completeFilterValue == null) {
@@ -131,7 +124,7 @@ public class FilterRootElement {
             if (completeFilterValue != null) {
                 completeFilterValue = "(" + completeFilterValue + ")" + " AND " + catalogQuery;
             } else {
-                completeFilterValue = "(" + fixedTerm + ")";
+                completeFilterValue = catalogQuery;
             }
         }
 

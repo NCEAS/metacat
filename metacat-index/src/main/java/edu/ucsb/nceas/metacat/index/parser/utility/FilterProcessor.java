@@ -265,7 +265,7 @@ public class FilterProcessor {
 
         // Apply the 'exclude' modifier, if it was present in the XML
         if (excludeCondition) {
-            completeFilterValue = "-" + completeFilterValue;
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
         }
 
         completeFilterValue = completeFilterValue.trim();
