@@ -33,6 +33,8 @@ import org.dataone.cn.indexer.parser.utility.LeafElement;
 /**
  *
  * Assembled a query string based on a set of filters in a DataONE collection document.
+ * This class handles communication with most of the Spring infrastructure built into the
+ * indexing component.
  * <p>
  * Used by FilterCommonRootSolrField.
  * Based on CommonRootSolrField by sroseboo
@@ -102,6 +104,7 @@ public class FilterRootElement {
         //     OR (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708))
         //     AND (-obsoletedBy:* AND formatType:METADATA)
 
+        String completeFilterValue = null;
         FilterGroupProcessor fgp = new FilterGroupProcessor();
         // This call processess all '<filterGroup> elements, in addition to all root level
         // filter definitions.
@@ -122,12 +125,11 @@ public class FilterRootElement {
             completeFilterValue = "(id:*)";
         }
 
-        // Don't include the 'fixed' filter if there are no pre or main filters. The fixed filter
-        // is usually something like '(-obsoletedBy:* AND formatType:METADATA)', which will return ALL
-        // unobsoleted metadata pids if there is no pre or main filters to constrain it.
-        if (fixedTerm != null) {
+        // Add the 'catalog' term, which is usually something like
+        // '(-obsoletedBy:* AND formatType:METADATA)'.
+        if (catalogQuery != null) {
             if (completeFilterValue != null) {
-                completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
+                completeFilterValue = "(" + completeFilterValue + ")" + " AND " + catalogQuery;
             } else {
                 completeFilterValue = "(" + fixedTerm + ")";
             }
@@ -223,8 +225,8 @@ public class FilterRootElement {
     }
 
     /**
-     * Get the terms used to identify a 'prefix' filter
-     * @return the terms used to identify a 'prefix' filter
+     * Get the terms used to identify a 'id' filter
+     * @return the terms used to identify a 'id' filter
      * @see "application-context-collection.xml"
      */
     public String getIdFilterMatch() {

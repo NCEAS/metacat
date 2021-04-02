@@ -91,10 +91,12 @@ public class FilterGroupProcessor {
         // Create XPath object
         XPathFactory xpathFactory = XPathFactory.newInstance();
         XPath xpath = xpathFactory.newXPath();
-        XPathExpression xPathExpression = xpath.compile(xPath);
+        String localName = "./*[local-name()]";
+        XPathExpression xPathExpression = xpath.compile(localName);
+        NodeList topNodes = (NodeList) xPathExpression.evaluate(docOrNode, XPathConstants.NODESET);
 
+        xPathExpression = xpath.compile(xPath);
         log.trace("FilterGroupProcessor.getFilterGroupValue xpath: " + xPath);
-
         NodeList nodeList = (NodeList) xPathExpression.evaluate(docOrNode,
                 XPathConstants.NODESET);
 
@@ -134,6 +136,7 @@ public class FilterGroupProcessor {
         }
 
         String operator = "AND";
+        // Top level (of /defintion) or filterGroup exclude operator
         Boolean exclude = false;
 
         // Find elements '<operator>', '<fieldsOperator>' // and '<exclude>' elements.
@@ -157,6 +160,7 @@ public class FilterGroupProcessor {
         // Loop through the nodes that match the filter xpath, for example "//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
+            log.trace("Processing node: " + node.getNodeName());
 
             Boolean foundNode = false;
             // For each node, search for a matching filter that can process that filter type
@@ -166,7 +170,7 @@ public class FilterGroupProcessor {
                     foundNode = true;
                     filterProcessor.initXPathExpressions();
                     filterValue = filterProcessor.getFilterValue(node);
-                    log.trace("returned filterValue: " + filterValue);
+                    log.trace("nodename: " + node.getNodeName() + " returned filterValue: " + filterValue);
                     break;
                 }
             }
@@ -245,32 +249,42 @@ public class FilterGroupProcessor {
 
         // Now assemble the complete query
         // (((prefilter) OR (main filters)) AND (fixedTerm)) OR (postfilter)
-        // Add the prefilter value, if defined.
-        if(prefilterValue != null) {
-            completeFilterValue = "(" + prefilterValue + ")";
-        }
 
         // Next add the main filter value, if defined.
         if(mainFilterValue != null) {
+            completeFilterValue = mainFilterValue;
+        }
+
+        // If multiple sub-filters were found, or an exclude condition was specified in the filter,
+        // surround the filter value with parenthesis. Note that in the case there is no 'main' filter
+        // (not id and not isPartof), then the 'completeFilterValue' will be null.
+        if ((nodeList.getLength() > 1 || exclude) && completeFilterValue != null) {
+            completeFilterValue = "(" + completeFilterValue + ")";
+        }
+
+        // Add the id filter value, if defined.
+        if(idFilterValue != null) {
             if(completeFilterValue != null) {
-                completeFilterValue = completeFilterValue + " OR " + "(" + mainFilterValue + ")";
+                completeFilterValue = "(" + "(" + completeFilterValue + ")" + " OR " + idFilterValue + ")";
             } else {
-                completeFilterValue = mainFilterValue;
+                completeFilterValue = idFilterValue;
             }
+        }
+
+        // Apply the 'exclude' operator ("-") to the 'main filters' and 'id filters', but not to
+        // the 'postFilter' (or 'fixedFilter').
+        if (exclude && completeFilterValue != null) {
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
         }
 
         // Add the postfix terms
-        if(postfilterValue != null && !postfilterValue.isEmpty()) {
+        if(isPartOfFilterValue != null && !isPartOfFilterValue.isEmpty()) {
             if(completeFilterValue != null) {
-                completeFilterValue = completeFilterValue + " OR " + "(" + postfilterValue + ")";
+                completeFilterValue = completeFilterValue + " OR " + isPartOfFilterValue;
             } else {
-                completeFilterValue = postfilterValue;
+                completeFilterValue = isPartOfFilterValue;
             }
         }
-
-        completeFilterValue = "(" + completeFilterValue + ")";
-
-        if (exclude) completeFilterValue = "-" + completeFilterValue;
 
         return completeFilterValue;
     }
