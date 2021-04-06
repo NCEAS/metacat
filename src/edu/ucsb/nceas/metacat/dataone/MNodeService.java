@@ -165,6 +165,8 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
@@ -611,13 +613,18 @@ public class MNodeService extends D1NodeService
                 // TODO: don't put objects into memory using stream to string
                 //String objectAsXML = "";
                 try {
-                    //objectAsXML = IOUtils.toString(object, "UTF-8");
-                    String formatId = null;
-                    if(sysmeta.getFormatId() != null) {
-                        formatId = sysmeta.getFormatId().getValue();
+                    NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
+                    if ( handler != null ) {
+                        //non-xml metadata object path
+                        File file = handler.save(object, pid, sysmeta.getChecksum());
+                        localId = file.getName();
+                    } else {
+                        String formatId = null;
+                        if(sysmeta.getFormatId() != null) {
+                            formatId = sysmeta.getFormatId().getValue();
+                        }
+                        localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId, sysmeta.getChecksum());
                     }
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId, sysmeta.getChecksum());
-
                     // register the newPid and the generated localId
                     if (newPid != null) {
                         IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);

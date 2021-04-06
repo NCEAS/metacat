@@ -117,6 +117,8 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
@@ -461,14 +463,18 @@ public abstract class D1NodeService {
         // CASE METADATA:
       	//String objectAsXML = "";
         try {
-	        //objectAsXML = IOUtils.toString(object, "UTF-8");
-            String formatId = null;
-            if(sysmeta.getFormatId() != null)  {
-                formatId = sysmeta.getFormatId().getValue();
-            }
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId, sysmeta.getChecksum());
-	        //localId = im.getLocalId(pid.getValue());
-
+	        NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
+	        if ( handler != null ) {
+	            //non-xml metadata object path
+	            File file = handler.save(object, pid, sysmeta.getChecksum());
+	            localId = file.getName();
+	        } else {
+	            String formatId = null;
+	            if(sysmeta.getFormatId() != null)  {
+	                formatId = sysmeta.getFormatId().getValue();
+	            }
+	            localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId, sysmeta.getChecksum());
+	        }
         } catch (IOException e) {
             removeSystemMetaAndIdentifier(pid);
         	String msg = "The Node is unable to create the object "+pid.getValue() +
