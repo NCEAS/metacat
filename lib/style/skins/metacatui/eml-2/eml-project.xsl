@@ -102,7 +102,9 @@
      <xsl:for-each select="abstract">
        <div class="control-group">
          <label class="control-label projectAbstract">Abstract:</label>
-         <xsl:call-template name="text" />
+         <div class="controls controls-well">
+           <xsl:call-template name="text" />
+         </div>
        </div>
      </xsl:for-each>
   </xsl:template>

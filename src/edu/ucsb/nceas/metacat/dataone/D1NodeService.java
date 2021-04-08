@@ -139,7 +139,7 @@ public abstract class D1NodeService {
   protected String userAgent = null;
   
   /* reference to the metacat handler */
-  protected MetacatHandler handler;
+  protected static MetacatHandler handler = new MetacatHandler();
   
   /* parameters set in the incoming request */
   //private Hashtable<String, String[]> params;
@@ -1101,7 +1101,6 @@ public abstract class D1NodeService {
     }
     
     // do the insert or update action
-    handler = new MetacatHandler(new Timer());
     if (ipAddress == null) {
         ipAddress = request.getRemoteAddr();
     }
@@ -2519,7 +2518,10 @@ public abstract class D1NodeService {
                   outerLoop:
                   for (String subject : map1.keySet()) {
                       if (map2.get(subject) == null) {
-                          logMetacat.debug("D1NodeService.equals - found the subject " + subject + " does exist in the first AccessPolicy but doesnot exist in the second AccessPolicy. So they donot equal.");
+                          logMetacat.debug("D1NodeService.equals - found the subject " + 
+                          subject + " does exist in the first AccessPolicy " + 
+                          "but does not exist in the second AccessPolicy. " + 
+                          "So they do not equal.");
                           break;//find a subject doesn't exist on the the second map. So they don't equal.
                       } else {
                           List<Permission> permissions1 = map1.get(subject);
@@ -2566,16 +2568,24 @@ public abstract class D1NodeService {
                           for (Permission permission : permissions) {
                               if (permission != null && !permission.toString().trim().equals("")) {
                                   List<Permission> expandedPermissions = expandPermissions(permission);
-                                  logMetacat.debug("D1NodeService.consolidateAccessRules - the expanded permission is " + expandedPermissions + " for the permission " + permission);
+                                  logMetacat.debug("D1NodeService.consolidateAccessRules - " + 
+                                  "the expanded permission is " + 
+                                  expandedPermissions + " for the permission " + permission);
                                   if (!consolidatedMap.containsKey(subject.getValue())) {
                                       consolidatedMap.put(subject.getValue(), expandedPermissions);
-                                      logMetacat.debug("D1NodeService.consolidateAccessRules - put the subject " + subject.getValue() + " and the permissions " + expandedPermissions + " into the map");
+                                      logMetacat.debug("D1NodeService.consolidateAccessRules - " + 
+                                      "put the subject " + 
+                                      subject.getValue() + " and the permissions " + 
+                                      expandedPermissions + " into the map");
                                   } else {
                                       List<Permission> existedPermissions = consolidatedMap.get(subject.getValue());
                                       for (Permission expandedPermission : expandedPermissions) {
                                           if (!existedPermissions.contains(expandedPermission)) {
                                               existedPermissions.add(expandedPermission);
-                                              logMetacat.debug("D1NodeService.consolidateAccessRules - add a new permssion " + permission.toString() + " for the subject "+ subject.getValue() + " into the map ") ;
+                                              logMetacat.debug("D1NodeService.consolidateAccessRules - " +
+                                              "add a new permssion " + 
+                                              permission.toString() + " for the subject " + 
+                                              subject.getValue() + " into the map ") ;
                                           }
                                       }
                                   }

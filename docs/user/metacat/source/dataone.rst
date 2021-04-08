@@ -331,6 +331,7 @@ It's recommended to use LetsEncrypt_ to enable TLS (HTTPS) for your installation
 Ensure your configuration has directives similar to the following at the VirtualHost level:
 
 ::
+
     SSLEngine on
     SSLOptions +StrictRequire +StdEnvVars +ExportCertData
     SSLVerifyClient none # The default, but explicitly included here
@@ -349,9 +350,8 @@ Ensure your configuration has directives similar to the following at the Virtual
             SSLVerifyClient optional
         </If>
     </Location>
-    ...
 
-  Note: Setting `SSLVerifyClient none` and the `Location` block above is a workaround for two separate issues:
+Note: Setting `SSLVerifyClient none` and the `Location` block above is a workaround for two separate issues:
 
   1. Safari 11 attempts to send a client certificate when `SSLVerifyClient` is set to `optional` even though other browsers do not. Without the above `Location` directive, Safari 11 users will be prompted to select a client certificate to authenticate with even when attempting to browse as a public (unauthenticated) user.
   2. libcurl deprecated sending the HTTP `Expect` header with POST requests and programmatic uploads from clients such as the R dataone package will fail unless this `Location` directive is in place and `SSLVerifyClient` is set to `none`.

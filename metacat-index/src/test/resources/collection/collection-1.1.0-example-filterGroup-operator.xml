@@ -12,10 +12,10 @@
             <filter>
                 <field>identifier</field>
                 <operator>OR</operator>
+                <exclude>true</exclude>
                 <value>urn:uuid:a843239b-6d04-4019-9835-6e3c8e3418c8</value>
                 <value>urn:uuid:30a28104-6814-497a-8f72-7fecb36cb721</value>
                 <value>urn:uuid:83b718dd-d709-466e-bf0d-0710a71e7a20</value>
-                <exclude>true</exclude>
             </filter>
             <operator>AND</operator>
         </filterGroup>

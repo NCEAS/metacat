@@ -479,25 +479,28 @@ public class MNodeService extends D1NodeService
         String invalidRequestCode = "1202";
         String notFoundCode ="1280";
         SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+        D1AuthHelper authDel = null;
         try {
-            D1AuthHelper authDel = new D1AuthHelper(request,pid,"1200","1310");
-            authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+            authDel = new D1AuthHelper(request,pid,"1200","1310");
+            //if the user has the change permission, it will be all set; otherwise, we need to check more.
+            authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
             allowed = true;
-            //only the users who have the the change_permission can change access rules
-            try {
-                authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
-            } catch(ServiceFailure e) {
-                throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id " + pid.getValue() + " since "+e.getDescription());
-            } catch(NotAuthorized e) {
-                //now the user doesn't have the change the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
-                if (!D1NodeService.equals(sysmeta.getAccessPolicy(), existingSysMeta.getAccessPolicy())) {
-                    throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
-                }
-            }
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
         } catch(NotAuthorized e) {
-            throw new NotAuthorized("1200", "Can't update the object with id "+pid.getValue()+" since "+e.getDescription());
+            //the user doesn't have the change permission. However, if it has the write permission and doesn't modify the access rules, Metacat still allows it to update the object
+            try {
+                authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+                //now the user has the write the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
+                if (!D1NodeService.equals(sysmeta.getAccessPolicy(), existingSysMeta.getAccessPolicy())) {
+                    throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
+                }
+                allowed = true;
+            } catch(ServiceFailure ee) {
+                throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id " + pid.getValue() + " since " + ee.getDescription());
+            } catch(NotAuthorized ee) {
+                throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since " + ee.getDescription());
+            }
         }
         
         end =System.currentTimeMillis();
@@ -533,6 +536,22 @@ public class MNodeService extends D1NodeService
                 throw new InvalidRequest("1202", 
                         "The previous identifier has already been made obsolete by: " + existingObsoletedBy.getValue());
             }
+            
+            //check the if client change the authoritative member node.
+            if (sysmeta.getAuthoritativeMemberNode() == null ||
+                    sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+                    sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
+                sysmeta.setAuthoritativeMemberNode(originMemberNode);
+            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && 
+                        !sysmeta.getAuthoritativeMemberNode().getValue().equals(
+                        existingSysMeta.getAuthoritativeMemberNode().getValue())){
+                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + 
+                            existingSysMeta.getAuthoritativeMemberNode().getValue() + 
+                            " and new authoriativeMemberNode is " + 
+                            sysmeta.getAuthoritativeMemberNode().getValue() + 
+                            ". They don't match. Clients don't have the permission to change it.");
+            }
+            
             end =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on checking the quality of the system metadata of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" is "+(end- startTime3)+ " milli seconds.");
 
@@ -865,6 +884,11 @@ public class MNodeService extends D1NodeService
         // verify the pid is valid format
         if (!isValidIdentifier(pid)) {
             throw new InvalidRequest("2153", "The provided identifier in the system metadata is invalid.");
+        }
+        
+        if (!NodeReplicationPolicyChecker.check(sourceNode, sysmeta)) {
+            throw new InvalidRequest("2153", "The object " + pid.getValue() + " from sourceNode" + sourceNode.getValue() + 
+                     " is not allowed to replicate to this node based on the node replication policy.");
         }
 
         // get from the membernode
@@ -1557,7 +1581,6 @@ public class MNodeService extends D1NodeService
              "\tIdentifier           = " + pid.getValue());
 
         InputStream inputStream = null; // bytes to be returned
-        handler = new MetacatHandler(new Timer());
         boolean allowed = false;
         String localId; // the metacat docid for the pid
 

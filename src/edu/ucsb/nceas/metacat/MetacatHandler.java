@@ -146,10 +146,22 @@ public class MetacatHandler {
     private static final String ERRORCLOSE = "</error>";
     public static final String FGDCDOCTYPE = "metadata";
     
-	private Timer timer;
+	private static Timer timer;
 	
+	/**
+	 * Constructor with a timer object. This constructor will be used in the MetacatServlet class which
+	 * is the only place to handle the site map generation.
+	 * @param timer  the timer used to schedule the site map generation
+	 */
     public MetacatHandler(Timer timer) {
-    	this.timer = timer;
+    	    this.timer = timer;
+    }
+    
+    /**
+     * Default constructor. It will be used in the DataONE API, which doesn't need to handle the timer.
+     */
+    public MetacatHandler() {
+        
     }
     
     

@@ -14,4 +14,4 @@ INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'htt
 UPDATE db_version SET status=0;
 
 INSERT INTO db_version (version, status, date_created)
-  VALUES ('2.15.0', 1, CURRENT_DATE);
+  VALUES ('2.14.1', 1, CURRENT_DATE);
