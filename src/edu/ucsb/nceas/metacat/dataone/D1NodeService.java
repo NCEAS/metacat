@@ -486,6 +486,10 @@ public abstract class D1NodeService {
             removeSystemMetaAndIdentifier(pid);
             logMetacat.error("D1NodeService.create - the node couldn't create the object "+pid.getValue()+" since "+e.getMessage(), e);
             throw e;
+        } catch (InvalidRequest e) {
+            removeSystemMetaAndIdentifier(pid);
+            logMetacat.error("D1NodeService.create - the node couldn't create the object " + pid.getValue() + " since " + e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
             removeSystemMetaAndIdentifier(pid);
             logMetacat.error("The node is unable to create the object: "+pid.getValue()+ " since " + e.getMessage(), e);

@@ -31,8 +31,11 @@ package edu.ucsb.nceas.metacat.dataone;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
@@ -48,6 +51,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URL;
@@ -200,6 +204,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testPublishPackage"));
     suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
     suite.addTest(new MNodeServiceTest("testAllowList"));
+    suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
     return suite;
     
   }
@@ -3611,5 +3616,104 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         //restore the original setting
         PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originalAllowedSubmitterString);
         AuthUtil.populateAllowedSubmitters();
+    }
+    
+    /**
+     * Test create and update json-ld objects
+     * @throws Exception
+     */
+    public void testInsertJson_LD() throws Exception {
+        printTestHeader("testInsertJson_LD");
+        
+        ObjectFormatIdentifier formatid = new ObjectFormatIdentifier();
+        formatid.setValue(NonXMLMetadataHandlers.JSON_LD);
+        
+        //create a json-ld object successfully
+        File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        OutputStream out = new FileOutputStream(temp1);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testInsertJson_LD." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(temp1);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatid);
+        object.close();
+        Checksum checksum = null;
+        DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+        Identifier pid = 
+          MNodeService.getInstance(request).create(session, guid, data, sysmeta);
+        SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+        assertTrue(result.getIdentifier().equals(guid));
+        data.close();
+        
+        //fail to update the object since the new object is an invalid json-ld object 
+        File temp2 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp2);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        Identifier newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_2." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new FileInputStream(temp2);
+        SystemMetadata newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp2, newMeta.getChecksum());
+        try {
+            MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
+            fail("we shouldn't get here since the new object is an invalid json-ld file");
+        } catch (Exception e) {
+            System.out.println("the message is +++++++++++ " +e.getMessage());
+            assertTrue(e instanceof InvalidRequest);
+        }
+        data.close();
+        temp2.delete();
+        
+        //successfully update the object
+        File temp3 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp3);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_2." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new FileInputStream(temp3);
+        newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp3, newMeta.getChecksum());
+        MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
+        data.close();
+        result = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+        assertTrue(result.getIdentifier().equals(newPid));
+        
+        //failed to create an object since it is an invalid json-ld object
+        File temp4 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp4);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_3." + (System.currentTimeMillis()));
+        object = new FileInputStream(temp4);
+        newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp4, newMeta.getChecksum());
+        try {
+            MNodeService.getInstance(request).create(session, newPid, data, newMeta);
+            fail("we shouldn't get here since the object is an invalid json-ld file");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        data.close();
+        temp4.delete();
     }
 }

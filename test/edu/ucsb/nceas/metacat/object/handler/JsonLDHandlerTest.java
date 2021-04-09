@@ -47,9 +47,9 @@ import junit.framework.TestSuite;
  */
 public class JsonLDHandlerTest extends MCTestCase {
     
-    private static final String JSON_LD_FILE_PATH = "test/json-ld.json";
+    public static final String JSON_LD_FILE_PATH = "test/json-ld.json";
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
-    private static final String INVALID_JSON_LD_FILE_PATH = "test/invalid-json-ld.json";
+    public static final String INVALID_JSON_LD_FILE_PATH = "test/invalid-json-ld.json";
     private static final String CHECKSUM_INVALID_JSON_FILE = "ede435691fa0c68e9a3c23697ffc92d4";
     
     /**
@@ -181,7 +181,7 @@ public class JsonLDHandlerTest extends MCTestCase {
     /*
      * A utility method to generate a temporary file.
      */
-    private File generateTmpFile(String prefix) throws IOException {
+    public static File generateTmpFile(String prefix) throws IOException {
         String newPrefix = prefix + "-" + System.currentTimeMillis();
         String suffix =  null;
         File newFile = null;
