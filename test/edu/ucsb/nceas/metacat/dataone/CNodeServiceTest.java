@@ -27,8 +27,12 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -81,6 +85,9 @@ import org.dataone.service.util.Constants;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 
 /**
  * A JUnit test for testing the dataone CNCore implementation
@@ -126,6 +133,7 @@ public class CNodeServiceTest extends D1NodeServiceTest {
 		suite.addTest(new CNodeServiceTest("testUpdateSystemMetadata"));
 		suite.addTest(new CNodeServiceTest("testArchive"));
 		suite.addTest(new CNodeServiceTest("testInvalidIds"));
+		suite.addTest(new CNodeServiceTest("testInsertJson_LD"));
 		
 		return suite;
 	}
@@ -1732,5 +1740,62 @@ public class CNodeServiceTest extends D1NodeServiceTest {
           
       }
       
+  }
+  
+  
+  /**
+   * Test create and update json-ld objects
+   * @throws Exception
+   */
+  public void testInsertJson_LD() throws Exception {
+      printTestHeader("testInsertJson_LD");
+      
+      ObjectFormatIdentifier formatid = new ObjectFormatIdentifier();
+      formatid.setValue(NonXMLMetadataHandlers.JSON_LD);
+      
+      //create a json-ld object successfully
+      File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+      InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+      OutputStream out = new FileOutputStream(temp1);
+      IOUtils.copy(input, out);
+      out.close();
+      input.close();
+      Session session = getCNSession();
+      Identifier guid = new Identifier();
+      guid.setValue("testInsertJson_LD." + System.currentTimeMillis());
+      InputStream object = new FileInputStream(temp1);
+      SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+      sysmeta.setFormatId(formatid);
+      object.close();
+      Checksum checksum = null;
+      DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+      Identifier pid = 
+        CNodeService.getInstance(request).create(session, guid, data, sysmeta);
+      SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+      assertTrue(result.getIdentifier().equals(guid));
+      data.close();
+      
+      //failed to create an object since it is an invalid json-ld object
+      File temp4 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+      input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+      out = new FileOutputStream(temp4);
+      IOUtils.copy(input, out);
+      out.close();
+      input.close();
+      Identifier newPid = new Identifier();
+      newPid.setValue("testInsertJson_LD_3." + (System.currentTimeMillis()));
+      object = new FileInputStream(temp4);
+      SystemMetadata newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+      newMeta.setFormatId(formatid);
+      object.close();
+      data = new DetailedFileInputStream(temp4, newMeta.getChecksum());
+      try {
+          CNodeService.getInstance(request).create(session, newPid, data, newMeta);
+          fail("we shouldn't get here since the object is an invalid json-ld file");
+      } catch (Exception e) {
+          assertTrue(e instanceof InvalidRequest);
+      }
+      data.close();
+      temp4.delete();
   }
 }
