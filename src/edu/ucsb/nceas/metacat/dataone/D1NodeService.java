@@ -132,6 +132,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public abstract class D1NodeService {
     
   public static final String DELETEDMESSAGE = "The object with the PID has been deleted from the node.";
+  public static final String METADATA = "METADATA";
     
   private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(D1NodeService.class);
 
@@ -735,7 +736,6 @@ public abstract class D1NodeService {
       if (headPID != null)
           pid = headPID;
 
-
       InputStream inputStream = null; // bytes to be returned
       boolean allowed = false;
       String localId; // the metacat docid for the pid
@@ -762,8 +762,20 @@ public abstract class D1NodeService {
 
       // if the person is authorized, perform the read
       if (allowed) {
+          SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+          ObjectFormat objectFormat = null;
+          String type = null;
           try {
-              inputStream = MetacatHandler.read(localId);
+              objectFormat = ObjectFormatCache.getInstance().getFormat(sm.getFormatId());
+          } catch (BaseException be) {
+              logMetacat.warn("Could not lookup ObjectFormat for: " + sm.getFormatId(), be);
+          }
+          if (objectFormat != null) {
+              type = objectFormat.getFormatType();
+          }
+          logMetacat.info("D1NodeService.get - the data type for the object " + pid.getValue() + " is " + type);
+          try {
+              inputStream = MetacatHandler.read(localId, type);
           } catch (McdbDocNotFoundException de) {
               String error ="";
               try {
