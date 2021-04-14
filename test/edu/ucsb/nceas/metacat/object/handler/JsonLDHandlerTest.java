@@ -28,15 +28,23 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 import org.apache.commons.compress.utils.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
 
 import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
+import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -45,7 +53,7 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class JsonLDHandlerTest extends MCTestCase {
+public class JsonLDHandlerTest extends D1NodeServiceTest {
     
     public static final String JSON_LD_FILE_PATH = "test/json-ld.json";
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
@@ -94,6 +102,10 @@ public class JsonLDHandlerTest extends MCTestCase {
      * @throws Exception
      */
     public void testSave() throws Exception {
+        String metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
+        String ip = "196.168.0.10";
+        String agent = "java/junit_test";
+        Session session = getTestSession();
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
@@ -111,10 +123,11 @@ public class JsonLDHandlerTest extends MCTestCase {
         Identifier pid = new Identifier();
         pid.setValue("test-id1-" + System.currentTimeMillis());
         assertTrue(temp1.exists());
-        File savedFile = handler.save(data, pid, expectedChecksum);
+        String localId = handler.save(data, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp1.exists());
-        String localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
+        deleteXMLDocuments(localId);
+        File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
         
         //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
@@ -128,10 +141,11 @@ public class JsonLDHandlerTest extends MCTestCase {
         pid = new Identifier();
         pid.setValue("test-id2-" + System.currentTimeMillis());
         assertTrue(temp2.exists());
-        File savedFile2 = handler.save(data, pid, expectedChecksum);
+        localId = handler.save(data, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp2.exists());
-        localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
+        deleteXMLDocuments(localId);
+        File savedFile2 = new File(metadataStoragePath, localId);
         assertTrue(savedFile2.exists());
         
         Checksum expectedChecksumForInvalidJson = new Checksum();
@@ -151,7 +165,7 @@ public class JsonLDHandlerTest extends MCTestCase {
         pid.setValue("test-id3-" + System.currentTimeMillis());
         assertTrue(temp3.exists());
         try {
-            File savedFile3 = handler.save(data, pid, expectedChecksumForInvalidJson);
+            localId = handler.save(data, pid, expectedChecksumForInvalidJson, session, ip, agent);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -170,7 +184,7 @@ public class JsonLDHandlerTest extends MCTestCase {
         pid.setValue("test-id4-" + System.currentTimeMillis());
         assertTrue(temp4.exists());
         try {
-            File savedFile4 = handler.save(data, pid, expectedChecksumForInvalidJson);
+            localId = handler.save(data, pid, expectedChecksumForInvalidJson, session, ip, agent);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -192,6 +206,36 @@ public class JsonLDHandlerTest extends MCTestCase {
             newFile = File.createTempFile(newPrefix, suffix, new File("."));
         }
         return newFile;
+    }
+    
+    /**
+     * Delete the record from the xml_documents table
+     * @param localId
+     * @throws SQLException
+     */
+    private static void deleteXMLDocuments(String localId) throws SQLException {
+        String docId = DocumentUtil.getDocIdFromString(localId);
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pStmt = null;
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool
+                    .getDBConnection("DocumentImpl.deleteXMLDocuments");
+            serialNumber = conn.getCheckOutSerialNumber();
+            //delete a record
+            pStmt = conn.prepareStatement(
+                    "DELETE FROM xml_documents WHERE docid = ? ");
+            pStmt.setString(1, docId);
+            pStmt.execute();
+        } finally {
+            try {
+                pStmt.close();
+            } finally {
+                //return back DBconnection
+                DBConnectionPool.returnDBConnection(conn, serialNumber);
+            }
+        }
     }
 
 }

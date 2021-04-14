@@ -467,8 +467,13 @@ public abstract class D1NodeService {
 	        NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
 	        if ( handler != null ) {
 	            //non-xml metadata object path
-	            File file = handler.save(object, pid, sysmeta.getChecksum());
-	            localId = file.getName();
+	            if (ipAddress == null) {
+	                ipAddress = request.getRemoteAddr();
+	            }
+	            if (userAgent == null) {
+	                userAgent = request.getHeader("User-Agent");
+	            }
+	            localId = handler.save(object, pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
 	        } else {
 	            String formatId = null;
 	            if(sysmeta.getFormatId() != null)  {
@@ -1160,17 +1165,52 @@ public abstract class D1NodeService {
   }
   
   /**
-   * Insert a data document
-   * 
-   * @param object
-   * @param pid
-   * @param sessionData
+   * Insert a data object into Metacat
+   * @param object  the input stream of the object will be inserted
+   * @param pid  the pid associated with the object
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @return  the local id of the inserted object
    * @throws ServiceFailure
- * @throws NotAuthorized 
-   * @returns localId of the data object inserted
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
    */
-  public String insertDataObject(InputStream object, Identifier pid, 
-          Session session, Checksum checksum) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+  public String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum) 
+                   throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+      if (ipAddress == null) {
+          ipAddress = request.getRemoteAddr();
+      }
+      if (userAgent == null) {
+          userAgent = request.getHeader("User-Agent");
+      }
+      String dataFilePath = null;
+      try {
+          dataFilePath = PropertyService.getProperty("application.datafilepath");
+      } catch (PropertyNotFoundException e) {
+          ServiceFailure sf = new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      }
+      return insertObject(object, pid, dataFilePath, session, checksum, ipAddress, userAgent);
+      
+  }
+  
+  /**
+   * Insert an object into the given directory
+   * @param object  the input stream of the object will be inserted
+   * @param pid  the pid associated with the object
+   * @param fileDirectory  the directory where the object will be inserted
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @param ip  the ip address of the client which initialize the call(for the log information)
+   * @param agent  the user agent of the client which initialize the call(for the log information)
+   * @return  the local id of the inserted object
+   * @throws ServiceFailure
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
+   */
+  public static String insertObject(InputStream object, Identifier pid, String fileDirectory,
+          Session session, Checksum checksum, String ip, String agent) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
       
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
@@ -1210,14 +1250,7 @@ public abstract class D1NodeService {
     String localId = im.generateLocalId(pid.getValue(), 1);
   
     // Save the data file to disk using "localId" as the name
-    String datafilepath = null;
-	try {
-		datafilepath = PropertyService.getProperty("application.datafilepath");
-	} catch (PropertyNotFoundException e) {
-		ServiceFailure sf = new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
-		sf.initCause(e);
-		throw sf;
-	}
+    
     boolean locked = false;
 	try {
 		locked = DocumentImpl.getDataFileLockGrant(localId);
@@ -1230,7 +1263,7 @@ public abstract class D1NodeService {
     logMetacat.debug("Case DATA: starting to write to disk.");
 	if (locked) {
 
-          File dataDirectory = new File(datafilepath);
+          File dataDirectory = new File(fileDirectory);
           dataDirectory.mkdirs();
   
           File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
@@ -1272,14 +1305,8 @@ public abstract class D1NodeService {
           }
   
           try {
-              if (ipAddress == null) {
-                  ipAddress = request.getRemoteAddr();
-              }
-              if (userAgent == null) {
-                  userAgent = request.getHeader("User-Agent");
-              }
               logMetacat.debug("Logging the creation event.");
-              EventLog.getInstance().log(ipAddress, userAgent, username, localId, "create");
+              EventLog.getInstance().log(ip, agent, username, localId, "create");
           } catch (Exception e) {
               logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
           }

@@ -31,10 +31,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
@@ -51,11 +53,10 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  */
 public abstract class NonXMLMetadataHandler {
     private static Log logMetacat = LogFactory.getLog(CNodeService.class);
-    private static File metadataStoragePath = null;
+    private static String metadataStoragePath = null;
     static {
         try {
-            String metadataStoragePathStr = PropertyService.getProperty("application.documentfilepath");
-            metadataStoragePath = new File(metadataStoragePathStr);
+            metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
         } catch (PropertyNotFoundException e) {
            logMetacat.error("NonXMLMetadataHandler.static - cannot find the metadata object storage path since " + e.getMessage());
         }
@@ -66,14 +67,19 @@ public abstract class NonXMLMetadataHandler {
      * @param source  the input stream contains the content of the meta data object
      * @param pid  the identifier associated with the input stream
      * @param expectedChecksum  the expected checksum for the saved file
-     * @return  the saved file. It can be null.
+     * @param session  the user's session who makes this call
+     * @param ipAddress  the ip address of the client who makes the call (for the log information)
+     * @param userAgent  the user agent of the client who makes the call (for the log information)
+     * @return  the local document id. It can be null.
      * @throws UnsupportedType
      * @throws ServiceFailure
      * @throws InvalidRequest
      * @throws InvalidSystemMetadata
+     * @throws NotAuthorized 
      */
-    public File save(InputStream source, Identifier pid, Checksum expectedChecksum) throws UnsupportedType, ServiceFailure, 
-                                                                                    InvalidRequest, InvalidSystemMetadata {
+    public String save(InputStream source, Identifier pid, Checksum expectedChecksum, 
+                        Session session, String ipAddress, String userAgent) 
+                        throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
         if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
         }
@@ -81,7 +87,7 @@ public abstract class NonXMLMetadataHandler {
             throw new UnsupportedType("1140", "NonXMLMetadataHandler.save - Metacat only supports the DetailedFileInputStream object for saving " 
                                     + pid.getValue() +" into disk");
         }
-        File savedFile = null;
+        String localId = null;
         DetailedFileInputStream input = (DetailedFileInputStream) source;
         File sourceFile = input.getFile();
         boolean valid = false;
@@ -103,11 +109,9 @@ public abstract class NonXMLMetadataHandler {
                         " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
             }
             //Save the meta data object to disk using "localId" as the name
-            IdentifierManager im = IdentifierManager.getInstance();
-            String localId = im.generateLocalId(pid.getValue(), 1);
-            savedFile = D1NodeService.writeStreamToFile(metadataStoragePath, localId, input, expectedChecksum, pid); 
+            localId = D1NodeService.insertObject(input, pid, metadataStoragePath, session, expectedChecksum, ipAddress, userAgent); 
         }
-        return savedFile;
+        return localId;
     }
     
     /**

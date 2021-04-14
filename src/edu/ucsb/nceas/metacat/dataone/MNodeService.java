@@ -616,8 +616,13 @@ public class MNodeService extends D1NodeService
                     NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
                     if ( handler != null ) {
                         //non-xml metadata object path
-                        File file = handler.save(object, pid, sysmeta.getChecksum());
-                        localId = file.getName();
+                        if (ipAddress == null) {
+                            ipAddress = request.getRemoteAddr();
+                        }
+                        if (userAgent == null) {
+                            userAgent = request.getHeader("User-Agent");
+                        }
+                        localId  = handler.save(object, pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
                     } else {
                         String formatId = null;
                         if(sysmeta.getFormatId() != null) {
