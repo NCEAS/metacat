@@ -1293,39 +1293,12 @@ public class MNResourceHandler extends D1ResourceHandler {
 		} catch (Exception e) {
 			logMetacat.warn("Could not parse count: " + e.getMessage());
 		}
-
-<<<<<<< HEAD
 		try {
 			pidFilter = params.get("idFilter")[0];
 		} catch (Exception e) {
 			logMetacat.warn("Could not parse pidFilter: " + e.getMessage());
 		}
-=======
-    /**
-     * Retrieve data package as Bagit zip
-     * @param format
-     * @param pid The pid of the resource map defining the pacakage
-     * @throws NotImplemented 
-     * @throws NotFound 
-     * @throws NotAuthorized 
-     * @throws ServiceFailure 
-     * @throws InvalidToken 
-     * @throws IOException 
-     * @throws InvalidRequest 
-     */
-    protected void getPackage(String format, String pid) throws InvalidToken, ServiceFailure, NotAuthorized, NotFound, NotImplemented, IOException, InvalidRequest {
-        long start = System.currentTimeMillis();
-        Identifier id = new Identifier();
-        id.setValue(pid);
-        ObjectFormatIdentifier formatId = null;
-        if (format != null) {
-        	formatId = new ObjectFormatIdentifier();
-        	formatId.setValue(format);
-        }
-	    InputStream speedBag = MNodeService.getInstance(request).getPackage(session, formatId , id);
->>>>>>> Revert to using InputStream in getPackage
 
-<<<<<<< HEAD
 		logMetacat.debug("calling getLogRecords");
 		Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
@@ -1333,22 +1306,9 @@ public class MNResourceHandler extends D1ResourceHandler {
 		response.setStatus(200);
 		response.setContentType("text/xml");
 
-<<<<<<< HEAD
 		TypeMarshaller.marshalTypeToOutputStream(log, out);
 		IOUtils.closeQuietly(out);
 	}
-=======
-=======
-        //Use the pid as the file name prefix, replacing all non-word characters
-        String filename = pid.replaceAll("\\W", "_") + ".zip";
-        response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
-        response.setContentType("application/zip");
-        response.setStatus(200);
->>>>>>> Add zip extension to downloads & fix bug where two science metadata documents were being written
-	    IOUtils.copyLarge(speedBag, response.getOutputStream());
-        // write it to the output stream
->>>>>>> Improve exception handling
-
 
 	/**
 	 * Implements REST version of DataONE CRUD API --> get
@@ -1544,8 +1504,9 @@ public class MNResourceHandler extends D1ResourceHandler {
 			formatId = new ObjectFormatIdentifier();
 			formatId.setValue(format);
 		}
+		InputStream is = null;
 		try {
-			SpeedBagIt speedBag = MNodeService.getInstance(request).getPackage(session, formatId, id);
+			is = MNodeService.getInstance(request).getPackage(session, formatId , id);
 			//Use the pid as the file name prefix, replacing all non-word characters
 			String filename = pid.replaceAll("\\W", "_") + ".zip";
 			response.setHeader("Content-Disposition", "inline; filename=\"" + filename + "\"");
@@ -1561,7 +1522,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 			IOUtils.closeQuietly(is);
 		}
 	}
-    
+
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, NotFound, NotImplemented, IOException,
 			MarshallingException, InvalidRequest, IdentifierNotUnique,
