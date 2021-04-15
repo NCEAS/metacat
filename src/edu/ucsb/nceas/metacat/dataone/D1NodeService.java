@@ -473,7 +473,7 @@ public abstract class D1NodeService {
 	            if (userAgent == null) {
 	                userAgent = request.getHeader("User-Agent");
 	            }
-	            localId = handler.save(object, pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
+	            localId = handler.save(object,sysmeta.getFormatId().getValue(), pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
 	        } else {
 	            String formatId = null;
 	            if(sysmeta.getFormatId() != null)  {
@@ -1191,13 +1191,14 @@ public abstract class D1NodeService {
           sf.initCause(e);
           throw sf;
       }
-      return insertObject(object, pid, dataFilePath, session, checksum, ipAddress, userAgent);
+      return insertObject(object, "BIN", pid, dataFilePath, session, checksum, ipAddress, userAgent);
       
   }
   
   /**
    * Insert an object into the given directory
    * @param object  the input stream of the object will be inserted
+   * @param docType  the doc type in the xml_document table
    * @param pid  the pid associated with the object
    * @param fileDirectory  the directory where the object will be inserted
    * @param session  the actor of this action
@@ -1209,7 +1210,7 @@ public abstract class D1NodeService {
    * @throws InvalidSystemMetadata
    * @throws NotAuthorized
    */
-  public static String insertObject(InputStream object, Identifier pid, String fileDirectory,
+  public static String insertObject(InputStream object, String docType, Identifier pid, String fileDirectory,
           Session session, Checksum checksum, String ip, String agent) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
       
     String username = Constants.SUBJECT_PUBLIC;
@@ -1278,7 +1279,7 @@ public abstract class D1NodeService {
           // if the localId is not acceptable or other untoward things happen
           try {
             logMetacat.debug("Registering document...");
-            DocumentImpl.registerDocument(localId, "BIN", localId,
+            DocumentImpl.registerDocument(localId, docType, localId,
                     username, groupnames);
             logMetacat.debug("Registration step completed.");
             

@@ -123,7 +123,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         Identifier pid = new Identifier();
         pid.setValue("test-id1-" + System.currentTimeMillis());
         assertTrue(temp1.exists());
-        String localId = handler.save(data, pid, expectedChecksum, session, ip, agent);
+        String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp1.exists());
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
@@ -141,7 +141,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         pid = new Identifier();
         pid.setValue("test-id2-" + System.currentTimeMillis());
         assertTrue(temp2.exists());
-        localId = handler.save(data, pid, expectedChecksum, session, ip, agent);
+        localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp2.exists());
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
@@ -165,7 +165,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         pid.setValue("test-id3-" + System.currentTimeMillis());
         assertTrue(temp3.exists());
         try {
-            localId = handler.save(data, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -184,7 +184,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         pid.setValue("test-id4-" + System.currentTimeMillis());
         assertTrue(temp4.exists());
         try {
-            localId = handler.save(data, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);

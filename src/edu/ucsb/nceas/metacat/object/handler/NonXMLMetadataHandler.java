@@ -65,6 +65,7 @@ public abstract class NonXMLMetadataHandler {
     /**
      * Save the bytes to the disk
      * @param source  the input stream contains the content of the meta data object
+     * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
      * @param pid  the identifier associated with the input stream
      * @param expectedChecksum  the expected checksum for the saved file
      * @param session  the user's session who makes this call
@@ -77,7 +78,7 @@ public abstract class NonXMLMetadataHandler {
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized 
      */
-    public String save(InputStream source, Identifier pid, Checksum expectedChecksum, 
+    public String save(InputStream source, String docType, Identifier pid, Checksum expectedChecksum, 
                         Session session, String ipAddress, String userAgent) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
         if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
@@ -109,7 +110,7 @@ public abstract class NonXMLMetadataHandler {
                         " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
             }
             //Save the meta data object to disk using "localId" as the name
-            localId = D1NodeService.insertObject(input, pid, metadataStoragePath, session, expectedChecksum, ipAddress, userAgent); 
+            localId = D1NodeService.insertObject(input, docType, pid, metadataStoragePath, session, expectedChecksum, ipAddress, userAgent); 
         }
         return localId;
     }

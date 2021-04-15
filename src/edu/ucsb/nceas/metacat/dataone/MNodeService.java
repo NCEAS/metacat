@@ -622,7 +622,7 @@ public class MNodeService extends D1NodeService
                         if (userAgent == null) {
                             userAgent = request.getHeader("User-Agent");
                         }
-                        localId  = handler.save(object, pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
+                        localId  = handler.save(object, sysmeta.getFormatId().getValue(), newPid, sysmeta.getChecksum(), session, ipAddress, userAgent);
                     } else {
                         String formatId = null;
                         if(sysmeta.getFormatId() != null) {
