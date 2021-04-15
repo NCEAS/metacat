@@ -36,10 +36,6 @@ import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.BagFile;
-import gov.loc.repository.bagit.Manifest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -104,6 +100,7 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;

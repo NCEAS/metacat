@@ -33,11 +33,7 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeVersionChecker;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
-import edu.ucsb.nceas.utilities.IOUtil;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.BagFile;
-import gov.loc.repository.bagit.Manifest;
+import edu.ucsb.nceas.utilities.IOUtil;s
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
