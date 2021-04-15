@@ -1325,6 +1325,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	    InputStream speedBag = MNodeService.getInstance(request).getPackage(session, formatId , id);
 >>>>>>> Revert to using InputStream in getPackage
 
+<<<<<<< HEAD
 		logMetacat.debug("calling getLogRecords");
 		Log log = MNodeService.getInstance(request).getLogRecords(session, fromDate, toDate, event, pidFilter, start, count);
 
@@ -1337,6 +1338,13 @@ public class MNResourceHandler extends D1ResourceHandler {
 		IOUtils.closeQuietly(out);
 	}
 =======
+=======
+        //Use the pid as the file name prefix, replacing all non-word characters
+        String filename = pid.replaceAll("\\W", "_") + ".zip";
+        response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
+        response.setContentType("application/zip");
+        response.setStatus(200);
+>>>>>>> Add zip extension to downloads & fix bug where two science metadata documents were being written
 	    IOUtils.copyLarge(speedBag, response.getOutputStream());
         // write it to the output stream
 >>>>>>> Improve exception handling
@@ -1547,7 +1555,6 @@ public class MNResourceHandler extends D1ResourceHandler {
 
 			// write it to the output stream
 			IOUtils.copyLarge(is, out);
-			IOUtils.closeQuietly(out);
 			long end = System.currentTimeMillis();
 			logMetacat.info(Settings.PERFORMANCELOG + pid + Settings.PERFORMANCELOG_GET_PACKAGE_METHOD + " Total getPackage method" + Settings.PERFORMANCELOG_DURATION + (end - start) / 1000);
 		} finally {

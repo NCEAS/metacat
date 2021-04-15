@@ -2626,7 +2626,6 @@ public class MNodeService extends D1NodeService
 						            params.put("docid", new String[] {localId});
 						            params.put("pid", new String[] {pid.getValue()});
 						            params.put("displaymodule", new String[] {"printall"});
-						            
 						            transformer.transformXMLDocument(
 						                    documentContent , 
 						                    sourceType, 
@@ -2636,7 +2635,6 @@ public class MNodeService extends D1NodeService
 						                    params, 
 						                    null //sessionid
 						                    );
-						            
 						            // finally, get the HTML back
 						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
 
@@ -2687,7 +2685,7 @@ public class MNodeService extends D1NodeService
                                     pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
 
 								} catch (Exception e) {
-									logMetacat.warn("There was an error generating the PDF file during a package export. " +
+									logMetacat.error("There was an error generating the PDF file during a package export. " +
                                             "Ensure that the package metadata is valid and supported.", e);
 								}
 							}
@@ -2700,42 +2698,12 @@ public class MNodeService extends D1NodeService
 								InputStream emlStream = this.get(session, metadataID);
 								parser.parse(emlStream);
 								DataPackage dataPackage = parser.getDataPackage();
-								
-								//Get all the entities in this package and loop through each to extract its ID and file name
-								Entity[] entities = dataPackage.getEntityList();
-								for(Entity entity: entities){
-									try{
-										//Get the file name from the metadata
-										String fileNameFromMetadata = entity.getName();
-										
-										//Get the ecogrid URL from the metadata
-										String ecogridIdentifier = entity.getEntityIdentifier();
-										//Parse the ecogrid URL to get the local id
-										String idFromMetadata = DocumentUtil.getAccessionNumberFromEcogridIdentifier(ecogridIdentifier);
-										
-										//Get the docid and rev pair
-										String docid = DocumentUtil.getDocIdFromString(idFromMetadata);
-										String rev = DocumentUtil.getRevisionStringFromString(idFromMetadata);
-										
-										//Get the GUID
-										String guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(rev));
-										Identifier dataIdentifier = new Identifier();
-										dataIdentifier.setValue(guid);
-										
-										//Add the GUID to our GUID & file name map
-										fileNames.put(dataIdentifier, fileNameFromMetadata);
-									}
-									catch(Exception e){
-										//Prevent just one entity error
-										e.printStackTrace();
-										logMetacat.debug(e.getMessage(), e);
-									}
-								}
+
 							}
 						}
 						catch(Exception e){
 							//Catch errors that would prevent package download
-							logMetacat.debug(e.toString());
+							logMetacat.error(e.toString());
 						}
 					}
 					packagePids.addAll(entries.keySet());
@@ -2756,21 +2724,17 @@ public class MNodeService extends D1NodeService
              * The next step is looping over each object in the package, determining its filename,
              * getting an InputStream to it, and adding it to the bag.
              */
-			for (Identifier entryPid: packagePids) {
+            Set<Identifier> packagePidsUnique = new HashSet<>(packagePids);
+			for (Identifier entryPid: packagePidsUnique) {
 				//Get the system metadata for each item
 				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
 				
 				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
 				String fileName = null;
-				
+
 				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
 				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
 				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-
-				if (fileNames.containsKey(entryPid)){
-					//Let's use the file name and extension from the metadata is we have it
-					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
 				
 				// ensure there is a file extension for the object
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
