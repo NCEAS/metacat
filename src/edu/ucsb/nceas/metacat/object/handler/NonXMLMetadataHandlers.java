@@ -22,11 +22,14 @@
  */
 package edu.ucsb.nceas.metacat.object.handler;
 
+import java.util.Vector;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
+import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 
 /**
  * The factory and utility methods for the NonXMLMetadataHandlers 
@@ -36,6 +39,12 @@ import edu.ucsb.nceas.metacat.dataone.CNodeService;
 public class NonXMLMetadataHandlers {
     
     public static String JSON_LD = "science-on-schema.org/Dataset/1.2;ld+json";
+    
+    private static Vector<String> nonXMLMetadataFormatList = new Vector<String>();
+    
+    static {
+        nonXMLMetadataFormatList = XMLSchemaService.getInstance().getNonXMLMetadataFormatList();
+    }
     
     private static Log logMetacat = LogFactory.getLog(CNodeService.class);
     
@@ -51,8 +60,11 @@ public class NonXMLMetadataHandlers {
         if (formatId == null) {
             return handler;
         }
-        if (formatId.getValue() != null && formatId.getValue().equals(JSON_LD)) {
-            handler = new JsonLDHandler();
+        if (nonXMLMetadataFormatList != null && formatId.getValue() != null && 
+                                    nonXMLMetadataFormatList.contains(formatId.getValue())) {
+            if (formatId.getValue().equals(JSON_LD)) {
+                handler = new JsonLDHandler();
+            }
         }
         return handler;
     }
