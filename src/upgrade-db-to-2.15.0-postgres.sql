@@ -4,6 +4,8 @@
 
 SELECT setval('xml_catalog_id_seq', (SELECT max(catalog_id) from xml_catalog));
 
+INSERT INTO xml_catalog (entry_type, public_id, format_id) SELECT 'NonXML', 'science-on-schema.org/Dataset/1.2;ld+json', 'science-on-schema.org/Dataset/1.2;ld+json'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='science-on-schema.org/Dataset/1.2;ld+json');
+
 /*
  * update the database version
  */

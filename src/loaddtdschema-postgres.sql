@@ -214,5 +214,7 @@ INSERT INTO xml_catalog (entry_type, public_id, format_id, system_id)
 
 INSERT INTO xml_catalog (entry_type, public_id, system_id) SELECT 'Schema', 'http://www.openarchives.org/OAI/2.0/oai_dc/', '/schema/oai_dc/oai_dc.xsd'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='http://www.openarchives.org/OAI/2.0/oai_dc/');
 
+INSERT INTO xml_catalog (entry_type, public_id, format_id) SELECT 'NonXML', 'science-on-schema.org/Dataset/1.2;ld+json', 'science-on-schema.org/Dataset/1.2;ld+json'  WHERE NOT EXISTS (SELECT * FROM xml_catalog WHERE public_id='science-on-schema.org/Dataset/1.2;ld+json');
+
 INSERT INTO db_version (version, status, date_created) 
   VALUES ('2.15.0',1,CURRENT_DATE);
