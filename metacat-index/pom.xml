@@ -9,7 +9,7 @@
 	<url>http://maven.apache.org</url>
 	
 	<properties>
-        <d1_cn_index_processor_version>2.3.8</d1_cn_index_processor_version>
+        <d1_cn_index_processor_version>2.3.13</d1_cn_index_processor_version>
         <metacat_common_version>2.15.0-SNAPSHOT</metacat_common_version>
     </properties>
 	

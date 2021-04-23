@@ -874,7 +874,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
-        assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T17:15:22Z</date>"));
+        assertTrue(resultStr.contains("<date name=\"pubDate\">2017-07-26T10:15:22Z</date>"));
         assertTrue(resultStr.contains("<str name=\"formatId\">http://www.isotc211.org/2005/gmd-pangaea</str>"));
     }
     
