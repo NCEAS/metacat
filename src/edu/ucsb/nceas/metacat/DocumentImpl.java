@@ -2335,7 +2335,7 @@ public class DocumentImpl
 
             }
             pstmt.close();
-            if (this.doctype != null) {
+            if (this.doctype != null && !XMLSchemaService.getInstance().getNonXMLMetadataFormatList().contains(doctype)) {
                 pstmt = dbconn.prepareStatement("SELECT system_id, entry_type "
                         + "FROM xml_catalog " + "WHERE public_id = ?");
                 //should increase usage count again
