@@ -123,6 +123,8 @@ public class DocumentImpl
     public static final String EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
     public static final String REVISIONTABLE = "xml_revisions";
     public static final String DOCUMENTTABLE = "xml_documents";
+    public static final String BIN = "BIN";
+    
     /*
      * public static final String EXTERNALSCHEMALOCATION =
      * "eml://ecoinformatics.org/eml-2.0.0
