@@ -29,7 +29,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +49,7 @@ import org.dataone.mimemultipart.SimpleMultipartEntity;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
+import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Identifier;
@@ -70,6 +73,9 @@ import com.hp.hpl.jena.rdf.model.ResourceFactory;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManagerTest;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 
 /**
@@ -134,6 +140,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testAccess"));
     suite.addTest(new MNodeQueryTest("testPortal110"));
     suite.addTest(new MNodeQueryTest("testCollectionl110"));
+    suite.addTest(new MNodeQueryTest("testSchemaOrg"));
     return suite;
     
   }
@@ -1525,6 +1532,56 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains(collectionQueryCollection110));
     }
 
-   
+    /**
+     * Query a schema.org document after creat it on Metacat
+     * @throws Exception
+     */
+    public void testSchemaOrg() throws Exception {
+        printTestHeader("testSchemaOrg");
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue(NonXMLMetadataHandlers.JSON_LD);
+        
+        //create a json-ld object successfully
+        File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        OutputStream out = new FileOutputStream(temp1);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        Checksum checksum = null;
+        DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+        
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testschemaOrg1." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(JsonLDHandlerTest.JSON_LD_FILE_PATH);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        object.close();
+        try {
+            request.setHeader(QuotaServiceManager.QUOTASUBJECTHEADER, QuotaServiceManagerTest.SUBSCRIBER);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, data, sysmeta);
+        } catch (Exception e) {
+            System.out.println("the error is " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+        data.close();
+        temp1.delete();
+        
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("<str name=\"title\">Removal of organic carbon by natural bacterioplankton"));
+        assertTrue(resultStr.contains("<str name=\"abstract\">This dataset includes results of laboratory"));
+        assertTrue(resultStr.contains("<str name=\"edition\">2013-11-21</str>"));
+    }
 
 }
