@@ -173,6 +173,9 @@ public abstract class NonXMLMetadataHandler {
                 if (forValidationStream != null) {
                     forValidationStream.close();
                 }
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
             } catch (IOException ee) {
                 logMetacat.warn("NonXMLMetadataHandler.save - cannot close the invalidation stream since " + ee.getMessage());
             }
@@ -181,6 +184,16 @@ public abstract class NonXMLMetadataHandler {
         }
         
         if (!valid) {
+            try {
+                if (forValidationStream != null) {
+                    forValidationStream.close();
+                }
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the invalidation stream since " + ee.getMessage());
+            }
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + " is invalid.");
         } else {
             try {
@@ -196,7 +209,6 @@ public abstract class NonXMLMetadataHandler {
                     tmpFile.delete();
                 }
                 try {
-                    source.close();
                     if (forValidationStream != null) {
                         forValidationStream.close();
                     }
