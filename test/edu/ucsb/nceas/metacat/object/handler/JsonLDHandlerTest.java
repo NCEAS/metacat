@@ -22,6 +22,7 @@
  */
 package edu.ucsb.nceas.metacat.object.handler;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -31,8 +32,10 @@ import java.io.OutputStream;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidSystemMetadata;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
@@ -54,6 +57,9 @@ import junit.framework.TestSuite;
  *
  */
 public class JsonLDHandlerTest extends D1NodeServiceTest {
+    private static String metadataStoragePath = null;
+    private static String ip = "196.168.0.10";
+    private static String agent = "java/junit_test";
     
     public static final String JSON_LD_FILE_PATH = "test/json-ld.json";
     private static final String CHECKSUM_JSON_FILE = "847e1655bdc98082804698dbbaf85c35";
@@ -66,6 +72,12 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
      */
     public JsonLDHandlerTest(String name) {
         super(name);
+        try {
+            metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
     }
     
     /**
@@ -76,6 +88,8 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         TestSuite suite = new TestSuite();
         suite.addTest(new JsonLDHandlerTest("testInvalid"));
         suite.addTest(new JsonLDHandlerTest("testSave"));
+        suite.addTest(new JsonLDHandlerTest("saveByteArray"));
+        suite.addTest(new JsonLDHandlerTest("saveFile"));
         return suite;
     }
     
@@ -102,9 +116,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testSave() throws Exception {
-        String metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
-        String ip = "196.168.0.10";
-        String agent = "java/junit_test";
+       
         Session session = getTestSession();
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
@@ -190,6 +202,129 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidRequest);
         }
         temp4.delete();
+        
+        //save the DetaiedFileInputStream from the valid json-ld object with a wrong checksum
+        File temp5 = generateTmpFile("temp5-json-ld-valid");
+        input = new FileInputStream(new File(JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp5);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        data = new DetailedFileInputStream(temp5, expectedChecksum);
+        pid = new Identifier();
+        pid.setValue("test-id5-" + System.currentTimeMillis());
+        assertTrue(temp5.exists());
+        try {
+            checksum = new Checksum();
+            checksum.setAlgorithm("MD5");
+            checksum.setValue(CHECKSUM_INVALID_JSON_FILE);
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, checksum, session, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidSystemMetadata);
+        }
+        temp5.delete();
+    }
+    
+    /**
+     * Save the jsonLD object coming from a byte array input stream
+     * @throws Exception
+     */
+    public void saveByteArray() throws Exception {
+        Session session = getTestSession();
+        Checksum expectedChecksum = new Checksum();
+        expectedChecksum.setAlgorithm("MD5");
+        expectedChecksum.setValue(CHECKSUM_JSON_FILE);
+        
+        Checksum expectedChecksumForInvalidJson = new Checksum();
+        expectedChecksumForInvalidJson.setAlgorithm("MD5");
+        expectedChecksumForInvalidJson.setValue(CHECKSUM_INVALID_JSON_FILE);
+        
+        //save a valid json file with correct expected checksum
+        String content = FileUtils.readFileToString(new File(JSON_LD_FILE_PATH), "UTF-8");
+        InputStream data = new ByteArrayInputStream(content.getBytes());
+        JsonLDHandler handler = new JsonLDHandler();
+        Identifier pid = new Identifier();
+        pid.setValue("testbye-id1-" + System.currentTimeMillis());
+        String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
+        IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
+        deleteXMLDocuments(localId);
+        File savedFile = new File(metadataStoragePath, localId);
+        assertTrue(savedFile.exists());
+        
+        //save the  valid json-ld object with the wrong checksum
+        data.reset();
+        pid = new Identifier();
+        pid.setValue("testbye-id2-" + System.currentTimeMillis());
+        try {
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidSystemMetadata);
+        }
+        
+        //save an invalid jsonld file
+        content = FileUtils.readFileToString(new File(INVALID_JSON_LD_FILE_PATH), "UTF-8");
+        data = new ByteArrayInputStream(content.getBytes());
+        pid = new Identifier();
+        pid.setValue("testbye-id3-" + System.currentTimeMillis());
+        try {
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+    }
+    
+    /**
+     * Save the jsonLD object coming from a regular file
+     * @throws Exception
+     */
+    public void saveFile() throws Exception {
+        Session session = getTestSession();
+        Checksum expectedChecksum = new Checksum();
+        expectedChecksum.setAlgorithm("MD5");
+        expectedChecksum.setValue(CHECKSUM_JSON_FILE);
+        
+        Checksum expectedChecksumForInvalidJson = new Checksum();
+        expectedChecksumForInvalidJson.setAlgorithm("MD5");
+        expectedChecksumForInvalidJson.setValue(CHECKSUM_INVALID_JSON_FILE);
+        
+        //save a valid json file with correct expected checksum
+        InputStream data = new FileInputStream(new File(JSON_LD_FILE_PATH));
+        JsonLDHandler handler = new JsonLDHandler();
+        Identifier pid = new Identifier();
+        pid.setValue("testSaveFile-id1-" + System.currentTimeMillis());
+        String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
+        IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
+        deleteXMLDocuments(localId);
+        File savedFile = new File(metadataStoragePath, localId);
+        assertTrue(savedFile.exists());
+        data.close();
+        
+        //save the  valid json-ld object with the wrong checksum
+        data = new FileInputStream(new File(JSON_LD_FILE_PATH));
+        pid = new Identifier();
+        pid.setValue("testSaveFile-id2-" + System.currentTimeMillis());
+        try {
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+            data.close();
+            assertTrue(e instanceof InvalidSystemMetadata);
+        }
+        
+        //save an invalid jsonld file
+        pid = new Identifier();
+        pid.setValue("test-saveFile-id3-" + System.currentTimeMillis());
+        data = new FileInputStream(new File(INVALID_JSON_LD_FILE_PATH));
+        try {
+            localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksumForInvalidJson, session, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+            data.close();
+            assertTrue(e instanceof InvalidRequest);
+        }
     }
     
     /*
@@ -237,5 +372,4 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             }
         }
     }
-
 }

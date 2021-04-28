@@ -25,9 +25,12 @@ package edu.ucsb.nceas.metacat.object.handler;
 import java.io.IOException;
 import java.io.InputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.InvalidRequest;
 
 import com.github.jsonldjava.utils.JsonUtils;
+
 
 /**
  * The handler of JSON-LD objects to save bites into disk
@@ -35,6 +38,7 @@ import com.github.jsonldjava.utils.JsonUtils;
  *
  */
 public class JsonLDHandler extends NonXMLMetadataHandler {
+    private static Log logMetacat = LogFactory.getLog(JsonLDHandler.class);
     
     /**
      * Default constructor
