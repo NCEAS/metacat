@@ -626,7 +626,7 @@ public abstract class D1NodeService {
   /*
    * Roll-back method when inserting data object fails.
    */
-  protected void removeIdFromIdentifierTable(Identifier id){
+  protected static void removeIdFromIdentifierTable(Identifier id){
       if(id != null) {
           try {
               if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
@@ -1192,7 +1192,7 @@ public abstract class D1NodeService {
    * @throws InvalidSystemMetadata
    * @throws NotAuthorized
    */
-  public String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum) 
+  protected String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum) 
                    throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
       if (ipAddress == null) {
           ipAddress = request.getRemoteAddr();
@@ -1231,7 +1231,7 @@ public abstract class D1NodeService {
    */
   public static String insertObject(InputStream object, String docType, Identifier pid, String fileDirectory,
           Session session, Checksum checksum, String ip, String agent, String replicationNotificationServer) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
-      
+    
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
     if (session != null ) {
@@ -1264,68 +1264,78 @@ public abstract class D1NodeService {
                 "permission to WRITE to the Node.");
     }
     
-    // generate pid/localId pair for object
-    logMetacat.debug("Generating a pid/localId mapping");
-    IdentifierManager im = IdentifierManager.getInstance();
-    String localId = im.generateLocalId(pid.getValue(), 1);
-  
-    // Save the data file to disk using "localId" as the name
-    logMetacat.debug("Case DATA: starting to write to disk.");
-          File dataDirectory = new File(fileDirectory);
-          dataDirectory.mkdirs();
-          File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
-  
-          // TODO: Check that the file size matches SystemMetadata
-      // long size = newFile.length();
-      // if (size == 0) {
-      //     throw new IOException("Uploaded file is 0 bytes!");
-      // }
-  
-          // Register the file in the database (which generates an exception
-      // if the localId is not acceptable or other untoward things happen
-      try {
-        logMetacat.debug("Registering document...");
-        DocumentImpl.registerDocument(localId, docType, localId,
-                username, groupnames);
-        logMetacat.debug("Registration step completed.");
-        
-      } catch (SQLException e) {
-        //newFile.delete();
-        logMetacat.debug("SQLE: " + e.getMessage());
-        e.printStackTrace(System.out);
-        throw new ServiceFailure("1190", "Registration failed: " + 
-        		e.getMessage());
-        
-      } catch (AccessionNumberException e) {
-        //newFile.delete();
-        logMetacat.debug("ANE: " + e.getMessage());
-        e.printStackTrace(System.out);
-        throw new ServiceFailure("1190", "Registration failed: " + 
-        	e.getMessage());
-        
-      } catch (Exception e) {
-        //newFile.delete();
-        logMetacat.debug("Exception: " + e.getMessage());
-        e.printStackTrace(System.out);
-        throw new ServiceFailure("1190", "Registration failed: " + 
-            	e.getMessage());
-          }
-  
-      try {
+    String localId = null;
+    try {
+     // generate pid/localId pair for object
+        logMetacat.debug("Generating a pid/localId mapping");
+        IdentifierManager im = IdentifierManager.getInstance();
+        localId = im.generateLocalId(pid.getValue(), 1);
+      
+        // Save the data file to disk using "localId" as the name
+        logMetacat.debug("Case DATA: starting to write to disk.");
+              File dataDirectory = new File(fileDirectory);
+              dataDirectory.mkdirs();
+              File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
+      
+              // TODO: Check that the file size matches SystemMetadata
+          // long size = newFile.length();
+          // if (size == 0) {
+          //     throw new IOException("Uploaded file is 0 bytes!");
+          // }
+      
+              // Register the file in the database (which generates an exception
+          // if the localId is not acceptable or other untoward things happen
+          try {
+            logMetacat.debug("Registering document...");
+            DocumentImpl.registerDocument(localId, docType, localId,
+                    username, groupnames);
+            logMetacat.debug("Registration step completed.");
+            
+          } catch (SQLException e) {
+            //newFile.delete();
+            logMetacat.debug("SQLE: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
+                    e.getMessage());
+            
+          } catch (AccessionNumberException e) {
+            //newFile.delete();
+            logMetacat.debug("ANE: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
+                e.getMessage());
+            
+          } catch (Exception e) {
+            //newFile.delete();
+            logMetacat.debug("Exception: " + e.getMessage());
+            e.printStackTrace(System.out);
+            throw new ServiceFailure("1190", "Registration failed: " + 
+                    e.getMessage());
+              }
+      
+          try {
               logMetacat.debug("Logging the creation event.");
-          EventLog.getInstance().log(ip, agent, username, localId, "create");
-      } catch (Exception e) {
-          logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
-      }
+              EventLog.getInstance().log(ip, agent, username, localId, "create");
+          } catch (Exception e) {
+              logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
+          }
 
-      // Schedule replication for this data file, the "insert" action is important here!
-      logMetacat.debug("Scheduling replication.");
-      boolean isMeta = true;
-      if (docType != null && docType.equals(DocumentImpl.BIN)) {
-          isMeta = false;
-      }
-      ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
-      return localId;
+          // Schedule replication for this data file, the "insert" action is important here!
+          logMetacat.debug("Scheduling replication.");
+          boolean isMeta = true;
+          if (docType != null && docType.equals(DocumentImpl.BIN)) {
+              isMeta = false;
+          }
+          replicationNotificationServer = "localhost";
+          ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
+    } catch (ServiceFailure sfe) {
+        removeIdFromIdentifierTable(pid);
+        throw sfe;
+    } catch (InvalidSystemMetadata ise) {
+        removeIdFromIdentifierTable(pid);
+        throw ise;
+    }
+    return localId;
   }
 
   /**

@@ -137,6 +137,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(temp1.exists());
         String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp1.exists());
+        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
@@ -155,6 +156,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         assertTrue(temp2.exists());
         localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
         assertTrue(!temp2.exists());
+        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile2 = new File(metadataStoragePath, localId);
@@ -182,6 +184,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp3.delete();
        
         //save the DetaiedFileInputStream from the invalid json-ld object with the expected checksum
@@ -201,6 +204,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp4.delete();
         
         //save the DetaiedFileInputStream from the valid json-ld object with a wrong checksum
@@ -223,6 +227,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         temp5.delete();
     }
     
@@ -247,6 +252,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         Identifier pid = new Identifier();
         pid.setValue("testbye-id1-" + System.currentTimeMillis());
         String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
+        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
@@ -262,6 +268,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         
         //save an invalid jsonld file
         content = FileUtils.readFileToString(new File(INVALID_JSON_LD_FILE_PATH), "UTF-8");
@@ -274,6 +281,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
     }
     
     /**
@@ -296,6 +304,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         Identifier pid = new Identifier();
         pid.setValue("testSaveFile-id1-" + System.currentTimeMillis());
         String localId = handler.save(data, NonXMLMetadataHandlers.JSON_LD, pid, expectedChecksum, session, ip, agent);
+        assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
@@ -313,6 +322,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             data.close();
             assertTrue(e instanceof InvalidSystemMetadata);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
         
         //save an invalid jsonld file
         pid = new Identifier();
@@ -325,6 +335,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             data.close();
             assertTrue(e instanceof InvalidRequest);
         }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
     }
     
     /*
