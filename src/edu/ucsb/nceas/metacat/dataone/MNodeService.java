@@ -712,22 +712,6 @@ public class MNodeService extends D1NodeService
         return newPid;
     }
     
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeIdFromIdentifierTable(Identifier id){
-        if(id != null) {
-            try {
-                if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
-                   String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
-                   IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
-                   logMetacat.info("MNodeService.removeIdFromIdentifierTable - the identifier "+id.getValue()+" and local id "+localId+" have been removed from the identifier table since the object creation failed");
-                }
-            } catch (Exception e) {
-                logMetacat.warn("MNodeService.removeIdFromIdentifierTable - can't decide if the mapping of  the pid "+id.getValue()+" exists on the identifier table.");
-            }
-        }
-    }
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
