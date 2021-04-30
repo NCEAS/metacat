@@ -1208,8 +1208,7 @@ public abstract class D1NodeService {
           sf.initCause(e);
           throw sf;
       }
-      String replicationNotificationServer = "localhost";
-      return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, ipAddress, userAgent, replicationNotificationServer);
+      return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, ipAddress, userAgent);
       
   }
   
@@ -1223,14 +1222,13 @@ public abstract class D1NodeService {
    * @param checksum  the expected checksum for this data object
    * @param ip  the ip address of the client which initialize the call(for the log information)
    * @param agent  the user agent of the client which initialize the call(for the log information)
-   * @param replicationNotificationServer  the notification server name during the replication process
    * @return  the local id of the inserted object
    * @throws ServiceFailure
    * @throws InvalidSystemMetadata
    * @throws NotAuthorized
    */
   public static String insertObject(InputStream object, String docType, Identifier pid, String fileDirectory,
-          Session session, Checksum checksum, String ip, String agent, String replicationNotificationServer) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+          Session session, Checksum checksum, String ip, String agent) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
     
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
@@ -1326,7 +1324,7 @@ public abstract class D1NodeService {
           if (docType != null && docType.equals(DocumentImpl.BIN)) {
               isMeta = false;
           }
-          replicationNotificationServer = "localhost";
+          String replicationNotificationServer = "localhost";
           ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
     } catch (ServiceFailure sfe) {
         removeIdFromIdentifierTable(pid);

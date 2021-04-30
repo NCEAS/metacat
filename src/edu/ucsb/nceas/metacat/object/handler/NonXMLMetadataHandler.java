@@ -41,8 +41,11 @@ import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 
+import edu.ucsb.nceas.metacat.DocumentImpl;
+import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -55,6 +58,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public abstract class NonXMLMetadataHandler {
     private static Log logMetacat = LogFactory.getLog(NonXMLMetadataHandler.class);
     private static String metadataStoragePath = null;
+    private File tmpFile = null;
     static {
         try {
             metadataStoragePath = PropertyService.getProperty("application.documentfilepath");
@@ -64,7 +68,7 @@ public abstract class NonXMLMetadataHandler {
     }
     
     /**
-     * Save the bytes to the disk with localhost as the default notification server in the replication process
+     * Save the bytes to the disk 
      * @param source  the input stream contains the content of the meta data object
      * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
      * @param pid  the identifier associated with the input stream
@@ -82,8 +86,207 @@ public abstract class NonXMLMetadataHandler {
     public String save(InputStream source, String docType, Identifier pid, Checksum expectedChecksum, 
                         Session session, String ipAddress, String userAgent) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
-        String replicationNotificationServer = "localhost";
-        return save(source, docType, pid, expectedChecksum, replicationNotificationServer, session, ipAddress, userAgent);
+        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
+        }
+        String localId = null;
+        boolean valid = false;
+        InputStream data = checkValidation(source, pid);
+        try {
+            if (metadataStoragePath == null) {
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
+                        " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
+            }
+            //Save the meta data object to disk using "localId" as the name
+            localId = D1NodeService.insertObject(data, docType, pid, metadataStoragePath, session, expectedChecksum, ipAddress, 
+                                                userAgent);
+        } finally {
+            if (tmpFile != null) {
+                tmpFile.delete();
+            }
+            try {
+                source.close();
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+            }
+            try {
+                data.close();
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+            }
+        }
+        return localId;
+    }
+    
+    
+    /**
+     * Save the bytes to the disk from a replication process
+     * @param source  the input stream contains the content of the meta data object
+     * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
+     * @param pid  the identifier associated with the input stream
+     * @param expectedChecksum  the expected checksum for the saved file. The value usually comes from the system meta data
+     * @param replicationNtofication server  the server name notifying the replication (only for the replication process)
+     * @param session  the user's session who makes this call
+     * @param ipAddress  the ip address of the client who makes the call (for the log information)
+     * @param userAgent  the user agent of the client who makes the call (for the log information)
+     * @return  the local document id. It can be null.
+     * @throws UnsupportedType
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     * @throws InvalidSystemMetadata
+     * @throws NotAuthorized 
+     */
+    public void saveReplication(InputStream source, String localId, Identifier pid, String docType, 
+                                 Checksum expectedChecksum, String owner, int serverCode, 
+                                 String replicationNotificationServer, String ipAddress, String userAgent) 
+                        throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
+        InputStream data = checkValidation(source, pid);
+        try {
+            if (metadataStoragePath == null) {
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
+                        " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
+            }
+            //Save the meta data object to disk using "localId" as the name
+            D1NodeService.writeStreamToFile(new File(metadataStoragePath), localId, source, expectedChecksum, pid);
+            try {
+                logMetacat.debug("Logging the creation event.");
+                EventLog.getInstance().log(ipAddress, userAgent, owner, localId, "create");
+            } catch (Exception e) {
+                logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
+            }
+
+            // Schedule replication for this data file
+            boolean isMeta = true;
+            ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
+        } finally {
+            if (tmpFile != null) {
+                tmpFile.delete();
+            }
+            try {
+                source.close();
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+            }
+            try {
+                data.close();
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
+            }
+        }
+    }
+    
+    /**
+     * This method consumes the source input to do the check of validation. 
+     * It will return an input stream for the next step - saving the bytes
+     * @param validationInput  the input stream of the content
+     * @param pid  the identifier will be saved (for log information)
+     * @return a input stream for the step
+     * @throws ServiceFailure
+     * @throws InvalidRequest
+     */
+    private InputStream checkValidation(InputStream validationInput, Identifier pid) throws ServiceFailure, InvalidRequest {
+        InputStream data = null;
+        boolean canReset = false;
+        boolean needCloseValidationInput = false;
+        if (validationInput instanceof DetailedFileInputStream) {
+            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the DetailedFileInputStream route for pid " + pid.getValue());
+            //Metacat can read an input stream from the file associated with the DetailedFileInputStream for the next step
+            DetailedFileInputStream input = (DetailedFileInputStream) validationInput;
+            File sourceFile = input.getFile();
+            try {
+                validationInput = new FileInputStream(sourceFile);
+                data = input;
+                needCloseValidationInput = true;
+            } catch (FileNotFoundException e) {
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot valid the meta data object " + 
+                        " because cannot find the file associated with the detailed file input stream " + 
+                        " for the object " + pid.getValue() + " since " + e.getMessage());
+            }
+        } else if (validationInput.markSupported()) {
+            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the resetable input stream route for pid " + pid.getValue());
+            //Metacat can reset input stream for the next step
+            data = validationInput;
+            canReset = true;
+        } else {
+            logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the another type of the input stream route for pid " + pid.getValue());
+            //Metacat has to save the source input stream into a temp file and read the file later for the next step
+            FileOutputStream out = null;
+            try {
+                tmpFile = generateTempFile("NonXML");
+                out = new FileOutputStream(tmpFile);
+                IOUtils.copyLarge(validationInput, out);
+                validationInput = new FileInputStream(tmpFile);
+                data = new FileInputStream(tmpFile);
+            } catch (IOException e) {
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the meta data object " + 
+                                          pid.getValue() + " into a temporary file since " + e.getMessage());
+            } finally {
+                try {
+                    IOUtils.close(out);
+                } catch (IOException e) {
+                    logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the out put stream after saving the object for pid " 
+                                    + pid.getValue() + "into a temporary file");
+                }
+            }
+            
+        }
+        //do the check validation job
+        boolean valid = false;
+        try {
+           valid = validate(validationInput);
+           if (canReset) {
+               try {
+                   data.reset();
+               } catch (IOException e) {
+                   throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the object " + 
+                           " because Metacat cannot reset the input stream even though the inputstream " + 
+                           data.getClass().getCanonicalName() + " for the object " + pid.getValue() + 
+                           " claim sit is resetable since " + e.getMessage());
+               }
+           }
+        } catch (InvalidRequest e) {
+            try {
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+                if (validationInput != null) {
+                    validationInput.close();
+                }
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the invalidation stream since " + ee.getMessage());
+            }
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.checkValidation - the metadata object " + pid.getValue() + 
+                                    " is invalid: " + e.getMessage());
+        }
+        
+        if (!valid) {
+            try {
+                if (tmpFile != null) {
+                    tmpFile.delete();
+                }
+                if (validationInput != null) {
+                    validationInput.close();
+                }
+            } catch (IOException ee) {
+                logMetacat.warn("NonXMLMetadataHandler.checkValidation - cannot close the invalidation stream since " + ee.getMessage());
+            }
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.checkValidation - the metadata object " + pid.getValue() + " is invalid.");
+        }
+        if (needCloseValidationInput) {
+            //this route handle that the validationInput stream was created as a new input stream. We need to close it. 
+            try {
+                validationInput.close();
+            } catch (IOException e) {
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.checkValidation - cannot save the object " + 
+                        " because Metacat cannot reset the input stream even though the inputstream " + 
+                        data.getClass().getCanonicalName() + " for the object " + pid.getValue() + 
+                        " claim sit is resetable since " + e.getMessage());
+            }
+        }
+        return data;
     }
     
     /**
@@ -106,123 +309,7 @@ public abstract class NonXMLMetadataHandler {
     public String save(InputStream source, String docType, Identifier pid, Checksum expectedChecksum, 
                         String replicationNotificationServer, Session session, String ipAddress, String userAgent) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
-        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
-        }
-        File tmpFile = null;
-        boolean canReset = false;
-        InputStream forValidationStream = null;
-        if (source instanceof DetailedFileInputStream) {
-            logMetacat.debug("NonXMLMetadataHandler.save - in the DetailedFileInputStream route for pid " + pid.getValue());
-            DetailedFileInputStream input = (DetailedFileInputStream) source;
-            File sourceFile = input.getFile();
-            try {
-                forValidationStream = new FileInputStream(sourceFile);
-            } catch (FileNotFoundException e) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot valid the meta data object " + 
-                        " because cannot find the file associated with the detailed file input stream " + 
-                        " for the object " + pid.getValue() + " since " + e.getMessage());
-            }
-        } else if ( source.markSupported()) {
-            logMetacat.debug("NonXMLMetadataHandler.save - in the resetable input stream route for pid " + pid.getValue());
-            forValidationStream = source;
-            canReset = true;
-        } else {
-            logMetacat.debug("NonXMLMetadataHandler.save - in the another type of the input stream route for pid " + pid.getValue());
-            FileOutputStream out = null;
-            try {
-                tmpFile = generateTempFile("NonXML");
-                out = new FileOutputStream(tmpFile);
-                IOUtils.copyLarge(source, out);
-                forValidationStream = new FileInputStream(tmpFile);
-                source = new FileInputStream(tmpFile);
-            } catch (IOException e) {
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the meta data object " + 
-                                          pid.getValue() + " into a temporary file since " + e.getMessage());
-            } finally {
-                try {
-                    IOUtils.close(out);
-                } catch (IOException e) {
-                    logMetacat.warn("NonXMLMetadataHandler.save - cannot close the out put stream after saving the object for pid " 
-                                    + pid.getValue() + "into a temporary file");
-                }
-            }
-            
-        }
-        
-        String localId = null;
-        boolean valid = false;
-        try {
-           valid = validate(forValidationStream);
-           if (canReset) {
-               try {
-                   source.reset();
-               } catch (IOException e) {
-                   throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the object " + 
-                           " because Metacat cannot reset the input stream even though the inputstream " + 
-                           source.getClass().getCanonicalName() + " for the object " + pid.getValue() + 
-                           " claim sit is resetable since " + e.getMessage());
-               }
-               
-           }
-        } catch (InvalidRequest e) {
-            try {
-                if (forValidationStream != null) {
-                    forValidationStream.close();
-                }
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
-            } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the invalidation stream since " + ee.getMessage());
-            }
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + 
-                                    " is invalid: " + e.getMessage());
-        }
-        
-        if (!valid) {
-            try {
-                if (forValidationStream != null) {
-                    forValidationStream.close();
-                }
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
-            } catch (IOException ee) {
-                logMetacat.warn("NonXMLMetadataHandler.save - cannot close the invalidation stream since " + ee.getMessage());
-            }
-            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the metadata object " + pid.getValue() + " is invalid.");
-        } else {
-            try {
-                if (metadataStoragePath == null) {
-                    throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
-                            " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
-                }
-                //Save the meta data object to disk using "localId" as the name
-                localId = D1NodeService.insertObject(source, docType, pid, metadataStoragePath, session, expectedChecksum, ipAddress, 
-                                                    userAgent, replicationNotificationServer);
-            } finally {
-                if (tmpFile != null) {
-                    tmpFile.delete();
-                }
-                try {
-                    if (forValidationStream != null) {
-                        forValidationStream.close();
-                    }
-                } catch (IOException ee) {
-                    logMetacat.warn("NonXMLMetadataHandler.save - cannot close the invalidation stream since " + ee.getMessage());
-                }
-                try {
-                    source.close();
-                } catch (IOException ee) {
-                    logMetacat.warn("NonXMLMetadataHandler.save - cannot close the source stream since " + ee.getMessage());
-                }
-            }
-        }
-        return localId;
+        return null;
     }
     
     /**
