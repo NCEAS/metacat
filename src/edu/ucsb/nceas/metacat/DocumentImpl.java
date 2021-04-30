@@ -1615,7 +1615,7 @@ public class DocumentImpl
      * @param isXml
      * @throws McdbException
      */
-    private static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
+    public static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
 
     	// must have an id
     	if (accNumber == null) {

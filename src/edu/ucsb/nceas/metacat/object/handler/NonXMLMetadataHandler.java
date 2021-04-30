@@ -43,6 +43,7 @@ import org.dataone.service.types.v1.Session;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
@@ -143,11 +144,30 @@ public abstract class NonXMLMetadataHandler {
         InputStream data = checkValidation(source, pid);
         try {
             if (metadataStoragePath == null) {
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.save - cannot save the metadata object " + pid.getValue() + 
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot save the metadata object " + pid.getValue() + 
                         " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
             }
             //Save the meta data object to disk using "localId" as the name
             D1NodeService.writeStreamToFile(new File(metadataStoragePath), localId, source, expectedChecksum, pid);
+            
+            //register the local id into the xml_table
+            try {
+                DocumentImpl.registerDocument(localId, docType, localId, owner, null, serverCode);
+            } catch (Exception e) {
+                boolean isMetadata = true;
+                try {
+                    DocumentImpl.deleteFromFileSystem(localId, isMetadata);
+                } catch (Exception ee) {
+                    logMetacat.error("NonXMLMetadataHandler.saveReplication - in the exception handler route, Metacat cannot delete " 
+                                      + localId + " in order to undo the transaction since " + ee.getMessage());
+                }
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot register " + pid.getValue() + 
+                        " into the xml_table since " + e.getMessage());
+            }
+            
+            //register the mapping in the identifier table
+            IdentifierManager.getInstance().createMapping(pid.getValue(), localId);
+
             try {
                 logMetacat.debug("Logging the creation event.");
                 EventLog.getInstance().log(ipAddress, userAgent, owner, localId, "create");
