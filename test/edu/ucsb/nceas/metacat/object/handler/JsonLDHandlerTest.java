@@ -30,16 +30,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.InvalidSystemMetadata;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 
+import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
@@ -142,6 +145,8 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
+        DocumentImpl.deleteFromFileSystem(localId, true);
+        assertTrue(!savedFile.exists());
         
         //save the DetaiedFileInputStream from the valid json-ld object with the expected checksum
         File temp2 = generateTmpFile("temp2-json-ld-valid");
@@ -161,6 +166,8 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         deleteXMLDocuments(localId);
         File savedFile2 = new File(metadataStoragePath, localId);
         assertTrue(savedFile2.exists());
+        DocumentImpl.deleteFromFileSystem(localId, true);
+        assertTrue(!savedFile2.exists());
         
         Checksum expectedChecksumForInvalidJson = new Checksum();
         expectedChecksumForInvalidJson.setAlgorithm("MD5");
@@ -257,9 +264,11 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
+        DocumentImpl.deleteFromFileSystem(localId, true);
+        assertTrue(!savedFile.exists());
         
-        //save the  valid json-ld object with the wrong checksum
-        data.reset();
+        //save the valid json-ld object with the wrong checksum
+        data = new ByteArrayInputStream(content.getBytes());
         pid = new Identifier();
         pid.setValue("testbye-id2-" + System.currentTimeMillis());
         try {
@@ -310,6 +319,8 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
         data.close();
+        DocumentImpl.deleteFromFileSystem(localId, true);
+        assertTrue(!savedFile.exists());
         
         //save the  valid json-ld object with the wrong checksum
         data = new FileInputStream(new File(JSON_LD_FILE_PATH));
@@ -336,6 +347,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidRequest);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
+        
     }
     
     /**
@@ -346,7 +358,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         String owner = "uid=kepler,o=unaffilicated,dc=ecoinformatic,dc=org";
         String localId = "testSaveReplication." + System.nanoTime() + ".1";
         String replicationNotificationServer = "mn-demo-6.test.dataone.org/knb/servlet/replication";
-        int serverCode = 2;
+        int serverCode = 1;
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");
         expectedChecksum.setValue(CHECKSUM_JSON_FILE);
@@ -363,16 +375,47 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         pid.setValue("pidForSaveReplication-" + System.currentTimeMillis());
         handler.saveReplication(data, localId, pid, NonXMLMetadataHandlers.JSON_LD, 
                 expectedChecksum, owner, serverCode, replicationNotificationServer, ip, agent);
+        String docId = DocumentUtil.getDocIdFromString(localId);
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pStmt = null;
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool
+                    .getDBConnection("JsonLDHandlerTest.saveReplication");
+            serialNumber = conn.getCheckOutSerialNumber();
+            //delete a record
+            pStmt = conn.prepareStatement(
+                    "select docid, doctype, rev, user_owner, server_location FROM xml_documents WHERE docid = ? ");
+            pStmt.setString(1, docId);
+            pStmt.execute();
+            ResultSet result = pStmt.getResultSet();
+            assertTrue(result.next());
+            assertTrue(result.getString(1).equals(docId));
+            assertTrue(result.getString(2).equals(NonXMLMetadataHandlers.JSON_LD));
+            assertTrue(result.getInt(3) == 1);
+            assertTrue(result.getString(4).equals(owner));
+            assertTrue(result.getInt(5) == serverCode);
+        } finally {
+            try {
+                pStmt.close();
+            } finally {
+                //return back DBconnection
+                DBConnectionPool.returnDBConnection(conn, serialNumber);
+            }
+        }
         assertTrue(IdentifierManager.getInstance().mappingExists(pid.getValue()));
         IdentifierManager.getInstance().removeMapping(pid.getValue(), localId);
         deleteXMLDocuments(localId);
         File savedFile = new File(metadataStoragePath, localId);
         assertTrue(savedFile.exists());
+        DocumentImpl.deleteFromFileSystem(localId, true);
+        assertTrue(!savedFile.exists());
         
         //save the  valid json-ld object with the wrong checksum
-        data.reset();
+        data = new ByteArrayInputStream(content.getBytes());
         pid = new Identifier();
-        pid.setValue("testbye-id2-" + System.currentTimeMillis());
+        pid.setValue("pidForSaveReplication2-" + System.currentTimeMillis());
         localId = "testSaveReplication2." + System.nanoTime() + ".1";
         try {
             handler.saveReplication(data, localId, pid, NonXMLMetadataHandlers.JSON_LD, 
@@ -382,12 +425,14 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidSystemMetadata);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
+        savedFile = new File(metadataStoragePath, localId);
+        assertTrue(!savedFile.exists());
         
         //save an invalid jsonld file
         content = FileUtils.readFileToString(new File(INVALID_JSON_LD_FILE_PATH), "UTF-8");
         data = new ByteArrayInputStream(content.getBytes());
         pid = new Identifier();
-        pid.setValue("testbye-id3-" + System.currentTimeMillis());
+        pid.setValue("pidForSaveReplication3-" + System.currentTimeMillis());
         localId = "testSaveReplication3." + System.nanoTime() + ".1";
         try {
             handler.saveReplication(data, localId, pid, NonXMLMetadataHandlers.JSON_LD, 
@@ -397,6 +442,28 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             assertTrue(e instanceof InvalidRequest);
         }
         assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
+        savedFile = new File(metadataStoragePath, localId);
+        assertTrue(!savedFile.exists());
+        
+        //save a valid json file with the correct expected checksum, 
+        //but a serverCode doesn't exist in xml_replication table
+        String content2 = FileUtils.readFileToString(new File(JSON_LD_FILE_PATH), "UTF-8");
+        data = new ByteArrayInputStream(content2.getBytes());
+        pid = new Identifier();
+        pid.setValue("pidForSaveReplication4-" + System.currentTimeMillis());
+        localId = "testSaveReplication4." + System.nanoTime() + ".1";
+        serverCode = 200000;
+        try {
+            handler.saveReplication(data, localId, pid, NonXMLMetadataHandlers.JSON_LD, 
+                    expectedChecksum, owner, serverCode, replicationNotificationServer, ip, agent);
+            fail("We can't reach here since it should throw an exception");
+        } catch (Exception e) {
+           assertTrue(e instanceof ServiceFailure);
+           assertTrue(e.getMessage().contains(localId));
+        }
+        assertTrue(!IdentifierManager.getInstance().mappingExists(pid.getValue()));
+        savedFile = new File(metadataStoragePath, localId);
+        assertTrue(!savedFile.exists());
     }
     
     /*

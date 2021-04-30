@@ -47,6 +47,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
+import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -158,24 +159,26 @@ public abstract class NonXMLMetadataHandler {
                 try {
                     DocumentImpl.deleteFromFileSystem(localId, isMetadata);
                 } catch (Exception ee) {
-                    logMetacat.error("NonXMLMetadataHandler.saveReplication - in the exception handler route, Metacat cannot delete " 
+                    logMetacat.error("NonXMLMetadataHandler.saveReplication - In the exception route, Metacat cannot delete " 
                                       + localId + " in order to undo the transaction since " + ee.getMessage());
                 }
-                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot register " + pid.getValue() + 
-                        " into the xml_table since " + e.getMessage());
+                throw new ServiceFailure("1190", "NonXMLMetadataHandler.saveReplication - cannot register the local id " 
+                                         + localId + " for the pid "+ pid.getValue() + 
+                                         " into the xml_table since " + e.getMessage());
             }
             
-            //register the mapping in the identifier table
+            //register the mapping of localId and pid in the identifier table
             IdentifierManager.getInstance().createMapping(pid.getValue(), localId);
 
+            //log the event
             try {
                 logMetacat.debug("Logging the creation event.");
-                EventLog.getInstance().log(ipAddress, userAgent, owner, localId, "create");
+                EventLog.getInstance().log(ipAddress, userAgent, ReplicationService.REPLICATIONUSER, localId, "create");
             } catch (Exception e) {
                 logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
             }
 
-            // Schedule replication for this data file
+            // Schedule replication for this file
             boolean isMeta = true;
             ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
         } finally {
