@@ -4315,7 +4315,7 @@ public class DocumentImpl
      *
      * @param serverName,
      */
-    private static int getServerCode(String serverName)
+    public static int getServerCode(String serverName)
     {
         PreparedStatement pStmt = null;
         int serverLocation = -2;

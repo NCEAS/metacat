@@ -357,7 +357,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
     public void testSaveReplication() throws Exception {
         String owner = "uid=kepler,o=unaffilicated,dc=ecoinformatic,dc=org";
         String localId = "testSaveReplication." + System.nanoTime() + ".1";
-        String replicationNotificationServer = "mn-demo-6.test.dataone.org/knb/servlet/replication";
+        String replicationNotificationServer = null;
         int serverCode = 1;
         Checksum expectedChecksum = new Checksum();
         expectedChecksum.setAlgorithm("MD5");

@@ -73,6 +73,8 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
@@ -446,106 +448,126 @@ public class ReplicationHandler extends TimerTask
       logReplication.info("ReplicationHandler.handleSingleXMLDocument - docid in repl: "+accNumber);
       String docType = docinfoHash.get("doctype");
       logReplication.info("ReplicationHandler.handleSingleXMLDocument - doctype in repl: "+docType);
-
-      String parserBase = null;
-      // this for eml2 and we need user eml2 parser
-      if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_0_0NAMESPACE))
-      {
-         parserBase = DocumentImpl.EML200;
-      }
-      else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_0_1NAMESPACE))
-      {
-        parserBase = DocumentImpl.EML200;
-      }
-      else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_1_0NAMESPACE))
-      {
-        parserBase = DocumentImpl.EML210;
-      }
-      else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE))
-      {
-        parserBase = DocumentImpl.EML210;
-      } else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
-          parserBase = DocumentImpl.EML210;
-      }
       
-      /*String formatId = null;
-      //get the format id from the system metadata 
-      if(sysMeta != null && sysMeta.getFormatId() != null) {
-          logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+accNumber);
-          formatId = sysMeta.getFormatId().getValue();
-      }*/
-      // Write the document into local host
-      DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
-      String newDocid = wrapper.writeReplication(dbConn,
-                              newxmldoc, xmlBytes,
-                              docinfoHash.get("public_access"),
-                              null,  /* the dtd text */
-                              actions,
-                              accNumber,
-                              null, //docinfoHash.get("user_owner"),                              
-                              null, /* null for groups[] */
-                              docHomeServer,
-                              remoteserver, tableName, true,// true is for time replication 
-                              createdDate,
-                              updatedDate);
-      
-      if(sysMeta != null) {
-			// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
-			// will not interrupt the process.
-			try {
-				MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
-			} catch (Exception ee) {
-				logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
-			}
-          
-		}
-      
-      //set the user information
-      String user = (String) docinfoHash.get("user_owner");
-      String updated = (String) docinfoHash.get("user_updated");
-      ReplicationService.updateUserOwner(dbConn, accNumber, user, updated);
-      
-      //process extra access rules 
-      try {
-      	// check if we had a guid -> docid mapping
-      	String docid = DocumentUtil.getDocIdFromAccessionNumber(accNumber);
-      	int rev = DocumentUtil.getRevisionFromAccessionNumber(accNumber);
-      	IdentifierManager.getInstance().getGUID(docid, rev);
-      	// no need to create the mapping if we have it
-      } catch (McdbDocNotFoundException mcdbe) {
-      	// create mapping if we don't
-      	IdentifierManager.getInstance().createMapping(accNumber, accNumber);
-      }
-      Vector<XMLAccessDAO> xmlAccessDAOList = dih.getAccessControlList();
-      if (xmlAccessDAOList != null) {
-      	AccessControlForSingleFile acfsf = new AccessControlForSingleFile(accNumber);
-      	for (XMLAccessDAO xmlAccessDAO : xmlAccessDAOList) {
-      		if (!acfsf.accessControlExists(xmlAccessDAO)) {
-      			acfsf.insertPermissions(xmlAccessDAO);
-      		}
+      NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysMeta.getFormatId());
+      if ( handler != null ) {
+          //non-xml objects route
+          try {
+              String user = (String) docinfoHash.get("user_owner");
+              int serverCode = DocumentImpl.getServerCode(docHomeServer);
+              logReplication.info("ReplicationHander.handleForceReplicateRequest - in the non-xml route, the user is " 
+                               + user + " for the identifier " + sysMeta.getIdentifier() + " and the docid " + accNumber +
+                               " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
+                               ". The docment has the server code " + serverCode + " with home server " + docHomeServer);
+              ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
+              handler.saveReplication(source, accNumber, sysMeta.getIdentifier(), docType, sysMeta.getChecksum(), user, 
+                                     serverCode, remoteserver, getIpFromURL(u), null);
+              if(sysMeta != null) {
+                  MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+              }
+          } catch (Exception e) {
+              HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+              throw e;
           }
+      } else {
+          String parserBase = null;
+          // this for eml2 and we need user eml2 parser
+          if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_0_0NAMESPACE))
+          {
+             parserBase = DocumentImpl.EML200;
+          }
+          else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_0_1NAMESPACE))
+          {
+            parserBase = DocumentImpl.EML200;
+          }
+          else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_1_0NAMESPACE))
+          {
+            parserBase = DocumentImpl.EML210;
+          }
+          else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE))
+          {
+            parserBase = DocumentImpl.EML210;
+          } else if (docType != null && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
+              parserBase = DocumentImpl.EML210;
+          }
+          
+          /*String formatId = null;
+          //get the format id from the system metadata 
+          if(sysMeta != null && sysMeta.getFormatId() != null) {
+              logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+accNumber);
+              formatId = sysMeta.getFormatId().getValue();
+          }*/
+          // Write the document into local host
+          DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
+          String newDocid = wrapper.writeReplication(dbConn,
+                                  newxmldoc, xmlBytes,
+                                  docinfoHash.get("public_access"),
+                                  null,  /* the dtd text */
+                                  actions,
+                                  accNumber,
+                                  null, //docinfoHash.get("user_owner"),                              
+                                  null, /* null for groups[] */
+                                  docHomeServer,
+                                  remoteserver, tableName, true,// true is for time replication 
+                                  createdDate,
+                                  updatedDate);
+          
+          if(sysMeta != null) {
+                // submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
+                // will not interrupt the process.
+                try {
+                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                } catch (Exception ee) {
+                    logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
+                }
+              
+            }
+          
+          //set the user information
+          String user = (String) docinfoHash.get("user_owner");
+          String updated = (String) docinfoHash.get("user_updated");
+          ReplicationService.updateUserOwner(dbConn, accNumber, user, updated);
+          
+          //process extra access rules 
+          try {
+            // check if we had a guid -> docid mapping
+            String docid = DocumentUtil.getDocIdFromAccessionNumber(accNumber);
+            int rev = DocumentUtil.getRevisionFromAccessionNumber(accNumber);
+            IdentifierManager.getInstance().getGUID(docid, rev);
+            // no need to create the mapping if we have it
+          } catch (McdbDocNotFoundException mcdbe) {
+            // create mapping if we don't
+            IdentifierManager.getInstance().createMapping(accNumber, accNumber);
+          }
+          Vector<XMLAccessDAO> xmlAccessDAOList = dih.getAccessControlList();
+          if (xmlAccessDAOList != null) {
+            AccessControlForSingleFile acfsf = new AccessControlForSingleFile(accNumber);
+            for (XMLAccessDAO xmlAccessDAO : xmlAccessDAOList) {
+                if (!acfsf.accessControlExists(xmlAccessDAO)) {
+                    acfsf.insertPermissions(xmlAccessDAO);
+                }
+              }
+          }
+          
+          
+          logReplication.info("ReplicationHandler.handleSingleXMLDocument - Successfully replicated doc " + accNumber);
+          if (tableName.equals(DocumentImpl.DOCUMENTTABLE))
+          {
+            logReplication.info("ReplicationHandler.handleSingleXMLDocument - " + DOCINSERTNUMBER + " Wrote xml doc " + accNumber +
+                                         " into "+tableName + " from " +
+                                             remoteserver);
+            DOCINSERTNUMBER++;
+          }
+          else
+          {
+              logReplication.info("ReplicationHandler.handleSingleXMLDocument - " +REVINSERTNUMBER + " Wrote xml doc " + accNumber +
+                      " into "+tableName + " from " +
+                          remoteserver);
+              REVINSERTNUMBER++;
+          }
+          String ip = getIpFromURL(u);
+          EventLog.getInstance().log(ip, null, ReplicationService.REPLICATIONUSER, accNumber, actions);
       }
-      
-      
-      logReplication.info("ReplicationHandler.handleSingleXMLDocument - Successfully replicated doc " + accNumber);
-      if (tableName.equals(DocumentImpl.DOCUMENTTABLE))
-      {
-        logReplication.info("ReplicationHandler.handleSingleXMLDocument - " + DOCINSERTNUMBER + " Wrote xml doc " + accNumber +
-                                     " into "+tableName + " from " +
-                                         remoteserver);
-        DOCINSERTNUMBER++;
-      }
-      else
-      {
-          logReplication.info("ReplicationHandler.handleSingleXMLDocument - " +REVINSERTNUMBER + " Wrote xml doc " + accNumber +
-                  " into "+tableName + " from " +
-                      remoteserver);
-          REVINSERTNUMBER++;
-      }
-      String ip = getIpFromURL(u);
-      EventLog.getInstance().log(ip, null, ReplicationService.REPLICATIONUSER, accNumber, actions);
-      
-
     }//try
     catch(Exception e)
     {

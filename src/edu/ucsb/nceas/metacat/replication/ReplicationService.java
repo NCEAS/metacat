@@ -723,16 +723,17 @@ public class ReplicationService extends BaseService {
 	            //non-xml objects route
 	            try {
 	                String user = (String) docinfoHash.get("user_owner");
-	                logMetacat.info("ReplicationHander.handleForceReplicateRequest - in the non-xml route, the user is " 
-	                                 + user + " for the identifier " + sysMeta.getIdentifier() + 
-	                                 " with the check sume in the system metadata " + sysMeta.getChecksum().getValue());
-	                Subject userSubject = new Subject();
-	                userSubject.setValue(user);
-	                Session session = new Session();
-	                session.setSubject(userSubject);
+	                int serverCode = DocumentImpl.getServerCode(homeServer);
+	                logReplication.info("ReplicationHander.handleForceReplicateRequest - in the non-xml route, the user is " 
+	                                 + user + " for the identifier " + sysMeta.getIdentifier() + " and the docid " + docid +
+	                                 " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
+	                                 ". The docment has the server code " + serverCode + " with home server " + homeServer);
 	                ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
-	                handler.save(source, docType, sysMeta.getIdentifier(), sysMeta.getChecksum(), server,
-	                                session, request.getRemoteAddr(), request.getHeader("User-Agent"));
+	                handler.saveReplication(source, docid, sysMeta.getIdentifier(), docType, sysMeta.getChecksum(), user, 
+	                                       serverCode, server, request.getRemoteAddr(), request.getHeader("User-Agent"));
+	                if(sysMeta != null) {
+	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                    }
 	            } catch (Exception e) {
 	                HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
 	                throw e;
