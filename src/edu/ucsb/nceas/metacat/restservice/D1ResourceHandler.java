@@ -600,35 +600,42 @@ public class D1ResourceHandler {
     }
     
     /**
-     * Get the session from the header of the request
+     * Get the session from the header of the request. The route is disabled by default.
+     * 
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
-            logMetacat.info("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
-            String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
-            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the subject from the header is " + dn);
-            if (dn != null) {
-                Subject subject = new Subject();
-                subject .setValue(dn);
-                session = new Session();
-                session.setSubject(subject);
-                
-                SubjectInfo subjectInfo = null;
-                try {
-                    subjectInfo = D1Client.getCN().getSubjectInfo(subject);
-                } catch (Exception be) {
-                    logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information since " + 
-                                    be.getMessage());
+            logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            String verify = (String) request.getHeader("Ssl-Client-Verify");
+            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
+            if (verify != null && verify.equals("SUCCESS")) {
+                //Metacat only looks up the dn from the header when the ssl client was verified.
+                //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
+                String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
+                logMetacat.info("D1ResourceHandler.getSessionFromHeader - the ssl client was verified and the subject from the header is " + dn);
+                if (dn != null) {
+                    Subject subject = new Subject();
+                    subject .setValue(dn);
+                    session = new Session();
+                    session.setSubject(subject);
+                    
+                    SubjectInfo subjectInfo = null;
+                    try {
+                        subjectInfo = D1Client.getCN().getSubjectInfo(subject);
+                    } catch (Exception be) {
+                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information since " + 
+                                        be.getMessage());
+                    }
+                    if (subjectInfo == null) {
+                        subjectInfo = new SubjectInfo();
+                        Person person = new Person();
+                        person.setSubject(subject);
+                        person.setFamilyName("Unknown");
+                        person.addGivenName("Unknown");
+                        subjectInfo.setPersonList(Arrays.asList(person));
+                    }
+                    session.setSubjectInfo(subjectInfo);
                 }
-                if (subjectInfo == null) {
-                    subjectInfo = new SubjectInfo();
-                    Person person = new Person();
-                    person.setSubject(subject);
-                    person.setFamilyName("Unknown");
-                    person.addGivenName("Unknown");
-                    subjectInfo.setPersonList(Arrays.asList(person));
-                }
-                session.setSubjectInfo(subjectInfo);
             }
         }
     }
