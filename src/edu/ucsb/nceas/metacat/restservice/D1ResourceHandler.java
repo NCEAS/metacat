@@ -134,7 +134,7 @@ public class D1ResourceHandler {
         logMetacat = LogFactory.getLog(D1ResourceHandler.class);
 		try {
 			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
-			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.httHeader.subject"));
+			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
 		} catch (PropertyNotFoundException e) {
 			// Just use our default as no max size is set in the properties file
 			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
