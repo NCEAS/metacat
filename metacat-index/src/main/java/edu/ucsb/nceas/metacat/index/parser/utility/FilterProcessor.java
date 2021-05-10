@@ -258,12 +258,14 @@ public class FilterProcessor {
             }
         }
 
-        if (nFields > 1) {
+        // If this subquery contains multiple terms, surround it with parenthesis
+        if (nFields > 1 || excludeCondition) {
             completeFilterValue = "(" + completeFilterValue + ")";
         }
+
         // Apply the 'exclude' modifier, if it was present in the XML
         if (excludeCondition) {
-            completeFilterValue = "-" + completeFilterValue;
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
         }
 
         completeFilterValue = completeFilterValue.trim();

@@ -33,6 +33,8 @@ import org.dataone.cn.indexer.parser.utility.LeafElement;
 /**
  *
  * Assembled a query string based on a set of filters in a DataONE collection document.
+ * This class handles communication with most of the Spring infrastructure built into the
+ * indexing component.
  * <p>
  * Used by FilterCommonRootSolrField.
  * Based on CommonRootSolrField by sroseboo
@@ -50,9 +52,9 @@ public class FilterRootElement {
     private List<FilterRootElement> subRoots = new ArrayList<FilterRootElement>();
     private List<FilterProcessor> filters = null;
     private FilterGroupProcessor filterGroup = null;
-    private String prefixMatch = null;
-    private String fixedTerm = null;
-    private String postfixMatch = null;
+    private String idFilterMatch = null;
+    private String catalogQuery = null;
+    private String isPartOfMatch = null;
     private Log log = LogFactory.getLog(FilterRootElement.class);
 
     public FilterRootElement() {
@@ -80,58 +82,49 @@ public class FilterRootElement {
     public String getRootValues(Object docOrNode)
             throws XPathExpressionException {
 
-        String prefilterValue = null;
-        String postfilterValue = null;
+        String idFilterValue = null;
+        String isPartOfFilterValue = null;
         String filterValue = null;
         filters = getFilters();
         filterGroup = getFilterGroup();
-        prefixMatch = getPrefixMatch();
-        fixedTerm = getFixedTerm();
-        postfixMatch = getPostfixMatch();
+        idFilterMatch = getIdFilterMatch();
+        catalogQuery = getCatalogQuery();
+        isPartOfMatch = getIsPartOfFilterMatch();
 
-        // A typical query prefilter: (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708 OR seriesId:urn:uuid:8c63bc73-c60e-4082-8dc2-8e3ea20bd6e5)
-        // A main filter: ((text:soil) AND (-(keywords:*soil layer*) AND -(attribute:*soil layer*)) AND ((dateUploaded:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z])
-        // A 'fixed' filter: AND (-obsoletedBy:* AND formatType:METADATA))
-        // A 'poastfix' filter: OR (id:urn:uuid:298073d0-dc2b-4f59-bf35-f7a8e60efa0e OR id:urn:uuid:6c6040ef-1393-47f9-a725-645f125f61ef)
-        // These are concatenated together to arrive at the full query:
-        //     (((<prefix filter) OR (<main filter>)) AND (<fixed filter>)) OR (<postfix filter)
+        // These are the filter components:
+        // - A main filter: ((text:soil) AND (-(keywords:*soil layer*) AND *:*))
+        // - An 'id' filter: OR (id:urn\:uuid\:298073d0-dc2b-4f59-bf35-f7a8e60efa0e OR seriesId:urn\:uuid\:8c63bc73-c60e-4082-8dc2-8e3ea20bd6e5)
+        // - A typical isPartOf filter: isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708
+        // - A 'fixed' filter: AND (-obsoletedBy:* AND formatType:METADATA))
+        // These are concatenated together to arrive at the full query using the form:
+        //    ( ( mainQuery ) OR idFilterQuery OR isPartOfQuery ) AND catalogQuery
+        // For exampe:
+        //   (((text:soil) AND (-(keywords:*soil layer*) AND *:*))
+        //     OR (id:urn\:uuid\:298073d0-dc2b-4f59-bf35-f7a8e60efa0e OR seriesId:urn\:uuid\:8c63bc73-c60e-4082-8dc2-8e3ea20bd6e5)
+        //     OR (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708))
+        //     AND (-obsoletedBy:* AND formatType:METADATA)
 
-        String mainFilterValue = null;
         String completeFilterValue = null;
-        String operator = "AND";
-        Boolean prefilter;
-        Boolean postfilter;
-        int nFilters = filters.size();
-        int iFilter;
-
         FilterGroupProcessor fgp = new FilterGroupProcessor();
         // This call processess all '<filterGroup> elements, in addition to all root level
         // filter definitions.
         log.trace("getRootValues, xpath: " + getxPath());
-        completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, prefixMatch, postfixMatch, xPath);
+        completeFilterValue = fgp.getFilterGroupValue(docOrNode, filters, filterGroup, idFilterMatch, isPartOfMatch, xPath);
 
-        log.error("completedFilterValue: " + completeFilterValue);
-        // Make sure that the only query term is a negation query, e.g. "-abstract:*fish*". This is a bit of a strange query, and
-        // would return many documents, but this is possible, so handle it.
-        if (completeFilterValue.matches("(^\\(*\\-\\w+:\\w+\\)*$)|(^\\(*\\-\\w+:\\*\\w+\\*\\)*$)")) {
-            completeFilterValue = completeFilterValue.replaceAll("^\\(", "");
-            completeFilterValue = completeFilterValue.replaceAll("\\)$", "");
-            completeFilterValue = "(" + completeFilterValue + " AND *:*" + ")";
-        }
+        log.trace("completeFilterValue: " + completeFilterValue);
 
         // This case shouldn't happen (no terms found or specified), but check anyway
         if(completeFilterValue == null) {
             completeFilterValue = "(id:*)";
         }
 
-        // Don't include the 'fixed' filter if there are no pre or main filters. The fixed filter
-        // is usually something like '(-obsoletedBy:* AND formatType:METADATA)', which will return ALL
-        // unobsoleted metadata pids if there is no pre or main filters to constrain it.
-        if (fixedTerm != null) {
+        // Add the 'catalog' term, which is usually something like
+        // '(-obsoletedBy:* AND formatType:METADATA)'.
+        if (catalogQuery != null) {
             if (completeFilterValue != null) {
-                completeFilterValue = "(" + completeFilterValue + " AND " + fixedTerm + ")";
+                completeFilterValue = "(" + completeFilterValue + ")" + " AND " + catalogQuery;
             } else {
-                completeFilterValue = "(" + fixedTerm + ")";
+                completeFilterValue = catalogQuery;
             }
         }
 
@@ -225,52 +218,52 @@ public class FilterRootElement {
     }
 
     /**
-     * Get the terms used to identify a 'prefix' filter
-     * @return the terms used to identify a 'prefix' filter
+     * Get the terms used to identify a 'id' filter
+     * @return the terms used to identify a 'id' filter
      * @see "application-context-collection.xml"
      */
-    public String getPrefixMatch() {
-        return prefixMatch;
+    public String getIdFilterMatch() {
+        return idFilterMatch;
     }
 
     /**
-     * Get the terms used to identify a 'prefix' filter
-     * @param prefixMatch the terms used to identify a 'prefix' filter
+     * Get the terms used to identify a 'id' filter
+     * @param idFilterMatch the terms used to identify an 'id' filter
      */
-    public void setPrefixMatch(String prefixMatch) {
-        this.prefixMatch = prefixMatch;
+    public void setIdFilterMatch(String idFilterMatch) {
+        this.idFilterMatch = idFilterMatch;
     }
 
     /**
-     * Get the 'fixed' portion of a query filter
-     * @return the 'fixed' portion of a query filter
+     * Get the 'catalogQuery' portion of a query filter
+     * @return the 'catalogQuery' portion of a query filter
      */
-    public String getFixedTerm() {
-        return fixedTerm;
+    public String getCatalogQuery() {
+        return catalogQuery;
     }
 
     /**
-     * Set the 'fixed' portion of a query filter
-     * @param fixedTerm the 'fixed' portion of a query filter
+     * Set the 'catalogQuery' portion of a query filter
+     * @param catalogQuery the 'catalogQuery' portion of a query filter
      */
-    public void setFixedTerm(String fixedTerm) {
-        this.fixedTerm = fixedTerm;
+    public void setCatalogQuery(String catalogQuery) {
+        this.catalogQuery = catalogQuery;
     }
 
     /**
-     * Get the terms used to identify a 'postfix' filter
-     * @return the terms used to identify a 'postfix' filter
+     * Get the terms used to identify an 'isPartOf' filter
+     * @return the terms used to identify a 'isPartOf' filter
      */
-    public String getPostfixMatch() {
-        return postfixMatch;
+    public String getIsPartOfFilterMatch() {
+        return isPartOfMatch;
     }
 
     /**
-     * Set the terms used to identify a 'postfix' filter
-     * @param postfixMatch the terms used to identify a 'postfix' filter
+     * Set the terms used to identify an 'isPartOf' filter
+     * @param isPartOfMatch the terms used to identify an 'isPartOf' filter
      */
-    public void setPostfixMatch(String postfixMatch) {
-        this.postfixMatch = postfixMatch;
+    public void setIsPartOfFilterMatch(String isPartOfMatch) {
+        this.isPartOfMatch = isPartOfMatch;
     }
 
     /**

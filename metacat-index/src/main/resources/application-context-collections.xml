@@ -1,7 +1,7 @@
-<beans xmlns="http://www.springframework.org/schema/beans"
-	xmlns:p="http://www.springframework.org/schema/p"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://www.springframework.org/schema/beans
+<beans xmlns:p="http://www.springframework.org/schema/p"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns="http://www.springframework.org/schema/beans"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans
 						http://www.springframework.org/schema/beans/spring-beans.xsd
 						http://www.springframework.org/schema/context
     					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
@@ -48,23 +48,16 @@
 		<constructor-arg name="name" value="collectionQuery" />
 	</bean>
 
-    <!-- The filters from the collection document are assembled into a query based on the properties defined below.
-         The placement of the filters in the query will be:
-         - (<filters that match 'prefixMatch'>) OR (<any filter that doesn't match 'prefixMatch', 'codaMatch'>) AND
-           (<'postfix' term>) OR (<filters that match 'codaMatch')
-         For example:
-
-         (((isPartOf:urn\:uuid\:4ef5567b-3066-425f-ae0d-685ba0d2cf82)) OR ((text:*lauren*) AND (text:*test*)) AND (-obsoletedBy:* AND formatType:METADATA)) OR
-           (id:urn\:uuid\:53154666-03db-4252-ae01-993a02df6099)
-
+    <!-- See 'FilterRootElement.java and FilterGroupProcessor.java for an explaination of the properties defined for
+         processing collection filter defintions.
     -->
 
 	<bean id="collection.filterFields" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement"
 		  p:name="collectionQuery"
 		  p:xPath=".//definition/booleanFilter | .//definition/dateFilter | .//definition/filter | .//definition/numericFilter | .//definition/filterGroup | booleanFilter | dateFilter | filter | numericFilter | filterGroup"
-		  p:prefixMatch="isPartOf,seriesId"
-		  p:fixedTerm="(-obsoletedBy:* AND formatType:METADATA)"
-	      p:postfixMatch="id">
+		  p:idFilterMatch="id,identifier,seriesId"
+		  p:catalogQuery="(-obsoletedBy:* AND formatType:METADATA)"
+	      p:isPartOfFilterMatch="isPartOf">
 		<property name="filters">
 			<list>
 				<ref bean="collection.booleanFilter"/>
