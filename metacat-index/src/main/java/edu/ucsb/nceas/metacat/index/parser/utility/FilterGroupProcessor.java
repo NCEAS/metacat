@@ -41,8 +41,10 @@ import org.w3c.dom.NodeList;
  *
  * Assemble a query string based on a set of filters in a DataONE collection document.
  * <p>
- * Used by FilterCommonRootSolrField.
- * Based on CommonRootSolrField by sroseboo
+ *   This class handles converting each <filterGroup> element of a portal filter <definition>,
+ *   including the top level filters that are not actually enclosed in a '<filterGroup>' element,
+ *   but are essential a top level filterGroup. The 'getFilterGroupValue' method therefore can
+ *   be called recursively.
  * </p>
  * @author slaughter
  *
@@ -87,28 +89,30 @@ public class FilterGroupProcessor {
     public String getFilterGroupValue(Object docOrNode,
                                       List<FilterProcessor> filters,
                                       FilterGroupProcessor filterGroup,
-                                      String prefixMatch,
-                                      String postfixMatch,
+                                      String idFilterMatch,
+                                      String isPartOfFilterMatch,
                                       String xPath)
             throws XPathExpressionException {
 
         // Create XPath object
         XPathFactory xpathFactory = XPathFactory.newInstance();
         XPath xpath = xpathFactory.newXPath();
-        XPathExpression xPathExpression = xpath.compile(xPath);
+        String localName = "./*[local-name()]";
+        XPathExpression xPathExpression = xpath.compile(localName);
+        NodeList topNodes = (NodeList) xPathExpression.evaluate(docOrNode, XPathConstants.NODESET);
 
+        xPathExpression = xpath.compile(xPath);
         log.trace("FilterGroupProcessor.getFilterGroupValue xpath: " + xPath);
-
         NodeList nodeList = (NodeList) xPathExpression.evaluate(docOrNode,
                 XPathConstants.NODESET);
 
-        String prefilterValue = null;
-        String postfilterValue = null;
+        String idFilterValue = null;
+        String isPartOfFilterValue = null;
         String filterValue = null;
         String mainFilterValue = null;
         String completeFilterValue = null;
-        Boolean prefilter;
-        Boolean postfilter;
+        Boolean idFilter;
+        Boolean isPartOfFilter;
 
         // A typical query prefilter: (isPartOf:urn\:uuid\:349aa330-4645-4dab-a02d-3bf950cf708 OR seriesId:urn:uuid:8c63bc73-c60e-4082-8dc2-8e3ea20bd6e5)
         // A main filter: ((text:soil) AND (-(keywords:*soil layer*) AND -(attribute:*soil layer*)) AND ((dateUploaded:[1800-01-01T00:00:00Z TO 2009-12-31T23:59:59Z])
@@ -119,25 +123,26 @@ public class FilterGroupProcessor {
 
         // Collect the terms that are used to identify a 'prefilter' item. These terms will be added to
         // the front of the complete query and 'OR'd together
-        HashSet<String> prefixMatchingFields = new HashSet<String>();
-        if(prefixMatch != null && !prefixMatch.isEmpty()) {
-            String tokens[] = prefixMatch.split(",");
+        HashSet<String> idFilterMatchingFields = new HashSet<String>();
+        if(idFilterMatch != null && !idFilterMatch.isEmpty()) {
+            String tokens[] = idFilterMatch.split(",");
             for (String token : tokens) {
-                prefixMatchingFields.add(token);
+                idFilterMatchingFields.add(token);
             }
         }
 
         // Collect the terms that are used to identify a 'postfilter' item. These terms will be added to
         // the front of the complete query and 'OR'd together
-        HashSet<String> postfixMatchingFields = new HashSet<String>();
-        if(postfixMatch != null && !postfixMatch.isEmpty()) {
-            String tokens[] = postfixMatch.split(",");
+        HashSet<String> isPartOfMatchingFields = new HashSet<String>();
+        if(isPartOfFilterMatch != null && !isPartOfFilterMatch.isEmpty()) {
+            String tokens[] = isPartOfFilterMatch.split(",");
             for (String token : tokens) {
-                postfixMatchingFields.add(token);
+                isPartOfMatchingFields.add(token);
             }
         }
 
         String operator = "AND";
+        // Top level (of /defintion) or filterGroup exclude operator
         Boolean exclude = false;
 
         // Find elements '<operator>', '<fieldsOperator>' // and '<exclude>' elements.
@@ -161,6 +166,7 @@ public class FilterGroupProcessor {
         // Loop through the nodes that match the filter xpath, for example "//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
         for (int i = 0; i < nodeList.getLength(); i++) {
             Node node = nodeList.item(i);
+            log.trace("Processing node: " + node.getNodeName());
 
             Boolean foundNode = false;
             // For each node, search for a matching filter that can process that filter type
@@ -170,7 +176,7 @@ public class FilterGroupProcessor {
                     foundNode = true;
                     filterProcessor.initXPathExpressions();
                     filterValue = filterProcessor.getFilterValue(node);
-                    log.trace("returned filterValue: " + filterValue);
+                    log.trace("nodename: " + node.getNodeName() + " returned filterValue: " + filterValue);
                     break;
                 }
             }
@@ -178,7 +184,7 @@ public class FilterGroupProcessor {
             // Process a '<filterGroup>', if that is the currnt node
             if(!foundNode) {
                 if (node.getNodeName().equalsIgnoreCase(filterGroup.getMatchElement())) {
-                    filterValue = filterGroup.getFilterGroupValue(node, filters, filterGroup, prefixMatch, postfixMatch, xPath);
+                    filterValue = filterGroup.getFilterGroupValue(node, filters, filterGroup, idFilterMatch, isPartOfFilterMatch, xPath);
                     log.trace("returned filterGroup filterValue: " + filterValue);
                 }
             }
@@ -187,34 +193,34 @@ public class FilterGroupProcessor {
             if(filterValue == null)
                 continue;
 
-            prefilter = false;
-            postfilter = false;
+            idFilter = false;
+            isPartOfFilter = false;
             // See if this filter value matches one of the 'prefix' filters, that will be 'OR'd
             // with the other filters. The 'prefilters' will be accumulated and prepended to the query
             // string, to be in sync with the way metacatui does things, and to make it easy to apply
             // the correct logical operators.
-            if(!prefixMatchingFields.isEmpty()) {
-                for(String term : prefixMatchingFields) {
+            if(!idFilterMatchingFields.isEmpty()) {
+                for(String term : idFilterMatchingFields) {
                     // Only match the term if it is preceded by a "(" or " " and followed by a ":"
                     // Example: 'id' matches '(id:10)' or 'id:10', but doesn't match 'myId:10'
                     Pattern p = Pattern.compile("[(-]" + term + ":" + "|" + "^" + term + ":");
                     Matcher m1 = null;
                     m1 = p.matcher(filterValue);
                     if(m1.find()) {
-                        prefilter = true;
-                        if(prefilterValue == null) {
-                            prefilterValue = filterValue;
+                        idFilter = true;
+                        if(idFilterValue == null) {
+                            idFilterValue = filterValue;
                         } else {
-                            prefilterValue += " OR " + filterValue;
+                            idFilterValue += " OR " + filterValue;
                         }
                         continue;
                     }
                 }
             }
 
-            // Check this filter for a match with the 'postfix' filter pattern.
-            if(!postfixMatchingFields.isEmpty()) {
-                for(String term : postfixMatchingFields) {
+            // Check this filter for a match with the 'isPartOF' filter pattern.
+            if(!isPartOfMatchingFields.isEmpty()) {
+                for(String term : isPartOfMatchingFields) {
                     // Only match the term if it is surrounded by non-alpha characters, i.e.
                     // term to match "id" is not embedded in another string such as "myId". That
                     // doesn't match, but "(id:1234)" does.
@@ -222,11 +228,11 @@ public class FilterGroupProcessor {
                     Matcher m1 = null;
                     m1 = p.matcher(filterValue);
                     if(m1.find()) {
-                        postfilter = true;
-                        if(postfilterValue == null) {
-                            postfilterValue = filterValue;
+                        isPartOfFilter = true;
+                        if(isPartOfFilterValue == null) {
+                            isPartOfFilterValue = filterValue;
                         } else {
-                            postfilterValue += " OR " + filterValue;
+                            isPartOfFilterValue += " OR " + filterValue;
                         }
                         continue;
                     }
@@ -235,7 +241,7 @@ public class FilterGroupProcessor {
 
             // If we found a prefilter item, don't add this portion to the completed query string yet. It
             // will be added after all other filters are processed.
-            if(prefilter || postfilter) {
+            if(idFilter || isPartOfFilter) {
                 continue;
             }
 
@@ -249,32 +255,42 @@ public class FilterGroupProcessor {
 
         // Now assemble the complete query
         // (((prefilter) OR (main filters)) AND (fixedTerm)) OR (postfilter)
-        // Add the prefilter value, if defined.
-        if(prefilterValue != null) {
-            completeFilterValue = "(" + prefilterValue + ")";
-        }
 
         // Next add the main filter value, if defined.
         if(mainFilterValue != null) {
+            completeFilterValue = mainFilterValue;
+        }
+
+        // If multiple sub-filters were found, or an exclude condition was specified in the filter,
+        // surround the filter value with parenthesis. Note that in the case there is no 'main' filter
+        // (not id and not isPartof), then the 'completeFilterValue' will be null.
+        if ((nodeList.getLength() > 1 || exclude) && completeFilterValue != null) {
+            completeFilterValue = "(" + completeFilterValue + ")";
+        }
+
+        // Add the id filter value, if defined.
+        if(idFilterValue != null) {
             if(completeFilterValue != null) {
-                completeFilterValue = completeFilterValue + " OR " + "(" + mainFilterValue + ")";
+                completeFilterValue = "(" + "(" + completeFilterValue + ")" + " OR " + idFilterValue + ")";
             } else {
-                completeFilterValue = mainFilterValue;
+                completeFilterValue = idFilterValue;
             }
+        }
+
+        // Apply the 'exclude' operator ("-") to the 'main filters' and 'id filters', but not to
+        // the 'postFilter' (or 'fixedFilter').
+        if (exclude && completeFilterValue != null) {
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
         }
 
         // Add the postfix terms
-        if(postfilterValue != null && !postfilterValue.isEmpty()) {
+        if(isPartOfFilterValue != null && !isPartOfFilterValue.isEmpty()) {
             if(completeFilterValue != null) {
-                completeFilterValue = completeFilterValue + " OR " + "(" + postfilterValue + ")";
+                completeFilterValue = completeFilterValue + " OR " + isPartOfFilterValue;
             } else {
-                completeFilterValue = postfilterValue;
+                completeFilterValue = isPartOfFilterValue;
             }
         }
-
-        completeFilterValue = "(" + completeFilterValue + ")";
-
-        if (exclude) completeFilterValue = "-" + completeFilterValue;
 
         return completeFilterValue;
     }
