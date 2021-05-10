@@ -935,9 +935,20 @@ public class MNodeService extends D1NodeService
                 // do we already have a replica?
                 try {
                     localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                    ObjectFormat objectFormat = null;
+                    String type = null;
+                    try {
+                        objectFormat = ObjectFormatCache.getInstance().getFormat(sysmeta.getFormatId());
+                    } catch (BaseException be) {
+                        logMetacat.warn("MNodeService.getReplica - Could not lookup ObjectFormat for: " + sysmeta.getFormatId(), be);
+                    }
+                    if (objectFormat != null) {
+                        type = objectFormat.getFormatType();
+                    }
+                    logMetacat.info("MNodeService.getReplica - the data type for the object " + pid.getValue() + " is " + type);
                     // if we have a local id, get the local object
                     try {
-                        object = MetacatHandler.read(localId);
+                        object = MetacatHandler.read(localId, type);
                     } catch (Exception e) {
                         // NOTE: we may already know about this ID because it could be a data file described by a metadata file
                         // https://redmine.dataone.org/issues/2572
@@ -1616,8 +1627,20 @@ public class MNodeService extends D1NodeService
 
         // if the person is authorized, perform the read
         if (allowed) {
+            SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            ObjectFormat objectFormat = null;
+            String type = null;
             try {
-                inputStream = MetacatHandler.read(localId);
+                objectFormat = ObjectFormatCache.getInstance().getFormat(sm.getFormatId());
+            } catch (BaseException be) {
+                logMetacat.warn("MNodeService.getReplica - could not lookup ObjectFormat for: " + sm.getFormatId(), be);
+            }
+            if (objectFormat != null) {
+                type = objectFormat.getFormatType();
+            }
+            logMetacat.info("MNodeService.getReplica - the data type for the object " + pid.getValue() + " is " + type);
+            try {
+                inputStream = MetacatHandler.read(localId, type);
             } catch (Exception e) {
                 throw new ServiceFailure("2181", "The object specified by " + 
                     pid.getValue() + "could not be returned due to error: " + e.getMessage());
