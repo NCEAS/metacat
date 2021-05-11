@@ -22,6 +22,7 @@
  */
 package edu.ucsb.nceas.metacat.object.handler;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -225,7 +226,7 @@ public abstract class NonXMLMetadataHandler {
                         " because cannot find the file associated with the detailed file input stream " + 
                         " for the object " + pid.getValue() + " since " + e.getMessage());
             }
-        } else if (validationInput.markSupported()) {
+        } else if (validationInput.markSupported() && validationInput instanceof ByteArrayInputStream) {
             logMetacat.debug("NonXMLMetadataHandler.checkValidation - in the resetable input stream route for pid " + pid.getValue());
             //Metacat can reset input stream for the next step
             data = validationInput;
