@@ -40,6 +40,7 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/collection/collection-1.1.0-example-fieldsOperator.xml");
         portalFiles.add("src/test/resources/collection/portal-1.1.0-example-negation-only.xml");
         portalFiles.add("src/test/resources/collection/collection-example.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-simple.xml");
         portalFiles.add("src/test/resources/collection/portal-example-full.xml");
         portalFiles.add("src/test/resources/collection/portal-example-seriesId.xml");
         portalFiles.add("src/test/resources/collection/portal-example-sasap.xml");
@@ -62,6 +63,7 @@ public class PortalSubprocessorTest {
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-fieldsOperator.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-portal-1.1.0-example-negation-only.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-simple.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-full.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-seriesId.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-sasap.txt");
@@ -83,6 +85,7 @@ public class PortalSubprocessorTest {
         portalNames.add("fieldsOperator-example");
         portalNames.add("portal-1.1.0-negation-only");
         portalNames.add("My saved search");
+        portalNames.add("My Soil Portal");
         portalNames.add("My Portal");
         portalNames.add("Another test portal");
         portalNames.add("Lauren's test project - updated");
