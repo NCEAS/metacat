@@ -30,6 +30,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -87,14 +88,17 @@ public class MNodeQueryTest extends D1NodeServiceTest {
 
     private static String unmatchingEncodingFilePath = "test/incorrect-encoding-declaration.xml";
     private static String taxononmyFilePath = "test/eml-with-taxonomy.xml";
-    private static String portalFilePath = "test/example-portal.xml";
+    private static String portalFilePath = "metacat-index/src/test/resources/collection/portal-example-simple.xml";
+    private static String portalResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-simple.txt";
     private static String portal110FilePath = "metacat-index/src/test/resources/collection/portal-1.1.0-example.xml";
+    private static String portal110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-portal-1.1.0.txt";
     private static String collection110FilePath = "metacat-index/src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml";
+    private static String collection110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt";
     private int tryAcccounts = 50;
     
-    private static final String collectionResult = "<str name=\"collectionQuery\">((text:*soil* AND (keywords:\"soil layer\" AND attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *]) AND (-obsoletedBy:* AND formatType:METADATA))</str>";
-    private static final String collectionQueryPortal110 = "((text:\"*soil carbon*\" AND (keywords:\"soil layer\" OR attribute:\"soil layer\") AND (dateUploaded:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z] AND beginDate:[1800-01-01T00:00:00Z TO 2009-01-01T00:00:00Z]) AND isPublic:true AND numberReplicas:[1 TO *] AND -(datasource:urn\\:node\\:TERN OR datasource:urn\\:node\\:ARCTIC)) AND (-obsoletedBy:* AND formatType:METADATA))";
-    private static final String collectionQueryCollection110 = "<str name=\"collectionQuery\">(((authorLastName:Kim AND -(identifier:urn\\:uuid\\:a843239b-6d04-4019-9835-6e3c8e3418c8 OR identifier:urn\\:uuid\\:30a28104-6814-497a-8f72-7fecb36cb721 OR identifier:urn\\:uuid\\:83b718dd-d709-466e-bf0d-0710a71e7a20)) OR (projectText:\"My Project\" AND keywordsText:\"Special Word\") OR (awardNumber:123 AND (beginDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z] AND endDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z]))) AND (-obsoletedBy:* AND formatType:METADATA))</str>";
+    private static String collectionResult = null;
+    private static String collectionQueryPortal110 = null;
+    private static String collectionQueryCollection110 = null;
     private static final String baseURI = "https://cn.dataone.org/cn/v2/resolve";
     private static final String longQueryFile = "test/test-queries/long-solr-query-partial.txt";
     
@@ -152,6 +156,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
    */
   public MNodeQueryTest(String name) {
     super(name);
+    try {
+        collectionQueryPortal110 = FileUtils.readFileToString(new File(portal110ResultFilePath), "UTF-8").trim();
+        collectionQueryCollection110 = FileUtils.readFileToString(new File(collection110ResultFilePath), "UTF-8").trim();
+        collectionResult = FileUtils.readFileToString(new File(portalResultFilePath), "UTF-8").trim();
+    } catch (IOException e) {
+        e.printStackTrace();
+    }
     
   }
 
@@ -949,7 +960,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         System.out.println(resultStr);
-        assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
+        assertTrue(resultStr.contains("<str name=\"label\">my-portal</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
     }
@@ -1102,7 +1113,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
             resultStr = IOUtils.toString(stream, "UTF-8"); 
         }
         //System.out.println(resultStr);
-        assertTrue(resultStr.contains("<str name=\"label\">laurentest7</str>"));
+        assertTrue(resultStr.contains("<str name=\"label\">my-portal</str>"));
         assertTrue(resultStr.contains("<str name=\"logo\">urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</str>"));
         assertTrue(resultStr.contains(collectionResult));
         resultStr = resultStr.replaceAll("\\s","");
