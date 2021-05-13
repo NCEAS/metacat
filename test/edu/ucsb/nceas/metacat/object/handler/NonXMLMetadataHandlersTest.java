@@ -77,7 +77,7 @@ public class NonXMLMetadataHandlersTest extends MCTestCase{
         
         //test the json-ld format id which is a non-xml format type
         formatId = new ObjectFormatIdentifier();
-        formatId.setValue("science-on-schema.org/Dataset/1.2;ld+json");
+        formatId.setValue(NonXMLMetadataHandlers.JSON_LD);
         handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(formatId);
         assertTrue (handler instanceof JsonLDHandler);
         

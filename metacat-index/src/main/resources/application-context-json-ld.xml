@@ -5,7 +5,7 @@
 	<bean id="jsonLdSubprocessor" class="org.dataone.cn.indexer.parser.JsonLdSubprocessor">
 		<property name="matchDocuments">
 			<list>
-				<value>science-on-schema.org/Dataset/1.2;ld+json</value>
+				<value>science-on-schema.org/Dataset;ld+json</value>
 			</list>
 		</property>
 		<property name="fieldList">

@@ -38,7 +38,7 @@ import edu.ucsb.nceas.metacat.service.XMLSchemaService;
  */
 public class NonXMLMetadataHandlers {
     
-    public static String JSON_LD = "science-on-schema.org/Dataset/1.2;ld+json";
+    public static String JSON_LD = "science-on-schema.org/Dataset;ld+json";
     
     private static Vector<String> nonXMLMetadataFormatList = new Vector<String>();
     
