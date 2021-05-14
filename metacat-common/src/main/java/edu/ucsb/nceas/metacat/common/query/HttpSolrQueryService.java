@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
 
@@ -47,9 +48,11 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.util.ClientUtils;
 import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.core.SolrResourceLoader;
+import org.apache.solr.core.ConfigSetService;
 import org.apache.solr.core.SolrConfig;
 import org.apache.solr.schema.FieldType;
 import org.apache.solr.schema.IndexSchema;
+import org.apache.solr.schema.IndexSchemaFactory;
 import org.apache.solr.schema.SchemaField;
 import org.apache.solr.schema.TextField;
 import org.dataone.configuration.Settings;
@@ -209,8 +212,11 @@ public class HttpSolrQueryService extends SolrQueryService {
     private void getIndexSchemaFieldFromServer() throws MalformedURLException, ParserConfigurationException, IOException, SAXException {
         log.debug("get filed map from server (downloading files) ==========================");
         SolrResourceLoader loader = new SolrResourceLoader();
-        schema = new IndexSchema("dataone", new InputSource(lookupSchema()), Version.LUCENE_8_4_1, loader);
-        log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++"+schema);
+        ConfigSetService service = null;
+        ConfigSetService.ConfigResource configureResource  = IndexSchemaFactory.getConfigResource(service, lookupSchema(), loader, "dataone");
+        Properties substitutableProperties = new Properties();
+        schema = new IndexSchema("dataone", configureResource,  Version.LUCENE_8_8_2, loader, substitutableProperties);
+        log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++" + schema);
         fieldMap = schema.getFields();
     }
     

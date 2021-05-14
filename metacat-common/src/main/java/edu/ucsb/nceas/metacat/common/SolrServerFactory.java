@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.common;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
+import java.util.Properties;
 
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -121,7 +123,8 @@ public class SolrServerFactory {
         log.info("The configured solr home from properties is " + solrHomeDir);
         String configFileName = Settings.getConfiguration().getString(SOLR_CONFIG_FILE_NAME_PROPERTY_NAME);
         File configFile = new File(solrHomeDir, configFileName);
-        coreContainer = new CoreContainer(solrHomeDir);
+        Properties properties = new Properties();
+        coreContainer = new CoreContainer(Paths.get(solrHomeDir), properties);
         coreContainer.load();
         collectionName = getCollectionName();
         solrServer = new EmbeddedSolrServer(coreContainer, collectionName);
