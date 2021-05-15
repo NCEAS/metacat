@@ -473,7 +473,7 @@ public abstract class D1NodeService {
 	            if (userAgent == null) {
 	                userAgent = request.getHeader("User-Agent");
 	            }
-	            localId = handler.save(object,sysmeta.getFormatId().getValue(), pid, sysmeta.getChecksum(), session, ipAddress, userAgent);
+	            localId = handler.save(object,sysmeta, session, ipAddress, userAgent);
 	        } else {
 	            String formatId = null;
 	            if(sysmeta.getFormatId() != null)  {

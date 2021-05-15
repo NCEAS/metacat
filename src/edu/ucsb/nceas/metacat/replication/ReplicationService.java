@@ -729,8 +729,8 @@ public class ReplicationService extends BaseService {
 	                                 " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
 	                                 ". The docment has the server code " + serverCode + " with home server " + homeServer);
 	                ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
-	                handler.saveReplication(source, docid, sysMeta.getIdentifier(), docType, sysMeta.getChecksum(), user, 
-	                                       serverCode, server, request.getRemoteAddr(), request.getHeader("User-Agent"));
+	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, 
+	                                       request.getRemoteAddr(), request.getHeader("User-Agent"));
 	                if(sysMeta != null) {
 	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
                     }

@@ -460,7 +460,7 @@ public class ReplicationHandler extends TimerTask
                                " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
                                ". The docment has the server code " + serverCode + " with home server " + docHomeServer);
               ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
-              handler.saveReplication(source, accNumber, sysMeta.getIdentifier(), docType, sysMeta.getChecksum(), user, 
+              handler.saveReplication(source, accNumber, sysMeta, user, 
                                      serverCode, remoteserver, getIpFromURL(u), null);
               if(sysMeta != null) {
                   MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);

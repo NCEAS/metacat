@@ -41,6 +41,7 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Checksum;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
@@ -73,9 +74,7 @@ public abstract class NonXMLMetadataHandler {
     /**
      * Save the bytes to the disk 
      * @param source  the input stream contains the content of the meta data object
-     * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
-     * @param pid  the identifier associated with the input stream
-     * @param expectedChecksum  the expected checksum for the saved file. The value usually comes from the system meta data
+     * @param sysmeta  the sysmeta associated with the input stream
      * @param session  the user's session who makes this call
      * @param ipAddress  the ip address of the client who makes the call (for the log information)
      * @param userAgent  the user agent of the client who makes the call (for the log information)
@@ -86,12 +85,19 @@ public abstract class NonXMLMetadataHandler {
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized 
      */
-    public String save(InputStream source, String docType, Identifier pid, Checksum expectedChecksum, 
+    public String save(InputStream source, SystemMetadata sysmeta, 
                         Session session, String ipAddress, String userAgent) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
+        if (sysmeta == null) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the system metadata parameter should not be null.");
+        }
+        Identifier pid = sysmeta.getIdentifier();
+        Checksum expectedChecksum = sysmeta.getChecksum();
+        String docType = sysmeta.getFormatId().getValue();
         if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the pid parameter should not be blank.");
         }
+        logMetacat.debug("NonXMLMetadataHandler.save - save the object " + pid.getValue() + " with doctype " + docType);
         String localId = null;
         boolean valid = false;
         InputStream data = checkValidation(source, pid);
@@ -125,11 +131,8 @@ public abstract class NonXMLMetadataHandler {
     /**
      * Save the bytes to the disk from a replication process
      * @param source  the input stream contains the content of the meta data object
-     * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
-     * @param pid  the identifier associated with the input stream
-     * @param expectedChecksum  the expected checksum for the saved file. The value usually comes from the system meta data
+     * @param sysmeta  the system meta data associated with the source
      * @param replicationNtofication server  the server name notifying the replication (only for the replication process)
-     * @param session  the user's session who makes this call
      * @param ipAddress  the ip address of the client who makes the call (for the log information)
      * @param userAgent  the user agent of the client who makes the call (for the log information)
      * @return  the local document id. It can be null.
@@ -139,10 +142,19 @@ public abstract class NonXMLMetadataHandler {
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized 
      */
-    public void saveReplication(InputStream source, String localId, Identifier pid, String docType, 
-                                 Checksum expectedChecksum, String owner, int serverCode, 
+    public void saveReplication(InputStream source, String localId, SystemMetadata sysmeta, String owner, int serverCode, 
                                  String replicationNotificationServer, String ipAddress, String userAgent) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
+        if (sysmeta == null) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.saveReplication - the system metadata parameter should not be null.");
+        }
+        Identifier pid = sysmeta.getIdentifier();
+        Checksum expectedChecksum = sysmeta.getChecksum();
+        String docType = sysmeta.getFormatId().getValue();
+        if (pid == null || pid.getValue() == null || pid.getValue().trim().equals("")) {
+            throw new InvalidRequest("1102", "NonXMLMetadataHandler.saveReplication - the pid parameter should not be blank.");
+        }
+        logMetacat.debug("NonXMLMetadataHandler.saveReplication - save the object " + pid.getValue() + " with doctype " + docType);
         InputStream data = checkValidation(source, pid);
         try {
             if (metadataStoragePath == null) {
