@@ -131,8 +131,7 @@ public abstract class NonXMLMetadataHandler {
      * @param source  the input stream contains the content of the meta data object
      * @param sysmeta  the system meta data associated with the source
      * @param replicationNtofication server  the server name notifying the replication (only for the replication process)
-     * @param ipAddress  the ip address of the client who makes the call (for the log information)
-     * @param userAgent  the user agent of the client who makes the call (for the log information)
+     * @param event  the event log information associated with this action
      * @return  the local document id. It can be null.
      * @throws UnsupportedType
      * @throws ServiceFailure
@@ -141,7 +140,7 @@ public abstract class NonXMLMetadataHandler {
      * @throws NotAuthorized 
      */
     public void saveReplication(InputStream source, String localId, SystemMetadata sysmeta, String owner, int serverCode, 
-                                 String replicationNotificationServer, String ipAddress, String userAgent) 
+                                 String replicationNotificationServer, EventLogData event) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
         if (sysmeta == null) {
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.saveReplication - the system metadata parameter should not be null.");
@@ -184,7 +183,7 @@ public abstract class NonXMLMetadataHandler {
             //log the event
             try {
                 logMetacat.debug("Logging the creation event.");
-                EventLog.getInstance().log(ipAddress, userAgent, ReplicationService.REPLICATIONUSER, localId, "create");
+                EventLog.getInstance().log(event.getIpAddress(), event.getUserAgent(), ReplicationService.REPLICATIONUSER, localId, "create");
             } catch (Exception e) {
                 logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
             }

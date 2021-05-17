@@ -63,6 +63,7 @@ import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.DocumentImplWrapper;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
@@ -460,8 +461,9 @@ public class ReplicationHandler extends TimerTask
                                " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
                                ". The docment has the server code " + serverCode + " with home server " + docHomeServer);
               ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
-              handler.saveReplication(source, accNumber, sysMeta, user, 
-                                     serverCode, remoteserver, getIpFromURL(u), null);
+              String principal = null;
+              EventLogData event =  new EventLogData(getIpFromURL(u), "java", principal, accNumber, "create");
+              handler.saveReplication(source, accNumber, sysMeta, user, serverCode, remoteserver, event);
               if(sysMeta != null) {
                   MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
               }

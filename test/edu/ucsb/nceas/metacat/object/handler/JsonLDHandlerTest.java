@@ -434,7 +434,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
         sysmeta.setFormatId(format);
         sysmeta.setChecksum(expectedChecksum);
         handler.saveReplication(data, localId, sysmeta, 
-                      owner, serverCode, replicationNotificationServer, ip, agent);
+                      owner, serverCode, replicationNotificationServer, event);
         String docId = DocumentUtil.getDocIdFromString(localId);
         DBConnection conn = null;
         int serialNumber = -1;
@@ -483,7 +483,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             handler.saveReplication(data, localId, sysmeta,  owner, serverCode, 
-                                  replicationNotificationServer, ip, agent);
+                                  replicationNotificationServer, event);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidSystemMetadata);
@@ -504,7 +504,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksumForInvalidJson);
             handler.saveReplication(data, localId, sysmeta, owner, serverCode, 
-                                   replicationNotificationServer, ip, agent);
+                                   replicationNotificationServer, event);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
@@ -527,7 +527,7 @@ public class JsonLDHandlerTest extends D1NodeServiceTest {
             sysmeta.setFormatId(format);
             sysmeta.setChecksum(expectedChecksum);
             handler.saveReplication(data, localId, sysmeta, owner, serverCode, 
-                                    replicationNotificationServer, ip, agent);
+                                    replicationNotificationServer, event);
             fail("We can't reach here since it should throw an exception");
         } catch (Exception e) {
            assertTrue(e instanceof ServiceFailure);

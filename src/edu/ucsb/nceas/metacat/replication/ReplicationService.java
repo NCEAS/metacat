@@ -90,6 +90,7 @@ import org.xml.sax.XMLReader;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.DocumentImplWrapper;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
@@ -729,8 +730,9 @@ public class ReplicationService extends BaseService {
 	                                 " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
 	                                 ". The docment has the server code " + serverCode + " with home server " + homeServer);
 	                ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
-	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, 
-	                                       request.getRemoteAddr(), request.getHeader("User-Agent"));
+	                EventLogData event =  new EventLogData(request.getRemoteAddr(), request.getHeader("User-Agent"),
+	                                                    ReplicationService.REPLICATIONUSER, docid, "create");
+	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, event);
 	                if(sysMeta != null) {
 	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
                     }
