@@ -658,6 +658,12 @@ public class MNodeService extends D1NodeService
 
                 // update the data object
                 try {
+                    if (ipAddress == null) {
+                        ipAddress = request.getRemoteAddr();
+                    }
+                    if (userAgent == null) {
+                        userAgent = request.getHeader("User-Agent");
+                    }
                     EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "update");
                     localId = insertDataObject(object, newPid, session, sysmeta.getChecksum(), event);
                 } catch (Exception e) {
