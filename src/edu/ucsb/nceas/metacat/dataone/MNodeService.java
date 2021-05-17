@@ -152,6 +152,7 @@ import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -622,7 +623,8 @@ public class MNodeService extends D1NodeService
                         if (userAgent == null) {
                             userAgent = request.getHeader("User-Agent");
                         }
-                        localId  = handler.save(object, sysmeta, session, ipAddress, userAgent);
+                        EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "update");
+                        localId  = handler.save(object, sysmeta, session, event);
                     } else {
                         String formatId = null;
                         if(sysmeta.getFormatId() != null) {
@@ -656,7 +658,8 @@ public class MNodeService extends D1NodeService
 
                 // update the data object
                 try {
-                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
+                    EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "update");
+                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum(), event);
                 } catch (Exception e) {
                     logMetacat.error("MNService.update - couldn't write the data object to the disk since "+e.getMessage(), e);
                     removeIdFromIdentifierTable(newPid);
@@ -688,7 +691,7 @@ public class MNodeService extends D1NodeService
             insertSystemMetadata(sysmeta);
 
             // log the update event
-            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
+            //EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
 
             long end4 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on updating/saving system metadata  of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" and saving the log information is "+(end4- end3)+ " milli seconds.");

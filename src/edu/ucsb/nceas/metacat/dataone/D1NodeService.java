@@ -107,6 +107,7 @@ import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
@@ -473,7 +474,8 @@ public abstract class D1NodeService {
 	            if (userAgent == null) {
 	                userAgent = request.getHeader("User-Agent");
 	            }
-	            localId = handler.save(object,sysmeta, session, ipAddress, userAgent);
+	            EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+	            localId = handler.save(object,sysmeta, session, event);
 	        } else {
 	            String formatId = null;
 	            if(sysmeta.getFormatId() != null)  {
@@ -506,7 +508,14 @@ public abstract class D1NodeService {
 	        
 	      // DEFAULT CASE: DATA (needs to be checked and completed)
           try {
-              localId = insertDataObject(object, pid, session, sysmeta.getChecksum());
+              if (ipAddress == null) {
+                  ipAddress = request.getRemoteAddr();
+              }
+              if (userAgent == null) {
+                  userAgent = request.getHeader("User-Agent");
+              }
+              EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+              localId = insertDataObject(object, pid, session, sysmeta.getChecksum(), event);
           } catch (ServiceFailure e) {
               removeSystemMetaAndIdentifier(pid);
               throw e;
@@ -1200,6 +1209,25 @@ public abstract class D1NodeService {
       if (userAgent == null) {
           userAgent = request.getHeader("User-Agent");
       }
+      EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+      return insertDataObject(object, pid, session, checksum, event);
+      
+  }
+  
+  /**
+   * Insert a data object into Metacat
+   * @param object  the input stream of the object will be inserted
+   * @param pid  the pid associated with the object
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @param event  the event log information associated with this action
+   * @return  the local id of the inserted object
+   * @throws ServiceFailure
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
+   */
+  protected String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum, EventLogData event) 
+                   throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
       String dataFilePath = null;
       try {
           dataFilePath = PropertyService.getProperty("application.datafilepath");
@@ -1208,7 +1236,7 @@ public abstract class D1NodeService {
           sf.initCause(e);
           throw sf;
       }
-      return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, ipAddress, userAgent);
+      return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, event);
       
   }
   
@@ -1220,15 +1248,14 @@ public abstract class D1NodeService {
    * @param fileDirectory  the directory where the object will be inserted
    * @param session  the actor of this action
    * @param checksum  the expected checksum for this data object
-   * @param ip  the ip address of the client which initialize the call(for the log information)
-   * @param agent  the user agent of the client which initialize the call(for the log information)
+   * @param event  the event log information associated with this action
    * @return  the local id of the inserted object
    * @throws ServiceFailure
    * @throws InvalidSystemMetadata
    * @throws NotAuthorized
    */
   public static String insertObject(InputStream object, String docType, Identifier pid, String fileDirectory,
-          Session session, Checksum checksum, String ip, String agent) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+          Session session, Checksum checksum, EventLogData event) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
     
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
@@ -1313,7 +1340,7 @@ public abstract class D1NodeService {
       
           try {
               logMetacat.debug("Logging the creation event.");
-              EventLog.getInstance().log(ip, agent, username, localId, "create");
+              EventLog.getInstance().log(event.getIpAddress(), event.getUserAgent(), username, localId, event.getEvent());
           } catch (Exception e) {
               logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
           }

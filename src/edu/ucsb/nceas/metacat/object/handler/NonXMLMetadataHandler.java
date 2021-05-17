@@ -45,6 +45,7 @@ import org.dataone.service.types.v1.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -76,8 +77,7 @@ public abstract class NonXMLMetadataHandler {
      * @param source  the input stream contains the content of the meta data object
      * @param sysmeta  the sysmeta associated with the input stream
      * @param session  the user's session who makes this call
-     * @param ipAddress  the ip address of the client who makes the call (for the log information)
-     * @param userAgent  the user agent of the client who makes the call (for the log information)
+     * @param event  the event log information associated with this action
      * @return  the local document id. It can be null.
      * @throws UnsupportedType
      * @throws ServiceFailure
@@ -85,8 +85,7 @@ public abstract class NonXMLMetadataHandler {
      * @throws InvalidSystemMetadata
      * @throws NotAuthorized 
      */
-    public String save(InputStream source, SystemMetadata sysmeta, 
-                        Session session, String ipAddress, String userAgent) 
+    public String save(InputStream source, SystemMetadata sysmeta, Session session, EventLogData event) 
                         throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
         if (sysmeta == null) {
             throw new InvalidRequest("1102", "NonXMLMetadataHandler.save - the system metadata parameter should not be null.");
@@ -107,8 +106,7 @@ public abstract class NonXMLMetadataHandler {
                         " into disk since the property - application.documentfilepath is not found in the metacat.properties file ");
             }
             //Save the meta data object to disk using "localId" as the name
-            localId = D1NodeService.insertObject(data, docType, pid, metadataStoragePath, session, expectedChecksum, ipAddress, 
-                                                userAgent);
+            localId = D1NodeService.insertObject(data, docType, pid, metadataStoragePath, session, expectedChecksum, event);
         } finally {
             if (tmpFile != null) {
                 tmpFile.delete();
