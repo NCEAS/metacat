@@ -322,28 +322,6 @@ public abstract class NonXMLMetadataHandler {
         return data;
     }
     
-    /**
-     * Save the bytes to the disk
-     * @param source  the input stream contains the content of the meta data object
-     * @param docType  the doc type of this object in the xml_document table. Usually it is the format id.
-     * @param pid  the identifier associated with the input stream
-     * @param expectedChecksum  the expected checksum for the saved file. The value usually comes from the system meta data
-     * @param replicationNtofication server  the server name notifying the replication (only for the replication process)
-     * @param session  the user's session who makes this call
-     * @param ipAddress  the ip address of the client who makes the call (for the log information)
-     * @param userAgent  the user agent of the client who makes the call (for the log information)
-     * @return  the local document id. It can be null.
-     * @throws UnsupportedType
-     * @throws ServiceFailure
-     * @throws InvalidRequest
-     * @throws InvalidSystemMetadata
-     * @throws NotAuthorized 
-     */
-    public String save(InputStream source, String docType, Identifier pid, Checksum expectedChecksum, 
-                        String replicationNotificationServer, Session session, String ipAddress, String userAgent) 
-                        throws UnsupportedType, ServiceFailure, InvalidRequest, InvalidSystemMetadata, NotAuthorized {
-        return null;
-    }
     
     /**
      *The abstract method to validate the non-xml object 
