@@ -14,7 +14,7 @@
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
                 PREFIX SO:   <https://schema.org/>
 
-                SELECT ( ?description as ?abstract )
+                SELECT ( str(?description) as ?abstract )
                 WHERE {
                     ?datasetId rdf:type       SO:Dataset .
                     ?datasetId SO:description ?description   .
@@ -266,7 +266,7 @@
                     WHERE {
                         ?datasetId rdf:type SO:Dataset .
                         ?datasetId SO:funder ?funderId .
-                        ?funderId SO:identifier ?identifier.
+                        ?funderId SO:identifier ?identifier .
                     }
                 ]]>
             </value>
