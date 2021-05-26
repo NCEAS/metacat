@@ -1,0 +1,1 @@
+((siteText:*America* AND keywordsText:ant AND (-(northBoundCoord:[* TO 54] AND eastBoundCoord:[* TO -62] AND southBoundCoord:[* TO 44] AND westBoundCoord:[* TO -79]) AND *:* ))) AND (-obsoletedBy:* AND formatType:METADATA)

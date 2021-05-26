@@ -65,6 +65,8 @@ public class XMLSchemaService extends BaseService {
 	
 	public static final String SCHEMA_DIR = "/schema/";
 	
+	public static String NONXML = "NonXML";
+	
 	private static XMLSchemaService xmlSchemaService = null;
 	
 	private static Log logMetacat = LogFactory.getLog(XMLSchemaService.class);
@@ -93,6 +95,9 @@ public class XMLSchemaService extends BaseService {
     //distinguish them. The key of the hash table is the format id, the values is all the namespace schema location
     //delimited string for this format id.
     private static Hashtable<String, String> formatId_NamespaceLocationHash = new Hashtable<String, String>();
+    
+    private static Vector<String> nonXMLMetadataFormatList = new Vector<String>();
+    
 	/**
 	 * private constructor since this is a singleton
 	 */
@@ -132,6 +137,7 @@ public class XMLSchemaService extends BaseService {
 			setUseFullSchemaValidation();
 			createRegisteredNameSpaceList();
 			createRegisteredNameSpaceAndLocationString();
+			populateNonXMLMetadataFormatList();
 		} catch (PropertyNotFoundException pnfe) {
 			logMetacat.error("XMLService.doRefresh - Could not find property: xml.useFullSchemaValidation. " + 
 					"Setting to false.");
@@ -200,6 +206,14 @@ public class XMLSchemaService extends BaseService {
 	 */
 	public Vector<String> getNameSpaceList() {
 		return nameSpaceList;
+	}
+	
+	/**
+	 * Get the list of format ids which are the non-xml metadata type 
+	 * @return a list that holds the format ids for non-xml metadata type
+	 */
+	public Vector<String> getNonXMLMetadataFormatList() {
+	    return nonXMLMetadataFormatList;
 	}
 	
 	/**
@@ -415,6 +429,53 @@ public class XMLSchemaService extends BaseService {
             DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
 	}
+	
+	
+	/*
+     * Populate the list of format ids for the non-xml metadata type
+     */
+    private void populateNonXMLMetadataFormatList() {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pstmt = null;
+        ResultSet resultSet = null;
+        nonXMLMetadataFormatList = new Vector<String>();
+        String sql = "SELECT format_id FROM xml_catalog where " + "entry_type ='" + NONXML + "'";
+        try {
+            // check out DBConnection
+            conn = DBConnectionPool
+                    .getDBConnection("XMLService.populateNonXMLMetadataFormatList");
+            serialNumber = conn.getCheckOutSerialNumber();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.execute();
+            resultSet = pstmt.getResultSet();
+            while (resultSet.next()) {
+                String formatId = resultSet.getString(1);
+                logMetacat.debug("XMLService.populateNonXMLMetadataFormatList - find the format id: " + 
+                        formatId + " as an non-xml metadata format id in the database.");
+                if (!nonXMLMetadataFormatList.contains(formatId)) {
+                    logMetacat.debug("XMLService.populateNonXMLMetadataFormatList - put the format id: " + 
+                                formatId + " into the non-xml metadata format id list.");
+                    nonXMLMetadataFormatList.add(formatId);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            logMetacat.error("XMLService.populateRegisteredNoNamespaceSchemaList - SQL Error: "
+                    + e.getMessage());
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+            }// try
+            catch (SQLException sqlE) {
+                logMetacat.error("XMLSchemaService.populateNonXMLMetadataFormatList - Error in close the pstmt: "
+                        + sqlE.getMessage());
+            }
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+    }
 	
 	/**
 	 * create a space delimited string of all namespaces and locations

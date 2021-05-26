@@ -473,13 +473,14 @@ public class MetaCatServlet extends HttpServlet {
 	 * Close all db connections from the pool
 	 */
     public void destroy() {
-    	ServiceService.stopAllServices();
-    	
-        // Close all db connection
-        logMetacat.warn("MetaCatServlet.destroy - Destroying MetacatServlet");
-        timer.cancel();
-        IndexingQueue.getInstance().setMetacatRunning(false);
-        DBConnectionPool.release();
+        try {
+            ServiceService.stopAllServices();
+            logMetacat.warn("MetaCatServlet.destroy - Destroying MetacatServlet");
+        } finally {
+            timer.cancel();
+            IndexingQueue.getInstance().setMetacatRunning(false);
+            DBConnectionPool.release();
+        }
     }
     
     /** Handle "GET" method requests from HTTP clients */

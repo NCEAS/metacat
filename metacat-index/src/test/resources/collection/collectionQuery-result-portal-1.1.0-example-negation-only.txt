@@ -1,0 +1,1 @@
+((-(abstract:*fish*) AND *:* )) AND (-obsoletedBy:* AND formatType:METADATA)

@@ -1,0 +1,516 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+    <label>portal-1.1.0-example</label>
+    <name>portal-1.1.0-example</name>
+    <description>This is a collection of datasets related to soil</description>
+    <definition>
+        <filter>
+            <label>Datasets about soil</label>
+            <field>text</field>
+            <operator>AND</operator>
+            <exclude>false</exclude>
+            <fieldsOperator>AND</fieldsOperator>
+            <matchSubstring>true</matchSubstring>
+            <value>soil carbon</value>
+        </filter>
+        <filter>
+            <field>keywords</field>
+            <field>attribute</field>
+            <operator>AND</operator>
+            <fieldsOperator>OR</fieldsOperator>
+            <value>soil layer</value>
+        </filter>
+        <dateFilter>
+            <field>dateUploaded</field>
+            <field>beginDate</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <min>1800-01-01T00:00:00Z</min>
+            <max>2009-01-01T00:00:00Z</max>
+        </dateFilter>
+        <booleanFilter>
+            <field>isPublic</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <value>true</value>
+        </booleanFilter>
+        <numericFilter>
+            <field>numberReplicas</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <min>1</min>
+        </numericFilter>
+        <filterGroup>
+            <filter>
+                <field>datasource</field>
+                <value>urn:node:TERN</value>
+            </filter>
+            <filter>
+                <field>datasource</field>
+                <value>urn:node:ARCTIC</value>
+            </filter>
+            <operator>OR</operator>
+            <exclude>true</exclude>
+        </filterGroup>
+        <operator>AND</operator>
+    </definition>
+    <logo>
+        <identifier>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</identifier>
+        <label>Project logo</label>
+    </logo>
+    <section>
+        <label>Earth View</label>
+        <title>Fluid Earth Viewer</title>
+        <introduction>This is an example of one type of visualization section</introduction>
+        <content>
+            <layer>precipitation</layer>
+            <layer>currents</layer>
+        </content>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>feverVisualization</optionValue>
+        </option>
+    </section>
+    <section>
+        <label>Numbers</label>
+        <title>Statistics and Figures</title>
+        <introduction>A summary of all datasets from SASAP</introduction>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>metrics</optionValue>
+        </option>
+        <option>
+            <optionName>hideCitations</optionName>
+            <optionValue>true</optionValue>
+        </option>
+        <option>
+            <optionName>hideFileFormats</optionName>
+            <optionValue>true</optionValue>
+        </option>
+    </section>
+    <section>
+        <label>Our Data</label>
+        <title>Browse SASAP Data</title>
+        <introduction>Search for or browse all datasets collected or synthesized by the SASAP working group</introduction>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>dataCatalog</optionValue>
+        </option>
+        <option>
+            <optionName>mapZoomLevel</optionName>
+            <optionValue>7</optionValue>
+        </option>
+        <option>
+            <optionName>mapCenterLatitude</optionName>
+            <optionValue>100</optionValue>
+        </option>
+        <option>
+            <optionName>mapCenterLongitude</optionName>
+            <optionValue>-100</optionValue>
+        </option>
+        <option>
+            <optionName>mapShapeHue</optionName>
+            <optionValue>28</optionValue>
+        </option>
+    </section>
+    <section>
+        <label>About</label>
+        <title>About this portal</title>
+        <introduction>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure
+            dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+        </introduction>
+        <image>
+            <identifier>urn:uuid:35122b0f-3c7c-443b-9408-2dfebefaf1dc</identifier>
+        </image>
+        <content>
+            <markdown>
+                <![CDATA[
+Problem Statement
+===
+Due largely to a strong science-based management approach, salmon in Alaska persist. However, it is difficult for many stakeholders of Alaska's salmon system to readily access up-to-date, accurate or integrated information. Existing information is often fragmented and/or ignores a significant body of indigenous knowledge. In addition, due to insufficient interdisciplinary methods to process available data, there are still salmon science and management questions that have not been addressed. A synthesis approach allows these fragmented collections of data to be combined, offering a powerful new tool for approaching many of these unanswered questions. As a large interdisciplinary synthesis project, SASAP seeks to integrate and use the vast body of data on Alaska's wild salmon to gain new understandings of salmon social-ecological systems and to inform systematic salmon management into the future. However, these data are dispersed across a variety of sources and formats which vary in accessibility, making synthesis of the data difficult. SASAP has dedicated a team of data scientists (the Data Task Force) to gather, homogenize, and synthesize these data enabling interdisciplinary analysis. ![Commercial fishing boats](knb.109201.1)
+
+Goals
+===
+The SASAP project specifically seeks to access and integrate data from a wide variety of sources, including data that have previously been inaccessible. Data Task Force members compile these disparate datasets into larger datasets in a standardized format, allowing for more powerful analyses. We then provide access to SASAP data collections for use by wild salmon researchers, analysts, and advocates to answer scientific, economic, social, and cultural questions around salmon. SASAP also strives to connect knowledge across disciplines and agencies, between cultures and users, and across regions. This synthesis will help gain a broad view of this complex and dynamic system in order to set shared research priorities, develop and monitor indicators of Alaska's salmon system health and drive sustainable management of the system. ![Sockeye](knb.109200.1)
+
+Goal #1
+----
+Here is info about goal 1
+
+Goal #2
+---
+Here is info about goal 2
+
+### Subgoal 2
+This is a third level header under goal 2
+
+Our Data
+===
+Our data collections include both original and compiled (derived) datasets, covering information on salmon habitat, productivity, harvests, permits, and a variety of other biophysical, sociological, and economic categories. Data collections can be searched through using filters by thematic categories, and can be further explored with subsetting and visualization tools before downloading. ![Map of size declines](knb.109199.1)
+
+Who We Are
+===
+SASAP is led by the National Center for Ecological Analysis and Synthesis (NCEAS) at the University of California, Santa Barbara and Nautilus Impact Investing (NII), in partnership with leading experts at the University of Alaska in Fairbanks and Anchorage, indigenous leaders, and specialists across resource sectors. Our approach is to build collaborations (working groups) of experts from diverse backgrounds and institutions. The working group synthesis process deliberately emphasizes collaboration between indigenous knowledge and western science perspectives to bridge the information gap. The Data Task Force consists of a projects data coordinator, a scientific programmer, and several student interns and postgraduate fellows at NCEAS. The task force facilitates data acquisition, processes and compiles datasets, and manages the SASAP data life cycle. ![Team](knb.109198.1)
+
+
+  ]]>
+            </markdown>
+        </content>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>freeform</optionValue>
+        </option>
+    </section>
+    <!-- The following two sections are examples of how the portal XML could be extended to support different types of sections. These types are not currently supported by MetacatUI. -->
+    <section>
+        <label>Data Explorer</label>
+        <title>Explor Salmon Data</title>
+        <introduction>Explore our data in this interactive shiny app</introduction>
+        <content>
+            <code>
+                <![CDATA[
+
+library(shiny)
+
+# Define UI for application that plots random distributions
+shinyUI(fluidPage(
+
+  # Application title
+  titlePanel("Hello Shiny!"),
+
+  # Sidebar with a slider input for number of observations
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("obs",
+                  "Number of observations:",
+                  min = 1,
+                  max = 1000,
+                  value = 500)
+    ),
+
+    # Show a plot of the generated distribution
+    mainPanel(
+      plotOutput("distPlot")
+    )
+  )
+))
+]]>
+            </code>
+        </content>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>shinyApp</optionValue>
+        </option>
+    </section>
+    <section>
+        <label>Popular Datasets</label>
+        <title>Popular SASAP Datasets</title>
+        <introduction>Browse some of our most impactful datasets</introduction>
+        <content>
+            <filter>
+                <field>identifier</field>
+                <operator>OR</operator>
+                <value>doi:10.5063/F1891459</value>
+                <value>doi:10.5063/F1W957H4</value>
+                <value>doi:10.5063/F1125QZK</value>
+            </filter>
+        </content>
+        <option>
+            <optionName>type</optionName>
+            <optionValue>featuredData</optionValue>
+        </option>
+    </section>
+    <associatedParty>
+        <individualName>
+            <salutation>Dr.</salutation>
+            <givenName>Courtney</givenName>
+            <surName>Carothers</surName>
+        </individualName>
+        <organizationName>(University of Alaska)</organizationName>
+        <positionName>Lead, Socio-Eco</positionName>
+        <electronicMailAddress>clcarothers@alaska.edu</electronicMailAddress>
+        <role>primary portal member</role>
+    </associatedParty>
+    <associatedParty>
+        <individualName>
+            <givenName>Rachel</givenName>
+            <surName>Donkersloot</surName>
+        </individualName>
+        <organizationName>(Alaska Marine Conservation Council)</organizationName>
+        <positionName>Lead, Well-Being and Alaska Salmon Systems</positionName>
+        <electronicMailAddress>rachel@akmarine.org</electronicMailAddress>
+        <userId directory="https://orcid.org">https://orcid.org/0000-0002-1825-1234</userId>
+        <role>primary project member</role>
+        <role>project member</role>
+    </associatedParty>
+    <associatedParty>
+        <individualName>
+            <givenName>Michael</givenName>
+            <surName>Jones</surName>
+        </individualName>
+        <organizationName>(Michigan State University)</organizationName>
+        <positionName>Lead, Using participatory modeling to empower community engagement in salmon science</positionName>
+        <phone phonetype="facsimile">(805)893-1234</phone>
+        <electronicMailAddress>jonesm30@anr.msu.edu</electronicMailAddress>
+        <role>primary portal member</role>
+        <role>portal member</role>
+    </associatedParty>
+    <acknowledgments>
+        Richard Brenner and Jennifer Shriver, Alaska Department of Fish and Game, have been vital for facilitating data requests; Matt Jones, Jeanette Clark, Jorge Cornejo-Donoso, Jesse Goldstein, and Jared Kibele, National Center for Ecological Analysis and
+        Synthesis have led data organization and QA/QC; Sarah Warnock, Nautilus Impact Investing has coordinated outreach and communication. This work was funded by generous support of the Gordon and Betty Moore Foundation.
+    </acknowledgments>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</identifier>
+        <!-- Nautilus -->
+        <label>Nautilus Impact Investing</label>
+        <associatedURL>https://nautilusii.com/</associatedURL>
+    </acknowledgmentsLogo>
+    <acknowledgmentsLogo>
+        <identifier>urn:uuid:cd625b80-4b2c-4320-a27a-8556aa47f1c7</identifier>
+        <!-- NCEAS square -->
+        <label>NCEAS</label>
+        <associatedURL>https://www.nceas.ucsb.edu</associatedURL>
+    </acknowledgmentsLogo>
+    <award>
+        <funderName>Gordon and Betty Moore Foundation</funderName>
+        <funderIdentifier>https://dx.doi.org/10.13039/100000936</funderIdentifier>
+        <awardNumber>5124</awardNumber>
+        <title>State of Alaska’s Salmon and People</title>
+        <funderLogo>
+            <identifier>urn:uuid:349aa330-4645-4dab-a02d-3bf950cf708d</identifier>
+        </funderLogo>
+    </award>
+    <award>
+        <funderName>Gordon and Betty Moore Foundation</funderName>
+        <funderIdentifier>https://dx.doi.org/10.13039/100000936</funderIdentifier>
+        <awardNumber>5451</awardNumber>
+        <title>Data Task Forces for Better Synthesis Studies</title>
+    </award>
+    <literatureCited>
+        <citation>
+            <bibtex>
+                @article{fegraus_2005, title = {Maximizing the {Value} of {Ecological} {Data} with {Structured} {Metadata}: {An} {Introduction} to {Ecological} {Metadata} {Language} ({EML}) and {Principles} for {Metadata} {Creation}}, journal = {Bulletin of the
+                Ecological Society of America}, author = {Fegraus, Eric H. and Andelman, Sandy and Jones, Matthew B. and Schildhauer, Mark}, year = {2005}, pages = {158--168} }
+            </bibtex>
+        </citation>
+        <citation>
+
+            <title>Title of a paper that this dataset, or its metadata, references.</title>
+            <creator>
+                <individualName>
+                    <givenName>Mark</givenName>
+                    <surName>Jarkady</surName>
+                </individualName>
+            </creator>
+            <pubDate>2017</pubDate>
+            <article>
+                <journal>EcoSphere</journal>
+                <publicationPlace>https://doi.org/10.1002/ecs2.2166</publicationPlace>
+            </article>
+        </citation>
+        <bibtex>
+            @article{hampton_2017, title = {Skills and {Knowledge} for {Data}-{Intensive} {Environmental} {Research}}, volume = {67}, copyright = {All rights reserved}, issn = {0006-3568, 1525-3244}, url =
+            {https://academic.oup.com/bioscience/article-lookup/doi/10.1093/biosci/bix025}, doi = {10.1093/biosci/bix025}, language = {en}, number = {6}, urldate = {2018-02-15}, journal = {BioScience}, author = {Hampton, Stephanie E. and Jones, Matthew B. and
+            Wasser, Leah A. and Schildhauer, Mark P. and Supp, Sarah R. and Brun, Julien and Hernandez, Rebecca R. and Boettiger, Carl and Collins, Scott L. and Gross, Louis J. and Fernández, Denny S. and Budden, Amber and White, Ethan P. and Teal, Tracy K. and
+            Labou, Stephanie G. and Aukema, Juliann E.}, month = jun, year = {2017}, pages = {546--557} }
+        </bibtex>
+    </literatureCited>
+
+    <!-- ====== Species Filter Group ====== -->
+    <filterGroup>
+
+        <label>Species</label>
+        <description>Species of salmon, common names</description>
+        <icon>sitemap</icon>
+
+        <choiceFilter>
+            <label>Salmon species</label>
+            <field>species</field>
+            <operator>OR</operator>
+            <exclude>false</exclude>
+            <fieldsOperator>OR</fieldsOperator>
+            <filterOptions>
+                <description>Salmon species, by common name</description>
+            </filterOptions>
+            <choice>
+                <label>Sockeye</label>
+                <value>Oncorhynchus nerka</value>
+                <choiceOptions>
+                    <image>
+                        <identifier>urn:uuid:735dddde-d0a9-4db7-980b-491ca22a5f06</identifier>
+                    </image>
+                </choiceOptions>
+            </choice>
+            <choice>
+                <label>Chinook</label>
+                <value>Oncorhynchus tshawytscha</value>
+                <choiceOptions>
+                    <image>
+                        <identifier>urn:uuid:11b12b9a-5d21-4402-9d9e-42a515a38559</identifier>
+                    </image>
+                </choiceOptions>
+            </choice>
+            <choice>
+                <label>Coho</label>
+                <value>Oncorhynchus kisutch</value>
+                <choiceOptions>
+                    <image>
+                        <identifier>urn:uuid:1dbd6fcb-7768-4c76-8479-002cee08cd34</identifier>
+                    </image>
+                </choiceOptions>
+            </choice>
+            <choice>
+                <label>Chum</label>
+                <value>Oncorhynchus keta</value>
+                <choiceOptions>
+                    <image>
+                        <identifier>urn:uuid:c463f608-6f72-404c-9796-f994411b89dd</identifier>
+                    </image>
+                </choiceOptions>
+            </choice>
+            <choice>
+                <label>Pink</label>
+                <value>Oncorhynchus gorbuscha</value>
+                <choiceOptions>
+                    <image>
+                        <identifier>urn:uuid:a7401fee-b9de-4c87-9e81-0b01f6f7985f</identifier>
+                    </image>
+                </choiceOptions>
+            </choice>
+            <chooseMultiple>true</chooseMultiple>
+        </choiceFilter>
+    </filterGroup>
+
+    <!-- ====== Geography Filter Group ====== -->
+    <filterGroup>
+
+        <label>Geography</label>
+        <description>The specific site that the data relate to</description>
+        <icon>globe</icon>
+
+        <!-- === waterbody sub-filter === -->
+        <choiceFilter>
+            <label>Waterbody</label>
+            <field>site</field>
+            <operator>AND</operator>
+            <exclude>false</exclude>
+            <fieldsOperator>AND</fieldsOperator>
+            <filterOptions>
+                <placeholder>Choose a waterbody</placeholder>
+                <icon>water</icon>
+                <description>Rivers, river systems, or other waterbodies</description>
+            </filterOptions>
+            <choice>
+                <label>Copper River</label>
+                <value>copper river</value>
+            </choice>
+            <choice>
+                <label>Tanana River</label>
+                <value>tanana river</value>
+            </choice>
+            <choice>
+                <label>Porcupine River</label>
+                <value>porcupine river</value>
+            </choice>
+            <choice>
+                <label>Koyukuk River</label>
+                <value>koyukuk river</value>
+            </choice>
+            <choice>
+                <label>Colville River</label>
+                <value>colville river</value>
+            </choice>
+
+            <chooseMultiple>true</chooseMultiple>
+
+        </choiceFilter>
+
+        <numericFilter>
+            <label>Numeric with range</label>
+            <field>southBoundCoord</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <min>1.03</min>
+            <max>141.78</max>
+            <rangeMin>0</rangeMin>
+            <rangeMax>150</rangeMax>
+            <step>.01</step>
+            <filterOptions>
+                <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis
+                    aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</description>
+                <option>
+                    <optionName>custom-color-option</optionName>
+                    <optionValue>#999999</optionValue>
+                </option>
+            </filterOptions>
+        </numericFilter>
+
+        <numericFilter>
+            <label>Numeric with range</label>
+            <field>northBoundCoord</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <value>5</value>
+            <rangeMin>0</rangeMin>
+            <rangeMax>150</rangeMax>
+            <step>.01</step>
+            <filterOptions>
+                <description>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis
+                    aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.</description>
+                <option>
+                    <optionName>custom-color-option</optionName>
+                    <optionValue>#999999</optionValue>
+                </option>
+            </filterOptions>
+        </numericFilter>
+
+    </filterGroup>
+    <filterGroup>
+        <label>Theme</label>
+        <description>Topic covered by the data</description>
+        <icon>book</icon>
+        <toggleFilter>
+            <label>Male or female</label>
+            <field>text</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <filterOptions>
+                <description>Limit to datasets that mention male or female</description>
+            </filterOptions>
+            <trueValue>male</trueValue>
+            <trueLabel>Male</trueLabel>
+            <falseValue>female</falseValue>
+            <falseLabel>Female</falseLabel>
+        </toggleFilter>
+    </filterGroup>
+    <filterGroup>
+        <label>Other</label>
+        <filter>
+            <field>origin</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+        </filter>
+        <dateFilter>
+            <label>Year of publication</label>
+            <field>datePublished</field>
+            <operator>AND</operator>
+            <fieldsOperator>AND</fieldsOperator>
+            <rangeMin>2015-01-01T00:00:00</rangeMin>
+            <rangeMax>2018-01-01T00:00:00</rangeMax>
+        </dateFilter>
+    </filterGroup>
+    <option>
+        <optionName>primaryColor</optionName>
+        <optionValue>#282182</optionValue>
+    </option>
+    <option>
+        <optionName>secondaryColor</optionName>
+        <optionValue>#465cd0</optionValue>
+    </option>
+    <option>
+        <optionName>accentColor</optionName>
+        <optionValue>#e88024</optionValue>
+    </option>
+</por:portal>

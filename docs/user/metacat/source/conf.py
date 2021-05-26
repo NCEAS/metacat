@@ -11,12 +11,12 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os, ConfigParser, StringIO
+import sys, os, configparser, io
 
 #Read the release version from the metacat.properties file
 prop = '[dummy]\n' + open('../../../../lib/metacat.properties').read()
-config = ConfigParser.SafeConfigParser()
-config.readfp(StringIO.StringIO(prop))
+config = configparser.SafeConfigParser()
+config.readfp(io.StringIO(prop))
 #print config.get('dummy', 'application.metacatVersion')
 
 # If extensions (or modules to document with autodoc) are in another directory,

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.1.0">
+    <label>filterGroup-example</label>
+    <name>filterGroup-example</name>
+    <description>This is a collection of datasets related to soil</description>
+    <definition>
+        <filter>
+            <label>Datasets about soil</label>
+            <field>text</field>
+            <exclude>false</exclude>
+            <matchSubstring>true</matchSubstring>
+            <value>soil</value>
+        </filter>
+        <filter>
+            <field>keywords</field>
+            <field>attribute</field>
+            <fieldsOperator>AND</fieldsOperator>
+            <value>soil layer</value>
+        </filter>
+        <dateFilter>
+            <field>dateUploaded</field>
+            <field>beginDate</field>
+            <fieldsOperator>AND</fieldsOperator>
+            <min>1800-01-01T00:00:00Z</min>
+            <max>2009-01-01T00:00:00Z</max>
+        </dateFilter>
+        <booleanFilter>
+            <field>isPublic</field>
+            <value>true</value>
+        </booleanFilter>
+        <numericFilter>
+            <field>numberReplicas</field>
+            <min>1</min>
+        </numericFilter>
+        <filterGroup>
+            <filter>
+                <field>datasource</field>
+                <value>urn:node:KNB</value>
+            </filter>
+            <filterGroup>
+                <filter>
+                    <field>authorLastName</field>
+                    <value>Smith</value>
+                </filter>
+                <filter>
+                    <field>authorGivenNameSort</field>
+                    <value>Bob</value>
+                </filter>
+                <operator>AND</operator>
+            </filterGroup>
+            <operator>OR</operator>
+            <exclude>true</exclude>
+        </filterGroup>
+        <operator>AND</operator>
+    </definition>
+</col:collection>

@@ -69,6 +69,7 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryService;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
@@ -89,6 +90,7 @@ public class MetacatSolrIndex {
     
     private static Log log = LogFactory.getLog(MetacatSolrIndex.class);
     private static MetacatSolrIndex  solrIndex = null;
+    private static String nodeType = null;
     
     public static MetacatSolrIndex getInstance() throws Exception {
         if (solrIndex == null) {
@@ -104,7 +106,7 @@ public class MetacatSolrIndex {
      * @throws ParserConfigurationException 
      */
     private MetacatSolrIndex() throws Exception {
-    	
+    	    nodeType = PropertyService.getProperty("dataone.nodeType");
     }
     
     
@@ -271,6 +273,12 @@ public class MetacatSolrIndex {
      * @param pid the pid's solr document will be deleted.
      */
     public void submitDeleteTask(Identifier pid, SystemMetadata sysMeta) {
+        if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
+            //only works for MNs
+            log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
+                    " will not be submitted into the index queue on hazelcast service.");
+            return;
+        }
         IndexTask task = new IndexTask();
         task.setSystemMetadata(sysMeta);
         task.setIsDeleteing(true);
@@ -282,6 +290,12 @@ public class MetacatSolrIndex {
     }
     
     public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
+        if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
+            //only works for MNs
+            log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
+                     " will not be submitted into the index queue on hazelcast service.");
+            return;
+        }
         	IndexTask task = new IndexTask();
         	task.setSystemMetadata(systemMetadata);
         	task.setFields(fields);

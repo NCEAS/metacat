@@ -30,12 +30,12 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Timer;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -45,6 +45,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.client.v1.itk.D1Client;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
@@ -60,7 +61,6 @@ import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 
 import edu.ucsb.nceas.metacat.AuthSession;
-import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
@@ -115,9 +115,9 @@ public class D1ResourceHandler {
     
     protected ServletContext servletContext;
     protected static Log logMetacat;
-    protected MetacatHandler handler;
     protected HttpServletRequest request;
     protected HttpServletResponse response;
+    protected boolean enableSessionFromHeader = false;
 
     protected Hashtable<String, String[]> params;
     protected Map<String, List<String>> multipartparams;
@@ -134,6 +134,7 @@ public class D1ResourceHandler {
         logMetacat = LogFactory.getLog(D1ResourceHandler.class);
 		try {
 			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
+			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
 		} catch (PropertyNotFoundException e) {
 			// Just use our default as no max size is set in the properties file
 			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
@@ -259,15 +260,16 @@ public class D1ResourceHandler {
                     }
                 }
             }
+            
+            if (session == null) {
+                //this is another sort - get the subject from the request header
+                //if the switch is eanbled in the metacat.properties file
+                getSessionFromHeader();
+            }
 			
             // initialize the parameters
             params = new Hashtable<String, String[]>();
             initParams();
-
-            // create the handler for interacting with Metacat
-            Timer timer = new Timer();
-            handler = new MetacatHandler(timer);
-
         } catch (Exception e) {
         	// TODO: more D1 structure when failing here
         	response.setStatus(400);
@@ -569,6 +571,8 @@ public class D1ResourceHandler {
         } catch (IOException e1) {
             logMetacat.error("Error writing exception to stream. " 
                     + e1.getMessage());
+        } finally {
+            IOUtils.closeQuietly(out);
         }
     }
     
@@ -593,5 +597,46 @@ public class D1ResourceHandler {
         }
         
         return result;
+    }
+    
+    /**
+     * Get the session from the header of the request. The route is disabled by default.
+     * 
+     */
+    protected void getSessionFromHeader() {
+        if (enableSessionFromHeader) {
+            logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            String verify = (String) request.getHeader("Ssl-Client-Verify");
+            logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
+            if (verify != null && verify.equals("SUCCESS")) {
+                //Metacat only looks up the dn from the header when the ssl client was verified.
+                //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
+                String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
+                logMetacat.info("D1ResourceHandler.getSessionFromHeader - the ssl client was verified and the subject from the header is " + dn);
+                if (dn != null) {
+                    Subject subject = new Subject();
+                    subject .setValue(dn);
+                    session = new Session();
+                    session.setSubject(subject);
+                    
+                    SubjectInfo subjectInfo = null;
+                    try {
+                        subjectInfo = D1Client.getCN().getSubjectInfo(subject);
+                    } catch (Exception be) {
+                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information since " + 
+                                        be.getMessage());
+                    }
+                    if (subjectInfo == null) {
+                        subjectInfo = new SubjectInfo();
+                        Person person = new Person();
+                        person.setSubject(subject);
+                        person.setFamilyName("Unknown");
+                        person.addGivenName("Unknown");
+                        subjectInfo.setPersonList(Arrays.asList(person));
+                    }
+                    session.setSubjectInfo(subjectInfo);
+                }
+            }
+        }
     }
 }

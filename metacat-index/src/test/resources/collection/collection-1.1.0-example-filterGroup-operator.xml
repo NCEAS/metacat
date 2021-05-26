@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.1.0">
+    <label>filterGroup-operator-example</label>
+    <name>filterGroup-operator-example</name>
+    <description>This is an example collection using a filter with 'operator' within a filterGroup</description>
+    <definition>
+        <filterGroup>
+            <filter>
+                <field>authorLastName</field>
+                <value>Kim</value>
+            </filter>
+            <filter>
+                <field>identifier</field>
+                <operator>OR</operator>
+                <exclude>true</exclude>
+                <value>urn:uuid:a843239b-6d04-4019-9835-6e3c8e3418c8</value>
+                <value>urn:uuid:30a28104-6814-497a-8f72-7fecb36cb721</value>
+                <value>urn:uuid:83b718dd-d709-466e-bf0d-0710a71e7a20</value>
+            </filter>
+            <operator>AND</operator>
+        </filterGroup>
+        <filterGroup>
+            <filter>
+                <field>projectText</field>
+                <value>My Project</value>
+            </filter>
+            <filter>
+                <field>keywordsText</field>
+                <value>Special Word</value>
+            </filter>
+            <operator>AND</operator>
+        </filterGroup>
+        <filterGroup>
+            <filter>
+                <field>awardNumber</field>
+                <value>123</value>
+            </filter>
+            <dateFilter>
+                <field>beginDate</field>
+                <field>endDate</field>
+                <min>2013-01-01T00:00:00Z</min>
+                <max>2020-12-31T23:59:59Z</max>
+            </dateFilter>
+            <operator>AND</operator>
+        </filterGroup>
+        <operator>OR</operator>
+    </definition>
+</col:collection>

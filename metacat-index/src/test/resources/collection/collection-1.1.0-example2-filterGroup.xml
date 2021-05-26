@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.1.0">
+    <label>filterGroup-example2</label>
+    <name>filterGroup-example2</name>
+    <description>This is a collection of datasets related to ants</description>
+    <definition>
+        <filter>
+            <field>siteText</field>
+            <matchSubstring>true</matchSubstring>
+            <value>America</value>
+        </filter>
+        <filter>
+            <field>keywordsText</field>
+            <value>ant</value>
+        </filter>
+        <filterGroup>
+            <numericFilter>
+                <field>northBoundCoord</field>
+                <max>54</max>
+            </numericFilter>
+            <numericFilter>
+                <field>eastBoundCoord</field>
+                <max>-62</max>
+            </numericFilter>
+            <numericFilter>
+                <field>southBoundCoord</field>
+                <max>44</max>
+            </numericFilter>
+            <numericFilter>
+                <field>westBoundCoord</field>
+                <max>-79</max>
+            </numericFilter>
+            <operator>AND</operator>
+            <exclude>true</exclude>
+        </filterGroup>
+        <operator>AND</operator>
+    </definition>
+</col:collection>

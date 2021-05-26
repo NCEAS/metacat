@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+  <label>example-portal-B</label>
+  <name>Exclude a filter group with a negative filter</name>
+  <definition>
+    <filter>
+      <label>Datasets added manually</label>
+      <field>isPartOf</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>urn:uuid:1a0fc71f-2d4b-404b-9cf5-aa82db18479c</value>
+    </filter>
+    <filter>
+      <field>kingdom</field>
+      <operator>OR</operator>
+      <exclude>true</exclude>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>Animalia</value>
+    </filter>
+    <exclude>true</exclude>
+  </definition>
+</por:portal>

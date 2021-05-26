@@ -1,1 +1,1 @@
-((((keywords:soil AND keywords:carbon AND attribute:soil AND attribute:carbon)) AND (-obsoletedBy:* AND formatType:METADATA)) OR ((id:doi\:10.5072/FK2CF9SR7F OR id:urn\:uuid\:43a50d52-ced4-4dc5-8000-7ec40803b7c2 OR id:urn\:uuid\:9cc96524-391f-4dcb-8b0b-8cef053da26f OR id:knb.26.2)))
+((((((keywords:soil AND keywords:carbon) AND (attribute:soil AND attribute:carbon)))) OR (id:doi\:10.5072/FK2CF9SR7F OR id:urn\:uuid\:43a50d52-ced4-4dc5-8000-7ec40803b7c2 OR id:urn\:uuid\:9cc96524-391f-4dcb-8b0b-8cef053da26f OR id:knb.26.2))) AND (-obsoletedBy:* AND formatType:METADATA)

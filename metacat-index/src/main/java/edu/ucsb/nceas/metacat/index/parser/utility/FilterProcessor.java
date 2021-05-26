@@ -56,6 +56,7 @@ public class FilterProcessor {
     private String defaults;
     private HashMap<String, String> defaultValues = new HashMap<String, String>();
     private final String DEFAULT_OPERATOR = "AND";
+    private final String DEFAULT_FIELDS_OPERATOR = "AND";
 
     private Log log = LogFactory.getLog(FilterProcessor.class);
 
@@ -72,22 +73,19 @@ public class FilterProcessor {
 
         HashMap<String, ArrayList<String>> leafValues = new HashMap<String, ArrayList<String>>();
 
-        log.debug("FilterProcessor.getFilterValues");
         // Leaf names that have corresponding, present values in the XML
         Set<String> leafNames = new HashSet<String>();
         // All possible leaf names, every ones that don't appear in the template
         Set<String> allLeafNames = new HashSet<String>();
 
-        // These are the leaf possible values that also have values in the corresponding xml
-        //HashMap<String, ArrayList<String>> leafValues = new HashMap<String, ArrayList<String>>();
-
-        log.debug("getting filter values for node: " + node.getNodeName());
         String value = null;
         String completeFilterValue = null;
         name = getName();
 
         Boolean excludeCondition = false;
         Boolean matchSubstring = false;
+        String operator = DEFAULT_OPERATOR;
+        String fieldsOperator = DEFAULT_FIELDS_OPERATOR;
 
         // Multiple templates may exist for each filter type. The processor will attempt to fill out each one in turn. The
         // first one that is filled out completely will be used. Each template is parsed for the alphanumeric words to determine
@@ -101,7 +99,7 @@ public class FilterProcessor {
             }
         }
 
-        // Assume ware are only making one pass throught this code that will apply the template, e.g. 'field:value'
+        // Assume we are only making one pass through this code that will apply the template, e.g. 'field:value'
         // If a 'concatenated' leaf value is found, we may have to make more passes. The concatenated value occurs when multiple
         // elements in the filter repeat, so the value returned by 'getLeafValue' will be a concatenation, i.e.
         //     <filter>
@@ -161,7 +159,12 @@ public class FilterProcessor {
                 } else if (leafName.compareToIgnoreCase("matchSubstring") == 0) {
                     if (Boolean.parseBoolean(value))
                         matchSubstring = true;
+                } else if (leafName.compareToIgnoreCase("operator") == 0) {
+                    operator = value;
+                } else if (leafName.compareToIgnoreCase("fieldsOperator") == 0) {
+                    fieldsOperator = value;
                 }
+
                 leafValues = addLeafValue(leafValues, leafName, value, delimeter);
             }
         }
@@ -195,6 +198,8 @@ public class FilterProcessor {
 
         // Make a filter pass for each <field> entry
         for(int iField = 0; iField < nFields; iField++) {
+            String subFilterValue = null;
+            // If multiple values exist for this field, surround them with parenthesis.
             log.trace("iField: " + iField);
             // Make a pass for each <value> element, with the current <field>
             // if no <value> elements are present, then just make one pass (we may have <min>, <max>, etc
@@ -231,37 +236,40 @@ public class FilterProcessor {
                     thisFilterValue = applyTemplate(lname, value, thisFilterValue);
                 }
 
-                log.debug("thisFilterValue: " + thisFilterValue);
+                log.trace("thisFilterValue: " + thisFilterValue);
 
-                // Apply the 'exclude' modifier, if it was present in the XML
-                if (excludeCondition) {
-                    thisFilterValue = "-" + thisFilterValue;
-                }
-
-                // If first pass, then initialize the completed filter value
-                if (iValue == 0 && iField == 0) {
-                    completeFilterValue = thisFilterValue;
+                // Accumulate value terms
+                if(iValue > 0) {
+                    subFilterValue = subFilterValue + " " + operator + " " + thisFilterValue;
                 } else {
-                    String operator = null;
-                    if (leafValues.containsKey("operator")) {
-                        operator = getLeafValue(leafValues, "operator", 0);
-                    } else {
-                        // If an operator wasn't defined for this filter, we have to use a default,
-                        // otherwise the query that is build will be syntactilly invalid.
-                        operator = DEFAULT_OPERATOR;
-                    }
-
-                    completeFilterValue = completeFilterValue + " " + operator + " " + thisFilterValue;
+                    subFilterValue = thisFilterValue;
                 }
+
+                // If this is the last pass, then surround this term by parens if needed.
+                if ((iValue == nValues - 1) && nValues > 1) {
+                    subFilterValue = "(" + subFilterValue + ")";
+                }
+                log.trace("subFilterValue: " + subFilterValue);
+            }
+            if (iField > 0) {
+                completeFilterValue = completeFilterValue + " " + fieldsOperator + " " + subFilterValue;
+            } else {
+                completeFilterValue = subFilterValue;
             }
         }
 
-        if(nFields > 1 || nValues > 1) {
+        // If this subquery contains multiple terms, surround it with parenthesis
+        if (nFields > 1 || excludeCondition) {
             completeFilterValue = "(" + completeFilterValue + ")";
         }
 
+        // Apply the 'exclude' modifier, if it was present in the XML
+        if (excludeCondition) {
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
+        }
+
         completeFilterValue = completeFilterValue.trim();
-        log.debug("    * * * * Final filter value: " + completeFilterValue);
+        log.trace("    * * * * Final filter value: " + completeFilterValue);
 
         return completeFilterValue;
     }
@@ -328,14 +336,14 @@ public class FilterProcessor {
             }
             if(matchAll) {
                 selectedTemplate = tval;
-                log.debug("Selecting template: " + tval);
+                log.trace("Selecting template: " + tval);
                 break;
             }
         }
 
         if(! matchAll) {
             selectedTemplate = templateValues[0];
-            log.debug("Can't find template match, using template: " + selectedTemplate);
+            log.trace("Can't find template match, using template: " + selectedTemplate);
         }
 
         return selectedTemplate;
@@ -399,14 +407,14 @@ public class FilterProcessor {
         if(delimeter != null && ! delimeter.isEmpty()) {
             String thisLeafValues[] = leafValue.split(delimeter);
             for(String val : thisLeafValues) {
-                log.debug("Adding leaf name, value: " + leafName + ", " + val);
+                log.trace("Adding leaf name, value: " + leafName + ", " + val);
                 currentValues.add(val);
             }
         } else {
             // No delimeter is defined, so we have no alternative but to add the entire value into
             // one entry
             currentValues.add(leafValue);
-            log.debug("Adding leaf name,value: " + leafName + ", " + leafValue);
+            log.trace("Adding leaf name,value: " + leafName + ", " + leafValue);
         }
 
         if(replace) {
@@ -431,7 +439,7 @@ public class FilterProcessor {
      */
     private String getLeafValue(HashMap<String, ArrayList<String>>leafValues, String leafName, int index) {
         ArrayList<String> currentValues = leafValues.get(leafName);
-        log.debug("Getting leaf name, value: " + leafName + ", " + currentValues.get(index));
+        log.trace("Getting leaf name, value: " + leafName + ", " + currentValues.get(index));
         return currentValues.get(index);
     }
 

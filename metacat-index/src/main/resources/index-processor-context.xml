@@ -52,6 +52,9 @@
 
     <import resource="application-context-eml-annotation.xml" />
     <import resource="application-context-ontology-model-service.xml" />
+    
+    <import resource="application-context-json-ld.xml" />
+    <import resource="application-context-schema-org.xml" />
 
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
@@ -132,6 +135,7 @@
        <ref bean="dublinCoreOAISubprocessor" />
        <ref bean="collectionsSubprocessor" />
        <ref bean="portalsSubprocessor" />
+       <ref bean="jsonLdSubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">
@@ -268,6 +272,15 @@
        <bean class="org.dataone.cn.indexer.XMLNamespace">
                 <constructor-arg name="prefix" value="collections100" />
                 <constructor-arg name="namespace" value="https://purl.dataone.org/collections-1.0.0" />
+       </bean>
+
+       <bean class="org.dataone.cn.indexer.XMLNamespace">
+           <constructor-arg name="prefix" value="portals110" />
+           <constructor-arg name="namespace" value="https://purl.dataone.org/portals-1.1.0" />
+       </bean>
+       <bean class="org.dataone.cn.indexer.XMLNamespace">
+           <constructor-arg name="prefix" value="collections110" />
+           <constructor-arg name="namespace" value="https://purl.dataone.org/collections-1.1.0" />
        </bean>
 
    </list>

@@ -123,6 +123,8 @@ public class DocumentImpl
     public static final String EXTERNALNONAMESPACESCHEMALOCATIONPROPERTY = "http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation";
     public static final String REVISIONTABLE = "xml_revisions";
     public static final String DOCUMENTTABLE = "xml_documents";
+    public static final String BIN = "BIN";
+    
     /*
      * public static final String EXTERNALSCHEMALOCATION =
      * "eml://ecoinformatics.org/eml-2.0.0
@@ -1613,7 +1615,7 @@ public class DocumentImpl
      * @param isXml
      * @throws McdbException
      */
-    private static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
+    public static void deleteFromFileSystem(String accNumber, boolean isXml) throws McdbException {
 
     	// must have an id
     	if (accNumber == null) {
@@ -2335,7 +2337,7 @@ public class DocumentImpl
 
             }
             pstmt.close();
-            if (this.doctype != null) {
+            if (this.doctype != null && !XMLSchemaService.getInstance().getNonXMLMetadataFormatList().contains(doctype)) {
                 pstmt = dbconn.prepareStatement("SELECT system_id, entry_type "
                         + "FROM xml_catalog " + "WHERE public_id = ?");
                 //should increase usage count again
@@ -4313,7 +4315,7 @@ public class DocumentImpl
      *
      * @param serverName,
      */
-    private static int getServerCode(String serverName)
+    public static int getServerCode(String serverName)
     {
         PreparedStatement pStmt = null;
         int serverLocation = -2;

@@ -146,10 +146,22 @@ public class MetacatHandler {
     private static final String ERRORCLOSE = "</error>";
     public static final String FGDCDOCTYPE = "metadata";
     
-	private Timer timer;
+	private static Timer timer;
 	
+	/**
+	 * Constructor with a timer object. This constructor will be used in the MetacatServlet class which
+	 * is the only place to handle the site map generation.
+	 * @param timer  the timer used to schedule the site map generation
+	 */
     public MetacatHandler(Timer timer) {
-    	this.timer = timer;
+    	    this.timer = timer;
+    }
+    
+    /**
+     * Default constructor. It will be used in the DataONE API, which doesn't need to handle the timer.
+     */
+    public MetacatHandler() {
+        
     }
     
     
@@ -997,12 +1009,28 @@ public class MetacatHandler {
     }
     
     /**
+     * Read a document from metacat and return the InputStream. The dataType will be null.
+     * @param docid - the metacat docid to read
+     * @return the document as an input stream
+     * @throws PropertyNotFoundException
+     * @throws ClassNotFoundException
+     * @throws ParseLSIDException
+     * @throws McdbException
+     * @throws SQLException
+     * @throws IOException
+     */
+    public static InputStream read(String docid) throws PropertyNotFoundException, ClassNotFoundException, 
+                               ParseLSIDException, McdbException, SQLException, IOException {
+        String dataType = null;
+        return read(docid, dataType);
+    }
+    
+    /**
      * Read a document from metacat and return the InputStream.  The XML or
      * data document should be on disk, but if not, read from the metacat database.
      * 
      * @param  docid - the metacat docid to read
-     * @param  username - the DN of the principal attempting the read
-     * @param  groups - the list of groups the DN belongs to as a String array
+     * @param dataType - the type of the object associated with docid
      * @return objectStream - the document as an InputStream
      * @throws InsufficientKarmaException
      * @throws ParseLSIDException
@@ -1012,10 +1040,10 @@ public class MetacatHandler {
      * @throws ClassNotFoundException
      * @throws IOException
      */
-	public static InputStream read(String docid) throws ParseLSIDException,
+	public static InputStream read(String docid, String dataType) throws ParseLSIDException,
 			PropertyNotFoundException, McdbException, SQLException,
 			ClassNotFoundException, IOException {
-		logMetacat.debug("MetacatHandler.read() called.");
+		logMetacat.debug("MetacatHandler.read() called and the data type is " + dataType);
 
 		InputStream inputStream = null;
 
@@ -1029,48 +1057,54 @@ public class MetacatHandler {
 				throw ple;
 			}
 		}
-
-		// accomodate old clients that send docids without revision numbers
-		docid = DocumentUtil.appendRev(docid);
-		DocumentImpl doc = new DocumentImpl(docid, false);
-
-		// deal with data or metadata cases
-		if (doc.getRootNodeID() == 0) {
-
-			// this is a data file
-			// get the path to the file to read
-			try {
-				String filepath = PropertyService.getProperty("application.datafilepath");
-				// ensure it is a directory path
-				if (!(filepath.endsWith("/"))) {
-					filepath += "/";
-				}
-				String filename = filepath + docid;
-				inputStream = readFromFilesystem(filename);
-			} catch (PropertyNotFoundException pnf) {
-				logMetacat.debug("There was a problem finding the "
-						+ "application.datafilepath property. The error "
-						+ "message was: " + pnf.getMessage());
-				throw pnf;
-			} // end try()
-
+		
+        if (dataType != null && dataType.equalsIgnoreCase(D1NodeService.METADATA)) {
+            logMetacat.debug("MetacatHandler.read - the data type is specified as the meta data");
+            String filepath = PropertyService.getProperty("application.documentfilepath");
+            // ensure it is a directory path
+            if (!(filepath.endsWith("/"))) {
+                filepath += "/";
+            }
+            String filename = filepath + docid;
+            inputStream = readFromFilesystem(filename);
 		} else {
-			// this is an metadata document
-			// Get the xml (will try disk then DB)
-			try {
-				// force the InputStream to be returned
-				OutputStream nout = null;
-				inputStream = doc.toXml(nout, null, null, true);
-			} catch (McdbException e) {
-				// report the error
-				logMetacat.error(
-						"MetacatHandler.readFromMetacat() "
-								+ "- could not read document " + docid + ": "
-								+ e.getMessage(), e);
-			}
-
+		 // accomodate old clients that send docids without revision numbers
+	        docid = DocumentUtil.appendRev(docid);
+	        DocumentImpl doc = new DocumentImpl(docid, false);
+		    // deal with data or metadata cases
+	        if (doc.getRootNodeID() == 0) {
+	            // this is a data file
+	            // get the path to the file to read
+	            try {
+	                String filepath = PropertyService.getProperty("application.datafilepath");
+	                // ensure it is a directory path
+	                if (!(filepath.endsWith("/"))) {
+	                    filepath += "/";
+	                }
+	                String filename = filepath + docid;
+	                inputStream = readFromFilesystem(filename);
+	            } catch (PropertyNotFoundException pnf) {
+	                logMetacat.debug("There was a problem finding the "
+	                        + "application.datafilepath property. The error "
+	                        + "message was: " + pnf.getMessage());
+	                throw pnf;
+	            } // end try()
+	        } else {
+	            // this is an metadata document
+	            // Get the xml (will try disk then DB)
+	            try {
+	                // force the InputStream to be returned
+	                OutputStream nout = null;
+	                inputStream = doc.toXml(nout, null, null, true);
+	            } catch (McdbException e) {
+	                // report the error
+	                logMetacat.error(
+	                        "MetacatHandler.readFromMetacat() "
+	                                + "- could not read document " + docid + ": "
+	                                + e.getMessage(), e);
+	            }
+	        }
 		}
-
 		return inputStream;
 	}
     

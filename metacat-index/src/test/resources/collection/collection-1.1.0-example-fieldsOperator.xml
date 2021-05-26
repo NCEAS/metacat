@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.1.0">
+    <label>fieldsOperator-example</label>
+    <name>fieldsOperator-example</name>
+    <description>This is an example collection using a filter with 'fieldsOperator'</description>
+    <definition>
+        <filter>
+            <field>title</field>
+            <field>abstract</field>
+            <field>keywordsText</field>
+            <operator>AND</operator>
+            <fieldsOperator>OR</fieldsOperator>
+            <value>salmon</value>
+            <value>climate</value>
+        </filter>
+    </definition>
+</col:collection>

@@ -13,6 +13,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.SAXException;
 
 import com.hazelcast.core.MapLoader;
@@ -21,6 +22,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -72,10 +74,11 @@ public class ObjectPathMap implements MapLoader<Identifier, String> {
 	 * the data.  The doctype value for metadata can vary, but for data
 	 * is always 'BIN', so using a simple if-then-else to separate
 	 */
-	private String pathToDocid(String localid) throws AccessControlException, HandlerException, MarshallingException, IOException, McdbException, SAXException  
-	{	
-		Hashtable<String, String> ht = ReplicationService.getDocumentInfoMap(localid);
-		if (ht.get("doctype").equals("BIN")) {
+	private String pathToDocid(String localid, Identifier key) throws AccessControlException, HandlerException, 
+	                                                  MarshallingException, IOException, 
+	                                                  McdbException, SAXException  {	
+	    SystemMetadata systemMetadata = IdentifierManager.getInstance().getSystemMetadata(key.getValue());
+		if (!D1NodeService.isScienceMetadata(systemMetadata)) {
 			return dataPath + FileUtil.getFS() + localid;
 		} else {
 			return metadataPath + FileUtil.getFS() + localid;
@@ -97,7 +100,7 @@ public class ObjectPathMap implements MapLoader<Identifier, String> {
 		String path = null;
 		try {
 			docid = im.getLocalId(key.getValue());
-			path = pathToDocid(docid);			
+			path = pathToDocid(docid, key);			
 		} catch (Exception e) {
 			if (logMetacat.isDebugEnabled()) {
         e.printStackTrace();
@@ -121,7 +124,7 @@ public class ObjectPathMap implements MapLoader<Identifier, String> {
 		for (Identifier id : identifiers) {
 			try {
 				String docid = im.getLocalId(id.getValue());
-				map.put(id, pathToDocid(docid));
+				map.put(id, pathToDocid(docid, id));
 
 			} catch (Exception e) {
 		      if (logMetacat.isDebugEnabled()) {

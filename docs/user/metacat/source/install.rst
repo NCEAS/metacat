@@ -288,6 +288,11 @@ install and run the Metacat Registry or to use the Metacat Replication feature.
           Options ExecCGI 
           Require all granted
         </Directory> 
+        <Directory "/var/www/metacatui">
+           AllowOverride All
+           FallbackResource /metacatui/index.html
+           Require all granted
+        </Directory>
         JkMount /metacat ajp13 
         JkMount /metacat/* ajp13 
         JkMount /metacat/metacat ajp13 

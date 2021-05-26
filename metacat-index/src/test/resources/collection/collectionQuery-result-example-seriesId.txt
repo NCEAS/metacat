@@ -1,1 +1,1 @@
-(((seriesId:urn\:uuid\:1234) AND (-obsoletedBy:* AND formatType:METADATA)))
+(seriesId:urn\:uuid\:1234) AND (-obsoletedBy:* AND formatType:METADATA)

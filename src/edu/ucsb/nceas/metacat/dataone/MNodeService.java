@@ -152,6 +152,7 @@ import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
@@ -165,6 +166,8 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
@@ -482,7 +485,8 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = null;
         try {
             authDel = new D1AuthHelper(request,pid,"1200","1310");
-            authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());//if the user has the change permission, it will be all set; otherwise, we need to check more.
+            //if the user has the change permission, it will be all set; otherwise, we need to check more.
+            authDel.doUpdateAuth(session, existingSysMeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
             allowed = true;
         } catch(ServiceFailure e) {
             throw new ServiceFailure("1310", "Can't determine if the client has the permission to update the object with id "+pid.getValue()+" since "+e.getDescription());
@@ -537,12 +541,18 @@ public class MNodeService extends D1NodeService
             }
             
             //check the if client change the authoritative member node.
-            if (sysmeta.getAuthoritativeMemberNode() == null || sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
+            if (sysmeta.getAuthoritativeMemberNode() == null ||
+                    sysmeta.getAuthoritativeMemberNode().getValue().trim().equals("") ||
                     sysmeta.getAuthoritativeMemberNode().getValue().equals("null")) {
                 sysmeta.setAuthoritativeMemberNode(originMemberNode);
-            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && !sysmeta.getAuthoritativeMemberNode().getValue().equals(existingSysMeta.getAuthoritativeMemberNode().getValue())){
-                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + existingSysMeta.getAuthoritativeMemberNode().getValue() + " and new authoriativeMemberNode is " + 
-                                        sysmeta.getAuthoritativeMemberNode().getValue() + ". They don't match. Clients don't have the permission to change it.");
+            } else if (existingSysMeta.getAuthoritativeMemberNode() != null && 
+                        !sysmeta.getAuthoritativeMemberNode().getValue().equals(
+                        existingSysMeta.getAuthoritativeMemberNode().getValue())){
+                throw new InvalidRequest("1202", "The previous authoriativeMemberNode is " + 
+                            existingSysMeta.getAuthoritativeMemberNode().getValue() + 
+                            " and new authoriativeMemberNode is " + 
+                            sysmeta.getAuthoritativeMemberNode().getValue() + 
+                            ". They don't match. Clients don't have the permission to change it.");
             }
             
             end =System.currentTimeMillis();
@@ -604,13 +614,24 @@ public class MNodeService extends D1NodeService
                 // TODO: don't put objects into memory using stream to string
                 //String objectAsXML = "";
                 try {
-                    //objectAsXML = IOUtils.toString(object, "UTF-8");
-                    String formatId = null;
-                    if(sysmeta.getFormatId() != null) {
-                        formatId = sysmeta.getFormatId().getValue();
+                    NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
+                    if ( handler != null ) {
+                        //non-xml metadata object path
+                        if (ipAddress == null) {
+                            ipAddress = request.getRemoteAddr();
+                        }
+                        if (userAgent == null) {
+                            userAgent = request.getHeader("User-Agent");
+                        }
+                        EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "update");
+                        localId  = handler.save(object, sysmeta, session, event);
+                    } else {
+                        String formatId = null;
+                        if(sysmeta.getFormatId() != null) {
+                            formatId = sysmeta.getFormatId().getValue();
+                        }
+                        localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId, sysmeta.getChecksum());
                     }
-                    localId = insertOrUpdateDocument(object, "UTF-8", pid, session, "update", formatId, sysmeta.getChecksum());
-
                     // register the newPid and the generated localId
                     if (newPid != null) {
                         IdentifierManager.getInstance().createMapping(newPid.getValue(), localId);
@@ -637,7 +658,14 @@ public class MNodeService extends D1NodeService
 
                 // update the data object
                 try {
-                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum());
+                    if (ipAddress == null) {
+                        ipAddress = request.getRemoteAddr();
+                    }
+                    if (userAgent == null) {
+                        userAgent = request.getHeader("User-Agent");
+                    }
+                    EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "update");
+                    localId = insertDataObject(object, newPid, session, sysmeta.getChecksum(), event);
                 } catch (Exception e) {
                     logMetacat.error("MNService.update - couldn't write the data object to the disk since "+e.getMessage(), e);
                     removeIdFromIdentifierTable(newPid);
@@ -669,7 +697,7 @@ public class MNodeService extends D1NodeService
             insertSystemMetadata(sysmeta);
 
             // log the update event
-            EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
+            //EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), subject.getValue(), localId, Event.UPDATE.toString());
 
             long end4 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on updating/saving system metadata  of the old pid "+pid.getValue()+" and the new pid "+newPid.getValue()+" and saving the log information is "+(end4- end3)+ " milli seconds.");
@@ -693,22 +721,6 @@ public class MNodeService extends D1NodeService
         return newPid;
     }
     
-    /*
-     * Roll-back method when inserting data object fails.
-     */
-    protected void removeIdFromIdentifierTable(Identifier id){
-        if(id != null) {
-            try {
-                if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
-                   String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
-                   IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
-                   logMetacat.info("MNodeService.removeIdFromIdentifierTable - the identifier "+id.getValue()+" and local id "+localId+" have been removed from the identifier table since the object creation failed");
-                }
-            } catch (Exception e) {
-                logMetacat.warn("MNodeService.removeIdFromIdentifierTable - can't decide if the mapping of  the pid "+id.getValue()+" exists on the identifier table.");
-            }
-        }
-    }
 
     public Identifier create(Session session, Identifier pid, InputStream object, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, NotAuthorized,
             IdentifierNotUnique, UnsupportedType, InsufficientResources, InvalidSystemMetadata, NotImplemented, InvalidRequest {
@@ -878,6 +890,11 @@ public class MNodeService extends D1NodeService
         if (!isValidIdentifier(pid)) {
             throw new InvalidRequest("2153", "The provided identifier in the system metadata is invalid.");
         }
+        
+        if (!NodeReplicationPolicyChecker.check(sourceNode, sysmeta)) {
+            throw new InvalidRequest("2153", "The object " + pid.getValue() + " from sourceNode" + sourceNode.getValue() + 
+                     " is not allowed to replicate to this node based on the node replication policy.");
+        }
 
         // get from the membernode
         // TODO: switch credentials for the server retrieval?
@@ -927,9 +944,20 @@ public class MNodeService extends D1NodeService
                 // do we already have a replica?
                 try {
                     localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
+                    ObjectFormat objectFormat = null;
+                    String type = null;
+                    try {
+                        objectFormat = ObjectFormatCache.getInstance().getFormat(sysmeta.getFormatId());
+                    } catch (BaseException be) {
+                        logMetacat.warn("MNodeService.getReplica - Could not lookup ObjectFormat for: " + sysmeta.getFormatId(), be);
+                    }
+                    if (objectFormat != null) {
+                        type = objectFormat.getFormatType();
+                    }
+                    logMetacat.info("MNodeService.getReplica - the data type for the object " + pid.getValue() + " is " + type);
                     // if we have a local id, get the local object
                     try {
-                        object = MetacatHandler.read(localId);
+                        object = MetacatHandler.read(localId, type);
                     } catch (Exception e) {
                         // NOTE: we may already know about this ID because it could be a data file described by a metadata file
                         // https://redmine.dataone.org/issues/2572
@@ -1569,7 +1597,6 @@ public class MNodeService extends D1NodeService
              "\tIdentifier           = " + pid.getValue());
 
         InputStream inputStream = null; // bytes to be returned
-        handler = new MetacatHandler(new Timer());
         boolean allowed = false;
         String localId; // the metacat docid for the pid
 
@@ -1609,8 +1636,20 @@ public class MNodeService extends D1NodeService
 
         // if the person is authorized, perform the read
         if (allowed) {
+            SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            ObjectFormat objectFormat = null;
+            String type = null;
             try {
-                inputStream = MetacatHandler.read(localId);
+                objectFormat = ObjectFormatCache.getInstance().getFormat(sm.getFormatId());
+            } catch (BaseException be) {
+                logMetacat.warn("MNodeService.getReplica - could not lookup ObjectFormat for: " + sm.getFormatId(), be);
+            }
+            if (objectFormat != null) {
+                type = objectFormat.getFormatType();
+            }
+            logMetacat.info("MNodeService.getReplica - the data type for the object " + pid.getValue() + " is " + type);
+            try {
+                inputStream = MetacatHandler.read(localId, type);
             } catch (Exception e) {
                 throw new ServiceFailure("2181", "The object specified by " + 
                     pid.getValue() + "could not be returned due to error: " + e.getMessage());

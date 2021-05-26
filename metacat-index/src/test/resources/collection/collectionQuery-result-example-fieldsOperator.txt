@@ -1,0 +1,1 @@
+(((title:salmon AND title:climate) OR (abstract:salmon AND abstract:climate) OR (keywordsText:salmon AND keywordsText:climate))) AND (-obsoletedBy:* AND formatType:METADATA)

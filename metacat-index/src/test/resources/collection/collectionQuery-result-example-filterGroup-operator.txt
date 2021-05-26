@@ -1,0 +1,2 @@
+(((((projectText:"My Project" AND keywordsText:"Special Word") OR (awardNumber:123 AND (beginDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z] AND endDate:[2013-01-01T00:00:00Z TO 2020-12-31T23:59:59Z])))) OR (((authorLastName:Kim)) OR (-((identifier:urn\:uuid\:a843239b-6d04-4019-9835-6e3c8e3418c8 OR identifier:urn\:uuid\:30a28104-6814-497a-8f72-7fecb36cb721 OR identifier:urn\:uuid\:83b718dd-d709-466e-bf0d-0710a71e7a20)) AND *:* )))) AND (-obsoletedBy:* AND formatType:METADATA)
+

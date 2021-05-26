@@ -34,12 +34,11 @@
 	
 	<property name="metacatui-tag" value="2.13.3" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
-    <property name="seek-tag" value="tags/ECOGRID_1_2_3" />
 	
 	<property environment="env" />
 	<property file="build.properties" /><!-- USER SPECIFIC PROPS -->
-	<property name="java.target.version" value="1.7" /> <!-- the target version for java compilation-->
-	<property name="java.source.version" value="1.7" /> <!-- the source code version for java compilation-->
+	<property name="java.target.version" value="1.8" /> <!-- the target version for java compilation-->
+	<property name="java.source.version" value="1.8" /> <!-- the source code version for java compilation-->
 
     <!-- Configure the maven2 ant tasks -->
     <path id="maven-ant-tasks.classpath" path="lib/maven-ant-tasks-2.1.0.jar" />
@@ -111,11 +110,6 @@
     	
 	<taskdef resource="axis-tasks.properties"
 		classpathref="axis.ant.classpath" />
-	
-	<!-- Determine if ecogrid should be installed-->
-	<condition property="enable.ecogrid">
-		<equals arg1="${install.ecogrid}" arg2="false" />
-	</condition>
 
 	<!-- Determine if perl should be built-->
 	<condition property="build.perl">
@@ -483,14 +477,6 @@
 		<property name="pkg.dir" value="./package" />
 		<property name="deb.pkg.dir" value="${pkg.dir}/debian" />
 
-		<property name="ecogrid-target-name" value="metacatImpl" />
-		<property name="ecogrid-module-dest-dir" value="${build.dir}" />
-		<property name="ecogrid-module" value="seek/projects/ecogrid" />
-		<property name="ecogrid-dist-dir"
-			value="${dist.dir}/${ecogrid-module}" />
-		<property name="ecogrid-dir"
-			value="${ecogrid-module-dest-dir}/${ecogrid-module}" />
-
 		<property name="package.home" value="edu/ucsb/nceas/metacat" />
 
 		<!-- set up svn -->
@@ -500,8 +486,6 @@
 			value="${svnant.lib}/svnClientAdapter.jar" />
 		<property name="svnjavahl.jar"
 			value="${svnant.lib}/svnjavahl.jar" />
-		<property name="svn.ecogridUrl"
-			value="https://code.ecoinformatics.org/code/seek/${seek-tag}/projects/ecogrid/" />
 		
 		<!-- the git repo for metacatUI-->
 		<property name="metacatui.git.repository.url"
@@ -879,39 +863,6 @@
 
 	<target name="build-metacat" depends="war, install-spatial, dist-metacat-index, build-metacat-ui"
 		description="Build Metacat">
-	</target>
-
-	<target name="install-ecogrid" depends="warPrepare, get-ecogrid"
-		if="enable.ecogrid" description="Install Ecogrid Compentent">
-		<ant antfile="build.xml" dir="${ecogrid-dir}" target="clean"
-			inheritall="false">
-			<property name="context" value="${metacat.context}" />
-			<property name="target" value="${ecogrid-target-name}" />
-		</ant>
-		<ant antfile="build.xml" dir="${ecogrid-dir}" target="war"
-			inheritall="false">
-			<property name="context" value="${metacat.context}" />
-			<property name="target" value="${ecogrid-target-name}" />
-			<property name="metacat.dir" value="${basedir}"/>
-		</ant>
-		<jar destfile="${ecogrid-dir}/build/${metacat.context}-new.war">
-		    <zipfileset src="${ecogrid-dir}/build/${metacat.context}.war">
-		         <exclude name="WEB-INF/lib/log4j-1.2.8.jar"/>
-		    	     <exclude name="WEB-INF/classes/log4j.properties"/>
-		     </zipfileset>
-	   </jar>
-		<copy file="${ecogrid-dir}/build/${metacat.context}-new.war"
-			tofile="${dist.dir}/${metacat.context}.war" overwrite="true" />
-
-
-	</target>
-
-	<target name="get-ecogrid" depends="init"
-		description="Check out ecogrid module">
-		<svn>
-			<export srcUrl="${svn.ecogridUrl}" force="true"
-				destPath="${ecogrid-dir}" />
-		</svn>
 	</target>
 
 	<target name="install-skin" depends="init"
@@ -1422,7 +1373,6 @@
 			<fileset dir="${schema-cvsrelpath}">
 				<include name="eml-*/*.xsd" />
 			</fileset>
-			<fileset dir="${ecogrid-dir}"/>
 			<fileset dir="lib/style/common/emlb6toeml2"/>
 			<fileset dir="lib/dtd"/>
 			<fileset dir="${libdir.mvn}"/>
@@ -1470,7 +1420,7 @@
 	</target>
 
 	<target name="dist"
-		depends="geteml,get-ecogrid,jar,protocol,documentation,getConversionXSL"
+		depends="geteml,jar,protocol,documentation,getConversionXSL"
 		description="prepares a full release distribution">
 		<mkdir dir="${dist.dir}" />
 		<delete dir="${ver.dir}" />
