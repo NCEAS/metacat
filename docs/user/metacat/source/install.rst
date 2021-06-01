@@ -497,6 +497,12 @@ https://lucene.apache.org/solr/downloads.html
 ::
 
   sudo bash ./install_solr_service.sh solr-8.8.2.tgz
+  
+If you upgrade Solr from an old 8.* version to 8.8.2, you may run this command instead:
+  
+::
+
+  sudo bash ./install_solr_service.sh solr-8.8.2.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -526,13 +532,18 @@ Add a new line for the ``SOLR_OPTS`` variable in the environment specific includ
 
 7. Increase Memory
 
+Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
+
 By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values between 10 and 20 gigabytes are not uncommon for production servers. When you need to change the memory settings for your Solr server, use the ``SOLR_JAVA_MEM`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
+
 
 ::
 
   SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
 8. Tomcat and Solr User Management
+
+Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
 Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat8`` group to fix the problem:
