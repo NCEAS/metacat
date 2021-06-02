@@ -118,6 +118,7 @@ public class D1ResourceHandler {
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected boolean enableSessionFromHeader = false;
+    protected String proxyKey = null;
 
     protected Hashtable<String, String[]> params;
     protected Map<String, List<String>> multipartparams;
@@ -135,6 +136,7 @@ public class D1ResourceHandler {
 		try {
 			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
 			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
+			proxyKey = PropertyService.getProperty("dataone.certificate.fromHttpHeader.proxyKey");
 		} catch (PropertyNotFoundException e) {
 			// Just use our default as no max size is set in the properties file
 			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
@@ -606,9 +608,27 @@ public class D1ResourceHandler {
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
             logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            //check the shared key between Metacat and the http server:
+            if (proxyKey == null || proxyKey.trim().equals("")) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - Metacat is not configured to handle the feature passing " +
+                                " the certificate by headers since the proxy key is blank");
+                return;
+            }
+            String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
+            if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key is null or blank. " + 
+                                "So Metacat do NOT trust the request.");
+                return;
+            }
+            if (!proxyKey.equals(proxyKeyFromHttp)) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key does not match the one " + 
+                        " stored in Metacat. So Metacat do NOT trust the request.");
+                return;
+            }
+            
             String verify = (String) request.getHeader("Ssl-Client-Verify");
             logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
-            if (verify != null && verify.equals("SUCCESS")) {
+            if (verify != null && verify.equalsIgnoreCase("SUCCESS")) {
                 //Metacat only looks up the dn from the header when the ssl client was verified.
                 //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
                 String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
