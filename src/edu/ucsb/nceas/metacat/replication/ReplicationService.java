@@ -78,6 +78,8 @@ import org.dataone.client.types.AutoCloseHttpClientInputStream;
 import org.dataone.client.utils.HttpUtils;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
@@ -88,6 +90,7 @@ import org.xml.sax.XMLReader;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.DocumentImplWrapper;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.McdbException;
@@ -105,6 +108,8 @@ import edu.ucsb.nceas.metacat.database.DatabaseService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
@@ -713,101 +718,128 @@ public class ReplicationService extends BaseService {
 			// Get Document type
 			String docType = (String) docinfoHash.get("doctype");
 			logReplication.info("ReplicationService.handleForceReplicateRequest - docType: " + docType);
-			String parserBase = null;
-			// this for eml2 and we need user eml2 parser
-			if (docType != null
-					&& (docType.trim()).equals(DocumentImpl.EML2_0_0NAMESPACE)) {
-				logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml200 document!");
-				parserBase = DocumentImpl.EML200;
-			} else if (docType != null
-					&& (docType.trim()).equals(DocumentImpl.EML2_0_1NAMESPACE)) {
-				logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.0.1 document!");
-				parserBase = DocumentImpl.EML200;
-			} else if (docType != null
-					&& (docType.trim()).equals(DocumentImpl.EML2_1_0NAMESPACE)) {
-				logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.1.0 document!");
-				parserBase = DocumentImpl.EML210;
-			} else if (docType != null
-					&& (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE)) {
-				logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.1.1 document!");
-				parserBase = DocumentImpl.EML210;
-			} else if (docType != null
-                    && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
-                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.2.0 document!");
-                parserBase = DocumentImpl.EML210;
-                logReplication.warn("ReplicationService.handleForceReplicateRequest - The parserBase is: " + parserBase);
-			}
 			
-			/*String formatId = null;
-		    //get the format id from the system metadata 
-		    if(sysMeta != null && sysMeta.getFormatId() != null) {
-		          logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+docid);
-		          formatId = sysMeta.getFormatId().getValue();
-		    }*/
-		      
-			// Get DBConnection from pool
-			dbConn = DBConnectionPool
-					.getDBConnection("MetacatReplication.handleForceReplicateRequest");
-			serialNumber = dbConn.getCheckOutSerialNumber();
-			// write the document to local database
-			DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
-			//try this independently so we can set access even if the update action is invalid (i.e docid has not changed)
-			try {
-				wrapper.writeReplication(dbConn, xmldoc, xmlBytes, null, null,
-						dbaction, docid, null, null, homeServer, server, createdDate,
-						updatedDate);
-			} finally {
-				if(sysMeta != null) {
-					// submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
-					// will not interrupt the process.
-					try {
-						MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
-					} catch (Exception ee) {
-						logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
-					}
+			NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysMeta.getFormatId());
+	        if ( handler != null ) {
+	            //non-xml objects route
+	            try {
+	                String user = (String) docinfoHash.get("user_owner");
+	                int serverCode = DocumentImpl.getServerCode(homeServer);
+	                logReplication.info("ReplicationHander.handleForceReplicateRequest - in the non-xml route, the user is " 
+	                                 + user + " for the identifier " + sysMeta.getIdentifier() + " and the docid " + docid +
+	                                 " with the check sume in the system metadata " + sysMeta.getChecksum().getValue() +
+	                                 ". The docment has the server code " + serverCode + " with home server " + homeServer);
+	                ByteArrayInputStream source = new ByteArrayInputStream(xmlBytes);
+	                EventLogData event =  new EventLogData(request.getRemoteAddr(), request.getHeader("User-Agent"),
+	                                                    ReplicationService.REPLICATIONUSER, docid, "create");
+	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, event);
+	                if(sysMeta != null) {
+	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                    }
+	            } catch (Exception e) {
+	                HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+	                throw e;
+	            }
+	        } else {
+	            //xml objects route
+	            String parserBase = null;
+	            // this for eml2 and we need user eml2 parser
+	            if (docType != null
+	                    && (docType.trim()).equals(DocumentImpl.EML2_0_0NAMESPACE)) {
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml200 document!");
+	                parserBase = DocumentImpl.EML200;
+	            } else if (docType != null
+	                    && (docType.trim()).equals(DocumentImpl.EML2_0_1NAMESPACE)) {
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.0.1 document!");
+	                parserBase = DocumentImpl.EML200;
+	            } else if (docType != null
+	                    && (docType.trim()).equals(DocumentImpl.EML2_1_0NAMESPACE)) {
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.1.0 document!");
+	                parserBase = DocumentImpl.EML210;
+	            } else if (docType != null
+	                    && (docType.trim()).equals(DocumentImpl.EML2_1_1NAMESPACE)) {
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.1.1 document!");
+	                parserBase = DocumentImpl.EML210;
+	            } else if (docType != null
+	                    && (docType.trim()).equals(DocumentImpl.EML2_2_0NAMESPACE)) {
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - This is an eml2.2.0 document!");
+	                parserBase = DocumentImpl.EML210;
+	                logReplication.warn("ReplicationService.handleForceReplicateRequest - The parserBase is: " + parserBase);
+	            }
+	            
+	            /*String formatId = null;
+	            //get the format id from the system metadata 
+	            if(sysMeta != null && sysMeta.getFormatId() != null) {
+	                  logMetacat.debug("ReplicationService.handleForceReplicateRequest - the format id will be got from the system metadata for the object "+docid);
+	                  formatId = sysMeta.getFormatId().getValue();
+	            }*/
+	              
+	            // Get DBConnection from pool
+	            dbConn = DBConnectionPool
+	                    .getDBConnection("MetacatReplication.handleForceReplicateRequest");
+	            serialNumber = dbConn.getCheckOutSerialNumber();
+	            // write the document to local database
+	            DocumentImplWrapper wrapper = new DocumentImplWrapper(parserBase, false, false);
+	            //try this independently so we can set access even if the update action is invalid (i.e docid has not changed)
+	            try {
+	                wrapper.writeReplication(dbConn, xmldoc, xmlBytes, null, null,
+	                        dbaction, docid, null, null, homeServer, server, createdDate,
+	                        updatedDate);
+	            } finally {
+	                if(sysMeta != null) {
+	                    // submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
+	                    // will not interrupt the process.
+	                    try {
+	                        MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+	                    } catch (Exception ee) {
+	                        logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
+	                    }
+	                    
+	                }
+	                //process extra access rules before dealing with the write exception (doc exist already)
+	                try {
+	                    // check if we had a guid -> docid mapping
+	                    String docidNoRev = DocumentUtil.getDocIdFromAccessionNumber(docid);
+	                    int rev = DocumentUtil.getRevisionFromAccessionNumber(docid);
+	                    IdentifierManager.getInstance().getGUID(docidNoRev, rev);
+	                    // no need to create the mapping if we have it
+	                } catch (McdbDocNotFoundException mcdbe) {
+	                    // create mapping if we don't
+	                    IdentifierManager.getInstance().createMapping(docid, docid);
+	                }
+	                Vector<XMLAccessDAO> accessControlList = dih.getAccessControlList();
+	                if (accessControlList != null) {
+	                    AccessControlForSingleFile acfsf = new AccessControlForSingleFile(docid);
+	                    for (XMLAccessDAO xmlAccessDAO : accessControlList) {
+	                        try {
+	                            if (!acfsf.accessControlExists(xmlAccessDAO)) {
+	                                acfsf.insertPermissions(xmlAccessDAO);
+	                                logReplication.info("ReplicationService.handleForceReplicateRequest - document " + docid
+	                                        + " permissions added to DB");
+	                            }
+	                        } catch (PermOrderException poe) {
+	                            // this is problematic, but should not prevent us from replicating
+	                            // see https://redmine.dataone.org/issues/2583
+	                            String msg = "Could not insert access control for: " + docid + " Message: " + poe.getMessage();
+	                            logMetacat.error(msg, poe);
+	                            logReplication.error(msg, poe);
+	                        }
+	                    }
+	                }
 	                
-				}
-				//process extra access rules before dealing with the write exception (doc exist already)
-				try {
-		        	// check if we had a guid -> docid mapping
-		        	String docidNoRev = DocumentUtil.getDocIdFromAccessionNumber(docid);
-		        	int rev = DocumentUtil.getRevisionFromAccessionNumber(docid);
-		        	IdentifierManager.getInstance().getGUID(docidNoRev, rev);
-		        	// no need to create the mapping if we have it
-		        } catch (McdbDocNotFoundException mcdbe) {
-		        	// create mapping if we don't
-		        	IdentifierManager.getInstance().createMapping(docid, docid);
-		        }
-		        Vector<XMLAccessDAO> accessControlList = dih.getAccessControlList();
-		        if (accessControlList != null) {
-		        	AccessControlForSingleFile acfsf = new AccessControlForSingleFile(docid);
-		        	for (XMLAccessDAO xmlAccessDAO : accessControlList) {
-		        		try {
-			        		if (!acfsf.accessControlExists(xmlAccessDAO)) {
-			        			acfsf.insertPermissions(xmlAccessDAO);
-								logReplication.info("ReplicationService.handleForceReplicateRequest - document " + docid
-										+ " permissions added to DB");
-			        		}
-		        		} catch (PermOrderException poe) {
-		        			// this is problematic, but should not prevent us from replicating
-		        			// see https://redmine.dataone.org/issues/2583
-		        			String msg = "Could not insert access control for: " + docid + " Message: " + poe.getMessage();
-		        			logMetacat.error(msg, poe);
-		        			logReplication.error(msg, poe);
-		        		}
-		            }
-		        }
-		        
-		        // process the real owner and updater
-				String user = (String) docinfoHash.get("user_owner");
-				String updated = (String) docinfoHash.get("user_updated");
-		        updateUserOwner(dbConn, docid, user, updated);
+	                // process the real owner and updater
+	                String user = (String) docinfoHash.get("user_owner");
+	                String updated = (String) docinfoHash.get("user_updated");
+	                updateUserOwner(dbConn, docid, user, updated);
 
-				logReplication.info("ReplicationService.handleForceReplicateRequest - document " + docid + " added to DB with "
-						+ "action " + dbaction);
-				
-				EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), REPLICATIONUSER, docid, dbaction);
-			}
+	                logReplication.info("ReplicationService.handleForceReplicateRequest - document " + docid + " added to DB with "
+	                        + "action " + dbaction);
+	                
+	                EventLog.getInstance().log(request.getRemoteAddr(), request.getHeader("User-Agent"), REPLICATIONUSER, docid, dbaction);
+	            }
+	            
+	        }
+			
 		} catch (SQLException sqle) {
 			logMetacat.error("ReplicationService.handleForceReplicateRequest - " + ReplicationService.METACAT_REPL_ERROR_MSG);                         
 			logReplication.error("ReplicationService.handleForceReplicateRequest - SQL error when adding doc " + docid + 

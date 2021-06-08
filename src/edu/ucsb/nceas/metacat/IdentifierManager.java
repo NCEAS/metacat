@@ -2041,7 +2041,7 @@ public class IdentifierManager {
             serialNumber = dbConn.getCheckOutSerialNumber();
 
             // the field query
-            String orderBySql = " order by guid ";
+            String orderBySql = " order by date_modified DESC ";
             String fieldQuery = fieldSql + whereClauseSql + orderBySql;
             String finalQuery = DatabaseService.getInstance().getDBAdapter().getPagedQuery(fieldQuery, start, count);
             fieldStmt = dbConn.prepareStatement(finalQuery);

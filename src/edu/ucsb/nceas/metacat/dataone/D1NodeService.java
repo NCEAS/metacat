@@ -107,6 +107,7 @@ import edu.ucsb.nceas.metacat.AccessionNumberException;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.EventLog;
+import edu.ucsb.nceas.metacat.EventLogData;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.MetacatHandler;
@@ -117,6 +118,8 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
@@ -130,6 +133,7 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 public abstract class D1NodeService {
     
   public static final String DELETEDMESSAGE = "The object with the PID has been deleted from the node.";
+  public static final String METADATA = "METADATA";
     
   private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(D1NodeService.class);
 
@@ -461,14 +465,24 @@ public abstract class D1NodeService {
         // CASE METADATA:
       	//String objectAsXML = "";
         try {
-	        //objectAsXML = IOUtils.toString(object, "UTF-8");
-            String formatId = null;
-            if(sysmeta.getFormatId() != null)  {
-                formatId = sysmeta.getFormatId().getValue();
-            }
-	        localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId, sysmeta.getChecksum());
-	        //localId = im.getLocalId(pid.getValue());
-
+	        NonXMLMetadataHandler handler = NonXMLMetadataHandlers.newNonXMLMetadataHandler(sysmeta.getFormatId());
+	        if ( handler != null ) {
+	            //non-xml metadata object path
+	            if (ipAddress == null) {
+	                ipAddress = request.getRemoteAddr();
+	            }
+	            if (userAgent == null) {
+	                userAgent = request.getHeader("User-Agent");
+	            }
+	            EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+	            localId = handler.save(object,sysmeta, session, event);
+	        } else {
+	            String formatId = null;
+	            if(sysmeta.getFormatId() != null)  {
+	                formatId = sysmeta.getFormatId().getValue();
+	            }
+	            localId = insertOrUpdateDocument(object,"UTF-8", pid, session, "insert", formatId, sysmeta.getChecksum());
+	        }
         } catch (IOException e) {
             removeSystemMetaAndIdentifier(pid);
         	String msg = "The Node is unable to create the object "+pid.getValue() +
@@ -480,6 +494,10 @@ public abstract class D1NodeService {
             removeSystemMetaAndIdentifier(pid);
             logMetacat.error("D1NodeService.create - the node couldn't create the object "+pid.getValue()+" since "+e.getMessage(), e);
             throw e;
+        } catch (InvalidRequest e) {
+            removeSystemMetaAndIdentifier(pid);
+            logMetacat.error("D1NodeService.create - the node couldn't create the object " + pid.getValue() + " since " + e.getMessage(), e);
+            throw e;
         } catch (Exception e) {
             removeSystemMetaAndIdentifier(pid);
             logMetacat.error("The node is unable to create the object: "+pid.getValue()+ " since " + e.getMessage(), e);
@@ -490,7 +508,14 @@ public abstract class D1NodeService {
 	        
 	      // DEFAULT CASE: DATA (needs to be checked and completed)
           try {
-              localId = insertDataObject(object, pid, session, sysmeta.getChecksum());
+              if (ipAddress == null) {
+                  ipAddress = request.getRemoteAddr();
+              }
+              if (userAgent == null) {
+                  userAgent = request.getHeader("User-Agent");
+              }
+              EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+              localId = insertDataObject(object, pid, session, sysmeta.getChecksum(), event);
           } catch (ServiceFailure e) {
               removeSystemMetaAndIdentifier(pid);
               throw e;
@@ -605,6 +630,23 @@ public abstract class D1NodeService {
           logMetacat.warn("Can't remove the solr index for pid "+sysMeta.getIdentifier().getValue());
       }
       
+  }
+  
+  /*
+   * Roll-back method when inserting data object fails.
+   */
+  protected static void removeIdFromIdentifierTable(Identifier id){
+      if(id != null) {
+          try {
+              if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
+                 String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
+                 IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
+                 logMetacat.info("MNodeService.removeIdFromIdentifierTable - the identifier "+id.getValue()+" and local id "+localId+" have been removed from the identifier table since the object creation failed");
+              }
+          } catch (Exception e) {
+              logMetacat.warn("MNodeService.removeIdFromIdentifierTable - can't decide if the mapping of  the pid "+id.getValue()+" exists on the identifier table.");
+          }
+      }
   }
 
   /**
@@ -725,7 +767,6 @@ public abstract class D1NodeService {
       if (headPID != null)
           pid = headPID;
 
-
       InputStream inputStream = null; // bytes to be returned
       boolean allowed = false;
       String localId; // the metacat docid for the pid
@@ -752,8 +793,20 @@ public abstract class D1NodeService {
 
       // if the person is authorized, perform the read
       if (allowed) {
+          SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+          ObjectFormat objectFormat = null;
+          String type = null;
           try {
-              inputStream = MetacatHandler.read(localId);
+              objectFormat = ObjectFormatCache.getInstance().getFormat(sm.getFormatId());
+          } catch (BaseException be) {
+              logMetacat.warn("Could not lookup ObjectFormat for: " + sm.getFormatId(), be);
+          }
+          if (objectFormat != null) {
+              type = objectFormat.getFormatType();
+          }
+          logMetacat.info("D1NodeService.get - the data type for the object " + pid.getValue() + " is " + type);
+          try {
+              inputStream = MetacatHandler.read(localId, type);
           } catch (McdbDocNotFoundException de) {
               String error ="";
               try {
@@ -1138,18 +1191,72 @@ public abstract class D1NodeService {
   }
   
   /**
-   * Insert a data document
-   * 
-   * @param object
-   * @param pid
-   * @param sessionData
+   * Insert a data object into Metacat
+   * @param object  the input stream of the object will be inserted
+   * @param pid  the pid associated with the object
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @return  the local id of the inserted object
    * @throws ServiceFailure
- * @throws NotAuthorized 
-   * @returns localId of the data object inserted
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
    */
-  public String insertDataObject(InputStream object, Identifier pid, 
-          Session session, Checksum checksum) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+  protected String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum) 
+                   throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+      if (ipAddress == null) {
+          ipAddress = request.getRemoteAddr();
+      }
+      if (userAgent == null) {
+          userAgent = request.getHeader("User-Agent");
+      }
+      EventLogData event =  new EventLogData(ipAddress, userAgent, null, null, "create");
+      return insertDataObject(object, pid, session, checksum, event);
       
+  }
+  
+  /**
+   * Insert a data object into Metacat
+   * @param object  the input stream of the object will be inserted
+   * @param pid  the pid associated with the object
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @param event  the event log information associated with this action
+   * @return  the local id of the inserted object
+   * @throws ServiceFailure
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
+   */
+  protected String insertDataObject(InputStream object, Identifier pid, Session session, Checksum checksum, EventLogData event) 
+                   throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+      String dataFilePath = null;
+      try {
+          dataFilePath = PropertyService.getProperty("application.datafilepath");
+      } catch (PropertyNotFoundException e) {
+          ServiceFailure sf = new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      }
+      return insertObject(object, DocumentImpl.BIN, pid, dataFilePath, session, checksum, event);
+      
+  }
+  
+  /**
+   * Insert an object into the given directory
+   * @param object  the input stream of the object will be inserted
+   * @param docType  the doc type in the xml_document table
+   * @param pid  the pid associated with the object
+   * @param fileDirectory  the directory where the object will be inserted
+   * @param session  the actor of this action
+   * @param checksum  the expected checksum for this data object
+   * @param event  the event log information associated with this action
+   * @return  the local id of the inserted object
+   * @throws ServiceFailure
+   * @throws InvalidSystemMetadata
+   * @throws NotAuthorized
+   */
+  public static String insertObject(InputStream object, String docType, Identifier pid, String fileDirectory,
+          Session session, Checksum checksum, EventLogData event) throws ServiceFailure, InvalidSystemMetadata, NotAuthorized {
+    
     String username = Constants.SUBJECT_PUBLIC;
     String[] groupnames = null;
     if (session != null ) {
@@ -1182,48 +1289,30 @@ public abstract class D1NodeService {
                 "permission to WRITE to the Node.");
     }
     
-    // generate pid/localId pair for object
-    logMetacat.debug("Generating a pid/localId mapping");
-    IdentifierManager im = IdentifierManager.getInstance();
-    String localId = im.generateLocalId(pid.getValue(), 1);
-  
-    // Save the data file to disk using "localId" as the name
-    String datafilepath = null;
-	try {
-		datafilepath = PropertyService.getProperty("application.datafilepath");
-	} catch (PropertyNotFoundException e) {
-		ServiceFailure sf = new ServiceFailure("1190", "Lookup data file path" + e.getMessage());
-		sf.initCause(e);
-		throw sf;
-	}
-    boolean locked = false;
-	try {
-		locked = DocumentImpl.getDataFileLockGrant(localId);
-	} catch (Exception e) {
-		ServiceFailure sf = new ServiceFailure("1190", "Could not lock file for writing:" + e.getMessage());
-		sf.initCause(e);
-		throw sf;
-	}
-
-    logMetacat.debug("Case DATA: starting to write to disk.");
-	if (locked) {
-
-          File dataDirectory = new File(datafilepath);
-          dataDirectory.mkdirs();
-  
-          File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
-  
-          // TODO: Check that the file size matches SystemMetadata
+    String localId = null;
+    try {
+     // generate pid/localId pair for object
+        logMetacat.debug("Generating a pid/localId mapping");
+        IdentifierManager im = IdentifierManager.getInstance();
+        localId = im.generateLocalId(pid.getValue(), 1);
+      
+        // Save the data file to disk using "localId" as the name
+        logMetacat.debug("Case DATA: starting to write to disk.");
+              File dataDirectory = new File(fileDirectory);
+              dataDirectory.mkdirs();
+              File newFile = writeStreamToFile(dataDirectory, localId, object, checksum, pid);
+      
+              // TODO: Check that the file size matches SystemMetadata
           // long size = newFile.length();
           // if (size == 0) {
           //     throw new IOException("Uploaded file is 0 bytes!");
           // }
-  
-          // Register the file in the database (which generates an exception
+      
+              // Register the file in the database (which generates an exception
           // if the localId is not acceptable or other untoward things happen
           try {
             logMetacat.debug("Registering document...");
-            DocumentImpl.registerDocument(localId, "BIN", localId,
+            DocumentImpl.registerDocument(localId, docType, localId,
                     username, groupnames);
             logMetacat.debug("Registration step completed.");
             
@@ -1232,44 +1321,46 @@ public abstract class D1NodeService {
             logMetacat.debug("SQLE: " + e.getMessage());
             e.printStackTrace(System.out);
             throw new ServiceFailure("1190", "Registration failed: " + 
-            		e.getMessage());
+                    e.getMessage());
             
           } catch (AccessionNumberException e) {
             //newFile.delete();
             logMetacat.debug("ANE: " + e.getMessage());
             e.printStackTrace(System.out);
             throw new ServiceFailure("1190", "Registration failed: " + 
-            	e.getMessage());
+                e.getMessage());
             
           } catch (Exception e) {
             //newFile.delete();
             logMetacat.debug("Exception: " + e.getMessage());
             e.printStackTrace(System.out);
             throw new ServiceFailure("1190", "Registration failed: " + 
-            	e.getMessage());
-          }
-  
+                    e.getMessage());
+              }
+      
           try {
-              if (ipAddress == null) {
-                  ipAddress = request.getRemoteAddr();
-              }
-              if (userAgent == null) {
-                  userAgent = request.getHeader("User-Agent");
-              }
               logMetacat.debug("Logging the creation event.");
-              EventLog.getInstance().log(ipAddress, userAgent, username, localId, "create");
+              EventLog.getInstance().log(event.getIpAddress(), event.getUserAgent(), username, localId, event.getEvent());
           } catch (Exception e) {
               logMetacat.warn("D1NodeService.insertDataObject - can't log the create event for the object " + pid.getValue());
           }
-          
-  
+
           // Schedule replication for this data file, the "insert" action is important here!
           logMetacat.debug("Scheduling replication.");
-          ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", false, null);
-      }
-      
-      return localId;
-    
+          boolean isMeta = true;
+          if (docType != null && docType.equals(DocumentImpl.BIN)) {
+              isMeta = false;
+          }
+          String replicationNotificationServer = "localhost";
+          ForceReplicationHandler frh = new ForceReplicationHandler(localId, "insert", isMeta, replicationNotificationServer);
+    } catch (ServiceFailure sfe) {
+        removeIdFromIdentifierTable(pid);
+        throw sfe;
+    } catch (InvalidSystemMetadata ise) {
+        removeIdFromIdentifierTable(pid);
+        throw ise;
+    }
+    return localId;
   }
 
   /**
@@ -1736,108 +1827,122 @@ public abstract class D1NodeService {
    * Write a stream to a file
    * 
    * @param dir - the directory to write to
-   * @param fileName - the file name to write to
+   * @param localId - the file name to write to
    * @param data - the object bytes as an input stream
    * 
    * @return newFile - the new file created
    * 
    * @throws ServiceFailure
    */
-  private File writeStreamToFile(File dir, String fileName, InputStream dataStream, Checksum checksum, Identifier pid) 
+  public static File writeStreamToFile(File dir, String localId, InputStream dataStream, Checksum checksum, Identifier pid) 
     throws ServiceFailure, InvalidSystemMetadata {
-    
-    File newFile = new File(dir, fileName);
-    File tempFile = null;
-    logMetacat.debug("Filename for write is: " + newFile.getAbsolutePath()+" for the data object pid "+pid.getValue());
+      File newFile = null;
+      boolean locked = false;
+      try {
+          locked = DocumentImpl.getDataFileLockGrant(localId);
+      } catch (Exception e) {
+          ServiceFailure sf = new ServiceFailure("1190", "Could not lock file for writing:" + e.getMessage());
+          sf.initCause(e);
+          throw sf;
+      }
 
-    try {
-            String checksumValue = checksum.getValue();
-            logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
-            if(checksumValue == null || checksumValue.trim().equals("")) {
-                logMetacat.error("D1NodeService.writeStreamToFile - the checksum value from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
-                throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
-            }
-            String algorithm = checksum.getAlgorithm();
-            logMetacat.info("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata is "+algorithm+" for the data object "+pid.getValue());
-            if(algorithm == null || algorithm.trim().equals("")) {
-                logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
-                throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
-            }
-          long start = System.currentTimeMillis();
-          //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
-          if (dataStream instanceof DetailedFileInputStream ) {
-              DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
-              tempFile = stream.getFile();
-              Checksum expectedChecksum = stream.getExpectedChecksum();
-              if (expectedChecksum != null) {
-                  String expectedAlgorithm = expectedChecksum.getAlgorithm();
-                  String expectedChecksumValue = expectedChecksum.getValue();
-                  if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
-                      //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
-                      if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
-                          FileUtils.moveFile(tempFile, newFile);
-                          long end = System.currentTimeMillis();
-                          logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
-                          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
-                                  pid.getValue() + 
-                                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
-                                  " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + 
-                                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
-                                  (end-start)/1000);
-                          return newFile;
-                      } else {
-                          logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
-                                                  ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
-                          throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
-                                  ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
-                      }
-                  } else {
-                      logMetacat.info("D1NodeService.writeStreamToFile - the checksum algorithm which the multipart handler used is " + expectedAlgorithm + " and it is different to one on the system metadata " + algorithm + ". So we have to calculate again.");
+      logMetacat.debug("Case DATA: starting to write to disk.");
+      if (locked) {
+          newFile = new File(dir, localId);
+          File tempFile = null;
+          logMetacat.debug("Filename for write is: " + newFile.getAbsolutePath()+" for the data object pid "+pid.getValue());
+
+          try {
+                  String checksumValue = checksum.getValue();
+                  logMetacat.info("D1NodeService.writeStreamToFile - the checksum value from the system metadata is "+checksumValue+" for the data object "+pid.getValue());
+                  if(checksumValue == null || checksumValue.trim().equals("")) {
+                      logMetacat.error("D1NodeService.writeStreamToFile - the checksum value from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+                      throw new InvalidSystemMetadata("1180", "The checksum value from the system metadata shouldn't be null or blank.");
                   }
-              } 
+                  String algorithm = checksum.getAlgorithm();
+                  logMetacat.info("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata is "+algorithm+" for the data object "+pid.getValue());
+                  if(algorithm == null || algorithm.trim().equals("")) {
+                      logMetacat.error("D1NodeService.writeStreamToFile - the algorithm to calculate the checksum from the system metadata shouldn't be null or blank for the data object "+pid.getValue());
+                      throw new InvalidSystemMetadata("1180", "The algorithm to calculate the checksum from the system metadata shouldn't be null or blank.");
+                  }
+                long start = System.currentTimeMillis();
+                //if the input stream is an object DetailedFileInputStream, it means this object already has the checksum information.
+                if (dataStream instanceof DetailedFileInputStream ) {
+                    DetailedFileInputStream stream = (DetailedFileInputStream) dataStream;
+                    tempFile = stream.getFile();
+                    Checksum expectedChecksum = stream.getExpectedChecksum();
+                    if (expectedChecksum != null) {
+                        String expectedAlgorithm = expectedChecksum.getAlgorithm();
+                        String expectedChecksumValue = expectedChecksum.getValue();
+                        if (expectedAlgorithm != null && expectedAlgorithm.equalsIgnoreCase(algorithm)) {
+                            //The algorithm is the same and the checksum is same, we just need to move the file from the temporary location (serialized by the multiple parts handler)  to the permanent location
+                            if (expectedChecksumValue != null && expectedChecksumValue.equalsIgnoreCase(checksumValue)) {
+                                FileUtils.moveFile(tempFile, newFile);
+                                long end = System.currentTimeMillis();
+                                logMetacat.info("D1NodeService.writeStreamToFile - Metacat only needs the move the data file from temporary location to the permanent location for the object " + pid.getValue());
+                                logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
+                                        pid.getValue() + 
+                                        edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
+                                        " Only move the data file from the temporary location to the permanent location since the multiparts handler has calculated the checksum" + 
+                                        edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
+                                        (end-start)/1000);
+                                return newFile;
+                            } else {
+                                logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
+                                                        ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
+                                throw new InvalidSystemMetadata("1180", "D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is " + expectedChecksumValue + 
+                                        ". But it doesn't match the value from the system metadata " + checksumValue + " for the object " + pid.getValue());
+                            }
+                        } else {
+                            logMetacat.info("D1NodeService.writeStreamToFile - the checksum algorithm which the multipart handler used is " + expectedAlgorithm + " and it is different to one on the system metadata " + algorithm + ". So we have to calculate again.");
+                        }
+                    } 
+                }
+                //The input stream is not a DetaileFileInputStream or the algorithm doesn't match, we have to calculate the checksum.
+                MessageDigest md = MessageDigest.getInstance(algorithm);
+                // write data stream to desired file
+                DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
+                long length = IOUtils.copyLarge(dataStream, os);
+                os.flush();
+                os.close();
+                String localChecksum = DatatypeConverter.printHexBinary(md.digest());
+                logMetacat.info("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum);
+                if(localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
+                    logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+" for the object "+pid.getValue());
+                    boolean success = newFile.delete();
+                    logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
+                    throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
+                }
+                long end = System.currentTimeMillis();
+                logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
+                        pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
+                        " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + 
+                        edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
+                        (end-start)/1000);
+                if(tempFile != null) {
+                    //tempFile.deleteOnExit();
+                    StreamingMultipartRequestResolver.deleteTempFile(tempFile);
+                }
+          } catch (FileNotFoundException e) {
+            logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);
+            throw new ServiceFailure("1190", "File not found: " + localId + " " 
+                      + e.getMessage());
+          } catch (IOException e) {
+            logMetacat.error("IOE: " + e.getMessage()+" for the data object "+pid.getValue(), e);
+            throw new ServiceFailure("1190", "File was not written: " + localId 
+                      + " " + e.getMessage());
+          } catch (NoSuchAlgorithmException e) {
+              logMetacat.error("D1NodeService.writeStreamToFile - no such checksum algorithm exception " + e.getMessage()+" for the data object "+pid.getValue(), e);
+              throw new ServiceFailure("1190", "No such checksum algorithm: "  
+                      + " " + e.getMessage());
+          } finally {
+              IOUtils.closeQuietly(dataStream);
           }
-          //The input stream is not a DetaileFileInputStream or the algorithm doesn't match, we have to calculate the checksum.
-          MessageDigest md = MessageDigest.getInstance(algorithm);
-          // write data stream to desired file
-          DigestOutputStream os = new DigestOutputStream( new FileOutputStream(newFile), md);
-          long length = IOUtils.copyLarge(dataStream, os);
-          os.flush();
-          os.close();
-          String localChecksum = DatatypeConverter.printHexBinary(md.digest());
-          logMetacat.info("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum);
-          if(localChecksum == null || localChecksum.trim().equals("") || !localChecksum.equalsIgnoreCase(checksumValue)) {
-              logMetacat.error("D1NodeService.writeStreamToFile - the check sum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+" for the object "+pid.getValue());
-              boolean success = newFile.delete();
-              logMetacat.info("delete the file "+newFile.getAbsolutePath()+" for the object "+pid.getValue()+" sucessfully?"+success);
-              throw new InvalidSystemMetadata("1180", "The checksum calculated from the saved local file is "+localChecksum+ ". But it doesn't match the value from the system metadata "+checksumValue+".");
-          }
-          long end = System.currentTimeMillis();
-          logMetacat.info(edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG + 
-                  pid.getValue() + edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_CREATE_UPDATE_METHOD + 
-                  " Need to read the data file from the temporary location and write it to the permanent location since the multiparts handler has NOT calculated the checksum" + 
-                  edu.ucsb.nceas.metacat.common.Settings.PERFORMANCELOG_DURATION + 
-                  (end-start)/1000);
-          if(tempFile != null) {
-              //tempFile.deleteOnExit();
-              StreamingMultipartRequestResolver.deleteTempFile(tempFile);
-          }
-    } catch (FileNotFoundException e) {
-      logMetacat.error("FNF: " + e.getMessage()+" for the data object "+pid.getValue(), e);
-      throw new ServiceFailure("1190", "File not found: " + fileName + " " 
-                + e.getMessage());
-    } catch (IOException e) {
-      logMetacat.error("IOE: " + e.getMessage()+" for the data object "+pid.getValue(), e);
-      throw new ServiceFailure("1190", "File was not written: " + fileName 
-                + " " + e.getMessage());
-    } catch (NoSuchAlgorithmException e) {
-        logMetacat.error("D1NodeService.writeStreamToFile - no such checksum algorithm exception " + e.getMessage()+" for the data object "+pid.getValue(), e);
-        throw new ServiceFailure("1190", "No such checksum algorithm: "  
-                + " " + e.getMessage());
-    } finally {
-        IOUtils.closeQuietly(dataStream);
-    }
-
-    return newFile;
+      } else {
+          logMetacat.error("D1NodeService.writeStreamToFile - Metacat cannot lock the file " + localId);
+          throw new ServiceFailure("1190", "D1NodeService.writeStreamToFile - Metacat cannot lock the file " + localId);
+      }
+      return newFile;
   }
 
   /**

@@ -21,7 +21,7 @@ running correctly:
   * In order to use the Metacat Registry (and for a more robust Web-serving environment in general), the Apache Web server should be installed with Tomcat and the two should be integrated. See the installing Apache for more information.
 
 * `Java 8`_ (Note: Java 7 is deprecated)
-* `Solr 8.4.1`_
+* `Solr 8.8.2`_
 
 .. _PostgreSQL: http://www.postgresql.org/
 
@@ -35,7 +35,7 @@ running correctly:
 
 .. _Java 8: http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html
 
-.. _Solr 8.4.1: https://lucene.apache.org/solr/guide/8_4/getting-started.html
+.. _Solr 8.8.2: https://lucene.apache.org/solr/guide/8_8/getting-started.html
 
 
 System requirements for running Metacat:
@@ -482,21 +482,27 @@ search engine. Unfortunately the Solr Debian packages that come with the Ubuntu 
 system are obsoleted and you have to install the binary packages by yourself. This section 
 provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
 
-Metacat support Solr 8.4.1 and newer versions. You might download the binary releases from:
+Metacat support Solr 8.8.2 and newer versions. You might download the binary releases from:
 
 https://lucene.apache.org/solr/downloads.html
 
-1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.4.1.tgz):
+1. Go to the directory which contains the Solr release file and extract the installation script file by typing (assume the download file being solr-8.8.2.tgz):
 
 ::
 
-  tar xzf solr-8.4.1.tgz solr-8.4.1/bin/install_solr_service.sh --strip-components=2
+  tar xzf solr-8.8.2.tgz solr-8.8.2/bin/install_solr_service.sh --strip-components=2
 
 2. Install Solr as the root user:
 
 ::
 
-  sudo bash ./install_solr_service.sh solr-8.4.1.tgz
+  sudo bash ./install_solr_service.sh solr-8.8.2.tgz
+  
+If you upgrade Solr from an old 8.* version to 8.8.2, you may run this command instead:
+  
+::
+
+  sudo bash ./install_solr_service.sh solr-8.8.2.tgz -f
 
 3. Ensure the Solr defaults file is group writable:
 
@@ -516,15 +522,28 @@ https://lucene.apache.org/solr/downloads.html
 
   sudo ufw status
 
-6. Increase Memory
+6. Add New Allowed Solr Paths
+
+Add a new line for the ``SOLR_OPTS`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
+
+::
+
+  SOLR_OPTS="$SOLR_OPTS -Dsolr.allowPaths=*"
+
+7. Increase Memory
+
+Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
 
 By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values between 10 and 20 gigabytes are not uncommon for production servers. When you need to change the memory settings for your Solr server, use the ``SOLR_JAVA_MEM`` variable in the environment specific include file (e.g. ``/etc/default/solr.in.sh``) such as:
+
 
 ::
 
   SOLR_JAVA_MEM="-Xms2g -Xmx2g"
 
-7. Tomcat and Solr User Management
+8. Tomcat and Solr User Management
+
+Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
 Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat8`` group to fix the problem:
@@ -534,14 +553,14 @@ Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat
   sudo usermod -a -G solr tomcat8
   sudo usermod -a -G tomcat8 solr
 
-8. Restart Solr server to make the new group setting effective (:note2:`Important`) 
+9. Restart Solr server to make the new group setting effective (:note2:`Important`) 
 
 ::
 
   sudo service solr stop
   sudo service solr start
 
-9. Check that the ``tomcat8`` user and ``solr`` user are members of the appropriate groups with:
+10. Check that the ``tomcat8`` user and ``solr`` user are members of the appropriate groups with:
 
 ::
 

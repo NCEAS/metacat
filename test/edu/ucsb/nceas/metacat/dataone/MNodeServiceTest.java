@@ -29,10 +29,15 @@ package edu.ucsb.nceas.metacat.dataone;
 
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.database.DBConnection;
+import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
+import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
@@ -48,9 +53,12 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.URL;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -200,6 +208,8 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testPublishPackage"));
     suite.addTest(new MNodeServiceTest("testPublishPrivatePackage"));
     suite.addTest(new MNodeServiceTest("testAllowList"));
+    suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
+    suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
     return suite;
     
   }
@@ -3611,5 +3621,231 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         //restore the original setting
         PropertyService.setPropertyNoPersist("auth.allowedSubmitters", originalAllowedSubmitterString);
         AuthUtil.populateAllowedSubmitters();
+    }
+    
+    /**
+     * Test create and update json-ld objects
+     * @throws Exception
+     */
+    public void testInsertJson_LD() throws Exception {
+        printTestHeader("testInsertJson_LD");
+        
+        ObjectFormatIdentifier formatid = new ObjectFormatIdentifier();
+        formatid.setValue(NonXMLMetadataHandlers.JSON_LD);
+        
+        //create a json-ld object successfully
+        File temp1 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        OutputStream out = new FileOutputStream(temp1);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testInsertJson_LD." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(temp1);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatid);
+        object.close();
+        Checksum checksum = null;
+        DetailedFileInputStream data = new DetailedFileInputStream(temp1, checksum);
+        Identifier pid = 
+          MNodeService.getInstance(request).create(session, guid, data, sysmeta);
+        SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+        assertTrue(result.getIdentifier().equals(guid));
+        data.close();
+        
+        //fail to update the object since the new object is an invalid json-ld object 
+        File temp2 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp2);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        Identifier newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_2." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new FileInputStream(temp2);
+        SystemMetadata newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp2, newMeta.getChecksum());
+        try {
+            MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
+            fail("we shouldn't get here since the new object is an invalid json-ld file");
+        } catch (Exception e) {
+            System.out.println("the message is +++++++++++ " +e.getMessage());
+            assertTrue(e instanceof InvalidRequest);
+        }
+        data.close();
+        temp2.delete();
+        
+        //successfully update the object
+        File temp3 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp3);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_2." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+        object = new FileInputStream(temp3);
+        newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp3, newMeta.getChecksum());
+        MNodeService.getInstance(request).update(session, pid, data, newPid, newMeta);
+        data.close();
+        result = MNodeService.getInstance(request).getSystemMetadata(session, newPid);
+        assertTrue(result.getIdentifier().equals(newPid));
+        
+        //failed to create an object since it is an invalid json-ld object
+        File temp4 = JsonLDHandlerTest.generateTmpFile("temp-json-ld-valid");
+        input = new FileInputStream(new File(JsonLDHandlerTest.INVALID_JSON_LD_FILE_PATH));
+        out = new FileOutputStream(temp4);
+        IOUtils.copy(input, out);
+        out.close();
+        input.close();
+        newPid = new Identifier();
+        newPid.setValue("testInsertJson_LD_3." + (System.currentTimeMillis()));
+        object = new FileInputStream(temp4);
+        newMeta = createSystemMetadata(newPid, session.getSubject(), object);
+        newMeta.setFormatId(formatid);
+        object.close();
+        data = new DetailedFileInputStream(temp4, newMeta.getChecksum());
+        try {
+            MNodeService.getInstance(request).create(session, newPid, data, newMeta);
+            fail("we shouldn't get here since the object is an invalid json-ld file");
+        } catch (Exception e) {
+            assertTrue(e instanceof InvalidRequest);
+        }
+        data.close();
+        temp4.delete();
+    }
+    
+    /**
+     * Test the event log behavior in the create and update methods.
+     * @throws Exception
+     */
+    public void testCreateAndUpdateEventLog() throws Exception {
+        printTestHeader("testInsertJson_LD");
+        
+        Session session = getTestSession();
+
+        //a data file
+        Identifier guid = new Identifier();
+        guid.setValue("dataTestCreateAndUpdateEventLog." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        ResultSet result = getEventLogs(guid);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("create"));
+        assertTrue(!result.next());
+        result.close();
+        
+        Identifier guid2 = new Identifier();
+        guid2.setValue("dataTestCreateAndUpdateEventLog2." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
+        result = getEventLogs(guid2);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("update"));
+        assertTrue(!result.next());
+        result.close();
+        
+        // a non-xml metadata
+        ObjectFormatIdentifier formatid = new ObjectFormatIdentifier();
+        formatid.setValue(NonXMLMetadataHandlers.JSON_LD);
+        Identifier guid3 = new Identifier();
+        guid3.setValue("nonXmlMetadataTestCreateAndUpdateEventLog." + System.currentTimeMillis());
+        object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        SystemMetadata sysmeta3 = createSystemMetadata(guid3, session.getSubject(), object);
+        sysmeta3.setFormatId(formatid);
+        object.close();
+        object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        MNodeService.getInstance(request).create(session, guid3, object, sysmeta3);
+        object.close();
+        result = getEventLogs(guid3);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("create"));
+        assertTrue(!result.next());
+        result.close();
+
+        Identifier guid4 = new Identifier();
+        guid4.setValue("nonXmlMetadataTestCreateAndUpdateEventLog23." + System.currentTimeMillis());
+        object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        SystemMetadata sysmeta4 = createSystemMetadata(guid4, session.getSubject(), object);
+        sysmeta4.setFormatId(formatid);
+        object.close();
+        object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+        MNodeService.getInstance(request).update(session, guid3, object, guid4, sysmeta4);
+        object.close();
+        result = getEventLogs(guid4);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("update"));
+        assertTrue(!result.next());
+        result.close();
+        
+        
+        // an ISO file
+        formatid = new ObjectFormatIdentifier();
+        formatid.setValue("http://www.isotc211.org/2005/gmd");
+        Identifier guid7 = new Identifier();
+        guid7.setValue("isoTestCreateAndUpdateEventLog." + System.currentTimeMillis());
+        object = new FileInputStream(new File("test/isoTestNodc1.xml"));
+        SystemMetadata sysmeta7 = createSystemMetadata(guid7, session.getSubject(), object);
+        sysmeta7.setFormatId(formatid);
+        object.close();
+        object = new FileInputStream(new File("test/isoTestNodc1.xml"));
+        MNodeService.getInstance(request).create(session, guid7, object, sysmeta7);
+        object.close();
+        result = getEventLogs(guid7);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("insert"));
+        assertTrue(!result.next());
+        result.close();
+
+        Identifier guid8 = new Identifier();
+        guid8.setValue("isoTestCreateAndUpdateEventLog2." + System.currentTimeMillis());
+        object = new FileInputStream(new File("test/isoTestNodc1.xml"));
+        SystemMetadata sysmeta8 = createSystemMetadata(guid8, session.getSubject(), object);
+        sysmeta8.setFormatId(formatid);
+        object.close();
+        object = new FileInputStream(new File("test/isoTestNodc1.xml"));
+        MNodeService.getInstance(request).update(session, guid7, object, guid8, sysmeta8);
+        object.close();
+        result = getEventLogs(guid8);
+        assertTrue(result.next());
+        assertTrue(result.getString(1).equals("update"));
+        assertTrue(!result.next());
+        result.close();
+    }
+    
+    /**
+     * Get the result set of the event logs for the given identifier
+     */
+    private ResultSet getEventLogs(Identifier guid) throws Exception {
+        DBConnection conn = null;
+        int serialNumber = -1;
+        PreparedStatement pStmt = null;
+        ResultSet result = null;
+        String docId = IdentifierManager.getInstance().getLocalId(guid.getValue());
+        try {
+            //check out DBConnection
+            conn = DBConnectionPool
+                    .getDBConnection("MNodeServiceTest.getEventLogs");
+            serialNumber = conn.getCheckOutSerialNumber();
+            //delete a record
+            pStmt = conn.prepareStatement("select event FROM access_log WHERE docid = ? ");
+            pStmt.setString(1, docId);
+            pStmt.execute();
+            result = pStmt.getResultSet();
+        } finally {
+            DBConnectionPool.returnDBConnection(conn, serialNumber);
+        }
+        return result;
     }
 }
