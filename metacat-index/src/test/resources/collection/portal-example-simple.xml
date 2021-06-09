@@ -21,6 +21,7 @@
             <field>beginDate</field>
             <min>1800-01-01T00:00:00Z</min>
             <max>2009-01-01T00:00:00Z</max>
+	    <fieldsOperator>AND</fieldsOperator>
         </dateFilter>
         <booleanFilter>
             <field>isPublic</field>

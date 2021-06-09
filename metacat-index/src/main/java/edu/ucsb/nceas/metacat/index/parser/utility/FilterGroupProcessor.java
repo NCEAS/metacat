@@ -141,6 +141,7 @@ public class FilterGroupProcessor {
             }
         }
 
+        // Top level (of /defintion) or filterGroup operator
         String operator = "AND";
         // Top level (of /defintion) or filterGroup exclude operator
         Boolean exclude = false;
@@ -155,12 +156,14 @@ public class FilterGroupProcessor {
         NodeList nl = (NodeList) xPathExpression2.evaluate(docOrNode, XPathConstants.NODESET);
         if (nl.getLength() > 0) {
             operator = nl.item(0).getTextContent();
+            log.trace("Setting operator to: " + operator);
         }
 
         xPathExpression2 = xpath2.compile(".//definition/exclude | exclude");
         nl = (NodeList) xPathExpression2.evaluate(docOrNode, XPathConstants.NODESET);
         if (nl.getLength() > 0) {
             exclude = Boolean.parseBoolean(nl.item(0).getTextContent());
+            log.trace("Setting exclude to: " + exclude);
         }
 
         // Loop through the nodes that match the filter xpath, for example "//definition/booleanFilter | //definition/dateFilter | //definition/filter | //definition/numericFilter"
@@ -200,6 +203,7 @@ public class FilterGroupProcessor {
             // string, to be in sync with the way metacatui does things, and to make it easy to apply
             // the correct logical operators.
             if(!idFilterMatchingFields.isEmpty()) {
+                log.trace("filter matches idFilter");
                 for(String term : idFilterMatchingFields) {
                     // Only match the term if it is preceded by a "(" or " " and followed by a ":"
                     // Example: 'id' matches '(id:10)' or 'id:10', but doesn't match 'myId:10'
@@ -220,6 +224,7 @@ public class FilterGroupProcessor {
 
             // Check this filter for a match with the 'isPartOF' filter pattern.
             if(!isPartOfMatchingFields.isEmpty()) {
+                log.trace("filter matches isPartOf");
                 for(String term : isPartOfMatchingFields) {
                     // Only match the term if it is surrounded by non-alpha characters, i.e.
                     // term to match "id" is not embedded in another string such as "myId". That
