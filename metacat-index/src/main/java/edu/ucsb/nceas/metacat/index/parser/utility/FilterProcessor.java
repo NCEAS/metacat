@@ -56,7 +56,7 @@ public class FilterProcessor {
     private String defaults;
     private HashMap<String, String> defaultValues = new HashMap<String, String>();
     private final String DEFAULT_OPERATOR = "AND";
-    private final String DEFAULT_FIELDS_OPERATOR = "AND";
+    private final String DEFAULT_FIELDS_OPERATOR = "OR";
 
     private Log log = LogFactory.getLog(FilterProcessor.class);
 
@@ -163,6 +163,7 @@ public class FilterProcessor {
                     operator = value;
                 } else if (leafName.compareToIgnoreCase("fieldsOperator") == 0) {
                     fieldsOperator = value;
+                    log.trace("Setting fieldsOperator: " + fieldsOperator);
                 }
 
                 leafValues = addLeafValue(leafValues, leafName, value, delimeter);
@@ -252,22 +253,25 @@ public class FilterProcessor {
                 log.trace("subFilterValue: " + subFilterValue);
             }
             if (iField > 0) {
+                log.debug("Ifield > 0, before: completeFilterValue: " + completeFilterValue + ", fieldsOperator: " + fieldsOperator + ", subFilterValue: " + subFilterValue);
                 completeFilterValue = completeFilterValue + " " + fieldsOperator + " " + subFilterValue;
             } else {
                 completeFilterValue = subFilterValue;
             }
         }
 
-        if (nFields > 1) {
+        // If this subquery contains multiple terms, surround it with parenthesis
+        if (nFields > 1 || excludeCondition) {
             completeFilterValue = "(" + completeFilterValue + ")";
         }
+
         // Apply the 'exclude' modifier, if it was present in the XML
         if (excludeCondition) {
-            completeFilterValue = "-" + completeFilterValue;
+            completeFilterValue = "("  + "-" + completeFilterValue + " AND *:* " + ")";
         }
 
         completeFilterValue = completeFilterValue.trim();
-        log.trace("    * * * * Final filter value: " + completeFilterValue);
+        log.debug("    * * * * Final filter value: " + completeFilterValue);
 
         return completeFilterValue;
     }

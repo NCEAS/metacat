@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+  <label>example-portal-A</label>
+  <name>Exclude a filter group with one rule</name>
+  <definition>
+    <filter>
+      <label>Datasets added manually</label>
+      <field>isPartOf</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>urn:uuid:1a0fc71f-2d4b-404b-9cf5-aa82db18479c</value>
+    </filter>
+    <filter>
+      <field>text</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>atlantic</value>
+      <value>pacific</value>
+    </filter>
+    <operator>OR</operator>
+    <exclude>true</exclude>
+  </definition>
+</por:portal>

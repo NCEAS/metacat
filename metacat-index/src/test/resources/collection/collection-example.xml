@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<col:collection xmlns:col="https://purl.dataone.org/collections-1.0.0">
+<col:collection xmlns:col="https://purl.dataone.org/collections-1.1.0">
     <label>saved-search</label>
     <name>My saved search</name>
     <description>This is a collection of datasets related to soil</description>

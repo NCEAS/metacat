@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+  <label>example-portal-C</label>
+  <name>ID filters with non-ID filters</name>
+  <definition>
+    <filter>
+      <label>Datasets added manually</label>
+      <field>isPartOf</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>urn:uuid:1a0fc71f-2d4b-404b-9cf5-aa82db18479c</value>
+    </filter>
+    <filter>
+      <field>id</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>urn:uuid:4852b15a-9c05-480b-b91d-fa34a59ce073</value>
+    </filter>
+    <filter>
+      <field>identifier</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>urn:uuid:aa80a1a5-b1bc-4788-9ca6-76c77247593b</value>
+    </filter>
+    <filter>
+      <field>seriesId</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>S1_201628322590140</value>
+    </filter>
+    <filter>
+      <field>keywordsText</field>
+      <operator>OR</operator>
+      <fieldsOperator>OR</fieldsOperator>
+      <value>polar</value>
+    </filter>
+  </definition>
+</por:portal>

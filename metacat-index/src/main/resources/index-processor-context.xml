@@ -52,6 +52,9 @@
 
     <import resource="application-context-eml-annotation.xml" />
     <import resource="application-context-ontology-model-service.xml" />
+    
+    <import resource="application-context-json-ld.xml" />
+    <import resource="application-context-schema-org.xml" />
 
 
  <bean id="serviceTypesConverter" class="org.dataone.cn.indexer.convert.MemberNodeServiceRegistrationTypeConverter" />
@@ -132,6 +135,7 @@
        <ref bean="dublinCoreOAISubprocessor" />
        <ref bean="collectionsSubprocessor" />
        <ref bean="portalsSubprocessor" />
+       <ref bean="jsonLdSubprocessor" />
       </list>
      </property>
      <property name="deleteSubprocessors">

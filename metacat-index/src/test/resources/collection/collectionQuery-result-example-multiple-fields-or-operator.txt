@@ -1,0 +1,2 @@
+(((abstract:*carbon* AND abstract:*organic*) AND keywordsText:*soil* AND (-((keywordsText:oceans OR keywordsText:arctic)) AND *:* ) AND (abstract:*arctic* OR title:*arctic* OR readPermission:*arctic*))) AND (-obsoletedBy:* AND formatType:METADATA)
+
