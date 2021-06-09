@@ -602,7 +602,8 @@ public class D1ResourceHandler {
     }
     
     /**
-     * Get the session from the header of the request. The route is disabled by default.
+     * Get the session from the header of the request. 
+     * This mechanism is disabled by default due to network security conditions needed for it to be secure
      * 
      */
     protected void getSessionFromHeader() {
