@@ -793,7 +793,7 @@ public abstract class D1NodeService {
 
       // if the person is authorized, perform the read
       if (allowed) {
-          SystemMetadata sm = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+          SystemMetadata sm = HazelcastService.getInstance().getSystemMetadataMap().get(pid);;
           ObjectFormat objectFormat = null;
           String type = null;
           try {
