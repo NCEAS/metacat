@@ -482,7 +482,7 @@ search engine. Unfortunately the Solr Debian packages that come with the Ubuntu 
 system are obsoleted and you have to install the binary packages by yourself. This section 
 provides guidance on how to setup Solr to run in production on *nix platforms, such as Ubuntu.
 
-Metacat support Solr 8.8.2 and newer versions. You might download the binary releases from:
+Metacat supports Solr 8.8.2 and newer versions. You may download the binary releases from:
 
 https://lucene.apache.org/solr/downloads.html
 
