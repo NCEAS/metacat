@@ -543,7 +543,7 @@ By default, Solr sets the maximum Java heap size to 512M (-Xmx512m). Values betw
 
 8. Tomcat and Solr User Management
 
-Note: If you are upgrading the Solr server and you might already run this command during the previous installation, you may skip this step.
+Note: If you are upgrading the Solr server and you have already run this command during the previous installation, you may skip this step.
 
 The interaction of the Tomcat and Solr services can cause the file permission issues. 
 Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat8`` group to fix the problem:
