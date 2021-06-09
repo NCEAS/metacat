@@ -12,10 +12,9 @@
       <value>organic</value>
     </filter>
     <filter>
-      <field>keywordsText</field>
+      <field>identifier</field>
       <operator>OR</operator>
-      <matchSubstring>true</matchSubstring>
-      <value>soil</value>
+      <value>urn:uuid:3456</value>
     </filter>
     <filter>
       <field>keywordsText</field>
@@ -31,6 +30,16 @@
       <operator>OR</operator>
       <matchSubstring>true</matchSubstring>
       <value>arctic</value>
+    </filter>
+    <filter>
+      <field>seriesId</field>
+      <operator>OR</operator>
+      <value>urn:uuid:1234</value>
+    </filter>
+    <filter>
+      <field>identifier</field>
+      <operator>OR</operator>
+      <value>urn:789a</value>
     </filter>
   </definition>
 </por:portal>
