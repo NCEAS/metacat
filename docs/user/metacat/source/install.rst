@@ -553,7 +553,7 @@ Add the ``tomcat8`` user to the ``solr`` group and the ``solr`` user to ``tomcat
   sudo usermod -a -G solr tomcat8
   sudo usermod -a -G tomcat8 solr
 
-9. Restart Solr server to make the new group setting effective (:note2:`Important`) 
+9. Restart the Solr server to make the new group setting effective (:note2:`Important`) 
 
 ::
 
