@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
-<por:portal xmlns:por="https://purl.dataone.org/portals-1.0.0">
-  <label>multiple fields using default fieldsOperator; negation, or operator test</label>
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+  <label>multipler-fields-negation-or-operator</label>
   <name>Peter test 2</name>
   <description>Another test portal to check the collection query</description>
   <definition>
@@ -12,9 +12,10 @@
       <value>organic</value>
     </filter>
     <filter>
-      <field>identifier</field>
+      <field>keywordsText</field>
       <operator>OR</operator>
-      <value>urn:uuid:3456</value>
+      <matchSubstring>true</matchSubstring>
+      <value>soil</value>
     </filter>
     <filter>
       <field>keywordsText</field>
@@ -30,16 +31,6 @@
       <operator>OR</operator>
       <matchSubstring>true</matchSubstring>
       <value>arctic</value>
-    </filter>
-    <filter>
-      <field>seriesId</field>
-      <operator>OR</operator>
-      <value>urn:uuid:1234</value>
-    </filter>
-    <filter>
-      <field>identifier</field>
-      <operator>OR</operator>
-      <value>urn:789a</value>
     </filter>
   </definition>
 </por:portal>

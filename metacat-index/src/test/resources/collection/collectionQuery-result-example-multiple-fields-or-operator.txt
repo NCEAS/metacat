@@ -1,2 +1,2 @@
-(((((abstract:*carbon* AND abstract:*organic*) AND (-((keywordsText:oceans OR keywordsText:arctic)) AND *:* ) AND (abstract:*arctic* OR title:*arctic* OR readPermission:*arctic*))) OR identifier:urn\:uuid\:3456 OR seriesId:urn\:uuid\:1234 OR identifier:urn\:789a)) AND (-obsoletedBy:* AND formatType:METADATA)
+(((abstract:*carbon* AND abstract:*organic*) AND keywordsText:*soil* AND (-((keywordsText:oceans OR keywordsText:arctic)) AND *:* ) AND (abstract:*arctic* OR title:*arctic* OR readPermission:*arctic*))) AND (-obsoletedBy:* AND formatType:METADATA)
 
