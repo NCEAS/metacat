@@ -45,7 +45,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v1.itk.D1Client;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
