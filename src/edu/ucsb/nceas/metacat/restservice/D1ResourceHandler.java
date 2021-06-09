@@ -644,7 +644,7 @@ public class D1ResourceHandler {
                     try {
                         subjectInfo = D1Client.getCN().getSubjectInfo(subject);
                     } catch (Exception be) {
-                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information since " + 
+                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information for subject" + dn + " since " + 
                                         be.getMessage());
                     }
                     if (subjectInfo == null) {
