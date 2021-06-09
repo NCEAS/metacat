@@ -264,8 +264,8 @@ public class D1ResourceHandler {
             }
             
             if (session == null) {
-                //this is another sort - get the subject from the request header
-                //if the switch is eanbled in the metacat.properties file
+                // If certificate or token sessions are not established, get a session object from values in the request headers,
+                // but only if this feature is enabled in the metacat.properties file
                 getSessionFromHeader();
             }
 			
