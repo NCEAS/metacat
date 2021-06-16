@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<por:portal xmlns:por="https://purl.dataone.org/portals-1.0.0">
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
     <label>laurentest5</label>
     <name>My Portal</name>
     <description>This is a collection of datasets related to soil</description>

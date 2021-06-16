@@ -41,7 +41,7 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/collection/portal-1.1.0-example-negation-only.xml");
         portalFiles.add("src/test/resources/collection/collection-example.xml");
         portalFiles.add("src/test/resources/collection/portal-example-simple.xml");
-        portalFiles.add("src/test/resources/collection/portal-example-full.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-full.xml");   
         portalFiles.add("src/test/resources/collection/portal-example-seriesId.xml");
         portalFiles.add("src/test/resources/collection/portal-example-sasap.xml");
         portalFiles.add("src/test/resources/collection/portal-example-multiple-pids.xml");
@@ -53,6 +53,7 @@ public class PortalSubprocessorTest {
         portalFiles.add("src/test/resources/collection/example-portal-C.xml");
         portalFiles.add("src/test/resources/collection/example-portal-D.xml");
         portalFiles.add("src/test/resources/collection/example-portal-E.xml");
+        portalFiles.add("src/test/resources/collection/portal-example-multiple-fields-or-operator.xml");
         
         // The resulting 'collectionQuery' field will be compared to known values
         ArrayList<String> collectionQueryResultFiles = new ArrayList<String>();
@@ -75,6 +76,7 @@ public class PortalSubprocessorTest {
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-portal-C.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-portal-D.txt");
         collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-portal-E.txt");
+        collectionQueryResultFiles.add("src/test/resources/collection/collectionQuery-result-example-multiple-fields-or-operator.txt");
 
         // Also test that the title is properly added and retrievable
         ArrayList<String> portalNames = new ArrayList<String>();
@@ -97,6 +99,7 @@ public class PortalSubprocessorTest {
         portalNames.add("ID filters with non-ID filters");
         portalNames.add("Exclude ID filters and non-ID filters");
         portalNames.add("High complexity query");
+        portalNames.add("multiple fields using default fieldsOperator; negation, or operator test");
 
         for(int i=0; i < portalFiles.size(); i++) {
             String collectionQuery = null;

@@ -33,7 +33,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 
 
 /**
- * The handler of JSON-LD objects to save bites into disk
+ * The handler of JSON-LD objects to save bytes to disk
  * @author tao
  *
  */

@@ -45,7 +45,7 @@ import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dataone.client.v1.itk.D1Client;
+import org.dataone.client.v2.itk.D1Client;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
@@ -118,6 +118,7 @@ public class D1ResourceHandler {
     protected HttpServletRequest request;
     protected HttpServletResponse response;
     protected boolean enableSessionFromHeader = false;
+    protected String proxyKey = null;
 
     protected Hashtable<String, String[]> params;
     protected Map<String, List<String>> multipartparams;
@@ -135,6 +136,7 @@ public class D1ResourceHandler {
 		try {
 			MAX_UPLOAD_SIZE = Integer.parseInt(PropertyService.getProperty("dataone.max_upload_size"));
 			enableSessionFromHeader = Boolean.parseBoolean(PropertyService.getProperty("dataone.certificate.fromHttpHeader.enabled"));
+			proxyKey = PropertyService.getProperty("dataone.certificate.fromHttpHeader.proxyKey");
 		} catch (PropertyNotFoundException e) {
 			// Just use our default as no max size is set in the properties file
 			logMetacat.warn("Property not found: " + "dataone.max_upload_size");
@@ -262,8 +264,8 @@ public class D1ResourceHandler {
             }
             
             if (session == null) {
-                //this is another sort - get the subject from the request header
-                //if the switch is eanbled in the metacat.properties file
+                // If certificate or token sessions are not established, get a session object from values in the request headers,
+                // but only if this feature is enabled in the metacat.properties file
                 getSessionFromHeader();
             }
 			
@@ -600,15 +602,34 @@ public class D1ResourceHandler {
     }
     
     /**
-     * Get the session from the header of the request. The route is disabled by default.
+     * Get the session from the header of the request. 
+     * This mechanism is disabled by default due to network security conditions needed for it to be secure
      * 
      */
     protected void getSessionFromHeader() {
         if (enableSessionFromHeader) {
             logMetacat.debug("D1ResourceHandler.getSessionFromHeader - In the route to get the session from a http header");
+            //check the shared key between Metacat and the http server:
+            if (proxyKey == null || proxyKey.trim().equals("")) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - Metacat is not configured to handle the feature passing " +
+                                " the certificate by headers since the proxy key is blank");
+                return;
+            }
+            String proxyKeyFromHttp = (String) request.getHeader("X-Proxy-Key");
+            if (proxyKeyFromHttp == null || proxyKeyFromHttp.trim().equals("")) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key is null or blank. " + 
+                                "So Metacat do NOT trust the request.");
+                return;
+            }
+            if (!proxyKey.equals(proxyKeyFromHttp)) {
+                logMetacat.warn("D1ResourceHandler.getSessionFromHeader - the value of the header X-Proxy-Key does not match the one " + 
+                        " stored in Metacat. So Metacat do NOT trust the request.");
+                return;
+            }
+            
             String verify = (String) request.getHeader("Ssl-Client-Verify");
             logMetacat.info("D1ResourceHandler.getSessionFromHeader - the status of the ssl client verification is " + verify);
-            if (verify != null && verify.equals("SUCCESS")) {
+            if (verify != null && verify.equalsIgnoreCase("SUCCESS")) {
                 //Metacat only looks up the dn from the header when the ssl client was verified.
                 //We confirmed the client couldn't overwrite the value of the header Ssl-Client-Subject-Dn
                 String dn = (String) request.getHeader("Ssl-Client-Subject-Dn");
@@ -621,9 +642,9 @@ public class D1ResourceHandler {
                     
                     SubjectInfo subjectInfo = null;
                     try {
-                        subjectInfo = D1Client.getCN().getSubjectInfo(subject);
+                        subjectInfo = D1Client.getCN().getSubjectInfo(null, subject);
                     } catch (Exception be) {
-                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information since " + 
+                        logMetacat.warn("D1ResourceHandler.getSessionFromHeader - can not get subject information for subject" + dn + " since " + 
                                         be.getMessage());
                     }
                     if (subjectInfo == null) {
