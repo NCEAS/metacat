@@ -43,7 +43,7 @@
 	  <property name="multivalue" value="false" />
 	</bean>
 
-	<bean id="collection.collectionQuery" class="edu.ucsb.nceas.metacat.index.parser.FilterCommonRootSolrField"
+	<bean id="collection.collectionQuery" class="org.dataone.cn.indexer.parser.FilterCommonRootSolrField"
 		  p:root-ref="collection.filterFields">
 		<constructor-arg name="name" value="collectionQuery" />
 	</bean>
@@ -52,7 +52,7 @@
          processing collection filter defintions.
     -->
 
-	<bean id="collection.filterFields" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterRootElement"
+	<bean id="collection.filterFields" class="org.dataone.cn.indexer.parser.utility.FilterRootElement"
 		  p:name="collectionQuery"
 		  p:xPath=".//definition/booleanFilter | .//definition/dateFilter | .//definition/filter | .//definition/numericFilter | .//definition/filterGroup | booleanFilter | dateFilter | filter | numericFilter | filterGroup"
 		  p:idFilterMatch="id,identifier,seriesId"
@@ -71,7 +71,7 @@
 		</property>
 	</bean>
 
-	<bean id="collection.booleanFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+	<bean id="collection.booleanFilter" class="org.dataone.cn.indexer.parser.utility.FilterProcessor"
 		  p:name="booleanFilter"
 		  p:matchElement="booleanFilter"
 		  p:template="field:value">
@@ -85,7 +85,7 @@
 		</property>
 	</bean>
 
-	<bean id="collection.dateFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+	<bean id="collection.dateFilter" class="org.dataone.cn.indexer.parser.utility.FilterProcessor"
 		  p:name="dateFilter"
 		  p:matchElement="dateFilter"
 		  p:defaults="min:*,max:*"
@@ -102,7 +102,7 @@
 		</property>
 	</bean>
 
-	<bean id="collection.numericFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+	<bean id="collection.numericFilter" class="org.dataone.cn.indexer.parser.utility.FilterProcessor"
 		  p:name="numericFilter"
 		  p:matchElement="numericFilter"
 		  p:defaults="min:*,max:*"
@@ -120,7 +120,7 @@
 		</property>
 	</bean>
 
-	<bean id="collection.textFilter" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterProcessor"
+	<bean id="collection.textFilter" class="org.dataone.cn.indexer.parser.utility.FilterProcessor"
 		  p:name="textfilter"
 		  p:matchElement="filter"
 		  p:escapeSpecialChars="true"
@@ -138,7 +138,7 @@
 		</property>
 	</bean>
 
-	<bean id="collection.filterGroup" class="edu.ucsb.nceas.metacat.index.parser.utility.FilterGroupProcessor"
+	<bean id="collection.filterGroup" class="org.dataone.cn.indexer.parser.utility.FilterGroupProcessor"
 		  p:name="filterGroup"
 		  p:matchElement="filterGroup">
 	</bean>
