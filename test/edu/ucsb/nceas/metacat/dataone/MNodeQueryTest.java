@@ -1693,6 +1693,51 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         }
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">Remote context, creator 03, 02, 01"));
+        
+        guid = new Identifier();
+        guid.setValue("testSchemaOrgWithContexts5." + System.currentTimeMillis());
+        object = new FileInputStream("test/context-http-doc.jsonld");
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream("test/context-http-doc.jsonld");
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object.close();
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
+        assertTrue(resultStr.contains("<str name=\"abstract\">No remote context, vocab https://schema.org/, creator 03, 02, 01, using @list"));
+        
+        guid = new Identifier();
+        guid.setValue("testSchemaOrgWithContexts6." + System.currentTimeMillis());
+        object = new FileInputStream("test/context-https-doc.jsonld");
+        sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream("test/context-https-doc.jsonld");
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        object.close();
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.print(resultStr);
+        assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
+        assertTrue(resultStr.contains("<str name=\"abstract\">Remote context, creator 03, 02, 01"));
     }
 
 }
