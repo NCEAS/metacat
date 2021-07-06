@@ -53,7 +53,7 @@
 	<bean id="isotc.origin" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="origin" />
 		<constructor-arg name="xpath" 
-			value='//gmd:CI_ResponsibleParty[gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() = "principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author"]/gmd:individualName/gco:CharacterString/text() | //gmd:CI_ResponsibleParty[(gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() = "principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author") and (not(gmd:individualName) or gmd:individualName[@gco:nilReason = "missing"])]/gmd:organisationName/gco:CharacterString/text()' />
+			value='//gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty/gmd:CI_ResponsibleParty[gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() = "principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author"]/gmd:individualName/*/text() | //gmd:identificationInfo/gmd:MD_DataIdentification/gmd:citation/gmd:CI_Citation/gmd:citedResponsibleParty/gmd:CI_ResponsibleParty[(gmd:role/gmd:CI_RoleCode/text() = "owner" or gmd:role/gmd:CI_RoleCode/text() = "originator" or gmd:role/gmd:CI_RoleCode/text() ="principalInvestigator" or gmd:role/gmd:CI_RoleCode/text() = "author") and (not(gmd:individualName) or gmd:individualName[@gco:nilReason = "missing"])]/gmd:organisationName/*/text()' />
 		<property name="multivalue" value="true" />
 		<property name="dedupe" value="true" />
 	</bean>
@@ -61,10 +61,15 @@
 	<bean id="isotc.pubDate" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="pubDate" />
 		<constructor-arg name="xpath" 
-			value="//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:Date/text() 
-			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date[1]/text() 
-			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:DateTime/text() 
-			     | //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:DateTime[1]/text()" />
+			value="if (//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:Date/text()) 
+			            then //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:Date/text()
+			       else if (//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:DateTime/text())
+			             then //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date[following-sibling::gmd:dateType/gmd:CI_DateTypeCode/text() = 'publication']/gco:DateTime/text() 
+			       else if (//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date[1]/text())
+			             then //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:Date[1]/text()
+			       else if (//gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:DateTime[1]/text())
+			             then //gmd:identificationInfo/*/gmd:citation/gmd:CI_Citation/gmd:date/gmd:CI_Date/gmd:date/gco:DateTime[1]/text()
+			       else ()" />
 		<property name="converter" ref="dateConverter" />
 	</bean>
 	
@@ -287,11 +292,11 @@
 	<bean id="isotc.serviceCoupling" class="org.dataone.cn.indexer.parser.SolrField">
 		<constructor-arg name="name" value="serviceCoupling" />
 		<constructor-arg name="xpath" 
-			value="concat(	substring('loose',	1 div boolean(	//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue = 'loose')),
-							substring('tight',	1 div boolean(	//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue = 'tight')),
-							substring('tight',	1 div boolean(	//gmd:distributionInfo/gmd:MD_Distribution and not(//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue))),
-							substring('',		1 div boolean(	not(   //srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue) 
-																and not(   //gmd:distributionInfo/gmd:MD_Distribution))))"/>
+			value="concat(	substring('loose',	1 div number(boolean(	//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue = 'loose'))),
+							substring('tight',	1 div number(boolean(	//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue = 'tight'))),
+							substring('tight',	1 div number(boolean(	//gmd:distributionInfo/gmd:MD_Distribution and not(//srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue)))),
+							substring('',		1 div number(boolean(	not(   //srv:SV_ServiceIdentification/srv:couplingType/srv:SV_CouplingType/@codeListValue) 
+																and not(   //gmd:distributionInfo/gmd:MD_Distribution)))))"/>
 	</bean>
 	
 	<!-- below fields are multivalue, so will just be added to existing service fields extracted above -->

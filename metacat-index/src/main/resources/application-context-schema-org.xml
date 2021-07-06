@@ -12,7 +12,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
 
                 SELECT ( str(?description) as ?abstract )
                 WHERE {
@@ -34,7 +34,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
                 SELECT ( ?name as ?title )
                 WHERE {
                     ?datasetId rdf:type SO:Dataset .
@@ -55,7 +55,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
 
                 SELECT ?label
                 WHERE {
@@ -77,7 +77,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         ( str(?identifier) as ?awardNumber)
@@ -107,7 +107,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         ( str(?name) as ?awardTitle)
@@ -143,7 +143,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
 
                 SELECT (?name as ?author)
                 WHERE {
@@ -168,7 +168,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         ( str(?datePublished) as ?pubDate)
@@ -191,7 +191,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
 
                 SELECT (?givenName as ?authorGivenName)
                 WHERE {
@@ -214,7 +214,7 @@
                 <![CDATA[
                     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
-                    PREFIX SO:  <https://schema.org/>
+                    PREFIX SO:  <http://schema.org/>
 
                     SELECT (?familyName as ?authorLastName)
                     WHERE {
@@ -237,7 +237,7 @@
                 <![CDATA[
                     PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
-                    PREFIX SO:  <https://schema.org/>
+                    PREFIX SO:  <http://schema.org/>
 
                     SELECT (?familyName as ?investigator)
                     WHERE {
@@ -259,7 +259,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         (?identifier as ?funderIdentifier)
@@ -281,7 +281,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         (?name as ?funderName)
@@ -302,7 +302,7 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
-                PREFIX SO:   <https://schema.org/>
+                PREFIX SO:   <http://schema.org/>
 
                 SELECT (?name as ?origin)
                 WHERE {
@@ -324,7 +324,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -346,7 +346,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     SELECT ?hasPart
                     WHERE {
                       ?datasetId rdf:type SO:Dataset .
@@ -375,7 +375,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?keywords
                       WHERE {
@@ -395,7 +395,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?southBoundCoord
                       WHERE {
@@ -424,7 +424,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?westBoundCoord
                       WHERE {
@@ -453,7 +453,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?northBoundCoord
                       WHERE {
@@ -484,7 +484,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?eastBoundCoord
                       WHERE {
@@ -520,7 +520,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT ?namedLocation
                     WHERE {
@@ -540,7 +540,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         # possible formats: "start/end", "start/..", "start"
@@ -563,7 +563,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT
                         # possible formats: "start/end", "start/..", "start"
@@ -586,7 +586,7 @@
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
 
                     SELECT (?variableMeasured as ?parameter)
                     WHERE {
@@ -614,7 +614,7 @@
                 <![CDATA[
                     PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX schema:  <https://schema.org/>
+                    PREFIX schema:  <http://schema.org/>
 
                     SELECT ( str(?version) as ?edition )
 
@@ -636,7 +636,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -663,7 +663,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -683,7 +683,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -704,7 +704,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -724,7 +724,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -746,7 +746,7 @@
             <value>
                 <![CDATA[
                     PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-                    PREFIX SO:   <https://schema.org/>
+                    PREFIX SO:   <http://schema.org/>
                     PREFIX PROV: <http://www.w3.org/ns/prov#>
                     PREFIX PROVONE: <http://purl.dataone.org/provone/2015/01/15/ontology#>
 
@@ -776,7 +776,7 @@
                 <![CDATA[
                     PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                     PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
-                    PREFIX SO:  <https://schema.org/>
+                    PREFIX SO:  <http://schema.org/>
 
                     SELECT ( str(?url) as ?serviceEndpoint )
 
