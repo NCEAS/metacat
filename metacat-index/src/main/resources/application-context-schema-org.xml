@@ -12,16 +12,21 @@
                 <![CDATA[
                 PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
                 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX list: <http://jena.hpl.hp.com/ARQ/list#>
                 PREFIX SO:   <http://schema.org/>
 
-                SELECT ( str(?description) as ?abstract )
+                SELECT (str(?member) as ?abstract)
                 WHERE {
-                    ?datasetId rdf:type       SO:Dataset .
-                    ?datasetId SO:description ?description   .
+                    ?datasetId rdf:type SO:Dataset .
+                    ?datasetId SO:description ?list .
+                    ?list list:index (?pos ?member) .
                     # Don't include referenced sub-Datasets (i.e. a Dataset in a 'hasPart' property)
                     FILTER NOT EXISTS { ?id SO:hasPart ?datasetId . }
                 }
-                    limit 1
+                order by (?pos)
+                limit 1
+
+
                 ]]>
             </value>
         </constructor-arg>
@@ -782,10 +787,19 @@
 
                     WHERE {
                         ?datasetId rdf:type SO:Dataset .
-                        ?datasetId SO:url ?url .
-                        # Don't include referenced sub-Datasets (i.e. a Dataset in a 'hasPart' property)
-                        FILTER NOT EXISTS { ?id SO:hasPart ?datasetId . }
-                    }
+                        {
+                          ?datasetId SO:url ?url .
+                          # Don't include referenced sub-Datasets (i.e. a Dataset in a 'hasPart' property)
+                          FILTER NOT EXISTS { ?id SO:hasPart ?datasetId . }
+                        }
+                        UNION
+                        {
+                          ?datasetId SO:distribution ?distribution .
+                          ?distribution rdf:type SO:DataDownload .
+                          ?distribution SO:contentUrl ?url .
+                          FILTER NOT EXISTS { ?id SO:hasPart ?datasetId . }
+                        }
+                    }    
                 ]]>
             </value>
         </constructor-arg>
