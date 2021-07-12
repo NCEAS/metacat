@@ -103,6 +103,8 @@ public class DOIService {
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 
 	private static DOIService instance = null;
+	
+	private static int PRIMARY_SHOULDER_INDEX = 1;
 
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
@@ -133,12 +135,16 @@ public class DOIService {
 		}
 
         boolean moreShoulders = true;
-        int i=0;
+        int i = PRIMARY_SHOULDER_INDEX;
         while (moreShoulders) {
-            i++;
 		    try {
-			    String shoulder = PropertyService.getProperty("guid.ezid.doishoulder."+i);
-                shoulderMap.put(new Integer(i), shoulder);
+			    String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + i);
+			    if (shoulder != null && !shoulder.trim().equals("")) {
+			        logMetacat.debug("DOIService.constructor - add the shoulder " + shoulder 
+			                            + " with the key " + i + " into the shoulder map. ");
+			        shoulderMap.put(new Integer(i), shoulder);
+			    }
+                i++;
 		    } catch (PropertyNotFoundException e) {
                 moreShoulders = false;
 		    }
@@ -353,12 +359,12 @@ public class DOIService {
 		this.refreshLogin();
 
         // Make sure we have a primary shoulder configured (which should enable mint operations)
-        if (!shoulderMap.containsKey(new Integer(1))) {
+        if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
             throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because primary shoulder unconfigured.");
         }
 
 		// call the EZID service
-		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(1)), metadata);
+		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
 		Identifier identifier = new Identifier();
 		identifier.setValue(doi);
 
