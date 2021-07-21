@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.14.1 Release
+Version: 2.15.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,17 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.15.0
+New features and bugs fixed in this release:
+* Support non-XML metadata objects in Metacat
+* Upgrade Solr to 8.8.2
+* Enforce the node replication policy in the MN.replicate method
+* Fix the bug of incorrect geohash
+* Fix the bug of incorrect collectionQuery
+* Change the default order to dateModified for the listObject method
+* Remove extra logged event in the MN.update method 
+* Upgrade some library jar files to fix security threats
 
 ### Release Notes for 2.14.1
 New features and bugs fixed in this release:

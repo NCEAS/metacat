@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<por:portal xmlns:por="https://purl.dataone.org/portals-1.1.0">
+  <label>multipler-fields-negation-or-operator</label>
+  <name>Peter test 2</name>
+  <description>Another test portal to check the collection query</description>
+  <definition>
+    <filter>
+      <label>Search</label>
+      <field>abstract</field>
+      <matchSubstring>true</matchSubstring>
+      <value>carbon</value>
+      <value>organic</value>
+    </filter>
+    <filter>
+      <field>keywordsText</field>
+      <operator>OR</operator>
+      <matchSubstring>true</matchSubstring>
+      <value>soil</value>
+    </filter>
+    <filter>
+      <field>keywordsText</field>
+      <operator>OR</operator>
+      <exclude>true</exclude>
+      <value>oceans</value>
+      <value>arctic</value>
+    </filter>
+    <filter>
+      <field>abstract</field>
+      <field>title</field>
+      <field>readPermission</field>
+      <operator>OR</operator>
+      <matchSubstring>true</matchSubstring>
+      <value>arctic</value>
+    </filter>
+  </definition>
+</por:portal>

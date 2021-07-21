@@ -1,0 +1,1 @@
+((-((-(kingdom:Animalia) AND *:* )) AND *:* ) OR isPartOf:urn\:uuid\:1a0fc71f-2d4b-404b-9cf5-aa82db18479c) AND (-obsoletedBy:* AND formatType:METADATA)

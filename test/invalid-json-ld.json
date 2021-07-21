@@ -1,0 +1,21 @@
+{
+  "@context": {
+    "@vocab": "https://schema.org/"
+  },
+  "@type": "Dataset",
+  "name": "Removal of organic carbon by natural bacterioplankton communities as a function of pCO2 from laboratory experiments between 2012 and 2016",
+  "description": "This dataset includes results of laboratory experiments which measured dissolved organic carbon (DOC) usage by natural bacteria in seawater at different pCO2 levels. Included in this dataset are; bacterial abundance, total organic carbon (TOC), what DOC was added to the experiment, target pCO2 level. ",
+  "url": "https://www.sample-data-repository.org/dataset/472032",
+  "sameAs": "https://search.dataone.org/#view/https://www.sample-data-repository.org/dataset/472032",
+  "version": "2013-11-21",
+  "keywords": ["ocean acidification", "Dissolved Organic Carbon", "bacterioplankton respiration", "pCO2", "carbon dioxide", "oceans"],
+  "identifier":
+      {
+        "@id": "https://doi.org/10.5066/F7VX0DMQ",
+        "@type": "PropertyValue",
+        "propertyID": "https://registry.identifiers.org/registry/doi",
+        "value": "doi:10.5066/F7VX0DMQ",
+        "url": "https://doi.org/10.5066/F7VX0DMQ"
+      
+      
+}

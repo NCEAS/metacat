@@ -25,6 +25,8 @@
 
 package edu.ucsb.nceas.metacat.replication;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
@@ -35,14 +37,21 @@ import junit.framework.Test;
 import junit.framework.TestSuite;
 
 import org.apache.commons.io.IOUtils;
+import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
+import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v2.SystemMetadata;
 import org.xml.sax.InputSource;
 import org.xml.sax.XMLReader;
 
-import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.client.Metacat;
 import edu.ucsb.nceas.metacat.client.MetacatFactory;
 import edu.ucsb.nceas.metacat.client.MetacatInaccessibleException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
+import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -56,7 +65,7 @@ import edu.ucsb.nceas.utilities.access.DocInfoHandler;
  * A JUnit test for testing Metacat replication
  */
 public class ReplicationTest
-    extends MCTestCase {
+    extends D1NodeServiceTest {
     
     private static final long forceReplicationSleep = 1 * 60 * 1000;
 	private String targetReplicationServer = null;
@@ -110,7 +119,7 @@ public class ReplicationTest
         suite.addTest(new ReplicationTest("testReplicateEML_AtoB"));
         suite.addTest(new ReplicationTest("testReplicateDataLocking"));
         suite.addTest(new ReplicationTest("testDocumentInfo"));
-        
+        suite.addTest(new ReplicationTest("testReplicateJsonLD_AtoB"));
         return suite;
     }
 
@@ -416,6 +425,39 @@ public class ReplicationTest
 		}
 	}
 
+	/**
+	 * Test the replication of an JsonLD document from A to B
+	 */
+	public void testReplicateJsonLD_AtoB() throws Exception {
+            //create a json-ld object successfull
+            String base = DocumentUtil.generateDocumentId("replicationTestJsonLD", 0);
+            String guidStr = base + "." + 1;
+            Session session = getTestSession();
+            Identifier guid = new Identifier();
+            guid.setValue(guidStr);
+            InputStream input = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), input);
+            ObjectFormatIdentifier formatid = new ObjectFormatIdentifier();
+            formatid.setValue(NonXMLMetadataHandlers.JSON_LD);
+            sysmeta.setFormatId(formatid);
+
+            InputStream object = new FileInputStream(new File(JsonLDHandlerTest.JSON_LD_FILE_PATH));
+            Identifier pid = 
+              MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            SystemMetadata result = MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertTrue(result.getIdentifier().equals(guid));
+            object.close();
+
+            // wait for replication (forced)
+            Thread.sleep(forceReplicationSleep);
+            //get the docid(autogen)
+            URL url = new URL("https://" + targetReplicationServer + "/d1/mn/v2/object/" + guidStr);
+            // check the target for the same data
+            InputStream is = url.openStream();
+            String replicatedObject = IOUtils.toString(is, MetaCatServlet.DEFAULT_ENCODING);
+            assertTrue(replicatedObject.contains("\"name\": \"Removal of organic carbon by natural bacterioplankton " 
+                          + "communities as a function of pCO2 from laboratory experiments between 2012 and 2016\""));
+    }
     
 }
 

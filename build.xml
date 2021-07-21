@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="2.13.3" />
+	<property name="metacatui-tag" value="2.15.1" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
 	
 	<property environment="env" />
@@ -1721,7 +1721,7 @@
     </target>
 	
 	<!-- build metacat-common jar -->
-	<target name="build-metacat-common" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
+	<target name="build-metacat-common" depends="setMavenHome" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
 		<artifact:mvn pom="metacat-common/pom.xml" mavenhome="${maven.home}" fork="true">
 			        <jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 		            <arg value="clean"/>
@@ -1734,7 +1734,7 @@
 	</target>
 
 	<!-- build metacat-index war -->
-	<target name="build-metacat-index" description="Calls the Maven build for metacat-index.war" >		
+	<target name="build-metacat-index" depends="setMavenHome" description="Calls the Maven build for metacat-index.war" >
 		<artifact:mvn pom="metacat-index/pom.xml" mavenhome="${maven.home}" fork="true">
 			<jvmarg value="-Dmaven.multiModuleProjectDirectory=${maven.home}" />
 			<arg value="clean"/>
