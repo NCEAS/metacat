@@ -100,7 +100,6 @@ import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
