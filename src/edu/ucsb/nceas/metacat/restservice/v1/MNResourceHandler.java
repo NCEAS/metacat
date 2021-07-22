@@ -1239,7 +1239,7 @@ public class MNResourceHandler extends D1ResourceHandler {
 	    InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
         
 		//Use the pid as the file name prefix, replacing all non-word characters
-		String filename = pid.replaceAll("\\W", "_");
+		String filename = pid.replaceAll("\\W", "_") + ".zip";
 
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
@@ -1492,3 +1492,4 @@ public class MNResourceHandler extends D1ResourceHandler {
 	}
 
 }
+
