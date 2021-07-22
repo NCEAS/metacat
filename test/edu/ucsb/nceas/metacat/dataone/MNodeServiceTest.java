@@ -1961,7 +1961,13 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             assertTrue(oreId3.size() == 1);
             //publish the package
             Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-
+            // test the ORE lookup
+            Thread.sleep(30000);
+            System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
+            List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
+            assertTrue(oreIds.size() == 1);
+            List<Identifier> oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+            assertTrue(oreId2.size() == 2);
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
