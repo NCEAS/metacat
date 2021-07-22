@@ -33,7 +33,7 @@ import edu.ucsb.nceas.metacat.dataone.D1NodeVersionChecker;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
-import edu.ucsb.nceas.utilities.IOUtil;s
+import edu.ucsb.nceas.utilities.IOUtil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
