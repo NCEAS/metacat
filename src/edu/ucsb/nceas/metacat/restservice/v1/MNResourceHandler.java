@@ -33,6 +33,7 @@ import java.util.Enumeration;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.zip.ZipOutputStream;
 
 import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
@@ -77,6 +78,7 @@ import org.dataone.service.util.Constants;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.ExceptionHandler;
 import org.dataone.service.util.TypeMarshaller;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
@@ -88,7 +90,6 @@ import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
@@ -1235,22 +1236,18 @@ public class MNResourceHandler extends D1ResourceHandler {
 
         Identifier id = new Identifier();
         id.setValue(pid);
-        InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
+	    InputStream is = MNodeService.getInstance(request).getPackage(session, null, id);
         
-        // use the provided filename
-        String filename = null;
-        if (is instanceof DeleteOnCloseFileInputStream) {
-            filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
-        } else {
-        	filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
-        }
+		//Use the pid as the file name prefix, replacing all non-word characters
+		String filename = pid.replaceAll("\\W", "_") + ".zip";
+
         response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
         response.setContentType("application/zip");
         response.setStatus(200);
-        OutputStream out = response.getOutputStream();
-        
-        // write it to the output stream
-        IOUtils.copyLarge(is, out);
+	    OutputStream out = response.getOutputStream();
+
+	    // write it to the output stream
+	    IOUtils.copyLarge(is, out);
    }
     
 	protected void publish(String pid) throws InvalidToken, ServiceFailure,
@@ -1495,3 +1492,4 @@ public class MNResourceHandler extends D1ResourceHandler {
 	}
 
 }
+

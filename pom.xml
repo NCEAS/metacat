@@ -65,34 +65,6 @@
 			<version>1.0.0</version>
 		</dependency>
     	<dependency>
-    		<groupId>gov.loc</groupId>
-			<artifactId>bagit</artifactId>
-			<version>4.4</version>
-			<type>jar</type>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpclient</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.httpcomponents</groupId>
-    				<artifactId>httpmime</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-		        </exclusion>
-		        <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-			</exclusions>
-    	</dependency>
-    	<dependency>
             <artifactId>d1_portal</artifactId>
             <groupId>org.dataone</groupId>
             <version>${d1_portal_version}</version>
@@ -467,6 +439,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+	<dependency>
+		<groupId>org.dataone</groupId>
+		<artifactId>speedbagit</artifactId>
+		<version>1.0-SNAPSHOT</version>
+		<type>jar</type>
+	</dependency>
         <dependency>
             <groupId>com.github.jsonld-java</groupId>
             <artifactId>jsonld-java</artifactId>

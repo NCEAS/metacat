@@ -100,7 +100,6 @@ import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.MultipartRequestWithSysmeta;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -133,7 +132,6 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * 		delete() - DELETE /d1/mn/object/PID
  * 		archive() - PUT /d1/mn/archive/PID
  *      updateSystemMetadata() - PUT /d1/mn/meta
-
  *    systemMetadataChanged() - POST /dirtySystemMetadata/PID
  * 	
  * 	MNReplication
@@ -1525,14 +1523,10 @@ public class MNResourceHandler extends D1ResourceHandler {
         InputStream is = null;
         try {
             is = MNodeService.getInstance(request).getPackage(session, formatId , id);
-            
-            // use the provided filename
-            String filename = null;
-            if (is instanceof DeleteOnCloseFileInputStream) {
-                filename = ((DeleteOnCloseFileInputStream)is).getFile().getName();
-            } else {
-                filename = "dataPackage-" + System.currentTimeMillis() + ".zip";
-            }
+
+	        //Use the pid as the file name prefix, replacing all non-word characters
+	        String filename = pid.replaceAll("\\W", "_") + ".zip";
+
             response.setHeader("Content-Disposition", "inline; filename=\"" + filename+"\"");
             response.setContentType("application/zip");
             response.setStatus(200);
@@ -1835,3 +1829,4 @@ public class MNResourceHandler extends D1ResourceHandler {
 	}
 
 }
+
