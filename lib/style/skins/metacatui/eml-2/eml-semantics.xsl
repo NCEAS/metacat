@@ -39,8 +39,9 @@
 
     <xsl:template name="annotation">
         <xsl:param name="context" />
-
         <xsl:element name="div">
+            <!-- The attributes on this element are redundant with the attributes on the direct children but were kept
+            for backwards compatibility with older versions of MetacatUI. -->
             <xsl:attribute name="class">annotation</xsl:attribute>
             <xsl:attribute name="data-html">true</xsl:attribute>
             <xsl:attribute name="title"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
@@ -51,15 +52,26 @@
             <xsl:attribute name="data-property-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
             <xsl:attribute name="data-value-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
             <xsl:attribute name="data-value-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
-            <div class="annotation-property"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></div>
-            <div class="annotation-value"><xsl:value-of select="normalize-space(./valueURI/@label)" /></div>
-            <xsl:element name="div">
-                    <xsl:attribute name="class">annotation-findmore tooltip-this</xsl:attribute>
-                    <xsl:attribute name="data-toggle">tooltip</xsl:attribute>
-                    <xsl:attribute name="data-placement">bottom</xsl:attribute>
-                    <xsl:attribute name="title"><xsl:value-of select="concat('Click to find more datasets with measurements of ', normalize-space(./valueURI/@label), '.')" /></xsl:attribute>
-                    <div><i class="icon-long-arrow-up"></i></div>
-                </xsl:element>
+            <div class="annotation-property">
+                <xsl:attribute name="title"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
+                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./propertyURI/@label)" /></xsl:attribute>
+                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./propertyURI/text())" /></xsl:attribute>
+                <xsl:attribute name="data-placement">bottom</xsl:attribute>
+                <xsl:attribute name="data-html">true</xsl:attribute>
+                <xsl:attribute name="data-content"><xsl:value-of select="concat(normalize-space(./propertyURI/@label), ' ', normalize-space(./valueURI/@label)) " /></xsl:attribute>
+                <xsl:value-of select="normalize-space(./propertyURI/@label)" />
+            </div>
+            <div class="annotation-value">
+                <xsl:attribute name="title"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
+                <xsl:attribute name="data-label"><xsl:value-of select="normalize-space(./valueURI/@label)" /></xsl:attribute>
+                <xsl:attribute name="data-uri"><xsl:value-of select="normalize-space(./valueURI/text())" /></xsl:attribute>
+                <xsl:attribute name="data-placement">bottom</xsl:attribute>
+                <xsl:attribute name="data-html">true</xsl:attribute>
+                <xsl:attribute name="data-content"><xsl:value-of select="concat(normalize-space(./propertyURI/@label), ' ', normalize-space(./valueURI/@label)) " /></xsl:attribute>
+                <div class="annotation-value-text">
+                    <xsl:value-of select="normalize-space(./valueURI/@label)" />
+                </div>
+            </div>
         </xsl:element>
     </xsl:template>
 
