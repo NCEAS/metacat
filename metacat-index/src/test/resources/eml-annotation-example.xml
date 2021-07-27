@@ -16,8 +16,12 @@
         <valueURI label="Carbon Dioxide Flux">http://purl.dataone.org/odo/ECSO_00000536</valueURI>
     </annotation>
     <annotation>
-        <propertyURI label="type">http://www.w3.org/1999/02/22-rdf-syntax-ns#type</propertyURI>
+        <propertyURI label="type">http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#containsMeasurementsOfType</propertyURI>
         <valueURI label="Total Soil Carbon">http://purl.dataone.org/odo/ECSO_00000531</valueURI>
+    </annotation>
+    <annotation>
+      <propertyURI label="type">http://purl.obolibrary.org/obo/RO_0002352</propertyURI>
+      <valueURI label="Total Soil Carbon">http://purl.dataone.org/odo/ECSO_00000531</valueURI>
     </annotation>
     <contact>
       <references>test.user</references>

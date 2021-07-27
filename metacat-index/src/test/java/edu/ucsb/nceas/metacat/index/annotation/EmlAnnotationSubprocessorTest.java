@@ -67,6 +67,11 @@ public class EmlAnnotationSubprocessorTest {
                 assertTrue(values.contains("http://purl.dataone.org/odo/ECSO_00001105"));
                 assertTrue(values.contains("http://purl.dataone.org/odo/ECSO_00000531"));
                 assertTrue(values.contains("http://purl.dataone.org/odo/ECSO_00001143"));
+                assertTrue(values.contains("http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#containsMeasurementsOfType"));
+                assertTrue(values.contains("http://purl.obolibrary.org/obo/RO_0002352"));
+                assertTrue(values.contains("http://purl.obolibrary.org/obo/RO_0000056"));
+                assertTrue(values.contains("http://purl.obolibrary.org/obo/RO_0002328"));
+
 
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 resultSolrDoc.serialize(baos, "UTF-8");

@@ -6,7 +6,8 @@
 	<bean id="ontologyModelService" class="edu.ucsb.nceas.metacat.index.annotation.OntologyModelService">
 		<property name="fieldList">
 			<list>
-				<ref bean="eml.annotation.expansion" />
+				<ref bean="eml.annotation.property.expansion" />
+				<ref bean="eml.annotation.value.expansion" />
 			</list>
 		</property>
 
@@ -57,8 +58,8 @@
 		</constructor-arg>
 	</bean>
 
-	<bean id="eml.annotation.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
-		<constructor-arg name="name" value="sem_annotation" />
+	<bean id="eml.annotation.property.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="annotation_property_uri" />
 		<constructor-arg name="query">
 			<value>
 				<![CDATA[
@@ -66,9 +67,27 @@
 				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 				PREFIX owl: <http://www.w3.org/2002/07/owl#>
 
-				SELECT ?sem_annotation
+				SELECT ?annotation_property_uri
 				WHERE {
-						<$CONCEPT_URI> rdfs:subClassOf* ?sem_annotation .
+						<$CONCEPT_URI> rdfs:subPropertyOf* ?annotation_property_uri .
+				 	}
+				 ]]>
+			</value>
+		</constructor-arg>
+	</bean>
+
+	<bean id="eml.annotation.value.expansion" class="org.dataone.cn.indexer.annotation.SparqlField">
+		<constructor-arg name="name" value="annotation_value_uri" />
+		<constructor-arg name="query">
+			<value>
+				<![CDATA[
+				PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+				PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+				PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+				SELECT ?annotation_value_uri
+				WHERE {
+						<$CONCEPT_URI> rdfs:subClassOf* ?annotation_value_uri .
 				 	}
 				 ]]>
 			</value>
