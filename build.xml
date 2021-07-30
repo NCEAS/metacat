@@ -254,6 +254,7 @@
 	<target name="init" depends="config, build-metacat-common" unless="init.called">
 		
 	    <property name="libdir.mvn" value="lib/maven" />
+		<delete dir="${libdir.mvn}"></delete>
 		<mkdir dir="${libdir.mvn}"/>
 		
 		<path id="base.classpath">

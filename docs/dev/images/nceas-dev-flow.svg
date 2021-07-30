@@ -2,7 +2,7 @@
 <svg width="377px" height="454px" viewBox="0 0 377 454" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
     <title>nceas-dev-flow</title>
     <defs>
-        <filter id="filter-1">
+        <filter color-interpolation-filters="auto" id="filter-1">
             <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0.786526 0 0 0 0 0.749235 0 0 0 0 0.654571 0 0 0 1.000000 0"></feColorMatrix>
         </filter>
     </defs>
@@ -17,8 +17,8 @@
         <path id="Line" d="M225.272711,357.830418 L225.721146,358.051565 L291.097,390.291 L292.866914,386.704595 L298.948435,394.721146 L288.886281,394.776433 L290.655,391.188 L225.278854,358.948435 L224.830418,358.727289 L225.272711,357.830418 Z" fill="#7BA27D" fill-rule="nonzero"></path>
         <path id="Line" d="M130,40.8764368 L130,425.123 L134,425.123563 L129.5,434.123563 L125,425.123563 L129,425.123 L129,40.8764368 L130,40.8764368 Z" fill="#877D63" fill-rule="nonzero"></path>
         <path id="Line" d="M308,40.8764368 L308,425.123 L312,425.123563 L307.5,434.123563 L303,425.123563 L307,425.123 L307,40.8764368 L308,40.8764368 Z" fill="#877D63" fill-rule="nonzero"></path>
-        <text id="master" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
-            <tspan x="196.041504" y="24">master</tspan>
+        <text id="main" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
+            <tspan x="202.662109" y="24">main</tspan>
         </text>
         <text id="develop" font-family="Arial-BoldMT, Arial" font-size="14" font-weight="bold" fill="#493C1B">
             <tspan x="106.04834" y="24">develop</tspan>

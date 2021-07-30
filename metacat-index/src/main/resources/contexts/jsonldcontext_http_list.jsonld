@@ -1682,7 +1682,7 @@
         "departureTime": { "@id": "schema:departureTime"},
         "dependencies": { "@id": "schema:dependencies"},
         "depth": { "@id": "schema:depth"},
-        "description": { "@id": "schema:description"},
+        "description": { "@id": "schema:description", "@container": "@list"},    
         "device": { "@id": "schema:device"},
         "diagnosis": { "@id": "schema:diagnosis"},
         "diagram": { "@id": "schema:diagram"},

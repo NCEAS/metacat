@@ -152,9 +152,9 @@ code to live and type::
 
   git clone https://github.com/nceas/metacat metacat
 
-The entire Metacat repository will be cloned to your local machine and the current branch is the master branch which is constantly maintained in a state ready for release. Detailed information about the code contribution please see:
+The entire Metacat repository will be cloned to your local machine and the current branch is the `main` branch which is constantly maintained in a state ready for release. Detailed information about the code contribution please see:
 
-https://github.com/NCEAS/metacat/blob/master/CONTRIBUTING.md
+https://github.com/NCEAS/metacat/blob/main/CONTRIBUTING.md
 
 Note that you do not need to create the WAR file directly because the Ant
 build-file has an "install" target that will build and deploy the WAR for you. 
