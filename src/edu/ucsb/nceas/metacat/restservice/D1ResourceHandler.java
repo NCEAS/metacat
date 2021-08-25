@@ -113,6 +113,8 @@ public class D1ResourceHandler {
     protected static final String FUNCTION_NAME_INSERT = "insert";
     protected static final String FUNCTION_NAME_UPDATE = "update";
     
+    protected static AuthSession auth = null;
+    
     protected ServletContext servletContext;
     protected static Log logMetacat;
     protected HttpServletRequest request;
@@ -198,11 +200,21 @@ public class D1ResourceHandler {
                         String password = null;
                        
                         String[] groups = null;
-                        try {
-                            AuthSession auth = new AuthSession();
-                            groups = auth.getGroups(username, password, dn);
-                        } catch (Exception e) {
-                            logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user "+dn+" from the authentication interface since :", e);
+                        if (auth == null) {
+                            try {
+                                auth = new AuthSession();
+                                groups = auth.getGroups(username, password, dn);
+                           } catch (Exception e) {
+                               logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
+                                               " from the authentication interface since :", e);
+                           }
+                        } else {
+                            try {
+                                groups = auth.getGroups(username, password, dn);
+                           } catch (Exception e) {
+                               logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
+                                               " from the authentication interface since :", e);
+                           }
                         }
 
                         if(groups != null) {
