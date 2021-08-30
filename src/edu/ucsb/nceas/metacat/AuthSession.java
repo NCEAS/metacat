@@ -334,7 +334,7 @@ public class AuthSession {
 	        if (synchronizedGroupsCacheMap != null) {
 	            //cache is enabled, so Metacat puts the group information to the map
 	            synchronizedGroupsCacheMap.put(userDN, groups);
-	            logMetacat.debug("AuthSession.getGroups - put the user " + userDN + " with the group information " + 
+	            logMetacat.debug("AuthSession.getGroups - Metacat got the group information for the user " + userDN + " from LDAP and put " + 
 	                             Arrays.toString(groups) + " into the cache." );
 	        }
 	    }

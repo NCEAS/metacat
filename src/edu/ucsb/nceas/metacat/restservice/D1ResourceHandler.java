@@ -115,7 +115,7 @@ public class D1ResourceHandler {
     protected static final String FUNCTION_NAME_UPDATE = "update";
     
     protected static AuthSession auth = null;
-    
+    protected static int authCacheSzie = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
     protected static boolean enableAppendLdapGroups = Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
     
     protected ServletContext servletContext;
@@ -208,7 +208,7 @@ public class D1ResourceHandler {
                                 try {
                                     synchronized (D1ResourceHandler.class) {
                                         if (auth == null) {
-                                            auth = new AuthSession();
+                                            auth = new AuthSession(authCacheSzie);
                                         }
                                     }
                                     groups = auth.getGroups(username, password, dn);
