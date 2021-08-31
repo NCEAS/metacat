@@ -129,6 +129,7 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Schedule;
 import org.dataone.service.types.v1.Service;
+import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -175,6 +176,7 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
@@ -1302,6 +1304,7 @@ public class MNodeService extends D1NodeService
         List<String> mnPackageServiceAvailables = null;
         List<String> mnQueryServiceAvailables = null;
         List<String> mnViewServiceAvailables = null;
+        Vector<String> allowedSubmitters = null;
 
         try {
             // get the properties of the node based on configuration information
@@ -1314,6 +1317,7 @@ public class MNodeService extends D1NodeService
             nodeType = NodeType.convert(nodeTypeString);
             nodeSynchronize = new Boolean(Settings.getConfiguration().getString("dataone.nodeSynchronize")).booleanValue();
             nodeReplicate = new Boolean(Settings.getConfiguration().getString("dataone.nodeReplicate")).booleanValue();
+            allowedSubmitters = AuthUtil.getAllowedSubmitters();
 
             // Set the properties of the node based on configuration information and
             // calls to current status methods
@@ -1406,6 +1410,20 @@ public class MNodeService extends D1NodeService
                     sMNStorage.setName("MNStorage");
                     sMNStorage.setVersion(version);
                     sMNStorage.setAvailable(available);
+                    if (allowedSubmitters != null && !allowedSubmitters.isEmpty()) {
+                        ServiceMethodRestriction createRestriction = new ServiceMethodRestriction();
+                        createRestriction.setMethodName("create");
+                        ServiceMethodRestriction updateRestriction = new ServiceMethodRestriction();
+                        updateRestriction.setMethodName("update");
+                        for (int j=0; j<allowedSubmitters.size(); j++) {
+                            Subject allowedSubject = new Subject();
+                            allowedSubject.setValue(allowedSubmitters.elementAt(j));
+                            createRestriction.addSubject(allowedSubject);
+                            updateRestriction.addSubject(allowedSubject);
+                        }
+                        sMNStorage.addRestriction(createRestriction);
+                        sMNStorage.addRestriction(updateRestriction);
+                    }
                     services.addService(sMNStorage);
                 }
             }
@@ -1510,6 +1528,10 @@ public class MNodeService extends D1NodeService
 
         } catch (PropertyNotFoundException pnfe) {
             String msg = "MNodeService.getCapabilities(): " + "property not found: " + pnfe.getMessage();
+            logMetacat.error(msg);
+            throw new ServiceFailure("2162", msg);
+        } catch (MetacatUtilException me) {
+            String msg = "MNodeService.getCapabilities(): " + "can't get the allowed submitters list since " + me.getMessage();
             logMetacat.error(msg);
             throw new ServiceFailure("2162", msg);
         }
