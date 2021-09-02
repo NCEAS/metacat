@@ -1,5 +1,6 @@
-<beans xmlns="http://www.springframework.org/schema/beans"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    <beans xmlns="http://www.springframework.org/schema/beans"
+           xmlns:p="http://www.springframework.org/schema/p"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://www.springframework.org/schema/beans 
                         http://www.springframework.org/schema/beans/spring-beans.xsd
                         http://www.springframework.org/schema/context  
@@ -802,6 +803,110 @@
                     }    
                 ]]>
             </value>
+        </constructor-arg>
+    </bean>
+    
+    <!-- define the base and components for accessing multiple bounding coordinates for geohash -->
+    <bean id="SO.geohashBase" class="org.dataone.cn.indexer.parser.utility.ElementCombiner"
+        p:name="geohashBase"
+        p:template="[northBoundCoord] [southBoundCoord] [eastBoundCoord] [westBoundCoord]">
+        <property name="elements">
+            <map>
+                <entry key="northBoundCoord" value-ref="schema_org_geoShape_box_north"/>
+                <entry key="southBoundCoord" value-ref="schema_org_geoShape_box_south"/>
+                <entry key="eastBoundCoord" value-ref="schema_org_geoShape_box_east"/>
+                <entry key="westBoundCoord" value-ref="schema_org_geoShape_box_west"/>
+            </map>
+        </property>
+    </bean>
+
+    <!-- use the root to calculate different geohash lengths -->
+	<bean id="schema_org_geohash_1" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_1" />
+		<property name="converter" ref="geohashConverter_1"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_2" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_2" />
+		<property name="converter" ref="geohashConverter_2"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_3" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_3" />
+		<property name="converter" ref="geohashConverter_3"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_4" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_4" />
+		<property name="converter" ref="geohashConverter_4"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_5" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_5" />
+		<property name="converter" ref="geohashConverter_5"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_6" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_6" />
+		<property name="converter" ref="geohashConverter_6"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_7" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_7" />
+		<property name="converter" ref="geohashConverter_7"/>
+	</bean>
+	
+	<bean id="schema_org_geohash_8" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_8" />
+		<property name="converter" ref="geohashConverter_8"/>
+	</bean>
+
+	<bean id="schema_org_geohash_9" class="org.dataone.cn.indexer.parser.DerivedSolrField"
+		p:multivalue="true"
+		p:base-ref="SO.geohashBase">
+		<constructor-arg name="name" value="geohash_9" />
+		<property name="converter" ref="geohashConverter_9"/>
+	</bean>
+    <bean id="schema_org_fullText" class="org.dataone.cn.indexer.annotation.SparqlField"
+        p:multivalue="false"
+        p:concatValues="true"
+        p:separator=" ">
+        <constructor-arg name="name" value="text" />
+        <constructor-arg name="query">
+            <value>
+                <![CDATA[
+                    PREFIX SO:   <http://schema.org/>
+                    PREFIX xsd:  <http://www.w3.org/2001/XMLSchema#>
+                    SELECT DISTINCT (str(?string) as ?text)
+                    WHERE {
+                        {
+                            ?a ?b ?string .
+                            filter(datatype(?string) = xsd:string) .
+                        }
+                        UNION
+                        {
+                            ?a ?b ?string .
+                            filter(datatype(?string) = SO:HTML) .
+                        }
+                   }
+                ]]>
+           </value>
         </constructor-arg>
     </bean>
 </beans>
