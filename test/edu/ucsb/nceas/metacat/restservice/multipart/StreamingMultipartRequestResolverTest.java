@@ -33,12 +33,12 @@ import javax.servlet.ReadListener;
 import javax.servlet.ServletInputStream;
 import javax.servlet.http.HttpServletRequest;
 
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.ByteArrayPartSource;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
-import org.apache.commons.httpclient.methods.multipart.StringPart;
+import org.apache.http.HttpEntity;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ByteArrayBody;
+import org.apache.http.entity.mime.content.StringBody;
 import org.dataone.configuration.Settings;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.service.types.v1.Checksum;
@@ -53,7 +53,6 @@ import org.dataone.service.util.TypeMarshaller;
 import org.mockito.Mockito;
 
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
@@ -126,19 +125,23 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         TypeMarshaller.marshalTypeToOutputStream(sysmeta, sysOutput);
         byte[] sysContent = sysOutput.toByteArray();
         
-        // Create part & entity from resource
-        Part[] parts = new Part[] { new StringPart("pid", guid.getValue()), new FilePart(StreamingMultipartRequestResolver.SYSMETA, new ByteArrayPartSource("sysmetametadata.xml", sysContent)),
-            new FilePart("object", new ByteArrayPartSource(objectFile, fileContent)) };
-        MultipartRequestEntity multipartRequestEntity =
-            new MultipartRequestEntity(parts, new PostMethod().getParams());
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        StringBody pidBody = new StringBody(guid.getValue(), ContentType.MULTIPART_FORM_DATA);
+        builder.addPart("pid", pidBody);
+        ByteArrayBody sysmetaBody = new ByteArrayBody(sysContent, "sysmetametadata.xml");
+        builder.addPart(StreamingMultipartRequestResolver.SYSMETA, sysmetaBody);
+        ByteArrayBody objectBody = new ByteArrayBody(fileContent, objectFile);
+        builder.addPart("object", objectBody);
+        HttpEntity entity = builder.build();
         // Serialize request body
         ByteArrayOutputStream requestContent = new ByteArrayOutputStream();
-        multipartRequestEntity.writeRequest(requestContent);
+        entity.writeTo(requestContent);
         ByteArrayInputStream requestInput = new ByteArrayInputStream(requestContent.toByteArray());
         ServletInputStream objectInputStream = new  WrappingServletInputStream(requestInput);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         Mockito.when(request.getMethod()).thenReturn("post");
-        Mockito.when(request.getContentType()).thenReturn(multipartRequestEntity.getContentType());
+        Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
@@ -200,19 +203,23 @@ public class StreamingMultipartRequestResolverTest extends D1NodeServiceTest {
         TypeMarshaller.marshalTypeToOutputStream(sysmeta, sysOutput);
         byte[] sysContent = sysOutput.toByteArray();
         
-        // Create part & entity from resource
-        Part[] parts = new Part[] { new StringPart("pid", guid.getValue()), new FilePart(StreamingMultipartRequestResolver.SYSMETA, new ByteArrayPartSource("sysmetametadata.xml", sysContent)),
-            new FilePart("object", new ByteArrayPartSource(objectFile, fileContent)) };
-        MultipartRequestEntity multipartRequestEntity =
-            new MultipartRequestEntity(parts, new PostMethod().getParams());
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        StringBody pidBody = new StringBody(guid.getValue(), ContentType.MULTIPART_FORM_DATA);
+        builder.addPart("pid", pidBody);
+        ByteArrayBody sysmetaBody = new ByteArrayBody(sysContent, "sysmetametadata.xml");
+        builder.addPart(StreamingMultipartRequestResolver.SYSMETA, sysmetaBody);
+        ByteArrayBody objectBody = new ByteArrayBody(fileContent, objectFile);
+        builder.addPart("object", objectBody);
+        HttpEntity entity = builder.build();
         // Serialize request body
         ByteArrayOutputStream requestContent = new ByteArrayOutputStream();
-        multipartRequestEntity.writeRequest(requestContent);
+        entity.writeTo(requestContent);
         ByteArrayInputStream requestInput = new ByteArrayInputStream(requestContent.toByteArray());
         ServletInputStream objectInputStream = new  WrappingServletInputStream(requestInput);
         HttpServletRequest request = Mockito.mock(HttpServletRequest.class);
         Mockito.when(request.getMethod()).thenReturn("post");
-        Mockito.when(request.getContentType()).thenReturn(multipartRequestEntity.getContentType());
+        Mockito.when(request.getContentType()).thenReturn(entity.getContentType().getValue());
         Mockito.when(request.getInputStream()).thenReturn(objectInputStream);
         StreamingMultipartRequestResolver resolver = new StreamingMultipartRequestResolver("build", 10000000);
         MultipartRequest result = resolver.resolveMultipart(request);
