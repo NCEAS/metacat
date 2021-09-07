@@ -31,6 +31,11 @@
   	<target publicid="-//W3C//HTML//EN">/style/skins/default/default.xsl</target>
   </doctype>
 
+<!-- eml-2.2.0 module -->
+  <doctype publicid="https://eml.ecoinformatics.org/eml-2.2.0">
+    <target publicid="-//W3C//HTML//EN">/style/skins/default/default.xsl</target>
+  </doctype>
+
 <!-- eml-2.1.1 module -->
   <doctype publicid="eml://ecoinformatics.org/eml-2.1.1">
     <target publicid="-//W3C//HTML//EN">/style/skins/default/default.xsl</target>
