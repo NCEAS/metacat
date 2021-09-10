@@ -80,7 +80,7 @@ public class AuthLdap implements AuthInterface {
 	private int ldapSearchCountLimit;
 	private String currentReferralInfo;
 	Hashtable<String, String> env = new Hashtable<String, String>(11);
-	private Context rContext;
+	//private Context rContext;
 	private String userName;
 	private String userPassword;
 	ReferralException refExc;
@@ -363,30 +363,37 @@ public class AuthLdap implements AuthInterface {
 	    if(env != null) {
 	        env.put(Context.REFERRAL, "ignore");
 	    }
-        LdapContext sctx = new InitialLdapContext(env, null);
+        LdapContext sctx = null;
         StartTlsResponse tls = null;
-        if(useTLS) {
-            tls = (StartTlsResponse) sctx.extendedOperation(new StartTlsRequest());
-            // Open a TLS connection (over the existing LDAP association) and get details
-            // of the negotiated TLS session: cipher suite, peer certificate, etc.
-            SSLSession session = tls.negotiate();
-        }
-        SearchControls ctls = new SearchControls();
-        ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
-        String filter = "(objectClass=*)";
-        NamingEnumeration answer  = sctx.search(alias, filter, ctls);
-        while(answer.hasMore()) {
-            SearchResult result = (SearchResult) answer.next();
-            if(!result.isRelative()) {
-                //if is not relative, this will be alias.
-                aliasedDn = result.getNameInNamespace();
-                break;
+        try {
+            sctx = new InitialLdapContext(env, null);
+            if(useTLS) {
+                tls = (StartTlsResponse) sctx.extendedOperation(new StartTlsRequest());
+                // Open a TLS connection (over the existing LDAP association) and get details
+                // of the negotiated TLS session: cipher suite, peer certificate, etc.
+                SSLSession session = tls.negotiate();
+            }
+            SearchControls ctls = new SearchControls();
+            ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
+            String filter = "(objectClass=*)";
+            NamingEnumeration answer  = sctx.search(alias, filter, ctls);
+            while(answer.hasMore()) {
+                SearchResult result = (SearchResult) answer.next();
+                if(!result.isRelative()) {
+                    //if is not relative, this will be alias.
+                    aliasedDn = result.getNameInNamespace();
+                    break;
+                }
+            }
+            
+        } finally {
+            if(useTLS && tls != null) {
+                tls.close();
+            }
+            if (sctx != null) {
+                sctx.close();
             }
         }
-        if(useTLS && tls != null) {
-            tls.close();
-        }
-        sctx.close();
         return aliasedDn;
 	    
 	}
@@ -394,15 +401,16 @@ public class AuthLdap implements AuthInterface {
 	private boolean authenticateTLS(Hashtable<String, String> env, String userDN, String password)
 			throws AuthTLSException, AuthenticationException{	
 		logMetacat.info("AuthLdap.authenticateTLS - Trying to authenticate with TLS");
+		LdapContext ctx = null;
+		StartTlsResponse tls = null;
 		try {
-			LdapContext ctx = null;
 			double startTime;
 			double stopTime;
 			startTime = System.currentTimeMillis();
 			ctx = new InitialLdapContext(env, null);
 			// Start up TLS here so that we don't pass our jewels in
 			// cleartext
-			StartTlsResponse tls = 
+			tls = 
 				(StartTlsResponse) ctx.extendedOperation(new StartTlsRequest());
 			// tls.setHostnameVerifier(new SampleVerifier());
 			SSLSession sess = tls.negotiate();
@@ -421,6 +429,21 @@ public class AuthLdap implements AuthInterface {
 			throw new AuthTLSException("AuthLdap.authenticateTLS - Naming error when athenticating via TLS: " + ne.getMessage());
 		} catch (IOException ioe) {
 			throw new AuthTLSException("AuthLdap.authenticateTLS - I/O error when athenticating via TLS: " + ioe.getMessage());
+		} finally {
+		    if (tls != null) {
+		        try {
+                    tls.close();
+                } catch (IOException ee) {
+                    logMetacat.error("AuthLdap.authenticateTLS - can't close the TlsResponse since " + ee.getMessage());
+                }
+            }
+		    if (ctx != null) {
+		        try {
+		            ctx.close();
+		        } catch (NamingException ee) {
+		            logMetacat.error("AuthLdap.authenticateTLS - can't close the LdapContext since " + ee.getMessage());
+		        }
+		    }
 		}
 		return true;
 	}
@@ -428,24 +451,29 @@ public class AuthLdap implements AuthInterface {
 	private boolean authenticateNonTLS(Hashtable<String, String> env, String userDN, String password) 
 			throws NamingException {
 		LdapContext ctx = null;
-		double startTime;
-		double stopTime;
-		
-		logMetacat.info("AuthLdap.authenticateNonTLS - Trying to authenticate without TLS");
-		//env.put(Context.SECURITY_AUTHENTICATION, "simple");
-		//env.put(Context.SECURITY_PRINCIPAL, userDN);
-		//env.put(Context.SECURITY_CREDENTIALS, password);
+		try {
+		    double startTime;
+	        double stopTime;
+	        
+	        logMetacat.info("AuthLdap.authenticateNonTLS - Trying to authenticate without TLS");
+	        //env.put(Context.SECURITY_AUTHENTICATION, "simple");
+	        //env.put(Context.SECURITY_PRINCIPAL, userDN);
+	        //env.put(Context.SECURITY_CREDENTIALS, password);
 
-		startTime = System.currentTimeMillis();
-		ctx = new InitialLdapContext(env, null);
-		ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
-        ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
-        ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
-        ctx.reconnect(null);
-		stopTime = System.currentTimeMillis();
-		logMetacat.info("AuthLdap.authenticateNonTLS - Connection time thru " + ldapsUrl + " was: "
-				+ (stopTime - startTime) / 1000 + " seconds.");
-
+	        startTime = System.currentTimeMillis();
+	        ctx = new InitialLdapContext(env, null);
+	        ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
+	        ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
+	        ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, password);
+	        ctx.reconnect(null);
+	        stopTime = System.currentTimeMillis();
+	        logMetacat.info("AuthLdap.authenticateNonTLS - Connection time thru " + ldapsUrl + " was: "
+	                + (stopTime - startTime) / 1000 + " seconds.");
+		} finally {
+		    if (ctx != null) {
+		        ctx.close();
+		    }
+		}
 		return true;
 	}
 
@@ -466,6 +494,7 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		env.put(Context.REFERRAL, "throw");
 		env.put(Context.PROVIDER_URL, ldapUrl + ldapBase);
+		DirContext sctx = null;
 		try {
 			int position = user.indexOf(",");
 			String uid = user.substring(user.indexOf("=") + 1, position);
@@ -474,7 +503,7 @@ public class AuthLdap implements AuthInterface {
 					.indexOf(",", position + 1));
 			logMetacat.info("AuthLdap.getIdentifyingName - org is: " + org);
 
-			DirContext sctx = new InitialDirContext(env);
+			sctx = new InitialDirContext(env);
 			SearchControls ctls = new SearchControls();
 			ctls.setSearchScope(SearchControls.SUBTREE_SCOPE);
 			String filter = "(&(uid=" + uid + ")(o=" + org + "))";
@@ -518,6 +547,10 @@ public class AuthLdap implements AuthInterface {
 			logMetacat.error("AuthLdap.getIdentifyingName - Naming exception while getting dn: " + e);
 			throw new NamingException("Naming exception in AuthLdap.getIdentifyingName: "
 					+ e);
+		} finally {
+		    if (sctx != null) {
+		        sctx.close();
+		    }
 		}
 		return identifier;
 	}
@@ -540,11 +573,11 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.REFERRAL, referral);
 		env.put(Context.PROVIDER_URL, ldapUrl);
 		env.put("com.sun.jndi.ldap.connect.timeout", ldapConnectTimeLimit);
-
+		DirContext ctx = null;
 		try {
 
 			// Create the initial directory context
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 
 			// Specify the attributes to match.
 			// Users are objects that have the attribute
@@ -610,10 +643,6 @@ public class AuthLdap implements AuthInterface {
 				users[i][3] = (String) uorg.elementAt(i);
 				users[i][4] = (String) umail.elementAt(i);
 			}
-
-			// Close the context when we're done
-			ctx.close();
-
 		} catch (NamingException e) {
 			logMetacat.error("AuthLdap.getUsers - Problem getting users in AuthLdap.getUsers:" + e);
 			// e.printStackTrace(System.err);
@@ -621,8 +650,16 @@ public class AuthLdap implements AuthInterface {
 			 * throw new ConnectException( "Problem getting users in
 			 * AuthLdap.getUsers:" + e);
 			 */
+		} finally {
+            // Close the context when we're done
+		    try {
+		        if (ctx != null ) {
+		            ctx.close();
+		        }
+		    } catch (NamingException ee) {
+		        logMetacat.error("AuthLdap.getUsers - can't close the LdapContext since " + ee.getMessage());
+		    }
 		}
-
 		return users;
 	}
 
@@ -654,12 +691,12 @@ public class AuthLdap implements AuthInterface {
 		    //the the user is an alias name. we need to use the the real name
 		    user = realName;
 		}
-
+		DirContext ctx = null;
 		try {
 
 			// Create the initial directory context
 		    env.put(Context.REFERRAL, referral);
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 			// Specify the attributes to match.
 			// Users are objects that have the attribute
 			// objectclass=InetOrgPerson.
@@ -711,16 +748,20 @@ public class AuthLdap implements AuthInterface {
 				logMetacat.error("AuthLdap.getUserInfo - LDAP Server size limit exceeded. "
 						+ "Returning incomplete record set.");
 			}
-
-			// Close the context when we're done
-			ctx.close();
-
 		} catch (NamingException e) {
 			logMetacat.error("AuthLdap.getUserInfo - Problem getting users:" + e);
 			// e.printStackTrace(System.err);
 			throw new ConnectException("Problem getting users in AuthLdap.getUsers:" + e);
+		} finally {
+            // Close the context when we're done
+		    if (ctx != null) {
+		        try {
+		            ctx.close();
+		        } catch (NamingException ee) {
+		            logMetacat.error("AuthLdap.getUserInfo - can't close the LdapContext since " + ee.getMessage());
+		        }
+		    }
 		}
-
 		return userinfo;
 	}
 
@@ -744,11 +785,11 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		env.put(Context.REFERRAL, referral);
 		env.put(Context.PROVIDER_URL, ldapUrl);
-
+		DirContext ctx = null;
 		try {
 
 			// Create the initial directory context
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 
 			// Specify the ids of the attributes to return
 			String[] attrIDs = { "uniqueMember" };
@@ -774,10 +815,6 @@ public class AuthLdap implements AuthInterface {
 			for (int i = 0; i < uvec.size(); i++) {
 				users[i] = (String) uvec.elementAt(i);
 			}
-
-			// Close the context when we're done
-			ctx.close();
-
 		} catch (NamingException e) {
 			logMetacat.error("AuthLdap.getUsers - Problem getting users for a group in "
 					+ "AuthLdap.getUsers:" + e);
@@ -785,6 +822,15 @@ public class AuthLdap implements AuthInterface {
 			 * throw new ConnectException( "Problem getting users for a group in
 			 * AuthLdap.getUsers:" + e);
 			 */
+		} finally {
+		    // Close the context when we're done
+            if (ctx != null) {
+                try {
+                    ctx.close();
+                } catch (NamingException ee) {
+                    logMetacat.error("AuthLdap.getUsers - can't close the LdapContext since " + ee.getMessage());
+                }
+            }
 		}
 
 		return users;
@@ -849,10 +895,11 @@ public class AuthLdap implements AuthInterface {
 		// Iterate through the referrals, handling NamingExceptions in the
 		// outer catch statement, ReferralExceptions in the inner catch
 		// statement
+		DirContext ctx = null;
 		try { // outer try
 
 			// Create the initial directory context
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 
 			// Specify the attributes to match.
 			// Groups are objects with attribute objectclass=groupofuniquenames.
@@ -1025,11 +1072,6 @@ public class AuthLdap implements AuthInterface {
 
 				}// end inner try
 			}// end for
-
-			// close the context now that all initial and referral
-			// searches are processed
-			ctx.close();
-
 		} catch (NamingException e) {
 
 			// naming exceptions get logged, groups are returned
@@ -1037,6 +1079,13 @@ public class AuthLdap implements AuthInterface {
 			e.printStackTrace(System.err);
 
 		} finally {
+		    if (ctx != null) {
+                try {
+                    ctx.close();
+                } catch (NamingException ee) {
+                    logMetacat.error("AuthLdap.getGroups - can't close the LdapContext since " + ee.getMessage());
+                }
+            }
 			// once all referrals are followed, report and return the groups
 			// found
 			logMetacat.warn("AuthLdap.getGroups - The user is in the following groups: " + gvec.toString());
@@ -1085,11 +1134,11 @@ public class AuthLdap implements AuthInterface {
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
 		env.put(Context.REFERRAL, referral);
 		env.put(Context.PROVIDER_URL, ldapUrl);
-
+		DirContext ctx = null;
 		try {
 
 			// Create the initial directory context
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 
 			// Ask for all attributes of the user
 			// Attributes attrs = ctx.getAttributes(userident);
@@ -1113,14 +1162,19 @@ public class AuthLdap implements AuthInterface {
 				}
 				attributes.put(attName, values);
 			}
-
-			// Close the context when we're done
-			ctx.close();
 		} catch (NamingException e) {
 			logMetacat.error("AuthLdap.getAttributes - Problem getting attributes:"
 					+ e);
 			throw new ConnectException(
 					"Problem getting attributes in AuthLdap.getAttributes:" + e);
+		} finally {
+		    if (ctx != null) {
+                try {
+                    ctx.close();
+                } catch (NamingException ee) {
+                    logMetacat.error("AuthLdap.getAttributes - can't close the LdapContext since " + ee.getMessage());
+                }
+            }
 		}
 
 		return attributes;
@@ -1147,11 +1201,11 @@ public class AuthLdap implements AuthInterface {
 
 		env.put(Context.REFERRAL, "ignore");
 		env.put(Context.PROVIDER_URL, ldapUrl + ldapBase);
-
+		DirContext ctx =  null;
 		try {
 
 			// Create the initial directory context
-			DirContext ctx = new InitialDirContext(env);
+			ctx = new InitialDirContext(env);
 
 			// Specify the ids of the attributes to return
 			String[] attrIDs = { "o", "ref" };
@@ -1221,14 +1275,18 @@ public class AuthLdap implements AuthInterface {
 					}
 				}
 			}
-
-			// Close the context when we're done
-			ctx.close();
-
 		} catch (NamingException e) {
 			logMetacat.error("AuthLdap.getSubtrees - Problem getting subtrees in AuthLdap.getSubtrees:" + e);
 			throw new ConnectException(
 					"Problem getting subtrees in AuthLdap.getSubtrees:" + e);
+		} finally {
+		    if (ctx != null) {
+                try {
+                    ctx.close();
+                } catch (NamingException ee) {
+                    logMetacat.error("AuthLdap.getSubtrees - can't close the LdapContext since " + ee.getMessage());
+                }
+            }
 		}
 
 		return trees;
@@ -1371,46 +1429,6 @@ public class AuthLdap implements AuthInterface {
 		return -1;
 	}
 
-	public void testCredentials(String dn, String password, String rootServer,
-			String rootBase) throws NamingException {
-
-		String server = "";
-		String userDN = "";
-		logMetacat.debug("dn is: " + dn);
-
-		int position = dn.lastIndexOf("/");
-		logMetacat.debug("AuthLdap.testCredentials - position is: " + position);
-		if (position == -1) {
-			server = rootServer;
-			if (dn.indexOf(userDN) < 0) {
-				userDN = dn + "," + rootBase;
-			} else {
-				userDN = dn;
-			}
-			logMetacat.debug("AuthLdap.testCredentials - userDN is: " + userDN);
-
-		} else {
-			server = dn.substring(0, position + 1);
-			userDN = dn.substring(position + 1);
-			logMetacat.debug("AuthLdap.testCredentials - server is: " + server);
-			logMetacat.debug("AuthLdap.testCredentials - userDN is: " + userDN);
-		}
-
-		logMetacat.debug("AuthLdap.testCredentials - Trying to authenticate: " + userDN + " using server: " + server);
-
-		// /* try {
-		LdapContext ctx = null;
-
-		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
-		env.put(Context.REFERRAL, "follow");
-		env.put(Context.SECURITY_AUTHENTICATION, "simple");
-		env.put(Context.SECURITY_PRINCIPAL, userDN);
-		env.put(Context.SECURITY_CREDENTIALS, password);
-		env.put(Context.PROVIDER_URL, rootServer);
-
-		ctx = new InitialLdapContext(env, null);
-
-	}
 
 	/**
 	 * Test method for the class

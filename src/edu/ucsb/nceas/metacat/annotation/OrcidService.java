@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.annotation;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
@@ -8,10 +9,11 @@ import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.List;
 
-
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -28,6 +30,9 @@ public class OrcidService {
 	
     //private static final String REST_URL = "http://pub.sandbox.orcid.org/v1.1/search/orcid-bio";
     private static final String REST_URL = "https://pub.orcid.org/v2.0/search";
+    
+    private static RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout(5 * 1000).build();
+    private static CloseableHttpClient client = HttpClientBuilder.create().setDefaultRequestConfig(requestConfig).build();
 
     
     /**
@@ -41,6 +46,8 @@ public class OrcidService {
 	public static String lookupOrcid(String text, String surName, List<String> givenNames, List<String> otherNames) {
 		
 		String url = null;
+		CloseableHttpResponse response = null;
+		InputStream is = null;
 
 		try {
 			
@@ -70,12 +77,10 @@ public class OrcidService {
 			urlParameters = URLEncoder.encode(urlParameters, "UTF-8");
 			
 			url = REST_URL + "?q=" + urlParameters + "&rows=1";
-			URL restURL = new URL(url);
-			HttpClient client = new HttpClient();
-			HttpMethod method = new GetMethod(url);
-			method.addRequestHeader("Accept", "application/orcid+xml");
-			client.executeMethod(method);
-			InputStream is = method.getResponseBodyAsStream();
+			HttpGet method = new HttpGet(url);
+			method.addHeader("Accept", "application/orcid+xml");
+			response = client.execute(method);
+			is = response.getEntity().getContent();
 			//InputStream is = restURL.openStream();
 			
 			String results = IOUtils.toString(is, "UTF-8");
@@ -89,6 +94,22 @@ public class OrcidService {
 			}
 		} catch (Exception e) {
 			logMetacat.error("Could not lookup ORCID using: " + url, e);
+		} finally {
+		    if (response != null) {
+		        try {
+		            response.close();
+		        } catch (IOException ee) {
+		            logMetacat.warn("OrcidServic.lookupOrcid - could not close the http response from the ORCID service since " + ee.getMessage());
+		        }
+		        
+		    }
+		    if (is != null) {
+		        try {
+                    is.close();
+                } catch (IOException ee) {
+                    logMetacat.warn("OrcidServic.lookupOrcid - could not close the input stream object from the http response " + ee.getMessage());
+                }
+		    }
 		}
 		
 		return null;

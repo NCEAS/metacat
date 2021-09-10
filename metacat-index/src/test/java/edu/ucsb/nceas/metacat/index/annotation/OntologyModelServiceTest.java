@@ -54,7 +54,7 @@ public class OntologyModelServiceTest {
 
         System.out.println("FOOBAR: " + service.getClass().getName());
         List<ISolrDataField> fieldList = service.getFieldList();
-        assertEquals(1, fieldList.size());
+        assertEquals(2, fieldList.size());
 
         Map<String, String> altEntries = service.getAltEntryList();
         assertEquals(16, altEntries.size());

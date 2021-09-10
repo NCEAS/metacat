@@ -46,6 +46,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.client.v2.itk.D1Client;
+import org.dataone.configuration.Settings;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.mimemultipart.MultipartRequest;
 import org.dataone.mimemultipart.MultipartRequestResolver;
@@ -112,6 +113,10 @@ public class D1ResourceHandler {
      */
     protected static final String FUNCTION_NAME_INSERT = "insert";
     protected static final String FUNCTION_NAME_UPDATE = "update";
+    
+    protected static AuthSession auth = null;
+    protected static int authCacheSzie = Settings.getConfiguration().getInt("auth.groupCacheSize", 100);
+    protected static boolean enableAppendLdapGroups = Settings.getConfiguration().getBoolean("dataone.session.appendLdapGroups.enabled", true);
     
     protected ServletContext servletContext;
     protected static Log logMetacat;
@@ -187,80 +192,99 @@ public class D1ResourceHandler {
 					}
 				}
             } else {
-                //The session is not null. However, the if we got the session is from a token, the ldap group information for is missing if we logged in by the ldap account.
-                //here we just patch it.
-                Subject subject = session.getSubject();
-                if(subject != null) {
-                    String dn = subject.getValue();
-                    logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "+dn+" This dn will be used to look up the group information");
-                    if(dn != null) {
-                        String username = null;
-                        String password = null;
-                       
-                        String[] groups = null;
-                        try {
-                            AuthSession auth = new AuthSession();
-                            groups = auth.getGroups(username, password, dn);
-                        } catch (Exception e) {
-                            logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user "+dn+" from the authentication interface since :", e);
-                        }
-
-                        if(groups != null) {
-                            SubjectInfo subjectInfo = session.getSubjectInfo();
-                            if(subjectInfo != null) {
-                                logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
-                                //we don't overwrite the existing subject info, just add the new groups informations
-                                List<Person> persons = subjectInfo.getPersonList();
-                                Person targetPerson = null;
-                                if(persons != null) {
-                                    for(Person person : persons) {
-                                        if(person.getSubject().equals(subject)) {
-                                            targetPerson = person;
-                                            logMetacat.debug("D1ReourceHandler.handle - we find a person with the subject "+dn+" in the subject info.");
-                                            break;
+                //The session is not null. However, if we got the session is from a token, the local ldap group information is missing when we logged in by the ldap account.
+                //Here we just patch it (d1_portal only patches the dataone groups)
+                if (enableAppendLdapGroups) {
+                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured to append the local ldap group information to a session.");
+                    Subject subject = session.getSubject();
+                    if(subject != null) {
+                        String dn = subject.getValue();
+                        logMetacat.debug("D1ReourceHandler.handle - the subject dn in the session is "+dn+" This dn will be used to look up the group information");
+                        if(dn != null) {
+                            String username = null;
+                            String password = null;
+                            String[] groups = null;
+                            if (auth == null) {
+                                try {
+                                    synchronized (D1ResourceHandler.class) {
+                                        if (auth == null) {
+                                            auth = new AuthSession(authCacheSzie);
                                         }
                                     }
-                                }
-                                boolean newPerson = false;
-                                if(targetPerson == null) {
-                                    newPerson = true;
-                                    targetPerson = new Person();
-                                    targetPerson.setSubject(subject);
-                                }
-                                for (int i=0; i<groups.length; i++) {
-                                    logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for an existing subject info.");
-                                    Group group = new Group();
-                                    group.setGroupName(groups[i]);
-                                    Subject groupSubject = new Subject();
-                                    groupSubject.setValue(groups[i]);
-                                    group.setSubject(groupSubject);
-                                    subjectInfo.addGroup(group);
-                                    targetPerson.addIsMemberOf(groupSubject);
-                                }
-                                if(newPerson) {
-                                    subjectInfo.addPerson(targetPerson);
-                                }
+                                    groups = auth.getGroups(username, password, dn);
+                               } catch (Exception e) {
+                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
+                                                   " from the authentication interface since :", e);
+                               }
                             } else {
-                                logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
-                                subjectInfo = new SubjectInfo();
-                                Person person = new Person();
-                                person.setSubject(subject);
-                                for (int i=0; i<groups.length; i++) {
-                                    logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for a new subject info.");
-                                    Group group = new Group();
-                                    group.setGroupName(groups[i]);
-                                    Subject groupSubject = new Subject();
-                                    groupSubject.setValue(groups[i]);
-                                    group.setSubject(groupSubject);
-                                    subjectInfo.addGroup(group);
-                                    person.addIsMemberOf(groupSubject);
+                                try {
+                                    groups = auth.getGroups(username, password, dn);
+                               } catch (Exception e) {
+                                   logMetacat.warn("D1ReourceHandler.handle - we can't get group information for the user " + dn + 
+                                                   " from the authentication interface since :", e);
+                               }
+                            }
+
+                            if(groups != null) {
+                                SubjectInfo subjectInfo = session.getSubjectInfo();
+                                if(subjectInfo != null) {
+                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    //we don't overwrite the existing subject info, just add the new groups informations
+                                    List<Person> persons = subjectInfo.getPersonList();
+                                    Person targetPerson = null;
+                                    if(persons != null) {
+                                        for(Person person : persons) {
+                                            if(person.getSubject().equals(subject)) {
+                                                targetPerson = person;
+                                                logMetacat.debug("D1ReourceHandler.handle - we find a person with the subject "+dn+" in the subject info.");
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    boolean newPerson = false;
+                                    if(targetPerson == null) {
+                                        newPerson = true;
+                                        targetPerson = new Person();
+                                        targetPerson.setSubject(subject);
+                                    }
+                                    for (int i=0; i<groups.length; i++) {
+                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for an existing subject info.");
+                                        Group group = new Group();
+                                        group.setGroupName(groups[i]);
+                                        Subject groupSubject = new Subject();
+                                        groupSubject.setValue(groups[i]);
+                                        group.setSubject(groupSubject);
+                                        subjectInfo.addGroup(group);
+                                        targetPerson.addIsMemberOf(groupSubject);
+                                    }
+                                    if(newPerson) {
+                                        subjectInfo.addPerson(targetPerson);
+                                    }
+                                } else {
+                                    logMetacat.debug("D1ReourceHandler.handle - the subject information is NOT null when we try to figure out the group information.");
+                                    subjectInfo = new SubjectInfo();
+                                    Person person = new Person();
+                                    person.setSubject(subject);
+                                    for (int i=0; i<groups.length; i++) {
+                                        logMetacat.debug("D1ReourceHandler.handle - create the group "+groups[i]+" for a new subject info.");
+                                        Group group = new Group();
+                                        group.setGroupName(groups[i]);
+                                        Subject groupSubject = new Subject();
+                                        groupSubject.setValue(groups[i]);
+                                        group.setSubject(groupSubject);
+                                        subjectInfo.addGroup(group);
+                                        person.addIsMemberOf(groupSubject);
+                                    }
+                                    subjectInfo.addPerson(person);
+                                    session.setSubjectInfo(subjectInfo);
                                 }
-                                subjectInfo.addPerson(person);
-                                session.setSubjectInfo(subjectInfo);
                             }
                         }
                     }
+                } else {
+                    logMetacat.debug("D1ReourceHandler.handle - Metacat is configured NOT to append the local ldap group information to a session.");
                 }
+                
             }
             
             if (session == null) {

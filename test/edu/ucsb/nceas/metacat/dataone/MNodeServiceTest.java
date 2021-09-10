@@ -41,10 +41,6 @@ import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.utilities.IOUtil;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.BagFile;
-import gov.loc.repository.bagit.Manifest;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -63,11 +59,15 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -107,11 +107,15 @@ import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.ReplicationPolicy;
+import org.dataone.service.types.v1.Service;
+import org.dataone.service.types.v1.ServiceMethodRestriction;
+import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
 import org.dataone.service.types.v1.util.ChecksumUtil;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
@@ -1280,15 +1284,68 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
   }
 
-  public void testGetCapabilities() {
+  public void testGetCapabilities() throws Exception {
       printTestHeader("testGetCapabilities");
+      String originAllowedSubmitters = PropertyService.getInstance().getProperty("auth.allowedSubmitters");
     try {
       Node node = MNodeService.getInstance(request).getCapabilities();
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       TypeMarshaller.marshalTypeToOutputStream(node, baos);
       assertNotNull(node);
-      // TODO: should probably test other parts of the node information
-      
+      // check the service restriction. First, there is no any service restrictions
+      Services services = node.getServices();
+      List<Service> list = services.getServiceList();
+      boolean hasV1MNStorage = false;
+      boolean hasV2MNStorage = false;
+      for (Service service : list) {
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v1")) {
+              hasV1MNStorage = true;
+              List<ServiceMethodRestriction> restrictions = service.getRestrictionList();
+              assertTrue(restrictions == null || restrictions.isEmpty());
+          }
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v2")) {
+              hasV2MNStorage = true;
+              List<ServiceMethodRestriction> restrictions = service.getRestrictionList();
+              assertTrue(restrictions == null || restrictions.isEmpty());
+          }
+      }
+      assertTrue(hasV1MNStorage);
+      assertTrue(hasV2MNStorage);
+      // check the service restriction. Second, there are some service restrctions
+      PropertyService.getInstance().setPropertyNoPersist("auth.allowedSubmitters", 
+                      "http\\://orcid.org/0000-0002-1209-5268:cn=parc,o=PARC,dc=ecoinformatics,dc=org");
+      AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
+      node = MNodeService.getInstance(request).getCapabilities();
+      services = node.getServices();
+      list = services.getServiceList();
+      hasV1MNStorage = false;
+      hasV2MNStorage = false;
+      for (Service service : list) {
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v1")) {
+              hasV1MNStorage = true;
+              ServiceMethodRestriction restriction1 = service.getRestriction(0);
+              assertTrue(restriction1.getMethodName().equals("create"));
+              assertTrue(restriction1.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction1.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+              ServiceMethodRestriction restriction2 = service.getRestriction(1);
+              assertTrue(restriction2.getMethodName().equals("update"));
+              assertTrue(restriction2.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction2.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+          }
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v2")) {
+              hasV2MNStorage = true;
+              ServiceMethodRestriction restriction1 = service.getRestriction(0);
+              assertTrue(restriction1.getMethodName().equals("create"));
+              assertTrue(restriction1.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction1.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+              ServiceMethodRestriction restriction2 = service.getRestriction(1);
+              assertTrue(restriction2.getMethodName().equals("update"));
+              assertTrue(restriction2.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction2.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+          }
+      }
+      assertTrue(hasV1MNStorage);
+      assertTrue(hasV2MNStorage);
     } catch (MarshallingException e) {
         e.printStackTrace();
         fail("The node instance couldn't be parsed correctly:" + e.getMessage());
@@ -1301,6 +1358,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         e.printStackTrace();
         fail("Probably not yet implemented: " + e.getMessage());
         
+    } finally {
+        PropertyService.getInstance().setPropertyNoPersist("auth.allowedSubmitters", originAllowedSubmitters);
+        AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
     }
     
   }
@@ -1801,114 +1861,107 @@ public class MNodeServiceTest extends D1NodeServiceTest {
 	 */
 	public void testGetOREPackage() {
 		printTestHeader("testGetOREPackage");
-
 		try {
-			
-			// construct the ORE package
-			Identifier resourceMapId = new Identifier();
-			//resourceMapId.setValue("doi://1234/AA/map.1.1");
-			resourceMapId.setValue("testGetOREPackage." + System.currentTimeMillis());
-			Identifier metadataId = new Identifier();
-			metadataId.setValue("doi://1234/AA/meta.1." + + System.currentTimeMillis());
-			List<Identifier> dataIds = new ArrayList<Identifier>();
-			Identifier dataId = new Identifier();
-			dataId.setValue("doi://1234/AA/data.1." + System.currentTimeMillis());
-			Identifier dataId2 = new Identifier();
-			dataId2.setValue("doi://1234/AA/data.2." + System.currentTimeMillis());
-			dataIds.add(dataId);
-			dataIds.add(dataId2);
-			Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
-			idMap.put(metadataId, dataIds);
-			ResourceMapFactory rmf = ResourceMapFactory.getInstance();
-			ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
-			assertNotNull(resourceMap);
-			String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
-			assertNotNull(rdfXml);
-			
-			Session session = getTestSession();
-			InputStream object = null;
-			SystemMetadata sysmeta = null;
-			
-			// save the data objects (data just contains their ID)
-			InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes("UTF-8"));
-			sysmeta = createSystemMetadata(dataId, session.getSubject(), dataObject1);
-			MNodeService.getInstance(request).create(session, dataId, dataObject1, sysmeta);
-			// second data file
-			InputStream dataObject2 = new ByteArrayInputStream(dataId2.getValue().getBytes("UTF-8"));
-			sysmeta = createSystemMetadata(dataId2, session.getSubject(), dataObject2);
-			MNodeService.getInstance(request).create(session, dataId2, dataObject2, sysmeta);
-			// metadata file
-			InputStream metadataObject = new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
-			sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
-			MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
-						
-			// save the ORE object
-			Thread.sleep(10000);
-			object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
-			sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
-			sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
-			Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
-			
-			// get the package we uploaded
-			ObjectFormatIdentifier format = new ObjectFormatIdentifier();
-            format.setValue("application/bagit-097");
-			InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
-			File bagFile = File.createTempFile("bagit.", ".zip");
-			IOUtils.copy(bagStream, new FileOutputStream(bagFile));
-			BagFactory bagFactory = new BagFactory();
-			Bag bag = bagFactory.createBag(bagFile);
-			Iterator<Manifest> manifestIter = bag.getTagManifests().iterator();
-			while (manifestIter.hasNext()) {
-				String filepath = manifestIter.next().getFilepath();
-				BagFile entryFile = bag.getBagFile(filepath);
-				InputStream result = entryFile.newInputStream();
-				// check ORE
-				if (filepath.contains(resourceMapId.getValue())) {
-					object.reset();
-					assertTrue(object.available() > 0);
-					assertTrue(result.available() > 0);
-					assertTrue(IOUtils.contentEquals(result, object));
-				}
-				// check metadata
-				if (filepath.contains(metadataId.getValue())) {
-					metadataObject.reset();
-					assertTrue(metadataObject.available() > 0);
-					assertTrue(result.available() > 0);
-					assertTrue(IOUtils.contentEquals(result, metadataObject));
-				}
-				if (filepath.contains(dataId.getValue())) {
-					dataObject1.reset();
-					assertTrue(dataObject1.available() > 0);
-					assertTrue(result.available() > 0);
-					assertTrue(IOUtils.contentEquals(result, dataObject1));
-				}
-				if (filepath.contains(dataId2.getValue())) {
-					dataObject2.reset();
-					assertTrue(dataObject2.available() > 0);
-					assertTrue(result.available() > 0);
-					assertTrue(IOUtils.contentEquals(result, dataObject2));
-				}
-				
-				
-			}
-			
-			// clean up
-			bagFile.delete();
-			
-			// test the ORE lookup
-			Thread.sleep(30000);
-			System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
-			List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(null, metadataId, true);
-			assertTrue(oreIds.contains(resourceMapId));
+          // construct the ORE package
+          Identifier resourceMapId = new Identifier();
+          //resourceMapId.setValue("doi://1234/AA/map.1.1");
+          resourceMapId.setValue("testGetOREPackage." + System.currentTimeMillis());
+          Identifier metadataId = new Identifier();
+          metadataId.setValue("doi://1234/AA/meta.1." + +System.currentTimeMillis());
+          List<Identifier> dataIds = new ArrayList<Identifier>();
+          Identifier dataId = new Identifier();
+          dataId.setValue("doi://1234/AA/data.1." + System.currentTimeMillis());
+          Identifier dataId2 = new Identifier();
+          dataId2.setValue("doi://1234/AA/data.2." + System.currentTimeMillis());
+          dataIds.add(dataId);
+          dataIds.add(dataId2);
+          Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+          idMap.put(metadataId, dataIds);
+          ResourceMapFactory rmf = ResourceMapFactory.getInstance();
+          ResourceMap resourceMap = rmf.createResourceMap(resourceMapId, idMap);
+          assertNotNull(resourceMap);
+          String rdfXml = ResourceMapFactory.getInstance().serializeResourceMap(resourceMap);
+          assertNotNull(rdfXml);
 
-		} catch (Exception e) {
+          Session session = getTestSession();
+          InputStream object = null;
+          SystemMetadata sysmeta = null;
+
+          // save the data objects (data just contains their ID)
+          InputStream dataObject1 = new ByteArrayInputStream(dataId.getValue().getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(dataId, session.getSubject(), dataObject1);
+          MNodeService.getInstance(request).create(session, dataId, dataObject1, sysmeta);
+          // second data file
+          InputStream dataObject2 = new ByteArrayInputStream(dataId2.getValue().getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(dataId2, session.getSubject(), dataObject2);
+          MNodeService.getInstance(request).create(session, dataId2, dataObject2, sysmeta);
+          // metadata file
+          InputStream metadataObject = new ByteArrayInputStream(metadataId.getValue().getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(metadataId, session.getSubject(), metadataObject);
+          MNodeService.getInstance(request).create(session, metadataId, metadataObject, sysmeta);
+
+          // save the ORE object
+          Thread.sleep(10000);
+          object = new ByteArrayInputStream(rdfXml.getBytes("UTF-8"));
+          sysmeta = createSystemMetadata(resourceMapId, session.getSubject(), object);
+          sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("http://www.openarchives.org/ore/terms").getFormatId());
+          Identifier pid = MNodeService.getInstance(request).create(session, resourceMapId, object, sysmeta);
+
+          // get the package we uploaded
+          ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+          format.setValue("application/bagit-097");
+          InputStream bagStream = MNodeService.getInstance(request).getPackage(session, format, pid);
+          File bagFile = File.createTempFile("bagit.", ".zip");
+          IOUtils.copy(bagStream, new FileOutputStream(bagFile));
+          // Check that the resource map is the same
+          String bagPath = bagFile.getAbsolutePath();
+          ZipFile zipFile = new ZipFile(bagPath);
+
+          Enumeration<? extends ZipEntry> entries = zipFile.entries();
+
+          while (entries.hasMoreElements()) {
+            ZipEntry entry = entries.nextElement();
+            // Check if it's the ORE
+            if (entry.getName().contains("testGetOREPackage")) {
+              InputStream stream = zipFile.getInputStream(entry);
+              object.reset();
+              assertTrue(IOUtils.contentEquals(stream, object));
+            }
+            // Check if it's the science metadata
+            else if (entry.getName().contains("meta.1")) {
+              InputStream stream = zipFile.getInputStream(entry);
+              metadataObject.reset();
+              assertTrue(IOUtils.contentEquals(stream, metadataObject));
+            }
+            // Check if it's the first data file
+            else if (entry.getName().contains("data.1")) {
+              InputStream stream = zipFile.getInputStream(entry);
+              dataObject1.reset();
+              assertTrue(IOUtils.contentEquals(stream, dataObject1));
+            }
+            // Check if it's the second data file
+            else if (entry.getName().contains("data.2")) {
+              InputStream stream = zipFile.getInputStream(entry);
+              dataObject2.reset();
+              assertTrue(IOUtils.contentEquals(stream, dataObject2));
+            }
+          }
+          // clean up
+          bagFile.delete();
+          Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
+          Thread.sleep(30000);
+          System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
+          List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
+          assertTrue(oreIds.size() == 1);
+          List<Identifier> oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
+          assertTrue(oreId2.size() == 2);
+        }
+		catch (Exception e) {
 			e.printStackTrace();
 			fail("Unexpected error: " + e.getMessage());
 		}
 	}
-	
-	
-	
+
 	/**
      * Test to publish a package
      */
@@ -1965,7 +2018,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             Thread.sleep(30000);
             List<Identifier> oreId3 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
             assertTrue(oreId3.size() == 1);
-          //publish the package
+            //publish the package
             Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
             // test the ORE lookup
             Thread.sleep(30000);
@@ -1974,7 +2027,6 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             assertTrue(oreIds.size() == 1);
             List<Identifier> oreId2 = MNodeService.getInstance(request).lookupOreFor(session, dataId, true);
             assertTrue(oreId2.size() == 2);
-
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -3849,3 +3901,4 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         return result;
     }
 }
+

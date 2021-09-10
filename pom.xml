@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.ecoinformatics</groupId>
     <artifactId>metacat</artifactId>
-    <version>2.15.0</version>
+    <version>2.15.1</version>
     <name>metacat</name>
     <packaging>war</packaging>
     <url>http://maven.apache.org</url>
@@ -12,7 +12,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <d1_libclient_version>2.3.1</d1_libclient_version>
         <d1_portal_version>2.3.2</d1_portal_version>
-        <metacat_common_version>2.15.0</metacat_common_version>
+        <metacat_common_version>2.15.1</metacat_common_version>
     </properties>
     <repositories>
         <repository>
@@ -64,34 +64,6 @@
 			<artifactId>datamanager</artifactId>
 			<version>1.0.0</version>
 		</dependency>
-    	<dependency>
-    		<groupId>gov.loc</groupId>
-			<artifactId>bagit</artifactId>
-			<version>4.4</version>
-			<type>jar</type>
-			<exclusions>
-				<exclusion>
-					<groupId>xml-apis</groupId>
-					<artifactId>xml-apis</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>org.apache.httpcomponents</groupId>
-					<artifactId>httpclient</artifactId>
-		        </exclusion>
-		        <exclusion>
-		        	<groupId>org.apache.httpcomponents</groupId>
-    				<artifactId>httpmime</artifactId>
-		        </exclusion>
-		        <exclusion>
-					<groupId>commons-codec</groupId>
-					<artifactId>commons-codec</artifactId>
-		        </exclusion>
-		        <exclusion>
-                    <groupId>log4j</groupId>
-                    <artifactId>log4j</artifactId>
-                </exclusion>
-			</exclusions>
-    	</dependency>
     	<dependency>
             <artifactId>d1_portal</artifactId>
             <groupId>org.dataone</groupId>
@@ -341,11 +313,6 @@
 			<version>2.7</version>
 		</dependency>
 		<dependency>
-            <groupId>commons-httpclient</groupId>
-            <artifactId>commons-httpclient</artifactId>
-            <version>3.1</version>
-        </dependency>
-		<dependency>
       		<groupId>org.dspace</groupId>
 			<artifactId>oaicat</artifactId>
 			<version>1.5.48</version>
@@ -467,6 +434,12 @@
                 </exclusion>
             </exclusions>
         </dependency>
+	<dependency>
+		<groupId>org.dataone</groupId>
+		<artifactId>speedbagit</artifactId>
+		<version>1.0.0</version>
+		<type>jar</type>
+	</dependency>
         <dependency>
             <groupId>com.github.jsonld-java</groupId>
             <artifactId>jsonld-java</artifactId>

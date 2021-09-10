@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="2.15.1" />
+	<property name="metacatui-tag" value="2.16.0" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
 	
 	<property environment="env" />
@@ -254,6 +254,7 @@
 	<target name="init" depends="config, build-metacat-common" unless="init.called">
 		
 	    <property name="libdir.mvn" value="lib/maven" />
+		<delete dir="${libdir.mvn}"></delete>
 		<mkdir dir="${libdir.mvn}"/>
 		
 		<path id="base.classpath">

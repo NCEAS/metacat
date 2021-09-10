@@ -23,6 +23,7 @@
 package edu.ucsb.nceas.metacat.dataone;
 
 import java.io.InputStream;
+import java.lang.Integer;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -74,55 +75,57 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.StringUtil;
 
 /**
- * 
+ *
  * Singleton for interacting with the EZID DOI library.
- * Allows DOI minting/initial registration, creating and updating 
+ * Allows DOI minting/initial registration, creating and updating
  * existing DOI registrations.
- * 
+ *
  * @author leinfelder
  */
 public class DOIService {
-    
+
     public static final String DATACITE = "datacite";
 
 	private Log logMetacat = LogFactory.getLog(DOIService.class);
 
 	private boolean doiEnabled = false;
-	
-	private String shoulder = null;
-	
+
+    private HashMap<Integer, String> shoulderMap = null;
+
 	private String ezidUsername = null;
-	
+
 	private String ezidPassword = null;
-	
+
 	private EZIDClient ezid = null;
-	
+
 	private Date lastLogin = null;
-	
+
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 
 	private static DOIService instance = null;
 	
+	private static int PRIMARY_SHOULDER_INDEX = 1;
+
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
-	
+
 	public static DOIService getInstance() {
 		if (instance == null) {
 			instance = new DOIService();
 		}
 		return instance;
 	}
-	
+
 	/**
 	 * Constructor, private for singleton access
 	 */
 	private DOIService() {
-		
+
 		// for DOIs
 		String ezidServiceBaseUrl = null;
-		
+        shoulderMap = new HashMap<Integer, String>();
+
 		try {
             doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
-			shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
 			ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
 			ezidUsername = PropertyService.getProperty("guid.ezid.username");
 			ezidPassword = PropertyService.getProperty("guid.ezid.password");
@@ -130,10 +133,32 @@ public class DOIService {
 			logMetacat.warn("DOI support is not configured at this node.", e);
 			return;
 		}
+
+        boolean moreShoulders = true;
+        int i = PRIMARY_SHOULDER_INDEX;
+        while (moreShoulders) {
+		    try {
+			    String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + i);
+			    if (shoulder != null && !shoulder.trim().equals("")) {
+			        logMetacat.debug("DOIService.constructor - add the shoulder " + shoulder 
+			                            + " with the key " + i + " into the shoulder map. ");
+			        shoulderMap.put(new Integer(i), shoulder);
+			    }
+                i++;
+		    } catch (PropertyNotFoundException e) {
+                moreShoulders = false;
+		    }
+        }
+
+        if (shoulderMap.size() < 1) {
+            logMetacat.warn("DOI support is not configured at this node because no shoulders are configured.");
+            return;
+        }
+
 		ezid = new EZIDClient(ezidServiceBaseUrl);
 		initDataCiteFactories();
 	}
-	
+
 	/*
 	 * Initialize the datacite factory by reading the property guid.ezid.datacite.factories from the metacat.properties file.
 	 */
@@ -158,12 +183,12 @@ public class DOIService {
                         logMetacat.debug("DOIService.initDataCiteFactories - the DataCiteFactory " + factoryClass + " was initialized.");
                     } catch (Exception e) {
                         logMetacat.warn("DOIService.initDataCiteFactories - can't initialize the class " + factoryClass + " since "+e.getMessage());
-                    } 
+                    }
                 }
             }
         }
 	}
-	
+
 	/**
 	 * Make sure we have a current login before making any calls
 	 * @throws EZIDException
@@ -172,21 +197,21 @@ public class DOIService {
 		Date now = Calendar.getInstance().getTime();
 		if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
 			ezid.login(ezidUsername, ezidPassword);
-			lastLogin = now;	
+			lastLogin = now;
 		}
 	}
-	
+
 	/**
 	 * submits DOI metadata information about the object to EZID
 	 * @param sysMeta
 	 * @return
-	 * @throws EZIDException 
-	 * @throws ServiceFailure 
-	 * @throws NotImplemented 
-	 * @throws InterruptedException 
+	 * @throws EZIDException
+	 * @throws ServiceFailure
+	 * @throws NotImplemented
+	 * @throws InterruptedException
 	 */
 	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, EZIDException, NotImplemented, ServiceFailure, InterruptedException {
-				
+
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
 		    boolean identifierIsDOI = false;
@@ -196,17 +221,19 @@ public class DOIService {
 			if(sysMeta.getSeriesId() != null) {
 			    sid = sysMeta.getSeriesId().getValue();
 			}
-            
-			// determine if this DOI identifier is in our configured shoulder
-			if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
-			    identifierIsDOI = true;
-			}
-			// determine if this DOI sid is in our configured shoulder
-            if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
-                sidIsDOI = true;
+
+			// determine if this DOI identifier is in our configured list of shoulders
+            for (String shoulder : shoulderMap.values()) {
+			    if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
+			        identifierIsDOI = true;
+			    }
+			    // determine if this DOI sid is in our configured shoulder
+                if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
+                    sidIsDOI = true;
+                }
             }
-			
-            // only continue if this DOI identifier or sid is in our configured shoulder
+
+            // only continue if this DOI identifier or sid is in our configured shoulder list
 			if(identifierIsDOI || sidIsDOI) {
 	            // finish the other part for the identifier if it is an DOI
 	            if(identifierIsDOI) {
@@ -217,28 +244,28 @@ public class DOIService {
 	                registerDOI(sid, sysMeta);
 	            }
 			}
-			
+
 		}
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Register the metadata for the given identifier. The given identifier can be an SID.
 	 * @param identifier  the given identifier will be registered with the metadata
 	 * @param title  the title will be in the metadata
-	 * @param sysMeta  the system metadata associates with the given id 
+	 * @param sysMeta  the system metadata associates with the given id
 	 * @param creators  the creator will be in the metadata
-	 * @throws ServiceFailure 
-	 * @throws NotImplemented 
-	 * @throws EZIDException 
-	 * @throws InterruptedException 
+	 * @throws ServiceFailure
+	 * @throws NotImplemented
+	 * @throws EZIDException
+	 * @throws InterruptedException
 	 */
 	private void registerDOI(String identifier, SystemMetadata sysMeta) throws InvalidRequest, NotImplemented, ServiceFailure, EZIDException, InterruptedException {
 	    // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
         Node node = MNodeService.getInstance(null).getCapabilities();
-        
+
         // target (URL)
         String target = node.getBaseURL() + "/v1/object/" + identifier;
         String uriTemplate = null;
@@ -258,7 +285,7 @@ public class DOIService {
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
         }
-        
+
         // status and export fields for public/protected data
         String status = InternalProfileValues.UNAVAILABLE.toString();
         String export = InternalProfileValues.NO.toString();
@@ -268,7 +295,7 @@ public class DOIService {
             status = InternalProfileValues.PUBLIC.toString();
             export = InternalProfileValues.YES.toString();
         }
-        
+
         // set the datacite metadata fields
         String dataCiteXML = generateDataCiteXML(identifier, sysMeta);
         metadata.put(DATACITE, dataCiteXML);
@@ -278,19 +305,19 @@ public class DOIService {
 
         // make sure we have a current login
         this.refreshLogin();
-        
+
         // set using the API
         ezid.createOrUpdate(identifier, metadata);
 	}
-	
+
 	/**
 	 * Generate the datacite xml document for the given information.
 	 * This method will look at the registered datacite factories to find a proper one for the given meta data standard.
-	 * If it can't find it, the default factory will be used. 
+	 * If it can't find it, the default factory will be used.
 	 * @param identifier
 	 * @param sysmeta
 	 * @return
-	 * @throws ServiceFailure 
+	 * @throws ServiceFailure
 	 */
 	private String generateDataCiteXML(String identifier, SystemMetadata sysMeta) throws InvalidRequest, ServiceFailure {
 	    Identifier id = new Identifier();
@@ -308,17 +335,17 @@ public class DOIService {
 	/**
 	 * Generate a DOI using the EZID service as configured
 	 * @return
-	 * @throws EZIDException 
-	 * @throws InvalidRequest 
+	 * @throws EZIDException
+	 * @throws InvalidRequest
 	 */
 	public Identifier generateDOI() throws EZIDException, InvalidRequest {
 
-		
+
 		// only continue if we have the feature turned on
 		if (!doiEnabled) {
 			throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
 		}
-		
+
 		// add only the minimal metadata required for this DOI
 		HashMap<String, String> metadata = new HashMap<String, String>();
 		metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
@@ -331,11 +358,16 @@ public class DOIService {
 		// make sure we have a current login
 		this.refreshLogin();
 
+        // Make sure we have a primary shoulder configured (which should enable mint operations)
+        if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
+            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because primary shoulder unconfigured.");
+        }
+
 		// call the EZID service
-		String doi = ezid.mintIdentifier(shoulder, metadata);
+		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
 		Identifier identifier = new Identifier();
 		identifier.setValue(doi);
-		
+
 		return identifier;
 	}
 

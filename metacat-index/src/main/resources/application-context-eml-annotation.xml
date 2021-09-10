@@ -17,7 +17,7 @@
 			<list>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="sem_annotation" />
-					<constructor-arg name="xpath" value="//annotation/valueURI/text()" />
+					<constructor-arg name="xpath" value="//annotation/propertyURI/text() | //annotation/valueURI/text()" />
 					<constructor-arg name="multivalue" value="true" />
 				</bean>
 			</list>

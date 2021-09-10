@@ -35,9 +35,13 @@ import java.io.OutputStreamWriter;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.io.Writer;
+import java.lang.NullPointerException;
 import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -125,6 +129,7 @@ import org.dataone.service.types.v1.Replica;
 import org.dataone.service.types.v1.ReplicationStatus;
 import org.dataone.service.types.v1.Schedule;
 import org.dataone.service.types.v1.Service;
+import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
@@ -138,6 +143,7 @@ import org.dataone.service.types.v1_1.QueryEngineList;
 import org.dataone.service.types.v1_1.QueryField;
 import org.dataone.service.util.Constants;
 import org.dataone.service.util.TypeMarshaller;
+import org.dataone.speedbagit.SpeedBagIt;
 import org.dspace.foresite.OREException;
 import org.dspace.foresite.OREParserException;
 import org.dspace.foresite.ORESerialiserException;
@@ -170,16 +176,13 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
-import edu.ucsb.nceas.metacat.util.DeleteOnCloseFileInputStream;
+import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 import edu.ucsb.nceas.utilities.XMLUtilities;
 import edu.ucsb.nceas.utilities.export.HtmlToPdf;
-import gov.loc.repository.bagit.Bag;
-import gov.loc.repository.bagit.BagFactory;
-import gov.loc.repository.bagit.writer.impl.ZipWriter;
 
 /**
  * Represents Metacat's implementation of the DataONE Member Node 
@@ -1301,6 +1304,7 @@ public class MNodeService extends D1NodeService
         List<String> mnPackageServiceAvailables = null;
         List<String> mnQueryServiceAvailables = null;
         List<String> mnViewServiceAvailables = null;
+        Vector<String> allowedSubmitters = null;
 
         try {
             // get the properties of the node based on configuration information
@@ -1313,6 +1317,7 @@ public class MNodeService extends D1NodeService
             nodeType = NodeType.convert(nodeTypeString);
             nodeSynchronize = new Boolean(Settings.getConfiguration().getString("dataone.nodeSynchronize")).booleanValue();
             nodeReplicate = new Boolean(Settings.getConfiguration().getString("dataone.nodeReplicate")).booleanValue();
+            allowedSubmitters = AuthUtil.getAllowedSubmitters();
 
             // Set the properties of the node based on configuration information and
             // calls to current status methods
@@ -1405,6 +1410,20 @@ public class MNodeService extends D1NodeService
                     sMNStorage.setName("MNStorage");
                     sMNStorage.setVersion(version);
                     sMNStorage.setAvailable(available);
+                    if (allowedSubmitters != null && !allowedSubmitters.isEmpty()) {
+                        ServiceMethodRestriction createRestriction = new ServiceMethodRestriction();
+                        createRestriction.setMethodName("create");
+                        ServiceMethodRestriction updateRestriction = new ServiceMethodRestriction();
+                        updateRestriction.setMethodName("update");
+                        for (int j=0; j<allowedSubmitters.size(); j++) {
+                            Subject allowedSubject = new Subject();
+                            allowedSubject.setValue(allowedSubmitters.elementAt(j));
+                            createRestriction.addSubject(allowedSubject);
+                            updateRestriction.addSubject(allowedSubject);
+                        }
+                        sMNStorage.addRestriction(createRestriction);
+                        sMNStorage.addRestriction(updateRestriction);
+                    }
                     services.addService(sMNStorage);
                 }
             }
@@ -1509,6 +1528,10 @@ public class MNodeService extends D1NodeService
 
         } catch (PropertyNotFoundException pnfe) {
             String msg = "MNodeService.getCapabilities(): " + "property not found: " + pnfe.getMessage();
+            logMetacat.error(msg);
+            throw new ServiceFailure("2162", msg);
+        } catch (MetacatUtilException me) {
+            String msg = "MNodeService.getCapabilities(): " + "can't get the allowed submitters list since " + me.getMessage();
             logMetacat.error(msg);
             throw new ServiceFailure("2162", msg);
         }
@@ -2555,33 +2578,57 @@ public class MNodeService extends D1NodeService
         return retList;
     }
 
+    /**
+     * Exports a data package to disk using the BagIt 0.97 specification.
+     *
+     * The ultimate goal is, for every file being added to the bag,
+     * get an InputStream to it and add it to the SpeedBagIt instance.
+     *
+     * During the export process, a PDF file is generated and included in the bag.
+     * The conversion works by using an XSLT with the EML to transform it into HTML,
+     * which is then converted to a PDF file. During this process the HTML and CSS file are
+     * written to disk, read in by the HtmlToPdf object, and then written back to disk.
+     *
+     * The PDF file and pid-mapping.txt files are both stored in memory throughout the
+     * export process.
+     *
+     * @param session Information about the user performing the request
+     * @param formatId
+     * @param pid The pid of the resource map
+     * @return A stream of a bag
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws InvalidRequest
+     * @throws NotImplemented
+     * @throws NotFound
+     */
 	@Override
 	public InputStream getPackage(Session session, ObjectFormatIdentifier formatId,
 			Identifier pid) throws InvalidToken, ServiceFailure,
 			NotAuthorized, InvalidRequest, NotImplemented, NotFound {
 	    if(formatId == null) {
-	        throw new InvalidRequest("2873", "The format type can't be null in the getpackage method.");
+	        throw new InvalidRequest("2873",  "The format id wasn't specified in the request. " +
+                    "Ensure that  the format id is properly set in the request.");
 	    } else if(!formatId.getValue().equals("application/bagit-097")) {
-	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not supported in the getpackage method");
+	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not a supported format.");
 	    }
 	    String serviceFailureCode = "2871";
 	    Identifier sid = getPIDForSID(pid, serviceFailureCode);
 	    if(sid != null) {
 	        pid = sid;
 	    }
-		InputStream bagInputStream = null;
-		BagFactory bagFactory = new BagFactory();
-		Bag bag = bagFactory.createBag();
-		
-		// track the temp files we use so we can delete them when finished
-		List<File> tempFiles = new ArrayList<File>();
-		
-		// the pids to include in the package
+
+		// The pids of all of the objects in the package
 		List<Identifier> packagePids = new ArrayList<Identifier>();
 		
 		// catch non-D1 service errors and throw as ServiceFailures
+        SpeedBagIt speedBag = null;
 		try {
-			//Create a map of dataone ids and file names
+            // Create a bag that is version 0.97 and has tag files that contain MD5 checksums
+            speedBag = new SpeedBagIt(0.97, "MD5");
+
+            //Create a map of dataone ids and file names
 			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
 			
 			// track the pid-to-file mapping
@@ -2603,12 +2650,12 @@ public class MNodeService extends D1NodeService
 							//Get the system metadata for this metadata object
 							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
 							
-							// include user-friendly metadata
+							// If it's supported metadata, create the PDF file out of it
 							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
 								InputStream metadataStream = this.get(session, metadataID);
 							
 								try {
-									// transform
+									// Set the properties for the XSLT transform
 						            String format = "default";
 
 									DBTransform transformer = new DBTransform();
@@ -2629,7 +2676,6 @@ public class MNodeService extends D1NodeService
 						            params.put("docid", new String[] {localId});
 						            params.put("pid", new String[] {pid.getValue()});
 						            params.put("displaymodule", new String[] {"printall"});
-						            
 						            transformer.transformXMLDocument(
 						                    documentContent , 
 						                    sourceType, 
@@ -2639,45 +2685,58 @@ public class MNodeService extends D1NodeService
 						                    params, 
 						                    null //sessionid
 						                    );
-						            
 						            // finally, get the HTML back
 						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
-						            
-						            // write to temp file with correct css path
+
+						            // Create a temporary directory to store the html + css. This is required for HtmlToPdf
 						            File tmpDir = File.createTempFile("package_", "_dir");
 						            tmpDir.delete();
 						            tmpDir.mkdir();
-						            File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
+
+						            // Create the directory for the CSS. This is required for HtmlToPdf
 						            File cssDir = new File(tmpDir, format);
 						            cssDir.mkdir();
 						            File cssFile = new File(tmpDir, format + "/" + format + ".css");
-						            String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
-						            File pdfFile = new File(tmpDir, pdfFileName);
-						            //File pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
-						            
-						            // put the CSS file in place for the html to find it
-						            String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
-						            IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
-						            
+
+						            // Write the CSS to the file
+                                    String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
+                                    IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
+
+						            // Create the pdf File that HtmlToPdf will write to
+                                    String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
+                                    File pdfFile = new File(tmpDir, pdfFileName);
+                                    pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
+
 						            // write the HTML file
+                                    File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
 						            IOUtils.copy(resultInputStream, new FileOutputStream(htmlFile));
 						            
 						            // convert to PDF
 						            HtmlToPdf.export(htmlFile.getAbsolutePath(), pdfFile.getAbsolutePath());
-						            
-						            //add to the package
-						            bag.addFileToPayload(pdfFile);
-									pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
-						            
-						            // mark for clean up after we are done
-									htmlFile.delete();
-									cssFile.delete();
-									cssDir.delete();
-						            tempFiles.add(tmpDir);
-									tempFiles.add(pdfFile); // delete this first later on
-						            
+
+						            // Now that the PDF file is generated and written to disk,
+                                    // delete the HTML & CSS files
+                                    htmlFile.delete();
+                                    cssFile.delete();
+                                    cssDir.delete();
+
+                                    // Load the PDF file into memory so that it can be deleted from disk
+                                    byte[] pdfMetadata = Files.readAllBytes(Paths.get(pdfFile.getAbsolutePath()));
+                                    InputStream pdfInputStream = new ByteArrayInputStream(pdfMetadata);
+
+                                    // Now that the PDF file has been loaded into memory, delete it from disk
+                                    pdfFile.delete();
+                                    tmpDir.delete();
+
+                                    // Add the pdf to the bag
+                                    speedBag.addFile(pdfInputStream, Paths.get("data/"+ pdfFileName).toString(), false);
+
+                                    // Create a record in the pid mapping file
+                                    pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
+
 								} catch (Exception e) {
-									logMetacat.warn("Could not transform metadata", e);
+									logMetacat.error("There was an error generating the PDF file during a package export. " +
+                                            "Ensure that the package metadata is valid and supported.", e);
 								}
 							}
 
@@ -2689,42 +2748,12 @@ public class MNodeService extends D1NodeService
 								InputStream emlStream = this.get(session, metadataID);
 								parser.parse(emlStream);
 								DataPackage dataPackage = parser.getDataPackage();
-								
-								//Get all the entities in this package and loop through each to extract its ID and file name
-								Entity[] entities = dataPackage.getEntityList();
-								for(Entity entity: entities){
-									try{
-										//Get the file name from the metadata
-										String fileNameFromMetadata = entity.getName();
-										
-										//Get the ecogrid URL from the metadata
-										String ecogridIdentifier = entity.getEntityIdentifier();
-										//Parse the ecogrid URL to get the local id
-										String idFromMetadata = DocumentUtil.getAccessionNumberFromEcogridIdentifier(ecogridIdentifier);
-										
-										//Get the docid and rev pair
-										String docid = DocumentUtil.getDocIdFromString(idFromMetadata);
-										String rev = DocumentUtil.getRevisionStringFromString(idFromMetadata);
-										
-										//Get the GUID
-										String guid = IdentifierManager.getInstance().getGUID(docid, Integer.valueOf(rev));
-										Identifier dataIdentifier = new Identifier();
-										dataIdentifier.setValue(guid);
-										
-										//Add the GUID to our GUID & file name map
-										fileNames.put(dataIdentifier, fileNameFromMetadata);
-									}
-									catch(Exception e){
-										//Prevent just one entity error
-										e.printStackTrace();
-										logMetacat.debug(e.getMessage(), e);
-									}
-								}
+
 							}
 						}
 						catch(Exception e){
 							//Catch errors that would prevent package download
-							logMetacat.debug(e.toString());
+							logMetacat.error(e.toString());
 						}
 					}
 					packagePids.addAll(entries.keySet());
@@ -2736,33 +2765,26 @@ public class MNodeService extends D1NodeService
 				// just the lone pid in this package
 				//packagePids.add(pid);
 			    //throw an invalid request exception
-			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package id (resource map id). Please use a package id instead.");
+			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package " +
+                        "id (resource map id). Please use a package id instead.");
 			}
-			
-			//Create a temp file, then delete it and make a directory with that name
-			File tempDir = File.createTempFile("temp", Long.toString(System.nanoTime()));
-			tempDir.delete();
-			tempDir = new File(tempDir.getPath() + "_dir");
-			tempDir.mkdir();			
-			tempFiles.add(tempDir);
-			File pidMappingFile = new File(tempDir, "pid-mapping.txt");
-			
-			// loop through the package contents
-			for (Identifier entryPid: packagePids) {
+
+            /**
+             * Up to this point, the only file that has been added to the bag is the metadata pdf file.
+             * The next step is looping over each object in the package, determining its filename,
+             * getting an InputStream to it, and adding it to the bag.
+             */
+            Set<Identifier> packagePidsUnique = new HashSet<>(packagePids);
+			for (Identifier entryPid: packagePidsUnique) {
 				//Get the system metadata for each item
 				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
 				
 				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
 				String fileName = null;
-				
+
 				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
 				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
 				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-
-				if (fileNames.containsKey(entryPid)){
-					//Let's use the file name and extension from the metadata is we have it
-					fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + fileNames.get(entryPid).replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
 				
 				// ensure there is a file extension for the object
 				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
@@ -2773,44 +2795,15 @@ public class MNodeService extends D1NodeService
 					fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
 				}
 				
-		        //Create a new file for this item and add to the list
-				File tempFile = new File(tempDir, fileName);
-				tempFiles.add(tempFile);
-				
-				InputStream entryInputStream = this.get(session, entryPid);			
-				IOUtils.copy(entryInputStream, new FileOutputStream(tempFile));
-				bag.addFileToPayload(tempFile);
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + tempFile.getName() + "\n");
+		        // Add the stream of the file to the bag object & write to the pid mapping file
+				InputStream entryInputStream = this.get(session, entryPid);
+                speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+				pidMapping.append(entryPid.getValue() + "\t" + "data/" + fileName + "\n");
 			}
 			
-			//add the the pid to data file map
-			IOUtils.write(pidMapping.toString(), new FileOutputStream(pidMappingFile));
-			bag.addFileAsTag(pidMappingFile);
-			tempFiles.add(pidMappingFile);
-			
-			bag = bag.makeComplete();
-			
-			///Now create the zip file
-			//Use the pid as the file name prefix, replacing all non-word characters
-			String zipName = pid.getValue().replaceAll("\\W", "_");
-			
-			File bagFile = new File(tempDir, zipName+".zip");
-			
-			bag.setFile(bagFile);
-			ZipWriter zipWriter = new ZipWriter(bagFactory);
-			bag.write(zipWriter, bagFile);
-			bagFile = bag.getFile();
-			// use custom FIS that will delete the file when closed
-			bagInputStream = new DeleteOnCloseFileInputStream(bagFile);
-			// also mark for deletion on shutdown in case the stream is never closed
-			bagFile.deleteOnExit();
-			tempFiles.add(bagFile);
-			
-			// clean up other temp files
-			for (int i=tempFiles.size()-1; i>=0; i--){
-				tempFiles.get(i).delete();
-			}
-			
+			// Get a stream to the pid mapping file and add it as a tag file, in the bag root
+            ByteArrayInputStream pidFile = new ByteArrayInputStream(pidMapping.toString().getBytes(StandardCharsets.UTF_8));
+            speedBag.addFile(pidFile, "pid-mapping.txt", true);
 		} catch (IOException e) {
 			// report as service failure
 		    e.printStackTrace();
@@ -2832,14 +2825,37 @@ public class MNodeService extends D1NodeService
 		} catch (OREParserException e) {
 			// report as service failure
 		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+			ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                    "error while processing the resource map. Ensure that the resource map " +
+                    "for the package is valid. " + e.getMessage());
 			sf.initCause(e);
 			throw sf;
-		}
-		
-		return bagInputStream;
+		} catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                    "error while adding a file to the archive. Please ensure that the " +
+                    "checksumming algorithm is supported." + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
+
+        try {
+            return speedBag.stream();
+        } catch (NullPointerException | IOException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                    "error while streaming the downloaded data package. " + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+            ServiceFailure sf = new ServiceFailure("1030", "While creating the package " +
+                    "download, an unsupported checksumming algorithm was encountered. " + e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
 	}
-	
+
 	 /**
 	   * Archives an object, where the object is either a 
 	   * data object or a science metadata object.
