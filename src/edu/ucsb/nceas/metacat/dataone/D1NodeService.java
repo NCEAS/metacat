@@ -2586,6 +2586,52 @@ public abstract class D1NodeService {
   }
   
   /**
+   * Check if the access control was modified between two system metadata objects. It compares two parts:
+   * RightsHolder and AccessPolicy
+   * @param originalSysmeta  the original system metadata object
+   * @param newSysmeta  the new system metadata object
+   * @return true if the access control was modified; false otherwise.
+   */
+  public static boolean isAccessControlDirty(SystemMetadata originalSysmeta, SystemMetadata newSysmeta) {
+      boolean dirty = true;
+      if (originalSysmeta == null && newSysmeta == null) {
+          dirty = false;
+          logMetacat.debug("D1NodeService.isAccessControlDirty - is access control dirty?(both system metadata objects are null) - " + dirty);
+      } else if (originalSysmeta != null && newSysmeta != null) {
+          //first to check if the rights holder was changed.
+          Subject originalRightsHolder = originalSysmeta.getRightsHolder();
+          Subject newRigthsHolder = newSysmeta.getRightsHolder();
+          if (originalRightsHolder == null && newRigthsHolder == null) {
+              dirty = false;
+              logMetacat.debug("D1NodeService.isAccessControlDirty - is the right holder dirty?(both right holder objects are null) - " + dirty);
+          } else if (originalRightsHolder != null && newRigthsHolder != null) {
+              if (originalRightsHolder.compareTo(newRigthsHolder) == 0) {
+                  dirty = false;
+              } else {
+                  dirty = true;
+              }
+              logMetacat.debug("D1NodeService.isAccessControlDirty - is the right holder dirty?(both right holder objects are not null) - " + dirty
+                                + " since the original right holder is " + originalRightsHolder.getValue() + 
+                                " and the new rights holder is  " + newRigthsHolder.getValue());
+          } else {
+              dirty = true;
+              logMetacat.debug("D1NodeService.isAccessControlDirty - is the rights holder dirty?(one rights holder object is null; another is not) - " + dirty);
+          }
+          if (!dirty) {
+              //rights holder is not changed, we need to compare the access policy
+              boolean isAccessPolicyEqual = equals(originalSysmeta.getAccessPolicy(), newSysmeta.getAccessPolicy());
+              logMetacat.debug("D1NodeService.isAccessControlDirty - do the access policies equal?(we need to compare access policy since the rights hloders are same) - " + isAccessPolicyEqual);
+              dirty = !isAccessPolicyEqual;
+          }
+          logMetacat.debug("D1NodeService.isAccessControlDirty - is access control dirty?(both system metadata objects are not null) - " + dirty);
+      } else {
+          dirty = true;
+          logMetacat.debug("D1NodeService.isAccessControlDirty - is access control dirty?(one system metadata object is null; another is not) - " + dirty);
+      }
+      return dirty;
+  }
+  
+  /**
    * Compare two AccessPolicy objects
    * @param ap1
    * @param ap2
@@ -2652,6 +2698,7 @@ public abstract class D1NodeService {
               }
           }
       }
+      logMetacat.debug("D1NodeService.equals - if the two access policy object equal? - " + equal);
       return equal;
   }
   
