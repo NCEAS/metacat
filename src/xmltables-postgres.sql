@@ -325,6 +325,8 @@ CREATE TABLE systemMetadata (
 CREATE INDEX systemMetadata_series_id on systemMetadata(series_id);
 CREATE INDEX systemMetadata_date_uploaded on systemMetadata(date_uploaded);
 CREATE INDEX systemMetadata_date_modified on systemMetadata(date_modified);
+CREATE INDEX systemMetadata_object_format on systemMetadata(object_format);
+CREATE INDEX systemMetadata_archived on systemMetadata(archived);
 
 /*
  * Table used to store the properties for media types. They are part of the system metadata. But a media type

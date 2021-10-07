@@ -107,6 +107,9 @@ import org.dataone.service.types.v1.ObjectList;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Person;
 import org.dataone.service.types.v1.ReplicationPolicy;
+import org.dataone.service.types.v1.Service;
+import org.dataone.service.types.v1.ServiceMethodRestriction;
+import org.dataone.service.types.v1.Services;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v1.SubjectInfo;
@@ -1281,15 +1284,68 @@ public class MNodeServiceTest extends D1NodeServiceTest {
       }
   }
 
-  public void testGetCapabilities() {
+  public void testGetCapabilities() throws Exception {
       printTestHeader("testGetCapabilities");
+      String originAllowedSubmitters = PropertyService.getInstance().getProperty("auth.allowedSubmitters");
     try {
       Node node = MNodeService.getInstance(request).getCapabilities();
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       TypeMarshaller.marshalTypeToOutputStream(node, baos);
       assertNotNull(node);
-      // TODO: should probably test other parts of the node information
-      
+      // check the service restriction. First, there is no any service restrictions
+      Services services = node.getServices();
+      List<Service> list = services.getServiceList();
+      boolean hasV1MNStorage = false;
+      boolean hasV2MNStorage = false;
+      for (Service service : list) {
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v1")) {
+              hasV1MNStorage = true;
+              List<ServiceMethodRestriction> restrictions = service.getRestrictionList();
+              assertTrue(restrictions == null || restrictions.isEmpty());
+          }
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v2")) {
+              hasV2MNStorage = true;
+              List<ServiceMethodRestriction> restrictions = service.getRestrictionList();
+              assertTrue(restrictions == null || restrictions.isEmpty());
+          }
+      }
+      assertTrue(hasV1MNStorage);
+      assertTrue(hasV2MNStorage);
+      // check the service restriction. Second, there are some service restrctions
+      PropertyService.getInstance().setPropertyNoPersist("auth.allowedSubmitters", 
+                      "http\\://orcid.org/0000-0002-1209-5268:cn=parc,o=PARC,dc=ecoinformatics,dc=org");
+      AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
+      node = MNodeService.getInstance(request).getCapabilities();
+      services = node.getServices();
+      list = services.getServiceList();
+      hasV1MNStorage = false;
+      hasV2MNStorage = false;
+      for (Service service : list) {
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v1")) {
+              hasV1MNStorage = true;
+              ServiceMethodRestriction restriction1 = service.getRestriction(0);
+              assertTrue(restriction1.getMethodName().equals("create"));
+              assertTrue(restriction1.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction1.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+              ServiceMethodRestriction restriction2 = service.getRestriction(1);
+              assertTrue(restriction2.getMethodName().equals("update"));
+              assertTrue(restriction2.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction2.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+          }
+          if (service.getName().equals("MNStorage") && service.getVersion().equals("v2")) {
+              hasV2MNStorage = true;
+              ServiceMethodRestriction restriction1 = service.getRestriction(0);
+              assertTrue(restriction1.getMethodName().equals("create"));
+              assertTrue(restriction1.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction1.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+              ServiceMethodRestriction restriction2 = service.getRestriction(1);
+              assertTrue(restriction2.getMethodName().equals("update"));
+              assertTrue(restriction2.getSubject(0).getValue().equals("http://orcid.org/0000-0002-1209-5268"));
+              assertTrue(restriction2.getSubject(1).getValue().equals("cn=parc,o=PARC,dc=ecoinformatics,dc=org"));
+          }
+      }
+      assertTrue(hasV1MNStorage);
+      assertTrue(hasV2MNStorage);
     } catch (MarshallingException e) {
         e.printStackTrace();
         fail("The node instance couldn't be parsed correctly:" + e.getMessage());
@@ -1302,6 +1358,9 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         e.printStackTrace();
         fail("Probably not yet implemented: " + e.getMessage());
         
+    } finally {
+        PropertyService.getInstance().setPropertyNoPersist("auth.allowedSubmitters", originAllowedSubmitters);
+        AuthUtil.populateAllowedSubmitters();//make the allowedSubimtters effective
     }
     
   }

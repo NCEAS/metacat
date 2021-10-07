@@ -66,9 +66,9 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
  *
  */
 public class RegisterDOITest extends D1NodeServiceTest {
-    private static final int MAX_TIMES = 50;
-    private static final int SLEEP_TIME = 3000;
-	private static final String EMLFILEPATH = "test/tao.14563.1.xml";
+    public static final int MAX_TIMES = 50;
+    public static final int SLEEP_TIME = 3000;
+	public static final String EMLFILEPATH = "test/tao.14563.1.xml";
 	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
 	
 	/**

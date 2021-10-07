@@ -28,6 +28,15 @@
 				<ref bean="schema_org_geoShape_box_west" />
 				<ref bean="schema_org_geoShape_box_north" />
 				<ref bean="schema_org_geoShape_box_east" />
+				<ref bean="schema_org_geohash_1" />
+				<ref bean="schema_org_geohash_2" />
+				<ref bean="schema_org_geohash_3" />
+				<ref bean="schema_org_geohash_4" />
+				<ref bean="schema_org_geohash_5" />
+				<ref bean="schema_org_geohash_6" />
+				<ref bean="schema_org_geohash_7" />
+				<ref bean="schema_org_geohash_8" />
+				<ref bean="schema_org_geohash_9" />
 				<ref bean="schema_org_creator_last_name" />
 				<ref bean="schema_org_prov_hadDerivation" />
 				<ref bean="schema_org_prov_instanceOfClass" />
@@ -42,6 +51,7 @@
 				<ref bean="schema_org_variableMeasured" />
 				<ref bean="schema_org_version" />
 				<ref bean="schema_org_url" />
+				<ref bean="schema_org_fullText" />
 			</list>
 		</property>
 	</bean>

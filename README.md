@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.15.0 Release
+Version: 2.15.1 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,19 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.15.1
+New features and bugs fixed in this release:
+* Metacat hangs with excessive thread counts
+* Support multiple DOI shoulders
+* Update EML Semantic Annotation indexing to include and expand property URIs
+* MNodeService.getPackage() takes too long for large packages
+* Geohashes, text fields not being indexed for schema.org documents
+* Expand elements covered by EML's attribute index fields beyond just dataTable
+* EML to HTML/PDF is broken in the getPackage() method
+* Have MNCore.getCapabilities() report on auth.allowSubmitters parameter setting
+* GetPackage API doesn't work from R on Windows 
+* Add new indexes for column archvied and object_format in the systemmetadata table
 
 ### Release Notes for 2.15.0
 New features and bugs fixed in this release:

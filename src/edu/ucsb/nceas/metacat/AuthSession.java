@@ -27,12 +27,16 @@
 package edu.ucsb.nceas.metacat;
 
 import java.net.ConnectException;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.servlet.http.HttpSession;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.collections4.map.LRUMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -52,6 +56,7 @@ public class AuthSession {
 	private HttpSession session = null;
 	private AuthInterface authService = null;
 	private String statusMessage = null;
+	private Map<String, String[]> synchronizedGroupsCacheMap = null;
 	private static Log logMetacat = LogFactory.getLog(AuthSession.class);
 
 	/**
@@ -71,6 +76,25 @@ public class AuthSession {
         }
 		this.authService = (AuthInterface) createObject(authClass);
 	}
+	
+	/**
+	 * Constructor with cached group information for users.
+	 * @param groupCacheSize  the size of the LRUMap map
+	 * @throws InstantiationException
+	 * @throws IllegalAccessException
+	 * @throws ClassNotFoundException
+	 */
+	public AuthSession(int groupCacheSize) throws InstantiationException, IllegalAccessException, ClassNotFoundException {
+        try {
+            this.authClass = PropertyService.getProperty("auth.class");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.error("AuthSession.constructor - " + e.getMessage());
+        }
+        this.authService = (AuthInterface) createObject(authClass);
+        LRUMap<String, String[]> LRUMap = new LRUMap<String, String[]>(groupCacheSize);
+        synchronizedGroupsCacheMap = Collections.synchronizedMap(LRUMap);
+    }
+	
 
 	/**
 	 * Get the new session
@@ -287,16 +311,33 @@ public class AuthSession {
 	 * @return null if no groups were found for the userDN
 	 */
 	public String[] getGroups(String logInUserName, String logInUserPassword, String userDN) throws Exception{
-	    String[][] groupsWithDescription = authService.getGroups(logInUserName,
-	            logInUserPassword, userDN);
-        String groups[] = null;
-        if(groupsWithDescription != null) {
-            groups = new String[groupsWithDescription.length];
-            for (int i = 0; i < groupsWithDescription.length; i++) {
-                groups[i] = groupsWithDescription[i][0];
-                logMetacat.debug("AuthSession.getGroups - found that user "+userDN+" is the member of the group "+groups[i]);
-            }
-        }
+	    String groups[] = null;
+	    boolean lookUpLDAP = true;
+	    if (synchronizedGroupsCacheMap != null) {
+	        if (synchronizedGroupsCacheMap.containsKey(userDN)) {
+	            groups = synchronizedGroupsCacheMap.get(userDN);
+	            lookUpLDAP = false; //we got the group information, so will skip the process looking up the ldap server
+	            logMetacat.debug("AuthSession.getGroups - get the group information for the user " + userDN +
+	                    " from the cache and it has groups - " + Arrays.toString(groups));
+	        }
+	    }
+	    if (lookUpLDAP) {
+	        String[][] groupsWithDescription = authService.getGroups(logInUserName,
+	                logInUserPassword, userDN);
+	        if(groupsWithDescription != null) {
+	            groups = new String[groupsWithDescription.length];
+	            for (int i = 0; i < groupsWithDescription.length; i++) {
+	                groups[i] = groupsWithDescription[i][0];
+	                logMetacat.debug("AuthSession.getGroups - found that user "+userDN+" is the member of the group "+groups[i]);
+	            }
+	        }
+	        if (synchronizedGroupsCacheMap != null) {
+	            //cache is enabled, so Metacat puts the group information to the map
+	            synchronizedGroupsCacheMap.put(userDN, groups);
+	            logMetacat.debug("AuthSession.getGroups - Metacat got the group information for the user " + userDN + " from LDAP and put " + 
+	                             Arrays.toString(groups) + " into the cache." );
+	        }
+	    }
         return groups;
 	}
 
