@@ -2698,7 +2698,7 @@ public abstract class D1NodeService {
               }
           }
       }
-      logMetacat.debug("D1NodeService.equals - if the two access policy object equal? - " + equal);
+      logMetacat.debug("D1NodeService.equals - does the two access policy object equal? - " + equal);
       return equal;
   }
   
