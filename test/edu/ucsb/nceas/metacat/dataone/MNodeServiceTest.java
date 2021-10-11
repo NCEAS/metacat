@@ -214,6 +214,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testAllowList"));
     suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
+    suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
     return suite;
     
   }
@@ -796,6 +797,23 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     } catch (Exception ee) {
         assertTrue( ee instanceof NotAuthorized);
     }
+     
+     //the write user fails to update the object since it modified the rights holder (need the change permission)
+     guid21 = new Identifier();
+     guid21.setValue("testUpdatewithAccessChange21." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid21, session.getSubject(), object);
+     updatedSysMeta.getAccessPolicy().addAllow(writeRule);
+     updatedSysMeta.getAccessPolicy().addAllow(changeRule);
+     Subject newRightsHolder = new Subject();
+     newRightsHolder.setValue("foo");
+     updatedSysMeta.setRightsHolder(newRightsHolder);
+     try {
+         MNodeService.getInstance(request).update(writeSession, guid20, object, guid21, updatedSysMeta);
+         fail("The write-permission-only user can't change the rights holder");
+    } catch (Exception ee) {
+        assertTrue( ee instanceof NotAuthorized);
+    }
     
      //the write user can update the object without modifying access rules
      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
@@ -809,7 +827,17 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      guid22.setValue("testUpdatewithAccessChange3." + System.currentTimeMillis());
      object = new ByteArrayInputStream("test".getBytes("UTF-8"));
      updatedSysMeta = createSystemMetadata(guid22, session.getSubject(), object);
+     updatedSysMeta.getAccessPolicy().addAllow(changeRule);
      MNodeService.getInstance(request).update(changeSession, guid21, object, guid22, updatedSysMeta);
+     
+     //the change user can update the rights holder
+     Identifier guid23 = new Identifier();
+     guid23.setValue("testUpdatewithAccessChange4." + System.currentTimeMillis());
+     object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+     updatedSysMeta = createSystemMetadata(guid23, session.getSubject(), object);
+     updatedSysMeta.getAccessPolicy().addAllow(changeRule);
+     updatedSysMeta.setRightsHolder(newRightsHolder);
+     MNodeService.getInstance(request).update(changeSession, guid22, object, guid23, updatedSysMeta);
      
      //test update an object with modified authoritative member node
      guid.setValue("testUpdate2." + System.currentTimeMillis());
@@ -1949,7 +1977,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // clean up
           bagFile.delete();
           Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-          Thread.sleep(30000);
+          Thread.sleep(50000);
           System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
           List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
           assertTrue(oreIds.size() == 1);
@@ -2869,6 +2897,145 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         } catch (Exception e) {
             assertTrue(e instanceof InvalidRequest);
         }
+    }
+    
+    /**
+     * Test the updateSystemmetadata method by users with different permission
+     * @throws Exception
+     */
+    public void testUpdateSystemMetadataPermission() throws Exception {
+        Subject read = new Subject();
+        read.setValue("Read");
+        Session readSession = new Session();
+        readSession.setSubject(read);
+        AccessRule readRule = new AccessRule();
+        readRule.addPermission(Permission.READ);
+        readRule.addSubject(read);
+        
+        Subject write = new Subject();
+        write.setValue("Write");
+        Session writeSession = new Session();
+        writeSession.setSubject(write);
+        AccessRule writeRule = new AccessRule();
+        writeRule.addPermission(Permission.WRITE);
+        writeRule.addSubject(write);
+        
+        Subject change = new Subject();
+        change.setValue("Change");
+        Session changeSession = new Session();
+        changeSession.setSubject(change);
+        AccessRule changeRule = new AccessRule();
+        changeRule.addPermission(Permission.CHANGE_PERMISSION);
+        changeRule.addSubject(change);
+        
+        Subject rightsHolder = new Subject();
+        rightsHolder.setValue("rightsHolder");
+        Subject newRightsHolder = new Subject();
+        newRightsHolder.setValue("newRightsHolder");
+
+        String str1 = "object1";
+        Thread.sleep(1000);
+        //insert test documents with a series id
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue(generateDocumentId());
+        InputStream object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        sysmeta.setRightsHolder(rightsHolder);
+        AccessPolicy policy = new AccessPolicy();
+        policy.addAllow(readRule);
+        policy.addAllow(writeRule);
+        policy.addAllow(changeRule);
+        sysmeta.setAccessPolicy(policy);
+        MNodeService.getInstance(request).create(session, guid, object1, sysmeta);
+        SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+       
+        //Read permission user can't update system metadata
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(readSession, guid, sysmeta);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+        
+        //Write permission user can't update the right holder
+        object1 = new ByteArrayInputStream(str1.getBytes("UTF-8"));
+        SystemMetadata newSysmeta = createSystemMetadata(guid, session.getSubject(), object1);
+        newSysmeta.setRightsHolder(newRightsHolder);
+        AccessPolicy policy1 = new AccessPolicy();
+        policy1.addAllow(readRule);
+        policy1.addAllow(writeRule);
+        policy1.addAllow(changeRule);
+        newSysmeta.setAccessPolicy(policy1);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(writeSession, guid, newSysmeta);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+        
+        //Write permission user can't update the access policy
+        newSysmeta.setRightsHolder(rightsHolder);
+        AccessPolicy policy2 = new AccessPolicy();
+        policy2.addAllow(readRule);
+        newSysmeta.setAccessPolicy(policy2);
+        try {
+            MNodeService.getInstance(request).updateSystemMetadata(writeSession, guid, newSysmeta);
+            fail("We shouldn't get there");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //Write permission user can update file name
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+        newSysmeta.setRightsHolder(rightsHolder);
+        newSysmeta.setAccessPolicy(policy);
+        newSysmeta.setFileName("foo");
+        newSysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        newSysmeta.setDateUploaded(readSys.getDateUploaded());
+        MNodeService.getInstance(request).updateSystemMetadata(writeSession, guid, newSysmeta);
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getFileName().equals("foo"));
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+        assertTrue(readSys.getRightsHolder().getValue().equals("rightsHolder"));
+        
+        //Change permission user can update the right holder
+        newSysmeta.setRightsHolder(newRightsHolder);
+        newSysmeta.setAccessPolicy(policy);
+        newSysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        MNodeService.getInstance(request).updateSystemMetadata(changeSession, guid, newSysmeta);
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getRightsHolder().getValue().equals("newRightsHolder"));
+        assertTrue(readSys.getFileName().equals("foo"));
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 3);
+        
+        //Change permission user can update the access policy
+        policy2 = new AccessPolicy();
+        policy2.addAllow(readRule);
+        policy2.addAllow(changeRule);
+        newSysmeta.setAccessPolicy(policy2);
+        newSysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        MNodeService.getInstance(request).updateSystemMetadata(changeSession, guid, newSysmeta);
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getRightsHolder().getValue().equals("newRightsHolder"));
+        assertTrue(readSys.getFileName().equals("foo"));
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 2);
+        
+        //change permission user can update file name
+        newSysmeta.setFileName("newfoo");
+        newSysmeta.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        MNodeService.getInstance(request).updateSystemMetadata(changeSession, guid, newSysmeta);
+        readSys = MNodeService.getInstance(request).getSystemMetadata(readSession, guid);
+        assertTrue(readSys.getFileName().equals("newfoo"));
+        assertTrue(readSys.getRightsHolder().getValue().equals("newRightsHolder"));
+        assertTrue(readSys.getAccessPolicy().sizeAllowList() == 2);
     }
     
     public void testUpdateObsoletesAndObsoletedBy() throws Exception {
