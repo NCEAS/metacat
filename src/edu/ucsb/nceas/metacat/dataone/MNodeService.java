@@ -498,7 +498,7 @@ public class MNodeService extends D1NodeService
             try {
                 authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
                 //now the user has the write the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
-                if (!D1NodeService.equals(sysmeta.getAccessPolicy(), existingSysMeta.getAccessPolicy())) {
+                if (D1NodeService.isAccessControlDirty(sysmeta, existingSysMeta)) {
                     throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
                 }
                 allowed = true;
@@ -2956,13 +2956,25 @@ public class MNodeService extends D1NodeService
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
 	          }
+	          D1AuthHelper authDel = null;
 	          try {
-                  D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861","4868");
+                  authDel = new D1AuthHelper(request, pid, "4861","4868");
                   authDel.doUpdateAuth(session, currentSysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
               } catch(ServiceFailure e) {
                   throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
               } catch(NotAuthorized e) {
-                  throw new NotAuthorized("4861", "Can't update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+                  //the user doesn't have the change permission. However, if it has the write permission and doesn't modify the access rules, Metacat still allows it to update the system metadata
+                  try {
+                      authDel.doUpdateAuth(session, currentSysmeta, Permission.WRITE, this.getCurrentNodeId());
+                      //now the user has the write the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
+                      if (D1NodeService.isAccessControlDirty(sysmeta, currentSysmeta)) {
+                          throw new NotAuthorized("4861", "Can't update the system metadata of the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
+                      }
+                  } catch(ServiceFailure ee) {
+                      throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metadata the object with id " + pid.getValue() + " since " + ee.getDescription());
+                  } catch(NotAuthorized ee) {
+                      throw new NotAuthorized("4861", "Can't update the system metadata of object with id " + pid.getValue() + " since " + ee.getDescription());
+                  }
               }      
 	          Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
 	          Date commingModiDate = sysmeta.getDateSysMetadataModified();
