@@ -304,7 +304,8 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testIsAuthorized(PISCOManager, id1,Permission.READ,true); 
         testIsAuthorized(nullSession, id1,Permission.READ,true); 
         
-        //7. Test the updateSystemMetadata (needs change permission) (the public and submitter has the read permission and the knb-admin group has write permission)
+        //7. Test the updateSystemMetadata (needs change permission if the access control changed; otherwise the write permssion is enough) 
+        //(the public and submitter has the read permission and the knb-admin group has write permission)
         //add a new policy that pisco group and submitter has the change permission, and third user has the read permission
         AccessRule rule4= new AccessRule();
         rule4.addPermission(Permission.CHANGE_PERMISSION);
@@ -334,7 +335,7 @@ public class MNodeAccessControlTest extends D1NodeServiceTest {
         testUpdateSystemmetadata(publicSession, id1, sysmeta, false);
         testUpdateSystemmetadata(submitter, id1, sysmeta, true);
         testUpdateSystemmetadata(PISCOManager, id1, sysmeta, true);
-        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, false);
+        testUpdateSystemmetadata(KNBadmin, id1, sysmeta, true);
         testUpdateSystemmetadata(rightsHolderSession, id1, sysmeta, true);
         testUpdateSystemmetadata(getCNSession(), id1, sysmeta, true);
         testUpdateSystemmetadata(getMNSession(), id1, sysmeta, true);
