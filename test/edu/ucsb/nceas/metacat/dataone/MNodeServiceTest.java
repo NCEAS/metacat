@@ -4027,6 +4027,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(!result.next());
         result.close();
 
+        Thread.sleep(5000);
         Identifier guid8 = new Identifier();
         guid8.setValue("isoTestCreateAndUpdateEventLog2." + System.currentTimeMillis());
         object = new FileInputStream(new File("test/isoTestNodc1.xml"));
