@@ -1977,7 +1977,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // clean up
           bagFile.delete();
           Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-          Thread.sleep(50000);
+          Thread.sleep(60000);
           System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
           List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
           assertTrue(oreIds.size() == 1);
@@ -4027,7 +4027,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         assertTrue(!result.next());
         result.close();
 
-        Thread.sleep(5000);
+        Thread.sleep(10000);
         Identifier guid8 = new Identifier();
         guid8.setValue("isoTestCreateAndUpdateEventLog2." + System.currentTimeMillis());
         object = new FileInputStream(new File("test/isoTestNodc1.xml"));
