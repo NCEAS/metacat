@@ -2108,7 +2108,7 @@ public class MNodeService extends D1NodeService
 			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
 			NotFound {
         Set<Subject> subjects = getQuerySubjects(session);
-        boolean isMNadmin = isMNAdminQuery(session);
+        boolean isMNadmin = isMNOrCNAdminQuery(session);
 		if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
@@ -2170,7 +2170,7 @@ public class MNodeService extends D1NodeService
     public InputStream postQuery(Session session, String engine, HashMap<String, String[]> params) throws InvalidToken,
             ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
         Set<Subject> subjects = getQuerySubjects(session);
-        boolean isMNadmin = isMNAdminQuery(session);
+        boolean isMNadmin = isMNOrCNAdminQuery(session);
         if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
@@ -2204,15 +2204,18 @@ public class MNodeService extends D1NodeService
     }
     
   /*
-   * Determine if the given session is a local admin subject.
+   * Determine if the given session is a local admin or cn subject.
    */
-    private boolean isMNAdminQuery(Session session) throws ServiceFailure {
+    private boolean isMNOrCNAdminQuery(Session session) throws ServiceFailure {
         boolean isMNadmin= false;
         if (session != null && session.getSubject() != null) {
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
-            if(authDel.isLocalMNAdmin(session)) {
-                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+            try {
+                authDel.doAdminAuthorization(session);
+                logMetacat.debug("MNodeService.isMNOrCNAdminQuery - this is a mn/cn admin session, it will bypass the access control rules.");
                 isMNadmin=true;//bypass access rules since it is the admin
+            } catch (NotAuthorized e) {
+                logMetacat.debug("MNodeService.isMNOrCNAdminQuery - this is NOT a mn/cn admin session, it can't bypass the access control rules.");
             }
         }
         return isMNadmin;
