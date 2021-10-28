@@ -129,6 +129,8 @@ public class D1NodeServiceTest extends MCTestCase {
 		MockReplicationMNode mNode = new MockReplicationMNode("http://replication.node.com");
 		nodeLocator.putNode(nodeRef, mNode);
 		D1Client.setNodeLocator(nodeLocator );
+		D1Node node = D1Client.getCN();//call this method can clear the default cn
+		System.out.println("in the D1NodeServiceTest set up................. the base url is for cn is " + node.getNodeBaseServiceUrl());
     	
     }
 
@@ -141,8 +143,23 @@ public class D1NodeServiceTest extends MCTestCase {
 	}
 	
 	public void testExpandRighsHolder() throws Exception {
-	      // set back to force it to use defaults
-	       D1Client.setNodeLocator(null);
+	    printTestHeader("testExpandRighsHolder");
+	        // set back to force it to use defaults
+	        NodeLocator nodeLocator1 = new NodeLocator() {
+               @Override
+               public D1Node getCNode() throws ClientSideException {
+                   D1Node node = null;
+                   try {
+                       node = D1Client.getCN("https://cn.dataone.org/cn");
+                   } catch (Exception e) {
+                       throw new ClientSideException(e.getMessage());
+                   }
+                   return node;
+               }
+           };
+           D1Client.setNodeLocator(nodeLocator1);
+           D1Node node = D1Client.getCN();//call this method can clear the mock cn
+           System.out.println("in the testExpandRighsHolder, ---the base url is for cn is " + node.getNodeBaseServiceUrl());
 	       Subject rightsHolder = new Subject();
 	       rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
 	       Subject user = new Subject();
@@ -313,6 +330,7 @@ public class D1NodeServiceTest extends MCTestCase {
 				break;
 			}
 		}
+		System.out.println("the subject " + subject.getValue() + " was created for cn session----------------------- ");
 		session.setSubject(subject);
 		return session;
 
