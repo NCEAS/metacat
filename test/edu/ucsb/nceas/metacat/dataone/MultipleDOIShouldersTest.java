@@ -38,6 +38,7 @@ import org.junit.Before;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOITest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;

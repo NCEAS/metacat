@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.dataone;
+package edu.ucsb.nceas.metacat.doi.ezid;
 
 import java.io.InputStream;
 import java.lang.Integer;
@@ -66,6 +66,7 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.DefaultDataCiteFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -82,11 +83,11 @@ import edu.ucsb.nceas.utilities.StringUtil;
  *
  * @author leinfelder
  */
-public class DOIService {
+public class EzidDOIService {
 
     public static final String DATACITE = "datacite";
 
-	private Log logMetacat = LogFactory.getLog(DOIService.class);
+	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
 	private boolean doiEnabled = false;
 
@@ -102,15 +103,15 @@ public class DOIService {
 
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 
-	private static DOIService instance = null;
+	private static EzidDOIService instance = null;
 	
 	private static int PRIMARY_SHOULDER_INDEX = 1;
 
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
-	public static DOIService getInstance() {
+	public static EzidDOIService getInstance() {
 		if (instance == null) {
-			instance = new DOIService();
+			instance = new EzidDOIService();
 		}
 		return instance;
 	}
@@ -118,7 +119,7 @@ public class DOIService {
 	/**
 	 * Constructor, private for singleton access
 	 */
-	private DOIService() {
+	private EzidDOIService() {
 
 		// for DOIs
 		String ezidServiceBaseUrl = null;

@@ -170,6 +170,7 @@ import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStrea
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
@@ -707,7 +708,7 @@ public class MNodeService extends D1NodeService
 
             // attempt to register the identifier - it checks if it is a doi
             try {
-                DOIService.getInstance().registerDOI(sysmeta);
+                EzidDOIService.getInstance().registerDOI(sysmeta);
             } catch (Exception e) {
                 throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
             }
@@ -831,7 +832,7 @@ public class MNodeService extends D1NodeService
         
         // attempt to register the identifier - it checks if it is a doi
         try {
-			DOIService.getInstance().registerDOI(sysmeta);
+			EzidDOIService.getInstance().registerDOI(sysmeta);
 		} catch (Exception e) {
 			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
 			sf.initCause(e);
@@ -1911,7 +1912,7 @@ public class MNodeService extends D1NodeService
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // attempt to re-register the identifier (it checks if it is a doi)
             try {
-                DOIService.getInstance().registerDOI(newSysMeta);
+                EzidDOIService.getInstance().registerDOI(newSysMeta);
             } catch (Exception e) {
                 logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
             }
@@ -2014,7 +2015,7 @@ public class MNodeService extends D1NodeService
 		} else if (scheme.equalsIgnoreCase(DOI_SCHEME)) {
 			// generate a DOI
 			try {
-				identifier = DOIService.getInstance().generateDOI();
+				identifier = EzidDOIService.getInstance().generateDOI();
 			} catch (EZIDException e) {
 				ServiceFailure sf = new ServiceFailure("2191", "Could not generate DOI: " + e.getMessage());
 				sf.initCause(e);
@@ -3041,7 +3042,7 @@ public class MNodeService extends D1NodeService
 	                  // attempt to re-register the identifier (it checks if it is a doi)
 	                  try {
 	                      logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sys.getIdentifier().getValue()+" is a doi");
-	                      DOIService.getInstance().registerDOI(sys);
+	                      EzidDOIService.getInstance().registerDOI(sys);
 	                  } catch (Exception e) {
 	                      logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
 	                  }
