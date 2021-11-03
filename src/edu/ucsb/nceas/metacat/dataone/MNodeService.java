@@ -170,6 +170,7 @@ import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStrea
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -2016,7 +2017,7 @@ public class MNodeService extends D1NodeService
 			// generate a DOI
 			try {
 				identifier = EzidDOIService.getInstance().generateDOI();
-			} catch (EZIDException e) {
+			} catch (DOIException e) {
 				ServiceFailure sf = new ServiceFailure("2191", "Could not generate DOI: " + e.getMessage());
 				sf.initCause(e);
 				throw sf;
