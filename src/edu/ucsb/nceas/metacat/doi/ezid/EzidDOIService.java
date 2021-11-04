@@ -119,9 +119,9 @@ public class EzidDOIService implements DOIService {
 	}
 
 	/**
-	 * Constructor, private for singleton access
+	 * Constructor
 	 */
-	private EzidDOIService() {
+	public EzidDOIService() {
 
 		// for DOIs
 		String ezidServiceBaseUrl = null;
