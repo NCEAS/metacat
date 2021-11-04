@@ -30,9 +30,9 @@ public class DOIServiceFactoryTest extends MCTestCase {
      * @throws Exception
      */
     @Test
-    public void testGetInstance() throws Exception {
+    public void testGetDOIService() throws Exception {
         String className = PropertyService.getProperty("guid.doiservice.plugin.class");
-        DOIService service = DOIServiceFactory.getInstance();
+        DOIService service = DOIServiceFactory.getDOIService();
         assertTrue(service.getClass().getCanonicalName().equals(className));
     }
 }

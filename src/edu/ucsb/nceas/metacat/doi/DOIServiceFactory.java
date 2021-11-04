@@ -38,7 +38,7 @@ public class DOIServiceFactory {
      * @throws IllegalAccessException 
      * @throws InstantiationException 
      */
-    public static DOIService getInstance() throws PropertyNotFoundException, InstantiationException, 
+    public static DOIService getDOIService() throws PropertyNotFoundException, InstantiationException, 
                                                     IllegalAccessException, ClassNotFoundException {
         if (doiService == null) {
             synchronized(DOIServiceFactory.class) {
