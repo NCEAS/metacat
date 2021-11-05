@@ -18,7 +18,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.dataone;
+package edu.ucsb.nceas.metacat.doi.ezid;
 
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
@@ -38,7 +38,9 @@ import org.junit.Before;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
-import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOITest;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.dataone.MockCNode;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
