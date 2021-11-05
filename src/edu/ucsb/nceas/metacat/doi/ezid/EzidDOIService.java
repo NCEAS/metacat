@@ -104,19 +104,11 @@ public class EzidDOIService implements DOIService {
 	private Date lastLogin = null;
 
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
-
-	private static EzidDOIService instance = null;
 	
 	private static int PRIMARY_SHOULDER_INDEX = 1;
 
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
-	public static EzidDOIService getInstance() {
-		if (instance == null) {
-			instance = new EzidDOIService();
-		}
-		return instance;
-	}
 
 	/**
 	 * Constructor

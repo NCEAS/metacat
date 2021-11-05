@@ -39,7 +39,7 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
-import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
 
@@ -97,7 +97,7 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 				
 				//Update the registration
 				if(sysMeta != null) {
-				    EzidDOIService.getInstance().registerDOI(sysMeta);
+				    DOIServiceFactory.getDOIService().registerDOI(sysMeta);
 				}
 			} catch (Exception e) {
 				// what to do? nothing
