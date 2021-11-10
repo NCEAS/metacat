@@ -78,6 +78,7 @@ public class D1AuthHelper {
     private String notAuthorizedCode;
     private String serviceFailureCode;
     private Identifier requestIdentifier;
+    private static NodeList cnList = null;
     
     /**
      * Each instance should correspond to a single request.
@@ -516,18 +517,22 @@ public class D1AuthHelper {
      * @throws NotImplemented
      */
     protected NodeList getCNNodeList() throws ServiceFailure {
-        
-        // are we allowed to do this? only CNs are allowed
-        try {
-            CNode cn = D1Client.getCN();
-        
-            logMetacat.debug("getCNNodeList - got CN instance");
-            return cn.listNodes(); 
-            
-        } catch (NotImplemented e) {
-            logMetacat.error("Unexpected Error getting NodeList from getCNNodeList().  Got 'NotImplemented' from the service call!",e);
-            throw new ServiceFailure("","Could not get NodeList from the CN. got 'NotImplemented' from the service call!");
+        if (cnList != null && cnList.getNodeList() != null && cnList.getNodeList().size() >0) {
+            logMetacat.debug("D1AuthHelper.getCNNodeList - got the cn list from the cache.");
+            return cnList;
+        } else {
+            // are we allowed to do this? only CNs are allowed
+            try {
+                CNode cn = D1Client.getCN();
+                logMetacat.debug("D1AuthHelper.getCNNodeList - got CN instance and get the cn list from the network.");
+                cnList = cn.listNodes();
+                return cnList; 
+            } catch (NotImplemented e) {
+                logMetacat.error("Unexpected Error getting NodeList from getCNNodeList().  Got 'NotImplemented' from the service call!",e);
+                throw new ServiceFailure("","Could not get NodeList from the CN. got 'NotImplemented' from the service call!");
+            }
         }
+       
     }
     
     /**

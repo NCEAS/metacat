@@ -101,6 +101,7 @@ public class D1NodeServiceTest extends MCTestCase {
         suite.addTest(new D1NodeServiceTest("testIsValidIdentifier"));
         suite.addTest(new D1NodeServiceTest("testAddParaFromSkinProperties"));
         suite.addTest(new D1NodeServiceTest("testAccessPolicyEqual"));
+        suite.addTest(new D1NodeServiceTest("testIsAccessControlDirty"));
         
         return suite;
     }
@@ -128,6 +129,8 @@ public class D1NodeServiceTest extends MCTestCase {
 		MockReplicationMNode mNode = new MockReplicationMNode("http://replication.node.com");
 		nodeLocator.putNode(nodeRef, mNode);
 		D1Client.setNodeLocator(nodeLocator );
+		D1Node node = D1Client.getCN();//call this method can clear the default cn
+		System.out.println("in the D1NodeServiceTest set up................. the base url is for cn is " + node.getNodeBaseServiceUrl());
     	
     }
 
@@ -140,8 +143,23 @@ public class D1NodeServiceTest extends MCTestCase {
 	}
 	
 	public void testExpandRighsHolder() throws Exception {
-	      // set back to force it to use defaults
-	       D1Client.setNodeLocator(null);
+	    printTestHeader("testExpandRighsHolder");
+	        // set back to force it to use defaults
+	        NodeLocator nodeLocator1 = new NodeLocator() {
+               @Override
+               public D1Node getCNode() throws ClientSideException {
+                   D1Node node = null;
+                   try {
+                       node = D1Client.getCN("https://cn.dataone.org/cn");
+                   } catch (Exception e) {
+                       throw new ClientSideException(e.getMessage());
+                   }
+                   return node;
+               }
+           };
+           D1Client.setNodeLocator(nodeLocator1);
+           D1Node node = D1Client.getCN();//call this method can clear the mock cn
+           System.out.println("in the testExpandRighsHolder, ---the base url is for cn is " + node.getNodeBaseServiceUrl());
 	       Subject rightsHolder = new Subject();
 	       rightsHolder.setValue("CN=arctic-data-admins,DC=dataone,DC=org");
 	       Subject user = new Subject();
@@ -312,6 +330,7 @@ public class D1NodeServiceTest extends MCTestCase {
 				break;
 			}
 		}
+		System.out.println("the subject " + subject.getValue() + " was created for cn session----------------------- ");
 		session.setSubject(subject);
 		return session;
 
@@ -714,6 +733,114 @@ public class D1NodeServiceTest extends MCTestCase {
         assertTrue(ap2.getAllow(1).getSubject(0).getValue().equals("http://orcid.org/0000-0002-8121-2341"));
         assertTrue(ap2.getAllow(1).getSubject(1).getValue().equals("CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"));
         assertTrue(ap2.getAllow(1).getPermission(0).equals(Permission.CHANGE_PERMISSION));
+	}
+	
+	/**
+	 * Test the isAccessControlDirty method
+	 * @throws Exception
+	 */
+	public void testIsAccessControlDirty() throws Exception {
+        printTestHeader("testIsAccessControlDirty");
+        String[] subjectsPublic = {"public"};
+        String[] subjectsMix = {"http://orcid.org/0000-0002-8121-2341", "CN=Bryce Mecum A27576,O=Google,C=US,DC=cilogon,DC=org"};
+        String rightsHolder1 = "http://orcid.org/0000-0002-8121-2341";
+        String rightsHolder2 = "uid=tao,o=NCEAS,dc=ecoinformatics,dc=org";
+        String rightsHolder3 = "UID=tao,O=NCEAS,DC=ecoinformatics,DC=org";
+        Permission[] permissionsREAD = {Permission.READ};
+        Permission[] permissionsCHANGE = {Permission.CHANGE_PERMISSION};
+
+        Subject sbjRightsHolder1 = new Subject();
+        sbjRightsHolder1.setValue(rightsHolder1);
+        Subject sbjRightsHolder2 = new Subject();
+        sbjRightsHolder2.setValue(rightsHolder2);
+        Subject sbjRightsHolder3 = new Subject();
+        sbjRightsHolder3.setValue(rightsHolder3);
+        AccessPolicy ap1 = null;
+        AccessPolicy ap2 = null;
+        ap1 = AccessUtil.createSingleRuleAccessPolicy(subjectsPublic, permissionsREAD);
+        ap2 = AccessUtil.createSingleRuleAccessPolicy(subjectsMix, permissionsCHANGE);
+        
+        //the rights holder changes but access policy doesn't change
+        SystemMetadata sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder1);
+        sysmeta1.setAccessPolicy(ap1);
+        SystemMetadata sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder2);
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        //both the rights holder and access policy change 
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder1);
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder2);
+        sysmeta2.setAccessPolicy(ap2);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        //both the rights holder and access policy doesn't change
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder1);
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder1);
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder2);
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder3); //just change the letter case
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        //the rights holder doesn't change but the access policy changes
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder1);
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder1);
+        sysmeta2.setAccessPolicy(ap2);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+	    //some scenario with null values
+        sysmeta1 = null;
+        sysmeta2 = null;
+        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        sysmeta1 = null;
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder1);
+        sysmeta2.setAccessPolicy(ap2);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        //without rights holder
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(!D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setAccessPolicy(ap2);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setRightsHolder(sbjRightsHolder1);
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
+        
+        sysmeta1 = new SystemMetadata();
+        sysmeta1.setRightsHolder(sbjRightsHolder1);
+        sysmeta1.setAccessPolicy(ap1);
+        sysmeta2 = new SystemMetadata();
+        sysmeta2.setAccessPolicy(ap1);
+        assertTrue(D1NodeService.isAccessControlDirty(sysmeta1, sysmeta2));
 	}
     
 }

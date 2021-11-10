@@ -154,7 +154,6 @@ import org.ecoinformatics.datamanager.parser.generic.DataPackageParserInterface;
 import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 import org.w3c.dom.Document;
 
-import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.DBQuery;
 import edu.ucsb.nceas.metacat.DBTransform;
 import edu.ucsb.nceas.metacat.EventLog;
@@ -170,6 +169,8 @@ import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStrea
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
+import edu.ucsb.nceas.metacat.doi.DOIException;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
@@ -498,7 +499,7 @@ public class MNodeService extends D1NodeService
             try {
                 authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
                 //now the user has the write the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
-                if (!D1NodeService.equals(sysmeta.getAccessPolicy(), existingSysMeta.getAccessPolicy())) {
+                if (D1NodeService.isAccessControlDirty(sysmeta, existingSysMeta)) {
                     throw new NotAuthorized("1200", "Can't update the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
                 }
                 allowed = true;
@@ -707,7 +708,7 @@ public class MNodeService extends D1NodeService
 
             // attempt to register the identifier - it checks if it is a doi
             try {
-                DOIService.getInstance().registerDOI(sysmeta);
+                DOIServiceFactory.getDOIService().registerDOI(sysmeta);
             } catch (Exception e) {
                 throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
             }
@@ -831,7 +832,7 @@ public class MNodeService extends D1NodeService
         
         // attempt to register the identifier - it checks if it is a doi
         try {
-			DOIService.getInstance().registerDOI(sysmeta);
+            DOIServiceFactory.getDOIService().registerDOI(sysmeta);
 		} catch (Exception e) {
 			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
 			sf.initCause(e);
@@ -1911,7 +1912,7 @@ public class MNodeService extends D1NodeService
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // attempt to re-register the identifier (it checks if it is a doi)
             try {
-                DOIService.getInstance().registerDOI(newSysMeta);
+                DOIServiceFactory.getDOIService().registerDOI(newSysMeta);
             } catch (Exception e) {
                 logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
             }
@@ -2014,8 +2015,8 @@ public class MNodeService extends D1NodeService
 		} else if (scheme.equalsIgnoreCase(DOI_SCHEME)) {
 			// generate a DOI
 			try {
-				identifier = DOIService.getInstance().generateDOI();
-			} catch (EZIDException e) {
+				identifier = DOIServiceFactory.getDOIService().generateDOI();
+			} catch (Exception e) {
 				ServiceFailure sf = new ServiceFailure("2191", "Could not generate DOI: " + e.getMessage());
 				sf.initCause(e);
 				throw sf;
@@ -2108,7 +2109,7 @@ public class MNodeService extends D1NodeService
 			ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented,
 			NotFound {
         Set<Subject> subjects = getQuerySubjects(session);
-        boolean isMNadmin = isMNAdminQuery(session);
+        boolean isMNadmin = isMNOrCNAdminQuery(session);
 		if (engine != null && engine.equals(EnabledQueryEngines.PATHQUERYENGINE)) {
 		    if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.PATHQUERYENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
@@ -2170,7 +2171,7 @@ public class MNodeService extends D1NodeService
     public InputStream postQuery(Session session, String engine, HashMap<String, String[]> params) throws InvalidToken,
             ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound {
         Set<Subject> subjects = getQuerySubjects(session);
-        boolean isMNadmin = isMNAdminQuery(session);
+        boolean isMNadmin = isMNOrCNAdminQuery(session);
         if (engine != null && engine.equals(EnabledQueryEngines.SOLRENGINE)) {
             if(!EnabledQueryEngines.getInstance().isEnabled(EnabledQueryEngines.SOLRENGINE)) {
                 throw new NotImplemented("0000", "MNodeService.query - the query engine "+engine +" hasn't been implemented or has been disabled.");
@@ -2204,15 +2205,18 @@ public class MNodeService extends D1NodeService
     }
     
   /*
-   * Determine if the given session is a local admin subject.
+   * Determine if the given session is a local admin or cn subject.
    */
-    private boolean isMNAdminQuery(Session session) throws ServiceFailure {
+    private boolean isMNOrCNAdminQuery(Session session) throws ServiceFailure {
         boolean isMNadmin= false;
         if (session != null && session.getSubject() != null) {
             D1AuthHelper authDel = new D1AuthHelper(request, null, "2822", "2821");
-            if(authDel.isLocalMNAdmin(session)) {
-                logMetacat.debug("MNodeService.query - this is a mn admin session, it will bypass the access control rules.");
+            try {
+                authDel.doAdminAuthorization(session);
+                logMetacat.debug("MNodeService.isMNOrCNAdminQuery - this is a mn/cn admin session, it will bypass the access control rules.");
                 isMNadmin=true;//bypass access rules since it is the admin
+            } catch (NotAuthorized e) {
+                logMetacat.debug("MNodeService.isMNOrCNAdminQuery - this is NOT a mn/cn admin session, it can't bypass the access control rules.");
             }
         }
         return isMNadmin;
@@ -2956,13 +2960,25 @@ public class MNodeService extends D1NodeService
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
 	          }
+	          D1AuthHelper authDel = null;
 	          try {
-                  D1AuthHelper authDel = new D1AuthHelper(request, pid, "4861","4868");
+                  authDel = new D1AuthHelper(request, pid, "4861","4868");
                   authDel.doUpdateAuth(session, currentSysmeta, Permission.CHANGE_PERMISSION, this.getCurrentNodeId());
               } catch(ServiceFailure e) {
                   throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
               } catch(NotAuthorized e) {
-                  throw new NotAuthorized("4861", "Can't update the system metacat of the object with id "+pid.getValue()+" since "+e.getDescription());
+                  //the user doesn't have the change permission. However, if it has the write permission and doesn't modify the access rules, Metacat still allows it to update the system metadata
+                  try {
+                      authDel.doUpdateAuth(session, currentSysmeta, Permission.WRITE, this.getCurrentNodeId());
+                      //now the user has the write the permission. If the access rules in the new and old system metadata are the same, it is fine; otherwise, Metacat throws an exception
+                      if (D1NodeService.isAccessControlDirty(sysmeta, currentSysmeta)) {
+                          throw new NotAuthorized("4861", "Can't update the system metadata of the object with id " + pid.getValue() + " since the user try to change the access rules without the change permission: " + e.getDescription());
+                      }
+                  } catch(ServiceFailure ee) {
+                      throw new ServiceFailure("4868", "Can't determine if the client has the permission to update the system metadata the object with id " + pid.getValue() + " since " + ee.getDescription());
+                  } catch(NotAuthorized ee) {
+                      throw new NotAuthorized("4861", "Can't update the system metadata of object with id " + pid.getValue() + " since " + ee.getDescription());
+                  }
               }      
 	          Date currentModiDate = currentSysmeta.getDateSysMetadataModified();
 	          Date commingModiDate = sysmeta.getDateSysMetadataModified();
@@ -3026,7 +3042,7 @@ public class MNodeService extends D1NodeService
 	                  // attempt to re-register the identifier (it checks if it is a doi)
 	                  try {
 	                      logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sys.getIdentifier().getValue()+" is a doi");
-	                      DOIService.getInstance().registerDOI(sys);
+	                      DOIServiceFactory.getDOIService().registerDOI(sys);
 	                  } catch (Exception e) {
 	                      logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
 	                  }

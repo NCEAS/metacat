@@ -749,17 +749,28 @@ public class MetaCatServlet extends HttpServlet {
 					
 					// attempt to redirect to metacatui (#view/{pid}) if not getting the raw XML
 					// see: https://projects.ecoinformatics.org/ecoinfo/issues/6546
-					if (!skin.equals("xml")) {
+					if (skin != null && !skin.equals("xml")) {
 						String uiContext = PropertyService.getProperty("ui.context");
 						String docidNoRev = DocumentUtil.getSmartDocId(docidToRead);
-						int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
-						String pid = null;
-						try {
-							pid = IdentifierManager.getInstance().getGUID(docidNoRev, rev);
-							response.sendRedirect(SystemUtil.getServerURL() + "/" + uiContext + "/#view/" + pid );
-							return;
-						} catch (McdbDocNotFoundException nfe) {
-							logMetacat.warn("Could not locate PID for docid: " + docidToRead, nfe);
+						if (docidNoRev != null) {
+						    int rev = DocumentUtil.getRevisionFromAccessionNumber(docidToRead);
+	                        String pid = null;
+	                        try {
+	                            pid = IdentifierManager.getInstance().getGUID(docidNoRev, rev);
+	                            response.sendRedirect(SystemUtil.getServerURL() + "/" + uiContext + "/#view/" + pid );
+	                            return;
+	                        } catch (McdbDocNotFoundException nfe) {
+	                            logMetacat.warn("Could not locate PID for docid: " + docidToRead, nfe);
+	                        }
+						} else {
+						    PrintWriter out = response.getWriter();
+                            response.setContentType("text/xml");
+                            out.println("<?xml version=\"1.0\"?>");
+                            out.println("<error>");
+                            out.println("The docid " + docidToRead + " doesn't match the format and doesn't exist.");
+                            out.println("</error>");
+                            out.close();
+                            return;
 						}
 					}
 					
