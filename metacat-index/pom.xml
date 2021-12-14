@@ -77,7 +77,11 @@
                 <exclusion>
                      <groupId>org.slf4j</groupId>
                       <artifactId>slf4j-api</artifactId>
-                  </exclusion>
+                 </exclusion>
+                 <exclusion>
+                     <groupId>log4j</groupId>
+                      <artifactId>log4j</artifactId>
+                 </exclusion>
         </exclusions>
         </dependency>
         <dependency>
