@@ -39,9 +39,9 @@ import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
-import edu.ucsb.nceas.metacat.dataone.DOIService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.dataone.RegisterDOITest;
+import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
+import edu.ucsb.nceas.metacat.doi.ezid.RegisterDOITest;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -110,10 +110,10 @@ public class UpdateDOITest extends D1NodeServiceTest {
                 metadata = ezid.getMetadata(publishedPID.getValue());
                 Thread.sleep(2000);
                 count++;
-            } while ((metadata == null || metadata.get(DOIService.DATACITE) == null) && count < 30);
+            } while ((metadata == null || metadata.get(EzidDOIService.DATACITE) == null) && count < 30);
             //System.out.println("The doi on the identifier is "+publishedPID.getValue());
             assertNotNull(metadata);
-            String result = metadata.get(DOIService.DATACITE);
+            String result = metadata.get(EzidDOIService.DATACITE);
             //System.out.println("the result is \n"+result);
             assertTrue(result.contains("Test EML package - public-readable from morpho"));
             assertTrue(result.contains(RegisterDOITest.creatorsStr));
@@ -156,10 +156,10 @@ public class UpdateDOITest extends D1NodeServiceTest {
                 metadata = ezid.getMetadata(publishedSID.getValue());
                 Thread.sleep(2000);
                 count++;
-            } while ((metadata == null || metadata.get(DOIService.DATACITE) == null) && count < 30);
+            } while ((metadata == null || metadata.get(EzidDOIService.DATACITE) == null) && count < 30);
             
             assertNotNull(metadata);
-            String result = metadata.get(DOIService.DATACITE);
+            String result = metadata.get(EzidDOIService.DATACITE);
             //System.out.println("the result is \n"+result);
             assertTrue(result.contains("Test EML package - public-readable from morpho"));
             assertTrue(result.contains(RegisterDOITest.creatorsStr));

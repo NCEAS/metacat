@@ -20,7 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
-package edu.ucsb.nceas.metacat.dataone;
+package edu.ucsb.nceas.metacat.doi.ezid;
 
 import java.io.InputStream;
 import java.lang.Integer;
@@ -66,6 +66,9 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.doi.DOIException;
+import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.datacite.DataCiteMetadataFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.DefaultDataCiteFactory;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -82,11 +85,11 @@ import edu.ucsb.nceas.utilities.StringUtil;
  *
  * @author leinfelder
  */
-public class DOIService {
+public class EzidDOIService implements DOIService {
 
     public static final String DATACITE = "datacite";
 
-	private Log logMetacat = LogFactory.getLog(DOIService.class);
+	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
 	private boolean doiEnabled = false;
 
@@ -101,24 +104,16 @@ public class DOIService {
 	private Date lastLogin = null;
 
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
-
-	private static DOIService instance = null;
 	
 	private static int PRIMARY_SHOULDER_INDEX = 1;
 
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
-	public static DOIService getInstance() {
-		if (instance == null) {
-			instance = new DOIService();
-		}
-		return instance;
-	}
 
 	/**
-	 * Constructor, private for singleton access
+	 * Constructor
 	 */
-	private DOIService() {
+	public EzidDOIService() {
 
 		// for DOIs
 		String ezidServiceBaseUrl = null;
@@ -210,7 +205,7 @@ public class DOIService {
 	 * @throws NotImplemented
 	 * @throws InterruptedException
 	 */
-	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, EZIDException, NotImplemented, ServiceFailure, InterruptedException {
+	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, ServiceFailure, InterruptedException {
 
 		// only continue if we have the feature turned on
 		if (doiEnabled) {
@@ -235,16 +230,21 @@ public class DOIService {
 
             // only continue if this DOI identifier or sid is in our configured shoulder list
 			if(identifierIsDOI || sidIsDOI) {
-	            // finish the other part for the identifier if it is an DOI
-	            if(identifierIsDOI) {
-	                registerDOI(identifier, sysMeta);
-	            }
-	            // finish the other part for the sid if it is an DOI
-	            if(sidIsDOI) {
-	                registerDOI(sid, sysMeta);
-	            }
+			    try {
+    	            // finish the other part for the identifier if it is an DOI
+    	            if(identifierIsDOI) {
+    	                registerDOI(identifier, sysMeta);
+    	            }
+    	            // finish the other part for the sid if it is an DOI
+    	            if(sidIsDOI) {
+    	                registerDOI(sid, sysMeta);
+    	            }
+			    } catch (EZIDException e) {
+			        throw new DOIException(e.getMessage());
+			    }
 			}
-
+		} else {
+		    throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
 		}
 
 		return true;
@@ -338,36 +338,38 @@ public class DOIService {
 	 * @throws EZIDException
 	 * @throws InvalidRequest
 	 */
-	public Identifier generateDOI() throws EZIDException, InvalidRequest {
-
-
-		// only continue if we have the feature turned on
-		if (!doiEnabled) {
-			throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
-		}
-
-		// add only the minimal metadata required for this DOI
-		HashMap<String, String> metadata = new HashMap<String, String>();
-		metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
-		metadata.put(DataCiteProfile.CREATOR.toString(), ErcMissingValueCode.UNKNOWN.toString());
-		metadata.put(DataCiteProfile.PUBLISHER.toString(), ErcMissingValueCode.UNKNOWN.toString());
-		metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), ErcMissingValueCode.UNKNOWN.toString());
-		metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.RESERVED.toString());
-		metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.NO.toString());
-
-		// make sure we have a current login
-		this.refreshLogin();
-
-        // Make sure we have a primary shoulder configured (which should enable mint operations)
-        if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
-            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because primary shoulder unconfigured.");
-        }
-
-		// call the EZID service
-		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
-		Identifier identifier = new Identifier();
-		identifier.setValue(doi);
-
+	public Identifier generateDOI() throws DOIException, InvalidRequest {
+	    Identifier identifier = new Identifier();
+	    try {
+    		// only continue if we have the feature turned on
+    		if (!doiEnabled) {
+    			throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+    		}
+    
+    		// add only the minimal metadata required for this DOI
+    		HashMap<String, String> metadata = new HashMap<String, String>();
+    		metadata.put(DataCiteProfile.TITLE.toString(), ErcMissingValueCode.UNKNOWN.toString());
+    		metadata.put(DataCiteProfile.CREATOR.toString(), ErcMissingValueCode.UNKNOWN.toString());
+    		metadata.put(DataCiteProfile.PUBLISHER.toString(), ErcMissingValueCode.UNKNOWN.toString());
+    		metadata.put(DataCiteProfile.PUBLICATION_YEAR.toString(), ErcMissingValueCode.UNKNOWN.toString());
+    		metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.RESERVED.toString());
+    		metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.NO.toString());
+    
+    		// make sure we have a current login
+    		this.refreshLogin();
+    
+            // Make sure we have a primary shoulder configured (which should enable mint operations)
+            if (!shoulderMap.containsKey(new Integer(PRIMARY_SHOULDER_INDEX))) {
+                throw new InvalidRequest("2193", "DOI scheme is not enabled at this node because primary shoulder unconfigured.");
+            }
+    
+    		// call the EZID service
+    		String doi = ezid.mintIdentifier(shoulderMap.get(new Integer(PRIMARY_SHOULDER_INDEX)), metadata);
+    		
+    		identifier.setValue(doi);
+	    } catch (EZIDException e) {
+	        throw new DOIException(e.getMessage());
+	    }
 		return identifier;
 	}
 

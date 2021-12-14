@@ -23,7 +23,7 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
 
-package edu.ucsb.nceas.metacat.dataone;
+package edu.ucsb.nceas.metacat.doi.ezid;
 
 
 import java.io.ByteArrayInputStream;
@@ -55,7 +55,11 @@ import org.junit.Before;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.dataone.MockCNode;
 import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
+import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 
 /**
@@ -299,8 +303,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			} while (metadata == null && count < MAX_TIMES);
 			
 			assertNotNull(metadata);
-			assertTrue(metadata.containsKey(DOIService.DATACITE));
-			String datacite = metadata.get(DOIService.DATACITE);
+			assertTrue(metadata.containsKey(EzidDOIService.DATACITE));
+			String datacite = metadata.get(EzidDOIService.DATACITE);
 			System.out.println(""+datacite);
 			assertTrue(datacite.contains("CN=Benjamin Leinfelder A515,O=University of Chicago,C=US,DC=cilogon,DC=org"));
 		} catch (Exception e) {
@@ -365,7 +369,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				} while (metadata == null && count < MAX_TIMES);
 	            
 	            assertNotNull(metadata);
-	            String result = metadata.get(DOIService.DATACITE);
+	            String result = metadata.get(EzidDOIService.DATACITE);
 	            System.out.println("result is\n"+result);
 	            Node node = MNodeService.getInstance(null).getCapabilities();
 	            String nodeName = node.getName();
@@ -437,7 +441,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
                 assertNotNull(metadata);
-                String result = metadata.get(DOIService.DATACITE);
+                String result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -488,7 +492,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
-                String result = metadata.get(DOIService.DATACITE);
+                String result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -538,7 +542,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
-                String result = metadata.get(DOIService.DATACITE);
+                String result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -562,7 +566,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 } while (metadata2 == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata2);
-                result = metadata.get(DOIService.DATACITE);
+                result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -899,7 +903,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             count++;
         } while (metadata == null && count < MAX_TIMES);
         assertNotNull(metadata);
-        String result = metadata.get(DOIService.DATACITE);
+        String result = metadata.get(EzidDOIService.DATACITE);
         assertTrue(result.contains("EML Annotation Example"));
         assertTrue(result.contains("0000-0002-1209-5122"));
         assertTrue(result.contains("It can include multiple paragraphs"));

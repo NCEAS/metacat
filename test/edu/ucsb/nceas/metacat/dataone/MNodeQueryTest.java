@@ -708,6 +708,20 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //CN session
+        Session cnSession = getCNSession();
+        stream = MNodeService.getInstance(request).query(cnSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        //postquery
+        stream = MNodeService.getInstance(request).postQuery(cnSession, "solr", params);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
     }
     
     /**
@@ -811,6 +825,20 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
         //postquery
         stream = MNodeService.getInstance(request).postQuery(mnSession, "solr", params);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        
+        //CN session
+        Session cnSession = getCNSession();
+        stream = MNodeService.getInstance(request).query(cnSession, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
+        assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));
+        //postquery
+        stream = MNodeService.getInstance(request).postQuery(cnSession, "solr", params);
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(resultStr.contains("<str name=\"id\">"+guid.getValue()+"</str>"));
         assertTrue(resultStr.contains("<bool name=\"archived\">false</bool>"));

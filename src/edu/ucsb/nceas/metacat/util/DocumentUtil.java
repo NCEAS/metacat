@@ -349,7 +349,9 @@ public class DocumentUtil
         String docid = null;
         if (accessionNumber == null) { return docid; }
         int indexOfLastSeperator = accessionNumber.lastIndexOf(separator);
-        docid = accessionNumber.substring(0, indexOfLastSeperator);
+        if (indexOfLastSeperator > 0) {
+            docid = accessionNumber.substring(0, indexOfLastSeperator);
+        }
         logMetacat.debug("DocumentUtil.getDocIdFromAccessionNumber - after parsing accession number, docid is "
                 + docid);
         return docid;
