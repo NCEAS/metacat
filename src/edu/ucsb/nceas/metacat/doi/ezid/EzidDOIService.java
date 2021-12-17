@@ -243,10 +243,7 @@ public class EzidDOIService implements DOIService {
 			        throw new DOIException(e.getMessage());
 			    }
 			}
-		} else {
-		    throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
-		}
-
+		} 
 		return true;
 	}
 
