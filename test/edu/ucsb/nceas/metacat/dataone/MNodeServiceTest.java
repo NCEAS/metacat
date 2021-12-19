@@ -33,6 +33,7 @@ import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.CNodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.object.handler.JsonLDHandlerTest;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -215,6 +216,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testInsertJson_LD"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
+    suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
     return suite;
     
   }
@@ -1977,7 +1979,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // clean up
           bagFile.delete();
           Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-          Thread.sleep(60000);
+          Thread.sleep(80000);
           System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
           List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
           assertTrue(oreIds.size() == 1);
@@ -4067,6 +4069,63 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             DBConnectionPool.returnDBConnection(conn, serialNumber);
         }
         return result;
+    }
+    
+    
+    /**
+     * Test to create and update object when DOI setting is disabled
+     */
+    public void testCreateAndUpdateWithDoiDisabled() throws Exception {
+        printTestHeader("testCreateAndUpdateWithDoiDisabled");
+        String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.ezid.enabled");
+        System.out.println("the dois status is ++++++++++++++ " + originDOIstatusStr);
+        try {
+            Session session = getTestSession();
+            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", "false");//disable doi
+            DOIServiceFactory.getDOIService().refreshStatus();
+            try {
+                //make sure the service of doi is disabled
+                MNodeService.getInstance(request).generateIdentifier(session, "doi", null);
+                fail("we shouldn't get here since generating doi should fail when the feature is disabled");
+            } catch (Exception e) {
+                assertTrue(e instanceof ServiceFailure);
+                assertTrue(e.getMessage().contains("DOI scheme is not enabled at this node"));
+            }
+            Identifier guid = new Identifier();
+            guid.setValue("testCreateAndUpdateWithDoiDisabled." + System.currentTimeMillis());
+            InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            Identifier newPid = new Identifier();
+            newPid.setValue("testCreateAndUpdateWithDoiDisabled-2." + (System.currentTimeMillis() + 1)); // ensure it is different from original
+            Identifier pid = 
+              MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            SystemMetadata getSysMeta = 
+                    MNodeService.getInstance(request).getSystemMetadata(session, pid);
+            assertEquals(pid.getValue(), getSysMeta.getIdentifier().getValue());
+            
+            object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+            SystemMetadata newSysMeta = createSystemMetadata(newPid, session.getSubject(), object);
+            // do the update
+            Identifier updatedPid = 
+              MNodeService.getInstance(request).update(session, pid, object, newPid, newSysMeta);
+            
+            // get the updated system metadata
+            SystemMetadata updatedSysMeta = 
+              MNodeService.getInstance(request).getSystemMetadata(session, updatedPid);
+            assertEquals(updatedPid.getValue(), updatedSysMeta.getIdentifier().getValue());
+            
+            try {
+                //publish will fail too
+                MNodeService.getInstance(request).publish(session, updatedPid);
+                fail("we shouldn't get here since publishing should fail when the feature is disabled");
+            } catch (Exception e) {
+                assertTrue(e instanceof ServiceFailure);
+                assertTrue(e.getMessage().contains("DOI scheme is not enabled at this node"));
+            }
+        } finally {
+            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", originDOIstatusStr);
+            DOIServiceFactory.getDOIService().refreshStatus();
+        }
     }
 }
 
