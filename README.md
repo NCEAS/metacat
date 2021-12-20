@@ -69,7 +69,7 @@ for the next release.
 
 ### Release Notes for 2.16.1
 Bugs fixed in this release:
-* Upgrade some library jar files to fix critical severe vulnerabilities
+* Upgrade some library jar files to fix severe security vulnerabilities
 * Metacat cannot create objects without DOI setting enabled
 
 ### Release Notes for 2.16.0
