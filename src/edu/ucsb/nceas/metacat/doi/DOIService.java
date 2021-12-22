@@ -25,6 +25,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.ezid.EZIDException;
+import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
  * An interface for the DOI service
@@ -51,4 +52,10 @@ public interface DOIService {
      * @throws InvalidRequest
      */
     public Identifier generateDOI() throws DOIException, InvalidRequest;
+    
+    /**
+     * Refresh the status (enable or disable) of the DOI service from property file
+     * @throws PropertyNotFoundException 
+     */
+    public void refreshStatus() throws PropertyNotFoundException;
 }

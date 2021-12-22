@@ -89,8 +89,8 @@ public class ServiceService {
 	public static void registerService(String serviceName, BaseService service)
 			throws ServiceException {
 		if (serviceList.containsKey(serviceName)) {
-			throw new ServiceException("ServiceService.registerService - Service: " + serviceName + " is already registered."
-					+ " Use ServiceService.reregister() to replace the service.");
+		    logMetacat.info("ServiceService.registerService - The service: " + serviceName + " already exists and Metacat skips the registration.");
+			return; //skip the registration if the service already exist.
 		}
 		logMetacat.info("ServiceService.registerService - Registering Service: " + serviceName);
 		serviceList.put(serviceName, service);

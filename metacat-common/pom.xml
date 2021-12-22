@@ -4,7 +4,7 @@
 	<groupId>edu.ucsb.nceas.metacat.common</groupId>
 	<artifactId>metacat-common</artifactId>
 	<packaging>jar</packaging>
-	<version>2.15.1</version>
+	<version>2.16.1</version>
 	<name>metacat-common</name>
 	<url>http://maven.apache.org</url>
 	<properties>
@@ -219,17 +219,17 @@
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-1.2-api</artifactId>
-            <version>2.14.0</version>
+            <version>2.17.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-core</artifactId>
-            <version>2.14.0</version>
+            <version>2.17.0</version>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-jcl</artifactId>
-            <version>2.14.0</version>
+            <version>2.17.0</version>
         </dependency>
         <dependency>
             <groupId>commons-logging</groupId>

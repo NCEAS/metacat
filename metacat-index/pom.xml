@@ -4,13 +4,13 @@
 	<groupId>edu.ucsb.nceas.metacat.index</groupId>
 	<artifactId>metacat-index</artifactId>
 	<packaging>war</packaging>
-	<version>2.15.1</version>
+	<version>2.16.1</version>
 	<name>metacat-index</name>
 	<url>http://maven.apache.org</url>
 	
 	<properties>
         <d1_cn_index_processor_version>2.3.14</d1_cn_index_processor_version>
-        <metacat_common_version>2.15.1</metacat_common_version>
+        <metacat_common_version>2.16.1</metacat_common_version>
     </properties>
 	
 	<repositories>
@@ -77,7 +77,11 @@
                 <exclusion>
                      <groupId>org.slf4j</groupId>
                       <artifactId>slf4j-api</artifactId>
-                  </exclusion>
+                 </exclusion>
+                 <exclusion>
+                     <groupId>log4j</groupId>
+                      <artifactId>log4j</artifactId>
+                 </exclusion>
         </exclusions>
         </dependency>
         <dependency>
