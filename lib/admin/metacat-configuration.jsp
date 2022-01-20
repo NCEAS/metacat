@@ -40,7 +40,6 @@
     Boolean replicationConfigured = (Boolean)request.getAttribute("replicationConfigured");
     String dataoneConfigured = (String)request.getAttribute("dataoneConfigured");
     String solrserverConfigured = (String)request.getAttribute("solrserverConfigured");
-    String geoserverConfigured = (String)request.getAttribute("geoserverConfigured");
     String ezidConfigured = (String)request.getAttribute("ezidConfigured");
     String quotaConfigured = (String)request.getAttribute("quotaConfigured");
     Boolean metacatConfigured = (Boolean)request.getAttribute("metacatConfigured");
@@ -213,57 +212,6 @@
         }
     %>
     
-     
-	<%
-	    if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.CONFIGURED)) {
-	%>
-	    	<tr>
-	    	<td class="configured-tag"><i class="icon-ok"></i> configured </td>
-	    	<td class="property-title"> Geoserver Configuration </td> 
-			<td class="configure-link"> <a href="<%= request.getContextPath() %>/admin?configureType=geoserver"><i class="icon-cogs"></i> Reconfigure Now</a> </td>   		
-	    	</tr>
-	<%
-		} else if (geoserverConfigured != null && geoserverConfigured.equals(PropertyService.BYPASSED)){
-	%>    		
-	    	<tr>
-	    	<td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
-			<td class="property-title"> Geoserver Configuration </td>  
-	<%
-			if (propsConfigured != null && propsConfigured) {
-	%>
-	        	
-			<td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=geoserver"><i class="icon-cogs"></i>Reconfigure Now</a> </td>			       	
-	<%
-			} else {
-	%> 
-			<td class="configure-link inactive"> Configure Global Properties First </td>
-	<%
-			}
-				%>     	
-	    	</tr>
-	<%
-		} else {
-	%>    		
-	    	<tr>
-	    	<td class="unconfigured-tag">unconfigured </td>  
-	    	<td class="property-title"> Geoserver Configuration </td>   
-	<%
-			if (propsConfigured != null && propsConfigured) {
-	%>
-	        	
-			<td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=geoserver"><i class="icon-cogs"></i> Configure Now</a> </td>			
-	        	
-	<%
-			} else {
-	%> 
-			<td class="configure-link inactive"> Configure Global Properties First </td>
-	<%
-			}
-	%>     	
-	    	</tr>
-	<%
-		}
-	%>
 	
 	<%
 	
