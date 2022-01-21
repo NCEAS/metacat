@@ -184,9 +184,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
 		try {
 			// get ezid config properties
-			String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+			String ezidUsername = PropertyService.getProperty("guid.doi.username");
+			String ezidPassword = PropertyService.getProperty("guid.doi.password");
+			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
 			
 			EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 			ezid.login(ezidUsername, ezidPassword);
@@ -276,9 +276,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		try {
 			// get ezid config properties
 			String shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
-			String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+			String ezidUsername = PropertyService.getProperty("guid.doi.username");
+			String ezidPassword = PropertyService.getProperty("guid.doi.password");
+			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
 			
 			Session session = getTestSession();
 			Identifier guid = new Identifier();
@@ -321,9 +321,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
 		try {
 			// get ezid config properties
-			String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+			String ezidUsername = PropertyService.getProperty("guid.doi.username");
+			String ezidPassword = PropertyService.getProperty("guid.doi.password");
+			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
 			
 			Session session = getTestSession();
 			Identifier guid = new Identifier();
@@ -408,9 +408,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
         String scheme = "DOI";
         try {
             // get ezid config properties
-            String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-            String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-            String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+            String ezidUsername = PropertyService.getProperty("guid.doi.username");
+            String ezidPassword = PropertyService.getProperty("guid.doi.password");
+            String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
             Session session = getTestSession();   
             String emlFile = "test/eml-multiple-creators.xml";
             InputStream content = null;
@@ -868,9 +868,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testPublishEML220() throws Exception {
-        String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-        String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        String ezidUsername = PropertyService.getProperty("guid.doi.username");
+        String ezidPassword = PropertyService.getProperty("guid.doi.password");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testPublishDOI." + System.currentTimeMillis());

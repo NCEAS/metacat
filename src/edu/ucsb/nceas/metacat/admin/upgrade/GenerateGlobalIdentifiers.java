@@ -118,8 +118,6 @@ public class GenerateGlobalIdentifiers implements UpgradeUtilityInterface {
             url = PropertyService.getProperty("database.connectionURI");
             user = PropertyService.getProperty("database.user");
             password = PropertyService.getProperty("database.password");
-//            eziduser = PropertyService.getProperty("guid.ezid.username");
-//            ezidPassword = PropertyService.getProperty("guid.ezid.password");
             
         } catch (PropertyNotFoundException e) {
             String msg = "PropertyNotFound while trying to convert identifiers: " + e.getMessage();

@@ -107,7 +107,7 @@ public class MultipleDOIShouldersTest extends D1NodeServiceTest {
     public void testPrimaryShoulder() throws Exception {
         printTestHeader("testPrimaryShoulder");
         try {
-            String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+            String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
             EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
           
             // Mint a DOI
@@ -197,7 +197,7 @@ public class MultipleDOIShouldersTest extends D1NodeServiceTest {
         // check for the metadata for title element
         int count = 0;
         HashMap<String, String> metadata = null;
-        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
         do {
             try {
@@ -256,7 +256,7 @@ public class MultipleDOIShouldersTest extends D1NodeServiceTest {
         // check for the metadata for title element
         int count = 0;
         HashMap<String, String> metadata = null;
-        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
         do {
             try {

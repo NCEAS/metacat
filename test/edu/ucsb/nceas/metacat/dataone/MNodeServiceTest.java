@@ -4077,11 +4077,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      */
     public void testCreateAndUpdateWithDoiDisabled() throws Exception {
         printTestHeader("testCreateAndUpdateWithDoiDisabled");
-        String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.ezid.enabled");
+        String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.doi.enabled");
         System.out.println("the dois status is ++++++++++++++ " + originDOIstatusStr);
         try {
             Session session = getTestSession();
-            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", "false");//disable doi
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.enabled", "false");//disable doi
             DOIServiceFactory.getDOIService().refreshStatus();
             try {
                 //make sure the service of doi is disabled
@@ -4123,7 +4123,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 assertTrue(e.getMessage().contains("DOI scheme is not enabled at this node"));
             }
         } finally {
-            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", originDOIstatusStr);
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.enabled", originDOIstatusStr);
             DOIServiceFactory.getDOIService().refreshStatus();
         }
     }

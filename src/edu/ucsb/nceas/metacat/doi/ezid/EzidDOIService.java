@@ -120,10 +120,10 @@ public class EzidDOIService implements DOIService {
         shoulderMap = new HashMap<Integer, String>();
 
 		try {
-            doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
-			ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
-			ezidUsername = PropertyService.getProperty("guid.ezid.username");
-			ezidPassword = PropertyService.getProperty("guid.ezid.password");
+            doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
+			ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+			ezidUsername = PropertyService.getProperty("guid.doi.username");
+			ezidPassword = PropertyService.getProperty("guid.doi.password");
 		} catch (PropertyNotFoundException e) {
 			logMetacat.warn("DOI support is not configured at this node.", e);
 			return;
@@ -376,7 +376,7 @@ public class EzidDOIService implements DOIService {
      * @throws PropertyNotFoundException 
      */
     public void refreshStatus() throws PropertyNotFoundException {
-        doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
+        doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
     }
 
 }
