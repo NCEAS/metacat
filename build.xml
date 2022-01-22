@@ -1431,7 +1431,7 @@
 	<target name="fulldist" depends="distbin, distsrc"
 			description="full distribution - source and bin"/>
 		
-	<target name="distbin" depends="build-metacat,war-lsid"
+	<target name="distbin" depends="build-metacat"
 		description="prepares a binary distribution">
 		<copy todir="${dist.dir}">
 			<fileset dir="./src/scripts" />
@@ -1553,113 +1553,6 @@
 		</fileset>
 	</path>
 
-	<filterset id="configFilters">
-		<!-- MCD BYE filter token="LSID_AUTHORITY_HOSTNAME"
-			value="${config.hostname}" / -->
-		<!-- MCD BYE filter token="LSID_AUTHORITY_PORT"
-			value="${config.port}" / -->
-		<!-- MCD BYE filter token="METADATA_LABELS"
-			value="${config.metadataLabelLsid}" / -->
-		<!-- MCD BYE filter token="METACAT_SERVER"
-			value="${config.metacatserver}" / -->
-		<!-- MCD BYE filter token="LSID_AUTHORITY_STRING"
-			value="${config.lsidauthority}" / -->
-	</filterset>
-
-	<target name="prepare-lsid" depends="prepare,clientjar"
-		description="Configure files prior to compilation">
-		<mkdir dir="${lsid.build.dir}" />
-		<!-- Copy the properties file into the build -->
-		<copy file="${conf.dir}/metacat-lsid.properties"
-			tofile="${lsid.build.dir}/WEB-INF/classes/metacat-lsid.properties"
-			overwrite="true">
-			<filterset refid="configFilters" />
-		</copy>
-		<copy file="${conf.dir}/log4j.properties"
-			tofile="${lsid.build.dir}/WEB-INF/classes/log4j.properties"
-			overwrite="true">
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy config files into the build -->
-		<copy todir="${lsid.build.dir}/WEB-INF">
-			<fileset dir="${webinf.dir}" includes="**/*.wsdd" />
-		</copy>
-		<!-- Copy the metadata configuration files into the build -->
-		<mkdir
-			dir="${lsid.build.dir}/WEB-INF/classes/${lsid.classes.dir}" />
-		<copy
-			todir="${lsid.build.dir}/WEB-INF/classes/${lsid.classes.dir}">
-			<fileset dir="${conf.dir}" includes="**/*.xml" />
-			<fileset dir="${conf.dir}" includes="**/*.xslt" />
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy services files into the build -->
-		<mkdir dir="${lsid.build.dir}/services" />
-		<copy todir="${lsid.build.dir}/services">
-			<fileset dir="${services.dir}" />
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy axis files into the build -->
-		<mkdir dir="${lsid.build.dir}" />
-		<copy todir="${lsid.build.dir}">
-			<fileset dir="${conf.dir}/axis" excludes="*.properties" />
-		</copy>
-		<mkdir dir="${lsid.build.dir}/WEB-INF/classes" />
-		<copy todir="${lsid.build.dir}/WEB-INF/classes">
-			<fileset dir="${conf.dir}/axis" includes="*.properties" />
-		</copy>
-	</target>
-
-	<target name="compile-lsid" depends="prepare-lsid"
-		description="Compile Java sources">
-		<mkdir dir="${lsid.build.dir}/WEB-INF/classes" />
-		<javac srcdir="src/edu/ucsb/nceas/metacat/lsid"
-			destdir="${lsid.build.dir}/WEB-INF/classes" debug="${compile.debug}"
-			deprecation="${compile.deprecation}"
-			target="${java.target.version}"
-			source="${java.source.version}"
-			optimize="${compile.optimize}">
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-				</fileset>
-			</classpath>
-		</javac>
-	</target>
-
-	<target name="war-lsid" depends="compile-lsid"
-		description="Create a war file for the application">
-		<mkdir dir="${dist.dir}" />
-		<war destfile="${dist.dir}/${authority.context}.war"
-			webxml="${webinf.dir}/web.xml">
-			<fileset dir="${lsid.build.dir}" />
-			<lib dir="${lsid.lib.dir}">
-				<patternset refid="lsid.jars" />
-			</lib>
-			<lib dir="${lib.dir}">
-				<patternset refid="lib.jars" />
-			</lib>
-			<lib dir="${lib.dir}">
-				<include name="xalan.jar" />
-				<include name="xml-apis.jar" />
-			</lib>
-			<lib dir="${build.dir}">
-				<include name="metacat-client.jar" />
-			</lib>
-		</war>
-	</target>
-
-	<target name="deploy-lsid" depends="war-lsid"
-		description="Deploy LSID war to servlet container">
-		<delete dir="${app.deploy.dir}/${authority.context}" />
-		<delete file="${app.deploy.dir}/${authority.context}.war" />
-		<mkdir dir="${app.deploy.dir}" />
-		<copy todir="${app.deploy.dir}">
-			<fileset dir="${dist.dir}" />
-		</copy>
-	</target>
-	
 	
 	<!-- build metacat-common jar -->
 	<target name="build-metacat-common" depends="setMavenHome" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >
