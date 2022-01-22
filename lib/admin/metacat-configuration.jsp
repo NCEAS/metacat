@@ -291,7 +291,7 @@
     %>
             <tr>
             <td class="configured-tag"><i class="icon-ok"></i> configured</td>
-            <td class="property-title"> EZID Configuration for DOIs </td> 
+            <td class="property-title"> DOI Service Configuration </td> 
             <td class="configure-link"><a href="<%= request.getContextPath() %>/admin?configureType=ezid"><i class="icon-cogs"></i>Reconfigure Now</a> </td>         
             </tr>
     <%
@@ -299,7 +299,7 @@
     %>          
             <tr>
             <td class="configured-tag"><i class="icon-ok"></i> bypassed </td>  
-            <td class="property-title">EZID Configuration for DOIs</td>  
+            <td class="property-title"> DOI Service Configuration </td>  
     <%
             if (propsConfigured != null && propsConfigured) {
     %>
@@ -318,7 +318,7 @@
     %>          
             <tr>
             <td class="unconfigured-tag">unconfigured </td>  
-            <td class="property-title"> EZID Configuration for DOIs </td>   
+            <td class="property-title"> DOI Service Configuration </td>   
     <%
             if (propsConfigured != null && propsConfigured) {
     %>
