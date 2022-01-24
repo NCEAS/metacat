@@ -170,6 +170,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;
+import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -2221,12 +2222,53 @@ public class MNodeService extends D1NodeService
         }
         return isMNadmin;
     }
+    
+    /**
+     * Publish an object for the given identifier. Because of the different mechanisms using on the different DOI services, 
+     * the given identifier can have different semantic meaning. On the EZID service, the identifier is for an existing 
+     * object which will be obsoleted by a new generated DOI. On the OSTI service, the identifier is an existing DOI and
+     * Metacat only needs to generate the metadata for it and doesn't need to obsolete it. 
+     * @param session  the subjects call the method
+     * @param identifer  the identifier of the object which will be published. 
+     * @throws InvalidRequest 
+     * @throws NotImplemented 
+     * @throws NotAuthorized 
+     * @throws ServiceFailure 
+     * @throws InvalidToken 
+     * @throws NotFound
+     * @throws InvalidSystemMetadata 
+     * @throws InsufficientResources 
+     * @throws UnsupportedType 
+     * @throws IdentifierNotUnique 
+     */
+    public Identifier publish(Session session, Identifier identifier) throws InvalidToken, 
+    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+    UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
+        try {
+            return DOIServiceFactory.getDOIService().publish(this, session, identifier);
+        } catch (PropertyNotFoundException e) {
+            ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        } catch (InstantiationException e) {
+            ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        } catch (IllegalAccessException e) {
+            ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        } catch (ClassNotFoundException e) {
+            ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+            sf.initCause(e);
+            throw sf;
+        }
+    }
 	
 	/**
 	 * Given an existing Science Metadata PID, this method mints a DOI
 	 * and updates the original object "publishing" the update with the DOI.
 	 * This includes updating the ORE map that describes the Science Metadata+data.
-	 * TODO: ensure all referenced objects allow public read
 	 * 
 	 * @see https://projects.ecoinformatics.org/ecoinfo/issues/6014
 	 * 
@@ -2243,7 +2285,7 @@ public class MNodeService extends D1NodeService
 	 * @throws UnsupportedType 
 	 * @throws IdentifierNotUnique 
 	 */
-	public Identifier publish(Session session, Identifier originalIdentifier) throws InvalidToken, 
+	public Identifier publishEZID(Session session, Identifier originalIdentifier) throws InvalidToken, 
 	ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
 	UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
 		
