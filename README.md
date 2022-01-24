@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.15.1 Release
+Version: 2.16.2 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,23 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.16.2
+Bugs fixed in this release:
+* Upgrade some library jar files to fix severe security vulnerabilities
+
+### Release Notes for 2.16.1
+Bugs fixed in this release:
+* Upgrade some library jar files to fix severe security vulnerabilities
+* Metacat cannot create objects without DOI setting enabled
+
+### Release Notes for 2.16.0
+New features and bugs fixed in this release:
+* Upgrade some library jar files to fix critical security vulnerabilities
+* Refactor the DOI service to use the plug-in architecture
+* CN subjects cannot query private objects
+* Users with the write permission cannot update system metadata
+* Metacat should return a not-found error rather than the internal error when there is a typo in the old Metacat API url 
 
 ### Release Notes for 2.15.1
 New features and bugs fixed in this release:

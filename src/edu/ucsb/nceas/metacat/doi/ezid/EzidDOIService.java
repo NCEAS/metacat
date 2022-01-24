@@ -243,10 +243,7 @@ public class EzidDOIService implements DOIService {
 			        throw new DOIException(e.getMessage());
 			    }
 			}
-		} else {
-		    throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
-		}
-
+		} 
 		return true;
 	}
 
@@ -372,5 +369,14 @@ public class EzidDOIService implements DOIService {
 	    }
 		return identifier;
 	}
+	
+
+    /**
+     * Refresh the status (enable or disable) of the DOI service from property file
+     * @throws PropertyNotFoundException 
+     */
+    public void refreshStatus() throws PropertyNotFoundException {
+        doiEnabled = new Boolean(PropertyService.getProperty("guid.ezid.enabled")).booleanValue();
+    }
 
 }
