@@ -2673,7 +2673,7 @@ public class MNodeService extends D1NodeService
 	    if(formatId == null) {
 	        throw new InvalidRequest("2873",  "The format id wasn't specified in the request. " +
                     "Ensure that  the format id is properly set in the request.");
-	    } else if(!formatId.getValue().equals("application/bagit-097") || !formatId.getValue().equals("application/bagit-1.0")) {
+	    } else if(!formatId.getValue().equals("application/bagit-097") && !formatId.getValue().equals("application/bagit-1.0")) {
 	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not a supported format.");
 	    }
 	    String serviceFailureCode = "2871";
