@@ -171,6 +171,8 @@ import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.download.PackageDownloaderV1;
+import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
@@ -2583,18 +2585,75 @@ public class MNodeService extends D1NodeService
     }
 
     /**
-     * Exports a data package to disk using the BagIt 0.97 specification.
+     * Returns a stream to a resource map
      *
-     * The ultimate goal is, for every file being added to the bag,
-     * get an InputStream to it and add it to the SpeedBagIt instance.
+     * @param session: The user's session
+     * @param pid: The resource map PID
      *
-     * During the export process, a PDF file is generated and included in the bag.
-     * The conversion works by using an XSLT with the EML to transform it into HTML,
-     * which is then converted to a PDF file. During this process the HTML and CSS file are
-     * written to disk, read in by the HtmlToPdf object, and then written back to disk.
+     * @return A stream to the bagged package
      *
-     * The PDF file and pid-mapping.txt files are both stored in memory throughout the
-     * export process.
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     */
+    private ResourceMap serializeResourceMap(Session session, Identifier pid)
+            throws InvalidToken, NotFound, InvalidRequest, ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented {
+        SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+        ResourceMap resMap = null;
+        try {
+            InputStream oreInputStream = this.get(session, pid);
+            resMap = ResourceMapFactory.getInstance().deserializeResourceMap(oreInputStream);
+        } catch (OREException | URISyntaxException e) {
+            logMetacat.error("There was problem with the resource map. Check that that the resource map is valid.", e);
+            throw new ServiceFailure("There was problem with the resource map. Check that that the resource map is valid.", e.getMessage());
+        } catch (UnsupportedEncodingException e) {
+            logMetacat.error("The resource map has an unsupported encoding format.", e);
+            throw new ServiceFailure("The resource map has an unsupported encoding format.", e.getMessage());
+        } catch (OREParserException e) {
+            logMetacat.error("Failed to parse the ORE.", e);
+            throw new ServiceFailure("Failed to parse the ORE.", e.getMessage());
+        }
+        return resMap;
+    }
+
+
+    /**
+     * Maps a resource map to a list to an object that contains all of the identifiers (objects+system metadata)
+     *
+     * @param session: The user's session
+     * @param orePid: The pid of the ORE document
+     *
+     * @throws ServiceFailure
+     */
+    private Map<Identifier, Map<Identifier, List<Identifier>>> parseResourceMap(Session session,
+                                                                                Identifier orePid) throws ServiceFailure {
+
+        // Container that holds the pids of all of the objects that are in a package
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = null;
+        try {
+            InputStream oreInputStream = this.get(session, orePid);
+            resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream); //TODO: Check aggregates vs documents in parseResourceMap
+        } catch (OREException | OREParserException | UnsupportedEncodingException | NotImplemented e) {
+            throw new ServiceFailure("Failed to parse the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (InvalidToken | NotAuthorized e) {
+            logMetacat.error("Invalid token while parsing the resource map. Check that you have permissions.", e);
+        } catch (URISyntaxException e) {
+            throw new ServiceFailure("There was a malformation in the resource map. Check that the resource map is valid", e.getMessage());
+        } catch (NotFound e) {
+            throw new ServiceFailure("Failed to locate the resource map. Check that the right pid was used.", e.getMessage());
+        }
+        if (resourceMapStructure == null) {
+            throw new ServiceFailure("", "There was an error while parsing the resource map.");
+        }
+        return resourceMapStructure;
+    }
+
+    /**
+     * Exports a data package to disk using the BagIt
+     *
+     * The Bagit 0.97 format corresponds to the V1 export format
+     * The Bagit 1.0 format corresponds to the V2 export format
      *
      * @param session Information about the user performing the request
      * @param formatId
@@ -2614,7 +2673,7 @@ public class MNodeService extends D1NodeService
 	    if(formatId == null) {
 	        throw new InvalidRequest("2873",  "The format id wasn't specified in the request. " +
                     "Ensure that  the format id is properly set in the request.");
-	    } else if(!formatId.getValue().equals("application/bagit-097")) {
+	    } else if(!formatId.getValue().equals("application/bagit-097") || !formatId.getValue().equals("application/bagit-1.0")) {
 	        throw new NotImplemented("", "The format "+formatId.getValue()+" is not a supported format.");
 	    }
 	    String serviceFailureCode = "2871";
@@ -2623,228 +2682,197 @@ public class MNodeService extends D1NodeService
 	        pid = sid;
 	    }
 
-		// The pids of all of the objects in the package
-		List<Identifier> packagePids = new ArrayList<Identifier>();
-		
-		// catch non-D1 service errors and throw as ServiceFailures
-        SpeedBagIt speedBag = null;
-		try {
-            // Create a bag that is version 0.97 and has tag files that contain MD5 checksums
-            speedBag = new SpeedBagIt(0.97, "MD5");
+	    if(formatId.getValue().equals("application/bagit-097")) {
+	        // Use the Version 1 package format
+            logMetacat.debug("Serving a download request for a Version 1 Package");
+            PackageDownloaderV1 downloader = null;
+            try {
+                downloader = new PackageDownloaderV1(pid);
+                SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
+                if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
+                    //Get the resource map as a map of Identifiers
+                    InputStream oreInputStream = this.get(session, pid);
+                    Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
+                    downloader.packagePids.addAll(resourceMapStructure.keySet());
+                    //Loop through each object in this resource map
+                    for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+                        //Loop through each metadata object in this entry
+                        Set<Identifier> metadataIdentifiers = entries.keySet();
+                        for (Identifier metadataID : metadataIdentifiers) {
+                            try {
+                                //Get the system metadata for this metadata object
+                                SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
+                                // If it's supported metadata, create the PDF file out of it
+                                if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
+                                    InputStream metadataStream = this.get(session, metadataID);
+                                    downloader.addSciPdf(metadataStream, metadataSysMeta, metadataID);
+                                }
+                            } catch (Exception e) {
+                                logMetacat.error(e.toString());
+                            }
+                        }
+                        downloader.packagePids.addAll(entries.keySet());
+                        for (List<Identifier> dataPids : entries.values()) {
+                            downloader.packagePids.addAll(dataPids);
+                        }
+                    }
+                } else {
+                    // just the lone pid in this package
+                    //throw an invalid request exception
+                    throw new InvalidRequest("2873", "The given pid " + pid.getValue() + " is not a package " +
+                            "id (resource map id). Please use a package id instead.");
+                }
 
-            //Create a map of dataone ids and file names
-			Map<Identifier, String> fileNames = new HashMap<Identifier, String>();
-			
-			// track the pid-to-file mapping
-			StringBuffer pidMapping = new StringBuffer();
-			
-			// find the package contents
-			SystemMetadata sysMeta = this.getSystemMetadata(session, pid);
-			if (ObjectFormatCache.getInstance().getFormat(sysMeta.getFormatId()).getFormatType().equals("RESOURCE")) {
-				//Get the resource map as a map of Identifiers
-				InputStream oreInputStream = this.get(session, pid);
-				Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = ResourceMapFactory.getInstance().parseResourceMap(oreInputStream);
-				packagePids.addAll(resourceMapStructure.keySet());
-				//Loop through each object in this resource map
-				for (Map<Identifier, List<Identifier>> entries: resourceMapStructure.values()) {
-					//Loop through each metadata object in this entry
-					Set<Identifier> metadataIdentifiers = entries.keySet();
-					for(Identifier metadataID: metadataIdentifiers){
-						try{
-							//Get the system metadata for this metadata object
-							SystemMetadata metadataSysMeta = this.getSystemMetadata(session, metadataID);
-							
-							// If it's supported metadata, create the PDF file out of it
-							if (ObjectFormatCache.getInstance().getFormat(metadataSysMeta.getFormatId()).getFormatType().equals("METADATA")) {
-								InputStream metadataStream = this.get(session, metadataID);
-							
-								try {
-									// Set the properties for the XSLT transform
-						            String format = "default";
+                /**
+                 * Up to this point, the only file that has been added to the bag is the metadata pdf file.
+                 * The next step is looping over each object in the package, determining its filename,
+                 * getting an InputStream to it, and adding it to the bag.
+                 */
+                Set<Identifier> packagePidsUnique = new HashSet<>(downloader.packagePids);
+                for (Identifier entryPid : packagePidsUnique) {
+                    //Get the system metadata for each item
+                    SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
 
-									DBTransform transformer = new DBTransform();
-						            String documentContent = IOUtils.toString(metadataStream, "UTF-8");
-						            String sourceType = metadataSysMeta.getFormatId().getValue();
-						            String targetType = "-//W3C//HTML//EN";
-						            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						            Writer writer = new OutputStreamWriter(baos , "UTF-8");
-						            // TODO: include more params?
-						            Hashtable<String, String[]> params = new Hashtable<String, String[]>();
-						            String localId = null;
-									try {
-										localId = IdentifierManager.getInstance().getLocalId(pid.getValue());
-									} catch (McdbDocNotFoundException e) {
-										throw new NotFound("1020", e.getMessage());
-									}
-									params.put("qformat", new String[] {format});	            
-						            params.put("docid", new String[] {localId});
-						            params.put("pid", new String[] {pid.getValue()});
-						            params.put("displaymodule", new String[] {"printall"});
-						            transformer.transformXMLDocument(
-						                    documentContent , 
-						                    sourceType, 
-						                    targetType , 
-						                    format, 
-						                    writer, 
-						                    params, 
-						                    null //sessionid
-						                    );
-						            // finally, get the HTML back
-						            ContentTypeByteArrayInputStream resultInputStream = new ContentTypeByteArrayInputStream(baos.toByteArray());
+                    String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
+                    String fileName = null;
 
-						            // Create a temporary directory to store the html + css. This is required for HtmlToPdf
-						            File tmpDir = File.createTempFile("package_", "_dir");
-						            tmpDir.delete();
-						            tmpDir.mkdir();
+                    //Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
+                    fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
 
-						            // Create the directory for the CSS. This is required for HtmlToPdf
-						            File cssDir = new File(tmpDir, format);
-						            cssDir.mkdir();
-						            File cssFile = new File(tmpDir, format + "/" + format + ".css");
+                    // ensure there is a file extension for the object
+                    String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
+                    fileName += extension;
 
-						            // Write the CSS to the file
-                                    String originalCssPath = SystemUtil.getContextDir() + "/style/skins/" + format + "/" + format + ".css";
-                                    IOUtils.copy(new FileInputStream(originalCssPath), new FileOutputStream(cssFile));
+                    // if SM has the file name, ignore everything else and use that
+                    if (entrySysMeta.getFileName() != null) {
+                        fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+                    }
 
-						            // Create the pdf File that HtmlToPdf will write to
-                                    String pdfFileName = metadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-METADATA.pdf";
-                                    File pdfFile = new File(tmpDir, pdfFileName);
-                                    pdfFile = File.createTempFile("metadata", ".pdf", tmpDir);
+                    // Add the stream of the file to the bag object & write to the pid mapping file
+                    InputStream entryInputStream = this.get(session, entryPid);
+                    downloader.speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
+                    downloader.pidMapping.append(entryPid.getValue() + "\t" + "data/" + fileName + "\n");
+                }
 
-						            // write the HTML file
-                                    File htmlFile = File.createTempFile("metadata", ".html", tmpDir);
-						            IOUtils.copy(resultInputStream, new FileOutputStream(htmlFile));
-						            
-						            // convert to PDF
-						            HtmlToPdf.export(htmlFile.getAbsolutePath(), pdfFile.getAbsolutePath());
+                // Get a stream to the pid mapping file and add it as a tag file, in the bag root
+                ByteArrayInputStream pidFile = new ByteArrayInputStream(
+                        downloader.pidMapping.toString().getBytes(StandardCharsets.UTF_8));
+                downloader.speedBag.addFile(pidFile, "pid-mapping.txt", true);
+            } catch (IOException e) {
+                // report as service failure
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            } catch (OREException e) {
+                // report as service failure
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            } catch (URISyntaxException e) {
+                // report as service failure
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            } catch (OREParserException e) {
+                // report as service failure
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                        "error while processing the resource map. Ensure that the resource map " +
+                        "for the package is valid. " + e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                        "error while adding a file to the archive. Please ensure that the " +
+                        "checksumming algorithm is supported." + e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            }
 
-						            // Now that the PDF file is generated and written to disk,
-                                    // delete the HTML & CSS files
-                                    htmlFile.delete();
-                                    cssFile.delete();
-                                    cssDir.delete();
-
-                                    // Load the PDF file into memory so that it can be deleted from disk
-                                    byte[] pdfMetadata = Files.readAllBytes(Paths.get(pdfFile.getAbsolutePath()));
-                                    InputStream pdfInputStream = new ByteArrayInputStream(pdfMetadata);
-
-                                    // Now that the PDF file has been loaded into memory, delete it from disk
-                                    pdfFile.delete();
-                                    tmpDir.delete();
-
-                                    // Add the pdf to the bag
-                                    speedBag.addFile(pdfInputStream, Paths.get("data/"+ pdfFileName).toString(), false);
-
-                                    // Create a record in the pid mapping file
-                                    pidMapping.append(metadataID.getValue() + " (pdf)" +  "\t" + "data/" + pdfFile.getName() + "\n");
-
-								} catch (Exception e) {
-									logMetacat.error("There was an error generating the PDF file during a package export. " +
-                                            "Ensure that the package metadata is valid and supported.", e);
-								}
-							}
-
-							
-							//If this is in eml format, extract the filename and GUID from each entity in its package
-							if (metadataSysMeta.getFormatId().getValue().startsWith("eml://") || metadataSysMeta.getFormatId().getValue().startsWith("https://eml.ecoinformatics.org")) {
-								//Get the package
-								DataPackageParserInterface parser = new Eml200DataPackageParser();
-								InputStream emlStream = this.get(session, metadataID);
-								parser.parse(emlStream);
-								DataPackage dataPackage = parser.getDataPackage();
-
-							}
-						}
-						catch(Exception e){
-							//Catch errors that would prevent package download
-							logMetacat.error(e.toString());
-						}
-					}
-					packagePids.addAll(entries.keySet());
-					for (List<Identifier> dataPids: entries.values()) {
-						packagePids.addAll(dataPids);
-					}
-				}
-			} else {
-				// just the lone pid in this package
-				//packagePids.add(pid);
-			    //throw an invalid request exception
-			    throw new InvalidRequest("2873", "The given pid "+pid.getValue()+" is not a package " +
-                        "id (resource map id). Please use a package id instead.");
-			}
-
-            /**
-             * Up to this point, the only file that has been added to the bag is the metadata pdf file.
-             * The next step is looping over each object in the package, determining its filename,
-             * getting an InputStream to it, and adding it to the bag.
-             */
-            Set<Identifier> packagePidsUnique = new HashSet<>(packagePids);
-			for (Identifier entryPid: packagePidsUnique) {
-				//Get the system metadata for each item
-				SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);					
-				
-				String objectFormatType = ObjectFormatCache.getInstance().getFormat(entrySysMeta.getFormatId()).getFormatType();
-				String fileName = null;
-
-				//TODO: Be more specific of what characters to replace. Make sure periods arent replaced for the filename from metadata
-				//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
-				fileName = entryPid.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" + objectFormatType;
-				
-				// ensure there is a file extension for the object
-				String extension = ObjectFormatInfo.instance().getExtension(entrySysMeta.getFormatId().getValue());
-				fileName += extension;
-				
-				// if SM has the file name, ignore everything else and use that
-				if (entrySysMeta.getFileName() != null) {
-					fileName = entrySysMeta.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
-				}
-				
-		        // Add the stream of the file to the bag object & write to the pid mapping file
-				InputStream entryInputStream = this.get(session, entryPid);
-                speedBag.addFile(entryInputStream, Paths.get("data/", fileName).toString(), false);
-				pidMapping.append(entryPid.getValue() + "\t" + "data/" + fileName + "\n");
-			}
-			
-			// Get a stream to the pid mapping file and add it as a tag file, in the bag root
-            ByteArrayInputStream pidFile = new ByteArrayInputStream(pidMapping.toString().getBytes(StandardCharsets.UTF_8));
-            speedBag.addFile(pidFile, "pid-mapping.txt", true);
-		} catch (IOException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (URISyntaxException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (OREParserException e) {
-			// report as service failure
-		    e.printStackTrace();
-			ServiceFailure sf = new ServiceFailure("1030", "There was an " +
-                    "error while processing the resource map. Ensure that the resource map " +
-                    "for the package is valid. " + e.getMessage());
-			sf.initCause(e);
-			throw sf;
-		} catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
-                    "error while adding a file to the archive. Please ensure that the " +
-                    "checksumming algorithm is supported." + e.getMessage());
-            sf.initCause(e);
-            throw sf;
+            // The underlying speedbag object is ready to be served to the clinet, do that here
+            try {
+                return downloader.speedBag.stream();
+            } catch (NullPointerException | IOException e) {
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                        "error while streaming the downloaded data package. " + e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "While creating the package " +
+                        "download, an unsupported checksumming algorithm was encountered. " + e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            }
         }
 
+	    logMetacat.debug("Serving a download request for a Version 2 Package");
+	    // Get the resource map. This is used various places downstream, which is why it's not a stream. Note that
+        // this throws if it can't be parsed because we depend on it for object pids.
+        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = parseResourceMap(session, pid);
+        // Holds the PID of every object in the resource map
+        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
+        pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
+
+        for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+            pidsOfPackageObjects.addAll(entries.keySet());
+            for (List<Identifier> dataPids : entries.values()) {
+                pidsOfPackageObjects.addAll(dataPids);
+            }
+        }
+        // Get a ResourceMap object representing the resource map. Throw if we can't get it
+        ResourceMap resourceMap = serializeResourceMap(session, pid);
+        SystemMetadata resourceMapSystemMetadata = this.getSystemMetadata(session, pid);
+        // Create the downloader that's responsible for creating the readme and bag archive.
+        // Throws if something went wrong (we can't continue without a PackageDownloader)
+        PackageDownloaderV2 downloader = new PackageDownloaderV2(pid, resourceMap, resourceMapSystemMetadata);
+
+        List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
+        // Iterate over all the pids and find get an input stream and potential disk location
+        for (Identifier entryPid : pidsOfPackageObjects) {
+            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
+            if (metadataIdentifiers.contains(entryPid)) {
+                continue;
+            }
+            // Get the system metadata and a stream to the data file
+            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+            InputStream objectInputStream = this.get(session, entryPid);
+            // Add the stream to the downloader, which will handle finding its location
+            downloader.addDataFile(entrySysMeta, objectInputStream);
+            try {
+                downloader.addSystemMetadata(entrySysMeta);
+            } catch (NoSuchAlgorithmException e) {
+                ServiceFailure sf = new ServiceFailure("1030", "While creating the package." +
+                        "Could not add thr system metadata to the zipfile. " + e.getMessage());
+                sf.initCause(e);
+                throw sf;
+            }
+        }
         try {
-            return speedBag.stream();
+            // Create the README file if there's science metadata
+            List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
+            if (!scienceMetadataIdentifiers.isEmpty()) {
+                Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
+                SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
+                InputStream scienceMetadataStream = this.get(session, sciMetataId);
+                downloader.generateReadme(scienceMetadataStream, systemMetadata);
+            }
+
+            // Add the science metadata and their associated system metadatas to the downloader
+            for (Identifier scienceMetadataIdentifier: scienceMetadataIdentifiers) {
+                SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
+                InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
+                downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
+            }
+
+            // Add all of the science metadata
+            downloader.addScienceMetadatas();// The underlying speedbag object is ready to be served to the clinet, do that here
+            return downloader.speedBag.stream();
         } catch (NullPointerException | IOException e) {
             e.printStackTrace();
             ServiceFailure sf = new ServiceFailure("1030", "There was an " +
@@ -2858,6 +2886,7 @@ public class MNodeService extends D1NodeService
             sf.initCause(e);
             throw sf;
         }
+
 	}
 
 	 /**

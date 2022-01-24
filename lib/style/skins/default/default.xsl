@@ -29,112 +29,69 @@
 	* into an HTML format suitable for rendering with modern web browsers.
 -->
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
-                xmlns:eml="eml://ecoinformatics.org/eml-2.1.0" 
-	            version="1.0">
-    <xsl:import href="../../common/resultset-table.xsl"/>
-    <xsl:import href="../../common/eml-2/eml.xsl"/>
-    <xsl:import href="../../common/fgdc/fgdc-root.xsl"/>
-		
+				xmlns:eml="eml://ecoinformatics.org/eml-2.1.0"
+				version="1.0">
+	<xsl:import href="./eml-2/eml.xsl"/>
+	<xsl:include href="./emltojson-ld.xsl" />
 	<xsl:output method="html" />
 	<xsl:param name="sessid" />
 	<xsl:param name="qformat">default</xsl:param>
 	<xsl:param name="enableediting">false</xsl:param>
 	<xsl:param name="contextURL"/>
 	<xsl:param name="cgi-prefix"/>
-	
+
 	<xsl:template match="/">
-	
+
 		<html>
-		
+
 			<xsl:call-template name="documenthead"/>
-			
+
 			<body id="Overview">
-			
+
 				<div id="main_wrapper">
-					
-				    <xsl:call-template name="bodyheader"/>
-				    
+
 					<div id="content_wrapper">
-					                        
-                   		<xsl:if test="*[local-name()='eml']">     	
-                            <xsl:call-template name="emldocument"/>
-                        </xsl:if>
-                        
-                        <xsl:if test="*[local-name()='resultset']">     	
-                            <xsl:call-template name="resultstable"/>
-                        </xsl:if>
-                        
-                        <xsl:if test="*[local-name()='metadata']">     	
-                            <xsl:call-template name="metadata"/>
-                        </xsl:if>
-                       						
+
+						<xsl:if test="*[local-name()='eml']">
+							<xsl:call-template name="emldocument"/>
+						</xsl:if>
+
 					</div>
-					
-					<xsl:call-template name="bodyfooter"/>
-					
 				</div>
-				
+
 			</body>
-			
+
 		</html>
-		
+
 	</xsl:template>
-	
+
 	<xsl:template name="documenthead">
 		<head>
-			<title>Data Repository
-			<xsl:if test="*[local-name()='eml']">     	
-            	<xsl:text>: </xsl:text><xsl:value-of select="/eml:eml/dataset/title"/>
-            </xsl:if>
-            </title>
-                        
-			<link rel="stylesheet" type="text/css"
-				href="{$contextURL}/style/skins/{$qformat}/{$qformat}.css" />
-			<script language="javascript" type="text/javascript" 
-					src="{$contextURL}/style/common/jquery/jquery.js"></script>	
-			<script language="Javascript" type="text/JavaScript"
-				src="{$contextURL}/style/skins/{$qformat}/{$qformat}.js" />
-			<script language="Javascript" type="text/JavaScript"
-				src="{$contextURL}/style/common/branding.js" />
-			<link rel="stylesheet" type="text/css"
-				href="{$contextURL}/style/skins/{$qformat}/{$qformat}.css" />
-
-			<script language="JavaScript">
-				<![CDATA[
-         		function submitform(action,form_ref) {
-             		form_ref.action.value=action;
-             		form_ref.sessionid.value="]]><xsl:value-of select="$sessid" /><![CDATA[";
-             		form_ref.qformat.value="]]><xsl:value-of select="$qformat" /><![CDATA[";
-		            form_ref.submit();
-         		}
-				]]>
+			<title>DataONE Dataset
+				<xsl:if test="*[local-name()='eml']">
+					<xsl:text>: </xsl:text><xsl:value-of select="/eml:eml/dataset/title"/>
+				</xsl:if>
+			</title>
+			<style>
+				<xsl:value-of select="document('./styling/default.css')/*"/>
+			</style>
+			<script type="application/ld+json">
+				<xsl:call-template name="jsonld">
+					<xsl:with-param name="science-meta" select="./*"/>
+				</xsl:call-template>
 			</script>
 		</head>
 	</xsl:template>
-    
-    <xsl:template name="emldocument">
-    	<table xsl:use-attribute-sets="cellspacing" width="100%"
-               class="{$mainContainerTableStyle}">
-			<tr>
-               	<td>
-            		<xsl:apply-templates select="*[local-name()='eml']"/>
-            	</td>
-            </tr>		
-        </table>
-    </xsl:template>
-    
-    <xsl:template name="bodyheader">
-		<!-- header here -->
-		<script language="JavaScript">
-			insertTemplateOpening('<xsl:value-of select="$contextURL" />');
-		</script>
-	</xsl:template>
 
-	<xsl:template name="bodyfooter">
-		<!-- footer here -->
-		<script language="JavaScript">
-			insertTemplateClosing('<xsl:value-of select="$contextURL" />');
-		</script>
+	<xsl:template name="emldocument">
+		<table xsl:use-attribute-sets="cellspacing" width="100%"
+			   class="{$mainContainerTableStyle}">
+			<tr>
+				<td>
+					<xsl:apply-templates select="*[local-name()='eml']"/>
+				</td>
+			</tr>
+		</table>
 	</xsl:template>
 
 </xsl:stylesheet>

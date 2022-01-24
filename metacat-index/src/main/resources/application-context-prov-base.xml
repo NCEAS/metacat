@@ -415,5 +415,28 @@
             </value>
         </constructor-arg>
     </bean>
+
+    <bean id="prov20150115.atLocation" class="org.dataone.cn.indexer.annotation.SparqlField">
+        <constructor-arg name="name" value="prov_atLocation" />
+        <constructor-arg name="query">
+            <value>
+                <![CDATA[
+                PREFIX rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+                PREFIX rdfs:    <http://www.w3.org/2000/01/rdf-schema#>
+                PREFIX owl:     <http://www.w3.org/2002/07/owl#>
+                PREFIX prov:    <http://www.w3.org/ns/prov#>
+                PREFIX provone: <http://purl.dataone.org/provone/2015/01/15/ontology#>
+                PREFIX ore:     <http://www.openarchives.org/ore/terms/>
+                PREFIX dcterms: <http://purl.org/dc/terms/>
+                SELECT (str(?pidValue) as ?pid) ?prov_iatLocation
+                FROM <$GRAPH_NAME>
+                WHERE {
+                    ?subject rdf:type ?prov_atLocation .
+                    ?subject dcterms:identifier ?pidValue .
+                }
+                ]]>
+            </value>
+        </constructor-arg>
+    </bean>
     
 </beans>
