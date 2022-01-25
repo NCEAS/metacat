@@ -2834,7 +2834,8 @@ public class MNodeService extends D1NodeService
 
         List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
         // Iterate over all the pids and find get an input stream and potential disk location
-        for (Identifier entryPid : pidsOfPackageObjects) {
+        HashSet<Identifier> uniquePids = new HashSet<>(pidsOfPackageObjects);
+        for (Identifier entryPid : uniquePids) {
             // Skip the resource map and the science metadata so that we don't write them to the data direcotry
             if (metadataIdentifiers.contains(entryPid)) {
                 continue;
@@ -2855,8 +2856,9 @@ public class MNodeService extends D1NodeService
         }
         try {
             // Create the README file if there's science metadata
+            logMetacat.debug("Creating Readme file.");
             List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
-            if (!scienceMetadataIdentifiers.isEmpty()) {
+            if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
                 Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
                 InputStream scienceMetadataStream = this.get(session, sciMetataId);
@@ -2865,6 +2867,7 @@ public class MNodeService extends D1NodeService
 
             // Add the science metadata and their associated system metadatas to the downloader
             for (Identifier scienceMetadataIdentifier: scienceMetadataIdentifiers) {
+                logMetacat.debug("Adding science metadata to the bag");
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
                 InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
                 downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
