@@ -196,16 +196,21 @@ public class PackageDownloaderV2 {
 		}
 
 		// See if it has a path defined in the resource map
-		logMetacat.debug("Determining if file has a record in the ");
+		logMetacat.debug("Determining if file has a record in the resource map");
 		String dataPath = this._filePathMap.get(objectSystemMetadataID.getValue());
-		logMetacat.info(this._filePathMap.get(objectSystemMetadataID.getValue()));
+		String filePath = "";
 		try {
 			String dataDirectory = PropertyService.getProperty("package.download.bag.directory.data");
-			// data + <atLocation> + filename
-			String filePath = Paths.get(dataDirectory, dataPath, dataFilename).toString();
+			if (this._filePathMap.get(objectSystemMetadataID.getValue()) == null) {
+				logMetacat.debug("Failed to find a file location for the data file. Defaulting to data/");
+				// Create the file path without any additional directories past the default data directory
+				filePath = Paths.get(dataDirectory, dataFilename).toString();
+			} else {
+				filePath = Paths.get(dataDirectory, dataPath, dataFilename).toString();
+			}
 			this.speedBag.addFile(inputStream, filePath, false);
 		} catch (Exception e) {
-			logMetacat.warn("Error creating bag files", e);
+			logMetacat.error("Error adding the datafile to the bag", e);
 			throw new ServiceFailure("There was an error creating the temporary download directories.", e.getMessage());
 		}
 	}
