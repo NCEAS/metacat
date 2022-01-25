@@ -271,7 +271,7 @@ public class EzidDOIService implements DOIService {
         // target (URL)
         String target = node.getBaseURL() + "/v1/object/" + identifier;
         String uriTemplate = null;
-        String uriTemplateKey = "guid.ezid.uritemplate.data";
+        String uriTemplateKey = "guid.doi.uritemplate.data";
         ObjectFormat objectFormat = null;
         try {
             objectFormat = D1Client.getCN().getFormat(sysMeta.getFormatId());
@@ -279,7 +279,7 @@ public class EzidDOIService implements DOIService {
             logMetacat.warn("Could not check format type for: " + sysMeta.getFormatId());
         }
         if (objectFormat != null && objectFormat.getFormatType().equals("METADATA")) {
-            uriTemplateKey = "guid.ezid.uritemplate.metadata";
+            uriTemplateKey = "guid.doi.uritemplate.metadata";
         }
         try {
             uriTemplate = PropertyService.getProperty(uriTemplateKey);

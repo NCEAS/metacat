@@ -19,6 +19,16 @@
 package edu.ucsb.nceas.metacat.doi.osti;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.StringWriter;
+
+import javax.xml.transform.Templates;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -33,13 +43,20 @@ import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
+
 
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
+import edu.ucsb.nceas.osti_elink.OSTIElinkClient;
+import edu.ucsb.nceas.osti_elink.OSTIElinkErrorAgent;
+import edu.ucsb.nceas.osti_elink.OSTIElinkException;
+import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -49,11 +66,16 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author tao
  */
 public class OstiDOIService implements DOIService{
-    private Log logMetacat = LogFactory.getLog(OstiDOIService.class);
+    private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
+    private static Templates eml2osti = null;                                                                      
+    private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
+    private static String uriTemplate = null;
+    
     private boolean doiEnabled = false;
     private String username = null;
     private String password = null;
     private String serviceBaseUrl = null;
+    private OSTIElinkClient ostiClient = null;
     
     /**
      * Constructor
@@ -61,11 +83,28 @@ public class OstiDOIService implements DOIService{
     public OstiDOIService() {
         try {
             doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
-            serviceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-            username = PropertyService.getProperty("guid.doi.username");
-            password = PropertyService.getProperty("guid.doi.password");
+            if (doiEnabled) {
+                serviceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+                username = PropertyService.getProperty("guid.doi.username");
+                password = PropertyService.getProperty("guid.doi.password");
+                OSTIElinkErrorAgent errorAgent = null;
+                ostiClient = new OSTIElinkClient(username, password, serviceBaseUrl, errorAgent);
+                String ostiPath = SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS() + 
+                                  "common" + FileUtil.getFS() + "osti" + FileUtil.getFS() + "eml2osti.xsl";
+                logMetacat.debug("OstiDOIService.OstiDOIService - the osti xsl file path is " + ostiPath);
+                eml2osti = transformerFactory.newTemplates(new StreamSource(ostiPath));
+                try {
+                    uriTemplate = PropertyService.getProperty("guid.doi.uritemplate.metadata");
+                } catch (PropertyNotFoundException e) {
+                    logMetacat.warn("OstiDOIService.OstiDOIService - No target URI template found in the configuration for: " + e.getMessage());
+                }
+            }
         } catch (PropertyNotFoundException e) {
-            logMetacat.warn("DOI support is not configured at this node.", e);
+            logMetacat.warn("OstiDOIService.OstiDOIService -DOI support is not configured at this node.", e);
+            return;
+        } catch (TransformerConfigurationException e) {
+            // TODO Auto-generated catch block
+            logMetacat.error("OstiDOIService.OstiDOIService - Metacat can't generate the style sheet to transform eml objects to OSTI documents: ", e);
             return;
         }
     }
@@ -92,7 +131,17 @@ public class OstiDOIService implements DOIService{
      * @throws InvalidRequest
      */
     public Identifier generateDOI() throws DOIException, InvalidRequest {
-        return null;
+        if (!doiEnabled) {
+            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+        }
+        try {
+            String doiStr = ostiClient.mintIdentifier(null);
+            Identifier doi = new Identifier();
+            doi.setValue(doiStr);
+            return doi;
+        } catch (OSTIElinkException e) {
+            throw new DOIException(e.getMessage());
+        }
     }
     
     /**
@@ -100,7 +149,7 @@ public class OstiDOIService implements DOIService{
      * @throws PropertyNotFoundException 
      */
     public void refreshStatus() throws PropertyNotFoundException {
-        
+        doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
     }
     
     /**
@@ -125,6 +174,46 @@ public class OstiDOIService implements DOIService{
     public Identifier publish(MNodeService service, Session session, Identifier identifier) throws InvalidToken, 
     ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
-        return null;
+        InputStream object = service.get(session, identifier);
+        String siteUrl = null;
+        try {
+            if (uriTemplate != null) {
+                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+            } else {
+                siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("OstiDOIService.publish - No target URI template found in the configuration for: " + e.getMessage());
+        }
+        logMetacat.debug("OstiDOIService.publish - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
+        try {
+            String ostiMeta = generateOstiMetadata(object, siteUrl);
+            ostiClient.setMetadata(identifier.getValue(), ostiMeta);
+        } catch (TransformerException e) {
+           throw new ServiceFailure("1030", e.getMessage());
+        } catch (InterruptedException e) {
+            throw new ServiceFailure("1030", e.getMessage());
+        }
+        return identifier;
+    }
+    
+    /**
+     * Generate the OSTI document for the given eml
+     * @param eml  the source eml 
+     * @param siteUrl  the site url for the metadata. If the value is set, the status of the osti record will be pending. 
+     * @return  the OSTI document for the eml
+     * @throws TransformerException
+     */
+    protected String generateOstiMetadata(InputStream eml, String siteUrl) throws TransformerException {
+        String meta = null;
+        Transformer transformer = eml2osti.newTransformer();
+        StringWriter writer = new StringWriter();
+        StreamResult result = new StreamResult(writer);
+        if (siteUrl != null && !siteUrl.trim().equals("")) {
+            transformer.setParameter("site_url", siteUrl);
+        }
+        transformer.transform(new StreamSource(eml), result);
+        meta = writer.toString();
+        return meta;
     }
 }
