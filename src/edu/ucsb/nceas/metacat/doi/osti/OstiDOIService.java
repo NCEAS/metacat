@@ -174,26 +174,27 @@ public class OstiDOIService implements DOIService{
     public Identifier publish(MNodeService service, Session session, Identifier identifier) throws InvalidToken, 
     ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
-        InputStream object = service.get(session, identifier);
-        String siteUrl = null;
-        try {
-            if (uriTemplate != null) {
-                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
-            } else {
-                siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
+        try (InputStream object = service.get(session, identifier)) {
+            String siteUrl = null;
+            try {
+                if (uriTemplate != null) {
+                    siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+                } else {
+                    siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
+                }
+            } catch (PropertyNotFoundException e) {
+                logMetacat.warn("OstiDOIService.publish - No target URI template found in the configuration for: " + e.getMessage());
             }
-        } catch (PropertyNotFoundException e) {
-            logMetacat.warn("OstiDOIService.publish - No target URI template found in the configuration for: " + e.getMessage());
-        }
-        logMetacat.debug("OstiDOIService.publish - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
-        try {
-            String ostiMeta = generateOstiMetadata(object, siteUrl);
-            ostiClient.setMetadata(identifier.getValue(), ostiMeta);
-        } catch (TransformerException e) {
-           throw new ServiceFailure("1030", e.getMessage());
-        } catch (InterruptedException e) {
-            throw new ServiceFailure("1030", e.getMessage());
-        }
+            logMetacat.debug("OstiDOIService.publish - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
+            try {
+                String ostiMeta = generateOstiMetadata(object, siteUrl);
+                ostiClient.setMetadata(identifier.getValue(), ostiMeta);
+            } catch (TransformerException e) {
+               throw new ServiceFailure("1030", e.getMessage());
+            } catch (InterruptedException e) {
+                throw new ServiceFailure("1030", e.getMessage());
+            }
+        } 
         return identifier;
     }
     
