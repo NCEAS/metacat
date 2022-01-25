@@ -121,6 +121,7 @@ public class OstiDOIService implements DOIService{
      */
     public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
                                                                 ServiceFailure, InterruptedException {
+        logMetacat.info("OstiDOIServic.registerDOI - do nothing.");
         return true;
     }
 
@@ -216,5 +217,15 @@ public class OstiDOIService implements DOIService{
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
         return meta;
+    }
+    
+    /**
+     * Get the metadata for the given identifier
+     * @param doi  the identifier to identify the OSTI metadata
+     * @return  the OSTI metadata associated with the identifier
+     * @throws OSTIElinkException
+     */
+    public String getMetadata(Identifier doi) throws OSTIElinkException {
+        return ostiClient.getMetadata(doi.getValue());
     }
 }
