@@ -62,6 +62,7 @@ public class OstiDOIServiceTest  extends D1NodeServiceTest {
         TestSuite suite = new TestSuite();
         suite.addTest(new OstiDOIServiceTest("testGenerateOstiMetadata"));
         suite.addTest(new OstiDOIServiceTest("testPublishProcess"));
+        suite.addTest(new OstiDOIServiceTest("testPublishProcessForSID"));
         return suite;
     }
     
@@ -146,6 +147,47 @@ public class OstiDOIServiceTest  extends D1NodeServiceTest {
         Thread.sleep(5000);
         meta = service.getMetadata(doi);
         //System.out.println("the osti meta is\n" + meta);
+        assertTrue(meta.contains("status=\"Pending\""));
+    }
+    
+    /**
+     * Test the publish process
+     * @throws Exception
+     */
+    public void testPublishProcessForSID() throws Exception {
+        printTestHeader("testPublishProcess");
+        
+        //Get the doi
+        String emlFile = "test/eml-ess-dive.xml";
+        Identifier doi = service.generateDOI();
+        Thread.sleep(5000);
+        String meta = service.getMetadata(doi);
+        //System.out.println("the osti meta is\n" + meta);
+        assertTrue(meta.contains("status=\"Saved\""));
+        
+        //create an object with the doi
+        Session session = getTestSession();
+        Identifier guid =  new Identifier();
+        guid.setValue("testPublishProcessForSID." + System.currentTimeMillis());
+        FileInputStream eml = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), eml);
+        eml.close();
+        sysmeta.setSeriesId(doi);
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        eml.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        meta = service.getMetadata(doi);
+        Thread.sleep(5000);
+        //System.out.println("the osti meta is\n" + meta);
+        assertTrue(meta.contains("status=\"Saved\""));
+        
+        //publish the object with the doi
+        MNodeService.getInstance(request).publish(session, doi);
+        Thread.sleep(5000);
+        meta = service.getMetadata(doi);
+        System.out.println("the osti meta is\n" + meta);
         assertTrue(meta.contains("status=\"Pending\""));
     }
 }
