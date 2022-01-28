@@ -217,6 +217,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
+    suite.addTest(new MNodeServiceTest("testCreateAndUpdateFGDC"));
     return suite;
     
   }
@@ -1979,7 +1980,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // clean up
           bagFile.delete();
           Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-          Thread.sleep(80000);
+          Thread.sleep(90000);
           System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
           List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
           assertTrue(oreIds.size() == 1);
@@ -4126,6 +4127,37 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", originDOIstatusStr);
             DOIServiceFactory.getDOIService().refreshStatus();
         }
+    }
+    
+    /**
+     * Test object creation FGDC objects
+     */
+    public void testCreateAndUpdateFGDC() throws Exception {
+        printTestHeader("testCreateAndUpdateFGDC");
+        ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+        format.setValue("FGDC-STD-001-1998");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCreateAndUpdateFGDC." + System.currentTimeMillis());
+        InputStream object = new FileInputStream("test/fgdc.xml");
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(format);
+        object.close();
+        object = new FileInputStream("test/fgdc.xml");
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertEquals(guid.getValue(), pid.getValue());
+        object.close();
+        
+        Thread.sleep(2000);
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testCreateAndUpdateFGDC2." + System.currentTimeMillis());
+        object = new FileInputStream("test/fgdc.xml");
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        object.close();
+        sysmeta2.setFormatId(format);
+        object = new FileInputStream("test/fgdc.xml");
+        MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
+        object.close();
     }
 }
 
