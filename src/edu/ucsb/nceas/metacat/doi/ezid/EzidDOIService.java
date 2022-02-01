@@ -93,6 +93,8 @@ import edu.ucsb.nceas.utilities.StringUtil;
 public class EzidDOIService implements DOIService {
 
     public static final String DATACITE = "datacite";
+    
+    private static final int MAX_ATTEMPT = 2;
 
 	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
@@ -341,6 +343,44 @@ public class EzidDOIService implements DOIService {
 	 * @throws InvalidRequest
 	 */
 	public Identifier generateDOI() throws DOIException, InvalidRequest {
+	    Identifier doi = null;
+	    //Try to generate a doi again after re-login if the first time failed.
+	    //See https://github.com/NCEAS/metacat/issues/1545
+	    for (int i=1; i <= MAX_ATTEMPT; i++) {
+	        logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time try to generate a DOI.");
+	        try {
+	            doi = generateDOIFromEZID();
+	            break;
+	        } catch (DOIException e) {
+	            if (i == MAX_ATTEMPT) {
+	                throw e; //Metacat throws an exception (stops trying) if the max_attempt tries failed
+	            } else {
+	                logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a DOIExcpetion " +
+	                                  e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
+	                ezid.login(ezidUsername, ezidPassword);
+	                lastLogin = Calendar.getInstance().getTime();
+	            }
+	        } catch (InvalidRequest e) {
+                if (i == MAX_ATTEMPT) {
+                    throw e;
+                } else {
+                    logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a InvalidRequest " +
+                            e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
+                    ezid.login(ezidUsername, ezidPassword);
+                    lastLogin = Calendar.getInstance().getTime();
+                }
+            }
+        }
+        return doi;
+    }
+
+    /**
+     * Generate a DOI using the EZID service as configured
+     * @return the doi generated from the EZID service
+     * @throws EZIDException
+     * @throws InvalidRequest
+     */
+	private Identifier generateDOIFromEZID() throws DOIException, InvalidRequest {
 	    Identifier identifier = new Identifier();
 	    try {
     		// only continue if we have the feature turned on
