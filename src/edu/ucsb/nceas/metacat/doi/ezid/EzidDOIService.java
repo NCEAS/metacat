@@ -423,30 +423,4 @@ public class EzidDOIService implements DOIService {
     public void refreshStatus() throws PropertyNotFoundException {
         doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
     }
-    
-    /**
-     * Given an existing Science Metadata PID, this method mints a DOI
-     * and updates the original object "publishing" the update with the DOI.
-     * This includes updating the ORE map that describes the Science Metadata+data.
-     * 
-     * @see https://projects.ecoinformatics.org/ecoinfo/issues/6014
-     * 
-     * @param originalIdentifier
-     * @param request
-     * @throws InvalidRequest 
-     * @throws NotImplemented 
-     * @throws NotAuthorized 
-     * @throws ServiceFailure 
-     * @throws InvalidToken 
-     * @throws NotFound
-     * @throws InvalidSystemMetadata 
-     * @throws InsufficientResources 
-     * @throws UnsupportedType 
-     * @throws IdentifierNotUnique 
-     */
-    public Identifier publish(MNodeService service, Session session, Identifier originalIdentifier) throws InvalidToken, 
-    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-    UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
-        return service.publishEZID(session, originalIdentifier);
-    }
 }

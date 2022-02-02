@@ -70,26 +70,4 @@ public interface DOIService {
      */
     public void refreshStatus() throws PropertyNotFoundException;
     
-    /**
-     * Publish an object for the given identifier. Because of the different mechanisms using on the different DOI services, 
-     * the given identifier can have different semantic meaning. On the EZID service, the identifier is for an existing 
-     * object which will be obsoleted by a new generated DOI. On the OSTI service, the identifier is an existing DOI and
-     * Metacat only needs to generate the metadata for it and doesn't need to obsolete it. 
-     * @param service  the MNodeService object which calls the method
-     * @param session  the subjects call the method
-     * @param identifer  the identifier of the object which will be published. 
-     * @throws InvalidRequest 
-     * @throws NotImplemented 
-     * @throws NotAuthorized 
-     * @throws ServiceFailure 
-     * @throws InvalidToken 
-     * @throws NotFound
-     * @throws InvalidSystemMetadata 
-     * @throws InsufficientResources 
-     * @throws UnsupportedType 
-     * @throws IdentifierNotUnique 
-     */
-    public Identifier publish(MNodeService service, Session session, Identifier identifier) throws InvalidToken, 
-    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-    UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException;
 }
