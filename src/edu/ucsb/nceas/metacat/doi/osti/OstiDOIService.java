@@ -32,6 +32,7 @@ import javax.xml.transform.stream.StreamSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -45,6 +46,7 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.ServiceMethodRestriction;
 import org.dataone.service.types.v1.Session;
+import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.SystemMetadata;
 
 
@@ -154,6 +156,59 @@ public class OstiDOIService implements DOIService{
     }
     
     /**
+     * Update the metadata for some records in the OSTI service. It can update both the identifier and series id in
+     * the system metadata if both of them are DOIs. It doesn't change the status (reserved or published) of the DOIs
+     * @param session  the subjects who calls the method
+     * @param sysmeta  the info contains the identifiers which will be updated (we can update only identifier, sid or both)
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotFound
+     * @throws NotImplemented
+     */
+    public void updateDOIMetadata(Session session, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, 
+                                                                           NotAuthorized, NotFound, NotImplemented {
+        if (doiEnabled) {
+            Identifier id = sysmeta.getIdentifier();
+            if (id.getValue() != null && (id.getValue().startsWith("doi://") 
+                                     || (id.getValue().startsWith("DOI://")))) {
+                updateDOIMetadata(session, id);
+            }
+            Identifier sid = sysmeta.getSeriesId();
+            if (sid.getValue() != null && (sid.getValue().startsWith("doi://") 
+                    || (sid.getValue().startsWith("DOI://")))) {
+                updateDOIMetadata(session, sid);
+            }
+        }
+    }
+    
+    /**
+     * Update the metadata in the osti service for a specific identifier(DOI). 
+     * It doesn't change the status (reserved or published) for the identifier(DOI).
+     * @param session  the subjects who calls the method
+     * @param doi  the doi to identify the metadata which will be updated
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotFound
+     * @throws NotImplemented
+     */
+    private void updateDOIMetadata(Session session, Identifier doi) throws InvalidToken, ServiceFailure, 
+                                                                           NotAuthorized, NotFound, NotImplemented {
+        MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
+        try (InputStream object = MNodeService.getInstance(request).get(session, doi)) {
+            try {
+                String ostiMeta = generateOstiMetadata(object);
+                ostiClient.setMetadata(doi.getValue(), ostiMeta);
+            } catch (TransformerException e) {
+               throw new ServiceFailure("1030", e.getMessage());
+            } catch (InterruptedException e) {
+                throw new ServiceFailure("1030", e.getMessage());
+            }
+        }
+    }
+    
+    /**
      * Publish an object for the given identifier. Because of the different mechanisms using on the different DOI services, 
      * the given identifier can have different semantic meaning. On the EZID service, the identifier is for an existing 
      * object which will be obsoleted by a new generated DOI. On the OSTI service, the identifier is an existing DOI and
@@ -188,7 +243,7 @@ public class OstiDOIService implements DOIService{
             }
             logMetacat.debug("OstiDOIService.publish - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
             try {
-                String ostiMeta = generateOstiMetadata(object, siteUrl);
+                String ostiMeta = generateOstiMetadata(object);
                 ostiClient.setMetadata(identifier.getValue(), ostiMeta);
             } catch (TransformerException e) {
                throw new ServiceFailure("1030", e.getMessage());
@@ -202,18 +257,14 @@ public class OstiDOIService implements DOIService{
     /**
      * Generate the OSTI document for the given eml
      * @param eml  the source eml 
-     * @param siteUrl  the site url for the metadata. If the value is set, the status of the osti record will be pending. 
      * @return  the OSTI document for the eml
      * @throws TransformerException
      */
-    protected String generateOstiMetadata(InputStream eml, String siteUrl) throws TransformerException {
+    protected String generateOstiMetadata(InputStream eml) throws TransformerException {
         String meta = null;
         Transformer transformer = eml2osti.newTransformer();
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
-        if (siteUrl != null && !siteUrl.trim().equals("")) {
-            transformer.setParameter("site_url", siteUrl);
-        }
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
         return meta;
