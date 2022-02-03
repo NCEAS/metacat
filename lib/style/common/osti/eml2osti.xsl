@@ -21,10 +21,6 @@
                     <xsl:when test="$osti_id">
                         <osti_id><xsl:value-of select="$osti_id"/></osti_id>
                     </xsl:when>
-                    <!-- only create new if there is not osti_id and site url -->
-                    <xsl:when test="not($osti_id) and not($site_url)">
-                        <set_reserved/>
-                    </xsl:when>
                 </xsl:choose>
                 <title>
                     <xsl:value-of select="title"/>
