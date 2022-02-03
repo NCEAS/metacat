@@ -169,15 +169,19 @@ public class OstiDOIService implements DOIService{
     public void updateDOIMetadata(Session session, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, 
                                                                            NotAuthorized, NotFound, NotImplemented {
         if (doiEnabled) {
-            Identifier id = sysmeta.getIdentifier();
-            if (id.getValue() != null && (id.getValue().startsWith("doi://") 
-                                     || (id.getValue().startsWith("DOI://")))) {
-                updateDOIMetadata(session, id);
-            }
-            Identifier sid = sysmeta.getSeriesId();
-            if (sid.getValue() != null && (sid.getValue().startsWith("doi://") 
-                    || (sid.getValue().startsWith("DOI://")))) {
-                updateDOIMetadata(session, sid);
+            try {
+                Identifier id = sysmeta.getIdentifier();
+                if (id.getValue() != null && (id.getValue().startsWith("doi://") 
+                                         || (id.getValue().startsWith("DOI://")))) {
+                    updateDOIMetadata(session, id);
+                }
+                Identifier sid = sysmeta.getSeriesId();
+                if (sid.getValue() != null && (sid.getValue().startsWith("doi://") 
+                        || (sid.getValue().startsWith("DOI://")))) {
+                    updateDOIMetadata(session, sid);
+                }
+            } catch (IOException e) {
+                throw new ServiceFailure("1030", e.getMessage());
             }
         }
     }
@@ -194,7 +198,7 @@ public class OstiDOIService implements DOIService{
      * @throws NotImplemented
      */
     private void updateDOIMetadata(Session session, Identifier doi) throws InvalidToken, ServiceFailure, 
-                                                                           NotAuthorized, NotFound, NotImplemented {
+                                                                           NotAuthorized, NotFound, NotImplemented, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
         try (InputStream object = MNodeService.getInstance(request).get(session, doi)) {
             try {
@@ -209,11 +213,7 @@ public class OstiDOIService implements DOIService{
     }
     
     /**
-     * Publish an object for the given identifier. Because of the different mechanisms using on the different DOI services, 
-     * the given identifier can have different semantic meaning. On the EZID service, the identifier is for an existing 
-     * object which will be obsoleted by a new generated DOI. On the OSTI service, the identifier is an existing DOI and
-     * Metacat only needs to generate the metadata for it and doesn't need to obsolete it. 
-     * @param service  the MNodeService object which calls the method
+     * Make the status of the identifier to be public 
      * @param session  the subjects call the method
      * @param identifer  the identifier of the object which will be published. 
      * @throws InvalidRequest 
@@ -227,31 +227,38 @@ public class OstiDOIService implements DOIService{
      * @throws UnsupportedType 
      * @throws IdentifierNotUnique 
      */
-    public Identifier publish(MNodeService service, Session session, Identifier identifier) throws InvalidToken, 
+    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
     ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
-        try (InputStream object = service.get(session, identifier)) {
-            String siteUrl = null;
-            try {
-                if (uriTemplate != null) {
-                    siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
-                } else {
-                    siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
-                }
-            } catch (PropertyNotFoundException e) {
-                logMetacat.warn("OstiDOIService.publish - No target URI template found in the configuration for: " + e.getMessage());
+        String siteUrl = null;
+        try {
+            if (uriTemplate != null) {
+                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+            } else {
+                siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
             }
-            logMetacat.debug("OstiDOIService.publish - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
-            try {
-                String ostiMeta = generateOstiMetadata(object);
-                ostiClient.setMetadata(identifier.getValue(), ostiMeta);
-            } catch (TransformerException e) {
-               throw new ServiceFailure("1030", e.getMessage());
-            } catch (InterruptedException e) {
-                throw new ServiceFailure("1030", e.getMessage());
-            }
-        } 
-        return identifier;
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("OstiDOIService.publishIdentifier - No target URI template found in the configuration for: " + e.getMessage());
+        }
+        logMetacat.debug("OstiDOIService.publishIdentifier - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
+        try {
+            String ostiMeta = generateXMLWithSiteURL(siteUrl);
+            ostiClient.setMetadata(identifier.getValue(), ostiMeta);
+        } catch (InterruptedException e) {
+            throw new ServiceFailure("1030", e.getMessage());
+        }
+    }
+    
+    /**
+     * Create a xml file with the site_url element
+     * @param siteURL  the value of the site_url element
+     * @return  the complete xml string
+     */
+    protected String generateXMLWithSiteURL(String siteURL) {
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-16\"?><records><record><site_url>";
+        xml = xml + siteURL;
+        xml = xml + "</site_url></record></records>";
+        return xml;
     }
     
     /**
