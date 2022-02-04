@@ -54,7 +54,7 @@ public interface DOIService {
      * @throws InterruptedException
      */
     public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
-                                                                ServiceFailure, InterruptedException;
+                                                                ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound;
 
     /**
      * Generate a DOI using the DOI service as configured
@@ -69,5 +69,28 @@ public interface DOIService {
      * @throws PropertyNotFoundException 
      */
     public void refreshStatus() throws PropertyNotFoundException;
+    
+
+    /**
+     * Make the status of the identifier to be public 
+     * @param session  the subjects call the method
+     * @param identifer  the identifier of the object which will be published.
+     * @param session
+     * @param identifier
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotImplemented
+     * @throws InvalidRequest
+     * @throws NotFound
+     * @throws IdentifierNotUnique
+     * @throws UnsupportedType
+     * @throws InsufficientResources
+     * @throws InvalidSystemMetadata
+     * @throws DOIException
+     */
+    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
+    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+    UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException;
     
 }

@@ -223,9 +223,11 @@ public class MNodeService extends D1NodeService
 	private static final String UUID_PREFIX = "urn:uuid:";
 	
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
+	
+	private static boolean autoPublishDOI = true;
 
 	/* the logger instance */
-    private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
+    private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
     
     /* A reference to a remote Memeber Node */
     //private MNode mn;
@@ -239,6 +241,11 @@ public class MNodeService extends D1NodeService
 
 
     static {
+        try {
+            autoPublishDOI = (new Boolean(PropertyService.getProperty("guid.doi.autoPublish"))).booleanValue();
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("MNodeService.static: can't find the property to indicate if Metacat automatically publish a DOI. It will use the default value - true." + e.getMessage());
+        }
         // use a shared executor service with nThreads == one less than available processors
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         int nThreads = availableProcessors * 1;
@@ -710,8 +717,11 @@ public class MNodeService extends D1NodeService
             // attempt to register the identifier - it checks if it is a doi
             try {
                 DOIServiceFactory.getDOIService().registerDOI(sysmeta);
+                if (autoPublishDOI) {
+                    DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
+                }
             } catch (Exception e) {
-                throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
+                logMetacat.error("MNodeService.update - Could not register DOI: " + e.getMessage());
             }
             long end5 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on registering the doi (if it is doi ) of the new pid "+newPid.getValue()+" is "+(end5- end4)+ " milli seconds.");
@@ -834,10 +844,11 @@ public class MNodeService extends D1NodeService
         // attempt to register the identifier - it checks if it is a doi
         try {
             DOIServiceFactory.getDOIService().registerDOI(sysmeta);
+            if (autoPublishDOI) {
+                DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
+            }
 		} catch (Exception e) {
-			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
-			sf.initCause(e);
-            throw sf;
+			logMetacat.error("MNodeService.create - Could not register DOI: " + e.getMessage());
 		}
         
         // return 
@@ -1914,8 +1925,11 @@ public class MNodeService extends D1NodeService
             // attempt to re-register the identifier (it checks if it is a doi)
             try {
                 DOIServiceFactory.getDOIService().registerDOI(newSysMeta);
+                if (autoPublishDOI) {
+                    DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
+                }
             } catch (Exception e) {
-                logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
+                logMetacat.error("MNodeService.systemMetadataChanged - Could not [re]register DOI: " + e.getMessage(), e);
             }
             
             // submit for indexing
@@ -3008,6 +3022,19 @@ public class MNodeService extends D1NodeService
 	      } finally {
 	          HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	      }
+	      
+	      if (success) {
+	          // attempt to re-register the identifier (it checks if it is a doi)
+              try {
+                  logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sysmeta.getIdentifier().getValue()+" is a doi");
+                  DOIServiceFactory.getDOIService().registerDOI(sysmeta);
+                  if (autoPublishDOI) {
+                      DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
+                  }
+              } catch (Exception e) {
+                  logMetacat.error("MNodeService.updateSystemMetadata - Could not [re]register DOI: " + e.getMessage(), e);
+              }
+	      }
 
 	      if(success && needSync) {
 	          logMetacat.debug("MNodeService.updateSystemMetadata - the cn needs to be notified that the system metadata of object " +pid.getValue()+" has been changed ");
@@ -3037,14 +3064,6 @@ public class MNodeService extends D1NodeService
 	                  } catch (Exception e) {
 	                      e.printStackTrace();
 	                      logMetacat.error("Can't update the systemmetadata of pid "+id.getValue()+" in CNs through cn.synchronize method since "+e.getMessage(), e);
-	                  }
-
-	                  // attempt to re-register the identifier (it checks if it is a doi)
-	                  try {
-	                      logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sys.getIdentifier().getValue()+" is a doi");
-	                      DOIServiceFactory.getDOIService().registerDOI(sys);
-	                  } catch (Exception e) {
-	                      logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
 	                  }
 	              }
 	              private Runnable init(CNode cn, SystemMetadata sys, Identifier id){
@@ -3084,6 +3103,40 @@ public class MNodeService extends D1NodeService
 	      result.append("</index>");
 	      result.append("</status>");
 	      return IOUtils.toInputStream(result.toString());
+	  }
+	  
+	  /**
+	   * Make status of the given identifier (e.g. a DOI) public
+	   * @param session  the subject who calls the method
+	   * @param identifer  the identifier whose status will be public
+	   * @throws InvalidToken
+	   * @throws ServiceFailure
+	   * @throws NotAuthorized
+	   * @throws NotImplemented
+	   * @throws InvalidRequest
+	   * @throws NotFound
+	   * @throws IdentifierNotUnique
+	   * @throws UnsupportedType
+	   * @throws InsufficientResources
+	   * @throws InvalidSystemMetadata
+	   * @throws DOIException
+	   */
+	  public void publishIdentifier(Session session, Identifier identifer) throws InvalidToken, 
+	    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+	    UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException {
+	      try {
+	          DOIServiceFactory.getDOIService().publishIdentifier(session, identifer);
+	      } catch (PropertyNotFoundException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	      } catch (DOIException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	      } catch (InstantiationException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	      } catch (IllegalAccessException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	      } catch (ClassNotFoundException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	      }
 	  }
 	
 	/**

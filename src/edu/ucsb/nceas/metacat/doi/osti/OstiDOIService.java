@@ -120,10 +120,13 @@ public class OstiDOIService implements DOIService{
      * @throws ServiceFailure
      * @throws NotImplemented
      * @throws InterruptedException
+     * @throws NotFound 
+     * @throws NotAuthorized 
+     * @throws InvalidToken 
      */
     public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
-                                                                ServiceFailure, InterruptedException {
-        logMetacat.info("OstiDOIServic.registerDOI - do nothing.");
+                                 ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound {
+        updateDOIMetadata(null, sysMeta);
         return true;
     }
 
@@ -229,7 +232,10 @@ public class OstiDOIService implements DOIService{
      */
     public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
     ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-    UnsupportedType, InsufficientResources, InvalidSystemMetadata, IOException {
+    UnsupportedType, InsufficientResources, InvalidSystemMetadata {
+        if (!doiEnabled) {
+            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+        }
         String siteUrl = null;
         try {
             if (uriTemplate != null) {

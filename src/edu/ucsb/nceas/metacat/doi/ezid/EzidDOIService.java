@@ -71,6 +71,8 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
+import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.doi.DOIService;
@@ -422,5 +424,43 @@ public class EzidDOIService implements DOIService {
      */
     public void refreshStatus() throws PropertyNotFoundException {
         doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
+    }
+    
+    /**
+     * Make the status of the identifier to be public 
+     * @param session  the subjects call the method
+     * @param identifer  the identifier of the object which will be published. 
+     * @throws InvalidRequest 
+     * @throws NotImplemented 
+     * @throws NotAuthorized 
+     * @throws ServiceFailure 
+     * @throws InvalidToken 
+     * @throws NotFound
+     * @throws InvalidSystemMetadata 
+     * @throws InsufficientResources 
+     * @throws UnsupportedType 
+     * @throws IdentifierNotUnique 
+     * @throws InterruptedException 
+     * @throws DOIException 
+     */
+    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
+    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+    UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException {
+        if (!doiEnabled) {
+            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+        }
+        HashMap<String, String> metadata = new HashMap<String, String>();
+        metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.PUBLIC.toString());
+        try {
+            // make sure we have a current login
+            this.refreshLogin();
+            // set using the API
+            ezid.setMetadata(identifier.getValue(), metadata);
+        } catch (EZIDException e) {
+            throw new DOIException(e.getMessage());
+        } catch (InterruptedException e) {
+            throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+        }
+       
     }
 }
