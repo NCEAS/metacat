@@ -2855,18 +2855,19 @@ public class MNodeService extends D1NodeService
             }
         }
         try {
-            // Create the README file if there's science metadata
-            logMetacat.debug("Creating Readme file.");
             List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
+            logMetacat.debug("Size: " + String.valueOf(scienceMetadataIdentifiers.size()));
             if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
+                logMetacat.debug("Creating Readme file.");
                 Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
                 InputStream scienceMetadataStream = this.get(session, sciMetataId);
                 downloader.generateReadme(scienceMetadataStream, systemMetadata);
             }
-
+            HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
+            logMetacat.debug(scienceMetadataIdentifiers.size());
             // Add the science metadata and their associated system metadatas to the downloader
-            for (Identifier scienceMetadataIdentifier: scienceMetadataIdentifiers) {
+            for (Identifier scienceMetadataIdentifier: uniqueSciPids) {
                 logMetacat.debug("Adding science metadata to the bag");
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
                 InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
@@ -2874,9 +2875,11 @@ public class MNodeService extends D1NodeService
             }
 
             // Add all of the science metadata
-            downloader.addScienceMetadatas();// The underlying speedbag object is ready to be served to the clinet, do that here
-            return downloader.speedBag.stream();
-        } catch (NullPointerException | IOException e) {
+            //downloader.addScienceMetadatas();
+            // The underlying speedbag object is ready to be served to the clinet, do that here
+            //return downloader.speedBag.stream();
+            return downloader.download();
+        } catch (NullPointerException e) {
             e.printStackTrace();
             ServiceFailure sf = new ServiceFailure("1030", "There was an " +
                     "error while streaming the downloaded data package. " + e.getMessage());

@@ -75,16 +75,16 @@ public class PackageDownloaderV2 {
 	// The resource map pid
 	private Identifier pid;
 	// A list of science and resource map pids
-	private List<Identifier> coreMetadataIdentifiers;
+	private List<Identifier> coreMetadataIdentifiers = new ArrayList<>();;
 	// Identifiers for the science metadata documents
-	private List<Identifier> scienceMetadataIdentifiers;
+	private List<Identifier> scienceMetadataIdentifiers = new ArrayList<>();
 	// The resource map describing the package
 	private ResourceMap resourceMap;
 	// The system metadata for the resource map
 	private SystemMetadata resourceMapSystemMetadata;
 	// A map between data object PID and the location where it should go on disk
 	private Map<String, String> _filePathMap;
-	private List<Pair<SystemMetadata, InputStream>> scienceMetadatas;
+	private List<Pair<SystemMetadata, InputStream>> scienceMetadatas = new ArrayList<>();
 	private SystemMetadata _scienceSystemMetadata;
 	// The underling SpeedBagIt object that holds the file streams
 	public SpeedBagIt speedBag = null;
@@ -185,11 +185,6 @@ public class PackageDownloaderV2 {
 		String dataObjectFileName = objectSystemMetadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" +
 				objectFormatType;
 
-		// ensure there is a file extension for the object
-		logMetacat.debug("Getting file extension");
-		String extension = ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
-		dataFilename += extension;
-
 		// if SM has the file name, ignore everything else and use that
 		if (systemMetadata.getFileName() != null) {
 			dataFilename = systemMetadata.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
@@ -201,13 +196,15 @@ public class PackageDownloaderV2 {
 		String filePath = "";
 		try {
 			String dataDirectory = PropertyService.getProperty("package.download.bag.directory.data");
-			if (this._filePathMap.get(objectSystemMetadataID.getValue()) == null) {
+			if (dataPath == null) {
 				logMetacat.debug("Failed to find a file location for the data file. Defaulting to data/");
 				// Create the file path without any additional directories past the default data directory
 				filePath = Paths.get(dataDirectory, dataFilename).toString();
 			} else {
-				filePath = Paths.get(dataDirectory, dataPath, dataFilename).toString();
+				filePath = Paths.get(dataDirectory, dataPath).toString();
+				logMetacat.debug(filePath);
 			}
+			logMetacat.debug("Adding data file to the bag at " + filePath);
 			this.speedBag.addFile(inputStream, filePath, false);
 		} catch (Exception e) {
 			logMetacat.error("Error adding the datafile to the bag", e);
@@ -220,6 +217,7 @@ public class PackageDownloaderV2 {
 	 */
 	public void addScienceMetadatas() throws NoSuchAlgorithmException {
 		int metadata_count = 0;
+
 		for (Pair<SystemMetadata, InputStream> scienceMetadata: this.scienceMetadatas) {
 			String filename = "";
 			try {
@@ -243,6 +241,7 @@ public class PackageDownloaderV2 {
 			}  catch (PropertyNotFoundException e) {
 				filePath = Paths.get("metadata", filename).toString();
 			}
+			logMetacat.debug("Adding metadata file to the bag as " + filePath);
 			this.speedBag.addFile(scienceMetadata.getValue(), filePath, true);
 			this.addSystemMetadata(scienceMetadata.getKey());
 		}
@@ -270,6 +269,7 @@ public class PackageDownloaderV2 {
 			logMetacat.error("Failed to de-serialize the resource map " +
 					"and write it to disk.", e);
 		}
+		logMetacat.debug("Adding resource map to "+ resmapPath);
 		this.speedBag.addFile(new ByteArrayInputStream(resMapString.getBytes()), resmapPath, true);
 	}
 
@@ -300,10 +300,12 @@ public class PackageDownloaderV2 {
 			// Construct the path
 			String systemMetaPath = "";
 			try {
-				systemMetaPath = Paths.get(PropertyService.getProperty("package.download.bag.directory.sysmeta"),
+				systemMetaPath = Paths.get(PropertyService.getProperty("package.download.bag.directory.metadata"),
+						PropertyService.getProperty("package.download.bag.directory.sysmeta"),
 						systemMetadataFilename).toString();
+
 			} catch (PropertyNotFoundException e) {
-				systemMetaPath = Paths.get("sysmeta", systemMetadataFilename).toString();
+				systemMetaPath = Paths.get("metadata", "sysmeta", systemMetadataFilename).toString();
 			}
 			// Add it to the bag
 			this.speedBag.addFile(sysMetaInputstream, systemMetaPath, true);
@@ -363,34 +365,37 @@ public class PackageDownloaderV2 {
 	}
 
 	public void getScienceMetadataIds () {
-		String rdfQuery = "      PREFIX cito:    <http://www.w3.org/ns/prov#>\n" +
+		String rdfQuery = "PREFIX cito: <http://purl.org/spar/cito/>\n" +
 				"\n" +
-				"                SELECT ?subject\n" +
-				"                WHERE {\n" +
+				"SELECT ?science_metadata\n" +
+				"WHERE {\n" +
 				"\n" +
-				"                    ?science_metadata cito:documents ?data_object .\n" +
-				"                }";
+				"?science_metadata cito:documents ?data_object .\n" +
+				"}";
 		try {
+			logMetacat.debug("Getting science metadata identifiers");
 			// Execute the SELECT query
 			ResultSet queryResults = selectQuery(rdfQuery);
 			// Stores a single result from the query
 			QuerySolution currentResult;
 			// Do as long as there's a result
 			while (queryResults.hasNext()) {
+				logMetacat.debug("Found a result...");
 				currentResult = queryResults.next();
 				// Get the atLocation and pid fields
 				RDFNode subjectNode = currentResult.get("science_metadata");
-
 				// Turn results into String
 				String subjectStr = subjectNode.toString();
-
+				logMetacat.debug("Found the subject, " + subjectStr);
 				// Check if we have any results
 				if (subjectStr == null) {
 					logMetacat.warn("Failed to find any science metadata documents during package download.");
 					continue;
 				}
+				String id = StringUtils.substringAfterLast(subjectStr, "resolve/");
+				id = java.net.URLDecoder.decode(id, "UTF-8");
 				Identifier identifier = new Identifier();
-				identifier.setValue(subjectStr);
+				identifier.setValue(id);
 				this.addCoreMetadataIdentifier(identifier);
 				this.addScienceSystemMetadata(identifier);
 			}
@@ -470,8 +475,6 @@ public class PackageDownloaderV2 {
 
 				// Make sure that the directory separators will work on Windows or POSIX
 				locationStr = FilenameUtils.separatorsToSystem(locationNode.toString());
-				// Remove any . characters to prevent directory traversal
-				locationStr = locationStr.replace(".", "");
 				// The subject form is pid^^vocabword. Remove everything after ^^
 				subjectStr = StringUtils.substringBefore(subjectStr, "^^");
 				this._filePathMap.put(subjectStr, locationStr);
