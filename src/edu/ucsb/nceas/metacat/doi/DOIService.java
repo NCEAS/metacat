@@ -51,6 +51,7 @@ public abstract class DOIService {
     protected static String serviceBaseUrl = null;
     protected static String username = null;
     protected static String password = null;
+    protected static boolean autoPublishDOI = true;
     
     /**
      * Constructor
@@ -61,9 +62,10 @@ public abstract class DOIService {
             serviceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
             username = PropertyService.getProperty("guid.doi.username");
             password = PropertyService.getProperty("guid.doi.password");
+            autoPublishDOI = (new Boolean(PropertyService.getProperty("guid.doi.autoPublish"))).booleanValue();
+          
         } catch (PropertyNotFoundException e) {
-            logMetacat.warn("DOI support is not configured at this node.", e);
-            return;
+            logMetacat.error("DOI support is not configured at this node.", e);
         }
     }
     

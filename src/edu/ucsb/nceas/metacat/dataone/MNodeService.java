@@ -223,8 +223,6 @@ public class MNodeService extends D1NodeService
 	private static final String UUID_PREFIX = "urn:uuid:";
 	
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
-	
-	private static boolean autoPublishDOI = true;
 
 	/* the logger instance */
     private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
@@ -241,11 +239,6 @@ public class MNodeService extends D1NodeService
 
 
     static {
-        try {
-            autoPublishDOI = (new Boolean(PropertyService.getProperty("guid.doi.autoPublish"))).booleanValue();
-        } catch (PropertyNotFoundException e) {
-            logMetacat.warn("MNodeService.static: can't find the property to indicate if Metacat automatically publish a DOI. It will use the default value - true." + e.getMessage());
-        }
         // use a shared executor service with nThreads == one less than available processors
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         int nThreads = availableProcessors * 1;
@@ -717,11 +710,11 @@ public class MNodeService extends D1NodeService
             // attempt to register the identifier - it checks if it is a doi
             try {
                 DOIServiceFactory.getDOIService().registerDOI(sysmeta);
-                if (autoPublishDOI) {
-                    DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
-                }
             } catch (Exception e) {
-                logMetacat.error("MNodeService.update - Could not register DOI: " + e.getMessage());
+                String message = "MNodeService.update - The object " + newPid.getValue() + " has been saved successfully on Metacat. " 
+                                 + " However, the new metadata can't be registered on the DOI service: " + e.getMessage();
+                logMetacat.error(message);
+                throw new ServiceFailure("1310", message);
             }
             long end5 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on registering the doi (if it is doi ) of the new pid "+newPid.getValue()+" is "+(end5- end4)+ " milli seconds.");
@@ -844,11 +837,11 @@ public class MNodeService extends D1NodeService
         // attempt to register the identifier - it checks if it is a doi
         try {
             DOIServiceFactory.getDOIService().registerDOI(sysmeta);
-            if (autoPublishDOI) {
-                DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
-            }
 		} catch (Exception e) {
-			logMetacat.error("MNodeService.create - Could not register DOI: " + e.getMessage());
+		    String message = "MNodeService.create - The object " + pid.getValue() + " has been created successfully on Metacat." 
+                    + " However, the metadata can't be registered on the DOI service: " + e.getMessage();
+			logMetacat.error(message);
+			throw new ServiceFailure("1190", message);
 		}
         
         // return 
@@ -1922,16 +1915,6 @@ public class MNodeService extends D1NodeService
         }
         
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
-            // attempt to re-register the identifier (it checks if it is a doi)
-            try {
-                DOIServiceFactory.getDOIService().registerDOI(newSysMeta);
-                if (autoPublishDOI) {
-                    DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
-                }
-            } catch (Exception e) {
-                logMetacat.error("MNodeService.systemMetadataChanged - Could not [re]register DOI: " + e.getMessage(), e);
-            }
-            
             // submit for indexing
             try {
                 MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
@@ -3028,9 +3011,6 @@ public class MNodeService extends D1NodeService
               try {
                   logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sysmeta.getIdentifier().getValue()+" is a doi");
                   DOIServiceFactory.getDOIService().registerDOI(sysmeta);
-                  if (autoPublishDOI) {
-                      DOIServiceFactory.getDOIService().publishIdentifier(session, pid);
-                  }
               } catch (Exception e) {
                   logMetacat.error("MNodeService.updateSystemMetadata - Could not [re]register DOI: " + e.getMessage(), e);
               }
