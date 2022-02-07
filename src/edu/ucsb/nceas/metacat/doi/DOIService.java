@@ -20,6 +20,8 @@ package edu.ucsb.nceas.metacat.doi;
 
 import java.io.IOException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.IdentifierNotUnique;
 import org.dataone.service.exceptions.InsufficientResources;
 import org.dataone.service.exceptions.InvalidRequest;
@@ -36,13 +38,42 @@ import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.ezid.EZIDException;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
- * An interface for the DOI service
+ * An abstract class for the DOI service
  * @author tao
  */
-public interface DOIService {
+public abstract class DOIService {
+    private static Log logMetacat = LogFactory.getLog(DOIService.class);
+    protected static boolean doiEnabled = false;
+    protected static String serviceBaseUrl = null;
+    protected static String username = null;
+    protected static String password = null;
+    
+    /**
+     * Constructor
+     */
+    public DOIService() {
+        try {
+            doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
+            serviceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+            username = PropertyService.getProperty("guid.doi.username");
+            password = PropertyService.getProperty("guid.doi.password");
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("DOI support is not configured at this node.", e);
+            return;
+        }
+    }
+    
+    /**
+     * Refresh the status (enable or disable) of the DOI service from property file
+     * @throws PropertyNotFoundException 
+     */
+    public void refreshStatus() throws PropertyNotFoundException {
+        doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
+    }
     
     /**
      * Submits DOI metadata information about the object to DOI services
@@ -53,7 +84,7 @@ public interface DOIService {
      * @throws NotImplemented
      * @throws InterruptedException
      */
-    public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
+    public abstract boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
                                                                 ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound;
 
     /**
@@ -62,15 +93,8 @@ public interface DOIService {
      * @throws EZIDException
      * @throws InvalidRequest
      */
-    public Identifier generateDOI() throws DOIException, InvalidRequest;
+    public abstract Identifier generateDOI() throws DOIException, InvalidRequest;
     
-    /**
-     * Refresh the status (enable or disable) of the DOI service from property file
-     * @throws PropertyNotFoundException 
-     */
-    public void refreshStatus() throws PropertyNotFoundException;
-    
-
     /**
      * Make the status of the identifier to be public 
      * @param session  the subjects call the method
@@ -89,7 +113,7 @@ public interface DOIService {
      * @throws InvalidSystemMetadata
      * @throws DOIException
      */
-    public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
+    public abstract void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
     ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
     UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException;
     

@@ -67,28 +67,21 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * Details of OSTI eink: https://www.osti.gov/elink/241-6api.jsp
  * @author tao
  */
-public class OstiDOIService implements DOIService{
+public class OstiDOIService extends DOIService{
     private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
     private static Templates eml2osti = null;                                                                      
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
     private static String uriTemplate = null;
     
-    private boolean doiEnabled = false;
-    private String username = null;
-    private String password = null;
-    private String serviceBaseUrl = null;
     private OSTIElinkClient ostiClient = null;
     
     /**
      * Constructor
      */
     public OstiDOIService() {
+        super();
         try {
-            doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
             if (doiEnabled) {
-                serviceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-                username = PropertyService.getProperty("guid.doi.username");
-                password = PropertyService.getProperty("guid.doi.password");
                 OSTIElinkErrorAgent errorAgent = null;
                 ostiClient = new OSTIElinkClient(username, password, serviceBaseUrl, errorAgent);
                 String ostiPath = SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS() + 
@@ -149,14 +142,7 @@ public class OstiDOIService implements DOIService{
             throw new DOIException(e.getMessage());
         }
     }
-    
-    /**
-     * Refresh the status (enable or disable) of the DOI service from property file
-     * @throws PropertyNotFoundException 
-     */
-    public void refreshStatus() throws PropertyNotFoundException {
-        doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
-    }
+
     
     /**
      * Update the metadata for some records in the OSTI service. It can update both the identifier and series id in

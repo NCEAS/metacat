@@ -92,7 +92,7 @@ import edu.ucsb.nceas.utilities.StringUtil;
  *
  * @author leinfelder
  */
-public class EzidDOIService implements DOIService {
+public class EzidDOIService extends DOIService {
 
     public static final String DATACITE = "datacite";
     
@@ -100,13 +100,7 @@ public class EzidDOIService implements DOIService {
 
 	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
-	private boolean doiEnabled = false;
-
     private HashMap<Integer, String> shoulderMap = null;
-
-	private String ezidUsername = null;
-
-	private String ezidPassword = null;
 
 	private EZIDClient ezid = null;
 
@@ -123,21 +117,10 @@ public class EzidDOIService implements DOIService {
 	 * Constructor
 	 */
 	public EzidDOIService() {
-
+	    super();
 		// for DOIs
 		String ezidServiceBaseUrl = null;
         shoulderMap = new HashMap<Integer, String>();
-
-		try {
-            doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
-			ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-			ezidUsername = PropertyService.getProperty("guid.doi.username");
-			ezidPassword = PropertyService.getProperty("guid.doi.password");
-		} catch (PropertyNotFoundException e) {
-			logMetacat.warn("DOI support is not configured at this node.", e);
-			return;
-		}
-
         boolean moreShoulders = true;
         int i = PRIMARY_SHOULDER_INDEX;
         while (moreShoulders) {
@@ -200,7 +183,7 @@ public class EzidDOIService implements DOIService {
 	private void refreshLogin() throws EZIDException {
 		Date now = Calendar.getInstance().getTime();
 		if (lastLogin == null || now.getTime() - lastLogin.getTime() > loginPeriod) {
-			ezid.login(ezidUsername, ezidPassword);
+			ezid.login(username, password);
 			lastLogin = now;
 		}
 	}
@@ -359,7 +342,7 @@ public class EzidDOIService implements DOIService {
 	            } else {
 	                logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a DOIExcpetion " +
 	                                  e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
-	                ezid.login(ezidUsername, ezidPassword);
+	                ezid.login(username, password);
 	                lastLogin = Calendar.getInstance().getTime();
 	            }
 	        } catch (InvalidRequest e) {
@@ -368,7 +351,7 @@ public class EzidDOIService implements DOIService {
                 } else {
                     logMetacat.debug("EzidDOIService.generateDOI - the " + i + " time generating a DOI failed since a InvalidRequest " +
                             e.getMessage() + ". Metacat is going to log-in the EZID service and try to generate a DOI again.");
-                    ezid.login(ezidUsername, ezidPassword);
+                    ezid.login(username, password);
                     lastLogin = Calendar.getInstance().getTime();
                 }
             }
@@ -417,14 +400,6 @@ public class EzidDOIService implements DOIService {
 		return identifier;
 	}
 	
-
-    /**
-     * Refresh the status (enable or disable) of the DOI service from property file
-     * @throws PropertyNotFoundException 
-     */
-    public void refreshStatus() throws PropertyNotFoundException {
-        doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
-    }
     
     /**
      * Make the status of the identifier to be public 
