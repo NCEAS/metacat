@@ -71,7 +71,7 @@ public class OstiDOIService extends DOIService{
     private static Log logMetacat = LogFactory.getLog(OstiDOIService.class);
     private static Templates eml2osti = null;                                                                      
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
-    private static String uriTemplate = null;
+    
     
     private OSTIElinkClient ostiClient = null;
     
@@ -88,11 +88,6 @@ public class OstiDOIService extends DOIService{
                                   "common" + FileUtil.getFS() + "osti" + FileUtil.getFS() + "eml2osti.xsl";
                 logMetacat.debug("OstiDOIService.OstiDOIService - the osti xsl file path is " + ostiPath);
                 eml2osti = transformerFactory.newTemplates(new StreamSource(ostiPath));
-                try {
-                    uriTemplate = PropertyService.getProperty("guid.doi.uritemplate.metadata");
-                } catch (PropertyNotFoundException e) {
-                    logMetacat.warn("OstiDOIService.OstiDOIService - No target URI template found in the configuration for: " + e.getMessage());
-                }
             }
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("OstiDOIService.OstiDOIService -DOI support is not configured at this node.", e);
@@ -155,7 +150,7 @@ public class OstiDOIService extends DOIService{
      * @throws NotFound
      * @throws NotImplemented
      */
-    public void updateDOIMetadata(Session session, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, 
+    protected void updateDOIMetadata(Session session, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, 
                                                                            NotAuthorized, NotFound, NotImplemented {
         if (doiEnabled) {
             try {
@@ -186,12 +181,24 @@ public class OstiDOIService extends DOIService{
      * @throws NotFound
      * @throws NotImplemented
      */
-    private void updateDOIMetadata(Session session, Identifier doi) throws InvalidToken, ServiceFailure, 
+    protected void updateDOIMetadata(Session session, Identifier doi) throws InvalidToken, ServiceFailure, 
                                                                            NotAuthorized, NotFound, NotImplemented, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
         try (InputStream object = MNodeService.getInstance(request).get(session, doi)) {
             try {
-                String ostiMeta = generateOstiMetadata(object);
+                String siteUrl = null;
+                if (autoPublishDOI) {
+                    //In Osti, the site url is used to control the status of doi.
+                    //<set_reserved> --> the Saved (reserved) status
+                    //<site_url> -- > the PENDING status
+                    siteUrl = getLandingPage(doi);
+                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
+                                     + doi.getValue() + " is: " + siteUrl);
+                }
+                //If the siteUrl is null, we will generate the metadata without site_url. It wouldn't change the status.
+                //If the site url is no null, we will we will generate the metadata without site_url. If the previous
+                //status is reserved, it will change to pending. If it is pending, nothing will be change.
+                String ostiMeta = generateOstiMetadata(object, siteUrl);
                 ostiClient.setMetadata(doi.getValue(), ostiMeta);
             } catch (TransformerException e) {
                throw new ServiceFailure("1030", e.getMessage());
@@ -222,16 +229,7 @@ public class OstiDOIService extends DOIService{
         if (!doiEnabled) {
             throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
         }
-        String siteUrl = null;
-        try {
-            if (uriTemplate != null) {
-                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
-            } else {
-                siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
-            }
-        } catch (PropertyNotFoundException e) {
-            logMetacat.warn("OstiDOIService.publishIdentifier - No target URI template found in the configuration for: " + e.getMessage());
-        }
+        String siteUrl = getLandingPage(identifier);
         logMetacat.debug("OstiDOIService.publishIdentifier - The site url for pid " + identifier.getValue() + " is: " + siteUrl);
         try {
             String ostiMeta = generateXMLWithSiteURL(siteUrl);
@@ -256,14 +254,19 @@ public class OstiDOIService extends DOIService{
     /**
      * Generate the OSTI document for the given eml
      * @param eml  the source eml 
+     * @param siteUrl  the site url will be used in the metadata. The site url will change the status to depending. 
+     *                  If it is null or blank, we don't use it.                 
      * @return  the OSTI document for the eml
      * @throws TransformerException
      */
-    protected String generateOstiMetadata(InputStream eml) throws TransformerException {
+    protected String generateOstiMetadata(InputStream eml, String siteUrl) throws TransformerException {
         String meta = null;
         Transformer transformer = eml2osti.newTransformer();
         StringWriter writer = new StringWriter();
         StreamResult result = new StreamResult(writer);
+        if (siteUrl != null && !siteUrl.trim().equals("")) {
+            transformer.setParameter("site_url", siteUrl);
+        }
         transformer.transform(new StreamSource(eml), result);
         meta = writer.toString();
         return meta;

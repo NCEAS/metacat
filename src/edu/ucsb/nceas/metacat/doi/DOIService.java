@@ -18,8 +18,6 @@
  */
 package edu.ucsb.nceas.metacat.doi;
 
-import java.io.IOException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.IdentifierNotUnique;
@@ -36,9 +34,8 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 
-import edu.ucsb.nceas.ezid.EZIDException;
-import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 /**
@@ -51,6 +48,7 @@ public abstract class DOIService {
     protected static String serviceBaseUrl = null;
     protected static String username = null;
     protected static String password = null;
+    protected static String uriTemplate = null;
     protected static boolean autoPublishDOI = true;
     
     /**
@@ -63,9 +61,10 @@ public abstract class DOIService {
             username = PropertyService.getProperty("guid.doi.username");
             password = PropertyService.getProperty("guid.doi.password");
             autoPublishDOI = (new Boolean(PropertyService.getProperty("guid.doi.autoPublish"))).booleanValue();
+            uriTemplate = PropertyService.getProperty("guid.doi.uritemplate.metadata");
           
         } catch (PropertyNotFoundException e) {
-            logMetacat.error("DOI support is not configured at this node.", e);
+            logMetacat.error("DOIService.constructor - we can't get the value of the property:", e);
         }
     }
     
@@ -75,16 +74,41 @@ public abstract class DOIService {
      */
     public void refreshStatus() throws PropertyNotFoundException {
         doiEnabled = new Boolean(PropertyService.getProperty("guid.doi.enabled")).booleanValue();
+        autoPublishDOI = (new Boolean(PropertyService.getProperty("guid.doi.autoPublish"))).booleanValue();
+    }
+    
+    /**
+     * Get the landing page url string for the given identifier
+     * @param identifier  the identifier which associates the landing page
+     * @return the url of the landing page
+     */
+    protected String getLandingPage(Identifier identifier) {
+        String siteUrl = null;
+        try {
+            if (uriTemplate != null) {
+                siteUrl =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
+            } else {
+                siteUrl =  SystemUtil.getContextURL() + "/d1/mn/v2/object/" + identifier.getValue();
+            }
+        } catch (PropertyNotFoundException e) {
+            logMetacat.warn("DOIService.getLandingPage - No target URI template found in the configuration for: " + e.getMessage());
+        }
+        logMetacat.warn("DOIService.getLandingPage - the landing page url is: " + siteUrl);
+        return siteUrl;
     }
     
     /**
      * Submits DOI metadata information about the object to DOI services
      * @param sysMeta
      * @return true if succeeded; false otherwise.
-     * @throws EZIDException
-     * @throws ServiceFailure
+     * @throws InvalidRequest
+     * @throws DOIException
      * @throws NotImplemented
+     * @throws ServiceFailure
      * @throws InterruptedException
+     * @throws InvalidToken
+     * @throws NotAuthorized
+     * @throws NotFound
      */
     public abstract boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
                                                                 ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound;
@@ -92,7 +116,7 @@ public abstract class DOIService {
     /**
      * Generate a DOI using the DOI service as configured
      * @return  the identifier which was minted by the DOI service
-     * @throws EZIDException
+     * @throws DOIException
      * @throws InvalidRequest
      */
     public abstract Identifier generateDOI() throws DOIException, InvalidRequest;
