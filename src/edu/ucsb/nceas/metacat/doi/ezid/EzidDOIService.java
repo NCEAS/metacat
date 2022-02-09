@@ -100,16 +100,12 @@ public class EzidDOIService extends DOIService {
 
 	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
-    private HashMap<Integer, String> shoulderMap = null;
-
 	private EZIDClient ezid = null;
 
 	private Date lastLogin = null;
 
 	private long loginPeriod = 1 * 24 * 60 * 60 * 1000;
 	
-	private static int PRIMARY_SHOULDER_INDEX = 1;
-
 	private Vector<DataCiteMetadataFactory> dataCiteFactories = new Vector<DataCiteMetadataFactory>();
 
 
@@ -120,28 +116,6 @@ public class EzidDOIService extends DOIService {
 	    super();
 		// for DOIs
 		String ezidServiceBaseUrl = null;
-        shoulderMap = new HashMap<Integer, String>();
-        boolean moreShoulders = true;
-        int i = PRIMARY_SHOULDER_INDEX;
-        while (moreShoulders) {
-		    try {
-			    String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + i);
-			    if (shoulder != null && !shoulder.trim().equals("")) {
-			        logMetacat.debug("DOIService.constructor - add the shoulder " + shoulder 
-			                            + " with the key " + i + " into the shoulder map. ");
-			        shoulderMap.put(new Integer(i), shoulder);
-			    }
-                i++;
-		    } catch (PropertyNotFoundException e) {
-                moreShoulders = false;
-		    }
-        }
-
-        if (shoulderMap.size() < 1) {
-            logMetacat.warn("DOI support is not configured at this node because no shoulders are configured.");
-            return;
-        }
-
 		ezid = new EZIDClient(ezidServiceBaseUrl);
 		initDataCiteFactories();
 	}

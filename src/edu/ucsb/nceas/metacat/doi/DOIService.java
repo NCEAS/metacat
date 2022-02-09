@@ -18,6 +18,8 @@
  */
 package edu.ucsb.nceas.metacat.doi;
 
+import java.util.HashMap;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.service.exceptions.IdentifierNotUnique;
@@ -43,13 +45,17 @@ import edu.ucsb.nceas.utilities.PropertyNotFoundException;
  * @author tao
  */
 public abstract class DOIService {
-    private static Log logMetacat = LogFactory.getLog(DOIService.class);
+    protected static final int PRIMARY_SHOULDER_INDEX = 1;
+    
     protected static boolean doiEnabled = false;
     protected static String serviceBaseUrl = null;
     protected static String username = null;
     protected static String password = null;
     protected static String uriTemplate = null;
     protected static boolean autoPublishDOI = true;
+    protected static HashMap<Integer, String> shoulderMap = null;
+    
+    private static Log logMetacat = LogFactory.getLog(DOIService.class);
     
     /**
      * Constructor
@@ -65,6 +71,28 @@ public abstract class DOIService {
           
         } catch (PropertyNotFoundException e) {
             logMetacat.error("DOIService.constructor - we can't get the value of the property:", e);
+        }
+        
+        shoulderMap = new HashMap<Integer, String>();
+        boolean moreShoulders = true;
+        int i = PRIMARY_SHOULDER_INDEX;
+        while (moreShoulders) {
+            try {
+                String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + i);
+                if (shoulder != null && !shoulder.trim().equals("")) {
+                    logMetacat.debug("DOIService.constructor - add the shoulder " + shoulder 
+                                        + " with the key " + i + " into the shoulder map. ");
+                    shoulderMap.put(new Integer(i), shoulder);
+                }
+                i++;
+            } catch (PropertyNotFoundException e) {
+                moreShoulders = false;
+            }
+        }
+
+        if (shoulderMap.size() < 1) {
+            logMetacat.error("DOI support is not configured at this node because no shoulders are configured.");
+            return;
         }
     }
     
