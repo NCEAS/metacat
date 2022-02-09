@@ -55,7 +55,7 @@ import edu.ucsb.nceas.utilities.SortedProperties;
  * there is a corresponding property that gives the 'shoulder' or 'prefix'' to be used to
  * convert existing IDs to GUIDs.  For example, if servers 1 & 2 are registered in 
  * xml_replication, then only convert the IDs for server 1 to GUIDs if the
- * property 'guid.ezid.doishoulder.1' defines a valid doi shoulder.
+ * property 'guid.doi.doishoulder.1' defines a valid doi shoulder.
  * 
  * NOTE: Metacat v2.0.5 has changed the name of the systemmetadata* tables to accommodate Oracle
  * length restrictions. The table names have been updated in this utility to enable
@@ -141,7 +141,7 @@ public class GenerateGlobalIdentifiers implements UpgradeUtilityInterface {
             
             // Get the server's shoulder, or skip if not found
             try {
-                String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + server);
+                String shoulder = PropertyService.getProperty("guid.doi.doishoulder." + server);
                 log.debug("Processing shoulder for server " + server + ": " + shoulder);
 
                 // Update identifiers table (but only for local documents, not replicated documents)

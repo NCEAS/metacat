@@ -643,7 +643,7 @@
         <helpFile> </helpFile>
     </config>
     <config>
-        <key>guid.ezid.doishoulder.1</key>
+        <key>guid.doi.doishoulder.1</key>
         <label>DOI Shouder</label>
         <group>8</group>
         <index>18</index>

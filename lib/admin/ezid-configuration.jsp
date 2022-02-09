@@ -92,10 +92,10 @@
             <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-baseurl')"></i>
         </div>
 		<div class="form-row">
-			<div class="textinput-label"><label for="guid.ezid.doishoulder.1" title="DOI shoulder">DOI Shoulder</label></div>
-			<input class="textinput" id="guid.ezid.doishoulder.1" 
-					name="guid.ezid.doishoulder.1" 	             		    	    	           		    	             			
-					value="<%= request.getAttribute("guid.ezid.doishoulder.1") %>"/> 
+			<div class="textinput-label"><label for="guid.doi.doishoulder.1" title="DOI shoulder">DOI Shoulder</label></div>
+			<input class="textinput" id="guid.doi.doishoulder.1" 
+					name="guid.doi.doishoulder.1" 	             		    	    	           		    	             			
+					value="<%= request.getAttribute("guid.doi.doishoulder.1") %>"/> 
 			<i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-doishoulder-1')"></i>
 		</div>
 	

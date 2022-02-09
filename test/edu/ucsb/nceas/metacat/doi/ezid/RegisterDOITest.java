@@ -275,7 +275,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 
 		try {
 			// get ezid config properties
-			String shoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
+			String shoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
 			String ezidUsername = PropertyService.getProperty("guid.doi.username");
 			String ezidPassword = PropertyService.getProperty("guid.doi.password");
 			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");

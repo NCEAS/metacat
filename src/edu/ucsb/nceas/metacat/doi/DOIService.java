@@ -78,7 +78,7 @@ public abstract class DOIService {
         int i = PRIMARY_SHOULDER_INDEX;
         while (moreShoulders) {
             try {
-                String shoulder = PropertyService.getProperty("guid.ezid.doishoulder." + i);
+                String shoulder = PropertyService.getProperty("guid.doi.doishoulder." + i);
                 if (shoulder != null && !shoulder.trim().equals("")) {
                     logMetacat.debug("DOIService.constructor - add the shoulder " + shoulder 
                                         + " with the key " + i + " into the shoulder map. ");

@@ -54,8 +54,8 @@ import junit.framework.TestSuite;
  *
  */
 public class MultipleDOIShouldersTest extends D1NodeServiceTest {
-    private static final String PROPERTY_SHOULDER_1 = "guid.ezid.doishoulder.1";
-    private static final String PROPERTY_SHOULDER_2 = "guid.ezid.doishoulder.2";
+    private static final String PROPERTY_SHOULDER_1 = "guid.doi.doishoulder.1";
+    private static final String PROPERTY_SHOULDER_2 = "guid.doi.doishoulder.2";
     private static final String SHOULDER_1 = "doi:10.18739/A2";
     private static final String SHOULDER_2 = "doi:10.5063/";
     

@@ -104,7 +104,7 @@ public class EZIDAdmin extends MetacatAdmin {
 				String username = PropertyService.getProperty("guid.doi.username");
 				String password = PropertyService.getProperty("guid.doi.password");
 				String baseurl = PropertyService.getProperty("guid.doi.baseurl");
-				String doishoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
+				String doishoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
 				boolean enable = false;
 				if (enablestr != null) {
 					enable = Boolean.parseBoolean(enablestr);
@@ -114,7 +114,7 @@ public class EZIDAdmin extends MetacatAdmin {
 				request.setAttribute("guid.doi.username", username);
 				request.setAttribute("guid.doi.password", password);
 				request.setAttribute("guid.doi.baseurl", baseurl);
-				request.setAttribute("guid.ezid.doishoulder.1", doishoulder);
+				request.setAttribute("guid.doi.doishoulder.1", doishoulder);
 				
 				
 				// try the backup properties
@@ -199,7 +199,7 @@ public class EZIDAdmin extends MetacatAdmin {
 				String username = (String)request.getParameter("guid.doi.username");
                 String password = (String)request.getParameter("guid.doi.password");
                 String baseurl = (String)request.getParameter("guid.doi.baseurl");
-                String doishoulder = (String)request.getParameter("guid.ezid.doishoulder.1");
+                String doishoulder = (String)request.getParameter("guid.doi.doishoulder.1");
                 boolean enable = false;
                 if (enablestr != null) {
                     enable = Boolean.parseBoolean(enablestr);
@@ -213,7 +213,7 @@ public class EZIDAdmin extends MetacatAdmin {
 					PropertyService.setPropertyNoPersist("guid.doi.username", username);
 					PropertyService.setPropertyNoPersist("guid.doi.password", password);
 					PropertyService.setPropertyNoPersist("guid.doi.baseurl", baseurl);
-					PropertyService.setPropertyNoPersist("guid.ezid.doishoulder.1", doishoulder);
+					PropertyService.setPropertyNoPersist("guid.doi.doishoulder.1", doishoulder);
 					// persist them all
 					PropertyService.persistProperties();
 					PropertyService.syncToSettings();
