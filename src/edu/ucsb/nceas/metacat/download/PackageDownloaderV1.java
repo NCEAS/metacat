@@ -64,7 +64,7 @@ import java.nio.file.Paths;
 import java.io.ByteArrayInputStream;
 import org.apache.commons.logging.LogFactory;
 
-public class PackageDownloaderV1{
+public class PackageDownloaderV1 {
 
 	// The pids of all of the objects in the package
 	public List<Identifier> packagePids;
@@ -74,7 +74,7 @@ public class PackageDownloaderV1{
 	private Identifier pid;
 	public StringBuffer pidMapping;
 	//Create a map of dataone ids and file names
-	Map<Identifier, String> fileNames;
+	public Map<Identifier, String> fileNames;
 
 	private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(this.getClass());
 
