@@ -163,74 +163,24 @@ public class EzidDOIService extends DOIService {
 	}
 
 	/**
-	 * submits DOI metadata information about the object to EZID
-	 * @param sysMeta
-	 * @return
-	 * @throws EZIDException
-	 * @throws ServiceFailure
-	 * @throws NotImplemented
-	 * @throws InterruptedException
-	 */
-	public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, ServiceFailure, InterruptedException {
-
-		// only continue if we have the feature turned on
-		if (doiEnabled) {
-		    boolean identifierIsDOI = false;
-		    boolean sidIsDOI = false;
-			String identifier = sysMeta.getIdentifier().getValue();
-			String sid = null;
-			if(sysMeta.getSeriesId() != null) {
-			    sid = sysMeta.getSeriesId().getValue();
-			}
-
-			// determine if this DOI identifier is in our configured list of shoulders
-            for (String shoulder : shoulderMap.values()) {
-			    if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
-			        identifierIsDOI = true;
-			    }
-			    // determine if this DOI sid is in our configured shoulder
-                if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
-                    sidIsDOI = true;
-                }
-            }
-
-            // only continue if this DOI identifier or sid is in our configured shoulder list
-			if(identifierIsDOI || sidIsDOI) {
-			    try {
-    	            // finish the other part for the identifier if it is an DOI
-    	            if(identifierIsDOI) {
-    	                registerDOI(identifier, sysMeta);
-    	            }
-    	            // finish the other part for the sid if it is an DOI
-    	            if(sidIsDOI) {
-    	                registerDOI(sid, sysMeta);
-    	            }
-			    } catch (EZIDException e) {
-			        throw new DOIException(e.getMessage());
-			    }
-			}
-		} 
-		return true;
-	}
-
-	/**
-	 * Register the metadata for the given identifier. The given identifier can be an SID.
-	 * @param identifier  the given identifier will be registered with the metadata
-	 * @param title  the title will be in the metadata
-	 * @param sysMeta  the system metadata associates with the given id
-	 * @param creators  the creator will be in the metadata
-	 * @throws ServiceFailure
-	 * @throws NotImplemented
-	 * @throws EZIDException
-	 * @throws InterruptedException
-	 */
-	private void registerDOI(String identifier, SystemMetadata sysMeta) throws InvalidRequest, NotImplemented, ServiceFailure, EZIDException, InterruptedException {
+     * Submit the metadata to the EZID service for a specific identifier(DOI). 
+     * This implementation will be call by the registerMetadata on the super class.
+     * @param identifier  the identifier to identify the metadata which will be updated
+     * @param  sysMeta  the system metadata associated with the identifier
+     * @throws InvalidToken
+     * @throws ServiceFailure
+     * @throws NotAuthorized
+     * @throws NotFound
+     * @throws NotImplemented
+     */
+    protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
+                                                        ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound, IOException {
 	    // enter metadata about this identifier
         HashMap<String, String> metadata = new HashMap<String, String>();
         Node node = MNodeService.getInstance(null).getCapabilities();
 
         // target (URL)
-        String target = node.getBaseURL() + "/v1/object/" + identifier;
+        String target = node.getBaseURL() + "/v1/object/" + identifier.getValue();
         String uriTemplate = null;
         String uriTemplateKey = "guid.doi.uritemplate.data";
         ObjectFormat objectFormat = null;
@@ -244,7 +194,7 @@ public class EzidDOIService extends DOIService {
         }
         try {
             uriTemplate = PropertyService.getProperty(uriTemplateKey);
-            target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier);
+            target =  SystemUtil.getSecureServerURL() + uriTemplate.replaceAll("<IDENTIFIER>", identifier.getValue());
         } catch (PropertyNotFoundException e) {
             logMetacat.warn("No target URI template found in the configuration for: " + uriTemplateKey);
         }
@@ -260,17 +210,20 @@ public class EzidDOIService extends DOIService {
         }
 
         // set the datacite metadata fields
-        String dataCiteXML = generateDataCiteXML(identifier, sysMeta);
+        String dataCiteXML = generateDataCiteXML(identifier.getValue(), sysMeta);
         metadata.put(DATACITE, dataCiteXML);
         metadata.put(InternalProfile.TARGET.toString(), target);
         metadata.put(InternalProfile.STATUS.toString(), status);
         metadata.put(InternalProfile.EXPORT.toString(), export);
 
-        // make sure we have a current login
-        this.refreshLogin();
-
-        // set using the API
-        ezid.createOrUpdate(identifier, metadata);
+        try {
+            // make sure we have a current login
+            this.refreshLogin();
+            // set using the API
+            ezid.createOrUpdate(identifier.getValue(), metadata);
+        } catch (EZIDException e) {
+            throw new DOIException(e.getMessage());
+        }
 	}
 
 	/**

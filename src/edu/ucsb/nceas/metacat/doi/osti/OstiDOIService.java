@@ -100,25 +100,6 @@ public class OstiDOIService extends DOIService{
     }
     
     /**
-     * Submits DOI metadata information about the object to DOI services
-     * This method do nothing in the OSTI implmenation
-     * @param sysMeta
-     * @return true if succeeded; false otherwise.
-     * @throws EZIDException
-     * @throws ServiceFailure
-     * @throws NotImplemented
-     * @throws InterruptedException
-     * @throws NotFound 
-     * @throws NotAuthorized 
-     * @throws InvalidToken 
-     */
-    public boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
-                                 ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound {
-        updateDOIMetadata(null, sysMeta);
-        return true;
-    }
-
-    /**
      * Generate a DOI using the DOI service as configured
      * @return  the identifier which was minted by the DOI service
      * @throws EZIDException
@@ -140,80 +121,33 @@ public class OstiDOIService extends DOIService{
 
     
     /**
-     * Update the metadata for some records in the OSTI service. It can update both the identifier and series id in
-     * the system metadata if both of them are DOIs. It doesn't change the status (reserved or published) of the DOIs
-     * @param session  the subjects who calls the method
-     * @param sysmeta  the info contains the identifiers which will be updated (we can update only identifier, sid or both)
-     * @throws InvalidToken
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws NotFound
-     * @throws NotImplemented
+     * Submit the metadata in the osti service for a specific identifier(DOI). 
+     * This implementation will be call by the registerMetadata on the super class.
+     * @param identifier  the identifier to identify the metadata which will be updated
+     * @param  sysMeta  the system metadata associated with the identifier
      */
-    protected void updateDOIMetadata(Session session, SystemMetadata sysmeta) throws InvalidToken, ServiceFailure, 
-                                                                           NotAuthorized, NotFound, NotImplemented {
-        if (doiEnabled) {
-            try {
-                String identifier = sysmeta.getIdentifier().getValue();
-                String sid = null;
-                if(sysmeta.getSeriesId() != null) {
-                    sid = sysmeta.getSeriesId().getValue();
-                }
-                boolean identifierIsDOI = false;
-                boolean sidIsDOI = false;
-                // determine if this DOI identifier is in our configured list of shoulders
-                for (String shoulder : shoulderMap.values()) {
-                    if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
-                        identifierIsDOI = true;
-                    }
-                    // determine if this DOI sid is in our configured shoulder
-                    if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
-                        sidIsDOI = true;
-                    }
-                }
-               
-                if (identifierIsDOI) {
-                    updateDOIMetadata(session, sysmeta.getIdentifier());
-                }
-                if (sidIsDOI) {
-                    updateDOIMetadata(session, sysmeta.getSeriesId());
-                }
-            } catch (IOException e) {
-                throw new ServiceFailure("1030", e.getMessage());
-            }
-        }
-    }
-    
-    /**
-     * Update the metadata in the osti service for a specific identifier(DOI). 
-     * It doesn't change the status (reserved or published) for the identifier(DOI).
-     * @param session  the subjects who calls the method
-     * @param doi  the doi to identify the metadata which will be updated
-     * @throws InvalidToken
-     * @throws ServiceFailure
-     * @throws NotAuthorized
-     * @throws NotFound
-     * @throws NotImplemented
-     */
-    protected void updateDOIMetadata(Session session, Identifier doi) throws InvalidToken, ServiceFailure, 
-                                                                           NotAuthorized, NotFound, NotImplemented, IOException {
+    protected void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
+                                                        ServiceFailure, InterruptedException, InvalidToken, NotFound, IOException, NotAuthorized {
         MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
-        try (InputStream object = MNodeService.getInstance(request).get(session, doi)) {
+        Session session = new Session();
+        Subject subject = MNodeService.getInstance(request).getCapabilities().getSubject(0);
+        session.setSubject(subject);
+        try (InputStream object = MNodeService.getInstance(request).get(session, identifier)) {
             try {
                 String siteUrl = null;
                 if (autoPublishDOI) {
                     //In Osti, the site url is used to control the status of doi.
                     //<set_reserved> --> the Saved (reserved) status
                     //<site_url> -- > the PENDING status
-                    siteUrl = getLandingPage(doi);
+                    siteUrl = getLandingPage(identifier);
                     logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
-                                     + doi.getValue() + " is: " + siteUrl);
+                                     + identifier.getValue() + " is: " + siteUrl);
                 }
                 //If the siteUrl is null, we will generate the metadata without site_url. It wouldn't change the status.
                 //If the site url is no null, we will we will generate the metadata without site_url. If the previous
                 //status is reserved, it will change to pending. If it is pending, nothing will be change.
                 String ostiMeta = generateOstiMetadata(object, siteUrl);
-                ostiClient.setMetadata(doi.getValue(), ostiMeta);
+                ostiClient.setMetadata(identifier.getValue(), ostiMeta);
             } catch (TransformerException e) {
                throw new ServiceFailure("1030", e.getMessage());
             } catch (InterruptedException e) {

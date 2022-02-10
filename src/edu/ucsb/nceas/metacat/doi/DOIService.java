@@ -18,6 +18,7 @@
  */
 package edu.ucsb.nceas.metacat.doi;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
@@ -138,8 +139,56 @@ public abstract class DOIService {
      * @throws NotAuthorized
      * @throws NotFound
      */
-    public abstract boolean registerDOI(SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
-                                                                ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound;
+    public boolean registerDOI(SystemMetadata sysmeta) throws InvalidRequest, DOIException, NotImplemented, 
+                                                                ServiceFailure, InterruptedException, NotAuthorized, InvalidToken, NotFound {
+        if (doiEnabled) {
+            try {
+                String identifier = sysmeta.getIdentifier().getValue();
+                String sid = null;
+                if(sysmeta.getSeriesId() != null) {
+                    sid = sysmeta.getSeriesId().getValue();
+                }
+                boolean identifierIsDOI = false;
+                boolean sidIsDOI = false;
+                // determine if this DOI identifier is in our configured list of shoulders
+                for (String shoulder : shoulderMap.values()) {
+                    if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
+                        identifierIsDOI = true;
+                    }
+                    // determine if this DOI sid is in our configured shoulder
+                    if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
+                        sidIsDOI = true;
+                    }
+                }
+                if (identifierIsDOI) {
+                    submitDOIMetadata(sysmeta.getIdentifier(), sysmeta);
+                }
+                if (sidIsDOI) {
+                    submitDOIMetadata(sysmeta.getSeriesId(), sysmeta);
+                }
+            } catch (IOException e) {
+                throw new ServiceFailure("1030", e.getMessage());
+            }
+        }
+        return true;
+    }
+    
+    /**
+     * Submit the doi metadata for the given id. This method is called by the method of registerDOI. 
+     * Every subclass must have the implementation. 
+     * @param identifier  id can be either an identifier or a sid
+     * @param sysMeta  the system metadata associated with the identifier
+     * @throws InvalidRequest
+     * @throws DOIException
+     * @throws NotImplemented
+     * @throws ServiceFailure
+     * @throws InterruptedException
+     * @throws InvalidToken
+     * @throws NotFound
+     * @throws IOException
+     */
+    protected abstract void submitDOIMetadata(Identifier identifier, SystemMetadata sysMeta) throws InvalidRequest, DOIException, NotImplemented, 
+                                                        ServiceFailure, InterruptedException, InvalidToken, NotAuthorized, NotFound, IOException;
 
     /**
      * Generate a DOI using the DOI service as configured
