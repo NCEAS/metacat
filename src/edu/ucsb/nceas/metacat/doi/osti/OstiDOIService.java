@@ -154,15 +154,29 @@ public class OstiDOIService extends DOIService{
                                                                            NotAuthorized, NotFound, NotImplemented {
         if (doiEnabled) {
             try {
-                Identifier id = sysmeta.getIdentifier();
-                if (id.getValue() != null && (id.getValue().startsWith("doi://") 
-                                         || (id.getValue().startsWith("DOI://")))) {
-                    updateDOIMetadata(session, id);
+                String identifier = sysmeta.getIdentifier().getValue();
+                String sid = null;
+                if(sysmeta.getSeriesId() != null) {
+                    sid = sysmeta.getSeriesId().getValue();
                 }
-                Identifier sid = sysmeta.getSeriesId();
-                if (sid.getValue() != null && (sid.getValue().startsWith("doi://") 
-                        || (sid.getValue().startsWith("DOI://")))) {
-                    updateDOIMetadata(session, sid);
+                boolean identifierIsDOI = false;
+                boolean sidIsDOI = false;
+                // determine if this DOI identifier is in our configured list of shoulders
+                for (String shoulder : shoulderMap.values()) {
+                    if (shoulder != null && !shoulder.trim().equals("") && identifier != null && identifier.startsWith(shoulder)) {
+                        identifierIsDOI = true;
+                    }
+                    // determine if this DOI sid is in our configured shoulder
+                    if (shoulder != null && !shoulder.trim().equals("") && sid != null && sid.startsWith(shoulder)) {
+                        sidIsDOI = true;
+                    }
+                }
+               
+                if (identifierIsDOI) {
+                    updateDOIMetadata(session, sysmeta.getIdentifier());
+                }
+                if (sidIsDOI) {
+                    updateDOIMetadata(session, sysmeta.getSeriesId());
                 }
             } catch (IOException e) {
                 throw new ServiceFailure("1030", e.getMessage());
