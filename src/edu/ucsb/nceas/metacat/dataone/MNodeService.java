@@ -3088,7 +3088,7 @@ public class MNodeService extends D1NodeService
 	  /**
 	   * Make status of the given identifier (e.g. a DOI) public
 	   * @param session  the subject who calls the method
-	   * @param identifer  the identifier whose status will be public
+	   * @param identifer  the identifier whose status will be public. It can be a pid or sid.
 	   * @throws InvalidToken
 	   * @throws ServiceFailure
 	   * @throws NotAuthorized
@@ -3101,22 +3101,38 @@ public class MNodeService extends D1NodeService
 	   * @throws InvalidSystemMetadata
 	   * @throws DOIException
 	   */
-	  public void publishIdentifier(Session session, Identifier identifer) throws InvalidToken, 
-	    ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
-	    UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException {
-	      try {
-	          DOIServiceFactory.getDOIService().publishIdentifier(session, identifer);
-	      } catch (PropertyNotFoundException e) {
+	  public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
+	      ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+	      UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException {
+	    
+	    String invalidRequestCode = "1202";
+	    String notFoundCode ="1280";
+	    if (identifier == null || identifier.getValue().trim().equals("")) {
+	        throw new InvalidRequest(invalidRequestCode, "MNodeService.publishIdentifier - the identifier which needs to be published can't be null.");
+	    }
+        String serviceFailureCode = "1310";
+        Identifier pid = getPIDForSID(identifier, serviceFailureCode);
+        if(pid == null) {
+            pid = identifier;
+        }
+        logMetacat.error("MNodeService.publishIdentifier - the PID for the id " + identifier.getValue() + " is " + pid.getValue());
+        SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
+        //if the user has the write permission, it will be all set
+        authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+	    try {
+	          DOIServiceFactory.getDOIService().publishIdentifier(session, identifier);
+	    } catch (PropertyNotFoundException e) {
 	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
-	      } catch (DOIException e) {
+	    } catch (DOIException e) {
 	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
-	      } catch (InstantiationException e) {
+	    } catch (InstantiationException e) {
 	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
-	      } catch (IllegalAccessException e) {
+	    } catch (IllegalAccessException e) {
 	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
-	      } catch (ClassNotFoundException e) {
+	    } catch (ClassNotFoundException e) {
 	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
-	      }
+	    }
 	  }
 	
 	/**
