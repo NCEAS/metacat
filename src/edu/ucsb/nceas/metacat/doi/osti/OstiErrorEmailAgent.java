@@ -43,12 +43,13 @@ import org.apache.commons.logging.LogFactory;
  * @author tao
  *
  */
-public class OstiEmailErorrAgent implements OSTIElinkErrorAgent {
+public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
     private static String letterStartPart = "Dear operators:\nMetacat got the following error message " +
                                             "when it interatcted the OSTI ELink Service: \n" ;
     private static String mailSubject = "OSTI Errors In Metacat";
-    private static Log logMetacat = LogFactory.getLog(OstiEmailErorrAgent.class);
+    private static Log logMetacat = LogFactory.getLog(OstiErrorEmailAgent.class);
     private static String smtpHost = null;
+    private static int port = 587;
     private static String toMail = null;
     private static String fromMail = null;
     private static Session session = null;
@@ -56,16 +57,20 @@ public class OstiEmailErorrAgent implements OSTIElinkErrorAgent {
     /**
      * Constructor - set the email settings
      */
-    public OstiEmailErorrAgent() {
+    public OstiErrorEmailAgent() {
         try {
             smtpHost = PropertyService.getProperty("guid.doi.mail.smtp.host");
             toMail = PropertyService.getProperty("guid.doi.mail.to");
             fromMail = PropertyService.getProperty("guid.doi.mail.from");
+            port = new Integer(PropertyService.getProperty("guid.doi.mail.smtp.port")).intValue();
         } catch (PropertyNotFoundException e) {
             logMetacat.error("OstiEmailErorrAgent.constructor - can't find the property " + e.getMessage());
+        } catch (NumberFormatException e) {
+            logMetacat.error("OstiEmailErorrAgent.constructor - can't transform the port configuration to a number: " + e.getMessage());
         }
         Properties props = System.getProperties();
         props.put("mail.smtp.host", smtpHost);
+        props.put("mail.smtp.port", port);
         session = Session.getDefaultInstance(props);
     }
     
