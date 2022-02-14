@@ -58,6 +58,7 @@ import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.osti_elink.OSTIElinkClient;
 import edu.ucsb.nceas.osti_elink.OSTIElinkErrorAgent;
 import edu.ucsb.nceas.osti_elink.OSTIElinkException;
+import edu.ucsb.nceas.osti_elink.OSTIElinkService;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -121,7 +122,7 @@ public class OstiDOIService extends DOIService{
 
     
     /**
-     * Submit the metadata in the osti service for a specific identifier(DOI). 
+     * Submit the metadata in the osti service for a specific identifier(DOI). The identifier can be a SID or PID
      * This implementation will be call by the registerMetadata on the super class.
      * @param identifier  the identifier to identify the metadata which will be updated
      * @param  sysMeta  the system metadata associated with the identifier
@@ -134,18 +135,33 @@ public class OstiDOIService extends DOIService{
         session.setSubject(subject);
         try (InputStream object = MNodeService.getInstance(request).get(session, identifier)) {
             try {
+                 //In Osti, the site url is used to control the status of doi.
+                //<set_reserved> --> the Saved (reserved) status
+                //<site_url> -- > the PENDING status
                 String siteUrl = null;
                 if (autoPublishDOI) {
-                    //In Osti, the site url is used to control the status of doi.
-                    //<set_reserved> --> the Saved (reserved) status
-                    //<site_url> -- > the PENDING status
                     siteUrl = getLandingPage(identifier);
                     logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
                                      + identifier.getValue() + " is: " + siteUrl);
+                } else {
+                    //In non-autoPublishDOI, we should reserve the current status in the OSTI server
+                    String status = ostiClient.getStatus(identifier.getValue());
+                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi and the current status is "
+                                     + status + " for the identifier " + identifier.getValue());
+                    if (status.equalsIgnoreCase(OSTIElinkService.SAVED)) {
+                        //we need to reserve the saved status, so the site url should be null. 
+                        //The style sheet will use "set_reserved" if both site url parameter is null and osti_id parameter is null.
+                        siteUrl = null;
+                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                                + identifier.getValue() + " should be null since its current status is Saved.");
+                    } else {
+                        //we need to reserve the "pending"/"released" status. So we need a site url
+                        siteUrl = getLandingPage(identifier);
+                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                                + identifier.getValue() + " is: " + siteUrl);
+                    }
+                    
                 }
-                //If the siteUrl is null, we will generate the metadata without site_url. It wouldn't change the status.
-                //If the site url is no null, we will we will generate the metadata without site_url. If the previous
-                //status is reserved, it will change to pending. If it is pending, nothing will be change.
                 String ostiMeta = generateOstiMetadata(object, siteUrl);
                 ostiClient.setMetadata(identifier.getValue(), ostiMeta);
             } catch (TransformerException e) {
@@ -202,8 +218,8 @@ public class OstiDOIService extends DOIService{
     /**
      * Generate the OSTI document for the given eml
      * @param eml  the source eml 
-     * @param siteUrl  the site url will be used in the metadata. The site url will change the status to depending. 
-     *                  If it is null or blank, we don't use it.                 
+     * @param siteUrl  the site url will be used in the metadata. . 
+     *                  If it is null or blank, the xml metadata will have "set_reserved".
      * @return  the OSTI document for the eml
      * @throws TransformerException
      */
