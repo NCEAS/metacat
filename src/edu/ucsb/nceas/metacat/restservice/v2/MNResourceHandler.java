@@ -432,7 +432,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                         generateIdentifier();
                         status = true;
                     }
-                } else if (resource.startsWith(RESOURCE_PUBLISH)) {
+                } else if (resource.startsWith(RESOURCE_PUBLISH) && !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
                     logMetacat.debug("Using resource: " + RESOURCE_PUBLISH);
                     // PUT
                     if (httpVerb == PUT) {
@@ -1598,14 +1598,8 @@ public class MNResourceHandler extends D1ResourceHandler {
 	    Identifier id = new Identifier();
         id.setValue(identifier);
         MNodeService.getInstance(request).publishIdentifier(session, id);
-
+        //the publish started in another thread, we just set the status to success
         response.setStatus(200);
-        response.setContentType("text/xml");
-        OutputStream out = response.getOutputStream();
-
-        // write new identifier to the output stream
-        TypeMarshaller.marshalTypeToOutputStream(identifier, out);
-        IOUtils.closeQuietly(out);
 	}
     
     /**

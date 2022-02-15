@@ -417,7 +417,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
         printTestHeader("testUnregisteredShoulder");
         int appendix = (int) (Math.random() * 100);
         String doi = "doi:15/1289761W/" + System.currentTimeMillis() + appendix;
-        System.out.println("the crafted dois is ++++++++++++ " + doi);
+        //System.out.println("the crafted dois is ++++++++++++ " + doi);
         Identifier guid = new Identifier();
         guid.setValue(doi);
         //create an object with the doi
