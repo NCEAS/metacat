@@ -214,7 +214,7 @@ public class OstiDOIService extends DOIService{
      * @return  the complete xml string
      */
     protected String generateXMLWithSiteURL(String siteURL) {
-        String xml = "<?xml version=\"1.0\" encoding=\"UTF-16\"?><records><record><site_url>";
+        String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record><site_url>";
         xml = xml + siteURL;
         xml = xml + "</site_url></record></records>";
         return xml;

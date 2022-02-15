@@ -41,9 +41,10 @@ import junit.framework.TestSuite;
  * @author tao
  *
  */
-public class OstiDOIServiceTest  extends D1NodeServiceTest {
+public class OstiDOIServiceTest extends D1NodeServiceTest {
     
     private OstiDOIService service = null;
+    private final static int MAX_ATTEMPTS = 20;
     
     /**
      * Constructor
@@ -60,9 +61,10 @@ public class OstiDOIServiceTest  extends D1NodeServiceTest {
      */
     public static Test suite() {
         TestSuite suite = new TestSuite();
-        suite.addTest(new OstiDOIServiceTest("testGenerateOstiMetadata"));
         suite.addTest(new OstiDOIServiceTest("testPublishProcess"));
         suite.addTest(new OstiDOIServiceTest("testPublishProcessForSID"));
+        suite.addTest(new OstiDOIServiceTest("testAutoPublishProcess"));
+        suite.addTest(new OstiDOIServiceTest("testAutoPublishProcessForSID"));
         return suite;
     }
     
@@ -89,43 +91,29 @@ public class OstiDOIServiceTest  extends D1NodeServiceTest {
         }
         service = new OstiDOIService();
     }
-
-    /**
-     * Test the method of getInstance
-     * @throws Exception
-     */
-    public void testGenerateOstiMetadata() throws Exception {
-        printTestHeader("testGenerateOstiMetadata");
-        String siteUrl = null;
-        FileInputStream eml = new FileInputStream("test/eml-2.2.0.xml");
-        String meta = service.generateOstiMetadata(eml, siteUrl);
-        eml.close();
-        //System.out.println("the osti meta is\n" + meta);
-        assertTrue(meta.contains("<set_reserved/>"));
-        assertTrue(!meta.contains("<site_url>"));
-        eml = new FileInputStream("test/eml-2.2.0.xml");
-        siteUrl = "https://foo.com";
-        meta = service.generateOstiMetadata(eml, siteUrl);
-        eml.close();
-        assertTrue(meta.contains("<site_url>https://foo.com</site_url>"));
-        assertTrue(!meta.contains("<set_reserved/>"));
-        //System.out.println("the osti meta is\n" + meta);
-    }
     
     /**
-     * Test the publish process
+     * Test the publish process when the autoPublish is off.
      * @throws Exception
      */
     public void testPublishProcess() throws Exception {
         printTestHeader("testPublishProcess");
-        
+        //set guid.doi.autoPublish off
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "false");
+        service.refreshStatus();
         //Get the doi
         String emlFile = "test/eml-ess-dive.xml";
         Identifier doi = service.generateDOI();
-        Thread.sleep(5000);
+        //System.out.println("++++++++++++++++++++++++++++++the doi is " + doi.getValue());
+        int count = 0;
         String meta = service.getMetadata(doi);
-        //System.out.println("the osti meta is\n" + meta);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
         assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("<title>unknown</title>"));
         
         //create an object with the doi
         Session session = getTestSession();
@@ -137,57 +125,284 @@ public class OstiDOIServiceTest  extends D1NodeServiceTest {
         Identifier pid = MNodeService.getInstance(request).create(session, doi, eml, sysmeta);
         eml.close();
         assertEquals(doi.getValue(), pid.getValue());
+        count = 0;
         meta = service.getMetadata(doi);
-        Thread.sleep(5000);
-        //System.out.println("the osti meta is\n" + meta);
+        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        //System.out.println("---------------------the metadata is\n" + meta);
+        assertTrue(meta.contains("<title>Specific conductivity"));
         assertTrue(meta.contains("status=\"Saved\""));
         
-        //publish the object with the doi
-        MNodeService.getInstance(request).publish(session, doi);
-        Thread.sleep(5000);
+        //publish the object with a different session.
+        try {
+            Session session2 = getAnotherSession();
+            MNodeService.getInstance(request).publishIdentifier(session2, doi);
+            fail("We shouldn't get here since the session can't publish it");
+        } catch (Exception e) {
+            
+        }
+        //publish the identifier with the doi
+        MNodeService.getInstance(request).publishIdentifier(session, doi);
+        count = 0;
         meta = service.getMetadata(doi);
-        //System.out.println("the osti meta is\n" + meta);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
         assertTrue(meta.contains("status=\"Pending\""));
     }
     
     /**
-     * Test the publish process
+     * Test the publish process when the autoPublish is off and the sid is a doi
      * @throws Exception
      */
     public void testPublishProcessForSID() throws Exception {
         printTestHeader("testPublishProcess");
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "false");
+        service.refreshStatus();
         
-        //Get the doi
+        //create an object with a non-doi
         String emlFile = "test/eml-ess-dive.xml";
-        Identifier doi = service.generateDOI();
-        Thread.sleep(5000);
-        String meta = service.getMetadata(doi);
-        //System.out.println("the osti meta is\n" + meta);
-        assertTrue(meta.contains("status=\"Saved\""));
-        
-        //create an object with the doi
         Session session = getTestSession();
         Identifier guid =  new Identifier();
         guid.setValue("testPublishProcessForSID." + System.currentTimeMillis());
         FileInputStream eml = new FileInputStream(emlFile);
         SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), eml);
         eml.close();
-        sysmeta.setSeriesId(doi);
         sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
         eml = new FileInputStream(emlFile);
         Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
         eml.close();
         assertEquals(guid.getValue(), pid.getValue());
+
+       //Get the doi
+        Identifier doi = service.generateDOI();
+        int count = 0;
+        String meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("<title>unknown</title>"));
+        
+        //update system metadata to set a doi as sid
+        eml = new FileInputStream(emlFile);
+        SystemMetadata sysmetaNew = createSystemMetadata(guid, session.getSubject(), eml);
+        sysmetaNew.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        sysmetaNew.setDateUploaded(readSys.getDateUploaded());
+        eml.close();
+        sysmetaNew.setSeriesId(doi);
+        sysmetaNew.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmetaNew);
+        count = 0;
         meta = service.getMetadata(doi);
-        Thread.sleep(5000);
-        //System.out.println("the osti meta is\n" + meta);
+        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        //System.out.println("---------------------the metadata is\n" + meta);
+        assertTrue(meta.contains("<title>Specific conductivity"));
         assertTrue(meta.contains("status=\"Saved\""));
         
-        //publish the object with the doi
-        MNodeService.getInstance(request).publish(session, doi);
-        Thread.sleep(5000);
+        //publish the identifier with the doi
+        MNodeService.getInstance(request).publishIdentifier(session, doi);
+        count = 0;
         meta = service.getMetadata(doi);
-        System.out.println("the osti meta is\n" + meta);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+        
+        //updated the object whose serial id is a doi. The status of doi is pending.
+        //after the update, the status of doi should still be pending
+        Identifier guid2 =  new Identifier();
+        guid2.setValue("testPublishProcessForSID2." + System.currentTimeMillis());
+        eml = new FileInputStream(emlFile);
+        sysmeta = createSystemMetadata(guid2, session.getSubject(), eml);
+        sysmeta.setSeriesId(doi);
+        eml.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier newPid = MNodeService.getInstance(request).update(session, guid, eml, guid2, sysmeta);
+        assertTrue(newPid.getValue().equals(guid2.getValue()));
+        Thread.sleep(3);
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+    }
+    
+    
+    /**
+     * Test the publish process when the autoPublish is on and the pid is a doi.
+     * @throws Exception
+     */
+    public void testAutoPublishProcess() throws Exception {
+        printTestHeader("testPublishProcess");
+        //set guid.doi.autoPublish off
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+        service.refreshStatus();
+        //Get the doi
+        String emlFile = "test/eml-ess-dive.xml";
+        Identifier doi = service.generateDOI();
+        //System.out.println("++++++++++++++++++++++++++++++the doi is " + doi.getValue());
+        int count = 0;
+        String meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("<title>unknown</title>"));
+        
+        //create an object with the doi
+        Session session = getTestSession();
+        FileInputStream eml = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(doi, session.getSubject(), eml);
+        eml.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, doi, eml, sysmeta);
+        eml.close();
+        assertEquals(doi.getValue(), pid.getValue());
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        //System.out.println("---------------------the metadata is\n" + meta);
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+        
+        //publish the object with a different session.
+        try {
+            Session session2 = getAnotherSession();
+            MNodeService.getInstance(request).publishIdentifier(session2, doi);
+            fail("We shouldn't get here since the session can't publish it");
+        } catch (Exception e) {
+            
+        }
+        //publish the identifier with the doi
+        MNodeService.getInstance(request).publishIdentifier(session, doi);
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+    }
+    
+    
+    /**
+     * Test the publish process when the autoPublish is off and the sid is a doi
+     * @throws Exception
+     */
+    public void testAutoPublishProcessForSID() throws Exception {
+        printTestHeader("testPublishProcess");
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+        service.refreshStatus();
+        
+        //create an object with a non-doi
+        String emlFile = "test/eml-ess-dive.xml";
+        Session session = getTestSession();
+        Identifier guid =  new Identifier();
+        guid.setValue("testPublishProcessForSID." + System.currentTimeMillis());
+        FileInputStream eml = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), eml);
+        eml.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        SystemMetadata readSys = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+        eml.close();
+        assertEquals(guid.getValue(), pid.getValue());
+
+       //Get the doi
+        Identifier doi = service.generateDOI();
+        int count = 0;
+        String meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && meta != null && !meta.contains("<title>unknown</title>")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("status=\"Saved\""));
+        assertTrue(meta.contains("<title>unknown</title>"));
+        
+        //update system metadata to set a doi as sid
+        eml = new FileInputStream(emlFile);
+        SystemMetadata sysmetaNew = createSystemMetadata(guid, session.getSubject(), eml);
+        sysmetaNew.setDateSysMetadataModified(readSys.getDateSysMetadataModified());
+        sysmetaNew.setDateUploaded(readSys.getDateUploaded());
+        eml.close();
+        sysmetaNew.setSeriesId(doi);
+        sysmetaNew.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmetaNew);
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("<title>Specific conductivity")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        //System.out.println("---------------------the metadata is\n" + meta);
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+        
+        //publish the identifier with the doi
+        MNodeService.getInstance(request).publishIdentifier(session, doi);
+        count = 0;
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
+        assertTrue(meta.contains("status=\"Pending\""));
+        
+        //updated the object whose serial id is a doi. The status of doi is pending.
+        //after the update, the status of doi should still be pending
+        Identifier guid2 =  new Identifier();
+        guid2.setValue("testPublishProcessForSID2." + System.currentTimeMillis());
+        eml = new FileInputStream(emlFile);
+        sysmeta = createSystemMetadata(guid2, session.getSubject(), eml);
+        sysmeta.setSeriesId(doi);
+        eml.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier newPid = MNodeService.getInstance(request).update(session, guid, eml, guid2, sysmeta);
+        assertTrue(newPid.getValue().equals(guid2.getValue()));
+        Thread.sleep(3);
+        meta = service.getMetadata(doi);
+        while (count < MAX_ATTEMPTS && !meta.contains("status=\"Pending\"")) {
+            Thread.sleep(1000);
+            count++;
+            meta = service.getMetadata(doi);
+        }
+        assertTrue(meta.contains("<title>Specific conductivity"));
         assertTrue(meta.contains("status=\"Pending\""));
     }
 }

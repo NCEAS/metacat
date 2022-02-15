@@ -3115,7 +3115,7 @@ public class MNodeService extends D1NodeService
         if(pid == null) {
             pid = identifier;
         }
-        logMetacat.error("MNodeService.publishIdentifier - the PID for the id " + identifier.getValue() + " is " + pid.getValue());
+        logMetacat.info("MNodeService.publishIdentifier - the PID for the id " + identifier.getValue() + " is " + pid.getValue());
         SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
         //if the user has the write permission, it will be all set
