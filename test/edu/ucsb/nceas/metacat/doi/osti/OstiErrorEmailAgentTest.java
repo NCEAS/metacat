@@ -37,8 +37,8 @@ public class OstiErrorEmailAgentTest extends MCTestCase {
     @Test
     public void testNotify() {
         OstiErrorEmailAgent agent = new OstiErrorEmailAgent();
-        Exception e = new Exception("this is email is a test");
-        agent.notify(e);
+       String error = "this is email is a test";
+        agent.notify(error);
     }
 
 }

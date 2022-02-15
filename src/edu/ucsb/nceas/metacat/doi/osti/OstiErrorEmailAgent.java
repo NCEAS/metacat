@@ -77,9 +77,9 @@ public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
     /**
      * Send the email with error messages to recipients 
      */
-    public void notify(Exception e) {
+    public void notify(String error) {
         try {
-            String body = letterStartPart + e.getMessage();
+            String body = letterStartPart + error;
             MimeMessage msg = new MimeMessage(session);
             //set message headers
             msg.addHeader("Content-type", "text/HTML; charset=UTF-8");
@@ -92,7 +92,7 @@ public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toMail, false));
             Transport.send(msg);  
         } catch (Exception ee) {
-            logMetacat.error("OstiEmailErorrAgent.notify - Metacat got the error message from OSTI: " + e.getMessage());
+            logMetacat.error("OstiEmailErorrAgent.notify - Metacat got the error message from OSTI: " + error);
             logMetacat.error("OstiEmailErorrAgent.notify - can't send out emails with the above message since " + ee.getMessage());
             
         }
