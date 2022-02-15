@@ -30,6 +30,7 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
@@ -215,8 +216,9 @@ public class OstiDOIService extends DOIService{
      */
     protected String generateXMLWithSiteURL(String siteURL) {
         String xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?><records><record><site_url>";
-        xml = xml + siteURL;
+        xml = xml + StringEscapeUtils.escapeXml(siteURL);
         xml = xml + "</site_url></record></records>";
+        logMetacat.debug("OstiDOIService.generateXMLWithSiteUR - the metadata is: " + xml);
         return xml;
     }
     

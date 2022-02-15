@@ -24,6 +24,7 @@ import edu.ucsb.nceas.MCTestCase;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.osti_elink.OSTIElinkNotFoundException;
 
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.service.types.v1.Identifier;
@@ -65,6 +66,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
         suite.addTest(new OstiDOIServiceTest("testPublishProcessForSID"));
         suite.addTest(new OstiDOIServiceTest("testAutoPublishProcess"));
         suite.addTest(new OstiDOIServiceTest("testAutoPublishProcessForSID"));
+        suite.addTest(new OstiDOIServiceTest("testUnregisteredShoulder"));
         return suite;
     }
     
@@ -162,7 +164,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testPublishProcessForSID() throws Exception {
-        printTestHeader("testPublishProcess");
+        printTestHeader("testPublishProcessForSID");
         PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "false");
         service.refreshStatus();
         
@@ -254,7 +256,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testAutoPublishProcess() throws Exception {
-        printTestHeader("testPublishProcess");
+        printTestHeader("testAutoPublishProcess");
         //set guid.doi.autoPublish off
         PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
         service.refreshStatus();
@@ -320,7 +322,7 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testAutoPublishProcessForSID() throws Exception {
-        printTestHeader("testPublishProcess");
+        printTestHeader("testAutoPublishProcessForSID");
         PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
         service.refreshStatus();
         
@@ -404,5 +406,37 @@ public class OstiDOIServiceTest extends D1NodeServiceTest {
         }
         assertTrue(meta.contains("<title>Specific conductivity"));
         assertTrue(meta.contains("status=\"Pending\""));
+    }
+    
+    /**
+     * Test create an object with a doi which doesn't cotain the registered shoulder.
+     * So this doi will not be handled
+     * @throws Exception
+     */
+    public void testUnregisteredShoulder() throws Exception {
+        printTestHeader("testUnregisteredShoulder");
+        int appendix = (int) (Math.random() * 100);
+        String doi = "doi:15/1289761W/" + System.currentTimeMillis() + appendix;
+        System.out.println("the crafted dois is ++++++++++++ " + doi);
+        Identifier guid = new Identifier();
+        guid.setValue(doi);
+        //create an object with the doi
+        String emlFile = "test/eml-ess-dive.xml";
+        Session session = getTestSession();
+        FileInputStream eml = new FileInputStream(emlFile);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), eml);
+        eml.close();
+        sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("https://eml.ecoinformatics.org/eml-2.2.0").getFormatId());
+        eml = new FileInputStream(emlFile);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, eml, sysmeta);
+        eml.close();
+        assertEquals(guid.getValue(), pid.getValue());
+        Thread.sleep(5000);
+        try {
+            String meta = service.getMetadata(guid);
+            fail("we can't get here ");
+        } catch (Exception e) {
+            assertTrue(e instanceof OSTIElinkNotFoundException);
+        }
     }
 }
