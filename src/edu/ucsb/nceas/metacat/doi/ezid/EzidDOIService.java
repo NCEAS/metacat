@@ -66,6 +66,7 @@ import org.ecoinformatics.datamanager.parser.generic.Eml200DataPackageParser;
 
 import edu.ucsb.nceas.ezid.EZIDClient;
 import edu.ucsb.nceas.ezid.EZIDException;
+import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfileResourceTypeValues;
 import edu.ucsb.nceas.ezid.profile.ErcMissingValueCode;
@@ -101,6 +102,8 @@ public class EzidDOIService extends DOIService {
 	private Log logMetacat = LogFactory.getLog(EzidDOIService.class);
 
 	private EZIDClient ezid = null;
+	
+	private EZIDService ezidService = null;
 
 	private Date lastLogin = null;
 
@@ -117,6 +120,7 @@ public class EzidDOIService extends DOIService {
 		// for DOIs
 		String ezidServiceBaseUrl = null;
 		ezid = new EZIDClient(ezidServiceBaseUrl);
+		ezidService = new EZIDService(ezidServiceBaseUrl);
 		initDataCiteFactories();
 	}
 
@@ -202,20 +206,37 @@ public class EzidDOIService extends DOIService {
         // status and export fields for public/protected data
         String status = InternalProfileValues.UNAVAILABLE.toString();
         String export = InternalProfileValues.NO.toString();
-        Subject publicSubject = new Subject();
+        if (autoPublishDOI) {
+            status = InternalProfileValues.PUBLIC.toString();
+            export = InternalProfileValues.YES.toString();
+            metadata.put(InternalProfile.STATUS.toString(), status);
+            metadata.put(InternalProfile.EXPORT.toString(), export);
+            logMetacat.debug("EzidDOIService.submitDOIMetadata - since it is auto-publish, the status will always set publis and the acutal value is" + status);
+        } else {
+            HashMap<String, String> existingMetadata = ezidService.getMetadata(identifier.getValue());
+            if (existingMetadata == null || existingMetadata.isEmpty()) {
+                //this the identifier doesn't exist in the Ezid service
+                status = InternalProfileValues.RESERVED.toString();
+                metadata.put(InternalProfile.STATUS.toString(), status);
+                metadata.put(InternalProfile.EXPORT.toString(), export);
+                logMetacat.debug("EzidDOIService.submitDOIMetadata - since it is NOT auto-publish and the identifier " + identifier.getValue() +
+                                 " doesn't exist. The status will always set reserved. And actual value is " + status);
+            } else {
+                //the this identifier does exist, we don't need need to change the status
+                logMetacat.debug("EzidDOIService.submitDOIMetadata - since it is NOT auto-publish and the identifier exists, we don't need to send any status information again." );
+            }
+        }
+        /*Subject publicSubject = new Subject();
         publicSubject.setValue(Constants.SUBJECT_PUBLIC);
         if (AuthUtils.isAuthorized(Arrays.asList(new Subject[] {publicSubject}), Permission.READ, sysMeta)) {
             status = InternalProfileValues.PUBLIC.toString();
             export = InternalProfileValues.YES.toString();
-        }
+        }*/
 
         // set the datacite metadata fields
         String dataCiteXML = generateDataCiteXML(identifier.getValue(), sysMeta);
         metadata.put(DATACITE, dataCiteXML);
         metadata.put(InternalProfile.TARGET.toString(), target);
-        metadata.put(InternalProfile.STATUS.toString(), status);
-        metadata.put(InternalProfile.EXPORT.toString(), export);
-
         try {
             // make sure we have a current login
             this.refreshLogin();
