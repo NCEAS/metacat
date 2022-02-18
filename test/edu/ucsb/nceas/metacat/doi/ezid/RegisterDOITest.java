@@ -70,11 +70,16 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
  *
  */
 public class RegisterDOITest extends D1NodeServiceTest {
-    public static final int MAX_TIMES = 50;
-    public static final int SLEEP_TIME = 3000;
+    public static final int MAX_TIMES = 20;
+    public static final int SLEEP_TIME = 1000;
 	public static final String EMLFILEPATH = "test/tao.14563.1.xml";
 	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
 	
+	// get ezid config properties
+    private String ezidUsername = null;
+    private String ezidPassword =  null;
+    private String ezidServiceBaseUrl = null;
+    private EZIDService ezid = null;
 	/**
 	 * Set up the test fixtures
 	 * 
@@ -83,6 +88,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	@Before
 	public void setUp() throws Exception {
 		super.setUp();
+		// get ezid config properties
+        ezidUsername = PropertyService.getProperty("guid.doi.username");
+        ezidPassword = PropertyService.getProperty("guid.doi.password");
+        ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
+        ezid = new EZIDService(ezidServiceBaseUrl);
 		// set up the configuration for d1client
 		Settings.getConfiguration().setProperty("D1Client.cnClassName",
 				MockCNode.class.getName());
@@ -183,14 +193,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		printTestHeader("testMintAndCreateDOI - common");
 
 		try {
-			// get ezid config properties
-			String ezidUsername = PropertyService.getProperty("guid.doi.username");
-			String ezidPassword = PropertyService.getProperty("guid.doi.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-			
-			EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 			ezid.login(ezidUsername, ezidPassword);
-			
 			// Mint a DOI
 			Session session = getTestSession();
 			Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
@@ -202,8 +205,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				try {
 					metadata = ezid.getMetadata(guid.getValue());
 				} catch (Exception e) {
-					Thread.sleep(SLEEP_TIME);
+					
 				}
+				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
@@ -242,8 +246,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 						}
 					}
 				} catch (Exception e) {
-					Thread.sleep(SLEEP_TIME);
+					
 				}
+				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
@@ -276,9 +281,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		try {
 			// get ezid config properties
 			String shoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
-			String ezidUsername = PropertyService.getProperty("guid.doi.username");
-			String ezidPassword = PropertyService.getProperty("guid.doi.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
 			
 			Session session = getTestSession();
 			Identifier guid = new Identifier();
@@ -289,7 +291,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			assertEquals(guid.getValue(), pid.getValue());
 
 			// check for the metadata explicitly, using ezid service
-			EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 			ezid.login(ezidUsername, ezidPassword);
 			int count = 0;
 			HashMap<String, String> metadata = null;
@@ -297,8 +298,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				try {
 					metadata = ezid.getMetadata(pid.getValue());
 				} catch (Exception e) {
-					Thread.sleep(SLEEP_TIME);
+					
 				}
+				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			
@@ -320,11 +322,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		printTestHeader("testPublishDOI");
 
 		try {
-			// get ezid config properties
-			String ezidUsername = PropertyService.getProperty("guid.doi.username");
-			String ezidPassword = PropertyService.getProperty("guid.doi.password");
-			String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
-			
 			Session session = getTestSession();
 			Identifier guid = new Identifier();
 			guid.setValue("testPublishDOI." + System.currentTimeMillis());
@@ -355,21 +352,24 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	            assertTrue(emlStr.contains("packageId=\"" + publishedIdentifier.getValue() + "\""));
 	            
 	            // check for the metadata explicitly, using ezid service
-	            EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
 	            ezid.login(ezidUsername, ezidPassword);
 	            int count = 0;
 				HashMap<String, String> metadata = null;
+				String result = null;
 				do {
 					try {
 						metadata = ezid.getMetadata(publishedIdentifier.getValue());
+						if (metadata != null) {
+						    result = metadata.get(EzidDOIService.DATACITE);
+						}
 					} catch (Exception e) {
-						Thread.sleep(SLEEP_TIME);
+						
 					}
+					Thread.sleep(SLEEP_TIME);
 					count++;
-				} while (metadata == null && count < MAX_TIMES);
-	            
+				} while (result == null && count < MAX_TIMES);
 	            assertNotNull(metadata);
-	            String result = metadata.get(EzidDOIService.DATACITE);
+	            result = metadata.get(EzidDOIService.DATACITE);
 	            System.out.println("result is\n"+result);
 	            Node node = MNodeService.getInstance(null).getCapabilities();
 	            String nodeName = node.getName();
@@ -407,10 +407,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
         printTestHeader("tesCreateDOIinSid");
         String scheme = "DOI";
         try {
-            // get ezid config properties
-            String ezidUsername = PropertyService.getProperty("guid.doi.username");
-            String ezidPassword = PropertyService.getProperty("guid.doi.password");
-            String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
             Session session = getTestSession();   
             String emlFile = "test/eml-multiple-creators.xml";
             InputStream content = null;
@@ -427,21 +423,25 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 content.close();
                 assertEquals(publishedIdentifier.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
-                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
                 ezid.login(ezidUsername, ezidPassword);
                 int count = 0;
                 HashMap<String, String> metadata = null;
+                String result = null;
                 do {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
+                    if (metadata != null) {
+                        result = metadata.get(EzidDOIService.DATACITE);
+                    }
+                    Thread.sleep(SLEEP_TIME);
                     count++;
-                } while (metadata == null && count < MAX_TIMES);
+                } while (result == null && count < MAX_TIMES);
                 System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
                 assertNotNull(metadata);
-                String result = metadata.get(EzidDOIService.DATACITE);
+                result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -478,21 +478,26 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 content.close();
                 assertEquals(guid.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
-                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
                 ezid.login(ezidUsername, ezidPassword);
                 int count = 0;
                 HashMap<String, String> metadata = null;
+                String result = null;
                 do {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                        if (metadata != null) {
+                            result = metadata.get(EzidDOIService.DATACITE);
+                        }
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
+                    Thread.sleep(SLEEP_TIME);
                     count++;
-                } while (metadata == null && count < MAX_TIMES);
+                } while (result == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
-                String result = metadata.get(EzidDOIService.DATACITE);
+                System.out.println("the metadata is " + metadata.toString());
+                result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -527,22 +532,26 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 content.close();
                 assertEquals(publishedIdentifier.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
-                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
                 ezid.login(ezidUsername, ezidPassword);
                 int count = 0;
                 //query the identifier
                 HashMap<String, String> metadata = null;
+                String result = null;
                 do {
                     try {
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                        if (metadata != null) {
+                            result = metadata.get(EzidDOIService.DATACITE);
+                        }
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
+                    Thread.sleep(SLEEP_TIME);
                     count++;
-                } while (metadata == null && count < MAX_TIMES);
+                } while (result == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata);
-                String result = metadata.get(EzidDOIService.DATACITE);
+                result = metadata.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -556,17 +565,22 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 
                 //query the sid
                 HashMap<String, String> metadata2 = null;
+                result = null;
                 do {
                     try {
                         metadata2 = ezid.getMetadata(doiSid.getValue());
+                        if (metadata2 != null) {
+                            result = metadata2.get(EzidDOIService.DATACITE);
+                        }
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
+                    Thread.sleep(SLEEP_TIME);
                     count++;
-                } while (metadata2 == null && count < MAX_TIMES);
+                } while (result == null && count < MAX_TIMES);
                 
                 assertNotNull(metadata2);
-                result = metadata.get(EzidDOIService.DATACITE);
+                result = metadata2.get(EzidDOIService.DATACITE);
                 System.out.println("the result is \n"+result);
                 assertTrue(result.contains("Test EML package - public-readable from morpho"));
                 assertTrue(result.contains(creatorsStr));
@@ -603,7 +617,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 content.close();
                 assertEquals(guid.getValue(), pid.getValue());
                 // check for the metadata explicitly, using ezid service
-                EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
                 ezid.login(ezidUsername, ezidPassword);
                 int count = 0;
                 HashMap<String, String> metadata = null;
@@ -611,9 +624,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(guid.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
-                    count = count + 10; //since it will null so we don't need run to many times.
+                    Thread.sleep(SLEEP_TIME);
+                    count = count + 4; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is "+metadata);
                 assertNull(metadata);
@@ -621,9 +635,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     try {
                         metadata = ezid.getMetadata(sid.getValue());
                     } catch (Exception e) {
-                        Thread.sleep(SLEEP_TIME);
+                        
                     }
-                    count = count + 10; //since it will null so we don't need run to many times.
+                    Thread.sleep(SLEEP_TIME);
+                    count = count + 4; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 assertNull(metadata);
                 content.close();
@@ -868,9 +883,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
      * @throws Exception
      */
     public void testPublishEML220() throws Exception {
-        String ezidUsername = PropertyService.getProperty("guid.doi.username");
-        String ezidPassword = PropertyService.getProperty("guid.doi.password");
-        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         Session session = getTestSession();
         Identifier guid = new Identifier();
         guid.setValue("testPublishDOI." + System.currentTimeMillis());
@@ -890,20 +902,24 @@ public class RegisterDOITest extends D1NodeServiceTest {
         // now publish it
         Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, pid);
         // check for the metadata explicitly, using ezid service
-        EZIDService ezid = new EZIDService(ezidServiceBaseUrl);
         ezid.login(ezidUsername, ezidPassword);
         int count = 0;
         HashMap<String, String> metadata = null;
+        String result = null;
         do {
             try {
                 metadata = ezid.getMetadata(publishedIdentifier.getValue());
+                if (metadata != null) {
+                    result = metadata.get(EzidDOIService.DATACITE);
+                }
             } catch (Exception e) {
-                Thread.sleep(SLEEP_TIME);
+                
             }
+            Thread.sleep(SLEEP_TIME);
             count++;
-        } while (metadata == null && count < MAX_TIMES);
+        } while (result == null && count < MAX_TIMES);
         assertNotNull(metadata);
-        String result = metadata.get(EzidDOIService.DATACITE);
+        result = metadata.get(EzidDOIService.DATACITE);
         assertTrue(result.contains("EML Annotation Example"));
         assertTrue(result.contains("0000-0002-1209-5122"));
         assertTrue(result.contains("It can include multiple paragraphs"));
@@ -926,8 +942,9 @@ public class RegisterDOITest extends D1NodeServiceTest {
                stream = MNodeService.getInstance(request).query(session, "solr", query);
                resultStr = IOUtils.toString(stream, "UTF-8");
             } catch (Exception e) {
-                Thread.sleep(SLEEP_TIME);
+                
             }
+            Thread.sleep(SLEEP_TIME);
             count++;
         } while (count < MAX_TIMES);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
