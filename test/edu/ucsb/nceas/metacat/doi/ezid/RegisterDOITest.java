@@ -59,6 +59,8 @@ import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.MockCNode;
+import edu.ucsb.nceas.metacat.doi.DOIService;
+import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.doi.datacite.EML2DataCiteFactoryTest;
 import edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
@@ -81,6 +83,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
     private String ezidPassword =  null;
     private String ezidServiceBaseUrl = null;
     private EZIDService ezid = null;
+    private DOIService doiService = null;
 	/**
 	 * Set up the test fixtures
 	 * 
@@ -94,9 +97,10 @@ public class RegisterDOITest extends D1NodeServiceTest {
         ezidPassword = PropertyService.getProperty("guid.doi.password");
         ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         ezid = new EZIDService(ezidServiceBaseUrl);
+        doiService = DOIServiceFactory.getDOIService();
 		// set up the configuration for d1client
-		Settings.getConfiguration().setProperty("D1Client.cnClassName",
-				MockCNode.class.getName());
+		/*Settings.getConfiguration().setProperty("D1Client.cnClassName",
+				MockCNode.class.getName());*/
 	}
 
 	/**
@@ -128,6 +132,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
 		suite.addTest(new RegisterDOITest("testPublishEML220"));
 		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
+		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOff"));
 		return suite;
 
 	}
@@ -298,11 +303,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			HashMap<String, String> metadata = null;
 			do {
 				try {
+				    Thread.sleep(SLEEP_TIME);
 					metadata = ezid.getMetadata(pid.getValue());
 				} catch (Exception e) {
 					
 				}
-				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			
@@ -360,6 +365,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				String result = null;
 				do {
 					try {
+					    Thread.sleep(SLEEP_TIME);
 						metadata = ezid.getMetadata(publishedIdentifier.getValue());
 						if (metadata != null) {
 						    result = metadata.get(EzidDOIService.DATACITE);
@@ -367,7 +373,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 					} catch (Exception e) {
 						
 					}
-					Thread.sleep(SLEEP_TIME);
 					count++;
 				} while (result == null && count < MAX_TIMES);
 	            assertNotNull(metadata);
@@ -431,6 +436,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 String result = null;
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                     } catch (Exception e) {
                         
@@ -438,7 +444,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     if (metadata != null) {
                         result = metadata.get(EzidDOIService.DATACITE);
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count++;
                 } while (result == null && count < MAX_TIMES);
                 System.out.println("The doi on the identifier is "+publishedIdentifier.getValue());
@@ -486,6 +491,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 String result = null;
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                         if (metadata != null) {
                             result = metadata.get(EzidDOIService.DATACITE);
@@ -493,7 +499,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count++;
                 } while (result == null && count < MAX_TIMES);
                 
@@ -541,6 +546,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 String result = null;
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata = ezid.getMetadata(publishedIdentifier.getValue());
                         if (metadata != null) {
                             result = metadata.get(EzidDOIService.DATACITE);
@@ -548,7 +554,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count++;
                 } while (result == null && count < MAX_TIMES);
                 
@@ -570,6 +575,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 result = null;
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata2 = ezid.getMetadata(doiSid.getValue());
                         if (metadata2 != null) {
                             result = metadata2.get(EzidDOIService.DATACITE);
@@ -577,7 +583,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count++;
                 } while (result == null && count < MAX_TIMES);
                 
@@ -624,22 +629,22 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 HashMap<String, String> metadata = null;
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata = ezid.getMetadata(guid.getValue());
                     } catch (Exception e) {
                         
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count = count + 4; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is "+metadata);
                 assertNull(metadata);
                 do {
                     try {
+                        Thread.sleep(SLEEP_TIME);
                         metadata = ezid.getMetadata(sid.getValue());
                     } catch (Exception e) {
                         
                     }
-                    Thread.sleep(SLEEP_TIME);
                     count = count + 4; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 assertNull(metadata);
@@ -910,6 +915,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         String result = null;
         do {
             try {
+                Thread.sleep(SLEEP_TIME);
                 metadata = ezid.getMetadata(publishedIdentifier.getValue());
                 if (metadata != null) {
                     result = metadata.get(EzidDOIService.DATACITE);
@@ -917,7 +923,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
             } catch (Exception e) {
                 
             }
-            Thread.sleep(SLEEP_TIME);
             count++;
         } while (result == null && count < MAX_TIMES);
         assertNotNull(metadata);
@@ -938,6 +943,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         String resultStr = IOUtils.toString(stream, "UTF-8");
         do {
             try {
+                Thread.sleep(SLEEP_TIME*3);
                 if(resultStr.contains("funding")) {
                     break;
                 }
@@ -946,7 +952,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
             } catch (Exception e) {
                 
             }
-            Thread.sleep(SLEEP_TIME*3);
             count++;
         } while (count < MAX_TIMES);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
@@ -972,6 +977,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
     public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
         printTestHeader("testPublishIdentifierProcessWithAutoPublishOn");
         try {
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "true");
+            doiService.refreshStatus();
             ezid.login(ezidUsername, ezidPassword);
             // Mint a DOI
             Session session = getTestSession();
@@ -981,11 +988,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
             int count = 0;
             do {
                 try {
+                    Thread.sleep(SLEEP_TIME);
                     metadata = ezid.getMetadata(guid.getValue());
                 } catch (Exception e) {
                     
                 }
-                Thread.sleep(SLEEP_TIME);
                 count++;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
@@ -1048,6 +1055,107 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     
                 }
                 count = count + 4;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+            // check that the target URI was updated
+            registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+            assertTrue(registeredTarget.contains(pid.getValue()));
+            creator = metadata.get(DataCiteProfile.CREATOR.toString());
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
+    }
+    
+    
+    /**
+     * When the autoPublish is false, to test the whole process:
+     * Reserve a doi, create an object use the doi and publisIdentifier this doi.
+     * @throws Exception
+     */
+    public void testPublishIdentifierProcessWithAutoPublishOff() throws Exception {
+        printTestHeader("testPublishIdentifierProcessWithAutoPublishOff");
+        try {
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.autoPublish", "false");
+            doiService.refreshStatus();
+            ezid.login(ezidUsername, ezidPassword);
+            // Mint a DOI
+            Session session = getTestSession();
+            Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
+            // check that EZID knows about it and its status is reserved 
+            HashMap<String, String> metadata = null;
+            int count = 0;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(guid.getValue());
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
+
+            // add the actual object for the newly-minted DOI
+            SystemMetadata sysmeta = null;
+            InputStream object = new FileInputStream(EMLFILEPATH);
+            sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            object.close();
+            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+            object = new FileInputStream(EMLFILEPATH);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            assertEquals(guid.getValue(), pid.getValue());
+            // check for the metadata for title element
+            count = 0;
+            metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                    // check if the update thread finished yet, otherwise try again
+                    if (metadata != null) {
+                        String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                        if (!registeredTarget.contains(pid.getValue())) {
+                            // try fetching it again
+                            metadata = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+            // check that the target URI was updated
+            String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+            assertTrue(registeredTarget.contains(pid.getValue()));
+            String creator = metadata.get(DataCiteProfile.CREATOR.toString());
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
+            
+            //publishIdentifier
+            MNodeService.getInstance(request).publishIdentifier(session, guid);
+            count = 0;
+            metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                    // check if the update thread finished yet, otherwise try again
+                    if (metadata != null) {
+                        registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                        if (!registeredTarget.contains(pid.getValue())) {
+                            // try fetching it again
+                            metadata = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }
+                count++;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
