@@ -55,6 +55,7 @@ import org.junit.Before;
 import edu.ucsb.nceas.ezid.EZIDService;
 import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
+import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.MockCNode;
@@ -126,6 +127,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnDOIObject"));
 		suite.addTest(new RegisterDOITest("testUpdateAccessPolicyOnPrivateDOIObject"));
 		suite.addTest(new RegisterDOITest("testPublishEML220"));
+		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
 		return suite;
 
 	}
@@ -203,11 +205,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			int count = 0;
 			do {
 				try {
+				    Thread.sleep(SLEEP_TIME);
 					metadata = ezid.getMetadata(guid.getValue());
 				} catch (Exception e) {
 					
 				}
-				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
@@ -236,6 +238,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			metadata = null;
 			do {
 				try {
+				    Thread.sleep(SLEEP_TIME);
 					metadata = ezid.getMetadata(pid.getValue());
 					// check if the update thread finished yet, otherwise try again
 					if (metadata != null && isMetadata) {
@@ -248,7 +251,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 				} catch (Exception e) {
 					
 				}
-				Thread.sleep(SLEEP_TIME);
 				count++;
 			} while (metadata == null && count < MAX_TIMES);
 			assertNotNull(metadata);
@@ -944,7 +946,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             } catch (Exception e) {
                 
             }
-            Thread.sleep(SLEEP_TIME);
+            Thread.sleep(SLEEP_TIME*3);
             count++;
         } while (count < MAX_TIMES);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
@@ -960,5 +962,103 @@ public class RegisterDOITest extends D1NodeServiceTest {
         assertTrue(resultStr.contains("<arr name=\"sem_annotation\">"));
         assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
         assertTrue(resultStr.contains("<str>http://purl.dataone.org/odo/ECSO_00000512</str>"));
+    }
+    
+    /**
+     * When the autoPublish is true, to test the whole process:
+     * Reserve a doi, create an object use the doi and publisIdentifier this doi.
+     * @throws Exception
+     */
+    public void testPublishIdentifierProcessWithAutoPublishOn() throws Exception {
+        printTestHeader("testPublishIdentifierProcessWithAutoPublishOn");
+        try {
+            ezid.login(ezidUsername, ezidPassword);
+            // Mint a DOI
+            Session session = getTestSession();
+            Identifier guid = MNodeService.getInstance(request).generateIdentifier(session, "DOI", null);
+            // check that EZID knows about it and its status is reserved 
+            HashMap<String, String> metadata = null;
+            int count = 0;
+            do {
+                try {
+                    metadata = ezid.getMetadata(guid.getValue());
+                } catch (Exception e) {
+                    
+                }
+                Thread.sleep(SLEEP_TIME);
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
+
+            // add the actual object for the newly-minted DOI
+            SystemMetadata sysmeta = null;
+            InputStream object = new FileInputStream(EMLFILEPATH);
+            sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+            object.close();
+            sysmeta.setFormatId(ObjectFormatCache.getInstance().getFormat("eml://ecoinformatics.org/eml-2.1.0").getFormatId());
+            object = new FileInputStream(EMLFILEPATH);
+            Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+            assertEquals(guid.getValue(), pid.getValue());
+            // check for the metadata for title element
+            count = 0;
+            metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                    // check if the update thread finished yet, otherwise try again
+                    if (metadata != null) {
+                        String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                        if (!registeredTarget.contains(pid.getValue())) {
+                            // try fetching it again
+                            metadata = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }
+                count++;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+            // check that the target URI was updated
+            String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+            assertTrue(registeredTarget.contains(pid.getValue()));
+            String creator = metadata.get(DataCiteProfile.CREATOR.toString());
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
+            
+            //publishIdentifier
+            MNodeService.getInstance(request).publishIdentifier(session, guid);
+            count = 0;
+            metadata = null;
+            do {
+                try {
+                    Thread.sleep(SLEEP_TIME);
+                    metadata = ezid.getMetadata(pid.getValue());
+                    // check if the update thread finished yet, otherwise try again
+                    if (metadata != null) {
+                        registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+                        if (!registeredTarget.contains(pid.getValue())) {
+                            // try fetching it again
+                            metadata = null;
+                        }
+                    }
+                } catch (Exception e) {
+                    
+                }
+                count = count + 4;
+            } while (metadata == null && count < MAX_TIMES);
+            assertNotNull(metadata);
+            assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
+            // check that the target URI was updated
+            registeredTarget = metadata.get(InternalProfile.TARGET.toString());
+            assertTrue(registeredTarget.contains(pid.getValue()));
+            creator = metadata.get(DataCiteProfile.CREATOR.toString());
+            assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
+        } catch (Exception e) {
+            e.printStackTrace();
+            fail("Unexpected error: " + e.getMessage());
+        }
     }
 }
