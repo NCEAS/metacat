@@ -213,7 +213,12 @@ public class EzidDOIService extends DOIService {
             metadata.put(InternalProfile.EXPORT.toString(), export);
             logMetacat.debug("EzidDOIService.submitDOIMetadata - since it is auto-publish, the status will always set publis and the acutal value is" + status);
         } else {
-            HashMap<String, String> existingMetadata = ezidService.getMetadata(identifier.getValue());
+            HashMap<String, String> existingMetadata = null;
+            try {
+                existingMetadata = ezidService.getMetadata(identifier.getValue());
+            } catch (EZIDException e) {
+                throw new DOIException(e.getMessage());
+            }
             if (existingMetadata == null || existingMetadata.isEmpty()) {
                 //this the identifier doesn't exist in the Ezid service
                 status = InternalProfileValues.RESERVED.toString();

@@ -613,7 +613,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         Thread.sleep(SLEEP_TIME);
                     }
-                    count++;
+                    count = count + 10; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 System.out.println("the metadata is "+metadata);
                 assertNull(metadata);
@@ -623,7 +623,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     } catch (Exception e) {
                         Thread.sleep(SLEEP_TIME);
                     }
-                    count++;
+                    count = count + 10; //since it will null so we don't need run to many times.
                 } while (metadata == null && count < MAX_TIMES);
                 assertNull(metadata);
                 content.close();
@@ -920,14 +920,16 @@ public class RegisterDOITest extends D1NodeServiceTest {
         String resultStr = IOUtils.toString(stream, "UTF-8");
         do {
             try {
-               if(resultStr.contains("funding")) {
-                   break;
-               }
+                if(resultStr.contains("funding")) {
+                    break;
+                }
+               stream = MNodeService.getInstance(request).query(session, "solr", query);
+               resultStr = IOUtils.toString(stream, "UTF-8");
             } catch (Exception e) {
                 Thread.sleep(SLEEP_TIME);
             }
             count++;
-        } while (metadata == null && count < MAX_TIMES);
+        } while (count < MAX_TIMES);
         assertTrue(resultStr.contains("<arr name=\"funding\">"));
         assertTrue(resultStr.contains("<str>Funding is from a grant from the National Science Foundation.</str>"));
         assertTrue(resultStr.contains("<arr name=\"funderName\">"));
