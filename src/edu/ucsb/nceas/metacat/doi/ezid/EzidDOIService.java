@@ -379,6 +379,7 @@ public class EzidDOIService extends DOIService {
         }
         HashMap<String, String> metadata = new HashMap<String, String>();
         metadata.put(InternalProfile.STATUS.toString(), InternalProfileValues.PUBLIC.toString());
+        metadata.put(InternalProfile.EXPORT.toString(), InternalProfileValues.YES.toString());
         try {
             // make sure we have a current login
             this.refreshLogin();

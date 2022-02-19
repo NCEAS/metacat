@@ -78,6 +78,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	public static final String EMLFILEPATH = "test/tao.14563.1.xml";
 	public static final String creatorsStr = "<creators><creator><creatorName>onlySurName</creatorName></creator><creator><creatorName>National Center for Ecological Analysis and Synthesis</creatorName></creator><creator><creatorName>Smith, John</creatorName></creator><creator><creatorName>King, Wendy</creatorName></creator><creator><creatorName>University of California Santa Barbara</creatorName></creator></creators>";
 	
+	private static String serverName = null;
 	// get ezid config properties
     private String ezidUsername = null;
     private String ezidPassword =  null;
@@ -98,6 +99,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
         ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
+        serverName = PropertyService.getProperty("server.name");
 		// set up the configuration for d1client
 		/*Settings.getConfiguration().setProperty("D1Client.cnClassName",
 				MockCNode.class.getName());*/
@@ -248,7 +250,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 					// check if the update thread finished yet, otherwise try again
 					if (metadata != null && isMetadata) {
 						String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-						if (!registeredTarget.contains(pid.getValue())) {
+						if (!registeredTarget.contains(serverName)) {
 							// try fetching it again
 							metadata = null;
 						}
@@ -264,7 +266,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
 			// check that the target URI was updated
 			if (isMetadata) {
 				String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-				assertTrue(registeredTarget.contains(pid.getValue()));
+				assertTrue(registeredTarget.contains(serverName));
 			}
 			if (isMetadata) {
 				String creator = metadata.get(DataCiteProfile.CREATOR.toString());
@@ -995,6 +997,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 }
                 count++;
             } while (metadata == null && count < MAX_TIMES);
+            System.out.println("after reserve (auto on)\n" + metadata.toString());
             assertNotNull(metadata);
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
 
@@ -1017,7 +1020,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     // check if the update thread finished yet, otherwise try again
                     if (metadata != null) {
                         String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-                        if (!registeredTarget.contains(pid.getValue())) {
+                        if (!registeredTarget.contains(serverName)) {
                             // try fetching it again
                             metadata = null;
                         }
@@ -1028,10 +1031,11 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 count++;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
+            System.out.println("after crate object (auto on)\n" + metadata.toString());
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-            assertTrue(registeredTarget.contains(pid.getValue()));
+            assertTrue(registeredTarget.contains(serverName));
             String creator = metadata.get(DataCiteProfile.CREATOR.toString());
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
             
@@ -1046,7 +1050,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     // check if the update thread finished yet, otherwise try again
                     if (metadata != null) {
                         registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-                        if (!registeredTarget.contains(pid.getValue())) {
+                        if (!registeredTarget.contains(serverName)) {
                             // try fetching it again
                             metadata = null;
                         }
@@ -1057,12 +1061,14 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 count = count + 4;
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
+            System.out.println("after publishIdentifier (auto on)\n" + metadata.toString());
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-            assertTrue(registeredTarget.contains(pid.getValue()));
+            assertTrue(registeredTarget.contains(serverName));
             creator = metadata.get(DataCiteProfile.CREATOR.toString());
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
+            assertTrue(metadata.get(InternalProfile.EXPORT.toString()).equals(InternalProfileValues.YES.toString()));
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
@@ -1098,7 +1104,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
             } while (metadata == null && count < MAX_TIMES);
             assertNotNull(metadata);
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
-
+            System.out.println("after reserve (auto off)\n" + metadata.toString());
             // add the actual object for the newly-minted DOI
             SystemMetadata sysmeta = null;
             InputStream object = new FileInputStream(EMLFILEPATH);
@@ -1118,7 +1124,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     // check if the update thread finished yet, otherwise try again
                     if (metadata != null) {
                         String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-                        if (!registeredTarget.contains(pid.getValue())) {
+                        if (!registeredTarget.contains(serverName)) {
                             // try fetching it again
                             metadata = null;
                         }
@@ -1128,11 +1134,12 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 }
                 count++;
             } while (metadata == null && count < MAX_TIMES);
+            System.out.println("after crate object (auto off)\n" + metadata.toString());
             assertNotNull(metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             String registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-            assertTrue(registeredTarget.contains(pid.getValue()));
+            assertTrue(registeredTarget.contains(serverName));
             String creator = metadata.get(DataCiteProfile.CREATOR.toString());
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.RESERVED.toString()));
             
@@ -1147,7 +1154,7 @@ public class RegisterDOITest extends D1NodeServiceTest {
                     // check if the update thread finished yet, otherwise try again
                     if (metadata != null) {
                         registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-                        if (!registeredTarget.contains(pid.getValue())) {
+                        if (!registeredTarget.contains(serverName)) {
                             // try fetching it again
                             metadata = null;
                         }
@@ -1157,13 +1164,15 @@ public class RegisterDOITest extends D1NodeServiceTest {
                 }
                 count++;
             } while (metadata == null && count < MAX_TIMES);
+            System.out.println("after publishIdentifier (auto off)\n" + metadata.toString());
             assertNotNull(metadata);
             assertTrue(metadata.containsKey(DataCiteProfile.TITLE.toString()));
             // check that the target URI was updated
             registeredTarget = metadata.get(InternalProfile.TARGET.toString());
-            assertTrue(registeredTarget.contains(pid.getValue()));
+            assertTrue(registeredTarget.contains(serverName));
             creator = metadata.get(DataCiteProfile.CREATOR.toString());
             assertTrue(metadata.get(InternalProfile.STATUS.toString()).equals(InternalProfileValues.PUBLIC.toString()));
+            assertTrue(metadata.get(InternalProfile.EXPORT.toString()).equals(InternalProfileValues.YES.toString()));
         } catch (Exception e) {
             e.printStackTrace();
             fail("Unexpected error: " + e.getMessage());
