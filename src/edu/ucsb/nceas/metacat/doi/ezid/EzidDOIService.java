@@ -118,9 +118,8 @@ public class EzidDOIService extends DOIService {
 	public EzidDOIService() {
 	    super();
 		// for DOIs
-		String ezidServiceBaseUrl = null;
-		ezid = new EZIDClient(ezidServiceBaseUrl);
-		ezidService = new EZIDService(ezidServiceBaseUrl);
+		ezid = new EZIDClient(serviceBaseUrl);
+		ezidService = new EZIDService(serviceBaseUrl);
 		initDataCiteFactories();
 	}
 
