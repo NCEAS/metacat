@@ -23,6 +23,9 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -2552,6 +2555,39 @@ public class MNodeService extends D1NodeService
 		return retList;
 	}
 	
+	/**
+	 * Get the newest ore id which integrates the given metadata pid
+	 * @param session  the subjects call the method
+	 * @param metadataPid  the metadata pid which be integrated. It is a pid
+	 * @return  the ore pid if we can find one; otherwise null will be returned
+	 */
+	private Identifier getNewestORE(Session session, Identifier metadataPid) throws InvalidToken, ServiceFailure, 
+	                                                                        NotAuthorized, NotFound, NotImplemented {
+	    Identifier potentialOreIdentifier = null;
+	    if (metadataPid != null && !metadataPid.getValue().trim().equals("")) {
+	        List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, metadataPid);
+	        if (potentialOreIdentifiers != null && potentialOreIdentifiers.size() >0) {
+	            int size = potentialOreIdentifiers.size();
+	            for (int i = size-1; i>=0; i--) {
+	                Identifier id = potentialOreIdentifiers.get(i);
+	                if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
+	                    SystemMetadata sys = this.getSystemMetadata(session, id);
+	                    if(sys != null && sys.getObsoletedBy() == null) {
+	                        //found the non-obsoletedBy ore document.
+	                        logMetacat.debug("MNodeService.getNewestORE - found the ore map from the list when the index is " + i +
+	                                         " and its pid is " + id.getValue());
+	                        potentialOreIdentifier = id;
+	                        break;
+	                    }
+	                }
+	            }
+	        } else {
+	            logMetacat.warn("MNodeService.getNewestORE - No potential ORE map found for the metadata object" + metadataPid.getValue() + 
+	                            " by the solr query.");
+	        }
+	    }
+        return potentialOreIdentifier;
+	}
 	
 	/**
      * Determines if we already have registered an ORE map for this package
@@ -3118,7 +3154,7 @@ public class MNodeService extends D1NodeService
 	        throw new InvalidRequest(invalidRequestCode, "MNodeService.publishIdentifier - the identifier which needs to be published can't be null.");
 	    }
         String serviceFailureCode = "1310";
-        Identifier pid = getPIDForSID(identifier, serviceFailureCode);
+        Identifier pid = getPIDForSID(identifier, serviceFailureCode);//identifier can be a sid, now we got the pid
         if(pid == null) {
             pid = identifier;
         }
@@ -3127,6 +3163,27 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
         //if the user has the write permission, it will be all set
         authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+        makePublicIfNot(existingSysMeta, pid);//make the metadata file public
+        Identifier oreIdentifier = getNewestORE(session, pid);
+        if (oreIdentifier != null) {
+            //make the result map public
+            SystemMetadata oreSysmeta = getSystemMetadataForPID(oreIdentifier, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+            makePublicIfNot(oreSysmeta, oreIdentifier);
+            if (enforcePublicEntirePackageInPublish) {
+                //make data objects public readable if needed
+                InputStream oreInputStream = this.get(session, oreIdentifier);
+                if (oreInputStream != null) {
+                    Model model = ModelFactory.createDefaultModel();
+                    model.read(oreInputStream, null);
+                    List<Identifier> dataIdentifiers = ResourceMapModifier.getSubjectsOfDocumentedBy(pid, model);
+                    for (Identifier dataId: dataIdentifiers) {
+                            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+                            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+                            this.updateSystemMetadata(dataSysMeta);
+                    }
+                }
+            }
+        }
 	    try {
 	          DOIServiceFactory.getDOIService().publishIdentifier(session, identifier);
 	    } catch (PropertyNotFoundException e) {
