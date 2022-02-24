@@ -2384,21 +2384,21 @@ public class MNodeService extends D1NodeService
                 List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
                 if (enforcePublicEntirePackageInPublish) {
-				List<String> pidsToSync = new ArrayList<String>();
-				for (Identifier dataId: dataIdentifiers) {
-			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-			            this.updateSystemMetadata(dataSysMeta);
-			            pidsToSync.add(dataId.getValue());
-				    
-				}
-				SyncAccessPolicy sap = new SyncAccessPolicy();
-				try {
-					sap.sync(pidsToSync);
-				} catch (Exception e) {
-					// ignore
-					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
-				}
+    				List<String> pidsToSync = new ArrayList<String>();
+    				for (Identifier dataId: dataIdentifiers) {
+    			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+    			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+    			            this.updateSystemMetadata(dataSysMeta);
+    			            pidsToSync.add(dataId.getValue());
+    				    
+    				}
+    				SyncAccessPolicy sap = new SyncAccessPolicy();
+    				try {
+    					sap.sync(pidsToSync);
+    				} catch (Exception e) {
+    					// ignore
+    					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
+    				}
                 }
 				// save the updated ORE
 				logMetacat.info("MNodeService.publish - the new ore document is "+newOreIdentifier.getValue()+" for the doi "+newIdentifier.getValue());
