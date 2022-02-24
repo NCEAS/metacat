@@ -2327,30 +2327,14 @@ public class MNodeService extends D1NodeService
 			} catch (NotFound nf) {
 				// this is probably okay for many sci meta data docs
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue()+" by the name convention.");
-				// try the SOLR index
-				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, originalIdentifier);
-				if (potentialOreIdentifiers != null && potentialOreIdentifiers.size() >0) {
-				    int size = potentialOreIdentifiers.size();
-				    for (int i = size-1; i>=0; i--) {
-				        Identifier id = potentialOreIdentifiers.get(i);
-				        if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
-				            SystemMetadata sys = this.getSystemMetadata(session, id);
-				            if(sys != null && sys.getObsoletedBy() == null) {
-				                //found the non-obsoletedBy ore document.
-				                logMetacat.debug("MNodeService.publish - found the ore map from the list when the index is " + i);
-				                potentialOreIdentifier = id;
-				                break;
-				            }
-				        }
-				    }
-					try {
-						oreInputStream = this.get(session, potentialOreIdentifier);
-					} catch (NotFound nf2) {
-						// this is probably okay for many sci meta data docs
-						logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
-					}
-				} else {
-				    logMetacat.warn("MNodeService.publish - No potential ORE map found for the metadata object" + originalIdentifier.getValue()+" by both the name convention or the solr query.");
+				potentialOreIdentifier = getNewestORE(session, originalIdentifier);
+				if (potentialOreIdentifier != null) {
+				    try {
+	                    oreInputStream = this.get(session, potentialOreIdentifier);
+	                } catch (NotFound nf2) {
+	                    // this is probably okay for many sci meta data docs
+	                    logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
+	                }
 				}
 			}
 			if (oreInputStream != null) {
