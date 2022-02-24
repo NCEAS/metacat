@@ -235,6 +235,7 @@ public class MNodeService extends D1NodeService
     
     // shared executor
     private static ExecutorService executor = null;
+    private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
 
 
@@ -244,7 +245,12 @@ public class MNodeService extends D1NodeService
         int nThreads = availableProcessors * 1;
         nThreads--;
         nThreads = Math.max(1, nThreads);
-        executor = Executors.newFixedThreadPool(nThreads);  
+        executor = Executors.newFixedThreadPool(nThreads); 
+        try {
+            enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        } catch (Exception e) {
+            logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
+        }
     }
 
 
@@ -2377,6 +2383,7 @@ public class MNodeService extends D1NodeService
                 oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
                 List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
+                if (enforcePublicEntirePackageInPublish) {
 				List<String> pidsToSync = new ArrayList<String>();
 				for (Identifier dataId: dataIdentifiers) {
 			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
@@ -2392,7 +2399,7 @@ public class MNodeService extends D1NodeService
 					// ignore
 					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
 				}
-				
+                }
 				// save the updated ORE
 				logMetacat.info("MNodeService.publish - the new ore document is "+newOreIdentifier.getValue()+" for the doi "+newIdentifier.getValue());
 				this.update(
@@ -3249,5 +3256,12 @@ public class MNodeService extends D1NodeService
         return readOnly;
     }
     
+    /**
+     * Set the value if Metacat need to make the entire package public during the publish process
+     * @param enforce  enforce the entire package public readable or not
+     */
+    protected static void setEnforcePublisEntirePackage(boolean enforce) {
+        enforcePublicEntirePackageInPublish = enforce;
+    }
   
 }
