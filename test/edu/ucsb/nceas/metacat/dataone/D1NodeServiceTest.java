@@ -25,6 +25,7 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,6 +42,7 @@ import javax.servlet.ServletContext;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
@@ -431,7 +433,13 @@ public class D1NodeServiceTest extends MCTestCase {
         // set the id
         sm.setIdentifier(id);
         sm.setFormatId(ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId());
+        byte[] array = IOUtils.toByteArray(object);
+        int size = array.length;
+        String sizeStr = "" + size;
+        //System.out.println("the size of system metadata is ***********************" + sizeStr);
+        sm.setSize(new BigInteger(sizeStr));
         // create the checksum
+        object = new ByteArrayInputStream(array);
         Checksum checksum = new Checksum();
         String ca = "MD5";
         checksum.setValue("test");
@@ -441,8 +449,6 @@ public class D1NodeServiceTest extends MCTestCase {
             checksum = ChecksumUtil.checksum(object, ca);
         }
         sm.setChecksum(checksum);
-        // set the size
-        sm.setSize(new BigInteger("0"));
         sm.setSubmitter(owner);
         sm.setRightsHolder(owner);
         sm.setDateUploaded(new Date());
