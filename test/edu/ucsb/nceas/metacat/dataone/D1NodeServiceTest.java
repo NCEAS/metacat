@@ -434,20 +434,24 @@ public class D1NodeServiceTest extends MCTestCase {
         sm.setIdentifier(id);
         sm.setFormatId(ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId());
         byte[] array = IOUtils.toByteArray(object);
+        if (object.markSupported()) {
+            object.reset();
+        }
         int size = array.length;
         String sizeStr = "" + size;
         //System.out.println("the size of system metadata is ***********************" + sizeStr);
         sm.setSize(new BigInteger(sizeStr));
         // create the checksum
-        object = new ByteArrayInputStream(array);
+        InputStream input = new ByteArrayInputStream(array);
         Checksum checksum = new Checksum();
         String ca = "MD5";
         checksum.setValue("test");
         checksum.setAlgorithm(ca);
         // actually generate one
-        if (object != null) {
-            checksum = ChecksumUtil.checksum(object, ca);
+        if (input != null) {
+            checksum = ChecksumUtil.checksum(input, ca);
         }
+        input.close();
         sm.setChecksum(checksum);
         sm.setSubmitter(owner);
         sm.setRightsHolder(owner);
