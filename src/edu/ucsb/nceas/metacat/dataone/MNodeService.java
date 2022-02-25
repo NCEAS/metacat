@@ -3147,12 +3147,14 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
         //if the user has the write permission, it will be all set
         authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
-        makePublicIfNot(existingSysMeta, pid);//make the metadata file public
+        existingSysMeta = makePublicIfNot(existingSysMeta, pid);//make the metadata file public
+        this.updateSystemMetadata(existingSysMeta);
         Identifier oreIdentifier = getNewestORE(session, pid);
         if (oreIdentifier != null) {
             //make the result map public
             SystemMetadata oreSysmeta = getSystemMetadataForPID(oreIdentifier, serviceFailureCode, invalidRequestCode, notFoundCode, true);
-            makePublicIfNot(oreSysmeta, oreIdentifier);
+            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier);
+            this.updateSystemMetadata(oreSysmeta);
             if (enforcePublicEntirePackageInPublish) {
                 //make data objects public readable if needed
                 InputStream oreInputStream = this.get(session, oreIdentifier);
