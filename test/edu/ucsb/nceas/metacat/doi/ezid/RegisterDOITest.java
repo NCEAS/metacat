@@ -27,12 +27,16 @@ package edu.ucsb.nceas.metacat.doi.ezid;
 
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import junit.framework.Test;
 import junit.framework.TestSuite;
@@ -40,15 +44,19 @@ import junit.framework.TestSuite;
 import org.apache.commons.io.IOUtils;
 import org.dataone.client.v2.formats.ObjectFormatCache;
 import org.dataone.configuration.Settings;
+import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Identifier;
+import org.dataone.service.types.v1.ObjectFormatIdentifier;
 import org.dataone.service.types.v1.Permission;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v1.Subject;
 import org.dataone.service.types.v2.Node;
 import org.dataone.service.types.v2.SystemMetadata;
+import org.dspace.foresite.ResourceMap;
 import org.junit.After;
 import org.junit.Before;
 
@@ -57,6 +65,7 @@ import edu.ucsb.nceas.ezid.profile.DataCiteProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfile;
 import edu.ucsb.nceas.ezid.profile.InternalProfileValues;
 import edu.ucsb.nceas.metacat.dataone.D1NodeServiceTest;
+import edu.ucsb.nceas.metacat.dataone.MNodeReplicationTest;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.MockCNode;
 import edu.ucsb.nceas.metacat.doi.DOIService;
@@ -100,9 +109,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
         ezid = new EZIDService(ezidServiceBaseUrl);
         doiService = DOIServiceFactory.getDOIService();
         serverName = PropertyService.getProperty("server.name");
-		// set up the configuration for d1client
-		/*Settings.getConfiguration().setProperty("D1Client.cnClassName",
-				MockCNode.class.getName());*/
 	}
 
 	/**
@@ -120,8 +126,6 @@ public class RegisterDOITest extends D1NodeServiceTest {
 	public static Test suite() {
 
 		TestSuite suite = new TestSuite();
-		suite.addTest(new RegisterDOITest("initialize"));
-
 		// DOI registration test
 		suite.addTest(new RegisterDOITest("testCreateDOI"));
 		suite.addTest(new RegisterDOITest("testMintAndCreateDOI"));
@@ -135,6 +139,8 @@ public class RegisterDOITest extends D1NodeServiceTest {
 		suite.addTest(new RegisterDOITest("testPublishEML220"));
 		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOn"));
 		suite.addTest(new RegisterDOITest("testPublishIdentifierProcessWithAutoPublishOff"));
+		suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPublic"));
+		suite.addTest(new RegisterDOITest("testPublishPrivatePackageToPartialPublic"));
 		return suite;
 
 	}
@@ -1178,4 +1184,309 @@ public class RegisterDOITest extends D1NodeServiceTest {
             fail("Unexpected error: " + e.getMessage());
         }
     }
+    
+    /***
+     * Test to publish a private package to make all of them public
+     * @throws Exception
+     */
+    public void testPublishPrivatePackageToPublic() throws Exception {
+        printTestHeader("testPublishPrivatePackageToPublic");
+        String user = "uid=test,o=nceas";
+        Subject subject = new Subject();
+        subject.setValue(user);
+        AccessRule rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        AccessPolicy access = new AccessPolicy();
+        access.addAllow(rule);
+        
+        Subject publicSub = new Subject();
+        publicSub.setValue("public");
+        Session publicSession = new Session();
+        publicSession.setSubject(publicSub);
+        
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "true");
+        boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
+        
+        //insert data
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        HashMap<String, String[]> params = null;
+        guid.setValue("testPublishPrivatePackageToPublic-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setAccessPolicy(access);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //insert metadata
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testPublishPrivatePackageToPublic-metadata." + System.currentTimeMillis());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        sysmeta2.setAccessPolicy(access);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //insert resource map
+        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+        List<Identifier> dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid2, dataIds);
+        Identifier resourceMapId = new Identifier();
+        // use the local id, not the guid in case we have DOIs for them already
+        resourceMapId.setValue("testPublishPrivatePackageToPublic-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+resourceMapId.getValue());
+        ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
+        String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        sysmeta3.setAccessPolicy(access);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //make sure the result map was indexed
+        query = "q=id:" + resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //publish the metadata id
+        Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
+        Thread.sleep(1000);
+        
+        //the new identifier is public readable
+        MNodeService.getInstance(request).getSystemMetadata(publicSession, publishedIdentifier);
+        //the old metadata object still is not public readable
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        //the old resource map still is not public readable
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        //new resource map object is public readable
+        SystemMetadata oldResourceMapSys = MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
+        Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
+        assertTrue(newResourceMapId != null);
+        MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
+        //the data object is public readable
+        MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
+    }
+    
+    /***
+     * Test to publish a private package to make only metadata and resource map objects public.
+     * The data objects are still private
+     * @throws Exception
+     */
+    public void testPublishPrivatePackageToPartialPublic() throws Exception {
+        printTestHeader("testPublishPrivatePackageToPartialPublic");
+        String user = "uid=test,o=nceas";
+        Subject subject = new Subject();
+        subject.setValue(user);
+        AccessRule rule = new AccessRule();
+        rule.addSubject(subject);
+        rule.addPermission(Permission.WRITE);
+        AccessPolicy access = new AccessPolicy();
+        access.addAllow(rule);
+        
+        Subject publicSub = new Subject();
+        publicSub.setValue("public");
+        Session publicSession = new Session();
+        publicSession.setSubject(publicSub);
+        
+        PropertyService.getInstance().setPropertyNoPersist("guid.doi.enforcePublicReadableEntirePackage", "false");
+        boolean enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        MNodeService.setEnforcePublisEntirePackage(enforcePublicEntirePackageInPublish);
+        
+        //insert data
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        HashMap<String, String[]> params = null;
+        guid.setValue("testPublishPrivatePackageToPartialPublic-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setAccessPolicy(access);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //insert metadata
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testPublishPrivatePackageToPartialPublic-metadata." + System.currentTimeMillis());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        sysmeta2.setAccessPolicy(access);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //insert resource map
+        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+        List<Identifier> dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid2, dataIds);
+        Identifier resourceMapId = new Identifier();
+        // use the local id, not the guid in case we have DOIs for them already
+        resourceMapId.setValue("testPublishPrivatePackageToPartialPublic-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+resourceMapId.getValue());
+        ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
+        String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        sysmeta3.setAccessPolicy(access);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        
+        //make sure the result map was indexed
+        query = "q=id:" + resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= MAX_TIMES) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        
+        //publish the metadata id
+        Identifier publishedIdentifier = MNodeService.getInstance(request).publish(session, guid2);
+        Thread.sleep(1000);
+        
+        //the new identifier is public readable
+        MNodeService.getInstance(request).getSystemMetadata(publicSession, publishedIdentifier);
+        //the old metadata object still is not public readable
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid2);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        //the old resource map still is not public readable
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, resourceMapId);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+        //new resource map object is public readable
+        SystemMetadata oldResourceMapSys = MNodeService.getInstance(request).getSystemMetadata(session, resourceMapId);
+        Identifier newResourceMapId = oldResourceMapSys.getObsoletedBy();
+        assertTrue(newResourceMapId != null);
+        MNodeService.getInstance(request).getSystemMetadata(publicSession, newResourceMapId);
+        //the data object is not public readable
+        try {
+            MNodeService.getInstance(request).getSystemMetadata(publicSession, guid);
+            fail("we can't get here since the object is not public readable");
+        } catch (Exception e) {
+            assertTrue(e instanceof NotAuthorized);
+        }
+    }
+    
 }

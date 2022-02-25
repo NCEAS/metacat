@@ -3301,7 +3301,7 @@ public class MNodeService extends D1NodeService
      * Set the value if Metacat need to make the entire package public during the publish process
      * @param enforce  enforce the entire package public readable or not
      */
-    protected static void setEnforcePublisEntirePackage(boolean enforce) {
+    public static void setEnforcePublisEntirePackage(boolean enforce) {
         enforcePublicEntirePackageInPublish = enforce;
     }
   
