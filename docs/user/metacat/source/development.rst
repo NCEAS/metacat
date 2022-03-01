@@ -19,5 +19,6 @@ Contents:
    doi
    statistics-service
    ore-model-expansion
+   storage-subsystem
    
 
