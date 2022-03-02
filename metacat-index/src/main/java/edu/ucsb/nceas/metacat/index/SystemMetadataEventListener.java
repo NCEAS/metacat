@@ -21,6 +21,8 @@ package edu.ucsb.nceas.metacat.index;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,6 +44,16 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 	private SolrIndex solrIndex = null;
 	
 	private IMap<Identifier, IndexTask> source = null;
+	
+	private static ExecutorService executor = null;
+    static {
+        // use a shared executor service with nThreads == one less than available processors
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        int nThreads = availableProcessors * 1;
+        nThreads--;
+        nThreads = Math.max(1, nThreads);
+        executor = Executors.newFixedThreadPool(nThreads); 
+    }
 	        
     /**
      * Default constructor - caller needs to initialize manually
@@ -121,50 +133,52 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     }
     
 	public void entryUpdated(EntryEvent<Identifier, IndexTask> entryEvent) {
-	    long start = System.currentTimeMillis();
 	    //System.out.println("===================================calling entryUpdated method ");
 	    log.debug("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
 		// add to the index
-		Identifier pid = entryEvent.getKey();
+		final Identifier pid = entryEvent.getKey();
 		//System.out.println("===================================update the document "+pid.getValue());
 		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
 		
+		final IndexTask task = entryEvent.getValue();
+		final boolean deletingTask = task.isDeleting();
+		final long startFromQueuing = task.getTimeAddToQueque();
+		
 		// what do we have to index?
-		IndexTask task = entryEvent.getValue();
-		SystemMetadata systemMetadata = task.getSystemMetadata();
-		Map<String, List<Object>> fields = task.getFields();
-		
-		/*if(systemMetadata == null) {
-		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
-		    return;
-		}*/
-		
-		// make sure we remove this task so that it can be re-added in the future
-		if (source != null && pid != null) {
-			source.remove(pid);
-		}
-		
-		if (systemMetadata != null) {
-		    if(task.isDeleting()) {
-		        solrIndex.remove(pid, systemMetadata);
-		    } else {
-		        solrIndex.update(pid, systemMetadata);
-		    }
-		    
-			
-		}
-		if (fields != null) {
-			solrIndex.insertFields(pid, fields);
-		}
-		long end = System.currentTimeMillis();
-        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total time to process indexer" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
-        long startFromQueuing = task.getTimeAddToQueque();
-        if (startFromQueuing != 0) {
-            log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURATION + (end-startFromQueuing)/1000);
-        }
-
+		Runnable runner = new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    long start = System.currentTimeMillis();
+                    SystemMetadata systemMetadata = task.getSystemMetadata();
+                    Map<String, List<Object>> fields = task.getFields();
+                    // make sure we remove this task so that it can be re-added in the future
+                    if (source != null && pid != null) {
+                        source.remove(pid);
+                    }
+                    if (systemMetadata != null) {
+                        if(deletingTask) {
+                            solrIndex.remove(pid, systemMetadata);
+                        } else {
+                            solrIndex.update(pid, systemMetadata);
+                        }
+                    }
+                    if (fields != null) {
+                        solrIndex.insertFields(pid, fields);
+                    }
+                    long end = System.currentTimeMillis();
+                    log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total time to process indexer" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+                    
+                    if (startFromQueuing != 0) {
+                        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURATION + (end-startFromQueuing)/1000);
+                    }
+                } catch (Exception e) {
+                    log.error("Error to index: " + e.getMessage(), e);
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        };
+        // submit the task, and that's it
+        executor.submit(runner);
 	}
-	
-	
-    
 }
