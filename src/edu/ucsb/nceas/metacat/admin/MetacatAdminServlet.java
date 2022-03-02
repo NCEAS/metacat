@@ -166,10 +166,6 @@ public class MetacatAdminServlet extends HttpServlet {
 				// process login
 				BackupAdmin.getInstance().configureBackup(request, response);
 				return;
-			} else if (action.equals("geoserver")) {
-				// process geoserver password change
-				GeoserverAdmin.getInstance().configureGeoserver(request, response);
-				return;
 			} else if (action.equals("dataone")) {
 				// process dataone config
 				D1Admin.getInstance().configureDataONE(request, response);
@@ -267,8 +263,6 @@ public class MetacatAdminServlet extends HttpServlet {
             //request.setAttribute("orgsConfigured", new Boolean(OrganizationUtil.areOrganizationsConfigured()));
             request.setAttribute("skinsConfigured", new Boolean(SkinUtil.areSkinsConfigured()));
             request.setAttribute("metacatConfigured", new Boolean(ConfigurationUtil.isMetacatConfigured()));    
-            request.setAttribute("geoserverConfigured", 
-                    PropertyService.getProperty("configutil.geoserverConfigured"));
             request.setAttribute("dataoneConfigured", 
                     PropertyService.getProperty("configutil.dataoneConfigured"));
             request.setAttribute("ezidConfigured", 

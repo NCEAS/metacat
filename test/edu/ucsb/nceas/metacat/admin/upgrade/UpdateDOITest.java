@@ -77,9 +77,9 @@ public class UpdateDOITest extends D1NodeServiceTest {
      */
     public void testUpdate() throws Exception {
      // get ezid config properties
-        String ezidUsername = PropertyService.getProperty("guid.ezid.username");
-        String ezidPassword = PropertyService.getProperty("guid.ezid.password");
-        String ezidServiceBaseUrl = PropertyService.getProperty("guid.ezid.baseurl");
+        String ezidUsername = PropertyService.getProperty("guid.doi.username");
+        String ezidPassword = PropertyService.getProperty("guid.doi.password");
+        String ezidServiceBaseUrl = PropertyService.getProperty("guid.doi.baseurl");
         Session session = getTestSession();   
         String emlFile = "test/eml-multiple-creators.xml";
         InputStream content = null;

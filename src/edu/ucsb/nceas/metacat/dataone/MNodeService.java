@@ -23,6 +23,9 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import com.hp.hpl.jena.rdf.model.Model;
+import com.hp.hpl.jena.rdf.model.ModelFactory;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -170,6 +173,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;
+import edu.ucsb.nceas.metacat.doi.DOIService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
@@ -224,7 +228,7 @@ public class MNodeService extends D1NodeService
 	private static String XPATH_EML_ID = "/eml:eml/@packageId";
 
 	/* the logger instance */
-    private org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
+    private static org.apache.commons.logging.Log logMetacat = LogFactory.getLog(MNodeService.class);
     
     /* A reference to a remote Memeber Node */
     //private MNode mn;
@@ -234,6 +238,7 @@ public class MNodeService extends D1NodeService
     
     // shared executor
     private static ExecutorService executor = null;
+    private static boolean enforcePublicEntirePackageInPublish = true;
     private boolean needSync = true;
 
 
@@ -243,7 +248,12 @@ public class MNodeService extends D1NodeService
         int nThreads = availableProcessors * 1;
         nThreads--;
         nThreads = Math.max(1, nThreads);
-        executor = Executors.newFixedThreadPool(nThreads);  
+        executor = Executors.newFixedThreadPool(nThreads); 
+        try {
+            enforcePublicEntirePackageInPublish = new Boolean(PropertyService.getProperty("guid.doi.enforcePublicReadableEntirePackage"));
+        } catch (Exception e) {
+            logMetacat.warn("MNodeService.static - couldn't get the value since " + e.getMessage());
+        }
     }
 
 
@@ -710,7 +720,10 @@ public class MNodeService extends D1NodeService
             try {
                 DOIServiceFactory.getDOIService().registerDOI(sysmeta);
             } catch (Exception e) {
-                throw new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
+                String message = "MNodeService.update - The object " + newPid.getValue() + " has been saved successfully on Metacat. " 
+                                 + " However, the new metadata can't be registered on the DOI service: " + e.getMessage();
+                logMetacat.error(message);
+                throw new ServiceFailure("1310", message);
             }
             long end5 =System.currentTimeMillis();
             logMetacat.debug("MNodeService.update - the time spending on registering the doi (if it is doi ) of the new pid "+newPid.getValue()+" is "+(end5- end4)+ " milli seconds.");
@@ -834,9 +847,10 @@ public class MNodeService extends D1NodeService
         try {
             DOIServiceFactory.getDOIService().registerDOI(sysmeta);
 		} catch (Exception e) {
-			ServiceFailure sf = new ServiceFailure("1190", "Could not register DOI: " + e.getMessage());
-			sf.initCause(e);
-            throw sf;
+		    String message = "MNodeService.create - The object " + pid.getValue() + " has been created successfully on Metacat." 
+                    + " However, the metadata can't be registered on the DOI service: " + e.getMessage();
+			logMetacat.error(message);
+			throw new ServiceFailure("1190", message);
 		}
         
         // return 
@@ -1910,13 +1924,6 @@ public class MNodeService extends D1NodeService
         }
         
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
-            // attempt to re-register the identifier (it checks if it is a doi)
-            try {
-                DOIServiceFactory.getDOIService().registerDOI(newSysMeta);
-            } catch (Exception e) {
-                logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
-            }
-            
             // submit for indexing
             try {
                 MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
@@ -2226,7 +2233,6 @@ public class MNodeService extends D1NodeService
 	 * Given an existing Science Metadata PID, this method mints a DOI
 	 * and updates the original object "publishing" the update with the DOI.
 	 * This includes updating the ORE map that describes the Science Metadata+data.
-	 * TODO: ensure all referenced objects allow public read
 	 * 
 	 * @see https://projects.ecoinformatics.org/ecoinfo/issues/6014
 	 * 
@@ -2321,30 +2327,14 @@ public class MNodeService extends D1NodeService
 			} catch (NotFound nf) {
 				// this is probably okay for many sci meta data docs
 				logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue()+" by the name convention.");
-				// try the SOLR index
-				List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, originalIdentifier);
-				if (potentialOreIdentifiers != null && potentialOreIdentifiers.size() >0) {
-				    int size = potentialOreIdentifiers.size();
-				    for (int i = size-1; i>=0; i--) {
-				        Identifier id = potentialOreIdentifiers.get(i);
-				        if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
-				            SystemMetadata sys = this.getSystemMetadata(session, id);
-				            if(sys != null && sys.getObsoletedBy() == null) {
-				                //found the non-obsoletedBy ore document.
-				                logMetacat.debug("MNodeService.publish - found the ore map from the list when the index is " + i);
-				                potentialOreIdentifier = id;
-				                break;
-				            }
-				        }
-				    }
-					try {
-						oreInputStream = this.get(session, potentialOreIdentifier);
-					} catch (NotFound nf2) {
-						// this is probably okay for many sci meta data docs
-						logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
-					}
-				} else {
-				    logMetacat.warn("MNodeService.publish - No potential ORE map found for the metadata object" + originalIdentifier.getValue()+" by both the name convention or the solr query.");
+				potentialOreIdentifier = getNewestORE(session, originalIdentifier);
+				if (potentialOreIdentifier != null) {
+				    try {
+	                    oreInputStream = this.get(session, potentialOreIdentifier);
+	                } catch (NotFound nf2) {
+	                    // this is probably okay for many sci meta data docs
+	                    logMetacat.warn("No potential ORE map found for: " + potentialOreIdentifier.getValue());
+	                }
 				}
 			}
 			if (oreInputStream != null) {
@@ -2380,22 +2370,23 @@ public class MNodeService extends D1NodeService
                 oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
                 List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
-				List<String> pidsToSync = new ArrayList<String>();
-				for (Identifier dataId: dataIdentifiers) {
-			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-			            this.updateSystemMetadata(dataSysMeta);
-			            pidsToSync.add(dataId.getValue());
-				    
-				}
-				SyncAccessPolicy sap = new SyncAccessPolicy();
-				try {
-					sap.sync(pidsToSync);
-				} catch (Exception e) {
-					// ignore
-					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
-				}
-				
+                if (enforcePublicEntirePackageInPublish) {
+    				List<String> pidsToSync = new ArrayList<String>();
+    				for (Identifier dataId: dataIdentifiers) {
+    			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+    			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+    			            this.updateSystemMetadata(dataSysMeta);
+    			            pidsToSync.add(dataId.getValue());
+    				    
+    				}
+    				SyncAccessPolicy sap = new SyncAccessPolicy();
+    				try {
+    					sap.sync(pidsToSync);
+    				} catch (Exception e) {
+    					// ignore
+    					logMetacat.warn("Error attempting to sync access for data objects when publishing package");
+    				}
+                }
 				// save the updated ORE
 				logMetacat.info("MNodeService.publish - the new ore document is "+newOreIdentifier.getValue()+" for the doi "+newIdentifier.getValue());
 				this.update(
@@ -2548,6 +2539,39 @@ public class MNodeService extends D1NodeService
 		return retList;
 	}
 	
+	/**
+	 * Get the newest ore id which integrates the given metadata pid
+	 * @param session  the subjects call the method
+	 * @param metadataPid  the metadata pid which be integrated. It is a pid
+	 * @return  the ore pid if we can find one; otherwise null will be returned
+	 */
+	private Identifier getNewestORE(Session session, Identifier metadataPid) throws InvalidToken, ServiceFailure, 
+	                                                                        NotAuthorized, NotFound, NotImplemented {
+	    Identifier potentialOreIdentifier = null;
+	    if (metadataPid != null && !metadataPid.getValue().trim().equals("")) {
+	        List<Identifier> potentialOreIdentifiers = this.lookupOreFor(session, metadataPid);
+	        if (potentialOreIdentifiers != null && potentialOreIdentifiers.size() >0) {
+	            int size = potentialOreIdentifiers.size();
+	            for (int i = size-1; i>=0; i--) {
+	                Identifier id = potentialOreIdentifiers.get(i);
+	                if (id != null && id.getValue() != null && !id.getValue().trim().equals("")) {
+	                    SystemMetadata sys = this.getSystemMetadata(session, id);
+	                    if(sys != null && sys.getObsoletedBy() == null) {
+	                        //found the non-obsoletedBy ore document.
+	                        logMetacat.debug("MNodeService.getNewestORE - found the ore map from the list when the index is " + i +
+	                                         " and its pid is " + id.getValue());
+	                        potentialOreIdentifier = id;
+	                        break;
+	                    }
+	                }
+	            }
+	        } else {
+	            logMetacat.warn("MNodeService.getNewestORE - No potential ORE map found for the metadata object" + metadataPid.getValue() + 
+	                            " by the solr query.");
+	        }
+	    }
+        return potentialOreIdentifier;
+	}
 	
 	/**
      * Determines if we already have registered an ORE map for this package
@@ -3008,6 +3032,16 @@ public class MNodeService extends D1NodeService
 	      } finally {
 	          HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
 	      }
+	      
+	      if (success) {
+	          // attempt to re-register the identifier (it checks if it is a doi)
+              try {
+                  logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sysmeta.getIdentifier().getValue()+" is a doi");
+                  DOIServiceFactory.getDOIService().registerDOI(sysmeta);
+              } catch (Exception e) {
+                  logMetacat.error("MNodeService.updateSystemMetadata - Could not [re]register DOI: " + e.getMessage(), e);
+              }
+	      }
 
 	      if(success && needSync) {
 	          logMetacat.debug("MNodeService.updateSystemMetadata - the cn needs to be notified that the system metadata of object " +pid.getValue()+" has been changed ");
@@ -3037,14 +3071,6 @@ public class MNodeService extends D1NodeService
 	                  } catch (Exception e) {
 	                      e.printStackTrace();
 	                      logMetacat.error("Can't update the systemmetadata of pid "+id.getValue()+" in CNs through cn.synchronize method since "+e.getMessage(), e);
-	                  }
-
-	                  // attempt to re-register the identifier (it checks if it is a doi)
-	                  try {
-	                      logMetacat.info("MNodeSerice.updateSystemMetadata - register doi if the pid "+sys.getIdentifier().getValue()+" is a doi");
-	                      DOIServiceFactory.getDOIService().registerDOI(sys);
-	                  } catch (Exception e) {
-	                      logMetacat.warn("Could not [re]register DOI: " + e.getMessage(), e);
 	                  }
 	              }
 	              private Runnable init(CNode cn, SystemMetadata sys, Identifier id){
@@ -3084,6 +3110,79 @@ public class MNodeService extends D1NodeService
 	      result.append("</index>");
 	      result.append("</status>");
 	      return IOUtils.toInputStream(result.toString());
+	  }
+	  
+	  /**
+	   * Make status of the given identifier (e.g. a DOI) public
+	   * @param session  the subject who calls the method
+	   * @param identifer  the identifier whose status will be public. It can be a pid or sid.
+	   * @throws InvalidToken
+	   * @throws ServiceFailure
+	   * @throws NotAuthorized
+	   * @throws NotImplemented
+	   * @throws InvalidRequest
+	   * @throws NotFound
+	   * @throws IdentifierNotUnique
+	   * @throws UnsupportedType
+	   * @throws InsufficientResources
+	   * @throws InvalidSystemMetadata
+	   * @throws DOIException
+	   */
+	  public void publishIdentifier(Session session, Identifier identifier) throws InvalidToken, 
+	      ServiceFailure, NotAuthorized, NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, 
+	      UnsupportedType, InsufficientResources, InvalidSystemMetadata, DOIException {
+	    
+	    String invalidRequestCode = "1202";
+	    String notFoundCode ="1280";
+	    if (identifier == null || identifier.getValue().trim().equals("")) {
+	        throw new InvalidRequest(invalidRequestCode, "MNodeService.publishIdentifier - the identifier which needs to be published can't be null.");
+	    }
+        String serviceFailureCode = "1310";
+        Identifier pid = getPIDForSID(identifier, serviceFailureCode);//identifier can be a sid, now we got the pid
+        if(pid == null) {
+            pid = identifier;
+        }
+        logMetacat.info("MNodeService.publishIdentifier - the PID for the id " + identifier.getValue() + " is " + pid.getValue());
+        SystemMetadata existingSysMeta = getSystemMetadataForPID(pid, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+        D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
+        //if the user has the write permission, it will be all set
+        authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
+        existingSysMeta = makePublicIfNot(existingSysMeta, pid);//make the metadata file public
+        this.updateSystemMetadata(existingSysMeta);
+        Identifier oreIdentifier = getNewestORE(session, pid);
+        if (oreIdentifier != null) {
+            //make the result map public
+            SystemMetadata oreSysmeta = getSystemMetadataForPID(oreIdentifier, serviceFailureCode, invalidRequestCode, notFoundCode, true);
+            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier);
+            this.updateSystemMetadata(oreSysmeta);
+            if (enforcePublicEntirePackageInPublish) {
+                //make data objects public readable if needed
+                InputStream oreInputStream = this.get(session, oreIdentifier);
+                if (oreInputStream != null) {
+                    Model model = ModelFactory.createDefaultModel();
+                    model.read(oreInputStream, null);
+                    List<Identifier> dataIdentifiers = ResourceMapModifier.getSubjectsOfDocumentedBy(pid, model);
+                    for (Identifier dataId: dataIdentifiers) {
+                            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
+                            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
+                            this.updateSystemMetadata(dataSysMeta);
+                    }
+                }
+            }
+        }
+	    try {
+	          DOIServiceFactory.getDOIService().publishIdentifier(session, identifier);
+	    } catch (PropertyNotFoundException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	    } catch (DOIException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	    } catch (InstantiationException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	    } catch (IllegalAccessException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	    } catch (ClassNotFoundException e) {
+	          throw new ServiceFailure("3196", "Can't publish the identifier since " + e.getMessage());
+	    }
 	  }
 	
 	/**
@@ -3200,5 +3299,12 @@ public class MNodeService extends D1NodeService
         return readOnly;
     }
     
+    /**
+     * Set the value if Metacat need to make the entire package public during the publish process
+     * @param enforce  enforce the entire package public readable or not
+     */
+    public static void setEnforcePublisEntirePackage(boolean enforce) {
+        enforcePublicEntirePackageInPublish = enforce;
+    }
   
 }
