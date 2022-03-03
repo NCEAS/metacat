@@ -97,7 +97,7 @@ public class SolrIndex {
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
-    private SolrClient solrServer = null;
+    private static SolrClient solrServer = null;
     private XMLNamespaceConfig xmlNamespaceConfig = null;
     private List<SolrField> sysmetaSolrFields = null;
 
@@ -106,7 +106,7 @@ public class SolrIndex {
 
     private static XPathFactory xpathFactory = null;
     private static XPath xpath = null;
-    Log log = LogFactory.getLog(SolrIndex.class);
+    private static Log log = LogFactory.getLog(SolrIndex.class);
     
     static {
         documentBuilderFactory = DocumentBuilderFactory.newInstance();
