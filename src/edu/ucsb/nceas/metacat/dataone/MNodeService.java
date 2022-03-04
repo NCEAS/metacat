@@ -2862,7 +2862,6 @@ public class MNodeService extends D1NodeService
                 Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
                 InputStream scienceMetadataStream = this.get(session, sciMetataId);
-                downloader.generateReadme(scienceMetadataStream, systemMetadata);
             }
             HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
             logMetacat.debug(scienceMetadataIdentifiers.size());
