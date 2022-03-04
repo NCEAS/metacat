@@ -2858,7 +2858,6 @@ public class MNodeService extends D1NodeService
             List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
             logMetacat.debug("Size: " + String.valueOf(scienceMetadataIdentifiers.size()));
             if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
-                logMetacat.debug("Creating Readme file.");
                 Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
                 InputStream scienceMetadataStream = this.get(session, sciMetataId);
@@ -2873,21 +2872,11 @@ public class MNodeService extends D1NodeService
                 downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
             }
 
-            // Add all of the science metadata
-            //downloader.addScienceMetadatas();
-            // The underlying speedbag object is ready to be served to the clinet, do that here
-            //return downloader.speedBag.stream();
             return downloader.download();
         } catch (NullPointerException e) {
             e.printStackTrace();
             ServiceFailure sf = new ServiceFailure("1030", "There was an " +
                     "error while streaming the downloaded data package. " + e.getMessage());
-            sf.initCause(e);
-            throw sf;
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-            ServiceFailure sf = new ServiceFailure("1030", "While creating the package " +
-                    "download, an unsupported checksumming algorithm was encountered. " + e.getMessage());
             sf.initCause(e);
             throw sf;
         }

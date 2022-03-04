@@ -27,7 +27,6 @@
 package edu.ucsb.nceas.metacat.download;
 
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.download.ReadmeFile;
 import edu.ucsb.nceas.utilities.FileUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -199,7 +198,10 @@ public class PackageDownloaderV2 {
 			if (dataPath == null) {
 				logMetacat.debug("Failed to find a file location for the data file. Defaulting to data/");
 				// Create the file path without any additional directories past the default data directory
-				filePath = Paths.get(dataDirectory, dataFilename).toString();
+				String extension = ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
+				dataObjectFileName += extension;
+				filePath = Paths.get(dataDirectory, dataObjectFileName).toString();
+				logMetacat.debug(filePath);
 			} else {
 				filePath = Paths.get(dataDirectory, dataPath).toString();
 				logMetacat.debug(filePath);
@@ -318,28 +320,6 @@ public class PackageDownloaderV2 {
 		} catch (IOException e) {
 			logMetacat.error("Failed to write to temporary file when writing object. ID: " +
 					systemMetadata.getIdentifier().getValue(), e);
-		}
-	}
-
-
-	/**
-	 * Responsible for creating the readme document and adding it to the bag.
-	 *
-	 * @param primaryScienceMetadata The primary EML/sicnece metadata document
-	 * @param primaryScienceSystemMetadata The system metadata document for the science metadata
-	 */
-	public void generateReadme(InputStream primaryScienceMetadata, SystemMetadata primaryScienceSystemMetadata) throws
-			NoSuchAlgorithmException{
-		// Create the README.html document. If the readme fails to be be created, still
-		// serve the download without the README.
-		try {
-			ReadmeFile readme = new ReadmeFile(IOUtils.toString(primaryScienceMetadata, "UTF-8"),
-					primaryScienceSystemMetadata);
-			// The readme is in the root directory, so leave it as the filename
-			String readmePath = PropertyService.getProperty("package.download.file.readme");
-			this.speedBag.addFile(readme.getStream(), readmePath, true);
-		} catch (ServiceFailure | PropertyNotFoundException | IOException e) {
-			logMetacat.error("Failed to create the readme file." , e);
 		}
 	}
 
