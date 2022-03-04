@@ -2856,14 +2856,12 @@ public class MNodeService extends D1NodeService
         }
         try {
             List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
-            logMetacat.debug("Size: " + String.valueOf(scienceMetadataIdentifiers.size()));
             if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
                 Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
                 SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
                 InputStream scienceMetadataStream = this.get(session, sciMetataId);
             }
             HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
-            logMetacat.debug(scienceMetadataIdentifiers.size());
             // Add the science metadata and their associated system metadatas to the downloader
             for (Identifier scienceMetadataIdentifier: uniqueSciPids) {
                 logMetacat.debug("Adding science metadata to the bag");

@@ -173,7 +173,6 @@ public class PackageDownloaderV2 {
 		// Start by finding its object type
 		String objectFormatType = null;
 		try {
-			logMetacat.debug("Getting object format type");
 			objectFormatType = ObjectFormatCache.getInstance().getFormat(systemMetadata.getFormatId()).getFormatType();
 		} catch (NotFound e) {
 			logMetacat.error("Failed to find the format type of the data object.", e);
@@ -360,7 +359,6 @@ public class PackageDownloaderV2 {
 			QuerySolution currentResult;
 			// Do as long as there's a result
 			while (queryResults.hasNext()) {
-				logMetacat.debug("Found a result...");
 				currentResult = queryResults.next();
 				// Get the atLocation and pid fields
 				RDFNode subjectNode = currentResult.get("science_metadata");
@@ -449,7 +447,7 @@ public class PackageDownloaderV2 {
 
 				// Check if we have any results
 				if (locationStr == null || subjectStr == null) {
-					logMetacat.warn("Failed to find any locaton values");
+					logMetacat.debug("Failed to find any locaton values");
 					continue;
 				}
 
