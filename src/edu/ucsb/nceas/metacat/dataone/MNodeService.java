@@ -2809,76 +2809,80 @@ public class MNodeService extends D1NodeService
                 sf.initCause(e);
                 throw sf;
             }
-        }
+        } else if (formatId.getValue().equals("application/bagit-1.0")) {
 
-	    logMetacat.debug("Serving a download request for a Version 2 Package");
-	    // Get the resource map. This is used various places downstream, which is why it's not a stream. Note that
-        // this throws if it can't be parsed because we depend on it for object pids.
-        Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = parseResourceMap(session, pid);
-        // Holds the PID of every object in the resource map
-        List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
-        pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
+            logMetacat.debug("Serving a download request for a Version 2 Package");
+            // Get the resource map. This is used various places downstream, which is why it's not a stream. Note that
+            // this throws if it can't be parsed because we depend on it for object pids.
+            Map<Identifier, Map<Identifier, List<Identifier>>> resourceMapStructure = parseResourceMap(session, pid);
+            // Holds the PID of every object in the resource map
+            List<Identifier> pidsOfPackageObjects = new ArrayList<Identifier>();
+            pidsOfPackageObjects.addAll(resourceMapStructure.keySet());
 
-        for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
-            pidsOfPackageObjects.addAll(entries.keySet());
-            for (List<Identifier> dataPids : entries.values()) {
-                pidsOfPackageObjects.addAll(dataPids);
+            for (Map<Identifier, List<Identifier>> entries : resourceMapStructure.values()) {
+                pidsOfPackageObjects.addAll(entries.keySet());
+                for (List<Identifier> dataPids : entries.values()) {
+                    pidsOfPackageObjects.addAll(dataPids);
+                }
             }
-        }
-        // Get a ResourceMap object representing the resource map. Throw if we can't get it
-        ResourceMap resourceMap = serializeResourceMap(session, pid);
-        SystemMetadata resourceMapSystemMetadata = this.getSystemMetadata(session, pid);
-        // Create the downloader that's responsible for creating the readme and bag archive.
-        // Throws if something went wrong (we can't continue without a PackageDownloader)
-        PackageDownloaderV2 downloader = new PackageDownloaderV2(pid, resourceMap, resourceMapSystemMetadata);
+            // Get a ResourceMap object representing the resource map. Throw if we can't get it
+            ResourceMap resourceMap = serializeResourceMap(session, pid);
+            SystemMetadata resourceMapSystemMetadata = this.getSystemMetadata(session, pid);
+            // Create the downloader that's responsible for creating the readme and bag archive.
+            // Throws if something went wrong (we can't continue without a PackageDownloader)
+            PackageDownloaderV2 downloader = new PackageDownloaderV2(pid, resourceMap, resourceMapSystemMetadata);
 
-        List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
-        // Iterate over all the pids and find get an input stream and potential disk location
-        HashSet<Identifier> uniquePids = new HashSet<>(pidsOfPackageObjects);
-        for (Identifier entryPid : uniquePids) {
-            // Skip the resource map and the science metadata so that we don't write them to the data direcotry
-            if (metadataIdentifiers.contains(entryPid)) {
-                continue;
+            List<Identifier> metadataIdentifiers = downloader.getCoreMetadataIdentifiers();
+            // Iterate over all the pids and find get an input stream and potential disk location
+            HashSet<Identifier> uniquePids = new HashSet<>(pidsOfPackageObjects);
+            for (Identifier entryPid : uniquePids) {
+                // Skip the resource map and the science metadata so that we don't write them to the data direcotry
+                if (metadataIdentifiers.contains(entryPid)) {
+                    continue;
+                }
+                // Get the system metadata and a stream to the data file
+                SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
+                InputStream objectInputStream = this.get(session, entryPid);
+                // Add the stream to the downloader, which will handle finding its location
+                downloader.addDataFile(entrySysMeta, objectInputStream);
+                try {
+                    downloader.addSystemMetadata(entrySysMeta);
+                } catch (NoSuchAlgorithmException e) {
+                    ServiceFailure sf = new ServiceFailure("1030", "While creating the package." +
+                            "Could not add thr system metadata to the zipfile. " + e.getMessage());
+                    sf.initCause(e);
+                    throw sf;
+                }
             }
-            // Get the system metadata and a stream to the data file
-            SystemMetadata entrySysMeta = this.getSystemMetadata(session, entryPid);
-            InputStream objectInputStream = this.get(session, entryPid);
-            // Add the stream to the downloader, which will handle finding its location
-            downloader.addDataFile(entrySysMeta, objectInputStream);
             try {
-                downloader.addSystemMetadata(entrySysMeta);
-            } catch (NoSuchAlgorithmException e) {
-                ServiceFailure sf = new ServiceFailure("1030", "While creating the package." +
-                        "Could not add thr system metadata to the zipfile. " + e.getMessage());
+                List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
+                if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
+                    Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
+                    SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
+                    InputStream scienceMetadataStream = this.get(session, sciMetataId);
+                }
+                HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
+                // Add the science metadata and their associated system metadatas to the downloader
+                for (Identifier scienceMetadataIdentifier : uniqueSciPids) {
+                    logMetacat.debug("Adding science metadata to the bag");
+                    SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
+                    InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
+                    downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
+                }
+
+                return downloader.download();
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+                ServiceFailure sf = new ServiceFailure("1030", "There was an " +
+                        "error while streaming the downloaded data package. " + e.getMessage());
                 sf.initCause(e);
                 throw sf;
             }
-        }
-        try {
-            List<Identifier> scienceMetadataIdentifiers = downloader.getScienceMetadataIdentifiers();
-            if (scienceMetadataIdentifiers != null && !scienceMetadataIdentifiers.isEmpty()) {
-                Identifier sciMetataId = scienceMetadataIdentifiers.get(0);
-                SystemMetadata systemMetadata = this.getSystemMetadata(session, sciMetataId);
-                InputStream scienceMetadataStream = this.get(session, sciMetataId);
-            }
-            HashSet<Identifier> uniqueSciPids = new HashSet<>(scienceMetadataIdentifiers);
-            // Add the science metadata and their associated system metadatas to the downloader
-            for (Identifier scienceMetadataIdentifier: uniqueSciPids) {
-                logMetacat.debug("Adding science metadata to the bag");
-                SystemMetadata systemMetadata = this.getSystemMetadata(session, scienceMetadataIdentifier);
-                InputStream scienceMetadataStream = this.get(session, scienceMetadataIdentifier);
-                downloader.addScienceMetadata(systemMetadata, scienceMetadataStream);
-            }
-
-            return downloader.download();
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            ServiceFailure sf = new ServiceFailure("1030", "There was an " +
-                    "error while streaming the downloaded data package. " + e.getMessage());
-            sf.initCause(e);
+        } else {
+            ServiceFailure sf = new ServiceFailure("", "The download forma,t "+formatId.getValue()+" is not a " +
+                    "supported format.");
             throw sf;
         }
-
 	}
 
 	 /**
