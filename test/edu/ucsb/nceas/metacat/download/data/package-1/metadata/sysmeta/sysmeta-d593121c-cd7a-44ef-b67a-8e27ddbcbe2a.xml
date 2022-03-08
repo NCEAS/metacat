@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:systemMetadata xmlns:ns2="http://ns.dataone.org/service/types/v1" xmlns:ns3="http://ns.dataone.org/service/types/v2.0">
+    <serialVersion>0</serialVersion>
+    <identifier>d593121c-cd7a-44ef-b67a-8e27ddbcbe2a</identifier>
+    <formatId>application/octet-stream</formatId>
+    <size>6220</size>
+    <checksum algorithm="SHA-256">7a0c1bdb32d68f7fa359e561a4f7e1fe8fb2fc26a1ea624a434a97a63735dd72</checksum>
+    <submitter>http://orcid.org/0000-0002-1756-2128</submitter>
+    <rightsHolder>http://orcid.org/0000-0002-1756-2128</rightsHolder>
+    <accessPolicy>
+        <allow>
+            <subject>https://orcid.org/0000-0002-1756-2128</subject>
+            <permission>read</permission>
+            <permission>write</permission>
+            <permission>changePermission</permission>
+        </allow>
+        <allow>
+            <subject>public</subject>
+            <permission>read</permission>
+        </allow>
+    </accessPolicy>
+    <replicationPolicy replicationAllowed="true" numberReplicas="3"/>
+    <archived>false</archived>
+    <dateUploaded>2022-01-26T01:27:24.471+00:00</dateUploaded>
+    <dateSysMetadataModified>2022-01-26T01:27:24.471+00:00</dateSysMetadataModified>
+    <originMemberNode>urn:node:mnDemo6</originMemberNode>
+    <authoritativeMemberNode>urn:node:mnDemo6</authoritativeMemberNode>
+    <fileName>daily-total-female-births.csv</fileName>
+</ns3:systemMetadata>
