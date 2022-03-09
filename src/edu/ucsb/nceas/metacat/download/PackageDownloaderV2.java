@@ -102,6 +102,7 @@ public class PackageDownloaderV2 {
 		this.resourceMap = resourceMap;
 		this.resourceMapSystemMetadata = resourceMapSystemMetadata;
 		this.coreMetadataIdentifiers = new ArrayList<Identifier>();
+		// A map of a Subject to its full filepath from prov:atLocation. Unsanitized.
 		this._filePathMap =  new HashMap<String, String>();
 		// A new SpeedBagIt instance that's BagIt Version 1.0 and using MD5 as the hasing algorithm
 		try {
@@ -168,8 +169,7 @@ public class PackageDownloaderV2 {
 	 * @param inputStream An input stream to the data file
 	 */
 	public void addDataFile(SystemMetadata systemMetadata, InputStream inputStream) throws ServiceFailure {
-		// Try and determine a sensible filename
-		String dataFilename = "";
+		// Try and determine a filename
 		// Start by finding its object type
 		String objectFormatType = null;
 		try {
@@ -180,33 +180,34 @@ public class PackageDownloaderV2 {
 		}
 		//Our default file name is just the ID + format type (e.g. walker.1.1-DATA)
 		Identifier objectSystemMetadataID = systemMetadata.getIdentifier();
-		String dataObjectFileName = objectSystemMetadataID.getValue().replaceAll("[^a-zA-Z0-9\\-\\.]", "_") + "-" +
-				objectFormatType;
+		String dataObjectFileName = this.sanitizeFilename(objectSystemMetadataID.getValue()) + "-" + objectFormatType;
+
+		// Try and determine the extension. Leave it extensionless if one isn't defined in the system metadata
+		try {
+			String extension = ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
+			dataObjectFileName += extension;
+		} catch (Exception e) { }
 
 		// if SM has the file name, ignore everything else and use that
 		if (systemMetadata.getFileName() != null) {
-			dataFilename = systemMetadata.getFileName().replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+			logMetacat.debug("Failed to find any filename in the system metadata.");
+			dataObjectFileName = this.sanitizeFilename(systemMetadata.getFileName());
 		}
+
 
 		// See if it has a path defined in the resource map
 		logMetacat.debug("Determining if file has a record in the resource map");
 		String dataPath = this._filePathMap.get(objectSystemMetadataID.getValue());
-		String filePath = "";
 		try {
 			String dataDirectory = PropertyService.getProperty("package.download.bag.directory.data");
 			if (dataPath == null) {
-				logMetacat.debug("Failed to find a file location for the data file. Defaulting to data/");
-				// Create the file path without any additional directories past the default data directory
-				String extension = ObjectFormatInfo.instance().getExtension(systemMetadata.getFormatId().getValue());
-				dataObjectFileName += extension;
-				filePath = Paths.get(dataDirectory, dataObjectFileName).toString();
-				logMetacat.debug(filePath);
+				dataPath = Paths.get(dataDirectory, dataObjectFileName).toString();
 			} else {
-				filePath = Paths.get(dataDirectory, dataPath).toString();
-				logMetacat.debug(filePath);
+				dataPath = this.sanitizeFilepath(dataPath);
+				dataPath = Paths.get(dataDirectory, dataPath).toString();
 			}
-			logMetacat.debug("Adding data file to the bag at " + filePath);
-			this.speedBag.addFile(inputStream, filePath, false);
+			logMetacat.debug("Adding data file to the bag at " + dataPath);
+			this.speedBag.addFile(inputStream, dataPath, false);
 		} catch (Exception e) {
 			logMetacat.error("Error adding the datafile to the bag", e);
 			throw new ServiceFailure("There was an error creating the temporary download directories.", e.getMessage());
@@ -234,6 +235,9 @@ public class PackageDownloaderV2 {
 				// Append the count to the file name. This gives naming doc(1), doc(2), doc(3)
 				filename = FilenameUtils.getPath(filename) + name+'('+String.valueOf(metadata_count)+')'+'.'+extension;
 			}
+			// Sanitize the filename
+			filename = this.sanitizeFilename(filename);
+			filename = filename + extension;
 			// Add the bag directory to the beginning of the filename
 			String filePath = "";
 			try {
@@ -286,11 +290,13 @@ public class PackageDownloaderV2 {
 			systemMetadataFilename = PropertyService.getProperty("package.download.file.sysmeta-prepend") +
 					systemMetadata.getIdentifier().getValue() +
 					PropertyService.getProperty("package.download.file.sysmeta-extension");
-			systemMetadataFilename.replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+
 		} catch (PropertyNotFoundException e) {
 			// Give a best bet for the file extension
 			logMetacat.error("Failed to find the system metadata name property.", e);
-			systemMetadataFilename = "system-metadata-" + systemMetadata.getIdentifier().getValue() + ".xml";
+			systemMetadataFilename = "system-metadata-" + systemMetadata.getIdentifier().getValue();
+			systemMetadataFilename = this.sanitizeFilename(systemMetadataFilename);
+			systemMetadataFilename =  systemMetadataFilename + ".xml";
 		}
 		try{
 			// The type marshler needs an OutputStream and we need an InputStream, so get an output
@@ -416,7 +422,7 @@ public class PackageDownloaderV2 {
 
 	/**
 	 * Queries the resource map for any pids that have an atLocation record. If found,
-	 * it saves them.
+	 * it saves them in the file path map. It leaves sanitation to the caller.
 	 *
 	 */
 	private void getObjectLocations() {
@@ -462,5 +468,15 @@ public class PackageDownloaderV2 {
 			// In any case, they should be passed over.
 			logMetacat.error("There was an error while parsing an atLocation field.", e);
 		}
+	}
+
+	// Sanitizes the 'filename' parameter; only alows numbers and letters
+	String sanitizeFilename(String filename) {
+		return filename.replaceAll("[^a-zA-Z0-9\\-\\.]", "_");
+	}
+
+	// Sanitizes a file path; it allows forward slashes
+	String sanitizeFilepath(String filename) {
+		return filename.replaceAll("[^a-zA-Z0-9\\-\\.\\/_ ]", "");
 	}
 }
