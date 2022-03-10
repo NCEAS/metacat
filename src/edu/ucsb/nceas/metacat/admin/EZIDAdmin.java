@@ -101,6 +101,7 @@ public class EZIDAdmin extends MetacatAdmin {
 			try {
 				// get the current configuration values
 			    String enablestr = PropertyService.getProperty("guid.doi.enabled");
+			    String doiPluginClass = PropertyService.getProperty("guid.doiservice.plugin.class");
 				String username = PropertyService.getProperty("guid.doi.username");
 				String password = PropertyService.getProperty("guid.doi.password");
 				String baseurl = PropertyService.getProperty("guid.doi.baseurl");
@@ -111,6 +112,7 @@ public class EZIDAdmin extends MetacatAdmin {
 				}
 				
 				request.setAttribute("guid.doi.enabled", enable);
+				request.setAttribute("guid.doiservice.plugin.class", doiPluginClass);
 				request.setAttribute("guid.doi.username", username);
 				request.setAttribute("guid.doi.password", password);
 				request.setAttribute("guid.doi.baseurl", baseurl);
@@ -196,6 +198,7 @@ public class EZIDAdmin extends MetacatAdmin {
 				validationErrors.addAll(validateOptions(request));
 				
 				String enablestr = (String)request.getParameter("guid.doi.enabled");
+				String pluginClass = (String)request.getParameter("guid.doiservice.plugin.class");
 				String username = (String)request.getParameter("guid.doi.username");
                 String password = (String)request.getParameter("guid.doi.password");
                 String baseurl = (String)request.getParameter("guid.doi.baseurl");
@@ -210,6 +213,7 @@ public class EZIDAdmin extends MetacatAdmin {
 					validationErrors.add("User Name and Password cannot be null");
 				} else {
 				    PropertyService.setPropertyNoPersist("guid.doi.enabled", Boolean.toString(enable));
+				    PropertyService.setPropertyNoPersist("guid.doiservice.plugin.class", pluginClass);
 					PropertyService.setPropertyNoPersist("guid.doi.username", username);
 					PropertyService.setPropertyNoPersist("guid.doi.password", password);
 					PropertyService.setPropertyNoPersist("guid.doi.baseurl", baseurl);

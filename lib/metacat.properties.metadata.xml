@@ -615,7 +615,7 @@
 	</config>
 	
 	<!-- EZID and DOI configurations -->
-	<config>
+  <config>
         <key>guid.doi.enabled</key>
         <label>Enable DOI Service</label>
         <group>8</group>
@@ -623,12 +623,29 @@
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
+  </config>
+	<config>
+        <key>guid.doiservice.plugin.class</key>
+        <label>DOI Service</label>
+        <group>8</group>
+        <index>16</index>
+        <fieldType>hidden</fieldType>
+		    <option>
+    		  <name>EZID</name>
+      		<value>edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService</value>
+    		</option>
+    		<option>
+      		<name>OSTI</name>
+      		<value>edu.ucsb.nceas.metacat.doi.osti.OstiDOIService</value>
+    		</option>
+        <description> </description>
+        <helpFile> </helpFile>
     </config>
     <config>
         <key>guid.doi.username</key>
         <label>User Name</label>
         <group>8</group>
-        <index>16</index>
+        <index>17</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -637,7 +654,7 @@
         <key>guid.doi.baseurl</key>
         <label>Service Base URL</label>
         <group>8</group>
-        <index>17</index>
+        <index>18</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -646,7 +663,7 @@
         <key>guid.doi.doishoulder.1</key>
         <label>DOI Shouder</label>
         <group>8</group>
-        <index>18</index>
+        <index>19</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -715,7 +732,7 @@
         <key>dataone.quotas.portals.enabled</key>
         <label>Enable Portal Quota</label>
         <group>9</group>
-        <index>19</index>
+        <index>20</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -724,7 +741,7 @@
         <key>dataone.quotas.storage.enabled</key>
         <label>Enable Storage Quota</label>
         <group>9</group>
-        <index>20</index>
+        <index>21</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -733,7 +750,7 @@
         <key>dataone.quotas.replication.enabled</key>
         <label>Enable Replication Quota</label>
         <group>9</group>
-        <index>21</index>
+        <index>22</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
@@ -742,7 +759,7 @@
         <key>dataone.quotas.bookkeeper.serviceUrl</key>
         <label>Bookkeeper Service URL</label>
         <group>9</group>
-        <index>22</index>
+        <index>23</index>
         <fieldType>hidden</fieldType>
         <description> </description>
         <helpFile> </helpFile>
