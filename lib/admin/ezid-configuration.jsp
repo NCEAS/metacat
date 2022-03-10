@@ -50,7 +50,7 @@
 	
 	<form method="POST" name="configuration_form" action="<%= request.getContextPath() %>/admin" 
 	                                        onsubmit="return submitForm(this);">
-	    <h3>EZID Service Configuration</h3>
+	    <h3>DOI Service Configuration</h3>
 		<div class="form-row">
             <div class="textinput-label"><label for="guid.doi.enabled" title="Enable DOI service">Enable DOI service</label></div>
     
@@ -68,6 +68,31 @@
                     value="true"/>
             <% } %>
             <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-enabled')"></i> 
+        </div>
+        <div class="form-row">
+            <div class="textinput-label"><label for="guid.doiservice.plugin.class" title="DOI user name">DOI Service</label></div>
+            <select class="textinput" name="guid.doiservice.plugin.class" id="guid.doiservice.plugin.class">
+                       <option value="edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService"
+                       <%
+                            String pluginClassName = (String) request.getAttribute("guid.doiservice.plugin.class");
+                            if (pluginClassName != null && pluginClassName.equals("edu.ucsb.nceas.metacat.doi.ezid.EzidDOIService")) {
+                       %>
+                                selected="yes"
+                        <%
+                            }
+                        %>
+                       >EZID</option>
+                       <option value="edu.ucsb.nceas.metacat.doi.osti.OstiDOIService"
+                       <%
+                            if (pluginClassName != null && pluginClassName.equals("edu.ucsb.nceas.metacat.doi.osti.OstiDOIService")) {
+                        %>
+                                selected="yes"
+                        <%
+                            }
+                        %>
+                       >OSTI</option>
+             </select>
+             <i class="icon-question-sign" onClick="helpWindow('<%= request.getContextPath() %>','docs/metacat-properties.html#guid-ezid-username')"></i>
         </div>
 		<div class="form-row">
                     <div class="textinput-label"><label for="guid.doi.username" title="DOI user name">User Name</label></div>
