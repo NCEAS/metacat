@@ -67,8 +67,10 @@ import com.hp.hpl.jena.rdf.model.Model;
 
 
 /**
- * A class that handles downloading data packages under the V2 format.
- *
+ * A class that handles downloading data packages under the V2 format. It contains a number of private
+ * members that hold information about the data package (lists of identifiers, metadata, file paths, etc).
+ * The public member functions are used as interfaces: identifiers, metadata, etc are added to this class
+ * through them.
  */
 public class PackageDownloaderV2 {
 	// The resource map pid
@@ -194,7 +196,6 @@ public class PackageDownloaderV2 {
 			dataObjectFileName = this.sanitizeFilename(systemMetadata.getFileName());
 		}
 
-
 		// See if it has a path defined in the resource map
 		logMetacat.debug("Determining if file has a record in the resource map");
 		String dataPath = this._filePathMap.get(objectSystemMetadataID.getValue());
@@ -235,9 +236,6 @@ public class PackageDownloaderV2 {
 				// Append the count to the file name. This gives naming doc(1), doc(2), doc(3)
 				filename = FilenameUtils.getPath(filename) + name+'('+String.valueOf(metadata_count)+')'+'.'+extension;
 			}
-			// Sanitize the filename
-			filename = this.sanitizeFilename(filename);
-			filename = filename + extension;
 			// Add the bag directory to the beginning of the filename
 			String filePath = "";
 			try {
@@ -251,7 +249,6 @@ public class PackageDownloaderV2 {
 			this.addSystemMetadata(scienceMetadata.getKey());
 		}
 	}
-
 
 	/**
 	 * Adds the resource map to the bag.
@@ -290,14 +287,14 @@ public class PackageDownloaderV2 {
 			systemMetadataFilename = PropertyService.getProperty("package.download.file.sysmeta-prepend") +
 					systemMetadata.getIdentifier().getValue() +
 					PropertyService.getProperty("package.download.file.sysmeta-extension");
-
 		} catch (PropertyNotFoundException e) {
 			// Give a best bet for the file extension
 			logMetacat.error("Failed to find the system metadata name property.", e);
-			systemMetadataFilename = "system-metadata-" + systemMetadata.getIdentifier().getValue();
-			systemMetadataFilename = this.sanitizeFilename(systemMetadataFilename);
-			systemMetadataFilename =  systemMetadataFilename + ".xml";
+			systemMetadataFilename = "system-metadata-" + systemMetadata.getIdentifier().getValue()+".xml";
 		}
+		logMetacat.debug("Sanitizing the system metadata filename: " + systemMetadataFilename);
+		systemMetadataFilename = this.sanitizeFilename(systemMetadataFilename);
+		logMetacat.debug("Sanitized the system metadata filename: " + systemMetadataFilename);
 		try{
 			// The type marshler needs an OutputStream and we need an InputStream, so get an output
 			// stream and turn it into an InputStream
@@ -328,6 +325,16 @@ public class PackageDownloaderV2 {
 		}
 	}
 
+	/**
+	 * Streams the completed bag to the caller.
+	 *
+	 * @return An InputStream consiting of the bag bytes
+	 * @throws ServiceFailure
+	 * @throws InvalidToken
+	 * @throws NotAuthorized
+	 * @throws NotFound
+	 * @throws NotImplemented
+	 */
 	public InputStream download() throws ServiceFailure, InvalidToken,
 			NotAuthorized, NotFound, NotImplemented {
 		try {
