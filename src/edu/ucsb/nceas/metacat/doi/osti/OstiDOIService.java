@@ -141,7 +141,7 @@ public class OstiDOIService extends DOIService{
                 String siteUrl = null;
                 if (autoPublishDOI) {
                     siteUrl = getLandingPage(identifier);
-                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
+                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
                                      + identifier.getValue() + " is: " + siteUrl);
                 } else {
                     //In non-autoPublishDOI, we should preserve the current status in the OSTI server
@@ -150,22 +150,23 @@ public class OstiDOIService extends DOIService{
                         status = ostiClient.getStatus(identifier.getValue());
                     } catch (OSTIElinkException ee) {
                         if (errorAgent != null) {
-                            errorAgent.notify(ee.getMessage());
+                            errorAgent.notify("OstiDOIService.submitDOIMetadata - can't get the OSTI status of id " + 
+                                               identifier.getValue() + " since:\n " + ee.getMessage());
                         }
                         throw new DOIException(ee.getMessage());
                     }
-                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi and the current status is "
+                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi and the current status is "
                                      + status + " for the identifier " + identifier.getValue());
                     if (status != null && status.equalsIgnoreCase(OSTIElinkService.SAVED)) {
                         //we need to preserve the saved status, so the site url should be null. 
                         //The style sheet will use "set_reserved" if both site url parameter is null and osti_id parameter is null.
                         siteUrl = null;
-                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
                                 + identifier.getValue() + " should be null since its current status is Saved.");
                     } else {
                         //we need to preserve the "pending"/"released" status. So we need a site url
                         siteUrl = getLandingPage(identifier);
-                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
                                 + identifier.getValue() + " is: " + siteUrl + " since the status is " + status);
                     }
                     
