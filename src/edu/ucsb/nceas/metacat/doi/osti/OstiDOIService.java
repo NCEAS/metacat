@@ -74,9 +74,8 @@ public class OstiDOIService extends DOIService{
     private static Templates eml2osti = null;                                                                      
     private static final TransformerFactory transformerFactory = TransformerFactory.newInstance();
     
-    
     private OSTIElinkClient ostiClient = null;
-    
+    private OSTIElinkErrorAgent errorAgent = null;
     /**
      * Constructor
      */
@@ -84,7 +83,7 @@ public class OstiDOIService extends DOIService{
         super();
         try {
             if (doiEnabled) {
-                OSTIElinkErrorAgent errorAgent = new OstiErrorEmailAgent();
+                errorAgent = new OstiErrorEmailAgent();
                 ostiClient = new OSTIElinkClient(username, password, serviceBaseUrl, errorAgent);
                 String ostiPath = SystemUtil.getContextDir() + FileUtil.getFS() + "style" + FileUtil.getFS() + 
                                   "common" + FileUtil.getFS() + "osti" + FileUtil.getFS() + "eml2osti.xsl";
@@ -142,7 +141,7 @@ public class OstiDOIService extends DOIService{
                 String siteUrl = null;
                 if (autoPublishDOI) {
                     siteUrl = getLandingPage(identifier);
-                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
+                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi. The site url will be used for pid " 
                                      + identifier.getValue() + " is: " + siteUrl);
                 } else {
                     //In non-autoPublishDOI, we should preserve the current status in the OSTI server
@@ -150,20 +149,24 @@ public class OstiDOIService extends DOIService{
                     try {
                         status = ostiClient.getStatus(identifier.getValue());
                     } catch (OSTIElinkException ee) {
+                        if (errorAgent != null) {
+                            errorAgent.notify("OstiDOIService.submitDOIMetadata - can't get the OSTI status of id " + 
+                                               identifier.getValue() + " since:\n " + ee.getMessage());
+                        }
                         throw new DOIException(ee.getMessage());
                     }
-                    logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured to auto publish doi and the current status is "
+                    logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured to auto publish doi and the current status is "
                                      + status + " for the identifier " + identifier.getValue());
                     if (status != null && status.equalsIgnoreCase(OSTIElinkService.SAVED)) {
                         //we need to preserve the saved status, so the site url should be null. 
                         //The style sheet will use "set_reserved" if both site url parameter is null and osti_id parameter is null.
                         siteUrl = null;
-                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
                                 + identifier.getValue() + " should be null since its current status is Saved.");
                     } else {
                         //we need to preserve the "pending"/"released" status. So we need a site url
                         siteUrl = getLandingPage(identifier);
-                        logMetacat.debug("OstiDOIService.updateDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
+                        logMetacat.debug("OstiDOIService.submitDOIMetadata - The system is configured NOT to auto publish doi. The site url will be used for pid " 
                                 + identifier.getValue() + " is: " + siteUrl + " since the status is " + status);
                     }
                     
@@ -249,7 +252,10 @@ public class OstiDOIService extends DOIService{
      * @return  the OSTI metadata associated with the identifier
      * @throws OSTIElinkException
      */
-    public String getMetadata(Identifier doi) throws OSTIElinkException {
+    public String getMetadata(Identifier doi) throws OSTIElinkException, InvalidRequest {
+        if (!doiEnabled) {
+            throw new InvalidRequest("2193", "DOI scheme is not enabled at this node.");
+        }
         return ostiClient.getMetadata(doi.getValue());
     }
 }
