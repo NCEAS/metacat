@@ -22,6 +22,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.osti_elink.OSTIElinkErrorAgent;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
@@ -46,13 +47,15 @@ import org.apache.commons.logging.LogFactory;
 public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
     private static String letterStartPart = "Dear operators:\nMetacat got the following error message " +
                                             "when it interatcted the OSTI ELink Service: \n" ;
-    private static String mailSubject = "OSTI Errors In Metacat";
+    private static String mailSubject = "OSTI Errors In Metacat at ";
+    private static String timeFormatPattern = "EEE, d MMM yyyy HH:mm:ss z";
     private static Log logMetacat = LogFactory.getLog(OstiErrorEmailAgent.class);
     private static String smtpHost = null;
     private static int port = 587;
     private static String toMail = null;
     private static String fromMail = null;
     private static Session session = null;
+    private static SimpleDateFormat dateFormat = null;
     
     /**
      * Constructor - set the email settings
@@ -72,6 +75,7 @@ public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
         props.put("mail.smtp.host", smtpHost);
         props.put("mail.smtp.port", port);
         session = Session.getDefaultInstance(props);
+        dateFormat = new SimpleDateFormat(timeFormatPattern);
     }
     
     /**
@@ -86,7 +90,7 @@ public class OstiErrorEmailAgent implements OSTIElinkErrorAgent {
             msg.addHeader("format", "flowed");
             msg.addHeader("Content-Transfer-Encoding", "8bit");
             msg.setFrom(new InternetAddress(fromMail)); 
-            msg.setSubject(mailSubject, "UTF-8");
+            msg.setSubject(mailSubject + dateFormat.format(new Date()), "UTF-8");
             msg.setText(body, "UTF-8");
             msg.setSentDate(new Date());
             msg.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toMail, false));

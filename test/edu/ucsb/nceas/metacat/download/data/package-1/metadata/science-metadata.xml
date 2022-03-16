@@ -1,0 +1,73 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<eml:eml packageId="doi:10.5072/FK2Z89B22B" scope="system" system="knb"
+    xmlns:eml="eml://ecoinformatics.org/eml-2.1.1"
+    xmlns:stmml="http://www.xml-cml.org/schema/stmml-1.1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="eml://ecoinformatics.org/eml-2.1.1 eml.xsd">
+    <dataset>
+        <title>California Daily Female Birth Counts</title>
+        <creator>
+            <individualName>
+                <givenName>Thomas</givenName>
+                <surName>Thelen</surName>
+            </individualName>
+            <userId directory="https://orcid.org">https://orcid.org/0000-0002-1756-2128</userId>
+        </creator>
+        <abstract>
+            <para>Example dataset. Data taken from Kaggle</para>
+        </abstract>
+        <intellectualRights>
+            <section>
+                <para>
+                    <literalLayout></literalLayout>
+                </para>
+            </section>
+        </intellectualRights>
+        <contact>
+            <individualName>
+                <givenName>Thomas</givenName>
+                <surName>Thelen</surName>
+            </individualName>
+            <electronicMailAddress>thelen@nceas.ucsb.edu</electronicMailAddress>
+            <userId directory="https://orcid.org">https://orcid.org/0000-0002-1756-2128</userId>
+        </contact>
+        <otherEntity>
+            <entityName>daily-total-female-births.csv</entityName>
+            <physical>
+                <objectName>daily-total-female-births.csv</objectName>
+                <size unit="bytes">30360</size>
+                <dataFormat>
+                    <externallyDefinedFormat>
+                        <formatName>application/octet-stream</formatName>
+                    </externallyDefinedFormat>
+                </dataFormat>
+            </physical>
+            <entityType>dataTable</entityType>
+        </otherEntity>
+        <otherEntity>
+            <entityName>female-daily-births.png</entityName>
+            <physical>
+                <objectName>female-daily-births.png</objectName>
+                <size unit="bytes">1165144</size>
+                <dataFormat>
+                    <externallyDefinedFormat>
+                        <formatName>application/octet-stream</formatName>
+                    </externallyDefinedFormat>
+                </dataFormat>
+            </physical>
+            <entityType>dataTable</entityType>
+        </otherEntity>
+        <otherEntity>
+            <entityName>plot.py</entityName>
+            <physical>
+                <objectName>plot.py</objectName>
+                <size unit="bytes">1869</size>
+                <dataFormat>
+                    <externallyDefinedFormat>
+                        <formatName>application/octet-stream</formatName>
+                    </externallyDefinedFormat>
+                </dataFormat>
+            </physical>
+            <entityType>dataTable</entityType>
+        </otherEntity>
+    </dataset>
+</eml:eml>
