@@ -62,7 +62,6 @@ public class ConfigurationUtil
 					&& AuthUtil.isAuthConfigured()
 					&& SkinUtil.areSkinsConfigured()
 					&& DatabaseUtil.isDatabaseConfigured()
-					&& GeoserverUtil.isGeoserverConfigured()
 					&& isBackupDirConfigured()
 					&& DataONEConfigUtil.isDataOneConfigured()
 					&& isEZIDConfigured();

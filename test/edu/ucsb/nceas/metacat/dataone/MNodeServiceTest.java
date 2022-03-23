@@ -217,6 +217,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateEventLog"));
     suite.addTest(new MNodeServiceTest("testUpdateSystemMetadataPermission"));
     suite.addTest(new MNodeServiceTest("testCreateAndUpdateWithDoiDisabled"));
+    suite.addTest(new MNodeServiceTest("testCreateAndUpdateFGDC"));
     return suite;
     
   }
@@ -1979,7 +1980,7 @@ public class MNodeServiceTest extends D1NodeServiceTest {
           // clean up
           bagFile.delete();
           Identifier doi = MNodeService.getInstance(request).publish(session, metadataId);
-          Thread.sleep(80000);
+          Thread.sleep(90000);
           System.out.println("+++++++++++++++++++ the metadataId on the ore package is "+metadataId.getValue());
           List<Identifier> oreIds = MNodeService.getInstance(request).lookupOreFor(session, doi, true);
           assertTrue(oreIds.size() == 1);
@@ -3568,14 +3569,17 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         metadata.setSize(size); //reset it back
         
         Checksum check = metadata.getChecksum();
+        String originalChecksumAlgorithm  = check.getAlgorithm();
+        String originalValue = check.getValue();
         Checksum newCheck = new Checksum();
         newCheck.setValue("12345");
+        newCheck.setAlgorithm(originalChecksumAlgorithm);
         metadata.setChecksum(newCheck);
         try {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its checksum was changed");
        } catch (InvalidRequest e)  {
-           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+           assertTrue("The update system metadata should fail since the checksum was changed", e.getMessage().contains("12345"));
        }
        
         metadata.setChecksum(null);
@@ -3583,8 +3587,32 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its checksum is null");
        } catch (InvalidRequest e)  {
-           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+           assertTrue("The update system metadata should fail since the checksum was changed", e.getMessage().contains("checksum"));
        }
+        
+        //change the checksum algorithm
+        newCheck = new Checksum();
+        newCheck.setValue(originalValue);
+        newCheck.setAlgorithm("SHA-256");
+        metadata.setChecksum(newCheck);
+        try {
+             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+             fail("We can't update the system metadata since its checksum was changed");
+        } catch (InvalidRequest e)  {
+            assertTrue("The update system metadata should fail since the checksum algorithm was changed", e.getMessage().contains("SHA-256"));
+        }
+        
+        //change the checksum algorithm
+        newCheck = new Checksum();
+        newCheck.setValue(originalValue);
+        newCheck.setAlgorithm(null);
+        metadata.setChecksum(newCheck);
+        try {
+             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+             fail("We can't update the system metadata since its checksum was changed");
+        } catch (InvalidRequest e)  {
+            assertTrue("The update system metadata should fail since the checksum algorithm was changed", e.getMessage().contains("algorithm"));
+        }
         
         metadata.setChecksum(check);
         
@@ -4077,11 +4105,11 @@ public class MNodeServiceTest extends D1NodeServiceTest {
      */
     public void testCreateAndUpdateWithDoiDisabled() throws Exception {
         printTestHeader("testCreateAndUpdateWithDoiDisabled");
-        String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.ezid.enabled");
+        String originDOIstatusStr = PropertyService.getInstance().getProperty("guid.doi.enabled");
         System.out.println("the dois status is ++++++++++++++ " + originDOIstatusStr);
         try {
             Session session = getTestSession();
-            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", "false");//disable doi
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.enabled", "false");//disable doi
             DOIServiceFactory.getDOIService().refreshStatus();
             try {
                 //make sure the service of doi is disabled
@@ -4123,9 +4151,40 @@ public class MNodeServiceTest extends D1NodeServiceTest {
                 assertTrue(e.getMessage().contains("DOI scheme is not enabled at this node"));
             }
         } finally {
-            PropertyService.getInstance().setPropertyNoPersist("guid.ezid.enabled", originDOIstatusStr);
+            PropertyService.getInstance().setPropertyNoPersist("guid.doi.enabled", originDOIstatusStr);
             DOIServiceFactory.getDOIService().refreshStatus();
         }
+    }
+    
+    /**
+     * Test object creation FGDC objects
+     */
+    public void testCreateAndUpdateFGDC() throws Exception {
+        printTestHeader("testCreateAndUpdateFGDC");
+        ObjectFormatIdentifier format = new ObjectFormatIdentifier();
+        format.setValue("FGDC-STD-001-1998");
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testCreateAndUpdateFGDC." + System.currentTimeMillis());
+        InputStream object = new FileInputStream("test/fgdc.xml");
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        sysmeta.setFormatId(format);
+        object.close();
+        object = new FileInputStream("test/fgdc.xml");
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        assertEquals(guid.getValue(), pid.getValue());
+        object.close();
+        
+        Thread.sleep(2000);
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testCreateAndUpdateFGDC2." + System.currentTimeMillis());
+        object = new FileInputStream("test/fgdc.xml");
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        object.close();
+        sysmeta2.setFormatId(format);
+        object = new FileInputStream("test/fgdc.xml");
+        MNodeService.getInstance(request).update(session, guid, object, guid2, sysmeta2);
+        object.close();
     }
 }
 

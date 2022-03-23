@@ -1,6 +1,6 @@
 # Metacat: Data Preservation and Discovery System
 
-Version: 2.16.2 Release
+Version: 2.17.0 Release
 
 Send feedback and bugs to: metacat-dev@ecoinformatics.org
                            http://github.com/NCEAS/metacat
@@ -66,6 +66,18 @@ list of currently unimplemented issues that we are working on
 for the next release.
 
 ## Release Notes
+
+### Release Notes for 2.17.0
+New features and bugs fixed in this release:
+* Support the OSTI DOI service
+* Support hierarchical packages in getPackage API
+* Use the file protocol rather than the https/http protocols to access schema files during the xml validation process
+* Metacat threw the error of the user not authorized during the publish process even though the EZID setting is correct
+* Metacat did not check if the checksum algorithm was changed in the MN.updateSystemmetadata method
+* EML to HTML .xslt skips methods section in attributes
+* Upgrade xerces to 2.12.2
+* Remove the GeoServer war file
+* Remove the oa4mp-client-oauth1-3.3.war file
 
 ### Release Notes for 2.16.2
 Bugs fixed in this release:

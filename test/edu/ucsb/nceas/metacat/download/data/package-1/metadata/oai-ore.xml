@@ -1,0 +1,59 @@
+<rdf:RDF
+    xmlns:dcterms="http://purl.org/dc/terms/"
+    xmlns:dc="http://purl.org/dc/elements/1.1/"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+    xmlns:j.0="http://purl.org/spar/cito/"
+    xmlns:owl="http://www.w3.org/2002/07/owl#"
+    xmlns:j.1="http://www.w3.org/ns/prov#"
+    xmlns:ore="http://www.openarchives.org/ore/terms/"
+    xmlns:foaf="http://xmlns.com/foaf/0.1/" > 
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9">
+    <j.0:documents rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/e0b3f8af-dd2e-4505-9250-32c592b288f8"/>
+    <j.0:documents rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/d593121c-cd7a-44ef-b67a-8e27ddbcbe2a"/>
+    <j.0:documents rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">735a9a2f-7d91-40d0-85e6-877de645fcf9</dcterms:identifier>
+    <ore:isAggregatedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A0">
+    <rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+    <foaf:name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Foresite ORE Library</foaf:name>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/e0b3f8af-dd2e-4505-9250-32c592b288f8">
+    <j.0:isDocumentedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
+    <j.1:atLocation>outputs/female-daily-births.png</j.1:atLocation>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">e0b3f8af-dd2e-4505-9250-32c592b288f8</dcterms:identifier>
+    <ore:isAggregatedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation">
+    <ore:aggregates rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/e0b3f8af-dd2e-4505-9250-32c592b288f8"/>
+    <ore:aggregates rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/d593121c-cd7a-44ef-b67a-8e27ddbcbe2a"/>
+    <ore:aggregates rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5"/>
+    <ore:aggregates rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/Aggregation"/>
+    <dc:title>DataONE Aggregation</dc:title>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9">
+    <dc:creator rdf:nodeID="A0"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9</dcterms:identifier>
+    <dcterms:modified rdf:datatype="http://www.w3.org/2001/XMLSchema#dateTime">2022-01-26T01:27:26Z</dcterms:modified>
+    <ore:describes rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+    <dcterms:creator rdf:nodeID="A1"/>
+    <rdf:type rdf:resource="http://www.openarchives.org/ore/terms/ResourceMap"/>
+  </rdf:Description>
+  <rdf:Description rdf:nodeID="A1">
+    <foaf:name rdf:datatype="http://www.w3.org/2001/XMLSchema#string">DataONE R Client</foaf:name>
+    <rdf:type rdf:resource="http://purl.org/dc/terms/Agent"/>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/d593121c-cd7a-44ef-b67a-8e27ddbcbe2a">
+    <ore:isAggregatedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+    <j.1:atLocation>inputs/daily-total-female-births.csv</j.1:atLocation>
+    <j.0:isDocumentedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">d593121c-cd7a-44ef-b67a-8e27ddbcbe2a</dcterms:identifier>
+  </rdf:Description>
+  <rdf:Description rdf:about="https://cn-sandbox.test.dataone.org/cn/v2/resolve/b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5">
+    <j.1:atLocation>plot.py</j.1:atLocation>
+    <ore:isAggregatedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/resource_map_735a9a2f-7d91-40d0-85e6-877de645fcf9#aggregation"/>
+    <dcterms:identifier rdf:datatype="http://www.w3.org/2001/XMLSchema#string">b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5</dcterms:identifier>
+    <j.0:isDocumentedBy rdf:resource="https://cn-sandbox.test.dataone.org/cn/v2/resolve/735a9a2f-7d91-40d0-85e6-877de645fcf9"/>
+  </rdf:Description>
+</rdf:RDF>

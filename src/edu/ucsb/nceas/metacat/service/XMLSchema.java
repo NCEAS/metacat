@@ -44,6 +44,7 @@ public class XMLSchema {
 	private String formatId = null;
 	
 	private static final String type = DocumentImpl.SCHEMA;
+	private static final String FILE_PROTOCOL = "file://";
 	
 
     private Log logMetacat = LogFactory.getLog(XMLSchema.class);
@@ -102,15 +103,7 @@ public class XMLSchema {
 		}
 			
 		this.fileName = fileName;
-		try { 
-			this.localFileUri = SystemUtil.getInternalContextURL() + XMLSchemaService.SCHEMA_DIR
-					+ fileName;
-			logMetacat.debug("XMLSchema.setFileName - localFileUri: " + this.localFileUri);
-		} catch (PropertyNotFoundException pnfe) {
-			localFileUri = XMLSchemaService.SCHEMA_DIR + fileName;
-			logMetacat.warn("XMLSchema.setFileName - Could not get context url. Setting localFileUri to: "
-					+ localFileUri);
-		}
+		
 		try {
 			String fileDir = SystemUtil.getContextDir() + XMLSchemaService.SCHEMA_DIR
 				+ fileName;
@@ -121,6 +114,8 @@ public class XMLSchema {
 			logMetacat.warn("XMLSchema.setFileName - Could not get context directory. Setting localFileDir to: "
 					+ localFileDir);
 		}
+		localFileUri = FILE_PROTOCOL + localFileDir;
+		logMetacat.debug("XMLSchema.setFileName - Setting localFileUri to: "+ localFileUri);
 	}
 	
 	/**

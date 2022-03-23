@@ -25,6 +25,7 @@
 
 package edu.ucsb.nceas.metacat.dataone;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,6 +42,7 @@ import javax.servlet.ServletContext;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.D1Node;
 import org.dataone.client.NodeLocator;
@@ -170,7 +172,7 @@ public class D1NodeServiceTest extends MCTestCase {
 	       user.setValue("uid=foo");
 	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
-	       user.setValue("http://orcid.org/0000-0002-8121-2341");
+	       user.setValue("http://orcid.org/0000-0003-0077-4738");
 	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");
@@ -431,18 +433,26 @@ public class D1NodeServiceTest extends MCTestCase {
         // set the id
         sm.setIdentifier(id);
         sm.setFormatId(ObjectFormatCache.getInstance().getFormat("application/octet-stream").getFormatId());
+        byte[] array = IOUtils.toByteArray(object);
+        if (object.markSupported()) {
+            object.reset();
+        }
+        int size = array.length;
+        String sizeStr = "" + size;
+        //System.out.println("the size of system metadata is ***********************" + sizeStr);
+        sm.setSize(new BigInteger(sizeStr));
         // create the checksum
+        InputStream input = new ByteArrayInputStream(array);
         Checksum checksum = new Checksum();
         String ca = "MD5";
         checksum.setValue("test");
         checksum.setAlgorithm(ca);
         // actually generate one
-        if (object != null) {
-            checksum = ChecksumUtil.checksum(object, ca);
+        if (input != null) {
+            checksum = ChecksumUtil.checksum(input, ca);
         }
+        input.close();
         sm.setChecksum(checksum);
-        // set the size
-        sm.setSize(new BigInteger("0"));
         sm.setSubmitter(owner);
         sm.setRightsHolder(owner);
         sm.setDateUploaded(new Date());

@@ -195,17 +195,6 @@
                </xsl:for-each>
              </xsl:if>
 
-
-
-           <!-- create a second easy access table listing the data entities -->
-           <xsl:if test="dataTable|spatialRaster|spatialVector|storedProcedure|view|otherEntity">
-			<xsl:if test="$withEntityLinks='1' or $displaymodule = 'printall'">
-	             <xsl:call-template name="datasetentity"/>
-			</xsl:if>
-           </xsl:if>
-
-
-
      <h4>People and Associated Parties</h4>
 
        <!-- add in the creators -->
@@ -453,6 +442,13 @@
            </xsl:for-each>
          </xsl:if>
      </div>
+
+     <!-- create a second easy access table listing the data entities -->
+     <xsl:if test="dataTable|spatialRaster|spatialVector|storedProcedure|view|otherEntity">
+      <xsl:if test="$withEntityLinks='1' or $displaymodule = 'printall'">
+              <xsl:call-template name="datasetentity"/>
+      </xsl:if>
+     </xsl:if>
 
 
        <!-- add in the intellectiual rights info -->

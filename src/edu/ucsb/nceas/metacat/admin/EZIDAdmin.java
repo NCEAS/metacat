@@ -100,21 +100,23 @@ public class EZIDAdmin extends MetacatAdmin {
 
 			try {
 				// get the current configuration values
-			    String enablestr = PropertyService.getProperty("guid.ezid.enabled");
-				String username = PropertyService.getProperty("guid.ezid.username");
-				String password = PropertyService.getProperty("guid.ezid.password");
-				String baseurl = PropertyService.getProperty("guid.ezid.baseurl");
-				String doishoulder = PropertyService.getProperty("guid.ezid.doishoulder.1");
+			    String enablestr = PropertyService.getProperty("guid.doi.enabled");
+			    String doiPluginClass = PropertyService.getProperty("guid.doiservice.plugin.class");
+				String username = PropertyService.getProperty("guid.doi.username");
+				String password = PropertyService.getProperty("guid.doi.password");
+				String baseurl = PropertyService.getProperty("guid.doi.baseurl");
+				String doishoulder = PropertyService.getProperty("guid.doi.doishoulder.1");
 				boolean enable = false;
 				if (enablestr != null) {
 					enable = Boolean.parseBoolean(enablestr);
 				}
 				
-				request.setAttribute("guid.ezid.enabled", enable);
-				request.setAttribute("guid.ezid.username", username);
-				request.setAttribute("guid.ezid.password", password);
-				request.setAttribute("guid.ezid.baseurl", baseurl);
-				request.setAttribute("guid.ezid.doishoulder.1", doishoulder);
+				request.setAttribute("guid.doi.enabled", enable);
+				request.setAttribute("guid.doiservice.plugin.class", doiPluginClass);
+				request.setAttribute("guid.doi.username", username);
+				request.setAttribute("guid.doi.password", password);
+				request.setAttribute("guid.doi.baseurl", baseurl);
+				request.setAttribute("guid.doi.doishoulder.1", doishoulder);
 				
 				
 				// try the backup properties
@@ -124,9 +126,9 @@ public class EZIDAdmin extends MetacatAdmin {
                     Vector<String> backupKeys = backupProperties.getPropertyNames();
                     for (String key : backupKeys) {
                         String value = backupProperties.getProperty(key);
-                        if(key != null && value != null && key.equals("guid.ezid.enabled")) {
+                        if(key != null && value != null && key.equals("guid.doi.enabled")) {
                             enable = Boolean.parseBoolean(value);
-                            request.setAttribute("guid.ezid.enabled", enable);
+                            request.setAttribute("guid.doi.enabled", enable);
                         } else if (value != null) {
                             request.setAttribute(key, value);
                         }
@@ -195,11 +197,12 @@ public class EZIDAdmin extends MetacatAdmin {
 				// and preserve their entries.
 				validationErrors.addAll(validateOptions(request));
 				
-				String enablestr = (String)request.getParameter("guid.ezid.enabled");
-				String username = (String)request.getParameter("guid.ezid.username");
-                String password = (String)request.getParameter("guid.ezid.password");
-                String baseurl = (String)request.getParameter("guid.ezid.baseurl");
-                String doishoulder = (String)request.getParameter("guid.ezid.doishoulder.1");
+				String enablestr = (String)request.getParameter("guid.doi.enabled");
+				String pluginClass = (String)request.getParameter("guid.doiservice.plugin.class");
+				String username = (String)request.getParameter("guid.doi.username");
+                String password = (String)request.getParameter("guid.doi.password");
+                String baseurl = (String)request.getParameter("guid.doi.baseurl");
+                String doishoulder = (String)request.getParameter("guid.doi.doishoulder.1");
                 boolean enable = false;
                 if (enablestr != null) {
                     enable = Boolean.parseBoolean(enablestr);
@@ -209,11 +212,12 @@ public class EZIDAdmin extends MetacatAdmin {
 				if (username == null || password == null) {
 					validationErrors.add("User Name and Password cannot be null");
 				} else {
-				    PropertyService.setPropertyNoPersist("guid.ezid.enabled", Boolean.toString(enable));
-					PropertyService.setPropertyNoPersist("guid.ezid.username", username);
-					PropertyService.setPropertyNoPersist("guid.ezid.password", password);
-					PropertyService.setPropertyNoPersist("guid.ezid.baseurl", baseurl);
-					PropertyService.setPropertyNoPersist("guid.ezid.doishoulder.1", doishoulder);
+				    PropertyService.setPropertyNoPersist("guid.doi.enabled", Boolean.toString(enable));
+				    PropertyService.setPropertyNoPersist("guid.doiservice.plugin.class", pluginClass);
+					PropertyService.setPropertyNoPersist("guid.doi.username", username);
+					PropertyService.setPropertyNoPersist("guid.doi.password", password);
+					PropertyService.setPropertyNoPersist("guid.doi.baseurl", baseurl);
+					PropertyService.setPropertyNoPersist("guid.doi.doishoulder.1", doishoulder);
 					// persist them all
 					PropertyService.persistProperties();
 					PropertyService.syncToSettings();

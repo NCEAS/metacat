@@ -32,7 +32,7 @@
 <project name="metacat" default="jar" basedir="."
          xmlns:artifact="antlib:org.apache.maven.artifact.ant">
 	
-	<property name="metacatui-tag" value="2.18.0" />
+	<property name="metacatui-tag" value="2.19.0" />
     <property name="eml2-style-tag" value="RELEASE_EML_UTILS_1_1_2" />
 	
 	<property environment="env" />
@@ -572,13 +572,6 @@
 			property="styles.not.needed" />
 	</target>
 
-	<target name="generateStubs" depends="prepare">
-		<echo
-			message=" Generating stubs for execution service from ${/tmp/KeplerWebService.wsdl}" />
-		<axis-wsdl2java verbose="true" output="${srcdir}"
-			url="/tmp/KeplerWebService.wsdl" />
-	</target>
-
 	<target name="compile" depends="prepare"
 		description="Compiles java code to build dir, and copies metacat props files there">
 
@@ -833,23 +826,11 @@
 		</java>
 	</target>
 
-	<target name="install-spatial" depends="jar,clientjar,harvesterjar"
-		description="Installs spatial option for metacat">
-		
-		<copy todir="${dist.dir}">
-			<fileset dir="./lib/spatial/geoserver" includes="*.war" />
-		</copy>
-
-	</target>
-
 	<target name="install" depends="build-metacat"
 		description="* Install Metacat For Development *">
 		<copy file="${dist.dir}/${metacat.context}.war"
 			todir="${app.deploy.dir}" />
 		<delete dir="${app.deploy.dir}/${metacat.context}" />
-		<copy file="${dist.dir}/geoserver.war"
-					todir="${app.deploy.dir}" />
-		<delete dir="${app.deploy.dir}/geoserver" />
 		<copy file="${dist.dir}/metacat-index.war"
 					todir="${app.deploy.dir}" />
 		<delete dir="${app.deploy.dir}/metacat-index" />
@@ -862,7 +843,7 @@
 		<echo>Dev install completed at ${NOW}</echo>
 	</target>
 
-	<target name="build-metacat" depends="war, install-spatial, dist-metacat-index, build-metacat-ui"
+	<target name="build-metacat" depends="war, dist-metacat-index, build-metacat-ui"
 		description="Build Metacat">
 	</target>
 
@@ -919,7 +900,7 @@
 		<echo message="Install Skin completed." />
 	</target>
 
-	<target name="war" depends="warPrepare,install-spatial"
+	<target name="war" depends="warPrepare"
 		description="Create a web archive (WAR) for servlet deployment">
 		<mkdir dir="${dist.dir}" />
 		<war destfile="${dist.dir}/${metacat.context}.war"
@@ -1034,11 +1015,6 @@
 				<exclude name="maven/**" />
 				<exclude name="skin.configs/**" />
 				<exclude name="spatial/geoserver/**" />
-			</fileset>
-		</copy>
-		<copy todir="${war.context}" filtering="no">
-			<fileset dir="lib">
-				<include name="spatial/geoserver/data/**" />
 			</fileset>
 		</copy>
 		<copy todir="${war.context.docs}" filtering="no">
@@ -1455,7 +1431,7 @@
 	<target name="fulldist" depends="distbin, distsrc"
 			description="full distribution - source and bin"/>
 		
-	<target name="distbin" depends="build-metacat,war-lsid"
+	<target name="distbin" depends="build-metacat"
 		description="prepares a binary distribution">
 		<copy todir="${dist.dir}">
 			<fileset dir="./src/scripts" />
@@ -1536,24 +1512,6 @@
 		</xslt>
 	</target>
 
-	<target name="spatial_option" depends="prepare"
-		description=" -- compiles code for the spatial option">
-
-		<echo message="Compiling the metatcat shapefile creator" />
-		<echo message="using the shapelib at: ${shapelib.dir}" />
-		<exec dir="." executable="g++" os="Linux, Unix"
-			failonerror="true">
-			<arg
-				line="./src/spatial/cpp/metacat_shapefile.cpp -I ${shapelib.dir} -c -o build/metacat_shapefile.o" />
-		</exec>
-
-		<exec dir="." executable="g++" os="Linux, Unix"
-			failonerror="true">
-			<arg
-				line="build/metacat_shapefile.o ${shapelib.dir}/.libs/libshp.a -o bin/metacat_shapefile" />
-		</exec>
-	</target>
-
 	<!-- LSID Authority support -->
 	<patternset id="lsid.jars">
 		<include name="axis.jar" />
@@ -1595,130 +1553,6 @@
 		</fileset>
 	</path>
 
-	<filterset id="configFilters">
-		<!-- MCD BYE filter token="LSID_AUTHORITY_HOSTNAME"
-			value="${config.hostname}" / -->
-		<!-- MCD BYE filter token="LSID_AUTHORITY_PORT"
-			value="${config.port}" / -->
-		<!-- MCD BYE filter token="METADATA_LABELS"
-			value="${config.metadataLabelLsid}" / -->
-		<!-- MCD BYE filter token="METACAT_SERVER"
-			value="${config.metacatserver}" / -->
-		<!-- MCD BYE filter token="LSID_AUTHORITY_STRING"
-			value="${config.lsidauthority}" / -->
-	</filterset>
-
-	<target name="prepare-lsid" depends="prepare,clientjar"
-		description="Configure files prior to compilation">
-		<mkdir dir="${lsid.build.dir}" />
-		<!-- Copy the properties file into the build -->
-		<copy file="${conf.dir}/metacat-lsid.properties"
-			tofile="${lsid.build.dir}/WEB-INF/classes/metacat-lsid.properties"
-			overwrite="true">
-			<filterset refid="configFilters" />
-		</copy>
-		<copy file="${conf.dir}/log4j.properties"
-			tofile="${lsid.build.dir}/WEB-INF/classes/log4j.properties"
-			overwrite="true">
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy config files into the build -->
-		<copy todir="${lsid.build.dir}/WEB-INF">
-			<fileset dir="${webinf.dir}" includes="**/*.wsdd" />
-		</copy>
-		<!-- Copy the metadata configuration files into the build -->
-		<mkdir
-			dir="${lsid.build.dir}/WEB-INF/classes/${lsid.classes.dir}" />
-		<copy
-			todir="${lsid.build.dir}/WEB-INF/classes/${lsid.classes.dir}">
-			<fileset dir="${conf.dir}" includes="**/*.xml" />
-			<fileset dir="${conf.dir}" includes="**/*.xslt" />
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy services files into the build -->
-		<mkdir dir="${lsid.build.dir}/services" />
-		<copy todir="${lsid.build.dir}/services">
-			<fileset dir="${services.dir}" />
-			<filterset refid="configFilters" />
-		</copy>
-		<!-- Copy axis files into the build -->
-		<mkdir dir="${lsid.build.dir}" />
-		<copy todir="${lsid.build.dir}">
-			<fileset dir="${conf.dir}/axis" excludes="*.properties" />
-		</copy>
-		<mkdir dir="${lsid.build.dir}/WEB-INF/classes" />
-		<copy todir="${lsid.build.dir}/WEB-INF/classes">
-			<fileset dir="${conf.dir}/axis" includes="*.properties" />
-		</copy>
-	</target>
-
-	<target name="compile-lsid" depends="prepare-lsid"
-		description="Compile Java sources">
-		<mkdir dir="${lsid.build.dir}/WEB-INF/classes" />
-		<javac srcdir="src/edu/ucsb/nceas/metacat/lsid"
-			destdir="${lsid.build.dir}/WEB-INF/classes" debug="${compile.debug}"
-			deprecation="${compile.deprecation}"
-			target="${java.target.version}"
-			source="${java.source.version}"
-			optimize="${compile.optimize}">
-			<classpath>
-				<path refid="compile.classpath" />
-				<fileset dir="${build.dir}">
-					<include name="${name}.jar" />
-				</fileset>
-			</classpath>
-		</javac>
-	</target>
-
-	<target name="war-lsid" depends="compile-lsid"
-		description="Create a war file for the application">
-		<mkdir dir="${dist.dir}" />
-		<war destfile="${dist.dir}/${authority.context}.war"
-			webxml="${webinf.dir}/web.xml">
-			<fileset dir="${lsid.build.dir}" />
-			<lib dir="${lsid.lib.dir}">
-				<patternset refid="lsid.jars" />
-			</lib>
-			<lib dir="${lib.dir}">
-				<patternset refid="lib.jars" />
-			</lib>
-			<lib dir="${lib.dir}">
-				<include name="xalan.jar" />
-				<include name="xml-apis.jar" />
-			</lib>
-			<lib dir="${build.dir}">
-				<include name="metacat-client.jar" />
-			</lib>
-		</war>
-	</target>
-
-	<target name="deploy-lsid" depends="war-lsid"
-		description="Deploy LSID war to servlet container">
-		<delete dir="${app.deploy.dir}/${authority.context}" />
-		<delete file="${app.deploy.dir}/${authority.context}.war" />
-		<mkdir dir="${app.deploy.dir}" />
-		<copy todir="${app.deploy.dir}">
-			<fileset dir="${dist.dir}" />
-		</copy>
-	</target>
-	
-	<target name="change-metacat-properties" depends="warPrepare"
-        description="Chage some default values of metacat.properties">
-       <echo file="${metacat-properties-file}" append="true">
-		   configutil.propertiesConfigured=true
-		   configutil.authConfigured=true
-           configutil.skinsConfigured=true
-		   configutil.databaseConfigured=true
-		   configutil.geoserverConfigured=true
-	   </echo>
-  </target>
-	
-	<!-- This target will use default values in svn metacat.properties to build a configured 
-		metacat (except configuti.* properties, they will be set true). Those default settings
-		are for a test machine. It may not work on your system-->
-	<target name="install-configured-metacat" depends="change-metacat-properties, install"
-        description="Install a metacat by the default value in metacat.properties without additional configutaion">
-    </target>
 	
 	<!-- build metacat-common jar -->
 	<target name="build-metacat-common" depends="setMavenHome" description="Calls the Maven build for metacat-common jar" unless="build-metacat-common-called" >

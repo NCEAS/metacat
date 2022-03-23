@@ -94,6 +94,7 @@ import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeInputStream;
 import edu.ucsb.nceas.metacat.dataone.D1AuthHelper;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
+import edu.ucsb.nceas.metacat.doi.DOIException;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.restservice.D1ResourceHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.CheckedFile;
@@ -156,6 +157,8 @@ public class MNResourceHandler extends D1ResourceHandler {
     protected static final String RESOURCE_PACKAGE = "packages";
     protected static final String RESOURCE_TOKEN = "token";
     protected static final String RESOURCE_WHOAMI = "whoami";
+    //make the status of identifier (e.g. DOI) public
+    protected static final String RESOURCE_PUBLISH_IDENTIFIER = "publishIdentifier";
 
 
 
@@ -429,7 +432,7 @@ public class MNResourceHandler extends D1ResourceHandler {
                         generateIdentifier();
                         status = true;
                     }
-                } else if (resource.startsWith(RESOURCE_PUBLISH)) {
+                } else if (resource.startsWith(RESOURCE_PUBLISH) && !resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
                     logMetacat.debug("Using resource: " + RESOURCE_PUBLISH);
                     // PUT
                     if (httpVerb == PUT) {
@@ -514,6 +517,16 @@ public class MNResourceHandler extends D1ResourceHandler {
 	                    doViews(format, pid);
 	                    status = true;
 	                }
+                } else if (resource.startsWith(RESOURCE_PUBLISH_IDENTIFIER)) {
+                    logMetacat.debug("Using resource: " + RESOURCE_PUBLISH_IDENTIFIER);
+                    // PUT
+                    if (httpVerb == PUT) {
+                        // after the command
+                        extra = parseTrailing(resource, RESOURCE_PUBLISH_IDENTIFIER);
+                        extra = decode(extra);
+                        publishIdentifier(extra);
+                        status = true;
+                    }  
                 } else {
                     throw new InvalidRequest("0000", "No resource matched for " + resource);
                 }
@@ -1560,6 +1573,33 @@ public class MNResourceHandler extends D1ResourceHandler {
 		// write new identifier to the output stream
 		TypeMarshaller.marshalTypeToOutputStream(newIdentifier, out);
 		IOUtils.closeQuietly(out);
+	}
+	
+	/**
+	 * Make the status of the identifier public
+	 * @param identifier  
+	 * @throws InvalidToken
+	 * @throws ServiceFailure
+	 * @throws NotAuthorized
+	 * @throws NotImplemented
+	 * @throws InvalidRequest
+	 * @throws NotFound
+	 * @throws IdentifierNotUnique
+	 * @throws UnsupportedType
+	 * @throws InsufficientResources
+	 * @throws InvalidSystemMetadata
+	 * @throws DOIException
+	 * @throws IOException
+	 * @throws MarshallingException
+	 */
+	protected void publishIdentifier(String identifier) throws InvalidToken, ServiceFailure, NotAuthorized, 
+	                         NotImplemented, InvalidRequest, NotFound, IdentifierNotUnique, UnsupportedType, 
+	                         InsufficientResources, InvalidSystemMetadata, DOIException, IOException, MarshallingException {
+	    Identifier id = new Identifier();
+        id.setValue(identifier);
+        MNodeService.getInstance(request).publishIdentifier(session, id);
+        //the publish started in another thread, we just set the status to success
+        response.setStatus(200);
 	}
     
     /**

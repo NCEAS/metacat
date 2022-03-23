@@ -609,7 +609,7 @@
 
    <!-- The eleventh row for method-->
   <div class="control-group">
-		<label class="control-label">Method</label>
+		<label class="control-label">Methods &amp; Sampling</label>
 		<div class="controls controls-well">
 		    <xsl:choose>
 		         <xsl:when test="references!=''">
@@ -617,8 +617,8 @@
 		          <xsl:variable name="references" select="$ids[@id=$ref_id]" />
 		          <xsl:for-each select="$references">
 		            <xsl:choose>
-		               <xsl:when test="method!=''">
-		                   <xsl:for-each select="method">
+		               <xsl:when test="methods!=''">
+		                   <xsl:for-each select="methods">
 		                     <xsl:call-template name="attributemethod">
 		                       <xsl:with-param name="docid" select="$docid"/>
 		                       <xsl:with-param name="entitytype" select="$entitytype"/>
@@ -635,8 +635,8 @@
 		        </xsl:when>
 		        <xsl:otherwise>
 		           <xsl:choose>
-		               <xsl:when test="method!=''">
-		                   <xsl:for-each select="method">
+		               <xsl:when test="methods!=''">
+		                   <xsl:for-each select="methods">
 		                     <xsl:call-template name="attributemethod">
 		                       <xsl:with-param name="docid" select="$docid"/>
 		                       <xsl:with-param name="entitytype" select="$entitytype"/>
@@ -1210,7 +1210,7 @@
 
 
    <!-- The eleventh row for method-->
-  <tr><th class="rowodd">Method</th>
+  <tr><th class="rowodd">Methods &amp; Sampling</th>
    <xsl:for-each select="attribute">
     <xsl:if test="position() = $attributeindex">
     <xsl:variable name="index" select="position()"/>
@@ -1226,9 +1226,9 @@
           <xsl:variable name="references" select="$ids[@id=$ref_id]" />
           <xsl:for-each select="$references">
             <xsl:choose>
-               <xsl:when test="method!=''">
+               <xsl:when test="methods!=''">
                  <td colspan="1" align="center" class="{$stripes}">
-                   <xsl:for-each select="method">
+                   <xsl:for-each select="methods">
                      <xsl:call-template name="attributemethod">
                        <xsl:with-param name="docid" select="$docid"/>
                        <xsl:with-param name="entitytype" select="$entitytype"/>
@@ -1248,9 +1248,9 @@
         </xsl:when>
         <xsl:otherwise>
            <xsl:choose>
-               <xsl:when test="method!=''">
+               <xsl:when test="methods!=''">
                  <td colspan="1" align="center" class="{$stripes}">
-                   <xsl:for-each select="method">
+                   <xsl:for-each select="methods">
                      <xsl:call-template name="attributemethod">
                        <xsl:with-param name="docid" select="$docid"/>
                        <xsl:with-param name="entitytype" select="$entitytype"/>
