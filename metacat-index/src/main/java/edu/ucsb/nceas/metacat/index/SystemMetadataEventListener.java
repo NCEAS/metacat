@@ -52,6 +52,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
         int nThreads = availableProcessors * 1;
         nThreads--;
         nThreads = Math.max(1, nThreads);
+        log.info("SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
         executor = Executors.newFixedThreadPool(nThreads); 
     }
 	        
