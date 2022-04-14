@@ -603,6 +603,7 @@ public class SolrIndex {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             //}
             update(pid, systemMetadata, objectPath);
+            log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
             String error = "SolrIndex.update - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
@@ -610,7 +611,7 @@ public class SolrIndex {
             writeEventLog(systemMetadata, pid, error, deleteEvent);
             log.error(error, e);
         }
-        log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
+        
     }
    
     
