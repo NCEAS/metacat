@@ -419,7 +419,7 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private synchronized void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath) 
+    private void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath) 
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, SolrServerException, MarshallingException, EncoderException, NotImplemented, NotFound, UnsupportedType {
         checkParams(pid, systemMetadata, objectPath);
@@ -526,7 +526,7 @@ public class SolrIndex {
     /*
      * Insert a SolrDoc to the solr server.
      */
-    private synchronized void insertToIndex(SolrDoc doc) throws SolrServerException, IOException {
+    private void insertToIndex(SolrDoc doc) throws SolrServerException, IOException {
         if(doc != null ) {
             SolrInputDocument solrDoc = new SolrInputDocument();
             List<SolrElementField> list = doc.getFieldList();
