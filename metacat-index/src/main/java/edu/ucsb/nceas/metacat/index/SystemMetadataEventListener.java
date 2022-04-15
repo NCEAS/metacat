@@ -37,6 +37,7 @@ import com.hazelcast.core.IMap;
 import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 
+
 public class SystemMetadataEventListener implements EntryListener<Identifier, IndexTask>, Runnable {
 	
 	private static Log log = LogFactory.getLog(SystemMetadataEventListener.class);
@@ -53,6 +54,8 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
         nThreads--;
         nThreads = Math.max(1, nThreads);
         log.info("SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
+        //int nThreads = org.dataone.configuration.Settings.getConfiguration().getInt("index.thread.number", 1);
+        //log.info("+++++++++++++++SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
         executor = Executors.newFixedThreadPool(nThreads); 
     }
 	        
@@ -134,14 +137,11 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     }
     
 	public void entryUpdated(EntryEvent<Identifier, IndexTask> entryEvent) {
-	    //System.out.println("===================================calling entryUpdated method ");
-	    log.debug("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
-		// add to the index
 		final Identifier pid = entryEvent.getKey();
-		//System.out.println("===================================update the document "+pid.getValue());
-		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
-		
 		final IndexTask task = entryEvent.getValue();
+		//System.out.println("the size of queue is " + source.size());
+		//System.out.println("+++++++++++++++++++++++++++++ the systemmetadata last modifying time is " + task.getSystemMetadata().getDateSysMetadataModified().getTime());
+		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
 		final boolean deletingTask = task.isDeleting();
 		final long startFromQueuing = task.getTimeAddToQueque();
 		
@@ -149,14 +149,20 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		Runnable runner = new Runnable() {
             @Override
             public void run() {
+                long start = System.currentTimeMillis();
+                if (source != null && pid != null) {
+                    try {
+                        source.lock(pid);
+                        // make sure we remove this task so that it can be re-added in the future
+                        source.remove(pid);
+                    } finally {
+                        source.unlock(pid);
+                    }
+                }
                 try {
-                    long start = System.currentTimeMillis();
+                    log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Time from queuing to start process is " + Settings.PERFORMANCELOG_DURATION + (start-startFromQueuing)/1000);
                     SystemMetadata systemMetadata = task.getSystemMetadata();
                     Map<String, List<Object>> fields = task.getFields();
-                    // make sure we remove this task so that it can be re-added in the future
-                    if (source != null && pid != null) {
-                        source.remove(pid);
-                    }
                     if (systemMetadata != null) {
                         if(deletingTask) {
                             solrIndex.remove(pid, systemMetadata);
