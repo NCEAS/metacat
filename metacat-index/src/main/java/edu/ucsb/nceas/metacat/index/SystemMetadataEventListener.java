@@ -188,4 +188,12 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
         // submit the task, and that's it
         executor.submit(runner);
 	}
+	
+	/**
+	 * Get the ExecutorService which indexes the tasks
+	 * @return the ExecutoSerice object
+	 */
+	public static ExecutorService getExecutor() {
+	    return executor;
+	}
 }

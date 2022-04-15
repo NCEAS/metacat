@@ -21,6 +21,8 @@ package edu.ucsb.nceas.metacat.index;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -118,7 +120,18 @@ public class MetacatIndexServlet extends HttpServlet {
      *Actions needed to be done before close the servlet
      */
     public void destroy() {
-     //do nothing
+        //Stop the index executor service
+        ExecutorService executor = SystemMetadataEventListener.getExecutor();
+        if (executor != null) {
+            executor.shutdown();
+            try {
+                if (!executor.awaitTermination(60, TimeUnit.SECONDS)) {
+                    executor.shutdownNow();
+                }                   
+            } catch (InterruptedException e) {              
+                executor.shutdownNow();
+            }
+        }
     }
     
     /** Handle "GET" method requests from HTTP clients */
