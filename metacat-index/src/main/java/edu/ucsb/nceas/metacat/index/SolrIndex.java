@@ -55,6 +55,7 @@ import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.client.solrj.response.UpdateResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.apache.solr.common.SolrException;
 import org.apache.solr.common.SolrInputDocument;
 import org.apache.solr.schema.IndexSchema;
 import org.dataone.cn.indexer.XMLNamespaceConfig;
@@ -592,6 +593,7 @@ public class SolrIndex {
      *    index for the doc.
      */
     public void update(Identifier pid, SystemMetadata systemMetadata) {
+        int time = 0;
         if(systemMetadata==null || pid==null) {
             log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
             return;
@@ -602,7 +604,18 @@ public class SolrIndex {
             //if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             //}
-            update(pid, systemMetadata, objectPath);
+            try {
+                update(pid, systemMetadata, objectPath);
+            } catch (SolrException ee) {
+                if (ee.getMessage().contains("version conflict") && time < 1) {
+                    log.info("SolrIndex.update - Indexer grabed an older verion of the solr doc for object " + 
+                             pid.getValue() + " It will process it again in oder to get the new solr doc copy");
+                    update(pid, systemMetadata, objectPath);
+                    time++;
+                } else {
+                    throw ee;
+                }
+            }
             log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
             EventlogFactory.createIndexEventLog().remove(pid);
         } catch (Exception e) {
