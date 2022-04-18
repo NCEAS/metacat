@@ -605,6 +605,7 @@ public class SolrIndex {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             //}
             try {
+                systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
                 update(pid, systemMetadata, objectPath);
             } catch (SolrException ee) {
                 if (ee.getMessage().contains("version conflict") && time < 1) {
