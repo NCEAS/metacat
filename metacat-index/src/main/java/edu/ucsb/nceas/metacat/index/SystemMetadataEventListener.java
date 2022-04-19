@@ -161,7 +161,8 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
                 }
                 try {
                     log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Time from queuing to start process is " + Settings.PERFORMANCELOG_DURATION + (start-startFromQueuing)/1000);
-                    SystemMetadata systemMetadata = task.getSystemMetadata();
+                    //SystemMetadata systemMetadata = task.getSystemMetadata();
+                    SystemMetadata systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
                     Map<String, List<Object>> fields = task.getFields();
                     if (systemMetadata != null) {
                         if(deletingTask) {
