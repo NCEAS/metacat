@@ -5,9 +5,11 @@
 						http://www.springframework.org/schema/beans/spring-beans.xsd
 						http://www.springframework.org/schema/context  
     					http://www.springframework.org/schema/context/spring-context-3.0.xsd">
-    					
-	<bean id="xpath_system_metadata_200" class="java.util.ArrayList">
-		<constructor-arg>
+	
+	<bean id="systemMetadata200Subprocessor"
+	  	class="org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor">
+	  	<property name="xmlNamespaceConfig" ref="xmlNamespaceConfig" />
+	    <property name="fieldList">
 			<list>
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="id" />
@@ -33,7 +35,7 @@
 						p:multivalue="true"
 						p:root-ref="mediaTypePropertyListRoot">
 						<constructor-arg name="name" value="mediaTypeProperty" />
-				</bean>
+				</bean>				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="formatId" />
 					<constructor-arg name="xpath"
@@ -101,14 +103,14 @@
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/obsoletedBy/text()" />
 				</bean>
-				 
+				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="archived" />
 					<constructor-arg name="xpath"
 						value="/d200:systemMetadata/archived/text()" />
 					<property name="defaultValue" value="false" />
 				</bean>
-							
+				
 				<bean class="org.dataone.cn.indexer.parser.SolrField">
 					<constructor-arg name="name" value="dateUploaded" />
 					<constructor-arg name="xpath"
@@ -181,10 +183,9 @@
 					<constructor-arg name="name" value="dataUrl" />
 		        </bean>
 			</list>
-		</constructor-arg>	
+		</property>
 	</bean>
 	
-		
 	<bean id="mediaTypePropertyListRoot" class="org.dataone.cn.indexer.parser.utility.RootElement"
 		p:name="mediaTypeProperty"
 		p:xPath='/d200:systemMetadata/mediaType/property'
@@ -204,8 +205,6 @@
 	<bean id="mediaTypePropertyValueLeaf" class="org.dataone.cn.indexer.parser.utility.LeafElement"
 		p:name="mediaTypePropertyValue"
 		p:xPath='text()' />
-	
-	
 	
 	
 </beans>

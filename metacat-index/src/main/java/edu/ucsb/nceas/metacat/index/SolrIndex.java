@@ -63,6 +63,7 @@ import org.dataone.cn.indexer.convert.SolrDateConverter;
 import org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentDeleteSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
+import org.dataone.cn.indexer.parser.ISolrField;
 import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
@@ -100,50 +101,28 @@ public class SolrIndex {
 
     private static SolrClient solrServer = null;
     private XMLNamespaceConfig xmlNamespaceConfig = null;
-    private List<SolrField> sysmetaSolrFields = null;
-
-    private static DocumentBuilderFactory documentBuilderFactory = null;
-    private static DocumentBuilder builder = null;
-
-    private static XPathFactory xpathFactory = null;
-    private static XPath xpath = null;
+    private BaseXPathDocumentSubprocessor systemMetadataProcessor = null;
+    private List<ISolrField> sysmetaSolrFields = null;
     private static Log log = LogFactory.getLog(SolrIndex.class);
     
-    static {
-        documentBuilderFactory = DocumentBuilderFactory.newInstance();
-        documentBuilderFactory.setNamespaceAware(true);
-        try {
-            builder = documentBuilderFactory.newDocumentBuilder();
-        } catch (ParserConfigurationException e) {
-            e.printStackTrace();
-        }
-        xpathFactory = XPathFactory.newInstance();
-        xpath = xpathFactory.newXPath();
-    }
     
     /**
      * Constructor
      * @throws SAXException 
      * @throws IOException 
      */
-    public SolrIndex(XMLNamespaceConfig xmlNamespaceConfig, List<SolrField> sysmetaSolrFields)
+    public SolrIndex(XMLNamespaceConfig xmlNamespaceConfig, BaseXPathDocumentSubprocessor systemMetadataProcessor)
                     throws XPathExpressionException, ParserConfigurationException, IOException, SAXException {
          this.xmlNamespaceConfig = xmlNamespaceConfig;
-         this.sysmetaSolrFields = sysmetaSolrFields;
+         this.systemMetadataProcessor = systemMetadataProcessor;
          init();
     }
     
     private void init() throws ParserConfigurationException, XPathExpressionException {
-        xpath.setNamespaceContext(xmlNamespaceConfig);
-        initExpressions();
+        sysmetaSolrFields = systemMetadataProcessor.getFieldList();
     }
 
-    private void initExpressions() throws XPathExpressionException {
-        for (SolrField field : sysmetaSolrFields) {
-            field.initExpression(xpath);
-        }
-
-    }
+   
     
     
     /**
@@ -161,6 +140,9 @@ public class SolrIndex {
     public void setSubprocessors(List<IDocumentSubprocessor> subprocessorList) {
         for (IDocumentSubprocessor subprocessor : subprocessorList) {
         	if (subprocessor instanceof BaseXPathDocumentSubprocessor) {
+        	    XPathFactory xpathFactory = XPathFactory.newInstance();
+        	    XPath xpath = xpathFactory.newXPath();
+        	    xpath.setNamespaceContext(xmlNamespaceConfig);
         		((BaseXPathDocumentSubprocessor)subprocessor).initExpression(xpath);
         	}
         }
@@ -197,24 +179,20 @@ public class SolrIndex {
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, MarshallingException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType{
         log.debug("SolrIndex.process - trying to generate the solr doc object for the pid "+id);
+        Map<String, SolrDoc> docs = new HashMap<String, SolrDoc>();
         // Load the System Metadata document
         ByteArrayOutputStream systemMetadataOutputStream = new ByteArrayOutputStream();
         TypeMarshaller.marshalTypeToOutputStream(systemMetadata, systemMetadataOutputStream);
-        ByteArrayInputStream systemMetadataStream = new ByteArrayInputStream(systemMetadataOutputStream.toByteArray());
-        Document sysMetaDoc = generateXmlDocument(systemMetadataStream);
-        if (sysMetaDoc == null) {
-            log.error("Could not load System metadata for ID: " + id);
-            return null;
+        ByteArrayInputStream systemMetadataStream = new ByteArrayInputStream(systemMetadataOutputStream.toByteArray());        
+        try {
+            docs = systemMetadataProcessor.processDocument(id, docs, systemMetadataStream);
+        } catch (Exception e) {
+            log.error(e.getMessage(), e);
+            throw new SolrServerException(e.getMessage());
         }
-
-        // Extract the field values from the System Metadata
-        List<SolrElementField> sysSolrFields = processSysmetaFields(sysMetaDoc, id);
-        SolrDoc indexDocument = new SolrDoc(sysSolrFields);
-        Map<String, SolrDoc> docs = new HashMap<String, SolrDoc>();
-        docs.put(id, indexDocument);
         
         // get the format id for this object
-        String formatId = indexDocument.getFirstFieldValue(SolrElementField.FIELD_OBJECTFORMAT);
+        String formatId = docs.get(id).getFirstFieldValue(SolrElementField.FIELD_OBJECTFORMAT);
         log.debug("SolrIndex.process - the object format id for the pid "+id+" is "+formatId);
         // Determine if subprocessors are available for this ID
         if (subprocessors != null) {
@@ -342,7 +320,7 @@ public class SolrIndex {
     private boolean isSystemMetadataField(String fieldName) {
         boolean is = false;
         if (fieldName != null && !fieldName.trim().equals("") && sysmetaSolrFields != null) {
-            for(SolrField field : sysmetaSolrFields) {
+            for(ISolrField field : sysmetaSolrFields) {
                 if(field !=  null && field.getName() != null && field.getName().equals(fieldName)) {
                     log.debug("SolrIndex.isSystemMetadataField - the field name "+fieldName+" matches one record of system metadata field list. It is a system metadata field.");
                     is = true;
@@ -352,43 +330,8 @@ public class SolrIndex {
         }
         return is;
     }
-    /*
-     * Generate a Document from the InputStream
-     */
-    private Document generateXmlDocument(InputStream smdStream) throws SAXException {
-        Document doc = null;
-
-        try {
-            doc = builder.parse(smdStream);
-        } catch (IOException e) {
-            log.error(e.getMessage(), e);
-        }
-
-        return doc;
-    }
     
-    /*
-     * Index the fields of the system metadata
-     */
-    private List<SolrElementField> processSysmetaFields(Document doc, String identifier) {
-
-        List<SolrElementField> fieldList = new ArrayList<SolrElementField>();
-        // solrFields is the list of fields defined in the application context
-       
-        for (SolrField field : sysmetaSolrFields) {
-            try {
-                // the field.getFields method can return a single value or
-                // multiple values for multi-valued fields
-                // or can return multiple SOLR document fields.
-                fieldList.addAll(field.getFields(doc, identifier));
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        return fieldList;
-
-    }
-    
+  
     /**
      * Check the parameters of the insert or update methods.
      * @param pid
