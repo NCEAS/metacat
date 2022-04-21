@@ -96,6 +96,8 @@ public class SolrIndex {
             
     public static final String ID = "id";
     private static final String IDQUERY = ID+":*";
+    private static final String VERSION_CONFLICT = "version conflict";
+    private static final int VERSION_CONFLICT_TRY = 3;//it must be equal or greater than 2.
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
@@ -399,72 +401,103 @@ public class SolrIndex {
      * @param fields
      */
     public void insertFields(Identifier pid, Map<String, List<Object>> fields) {
-    	
     	try {
-			// copy the original values already indexed for this document	
-	    	SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
-        if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
-                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
-            query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
-        }
-	    	log.info("SolrIndex.insertFields - The query to get the original solr doc is ~~~~~~~~~~~~~~~=================="+query.toString());
-	    	QueryResponse res = solrServer.query(query);
-	    	SolrDoc doc = new SolrDoc();
-	    	
-	    	// include existing values if they exist
-	        IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
-
-	        if (res.getResults().size() > 0) {
-		        SolrDocument orig = res.getResults().get(0);
-		    	for (String fieldName: orig.getFieldNames()) {
-		        	//  don't transfer the copyTo fields, otherwise there are errors
-		        	if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
-		        		continue;
-		        	}
-		        	for (Object value: orig.getFieldValues(fieldName)) {
-		        		String stringValue = value.toString();
-		        		// special handling for dates in ISO 8601
-		        		if (value instanceof Date) {
-		        			stringValue = DateTimeMarshaller.serializeDateToUTC((Date)value);
-		        			SolrDateConverter converter = new SolrDateConverter();
-		        			stringValue = converter.convert(stringValue);
-		        		}
-						SolrElementField field = new SolrElementField(fieldName, stringValue);
-						log.debug("Adding field: " + fieldName);
-						doc.addField(field);
-		        	}
-		        }
-	        }
-	    	
-	        // add the additional fields we are trying to include in the index
-	        for (String fieldName: fields.keySet()) {
-	    		List<Object> values = fields.get(fieldName);
-	    		for (Object value: values) {
-	    			if (!doc.hasFieldWithValue(fieldName, value.toString())) {
-	    				if (indexSchema.getField(fieldName).multiValued()) {
-	    					doc.addField(new SolrElementField(fieldName, value.toString()));
-	    				} else {
-	    	    	    	doc.updateOrAddField(fieldName, value.toString());
-	    				}
-	    			}
-	    		}
-	    	}
-	        
-	        // make sure there is an id in the solrdoc so it is added to the index
-	        if (!doc.hasField(ID)) {
-	        	doc.updateOrAddField(ID, pid.getValue());
-	        }
-	        
-	        // insert the whole thing
-	        insertToIndex(doc);
-	        log.info("SolrIndex.insetFields - successfully added some extra solr index fields for the objec " + pid.getValue());
+    	    for (int i=1; i<=VERSION_CONFLICT_TRY; i++) {
+    	        try {
+                    insertExtraFields(pid, fields);
+                    break;
+                } catch (SolrException ee) {
+                    if (ee.getMessage().contains(VERSION_CONFLICT) ) {
+                        log.info("SolrIndex.insertFields - Indexer grabed an older verion of the solr doc for object " + 
+                                    pid.getValue() + " It will process it again in oder to get the new solr doc copy. This is " + i + " time to try.");
+                        if (i == VERSION_CONFLICT_TRY) {
+                            throw ee; //we tried the max time and still failed to get the newest version
+                        }
+                    } else {
+                        throw ee;
+                    }
+                }
+    	    }
+    	    log.info("SolrIndex.insetFields - successfully added some extra solr index fields for the objec " + pid.getValue());
     	} catch (Exception e) {
-    		String error = "SolrIndex.insetFields - could not update the solr index for the object "+pid.getValue()+" since " + e.getMessage();
-    		    boolean deleteEvent = false;
+    		String error = "SolrIndex.insetFields - could not update the solr index for the object "+
+    	                    pid.getValue()+" since " + e.getMessage();
             writeEventLog(null, pid, error, false);
             log.error(error, e);
     	}
     	
+    }
+    
+    /**
+     * Adds the given fields to the solr index for the given pid, preserving the index values
+     * that previously existed
+     * @param pid
+     * @param fields
+     * @throws IOException 
+     * @throws SolrServerException 
+     * @throws SAXException 
+     * @throws ParserConfigurationException 
+     * @throws NotFound 
+     * @throws UnsupportedType 
+     */
+    private void insertExtraFields(Identifier pid, Map<String, List<Object>> fields) throws SolrServerException, IOException, 
+                                                            UnsupportedType, NotFound, ParserConfigurationException, SAXException {
+            // copy the original values already indexed for this document   
+            SolrQuery query = new SolrQuery("id:\"" + pid.getValue() + "\"");
+            if(ApplicationController.getIncludeArchivedQueryParaName() != null && !ApplicationController.getIncludeArchivedQueryParaName().trim().equals("") && 
+                ApplicationController.getIncludeArchivedQueryParaValue() != null && !ApplicationController.getIncludeArchivedQueryParaValue().trim().equals("")) {
+                query.set(ApplicationController.getIncludeArchivedQueryParaName(), ApplicationController.getIncludeArchivedQueryParaValue());
+            }
+            log.info("SolrIndex.insertFields - The query to get the original solr doc is ~~~~~~~~~~~~~~~=================="+query.toString());
+            QueryResponse res = solrServer.query(query);
+            SolrDoc doc = new SolrDoc();
+            
+            // include existing values if they exist
+            IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
+
+            if (res.getResults().size() > 0) {
+                SolrDocument orig = res.getResults().get(0);
+                for (String fieldName: orig.getFieldNames()) {
+                    //  don't transfer the copyTo fields, otherwise there are errors
+                    if (indexSchema.isCopyFieldTarget(indexSchema.getField(fieldName))) {
+                        continue;
+                    }
+                    for (Object value: orig.getFieldValues(fieldName)) {
+                        String stringValue = value.toString();
+                        // special handling for dates in ISO 8601
+                        if (value instanceof Date) {
+                            stringValue = DateTimeMarshaller.serializeDateToUTC((Date)value);
+                            SolrDateConverter converter = new SolrDateConverter();
+                            stringValue = converter.convert(stringValue);
+                        }
+                        SolrElementField field = new SolrElementField(fieldName, stringValue);
+                        log.debug("Adding field: " + fieldName);
+                        doc.addField(field);
+                    }
+                }
+            }
+            
+            // add the additional fields we are trying to include in the index
+            for (String fieldName: fields.keySet()) {
+                List<Object> values = fields.get(fieldName);
+                for (Object value: values) {
+                    if (!doc.hasFieldWithValue(fieldName, value.toString())) {
+                        if (indexSchema.getField(fieldName).multiValued()) {
+                            doc.addField(new SolrElementField(fieldName, value.toString()));
+                        } else {
+                            doc.updateOrAddField(fieldName, value.toString());
+                        }
+                    }
+                }
+            }
+            
+            // make sure there is an id in the solrdoc so it is added to the index
+            if (!doc.hasField(ID)) {
+                doc.updateOrAddField(ID, pid.getValue());
+            }
+            
+            // insert the whole thing
+            insertToIndex(doc);
     }
     
     /*
@@ -536,7 +569,6 @@ public class SolrIndex {
      *    index for the doc.
      */
     public void update(Identifier pid, SystemMetadata systemMetadata) {
-        int time = 0;
         if(systemMetadata==null || pid==null) {
             log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
             return;
@@ -547,17 +579,21 @@ public class SolrIndex {
             //if (systemMetadata.getArchived() == null || !systemMetadata.getArchived()) {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             //}
-            try {
-                systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
-                update(pid, systemMetadata, objectPath);
-            } catch (SolrException ee) {
-                if (ee.getMessage().contains("version conflict") && time < 1) {
-                    log.info("SolrIndex.update - Indexer grabed an older verion of the solr doc for object " + 
-                             pid.getValue() + " It will process it again in oder to get the new solr doc copy");
+            systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
+            for (int i=1; i<=VERSION_CONFLICT_TRY; i++) {
+                try {
                     update(pid, systemMetadata, objectPath);
-                    time++;
-                } else {
-                    throw ee;
+                    break;
+                } catch (SolrException ee) {
+                    if (ee.getMessage().contains(VERSION_CONFLICT)) {
+                        log.info("SolrIndex.update - Indexer grabed an older verion of the solr doc for object " + 
+                                    pid.getValue() + " It will process it again in oder to get the new solr doc copy. This is the " + i + " time to try.");
+                        if (i == VERSION_CONFLICT_TRY) {
+                            throw ee; //we tried the max time and still failed to get the newest version
+                        }
+                    } else {
+                        throw ee;
+                    }
                 }
             }
             log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());
