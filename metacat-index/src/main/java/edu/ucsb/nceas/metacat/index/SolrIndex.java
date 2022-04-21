@@ -286,6 +286,14 @@ public class SolrIndex {
         SolrDoc indexedDocument = indexedDocuments == null || indexedDocuments.size() <= 0 ? null
                 : indexedDocuments.get(0);
         
+        /*int wait = new Double(Math.random()  * 3000).intValue();
+        System.out.println("++++++++++++++++++++++++++++ the wait time is " + wait);
+        try {
+            Thread.sleep(wait);
+        } catch (Exception e) {
+            
+        }*/
+
         IndexSchema indexSchema = SolrQueryServiceController.getInstance().getSchema();
 
         if (indexedDocument == null || indexedDocument.getFieldList().size() <= 0) {
