@@ -38,7 +38,6 @@ import org.apache.solr.common.params.SolrParams;
 import org.apache.solr.common.util.NamedList;
 import org.apache.solr.schema.IndexSchema;
 import org.apache.solr.servlet.SolrRequestParsers;
-import org.dataone.cn.indexer.XmlDocumentUtility;
 import org.dataone.cn.indexer.convert.SolrDateConverter;
 import org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
@@ -46,6 +45,7 @@ import org.dataone.cn.indexer.resourcemap.ResourceMap;
 import org.dataone.cn.indexer.resourcemap.ResourceMapFactory;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.ServiceFailure;
@@ -53,7 +53,6 @@ import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dspace.foresite.OREParserException;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.SolrServerFactory;
@@ -74,6 +73,8 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     private static final String QUERY2="q="+SolrElementField.FIELD_RESOURCEMAP+":";
     private static Log log = LogFactory.getLog(SolrIndex.class);
     private static SolrClient solrServer =  null;
+    private static int waitingTime = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.time", 100);
+    private static int maxAttempts = Settings.getConfiguration().getInt("index.resourcemap.max.attempts", 5);
     static {
         try {
             solrServer = SolrServerFactory.createSolrServer();
@@ -85,7 +86,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     @Override
     public Map<String, SolrDoc> processDocument(String identifier, Map<String, SolrDoc> docs,
     InputStream is) throws IOException, EncoderException, SAXException,
-    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException, ServiceFailure{
+    XPathExpressionException, ParserConfigurationException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException, ServiceFailure, InterruptedException{
         SolrDoc resourceMapDoc = docs.get(identifier);
         //Document doc = XmlDocumentUtility.generateXmlDocument(is);
         Identifier id = new Identifier();
@@ -102,7 +103,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     }
 
     private List<SolrDoc> processResourceMap(SolrDoc indexDocument, String resourcMapPath)
-                    throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException{
+                    throws XPathExpressionException, IOException, SAXException, ParserConfigurationException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType, OREParserException, ResourceMapException, InterruptedException{
         //ResourceMap resourceMap = new ResourceMap(resourceMapDocument);
         IndexVisibilityHazelcastImplWithArchivedObj indexVisitility = new IndexVisibilityHazelcastImplWithArchivedObj();
         ResourceMap resourceMap = ResourceMapFactory.buildResourceMap(resourcMapPath, indexVisitility);
@@ -123,7 +124,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
         return mergedDocuments;
     }
     
-    private List<SolrDoc> getSolrDocs(String resourceMapId, List<String> ids) throws SolrServerException, IOException, ParserConfigurationException, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, ResourceMapException {
+    private List<SolrDoc> getSolrDocs(String resourceMapId, List<String> ids) throws SolrServerException, IOException, ParserConfigurationException, SAXException, XPathExpressionException, NotImplemented, NotFound, UnsupportedType, ResourceMapException, InterruptedException {
         List<SolrDoc> list = new ArrayList<SolrDoc>();
         if(ids != null) {
             for(String id : ids) {
@@ -131,7 +132,22 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
                 if(doc != null) {
                     list.add(doc);
                 } else if ( !id.equals(resourceMapId)) {
-                    throw new ResourceMapException("Solr index doesn't have the information about the id "+id+" which is a component in the resource map "+resourceMapId+". Metacat-Index can't process the resource map prior to its components.");
+                    for (int i=0; i<maxAttempts; i++) {
+                        Thread.sleep(waitingTime);
+                        doc = getSolrDoc(id);
+                        log.debug("ResourceMapSubprocessor.getSolrDocs - the " + i + " time to wait " + 
+                                   waitingTime + " to get the solr doc for " + id);
+                        if (doc != null) {
+                            break;
+                        }
+                    }
+                    if (doc != null) {
+                        list.add(doc);
+                    } else {
+                        throw new ResourceMapException("Solr index doesn't have the information about the id "+id+
+                                " which is a component in the resource map "+resourceMapId+
+                                ". Metacat-Index can't process the resource map prior to its components.");
+                    }
                 }
             }
         }
