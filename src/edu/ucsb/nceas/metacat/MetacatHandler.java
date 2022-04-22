@@ -1835,7 +1835,6 @@ public class MetacatHandler {
                 	//IdentifierManager.getInstance().updateSystemMetadata(sysMeta);
                   
                 } catch ( McdbDocNotFoundException mnfe) {
-                  
                   // handle inserts
                   try {
                    // create the system metadata. During the creatation, the data file in the eml may need to be reindexed.
@@ -1855,6 +1854,11 @@ public class MetacatHandler {
         			SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
         			if (oreSystemMetadata != null) {
                         MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, null, true);
+                        if (oreSystemMetadata.getObsoletes() != null) {
+                            logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - submit the index task to reindex the obsoleted resource map " + 
+                                              oreSystemMetadata.getObsoletes().getValue());
+                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), oreSystemMetadata, null, true);
+                        }
         			}
                     
                   } catch ( McdbDocNotFoundException dnfe ) {
