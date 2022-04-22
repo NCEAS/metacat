@@ -315,11 +315,12 @@ public class MetacatSolrIndex {
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
-		    Map<String, List<Object>> obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
+		    Map<String, List<Object>> obsoletedFields = null;
+		    /*obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
 		    if(obsoletedPid != null && pid != null) {
 	            log.debug("MetacatSolrIndex.submit - We will index the old version  "+obsoletedPid.getValue()+" of the object "+ pid.getValue() +
 	                    " as well. So we put "+obsoletedPid.getValue()+" into the index queue on hazelcast service.");
-	        }
+	        }*/
 			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
 		}
     }
