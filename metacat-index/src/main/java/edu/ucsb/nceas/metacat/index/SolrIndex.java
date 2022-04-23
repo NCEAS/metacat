@@ -97,7 +97,8 @@ public class SolrIndex {
     public static final String ID = "id";
     private static final String IDQUERY = ID+":*";
     private static final String VERSION_CONFLICT = "version conflict";
-    private static final int VERSION_CONFLICT_TRY = 3;//it must be equal or greater than 2.
+    private static final int VERSION_CONFLICT_MAX_ATTEMPTS = org.dataone.configuration.Settings.getConfiguration().getInt("index.solr.versionConflict.max.attempts", 2);
+    private static final int VERSION_CONFICT_WAITING = org.dataone.configuration.Settings.getConfiguration().getInt("index.solr.versionConflict.waiting.time", 100);; //milliseconds
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
@@ -410,22 +411,36 @@ public class SolrIndex {
      */
     public void insertFields(Identifier pid, Map<String, List<Object>> fields) {
     	try {
-    	    for (int i=1; i<=VERSION_CONFLICT_TRY; i++) {
-    	        try {
-                    insertExtraFields(pid, fields);
-                    break;
-                } catch (SolrException ee) {
-                    if (ee.getMessage().contains(VERSION_CONFLICT) ) {
-                        log.info("SolrIndex.insertFields - Indexer grabed an older verion of the solr doc for object " + 
-                                    pid.getValue() + " It will process it again in oder to get the new solr doc copy. This is " + i + " time to try.");
-                        if (i == VERSION_CONFLICT_TRY) {
-                            throw ee; //we tried the max time and still failed to get the newest version
+    	    try {
+    	        insertExtraFields(pid, fields);
+            } catch (SolrException e) {
+                if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
+                    log.info("SolrIndex.insertFields - Indexer grabbed an older verion of the solr doc for object " + 
+                            pid.getValue() + ". It will try " + VERSION_CONFLICT_MAX_ATTEMPTS + " to fix the issues");
+                    for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
+                        try {
+                            Thread.sleep(VERSION_CONFICT_WAITING);
+                            insertExtraFields(pid, fields);
+                            break;
+                        } catch (SolrException ee) {
+                            if (ee.getMessage().contains(VERSION_CONFLICT)) {
+                                log.info("SolrIndex.insertFields - Indexer grabbed an older verion of the solr doc for object " + 
+                                        pid.getValue() + ". It will process it again in oder to get the new solr doc copy. This is the " + 
+                                        (i+1) + " time to re-try.");
+                                if (i == (VERSION_CONFLICT_MAX_ATTEMPTS -1)) {
+                                    log.info("SolrIndex.insertFields - Indexer grabbed an older verion of the solr doc for object " + 
+                                            pid.getValue() + ". However, Metacat already tried the max times and still can't fix the issue.");
+                                    throw ee;
+                                }
+                            } else {
+                                throw ee;
+                            }
                         }
-                    } else {
-                        throw ee;
                     }
+                } else {
+                    throw e;
                 }
-    	    }
+            }
     	    log.info("SolrIndex.insetFields - successfully added some extra solr index fields for the objec " + pid.getValue());
     	} catch (Exception e) {
     		String error = "SolrIndex.insetFields - could not update the solr index for the object "+
@@ -588,20 +603,34 @@ public class SolrIndex {
             objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
             //}
             systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
-            for (int i=1; i<=VERSION_CONFLICT_TRY; i++) {
-                try {
-                    update(pid, systemMetadata, objectPath);
-                    break;
-                } catch (SolrException ee) {
-                    if (ee.getMessage().contains(VERSION_CONFLICT)) {
-                        log.info("SolrIndex.update - Indexer grabed an older verion of the solr doc for object " + 
-                                    pid.getValue() + " It will process it again in oder to get the new solr doc copy. This is the " + i + " time to try.");
-                        if (i == VERSION_CONFLICT_TRY) {
-                            throw ee; //we tried the max time and still failed to get the newest version
+            try {
+                update(pid, systemMetadata, objectPath);
+            } catch (SolrException e) {
+                if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
+                    log.info("SolrIndex.update - Indexer grabbed an older verion of the solr doc for object " + 
+                            pid.getValue() + ". It will try " + VERSION_CONFLICT_MAX_ATTEMPTS + " to fix the issues");
+                    for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
+                        try {
+                            Thread.sleep(VERSION_CONFICT_WAITING);
+                            update(pid, systemMetadata, objectPath);
+                            break;
+                        } catch (SolrException ee) {
+                            if (ee.getMessage().contains(VERSION_CONFLICT)) {
+                                log.info("SolrIndex.update - Indexer grabbed an older verion of the solr doc for object " + 
+                                        pid.getValue() + ". It will process it again in oder to get the new solr doc copy. This is the " + 
+                                        (i+1) + " time to re-try.");
+                                if (i == (VERSION_CONFLICT_MAX_ATTEMPTS -1)) {
+                                    log.info("SolrIndex.update - Indexer grabbed an older verion of the solr doc for object " + 
+                                            pid.getValue() + ". However, Metacat already tried the max times and still can't fix the issue.");
+                                    throw ee;
+                                }
+                            } else {
+                                throw ee;
+                            }
                         }
-                    } else {
-                        throw ee;
                     }
+                } else {
+                    throw e;
                 }
             }
             log.info("SolrIndex.update - successfully inserted the solr index of the object " + pid.getValue());

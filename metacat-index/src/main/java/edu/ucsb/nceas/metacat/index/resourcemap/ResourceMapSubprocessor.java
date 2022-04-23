@@ -74,7 +74,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
     private static Log log = LogFactory.getLog(SolrIndex.class);
     private static SolrClient solrServer =  null;
     private static int waitingTime = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.time", 100);
-    private static int maxAttempts = Settings.getConfiguration().getInt("index.resourcemap.max.attempts", 5);
+    private static int maxAttempts = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.max.attempts", 5);
     static {
         try {
             solrServer = SolrServerFactory.createSolrServer();
