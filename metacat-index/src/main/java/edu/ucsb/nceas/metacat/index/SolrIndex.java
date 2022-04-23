@@ -612,6 +612,7 @@ public class SolrIndex {
                     for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
                         try {
                             Thread.sleep(VERSION_CONFICT_WAITING);
+                            systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
                             update(pid, systemMetadata, objectPath);
                             break;
                         } catch (SolrException ee) {
