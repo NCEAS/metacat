@@ -135,7 +135,7 @@ public class ResourceMapSubprocessor extends BaseXPathDocumentSubprocessor imple
                     for (int i=0; i<maxAttempts; i++) {
                         Thread.sleep(waitingTime);
                         doc = getSolrDoc(id);
-                        log.debug("ResourceMapSubprocessor.getSolrDocs - the " + i + " time to wait " + 
+                        log.debug("ResourceMapSubprocessor.getSolrDocs - the " + (i+1) + " time to wait " + 
                                    waitingTime + " to get the solr doc for " + id);
                         if (doc != null) {
                             break;
