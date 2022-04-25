@@ -1928,7 +1928,8 @@ public class MNodeService extends D1NodeService
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // submit for indexing
             try {
-                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, false);
+                boolean isSysmetaChangeOnly = true;
+                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta,  isSysmetaChangeOnly, null, false);
             } catch (Exception e) {
                 logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
             }

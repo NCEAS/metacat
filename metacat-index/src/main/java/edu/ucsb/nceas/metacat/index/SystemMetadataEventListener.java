@@ -144,6 +144,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
 		final boolean deletingTask = task.isDeleting();
 		final long startFromQueuing = task.getTimeAddToQueque();
+		final boolean isSysmetaChangeOnly = task.isSysmetaChangeOnly();
 		
 		// what do we have to index?
 		Runnable runner = new Runnable() {
@@ -168,7 +169,7 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
                         if(deletingTask) {
                             solrIndex.remove(pid, systemMetadata);
                         } else {
-                            solrIndex.update(pid, systemMetadata);
+                            solrIndex.update(pid, systemMetadata, isSysmetaChangeOnly);
                         }
                     }
                     if (fields != null) {

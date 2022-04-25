@@ -1857,7 +1857,9 @@ public class MetacatHandler {
                         if (oreSystemMetadata.getObsoletes() != null) {
                             logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - submit the index task to reindex the obsoleted resource map " + 
                                               oreSystemMetadata.getObsoletes().getValue());
-                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), oreSystemMetadata, null, true);
+                            boolean isSysmetaChangeOnly = true;
+                            SystemMetadata obsoletedOresysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(oreSystemMetadata.getObsoletes());
+                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, null, true);
                         }
         			}
                     

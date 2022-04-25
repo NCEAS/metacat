@@ -1469,7 +1469,8 @@ public abstract class D1NodeService {
         // submit for indexing
         try {
             HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, false);
+            boolean isSysmetaChangeOnly = true;
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, null, false);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
             //logMetacat.warn("D1NodeService.updateSystemMetadataWithoutLock - we can't submit the change of the system metadata to the solr index since "+e.getMessage());

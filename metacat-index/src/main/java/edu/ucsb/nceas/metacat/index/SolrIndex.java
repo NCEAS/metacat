@@ -178,7 +178,7 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private Map<String, SolrDoc> process(String id, SystemMetadata systemMetadata, String objectPath)
+    private Map<String, SolrDoc> process(String id, SystemMetadata systemMetadata, String objectPath, boolean isSysmetaChangeOnly)
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, MarshallingException, EncoderException, SolrServerException, NotImplemented, NotFound, UnsupportedType{
         log.debug("SolrIndex.process - trying to generate the solr doc object for the pid "+id);
@@ -197,37 +197,42 @@ public class SolrIndex {
         // get the format id for this object
         String formatId = docs.get(id).getFirstFieldValue(SolrElementField.FIELD_OBJECTFORMAT);
         log.debug("SolrIndex.process - the object format id for the pid "+id+" is "+formatId);
-        // Determine if subprocessors are available for this ID
-        if (subprocessors != null) {
-	        // for each subprocessor loaded from the spring config
-	        for (IDocumentSubprocessor subprocessor : subprocessors) {
-	            // Does this subprocessor apply?
-	            if (subprocessor.canProcess(formatId)) {
-	                // if so, then extract the additional information from the
-	                // document.
-	                try {
-	                    // docObject = the resource map document or science
-	                    // metadata document.
-	                    // note that resource map processing touches all objects
-	                    // referenced by the resource map.
-	                	FileInputStream dataStream = new FileInputStream(objectPath);
-	                    if (!dataStream.getFD().valid()) {
-	                    	log.error("SolrIndex.process - subprocessor "+ subprocessor.getClass().getName() +" couldn't process since it could not load OBJECT file for ID,Path=" + id + ", "
-                                    + objectPath);
-	                        //throw new Exception("Could not load OBJECT for ID " + id );
-	                    } else {
-	                        docs = subprocessor.processDocument(id, docs, dataStream);
-	                        log.debug("SolrIndex.process - subprocessor "+ subprocessor.getClass().getName() +" generated solr doc for id "+id);
-	                    }
-	                } catch (Exception e) {
-	                    e.printStackTrace();
-	                    log.error(e.getMessage(), e);
-	                    throw new SolrServerException(e.getMessage());
-	                }
-	            }
-	        }
-       }
-
+        if (formatId.equals("http://www.openarchives.org/ore/terms") && isSysmetaChangeOnly) {
+            log.info("SolrIndex.process - This is a systemmetadata-change-only event for the resource map " + id +
+                    ". So we only use the system metadata subprocessor");
+        } else {
+            // Determine if subprocessors are available for this ID
+            if (subprocessors != null) {
+                // for each subprocessor loaded from the spring config
+                for (IDocumentSubprocessor subprocessor : subprocessors) {
+                    // Does this subprocessor apply?
+                    if (subprocessor.canProcess(formatId)) {
+                        // if so, then extract the additional information from the
+                        // document.
+                        try {
+                            // docObject = the resource map document or science
+                            // metadata document.
+                            // note that resource map processing touches all objects
+                            // referenced by the resource map.
+                            FileInputStream dataStream = new FileInputStream(objectPath);
+                            if (!dataStream.getFD().valid()) {
+                                log.error("SolrIndex.process - subprocessor "+ subprocessor.getClass().getName() +" couldn't process since it could not load OBJECT file for ID,Path=" + id + ", "
+                                        + objectPath);
+                                //throw new Exception("Could not load OBJECT for ID " + id );
+                            } else {
+                                docs = subprocessor.processDocument(id, docs, dataStream);
+                                log.debug("SolrIndex.process - subprocessor "+ subprocessor.getClass().getName() +" generated solr doc for id "+id);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            log.error(e.getMessage(), e);
+                            throw new SolrServerException(e.getMessage());
+                        }
+                    }
+                }
+           }
+        }
+       
         /*if(docs != null) {
                 SolrDoc solrDoc = docs.get(id);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -374,13 +379,13 @@ public class SolrIndex {
      * @throws NotFound 
      * @throws NotImplemented 
      */
-    private void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath) 
+    private void insert(Identifier pid, SystemMetadata systemMetadata, String objectPath, boolean isSysmetaChangeOnly) 
                     throws IOException, SAXException, ParserConfigurationException,
                     XPathExpressionException, SolrServerException, MarshallingException, EncoderException, NotImplemented, NotFound, UnsupportedType {
         checkParams(pid, systemMetadata, objectPath);
         log.debug("SolrIndex.insert - trying to insert the solrDoc for object "+pid.getValue());
         long start = System.currentTimeMillis();
-        Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, objectPath);
+        Map<String, SolrDoc> docs = process(pid.getValue(), systemMetadata, objectPath, isSysmetaChangeOnly);
         long end = System.currentTimeMillis();
         log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Index subprocessors process" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
         //transform the Map to the SolrInputDocument which can be used by the solr server
@@ -391,7 +396,7 @@ public class SolrIndex {
                 if(id != null) {
                     SolrDoc doc = docs.get(id);
                     insertToIndex(doc);
-                    log.debug("SolrIndex.insert - inserted the solr-doc object of pid "+id+", which relates to object "+pid.getValue()+", into the solr server.");
+                    log.info("SolrIndex.insert - inserted the solr-doc object of pid "+id+", which relates to object "+pid.getValue()+", into the solr server.");
                 }
                 
             }
@@ -591,7 +596,7 @@ public class SolrIndex {
      * 2. Add a new doc - if the system metadata shows the value of the archive is false, generate the
      *    index for the doc.
      */
-    public void update(Identifier pid, SystemMetadata systemMetadata) {
+    public void update(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly) {
         if(systemMetadata==null || pid==null) {
             log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
             return;
@@ -604,7 +609,7 @@ public class SolrIndex {
             //}
             systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
             try {
-                update(pid, systemMetadata, objectPath);
+                update(pid, systemMetadata, objectPath, isSysmetaChangeOnly);
             } catch (SolrException e) {
                 if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
                     log.info("SolrIndex.update - Indexer grabbed an older verion of the solr doc for object " + 
@@ -613,7 +618,7 @@ public class SolrIndex {
                         try {
                             Thread.sleep(VERSION_CONFICT_WAITING);
                             systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
-                            update(pid, systemMetadata, objectPath);
+                            update(pid, systemMetadata, objectPath, isSysmetaChangeOnly);
                             break;
                         } catch (SolrException ee) {
                             if (ee.getMessage().contains(VERSION_CONFLICT)) {
@@ -668,7 +673,7 @@ public class SolrIndex {
      * @throws MarshallingException
      * @throws EncoderException
      */
-    void update(Identifier pid, SystemMetadata systemMetadata, String objectPath) throws Exception {
+    void update(Identifier pid, SystemMetadata systemMetadata, String objectPath, boolean isSysmetaChangeOnly) throws Exception {
         //checkParams(pid, systemMetadata, objectPath);
         if(systemMetadata==null || pid==null) {
             log.error("SolrIndex.update - the systemMetadata or pid is null. So nothing will be indexed.");
@@ -681,7 +686,7 @@ public class SolrIndex {
             log.info("SolrIndex.update============================= archive the idex for the identifier "+pid.getValue());
         } else {*/
             //generate index for either add or update.
-            insert(pid, systemMetadata, objectPath);
+            insert(pid, systemMetadata, objectPath, isSysmetaChangeOnly);
             log.info("SolrIndex.update============================= insert index for the identifier "+pid.getValue());
         //}
     }
@@ -1086,7 +1091,8 @@ public class SolrIndex {
             SystemMetadata sysMeta = DistributedMapsFactory.getSystemMetadata(idToIndex);
             if (SolrDoc.visibleInIndex(sysMeta)) {
                 String objectPath = DistributedMapsFactory.getObjectPathMap().get(pid);
-                insert(pid, sysMeta, objectPath);
+                boolean isSysmetaChangeOnlyEvent = false;
+                insert(pid, sysMeta, objectPath, isSysmetaChangeOnlyEvent);
             }
         }
     		
