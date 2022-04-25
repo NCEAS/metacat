@@ -22,7 +22,6 @@ import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -35,8 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathExpressionException;
@@ -64,7 +61,6 @@ import org.dataone.cn.indexer.parser.BaseXPathDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentDeleteSubprocessor;
 import org.dataone.cn.indexer.parser.IDocumentSubprocessor;
 import org.dataone.cn.indexer.parser.ISolrField;
-import org.dataone.cn.indexer.parser.SolrField;
 import org.dataone.cn.indexer.solrhttp.SolrDoc;
 import org.dataone.cn.indexer.solrhttp.SolrElementField;
 import org.dataone.exceptions.MarshallingException;
@@ -78,7 +74,6 @@ import org.dataone.service.types.v2.SystemMetadata;
 import org.dataone.service.util.DateTimeMarshaller;
 import org.dataone.service.util.TypeMarshaller;
 import org.dspace.foresite.OREParserException;
-import org.w3c.dom.Document;
 import org.xml.sax.SAXException;
 
 import edu.ucsb.nceas.metacat.common.Settings;
@@ -98,7 +93,8 @@ public class SolrIndex {
     private static final String IDQUERY = ID+":*";
     private static final String VERSION_CONFLICT = "version conflict";
     private static final int VERSION_CONFLICT_MAX_ATTEMPTS = org.dataone.configuration.Settings.getConfiguration().getInt("index.solr.versionConflict.max.attempts", 2);
-    private static final int VERSION_CONFICT_WAITING = org.dataone.configuration.Settings.getConfiguration().getInt("index.solr.versionConflict.waiting.time", 100);; //milliseconds
+    private static final int VERSION_CONFICT_WAITING = org.dataone.configuration.Settings.getConfiguration().getInt("index.solr.versionConflict.waiting.time", 100); //milliseconds
+    private static final List<String> resourceMapFormatIdList = org.dataone.configuration.Settings.getConfiguration().getList("index.resourcemap.namespace");
     private List<IDocumentSubprocessor> subprocessors = null;
     private List<IDocumentDeleteSubprocessor> deleteSubprocessors = null;
 
@@ -196,11 +192,23 @@ public class SolrIndex {
         
         // get the format id for this object
         String formatId = docs.get(id).getFirstFieldValue(SolrElementField.FIELD_OBJECTFORMAT);
+        boolean skipOtherProcessor = false;
         log.debug("SolrIndex.process - the object format id for the pid "+id+" is "+formatId);
-        if (formatId.equals("http://www.openarchives.org/ore/terms") && isSysmetaChangeOnly) {
-            log.info("SolrIndex.process - This is a systemmetadata-change-only event for the resource map " + id +
-                    ". So we only use the system metadata subprocessor");
-        } else {
+        if (resourceMapFormatIdList.contains(formatId) && isSysmetaChangeOnly) {
+            //we need to make the solr doc exists (means the resource map was processed 
+            SolrDoc existingResourceMapSolrDoc = ResourceMapSubprocessor.getSolrDoc(id);
+            if (existingResourceMapSolrDoc != null ) {
+                log.info("SolrIndex.process - This is a systemmetadata-change-only event for the resource map " + id +
+                        ". So we only use the system metadata subprocessor");
+                skipOtherProcessor = true;
+            } else {
+                log.info("SolrIndex.process - There is no solr doc for the resource map " + id + 
+                        ". Even though this is a systemmetadata-change-only event, we can NOT just reindex the systemmeta only.");
+            }
+            
+        }
+        if (!skipOtherProcessor) {
+            log.info("SolrIndex.process - Start to use subprocessor list to process the " + id);
             // Determine if subprocessors are available for this ID
             if (subprocessors != null) {
                 // for each subprocessor loaded from the spring config
