@@ -32,6 +32,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dataone.client.v2.formats.ObjectFormatCache;
 
 
 /**
@@ -64,6 +65,7 @@ public class MetacatIndexServlet extends HttpServlet {
         //System.out.println("the file is "+url.getPath());
         //ApplicationController controller = null;
         try {
+            ObjectFormatCache.getInstance();
              //ApplicationController controller = new ApplicationController(FILEPREFIX + url.getFile(), fullMetacatPropertiesFilePath);
             ApplicationController controller = new ApplicationController("/index-processor-context.xml", fullMetacatPropertiesFilePath);
              //Start the controller in other thread - SystemmetadataEventListener and to generate indexes for those haven't been indexed in another thread
@@ -72,7 +74,6 @@ public class MetacatIndexServlet extends HttpServlet {
         } catch (Exception e) {
             throw new ServletException(e.getMessage());
         }
-       
         //controller.startIndex();//Start to generate indexes for those haven't been indexed in another thread
         //List<SolrIndex> list = controller.getSolrIndexes();
         //System.out.println("++++++++++++++++++++++++------------------- the size is  "+list.size());
