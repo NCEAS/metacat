@@ -625,7 +625,8 @@ public class SystemMetadataFactory {
 								session.setSubject(submitter);
 								MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
 								MNodeService.getInstance(request).insertDataObject(IOUtils.toInputStream(resourceMapXML, MetaCatServlet.DEFAULT_ENCODING), resourceMapId, session, resourceMapSysMeta.getChecksum());
-								MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
+								//MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
+								HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapId, resourceMapSysMeta);
 								logMetacat.info("Inserted ORE package: " + resourceMapId.getValue());
 							}
 			        	}
@@ -662,16 +663,7 @@ public class SystemMetadataFactory {
 	    try {
 	        logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex"+id.getValue());
 	        if(sysmeta != null) {
-	            if(!sysmeta.getArchived()) {
-	                //set the archive to true to remove index.
-	                sysmeta.setArchived(true);
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-	                //re-insert the index
-	                sysmeta.setArchived(false);
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-	            } else {
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-	            }
+	            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, false);
 	        }
 	       
         } catch (Exception e) {
