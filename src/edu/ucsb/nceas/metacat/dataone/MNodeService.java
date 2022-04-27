@@ -1928,7 +1928,8 @@ public class MNodeService extends D1NodeService
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
             // submit for indexing
             try {
-                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta, null, true);
+                boolean isSysmetaChangeOnly = true;
+                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta,  isSysmetaChangeOnly, null, false);
             } catch (Exception e) {
                 logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
             }
@@ -1973,7 +1974,7 @@ public class MNodeService extends D1NodeService
         }
     }
     
-    private SystemMetadata makePublicIfNot(SystemMetadata sysmeta, Identifier pid) throws ServiceFailure, InvalidToken, NotFound, NotImplemented, InvalidRequest {
+    private SystemMetadata makePublicIfNot(SystemMetadata sysmeta, Identifier pid, boolean needIndex) throws ServiceFailure, InvalidToken, NotFound, NotImplemented, InvalidRequest {
     	// check if it is publicly readable
 		boolean isPublic = false;
 		Subject publicSubject = new Subject();
@@ -1998,7 +1999,9 @@ public class MNodeService extends D1NodeService
 		        policy.addAllow(publicRule);
 		        sysmeta.setAccessPolicy(policy);
 		    }
-			
+			if (needIndex) {
+			    this.updateSystemMetadata(sysmeta);
+			}
 		}
 		
 		return sysmeta;
@@ -2285,7 +2288,7 @@ public class MNodeService extends D1NodeService
 		sysmeta.setObsoletedBy(null);
 		
 		// ensure it is publicly readable
-		sysmeta = makePublicIfNot(sysmeta, originalIdentifier);
+		sysmeta = makePublicIfNot(sysmeta, originalIdentifier, false);
 		
 		//Get the bytes
 		InputStream inputStream = null;		
@@ -2369,15 +2372,14 @@ public class MNodeService extends D1NodeService
 				oreSysMeta.setFileName("resourceMap_" + newOreIdentifier.getValue() + ".rdf.xml");
 				
 				// ensure ORE is publicly readable
-                oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier);
+                oreSysMeta = makePublicIfNot(oreSysMeta, potentialOreIdentifier, false);
                 List<Identifier> dataIdentifiers = modifier.getSubjectsOfDocumentedBy(newIdentifier);
 				// ensure all data objects allow public read
                 if (enforcePublicEntirePackageInPublish) {
     				List<String> pidsToSync = new ArrayList<String>();
     				for (Identifier dataId: dataIdentifiers) {
     			            SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-    			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-    			            this.updateSystemMetadata(dataSysMeta);
+    			            dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true);
     			            pidsToSync.add(dataId.getValue());
     				    
     				}
@@ -3172,14 +3174,12 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1200", "1310");
         //if the user has the write permission, it will be all set
         authDel.doUpdateAuth(session, existingSysMeta, Permission.WRITE, this.getCurrentNodeId());
-        existingSysMeta = makePublicIfNot(existingSysMeta, pid);//make the metadata file public
-        this.updateSystemMetadata(existingSysMeta);
+        existingSysMeta = makePublicIfNot(existingSysMeta, pid, true);//make the metadata file public
         Identifier oreIdentifier = getNewestORE(session, pid);
         if (oreIdentifier != null) {
             //make the result map public
             SystemMetadata oreSysmeta = getSystemMetadataForPID(oreIdentifier, serviceFailureCode, invalidRequestCode, notFoundCode, true);
-            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier);
-            this.updateSystemMetadata(oreSysmeta);
+            oreSysmeta = makePublicIfNot(oreSysmeta, oreIdentifier, true);
             if (enforcePublicEntirePackageInPublish) {
                 //make data objects public readable if needed
                 InputStream oreInputStream = this.get(session, oreIdentifier);
@@ -3189,8 +3189,7 @@ public class MNodeService extends D1NodeService
                     List<Identifier> dataIdentifiers = ResourceMapModifier.getSubjectsOfDocumentedBy(pid, model);
                     for (Identifier dataId: dataIdentifiers) {
                             SystemMetadata dataSysMeta = this.getSystemMetadata(session, dataId);
-                            dataSysMeta = makePublicIfNot(dataSysMeta, dataId);
-                            this.updateSystemMetadata(dataSysMeta);
+                            dataSysMeta = makePublicIfNot(dataSysMeta, dataId, true);
                     }
                 }
             }

@@ -289,7 +289,20 @@ public class MetacatSolrIndex {
         }
     }
     
+    /**
+     * Submit the index task to the index queue
+     * @param pid  the pid will be indexed
+     * @param systemMetadata  the system metadata associated with the pid
+     * @param fields  extra fields which need to be indexed 
+     * @param followRevisions .. if the obsoleted version will be indexed
+     */
     public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
+        boolean isSysmetaChangeOnly = false;
+        submit(pid, systemMetadata, isSysmetaChangeOnly, fields, followRevisions);
+    }
+    
+    
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, Map<String, List<Object>> fields, boolean followRevisions) {
         if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
             //only works for MNs
             log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
@@ -301,6 +314,7 @@ public class MetacatSolrIndex {
         	task.setFields(fields);
         	long start = System.currentTimeMillis();
         	task.setTimeAddToQueque(start);
+        	task.setSysmetaChangeOnly(isSysmetaChangeOnly);
         	if(pid != null) {
         	    log.debug("MetacatSolrIndex.submit - will put the pid " + pid.getValue() + " into the index queue on hazelcast service.");
         	}
@@ -315,11 +329,12 @@ public class MetacatSolrIndex {
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
-		    Map<String, List<Object>> obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
+		    Map<String, List<Object>> obsoletedFields = null;
+		    /*obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
 		    if(obsoletedPid != null && pid != null) {
 	            log.debug("MetacatSolrIndex.submit - We will index the old version  "+obsoletedPid.getValue()+" of the object "+ pid.getValue() +
 	                    " as well. So we put "+obsoletedPid.getValue()+" into the index queue on hazelcast service.");
-	        }
+	        }*/
 			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
 		}
     }
