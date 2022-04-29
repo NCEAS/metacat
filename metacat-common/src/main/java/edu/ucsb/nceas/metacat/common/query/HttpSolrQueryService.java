@@ -36,6 +36,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -175,14 +176,19 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @param subjects  subjects the user's identity which sent the query. If the Subjects is null, there wouldn't be any access control.
      * @return the response input stream from the solr server
      * @throws IOException
+     * @throws SolrServerException 
      */
-    private InputStream httpGetQuery(SolrParams query, Set<Subject> subjects) throws IOException {
+    private InputStream httpGetQuery(SolrParams query, Set<Subject> subjects) throws IOException, SolrServerException {
         InputStream stream = null;
         query = appendAccessFilterParams(query, subjects);
         String queryStr = solrServerBaseURL + SELECTIONPHASE + query.toQueryString();
         log.info("HttpSolrQueryService.httpGetQuery - the query string is " + queryStr);
         HttpGet get = new HttpGet(queryStr);
         HttpResponse response = httpClient.execute(get);
+        if (response.getStatusLine().getStatusCode() != 200) {
+            String error = IOUtils.toString(response.getEntity().getContent());
+            throw new SolrServerException("HttpSolrQueryService.query - the error from the solr http server is:\n" + error);
+        }
         stream = response.getEntity().getContent();
         return stream;
     }
@@ -194,8 +200,9 @@ public class HttpSolrQueryService extends SolrQueryService {
      * @return the response input stream from the solr server
      * @throws ClientProtocolException
      * @throws IOException
+     * @throws SolrServerException 
      */
-    private InputStream httpPostQuery(SolrParams query, Set<Subject> subjects) throws ClientProtocolException, IOException {
+    private InputStream httpPostQuery(SolrParams query, Set<Subject> subjects) throws ClientProtocolException, IOException, SolrServerException {
         InputStream stream = null;
         HttpPost httpPost = new HttpPost(solrServerBaseURL + SELECTIONPHASE);
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
@@ -221,6 +228,10 @@ public class HttpSolrQueryService extends SolrQueryService {
         }
         httpPost.setEntity(new UrlEncodedFormEntity(params));
         HttpResponse response = httpClient.execute(httpPost);
+        if (response.getStatusLine().getStatusCode() != 201) {
+            String error = IOUtils.toString(response.getEntity().getContent());
+            throw new SolrServerException("HttpSolrQueryService.query - the error from the solr http server is:\n" + error);
+        }
         stream = response.getEntity().getContent();
         return stream;
     }
