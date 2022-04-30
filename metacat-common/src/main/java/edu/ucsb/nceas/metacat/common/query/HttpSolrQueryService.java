@@ -185,11 +185,15 @@ public class HttpSolrQueryService extends SolrQueryService {
         log.info("HttpSolrQueryService.httpGetQuery - the query string is " + queryStr);
         HttpGet get = new HttpGet(queryStr);
         HttpResponse response = httpClient.execute(get);
-        if (response.getStatusLine().getStatusCode() != 200) {
-            String error = IOUtils.toString(response.getEntity().getContent());
-            throw new SolrServerException("HttpSolrQueryService.query - the error from the solr http server is:\n" + error);
-        }
         stream = response.getEntity().getContent();
+        if (response.getStatusLine().getStatusCode() != 200) {
+            try {
+                String error = IOUtils.toString(stream);
+                throw new SolrServerException("HttpSolrQueryService.httpGetQuery - the error from the solr http server is:\n" + error);
+            } finally {
+                stream.close();
+            }
+        }
         return stream;
     }
     
@@ -228,11 +232,15 @@ public class HttpSolrQueryService extends SolrQueryService {
         }
         httpPost.setEntity(new UrlEncodedFormEntity(params));
         HttpResponse response = httpClient.execute(httpPost);
-        if (response.getStatusLine().getStatusCode() != 201) {
-            String error = IOUtils.toString(response.getEntity().getContent());
-            throw new SolrServerException("HttpSolrQueryService.query - the error from the solr http server is:\n" + error);
-        }
         stream = response.getEntity().getContent();
+        if (response.getStatusLine().getStatusCode() != 201) {
+            try {
+                String error = IOUtils.toString(stream);
+                throw new SolrServerException("HttpSolrQueryService.httpPostQuery - the error from the solr http server is:\n" + error);
+            } finally {
+                stream.close();
+            }
+        }
         return stream;
     }
     
