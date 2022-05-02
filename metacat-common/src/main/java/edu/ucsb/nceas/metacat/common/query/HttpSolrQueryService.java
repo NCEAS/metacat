@@ -216,7 +216,7 @@ public class HttpSolrQueryService extends SolrQueryService {
         ConfigSetService.ConfigResource configureResource  = IndexSchemaFactory.getConfigResource(service, lookupSchema(), loader, "dataone");
         Properties substitutableProperties = new Properties();
         schema = new IndexSchema("dataone", configureResource,  Version.LUCENE_8_8_2, loader, substitutableProperties);
-        log.info("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++" + schema);
+        log.debug("Intialize the schema is +++++++++++++++++++++++++++++++++++++++++++++++++++" + schema);
         fieldMap = schema.getFields();
     }
     

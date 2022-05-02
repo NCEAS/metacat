@@ -146,6 +146,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testCollectionl110"));
     suite.addTest(new MNodeQueryTest("testSchemaOrg"));
     suite.addTest(new MNodeQueryTest("testSchemaOrgWithContexts"));
+    suite.addTest(new MNodeQueryTest("testUpdateSystemmetadataToMakeObsolescentChain"));
     return suite;
     
   }
@@ -374,6 +375,117 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
         
+        
+        //=======================================update the package
+         //update the metadata object
+        Identifier guid4 = new Identifier();
+        guid4.setValue("testPackage-metadata-new-version." + System.currentTimeMillis());
+        System.out.println("the new version of the metadata object id is ==== "+guid4.getValue());
+        InputStream object4 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta4 = createSystemMetadata(guid4, session.getSubject(), object4);
+        object4.close();
+        sysmeta4.setFormatId(formatId);
+        object4 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).update(session, guid2, object4, guid4, sysmeta4);
+        //make sure the new metadata object was indexed
+        query = "q=id:"+guid4.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println("the result str is " + resultStr);
+        assertTrue(resultStr.contains("name=\"obsoletes\">" + guid2.getValue()));
+        
+        //make sure guid2 was obsoleted
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid4.getValue()));
+        
+        //create a new resourcemap with the new metadata object and old data object
+        idMap = new HashMap<Identifier, List<Identifier>>();
+        dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid4, dataIds);
+        Identifier newResourceMapId = new Identifier();
+        // use the local id, not the guid in case we have DOIs for them already
+        newResourceMapId.setValue("newTestPackage-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+newResourceMapId.getValue());
+        rm = ResourceMapFactory.getInstance().createResourceMap(newResourceMapId, idMap);
+        resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object5 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta5 = createSystemMetadata(newResourceMapId, session.getSubject(), object5);
+        sysmeta5.setFormatId(formatId3);
+        MNodeService.getInstance(request).update(session, resourceMapId, object5, newResourceMapId, sysmeta5);
+        //make sure the old resource map has the obsoletedBy field.
+        query = "q=id:"+resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + newResourceMapId.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("name=\"obsoletedBy\">" + newResourceMapId.getValue()));
+        //make sure the new resource map was indexed
+        query = "q=id:"+newResourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("name=\"obsoletes\">" + resourceMapId.getValue()));
+        //make sure the new metadata object was reindexed and have the new resource map
+        query = "q=id:"+guid4.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("name=\"obsoletes\">" + guid2.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains(guid.getValue()));// the data object id
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(newResourceMapId.getValue()));
+        // make sure the data object has been reindexed with the new information
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        assertTrue(resultStr.contains("<arr name=\"isDocumentedBy\">"));
+        assertTrue(resultStr.contains(guid2.getValue()));
+        assertTrue(resultStr.contains(guid4.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        assertTrue(resultStr.contains(newResourceMapId.getValue()));
     }
     
     /***
@@ -1766,6 +1878,87 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         System.out.print(resultStr);
         assertTrue(resultStr.contains("<str name=\"title\">test of context normalization"));
         assertTrue(resultStr.contains("<str name=\"abstract\">Remote context, creator 03, 02, 01"));
+    }
+    
+    /**
+     * Test query result after use the updateSystemmetadat method
+     * to make an obsolescent chain.
+     * @throws Exception
+     */
+    public void testUpdateSystemmetadataToMakeObsolescentChain() throws Exception {
+        //insert data
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        guid.setValue("testUpdateSystemmetadataToMakeObsolescentChain." + System.currentTimeMillis());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //insert data
+        Identifier guid1 = new Identifier();
+        guid1.setValue("testUpdateSystemmetadataToMakeObsolescentChain-1." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta1 = createSystemMetadata(guid1, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid1, object, sysmeta1);
+
+        //insert data
+        Identifier guid2 = new Identifier();
+        guid2.setValue("testUpdateSystemmetadataToMakeObsolescentChain-2." + System.currentTimeMillis());
+        object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid2, object, sysmeta2);
+        
+       SystemMetadata sysmeta3 = MNodeService.getInstance(request).getSystemMetadata(session, guid);
+       sysmeta3.setObsoletedBy(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid, sysmeta3);
+       
+       SystemMetadata sysmeta4 = MNodeService.getInstance(request).getSystemMetadata(session, guid1);
+       sysmeta4.setObsoletes(guid);
+       sysmeta4.setObsoletedBy(guid2);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid1, sysmeta4);
+       
+       SystemMetadata sysmeta5 = MNodeService.getInstance(request).getSystemMetadata(session, guid2);
+       sysmeta5.setObsoletes(guid1);
+       MNodeService.getInstance(request).updateSystemMetadata(session, guid2, sysmeta5);
+       
+       String query = "q=id:"+guid.getValue();
+       InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+       String resultStr = IOUtils.toString(stream, "UTF-8");
+       int account = 0;
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue())) && account <= tryAcccounts) {
+           Thread.sleep(1000);
+           account++;
+           stream = MNodeService.getInstance(request).query(session, "solr", query);
+           resultStr = IOUtils.toString(stream, "UTF-8"); 
+       }
+       assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid1.getValue()));
+       
+       query = "q=id:"+guid1.getValue();
+       stream = MNodeService.getInstance(request).query(session, "solr", query);
+       resultStr = IOUtils.toString(stream, "UTF-8");
+       account = 0;
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue())) && account <= tryAcccounts) {
+           Thread.sleep(1000);
+           account++;
+           stream = MNodeService.getInstance(request).query(session, "solr", query);
+           resultStr = IOUtils.toString(stream, "UTF-8"); 
+       }
+       assertTrue(resultStr.contains("name=\"obsoletedBy\">" + guid2.getValue()));
+       assertTrue(resultStr.contains("name=\"obsoletes\">" + guid.getValue()));
+       
+       
+       query = "q=id:"+guid2.getValue();
+       stream = MNodeService.getInstance(request).query(session, "solr", query);
+       resultStr = IOUtils.toString(stream, "UTF-8");
+       account = 0;
+       while ( (resultStr == null || !resultStr.contains("name=\"obsoletes\">" + guid1.getValue())) && account <= tryAcccounts) {
+           Thread.sleep(1000);
+           account++;
+           stream = MNodeService.getInstance(request).query(session, "solr", query);
+           resultStr = IOUtils.toString(stream, "UTF-8"); 
+       }
+       assertTrue(resultStr.contains("name=\"obsoletes\">" + guid1.getValue()));
+       
     }
 
 }
