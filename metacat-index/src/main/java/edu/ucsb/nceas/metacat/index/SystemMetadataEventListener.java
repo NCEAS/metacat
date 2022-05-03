@@ -46,14 +46,26 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 	
 	private IMap<Identifier, IndexTask> source = null;
 	
+	private static String specifiedThreadNumberStr = org.dataone.configuration.Settings.getConfiguration().getString("index.thread.number", "0");
+	private static int specifiedThreadNumber = 0;
 	private static ExecutorService executor = null;
     static {
-        // use a shared executor service with nThreads == one less than available processors
+        try {
+            specifiedThreadNumber = (new Integer(specifiedThreadNumberStr)).intValue();
+        } catch (Exception e) {
+            log.warn("SystemMetadataEventListener static part - Metacat cannot parse the string " + specifiedThreadNumberStr +
+                     " specified by property index.thread.number into a number since " + e.getLocalizedMessage() + 
+                     ". The default value 0 will be used as the specified value");
+        }
         int availableProcessors = Runtime.getRuntime().availableProcessors();
-        int nThreads = availableProcessors * 1;
-        nThreads--;
-        nThreads = Math.max(1, nThreads);
-        log.info("SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
+        availableProcessors = availableProcessors - 1;
+        int nThreads = Math.max(1, availableProcessors); //the default threads number
+        if (specifiedThreadNumber > 0 && specifiedThreadNumber < nThreads) {
+            nThreads = specifiedThreadNumber;
+        }
+        log.info("SystemMetadataEventListener static part - the number of indexing threads specified in the metacat.properties file is " + specifiedThreadNumber +
+                ". The number of threads calculated from the available processors is " + availableProcessors + 
+                 ". The eventual number of threads will used in the executor is " + nThreads);
         //int nThreads = org.dataone.configuration.Settings.getConfiguration().getInt("index.thread.number", 1);
         //log.info("+++++++++++++++SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
         executor = Executors.newFixedThreadPool(nThreads); 
