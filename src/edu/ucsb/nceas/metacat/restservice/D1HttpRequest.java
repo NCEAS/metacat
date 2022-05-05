@@ -58,7 +58,7 @@ public class D1HttpRequest extends HttpServletRequestWrapper
         String s = super.getPathInfo();
         logMetacat.info("D1HttpRequest.getPathInfo - the orignial pathInfo: "+s);
         String reqUri = this.getRequestURI();
-        logMetacat.debug("D1HttpRequest.getPathInfo - original requestURI: "+reqUri);
+        logMetacat.info("D1HttpRequest.getPathInfo - original requestURI: " + reqUri);
         String strip = this.getContextPath() + this.getServletPath();
         logMetacat.debug("D1HttpRequest.getPathInfo - stripping "+ strip + " from requestURI");
         s = reqUri.substring(strip.length());
@@ -70,7 +70,7 @@ public class D1HttpRequest extends HttpServletRequestWrapper
         {
             s = URLDecoder.decode(s);
         }*/
-        logMetacat.info("D1HttpRequest.getPathInfo - the new pathInfo: "+s);
+        logMetacat.info("D1HttpRequest.getPathInfo - the new pathInfo which comes from requestURI is: " + s);
         return s;
     }
     
