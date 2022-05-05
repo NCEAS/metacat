@@ -67,6 +67,8 @@ for the next release.
 
 ## Release Notes
 ### Release Notes for 2.18.0
+This release focuses on improving indexing performance.
+New features and bugs fixed in this release:
 * Use a multiple-tread process to index objects
 * Eliminate unnecessary index tasks
 * Fix bugs in Bagit implementation
