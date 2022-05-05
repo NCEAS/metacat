@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -52,6 +54,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.eml.DataoneEMLParser;
 import org.dataone.eml.EMLDocument;
 import org.dataone.eml.EMLDocument.DistributionMetadata;
@@ -106,7 +109,8 @@ public class SystemMetadataFactory {
 
 	public static final String RESOURCE_MAP_PREFIX = "resourceMap_";
 	private static Log logMetacat = LogFactory.getLog(SystemMetadataFactory.class);
-	private static final int wait_times = 4;
+	private static int waitingTime = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.time", 100);
+    private static int maxAttempts = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.max.attempts", 5);
 	/**
 	 * use this flag if you want to update any existing system metadata values with generated content
 	 */
@@ -666,16 +670,16 @@ public class SystemMetadataFactory {
 	    try {
 	        logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex"+id.getValue());
 	        if(sysmeta != null) {
-	            for (int i=0; i<wait_times; i++) {
+	            for (int i=0; i<maxAttempts; i++) {
 	                try {
 	                    boolean exists = solrDocExists(id.getValue(), session, request);
 	                    if (exists) {
 	                        break;
 	                    }
-                        Thread.sleep(80);
+                        Thread.sleep(waitingTime);
 	                } catch (Exception ee) {
 	                    logMetacat.warn("Can't get the solr doc for  " + id.getValue() + " since " + ee.getMessage());
-	                    Thread.sleep(80);
+	                    Thread.sleep(waitingTime);
 	                } 
 	            }
 	            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, false);
@@ -705,7 +709,8 @@ public class SystemMetadataFactory {
 	private static boolean solrDocExists(String id, Session session, HttpServletRequest request) throws InvalidToken, 
 	                                            ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound, IOException {
 	    boolean exists = false;
-	    String query = "q=id:" +id;
+	    String query = "q=id:" + URLEncoder.encode(id, StandardCharsets.UTF_8.toString());
+	    logMetacat.debug("SystemMetadataFactory.solrDocExist - the solr query is " + query);
 	    InputStream response = MNodeService.getInstance(request).query(session, "solr", query);
 	    String result = IOUtils.toString(response);
 	    logMetacat.debug("SystemMetadataFactory.solrDocExist - the response from the solr query is " + result);
