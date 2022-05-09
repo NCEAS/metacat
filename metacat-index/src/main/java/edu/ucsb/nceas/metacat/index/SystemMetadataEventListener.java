@@ -63,9 +63,9 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
         if (specifiedThreadNumber > 0 && specifiedThreadNumber < nThreads) {
             nThreads = specifiedThreadNumber;
         }
-        log.info("SystemMetadataEventListener static part - the number of indexing threads specified in the metacat.properties file is " + specifiedThreadNumber +
-                ". The number of threads calculated from the available processors is " + availableProcessors + 
-                 ". The eventual number of threads will used in the executor is " + nThreads);
+        log.info("SystemMetadataEventListener static part - the size of index thread pool specified in the metacat.properties file is " + specifiedThreadNumber +
+                ". The size computed from the available processors is " + availableProcessors + 
+                 ". Final computed thread pool size for index executor: " + nThreads);
         //int nThreads = org.dataone.configuration.Settings.getConfiguration().getInt("index.thread.number", 1);
         //log.info("+++++++++++++++SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
         executor = Executors.newFixedThreadPool(nThreads); 
