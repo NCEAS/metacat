@@ -74,9 +74,10 @@ public class SolrIndexIT  {
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        //List<String> chain = null;
+       boolean isSysmetaOnlyEvent = false;
        Identifier pid = new Identifier();
        pid.setValue(id);
-       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH, isSysmetaOnlyEvent);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        //assertTrue(ids.size() == 1);
@@ -96,13 +97,14 @@ public class SolrIndexIT  {
      */
     @Test
     public void testUpdate() throws Exception {
+        boolean isSysmetaOnlyEvent = false;
        //InputStream systemInputStream = new FileInputStream(new File(SYSTEMMETAFILEPATH));
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAUPDATEFILEPATH);
        /*obsoletes.add(id);
        obsoletes.add("tao");*/
        Identifier pid = new Identifier();
        pid.setValue(newId);
-       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH);
+       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH, isSysmetaOnlyEvent);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(result.contains("version2"));
@@ -112,7 +114,7 @@ public class SolrIndexIT  {
        SystemMetadata obsoletedSystemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
        assertTrue(obsoletedSystemMetadata.getIdentifier().getValue().equals(obsoletedPid.getValue()));
        obsoletedSystemMetadata.setObsoletedBy(pid);
-       solrIndex.update(obsoletedPid, obsoletedSystemMetadata, EMLFILEPATH);
+       solrIndex.update(obsoletedPid, obsoletedSystemMetadata, EMLFILEPATH, isSysmetaOnlyEvent);
        
        // old version should be marked as obsoleted and not returned
        result = doQuery(solrIndex.getSolrServer(), "&fq=-obsoletedBy:*");
@@ -132,9 +134,10 @@ public class SolrIndexIT  {
        /*ArrayList<String> obsoletes = new ArrayList<String>();
        obsoletes.add(id);
        obsoletes.add("tao");*/
+       boolean isSysmetaOnlyEvent = false;
        Identifier pid = new Identifier();
        pid.setValue(newId);
-       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH);
+       solrIndex.update(pid, systemMetadata, EMLUPDATEFILEPATH, isSysmetaOnlyEvent);
        String result = doQuery(solrIndex.getSolrServer());
        assertTrue(result.contains("version1"));
        assertTrue(!result.contains("version2"));
@@ -148,9 +151,10 @@ public class SolrIndexIT  {
     public void testDynamicFields() throws Exception {
     	
        SystemMetadata systemMetadata = TypeMarshaller.unmarshalTypeFromFile(SystemMetadata.class, SYSTEMMETAFILEPATH);
+       boolean isSysmetaOnlyEvent = false;
        Identifier pid = new Identifier();
        pid.setValue(id);
-       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH, isSysmetaOnlyEvent);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        boolean foundId = false;
@@ -194,7 +198,8 @@ public class SolrIndexIT  {
        Identifier pid = new Identifier();
        pid.setValue(id);
        DistributedMapsFactory.getSystemMetadataMap().put(pid, systemMetadata);
-       solrIndex.update(pid, systemMetadata, EMLFILEPATH);
+       boolean isSysmetaOnlyEvent = false;
+       solrIndex.update(pid, systemMetadata, EMLFILEPATH, isSysmetaOnlyEvent);
        String result = doQuery(solrIndex.getSolrServer());
        List<String> ids = solrIndex.getSolrIds();
        boolean foundId = false;
@@ -211,7 +216,7 @@ public class SolrIndexIT  {
        Identifier annotationPid = new Identifier();
        annotationPid.setValue(annotation_id);
        DistributedMapsFactory.getSystemMetadataMap().put(annotationPid, annotationSystemMetadata);
-       solrIndex.update(annotationPid, annotationSystemMetadata, OA_FILE_PATH);
+       solrIndex.update(annotationPid, annotationSystemMetadata, OA_FILE_PATH, isSysmetaOnlyEvent);
        String annotationResult = doQuery(solrIndex.getSolrServer(), "&fq=standard_sm:\"http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram\"");
        assertTrue(annotationResult.contains(pid.getValue()));
        assertTrue(annotationResult.contains("http://ecoinformatics.org/oboe/oboe.1.0/oboe-standards.owl#Gram"));

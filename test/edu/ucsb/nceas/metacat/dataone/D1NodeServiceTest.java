@@ -172,7 +172,7 @@ public class D1NodeServiceTest extends MCTestCase {
 	       user.setValue("uid=foo");
 	       assertTrue(!D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
-	       user.setValue("http://orcid.org/0000-0002-8121-2341");
+	       user.setValue("http://orcid.org/0000-0003-0077-4738");
 	       assertTrue(D1AuthHelper.expandRightsHolder(rightsHolder, user));
 	       
 	       rightsHolder.setValue("CN=foo,,DC=dataone,DC=org");

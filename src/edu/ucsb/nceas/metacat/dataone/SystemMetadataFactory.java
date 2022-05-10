@@ -31,6 +31,8 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -42,6 +44,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPathExpressionException;
 
@@ -51,13 +54,19 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.wicket.protocol.http.mock.MockHttpServletRequest;
 import org.dataone.client.v2.formats.ObjectFormatCache;
+import org.dataone.configuration.Settings;
 import org.dataone.eml.DataoneEMLParser;
 import org.dataone.eml.EMLDocument;
 import org.dataone.eml.EMLDocument.DistributionMetadata;
 import org.dataone.exceptions.MarshallingException;
 import org.dataone.ore.ResourceMapFactory;
 import org.dataone.service.exceptions.BaseException;
+import org.dataone.service.exceptions.InvalidRequest;
+import org.dataone.service.exceptions.InvalidToken;
+import org.dataone.service.exceptions.NotAuthorized;
 import org.dataone.service.exceptions.NotFound;
+import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.types.v1.AccessPolicy;
 import org.dataone.service.types.v1.AccessRule;
 import org.dataone.service.types.v1.Checksum;
@@ -100,6 +109,8 @@ public class SystemMetadataFactory {
 
 	public static final String RESOURCE_MAP_PREFIX = "resourceMap_";
 	private static Log logMetacat = LogFactory.getLog(SystemMetadataFactory.class);
+	private static int waitingTime = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.time", 100);
+    private static int maxAttempts = Settings.getConfiguration().getInt("index.resourcemap.waitingComponent.max.attempts", 5);
 	/**
 	 * use this flag if you want to update any existing system metadata values with generated content
 	 */
@@ -375,7 +386,9 @@ public class SystemMetadataFactory {
                         "https://eml.ecoinformatics.org/eml-2.2.0").getFormatId()) {
 
 			try {
-				
+			    Session session = new Session();
+                session.setSubject(submitter);
+                MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
 				// get it again to parse the document
 				logMetacat.debug("Re-reading document inputStream");
 				inputStream = MetacatHandler.read(localId);
@@ -457,9 +470,6 @@ public class SystemMetadataFactory {
 									dataGuid.setValue(dataDocLocalId);
 									
 									// save it locally
-									Session session = new Session();
-									session.setSubject(submitter);
-									MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
 									Checksum sum = null;
 									MNodeService.getInstance(request).insertDataObject(dataObject, dataGuid, session, sum);
 									
@@ -551,7 +561,7 @@ public class SystemMetadataFactory {
 							// reindex data file if need it.
 							logMetacat.debug("do we need to reindex guid "+dataGuid.getValue()+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?"+indexDataFile);
 							if(indexDataFile) {
-							    reindexDataFile(dataSysMeta.getIdentifier(), dataSysMeta);
+							    reindexDataFile(dataSysMeta.getIdentifier(), dataSysMeta, session, request);
 							}
 
 							// include as part of the ORE package
@@ -621,11 +631,9 @@ public class SystemMetadataFactory {
 				            
 							// save it locally, if it doesn't already exist
 							if (!IdentifierManager.getInstance().identifierExists(resourceMapId.getValue())) {
-								Session session = new Session();
-								session.setSubject(submitter);
-								MockHttpServletRequest request = new MockHttpServletRequest(null, null, null);
 								MNodeService.getInstance(request).insertDataObject(IOUtils.toInputStream(resourceMapXML, MetaCatServlet.DEFAULT_ENCODING), resourceMapId, session, resourceMapSysMeta.getChecksum());
-								MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
+								//MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
+								HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapId, resourceMapSysMeta);
 								logMetacat.info("Inserted ORE package: " + resourceMapId.getValue());
 							}
 			        	}
@@ -658,20 +666,23 @@ public class SystemMetadataFactory {
 	 * Re-index the data file since the access rule was changed during the inserting of the eml document.
 	 * (During first time to index the data file in Metacat API, the eml hasn't been inserted)
 	 */
-	private static void reindexDataFile(Identifier id, SystemMetadata sysmeta) {
+	private static void reindexDataFile(Identifier id, SystemMetadata sysmeta, Session session, HttpServletRequest request) {
 	    try {
 	        logMetacat.debug("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ reindex"+id.getValue());
 	        if(sysmeta != null) {
-	            if(!sysmeta.getArchived()) {
-	                //set the archive to true to remove index.
-	                sysmeta.setArchived(true);
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-	                //re-insert the index
-	                sysmeta.setArchived(false);
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
-	            } else {
-	                MetacatSolrIndex.getInstance().submit(id, sysmeta, null, true);
+	            for (int i=0; i<maxAttempts; i++) {
+	                try {
+	                    boolean exists = solrDocExists(id.getValue(), session, request);
+	                    if (exists) {
+	                        break;
+	                    }
+                        Thread.sleep(waitingTime);
+	                } catch (Exception ee) {
+	                    logMetacat.warn("Can't get the solr doc for  " + id.getValue() + " since " + ee.getMessage());
+	                    Thread.sleep(waitingTime);
+	                } 
 	            }
+	            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, false);
 	        }
 	       
         } catch (Exception e) {
@@ -680,6 +691,34 @@ public class SystemMetadataFactory {
             //e.printStackTrace();
         }
 	}
+	
+	/**
+	 * Check if the the solr doc for the given id exists.
+	 * @param id
+	 * @param session
+	 * @param request
+	 * @return
+	 * @throws InvalidToken
+	 * @throws ServiceFailure
+	 * @throws NotAuthorized
+	 * @throws InvalidRequest
+	 * @throws NotImplemented
+	 * @throws NotFound
+	 * @throws IOException
+	 */
+	private static boolean solrDocExists(String id, Session session, HttpServletRequest request) throws InvalidToken, 
+	                                            ServiceFailure, NotAuthorized, InvalidRequest, NotImplemented, NotFound, IOException {
+	    boolean exists = false;
+	    String query = "q=id:" + URLEncoder.encode(id, StandardCharsets.UTF_8.toString());
+	    logMetacat.debug("SystemMetadataFactory.solrDocExist - the solr query is " + query);
+	    InputStream response = MNodeService.getInstance(request).query(session, "solr", query);
+	    String result = IOUtils.toString(response);
+	    logMetacat.debug("SystemMetadataFactory.solrDocExist - the response from the solr query is " + result);
+	    if (result != null && result.contains("checksumAlgorithm")) {
+	        exists = true;
+	    }
+	    return exists;
+    }
 
 	/**
 	 * Checks for potential ORE object existence 

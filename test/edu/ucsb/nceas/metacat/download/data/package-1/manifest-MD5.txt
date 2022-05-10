@@ -1,0 +1,3 @@
+40ca1524c0df75cd9f79ea0a801057a9 data/plot.py
+01a7b1a4ad69022d29de291e02e0bcf5 data/inputs/daily-total-female-births.csv
+803c01ef527be2709471b628b0ad4cbe data/outputs/female-daily-births.png

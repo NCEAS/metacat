@@ -550,7 +550,7 @@ public abstract class D1NodeService {
     
     try {
         // submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, false);
     } catch (Exception e) {
         logMetacat.warn("Couldn't create solr index for object "+pid.getValue());
     }
@@ -1379,7 +1379,7 @@ public abstract class D1NodeService {
         // note: the calling subclass handles the map hazelcast lock/unlock
       	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
       	// submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, true);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, false);
       } catch (Exception e) {
           throw new ServiceFailure("1190", e.getMessage());
       }  
@@ -1469,7 +1469,8 @@ public abstract class D1NodeService {
         // submit for indexing
         try {
             HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+            boolean isSysmetaChangeOnly = true;
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, null, false);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
             //logMetacat.warn("D1NodeService.updateSystemMetadataWithoutLock - we can't submit the change of the system metadata to the solr index since "+e.getMessage());
@@ -1643,11 +1644,19 @@ public abstract class D1NodeService {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's size "+newMeta.getSize().longValue()+" is "+
 	                      "different to the orginal one "+orgMeta.getSize().longValue());
 	        }
-	        if(newMeta.getChecksum()!= null && orgMeta.getChecksum() != null && !orgMeta.getChecksum().getValue().equals(newMeta.getChecksum().getValue())) {
-	            logMetacat.error("The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
-                        "different to the orginal one "+orgMeta.getChecksum().getValue());
-	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
-                        "different to the orginal one "+orgMeta.getChecksum().getValue());
+	        if(newMeta.getChecksum()!= null && orgMeta.getChecksum() != null) {
+	            if (!orgMeta.getChecksum().getValue().equals(newMeta.getChecksum().getValue())) {
+	                logMetacat.error("The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
+	                        "different to the orginal one "+orgMeta.getChecksum().getValue());
+	                throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum "+newMeta.getChecksum().getValue()+" is "+
+	                        "different to the orginal one "+orgMeta.getChecksum().getValue());
+	            }
+	            if (!orgMeta.getChecksum().getAlgorithm().equals(newMeta.getChecksum().getAlgorithm())) {
+                    logMetacat.error("The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum algorithm " 
+                                      + newMeta.getChecksum().getAlgorithm() + " is " + "different to the orginal one " + orgMeta.getChecksum().getAlgorithm());
+                    throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum algorithm " 
+                            + newMeta.getChecksum().getAlgorithm() + " is " + "different to the orginal one " + orgMeta.getChecksum().getAlgorithm());
+                }
 	        } else if (orgMeta.getChecksum() != null && newMeta.getChecksum() == null) {
 	            throw new InvalidRequest("4869", "The request is trying to modify an immutable field in the SystemMeta: the new system meta's checksum is null and it is "+
                         "different to the orginal one "+orgMeta.getChecksum().getValue());

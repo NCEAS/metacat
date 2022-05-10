@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns3:systemMetadata xmlns:ns2="http://ns.dataone.org/service/types/v1" xmlns:ns3="http://ns.dataone.org/service/types/v2.0">
+    <serialVersion>0</serialVersion>
+    <identifier>b9ba3f69-6b83-44ff-ab1d-2c4fbd8566c5</identifier>
+    <formatId>application/octet-stream</formatId>
+    <size>227</size>
+    <checksum algorithm="SHA-256">1e6744a875fe86d4e071941c0aed7649886374d1b3214f8dc5bf51619630c392</checksum>
+    <submitter>http://orcid.org/0000-0002-1756-2128</submitter>
+    <rightsHolder>http://orcid.org/0000-0002-1756-2128</rightsHolder>
+    <accessPolicy>
+        <allow>
+            <subject>https://orcid.org/0000-0002-1756-2128</subject>
+            <permission>read</permission>
+            <permission>write</permission>
+            <permission>changePermission</permission>
+        </allow>
+        <allow>
+            <subject>public</subject>
+            <permission>read</permission>
+        </allow>
+    </accessPolicy>
+    <replicationPolicy replicationAllowed="true" numberReplicas="3"/>
+    <archived>false</archived>
+    <dateUploaded>2022-01-26T01:27:23.932+00:00</dateUploaded>
+    <dateSysMetadataModified>2022-01-26T01:27:23.932+00:00</dateSysMetadataModified>
+    <originMemberNode>urn:node:mnDemo6</originMemberNode>
+    <authoritativeMemberNode>urn:node:mnDemo6</authoritativeMemberNode>
+    <fileName>plot.py</fileName>
+</ns3:systemMetadata>

@@ -21,6 +21,8 @@ package edu.ucsb.nceas.metacat.index;
 import java.io.FileNotFoundException;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -35,6 +37,7 @@ import com.hazelcast.core.IMap;
 import edu.ucsb.nceas.metacat.common.Settings;
 import edu.ucsb.nceas.metacat.common.index.IndexTask;
 
+
 public class SystemMetadataEventListener implements EntryListener<Identifier, IndexTask>, Runnable {
 	
 	private static Log log = LogFactory.getLog(SystemMetadataEventListener.class);
@@ -42,6 +45,31 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
 	private SolrIndex solrIndex = null;
 	
 	private IMap<Identifier, IndexTask> source = null;
+	
+	private static String specifiedThreadNumberStr = org.dataone.configuration.Settings.getConfiguration().getString("index.thread.number", "0");
+	private static int specifiedThreadNumber = 0;
+	private static ExecutorService executor = null;
+    static {
+        try {
+            specifiedThreadNumber = (new Integer(specifiedThreadNumberStr)).intValue();
+        } catch (Exception e) {
+            log.warn("SystemMetadataEventListener static part - Metacat cannot parse the string " + specifiedThreadNumberStr +
+                     " specified by property index.thread.number into a number since " + e.getLocalizedMessage() + 
+                     ". The default value 0 will be used as the specified value");
+        }
+        int availableProcessors = Runtime.getRuntime().availableProcessors();
+        availableProcessors = availableProcessors - 1;
+        int nThreads = Math.max(1, availableProcessors); //the default threads number
+        if (specifiedThreadNumber > 0 && specifiedThreadNumber < nThreads) {
+            nThreads = specifiedThreadNumber;
+        }
+        log.info("SystemMetadataEventListener static part - the size of index thread pool specified in the metacat.properties file is " + specifiedThreadNumber +
+                ". The size computed from the available processors is " + availableProcessors + 
+                 ". Final computed thread pool size for index executor: " + nThreads);
+        //int nThreads = org.dataone.configuration.Settings.getConfiguration().getInt("index.thread.number", 1);
+        //log.info("+++++++++++++++SystemMetadataEventListener.static - the number of threads will used in executors is " + nThreads);
+        executor = Executors.newFixedThreadPool(nThreads); 
+    }
 	        
     /**
      * Default constructor - caller needs to initialize manually
@@ -121,50 +149,65 @@ public class SystemMetadataEventListener implements EntryListener<Identifier, In
     }
     
 	public void entryUpdated(EntryEvent<Identifier, IndexTask> entryEvent) {
-	    long start = System.currentTimeMillis();
-	    //System.out.println("===================================calling entryUpdated method ");
-	    log.debug("===================================SystemMetadataEventListener. entryUpdated - calling SystemMetadataEventListener.itemAdded method ");
-		// add to the index
-		Identifier pid = entryEvent.getKey();
-		//System.out.println("===================================update the document "+pid.getValue());
+		final Identifier pid = entryEvent.getKey();
+		final IndexTask task = entryEvent.getValue();
+		//System.out.println("the size of queue is " + source.size());
+		//System.out.println("+++++++++++++++++++++++++++++ the systemmetadata last modifying time is " + task.getSystemMetadata().getDateSysMetadataModified().getTime());
 		log.info("===================================SystemMetadataEventListener. entryUpdated - adding the document " + pid.getValue());
+		final boolean deletingTask = task.isDeleting();
+		final long startFromQueuing = task.getTimeAddToQueque();
+		final boolean isSysmetaChangeOnly = task.isSysmetaChangeOnly();
 		
 		// what do we have to index?
-		IndexTask task = entryEvent.getValue();
-		SystemMetadata systemMetadata = task.getSystemMetadata();
-		Map<String, List<Object>> fields = task.getFields();
-		
-		/*if(systemMetadata == null) {
-		    writeEventLog(systemMetadata, pid, "SystemMetadataEventListener.itemAdded -could not get the SystemMetadata");
-		    return;
-		}*/
-		
-		// make sure we remove this task so that it can be re-added in the future
-		if (source != null && pid != null) {
-			source.remove(pid);
-		}
-		
-		if (systemMetadata != null) {
-		    if(task.isDeleting()) {
-		        solrIndex.remove(pid, systemMetadata);
-		    } else {
-		        solrIndex.update(pid, systemMetadata);
-		    }
-		    
-			
-		}
-		if (fields != null) {
-			solrIndex.insertFields(pid, fields);
-		}
-		long end = System.currentTimeMillis();
-        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total time to process indexer" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
-        long startFromQueuing = task.getTimeAddToQueque();
-        if (startFromQueuing != 0) {
-            log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURATION + (end-startFromQueuing)/1000);
-        }
-
+		Runnable runner = new Runnable() {
+            @Override
+            public void run() {
+                long start = System.currentTimeMillis();
+                if (source != null && pid != null) {
+                    try {
+                        source.lock(pid);
+                        // make sure we remove this task so that it can be re-added in the future
+                        source.remove(pid);
+                    } finally {
+                        source.unlock(pid);
+                    }
+                }
+                try {
+                    log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Time from queuing to start process is " + Settings.PERFORMANCELOG_DURATION + (start-startFromQueuing)/1000);
+                    //SystemMetadata systemMetadata = task.getSystemMetadata();
+                    SystemMetadata systemMetadata = DistributedMapsFactory.getSystemMetadataMap().get(pid);
+                    Map<String, List<Object>> fields = task.getFields();
+                    if (systemMetadata != null) {
+                        if(deletingTask) {
+                            solrIndex.remove(pid, systemMetadata);
+                        } else {
+                            solrIndex.update(pid, systemMetadata, isSysmetaChangeOnly);
+                        }
+                    }
+                    if (fields != null) {
+                        solrIndex.insertFields(pid, fields);
+                    }
+                    long end = System.currentTimeMillis();
+                    log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total time to process indexer" + Settings.PERFORMANCELOG_DURATION + (end-start)/1000);
+                    
+                    if (startFromQueuing != 0) {
+                        log.info(Settings.PERFORMANCELOG + pid.getValue() + Settings.PERFORMANCELOG_INDEX_METHOD + " Total indexing (including queuing time)" + Settings.PERFORMANCELOG_DURATION + (end-startFromQueuing)/1000);
+                    }
+                } catch (Exception e) {
+                    log.error("Error to index: " + e.getMessage(), e);
+                    throw new RuntimeException(e.getMessage(), e);
+                }
+            }
+        };
+        // submit the task, and that's it
+        executor.submit(runner);
 	}
 	
-	
-    
+	/**
+	 * Get the ExecutorService which indexes the tasks
+	 * @return the ExecutoSerice object
+	 */
+	public static ExecutorService getExecutor() {
+	    return executor;
+	}
 }

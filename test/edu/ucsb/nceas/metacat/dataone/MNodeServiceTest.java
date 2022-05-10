@@ -3569,14 +3569,17 @@ public class MNodeServiceTest extends D1NodeServiceTest {
         metadata.setSize(size); //reset it back
         
         Checksum check = metadata.getChecksum();
+        String originalChecksumAlgorithm  = check.getAlgorithm();
+        String originalValue = check.getValue();
         Checksum newCheck = new Checksum();
         newCheck.setValue("12345");
+        newCheck.setAlgorithm(originalChecksumAlgorithm);
         metadata.setChecksum(newCheck);
         try {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its checksum was changed");
        } catch (InvalidRequest e)  {
-           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+           assertTrue("The update system metadata should fail since the checksum was changed", e.getMessage().contains("12345"));
        }
        
         metadata.setChecksum(null);
@@ -3584,8 +3587,32 @@ public class MNodeServiceTest extends D1NodeServiceTest {
             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
             fail("We can't update the system metadata since its checksum is null");
        } catch (InvalidRequest e)  {
-           //assertTrue("The update system metadata should fail since the size was changed", e.getMessage().contains("The rightsHolder field "));
+           assertTrue("The update system metadata should fail since the checksum was changed", e.getMessage().contains("checksum"));
        }
+        
+        //change the checksum algorithm
+        newCheck = new Checksum();
+        newCheck.setValue(originalValue);
+        newCheck.setAlgorithm("SHA-256");
+        metadata.setChecksum(newCheck);
+        try {
+             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+             fail("We can't update the system metadata since its checksum was changed");
+        } catch (InvalidRequest e)  {
+            assertTrue("The update system metadata should fail since the checksum algorithm was changed", e.getMessage().contains("SHA-256"));
+        }
+        
+        //change the checksum algorithm
+        newCheck = new Checksum();
+        newCheck.setValue(originalValue);
+        newCheck.setAlgorithm(null);
+        metadata.setChecksum(newCheck);
+        try {
+             MNodeService.getInstance(request).updateSystemMetadata(session, guid, metadata);
+             fail("We can't update the system metadata since its checksum was changed");
+        } catch (InvalidRequest e)  {
+            assertTrue("The update system metadata should fail since the checksum algorithm was changed", e.getMessage().contains("algorithm"));
+        }
         
         metadata.setChecksum(check);
         
