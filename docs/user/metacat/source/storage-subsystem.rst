@@ -210,6 +210,53 @@ Architecture
    
    Architectural redesign thoughts.
 
+
+.. figure:: images/mc-overview.png
+
+   Figure 1. Metacat components overview.
+
+..
+  This block defines the components diagram referenced above.
+  @startuml images/mc-overview.png
+  !theme bluegray
+  !include <logos/solr>
+  
+  frame "Metacat" {
+      [Task Generator]
+  }
+  
+  frame "RabbitMQ deployment" {
+    addTask - [PriorityQueue]
+  }
+  
+  node "MC Index" {
+    [PriorityQueue] --> [Index Worker 1]
+    [PriorityQueue] --> [Index Worker 2]
+    [PriorityQueue] --> [Index Worker 3]
+  }
+  
+  database "<$solr>" as s {
+    folder "Core" {
+      [Index Schema]
+    }
+  }
+  
+  [Task Generator] --> addTask
+  [Index Worker 1] --> [Index Schema]
+  [Index Worker 2] --> [Index Schema]
+  [Index Worker 3] --> [Index Schema]
+
+  @enduml
+
+.. raw:: latex
+
+  \newpage
+
+.. raw:: pdf
+
+  PageBreak
+
+
 Design choices include:
 
 - Storage interface
