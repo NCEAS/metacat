@@ -220,31 +220,74 @@ Architecture
   @startuml images/mc-overview.png
   !theme bluegray
   !include <logos/solr>
-  
+  skinparam actorStyle awesome
+
+  :Alice:
+
+  frame "Ceph Cluster" as cluster {
+    component CephFS
+    component "hosts" {
+      database "ceph-host-1"
+      database "ceph-host-2"
+      database "ceph-host-3"
+      database "ceph-host-n"
+    }
+    CephFS-hosts
+  }
+
   frame "Metacat" {
-      [Task Generator]
+    interface "DataONE API" as D1
+    :Alice: --> D1
+    D1 --> :Alice:
+    [MetacatHandler]--D1
+    [Task Generator] <-- [MetacatHandler]
+    frame "Storage Subsystem" as S {
+      () Read as R
+      () Write as W
+      rectangle store {
+        component cephAdaptor
+        component S3Adaptor
+        component LocalFSAdaptor
+      }
+      cephAdaptor -- R
+      cephAdaptor -- W
+    }
+    W <-- [MetacatHandler]
+    R <-- [MetacatHandler]
   }
-  
-  frame "RabbitMQ deployment" {
-    addTask - [PriorityQueue]
-  }
-  
-  node "MC Index" {
-    [PriorityQueue] --> [Index Worker 1]
-    [PriorityQueue] --> [Index Worker 2]
-    [PriorityQueue] --> [Index Worker 3]
-  }
-  
-  database "<$solr>" as s {
-    folder "Core" {
-      [Index Schema]
+
+  frame "Indexing Deployment" as indexer {
+    frame "RabbitMQ deployment" {
+      interface addTask
+      [PriorityQueue] as queue
+      addTask --> queue
+    }
+
+    node "MC Index" {
+      [Index Worker 1] as iw1
+      [Index Worker 2] as iw2
+      [Index Worker 3] as iw3
+      queue --> iw1
+      queue --> iw2
+      queue --> iw3
+    }
+
+    frame "SOLR deployment" {
+      database "<$solr>" as s {
+        folder "Core" {
+          [Index Schema]
+        }
+      }
     }
   }
-  
+
   [Task Generator] --> addTask
-  [Index Worker 1] --> [Index Schema]
-  [Index Worker 2] --> [Index Schema]
-  [Index Worker 3] --> [Index Schema]
+  iw1 --> [Index Schema] : update
+  iw2 --> [Index Schema] : update
+  iw3 --> [Index Schema] : update
+  cephAdaptor <-- CephFS : read
+  cephAdaptor --> CephFS : write
+  iw1 <.. CephFS : read
 
   @enduml
 
