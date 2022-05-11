@@ -205,24 +205,24 @@ Design diagrams
 Architecture
 ~~~~~~~~~~~~
 
-.. figure:: images/indexing-21.jpg
-   :align: center
-   
-   Architectural redesign thoughts.
-
-
 .. figure:: images/mc-overview.png
+   :align: center
 
-   Figure 1. Metacat components overview.
+   Figure 1. Metacat components overview, highlighting index task flow with dashed arrows.
 
 ..
   This block defines the components diagram referenced above.
   @startuml images/mc-overview.png
-  !theme bluegray
+  top to bottom direction
+  !theme superhero-outline
   !include <logos/solr>
   skinparam actorStyle awesome
 
-  :Alice:
+  together {
+    :Alice:
+    :Bob:
+    :Chandra:
+  }
 
   frame "Ceph Cluster" as cluster {
     component CephFS
@@ -235,44 +235,67 @@ Architecture
     CephFS-hosts
   }
 
+  frame DataONEDrive as d1d {
+    [Globus]
+    [WebDAV]
+    d1d-u-cluster
+  }
+
+  frame "Postgres deployment" as pg {
+    database metacat as mcdb {
+    }
+  }
+
   frame "Metacat" {
     interface "DataONE API" as D1
-    :Alice: --> D1
-    D1 --> :Alice:
+    :Alice: -d-> D1
+    :Bob: -d-> D1
+    :Chandra: -d-> D1
     [MetacatHandler]--D1
-    [Task Generator] <-- [MetacatHandler]
-    frame "Storage Subsystem" as S {
-      () Read as R
-      () Write as W
-      rectangle store {
-        component cephAdaptor
-        component S3Adaptor
-        component LocalFSAdaptor
+    [Task Generator] <.. [MetacatHandler]
+    [Search] <-- [MetacatHandler]
+    [Auth] <-- [MetacatHandler]
+    [EventLog] <-- [MetacatHandler]
+    [Replicate] <-- [MetacatHandler]
+    frame "Storage Subsystem" as Storage {
+
+      frame "Storage Adapters" as store {
+        component ceph
+        component S3
+        component LocalFS
       }
-      cephAdaptor -- R
-      cephAdaptor -- W
+      rectangle DataObject as do {
+              () Read as R
+              () Write as W
+      }
+      do--R
+      do--W
+      do --> ceph
+      do <-- ceph
     }
     W <-- [MetacatHandler]
     R <-- [MetacatHandler]
+    do--pg
   }
 
   frame "Indexing Deployment" as indexer {
     frame "RabbitMQ deployment" {
       interface addTask
-      [PriorityQueue] as queue
-      addTask --> queue
+      queue PriorityQueue as pqueue
+      [Monitor]
+      addTask .> pqueue
     }
 
     node "MC Index" {
       [Index Worker 1] as iw1
       [Index Worker 2] as iw2
       [Index Worker 3] as iw3
-      queue --> iw1
-      queue --> iw2
-      queue --> iw3
+      pqueue ..> iw1
+      pqueue ..> iw2
+      pqueue ..> iw3
     }
 
-    frame "SOLR deployment" {
+    frame "SOLR deployment" as solr {
       database "<$solr>" as s {
         folder "Core" {
           [Index Schema]
@@ -281,13 +304,16 @@ Architecture
     }
   }
 
-  [Task Generator] --> addTask
+  [Task Generator] ..> addTask : add
   iw1 --> [Index Schema] : update
   iw2 --> [Index Schema] : update
   iw3 --> [Index Schema] : update
-  cephAdaptor <-- CephFS : read
-  cephAdaptor --> CephFS : write
+  ceph <-- CephFS : read
+  ceph --> CephFS : write
   iw1 <.. CephFS : read
+  iw2 <.. CephFS : read
+  iw3 <.. CephFS : read
+  Search --> solr
 
   @enduml
 
