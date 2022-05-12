@@ -553,3 +553,178 @@ Proposed Indexing with RabbitMQ
       deactivate IndexWorker
       
   @enduml
+
+
+Proposed MN.create method
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: images/MN-create.png
+   :align: center
+
+   This sequence diagram shows data flow in the MN.create method.
+   
+..
+   @startuml
+   title "Sequence diagram for the MN.create method "
+    participant Client
+    participant "MNResourceHandler" <<Metacat>>
+    participant "StreamMultipartHandler" <<Metacat>>
+    participant "MetacatHandler" <<Metacat>>
+    participant "XMLValidator" <<Metacat>>
+    participant "StorageManager" <<Metacat Singleton>>
+    /'participant "CephFileSystem" <<CEPH>>'/
+    participant "MNodeService" <<Metacat>> 
+    participant "D1AuthHelper" <<Metacat>>
+    participant "ChecksumManager" <<Metacat Singleton>>
+    participant "DBSystemMetadataManager" <<Metacat Singletone>>
+
+  
+   
+
+   Client -> MNResourceHandler : HTTP POST(sysmeta, pid, object) 
+
+   activate MNResourceHandler 
+   MNResourceHandler -> StreamMultipartHandler : resoloveMultipart(HttpServeletRequest)
+   deactivate MNResourceHandler
+
+   activate StreamMultipartHandler
+   StreamMultipartHandler -> StreamMultipartHandler : parseSysmeta
+   StreamMultipartHandler -> StreamMultipartHandler : parsePid
+   StreamMultipartHandler -> MetacatHandler : writeTemp(object, checksumAlg[])
+   deactivate StreamMultipartHandler 
+
+   activate MetacatHandler
+   MetacatHandler -> MetacatHandler : createDigestInputStream(object)
+   MetacatHandler -> StorageManager : writeTemp(digestObjectInputStream)
+   deactivate MetacatHandler
+
+   activate StorageManager
+   StorageManager -> MetacatHandler : objectFile
+   deactivate StorageManager
+
+   activate MetacatHandler
+   MetacatHandler -> MetacatHandler : createCheckedFile(objectFile, checksums[]) 
+   MetacatHandler -> StreamMultipartHandler : checkedFile
+   deactivate MetacatHandler
+
+   activate StreamMultipartHandler
+   StreamMultipartHandler -> MNResourceHandler : MultipartRequest (sysmeta, pid, checkedFile)
+   deactivate StreamMultipartHandler 
+
+   activate MNResourceHandler 
+   MNResourceHandler -> MNodeService: create(session, pid, checkedFileInputStream{with the field of checkedFile}, sysmeta)
+   deactivate MNResourceHandler
+
+   activate MNodeService
+   MNodeService -> D1AuthHelper : doIsAuthorized(session)
+   deactivate MNodeService
+
+   activate D1AuthHelper
+   D1AuthHelper -> MNodeService : true
+   deactivate D1AuthHelper
+
+   activate MNodeService
+   MNodeService -> MetacatHandler : write(pid, checkedFileInputStream, sysmeta)
+   deactivate MNodeService 
+
+   alt "object is scientific metadata"
+      activate MetacatHandler 
+      MetacatHandler -> XMLValidator : validate(checkedFile)
+      deactivate MetacatHandler
+  
+      activate XMLValidator
+      XMLValidator -> MetacatHandler : true
+      deactivate XMLValidator
+      activate MetacatHandler
+   end
+
+
+   MetacatHandler -> StorageManager : mkDirs(pid-hash-string)
+   deactivate MetacatHandler
+
+   alt
+      activate StorageManager 
+      StorageManager -> MetacatHandler : directoryPath
+      deactivate StorageManager
+
+      activate MetacatHandler
+      MetacatHandler -> StorageManager : move(checkedFile, diretoryPath)
+      deactivate MetacatHandler
+
+      activate StorageManager 
+      StorageManager -> MetacatHandler : success
+      deactivate StorageManager
+
+      activate MetacatHandler 
+      MetacatHandler -> StorageManager : write(sysmetaInputStream, directoryPath)
+      deactivate MetacatHandler
+
+      activate StorageManager 
+      StorageManager -> MetacatHandler : success
+      deactivate StorageManager
+
+      activate MetacatHandler
+      MetacatHandler -> ChecksumManager : map(pid, checksums[])
+      deactivate MetacatHandler
+
+      activate ChecksumManager
+      ChecksumManager -> MetacatHandler : success
+      deactivate ChecksumManager
+
+
+   else directoryPath already exists
+
+   /'MetacatHandler -> StorageManager : write(sysmetaInputStream)'/
+
+   /'activate StorageManager '/
+   /'StorageManager -> MetacatHandler : success'/
+   /'deactivate StorageManager'/
+   /'activate MetacatHandler'/
+   /'MetacatHandler -> ChecksumManager : map(pid, checksum[])'/
+   /'deactivate MetacatHandler./
+   /'activate ChecksumManager./
+   /'ChecksumManager -> MetacatHandler : success'/
+      MetacatHandler -> Client : InvalidRequest(pid already used)
+      deactivate ChecksumManager
+
+   end
+
+   activate MetacatHandler
+   MetacatHandler -> DBSystemMetadataManager : save(sysmeta)
+   deactivate MetacatHandler
+
+   activate DBSystemMetadataManager
+   DBSystemMetadataManager -> MetacatHandler : success
+   deactivate DBSystemMetadataManager
+
+   activate MetacatHandler
+   MetacatHandler -> MNodeService : pid
+   deactivate MetacatHandler
+
+   activate MNodeService
+   MNodeService -> MNResourceHandler : pid
+   deactivate MNodeService
+
+   activate MNResourceHandler
+   MNResourceHandler -> Client : pid
+   deactivate MNResourceHandler
+
+   @enduml
+
+CheckedFile and CheckedFileInputStream Class Diagram
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. figure:: images/checkedFile-class.png
+   :align: center  
+..
+   @startuml
+
+   File <|-- CheckedFile
+   CheckedFile : Checksum[]: checksums
+   CheckedFile : getChecksums()
+
+   FileInputStream <|-- CheckedFileInputStream
+   CheckedFileInputStream : CheckedFile: checkedFile
+   CheckedFileInputStream : getFile()
+
+   @enduml
