@@ -377,7 +377,7 @@ Legacy MN Indexing
    The red boxes represent compoenents that could be replaced by RabbitMQ messaging.
 
 ..
-  @startuml
+  @startuml images/MN-indexing-hazelcast.png
    title "Metacat indexing (MN w/Hazelcast)"
       participant Client
       participant "MNResourceHandler" <<Metacat>>
@@ -433,7 +433,7 @@ Legacy CN Indexing
   The red boxes represent compoenents that could be replaced by RabbitMQ messaging.
 
 ..
-  @startuml
+  @startuml images/CN-indexing-hazelcast.png
    title "DataONE indexing (CN w/Hazelcast)"
       participant "task" <<d1_synchronization>>
       participant "CNCore" <<d1_synchronization>>
@@ -507,7 +507,7 @@ Proposed Indexing with RabbitMQ
    The green boxes represent compenents that would replace legacy indexing components in order to implement RabbitMQ messaging.
 
 ..
-  @startuml
+  @startuml images/MN-indexing-rabbitmq.png
    title "Metacat indexing with RabbitMQ"
       participant Client
       participant "MNResourceHandler" <<Metacat>>
