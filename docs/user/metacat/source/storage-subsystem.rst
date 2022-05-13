@@ -508,52 +508,66 @@ Proposed Indexing with RabbitMQ
 
 ..
   @startuml images/MN-indexing-rabbitmq.png
-   title "Metacat indexing with RabbitMQ"
-      participant Client
-      participant "MNResourceHandler" <<Metacat>>
-      participant "MNodeService" <<Metacat>>
-      participant "D1NodeService" <<Metacat>>
-      participant "MetacatHandler" <<Metacat>>
-      participant "IndexScheduler" <<Metacat-index>> #lightgreen
-      queue       "channel" <<RabbitMQ>> #lightgreen
-      participant "IndexWorker" <<Metacat-index>> #lightgreen
-      participant "SolrIndex" <<Metacat-index>>
-  
-      Client -> MNResourceHandler : HTTP POST(sysmeta, pid, object) 
-      
-      activate MNResourceHandler 
-      MNResourceHandler -> MNResourceHandler : handle(bytes)
-      MNResourceHandler -> MNResourceHandler : putObject(pid, action)
-      MNResourceHandler -> MNodeService : create(session, pid, object, sysmeta)
-      deactivate MNResourceHandler
-      
-      activate MNodeService
-      MNodeService -> D1NodeService : insertOrUpdateDocument(object, pid)
-      deactivate MNodeService
-  
-      activate D1NodeService
-      D1NodeService -> MetacatHandler : handleInsertOrUpdateAction()
-      deactivate D1NodeService
-      
-      activate MetacatHandler
-      MetacatHandler -> IndexScheduler : queueEntry(pid, sysmeta)
-      deactivate MetacatHandler
-      
-      activate IndexScheduler
-      IndexScheduler -> channel : basicPublish(exchange, key, properties, message)
-      deactivate IndexScheduler
-      
-      activate channel
-      channel -> IndexWorker : handleDelivery(tag, envelope, properties, message) 
-      deactivate channel
-      
-      activate IndexWorker
-      IndexWorker -> SolrIndex : update(pid, sysmeta, fields)
-      IndexWorker -> SolrIndex : insertFields(pid, fields)
-      deactivate IndexWorker
-      
-  @enduml
+  title "Metacat indexing with RabbitMQ"
+  participant Client
+  participant "MNResourceHandler" <<Metacat>>
+  participant "MNodeService" <<Metacat>>
+  participant "D1NodeService" <<Metacat>>
+  participant "MetacatHandler" <<Metacat>>
+  participant "IndexScheduler" <<Metacat-index>> #lightgreen
+  queue       "channel" <<RabbitMQ>> #lightgreen
+  participant "IndexWorker" <<Metacat-index>> #lightgreen
+  participant "SolrIndex" <<Metacat-index>>
 
+  Client -> MNResourceHandler : HTTP POST(sysmeta, pid, object)
+
+  activate MNResourceHandler
+  MNResourceHandler -> MNResourceHandler : handle(bytes)
+  MNResourceHandler -> MNResourceHandler : putObject(pid, action)
+  MNResourceHandler -> MNodeService : create(session, pid, object, sysmeta)
+
+  activate MNodeService
+  MNodeService -> D1NodeService : insertOrUpdateDocument(object, pid)
+
+  activate D1NodeService
+  D1NodeService -> MetacatHandler : handleInsertOrUpdateAction()
+
+  activate MetacatHandler
+  MetacatHandler -> IndexScheduler : queueEntry(pid, sysmeta)
+
+  activate IndexScheduler
+
+  activate channel
+  IndexScheduler -> channel : basicPublish(exchange, key, properties, message)
+  IndexScheduler <- channel
+
+  MetacatHandler <- IndexScheduler
+  deactivate channel
+  deactivate IndexScheduler
+
+  D1NodeService <- MetacatHandler
+  deactivate MetacatHandler
+
+  MNodeService <- D1NodeService
+  deactivate D1NodeService
+
+  MNResourceHandler <- MNodeService
+  deactivate MNodeService
+
+  Client <- MNResourceHandler
+  deactivate MNResourceHandler
+
+  activate channel
+  channel -> IndexWorker : handleDelivery(tag, envelope, properties, message)
+  deactivate channel
+
+  activate IndexWorker
+  IndexWorker -> SolrIndex : update(pid, sysmeta, fields)
+  IndexWorker <- SolrIndex
+  IndexWorker -> SolrIndex : insertFields(pid, fields)
+  IndexWorker <- SolrIndex
+  deactivate IndexWorker
+  @enduml
 
 Proposed MN.create method
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -564,7 +578,7 @@ Proposed MN.create method
    This sequence diagram shows data flow in the MN.create method.
    
 ..
-   @startuml
+   @startuml images/MN-create.png
    title "Sequence diagram for the MN.create method "
     participant Client
     participant "MNResourceHandler" <<Metacat>>
@@ -717,7 +731,7 @@ CheckedFile and CheckedFileInputStream Class Diagram
 .. figure:: images/checkedFile-class.png
    :align: center  
 ..
-   @startuml
+   @startuml images/checkedFile-class.png
 
    File <|-- CheckedFile
    CheckedFile : Checksum[]: checksums
