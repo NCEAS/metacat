@@ -566,6 +566,7 @@ Proposed Indexing with RabbitMQ
   IndexWorker <- SolrIndex
   IndexWorker -> SolrIndex : insertFields(pid, fields)
   IndexWorker <- SolrIndex
+  IndexWorker -> channel : basicAck(envelope.getDeliveryTag(), false);
   deactivate IndexWorker
   @enduml
 
