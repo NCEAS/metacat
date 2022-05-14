@@ -278,12 +278,12 @@ Architecture
     do--pg
   }
 
-  frame "Indexing Deployment" as indexer {
+  frame "dataone-index" as indexer {
     frame "RabbitMQ deployment" {
-      interface addTask
+      interface basicPublish
       queue PriorityQueue as pqueue
       [Monitor]
-      addTask .> pqueue
+      basicPublish .> pqueue
     }
 
     node "MC Index" {
@@ -304,15 +304,15 @@ Architecture
     }
   }
 
-  [Task Generator] ..> addTask : add
+  [Task Generator] ..> basicPublish : add
   iw1 --> [Index Schema] : update
   iw2 --> [Index Schema] : update
   iw3 --> [Index Schema] : update
   ceph <-- CephFS : read
   ceph --> CephFS : write
-  iw1 <.. CephFS : read
-  iw2 <.. CephFS : read
-  iw3 <.. CephFS : read
+  iw1 ..> CephFS : read
+  iw2 ..> CephFS : read
+  iw3 ..> CephFS : read
   Search --> solr
 
   @enduml
@@ -514,10 +514,10 @@ Proposed Indexing with RabbitMQ
   participant "MNodeService" <<Metacat>>
   participant "D1NodeService" <<Metacat>>
   participant "MetacatHandler" <<Metacat>>
-  participant "IndexScheduler" <<Metacat-index>> #lightgreen
+  participant "TaskGenerator" <<Metacat>> #lightgreen
   queue       "channel" <<RabbitMQ>> #lightgreen
-  participant "IndexWorker" <<Metacat-index>> #lightgreen
-  participant "SolrIndex" <<Metacat-index>>
+  participant "IndexWorker" <<dataone-index>> #lightgreen
+  participant "SolrIndex" <<dataone-index>>
 
   Client -> MNResourceHandler : HTTP POST(sysmeta, pid, object)
 
@@ -533,17 +533,17 @@ Proposed Indexing with RabbitMQ
   D1NodeService -> MetacatHandler : handleInsertOrUpdateAction()
 
   activate MetacatHandler
-  MetacatHandler -> IndexScheduler : queueEntry(pid, sysmeta)
+  MetacatHandler -> TaskGenerator : queueEntry(pid, sysmeta)
 
-  activate IndexScheduler
+  activate TaskGenerator
 
   activate channel
-  IndexScheduler -> channel : basicPublish(exchange, key, properties, message)
-  IndexScheduler <- channel
+  TaskGenerator -> channel : basicPublish(exchange, key, properties, message)
+  TaskGenerator <- channel
 
-  MetacatHandler <- IndexScheduler
+  MetacatHandler <- TaskGenerator
   deactivate channel
-  deactivate IndexScheduler
+  deactivate TaskGenerator
 
   D1NodeService <- MetacatHandler
   deactivate MetacatHandler
