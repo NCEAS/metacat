@@ -342,14 +342,6 @@ Design choices include:
         - System processes
         - User access processes
 
-
-Indexing Sequence Diagram
-~~~~~~~~~~~~~~~~~~~~~~~~~
-.. figure:: images/indexing-24.jpg
-   :align: center
-   
-   Indexing and storage sequence.
-
 Physical File Layout
 ~~~~~~~~~~~~~~~~~~~~
 
