@@ -3695,7 +3695,7 @@ public class DocumentImpl
                 	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 	if(!removeAll) {
                 		HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
-                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, null, false);
+                		MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
                 	} else { 
                 		try {
                 			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));

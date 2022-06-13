@@ -1845,7 +1845,7 @@ public class MetacatHandler {
                     HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
                     
                     // submit for indexing
-                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
                     
                     // [re]index the resource map now that everything is saved
                     // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
@@ -1853,13 +1853,13 @@ public class MetacatHandler {
         			potentialOreIdentifier.setValue(SystemMetadataFactory.RESOURCE_MAP_PREFIX + sysMeta.getIdentifier().getValue());
         			SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
         			if (oreSystemMetadata != null) {
-                        MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, null, false);
+                        MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, false);
                         if (oreSystemMetadata.getObsoletes() != null) {
                             logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - submit the index task to reindex the obsoleted resource map " + 
                                               oreSystemMetadata.getObsoletes().getValue());
                             boolean isSysmetaChangeOnly = true;
                             SystemMetadata obsoletedOresysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(oreSystemMetadata.getObsoletes());
-                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, null, true);
+                            MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, true);
                         }
         			}
                     
@@ -2711,8 +2711,8 @@ public class MetacatHandler {
 					} else {
 						try {
 							// submit for indexing
-						    Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+						    //Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+	                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, false);
 						} catch (Exception e) {
 							failedList.add(id);
 						    logMetacat.info("Error submitting to index for pid " + id);
@@ -2923,8 +2923,8 @@ public class MetacatHandler {
                     SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
                     if (sysMeta != null) {
                         // submit for indexing
-                        Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, fields, false);
+                        //Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
+                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, false);
                         i++;
                         logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for indexing in the buildIndexFromQuery on pid: " + guid);
                     }
@@ -3442,7 +3442,7 @@ public class MetacatHandler {
                                 HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
                                 
                                 // submit for indexing
-                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, null, true);
+                                MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, true);
                                 
                             } catch (Exception ee) {
                                 // If the file did not exist before this method was 

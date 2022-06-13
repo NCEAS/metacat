@@ -300,9 +300,9 @@ public class MetacatSolrIndex {
      * @param fields  extra fields which need to be indexed 
      * @param followRevisions .. if the obsoleted version will be indexed
      */
-    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean followRevisions) {
         boolean isSysmetaChangeOnly = false;
-        submit(pid, systemMetadata, isSysmetaChangeOnly, fields, followRevisions);
+        submit(pid, systemMetadata, isSysmetaChangeOnly, followRevisions);
     }
     
     
@@ -314,7 +314,7 @@ public class MetacatSolrIndex {
      * @param fields  extra fields which need to be indexed 
      * @param followRevisions  if the obsoleted version will be indexed
      */
-    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, Map<String, List<Object>> fields, boolean followRevisions) {
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, boolean followRevisions) {
         if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
             //only works for MNs
             log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
@@ -336,7 +336,7 @@ public class MetacatSolrIndex {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
 		    Map<String, List<Object>> obsoletedFields = null;
-			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
+			this.submit(obsoletedPid, obsoletedSysMeta , followRevisions);
 		}
     }
     

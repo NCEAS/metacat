@@ -734,7 +734,7 @@ public class ReplicationService extends BaseService {
 	                                                    ReplicationService.REPLICATIONUSER, docid, "create");
 	                handler.saveReplication(source, docid, sysMeta, user, serverCode, server, event);
 	                if(sysMeta != null) {
-	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
                     }
 	            } catch (Exception e) {
 	                HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
@@ -790,7 +790,7 @@ public class ReplicationService extends BaseService {
 	                    // submit for indexing. When the doc writing process fails, the index process will fail as well. But this failure
 	                    // will not interrupt the process.
 	                    try {
-	                        MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+	                        MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	                    } catch (Exception ee) {
 	                        logReplication.warn("ReplicationService.handleForceReplicateRequest - couldn't index the doc since "+ee.getMessage());
 	                    }
@@ -1053,7 +1053,7 @@ public class ReplicationService extends BaseService {
 	      	  // save the system metadata
 	      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 	      	  // submit for indexing
-              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+              MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	        }
 	        
 	        // process the access control
@@ -1325,7 +1325,7 @@ public class ReplicationService extends BaseService {
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
 				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
 				// submit for indexing
-                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, null, true);
+                MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}
       
 			logReplication.info("ReplicationService.handleForceReplicateSystemMetadataRequest - processed guid: " + guid);
