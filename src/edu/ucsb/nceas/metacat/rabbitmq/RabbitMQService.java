@@ -117,14 +117,12 @@ public class RabbitMQService extends BaseService {
     }
     
     /**
-     * Publish the given inforamtion to the index queue
-     * @param id
-     * @param type
-     * @param sysmeta
-     * @param followRevision
+     * Publish the given information to the index queue
+     * @param id  the identifier of the object which will be indexed
+     * @param type  the type of indexing, it can be delete, create or updateSysmetaOnly
+     * @param sysmeta  the system metadata associated with the id. This is optional
      */
-    public void publishToIndexQueue(Identifier id, String type, SystemMetadata sysmeta,
-                boolean followRevision ) throws ServiceException {
+    public void publishToIndexQueue(Identifier id, String type, SystemMetadata sysmeta) throws ServiceException {
         if (id == null || id.getValue() == null || id.getValue().trim().equals("")) {
             throw new ServiceException("RabbitMQService.publishToIndexQueue - the identifier can't be null or blank.");
         }
