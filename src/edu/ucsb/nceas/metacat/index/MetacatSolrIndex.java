@@ -70,7 +70,7 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
-import edu.ucsb.nceas.metacat.rabbitmq.RabbitMQService;
+import edu.ucsb.nceas.metacat.rabbitmq.IndexGenerator;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
@@ -284,8 +284,8 @@ public class MetacatSolrIndex {
         if(pid != null) {
             log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid " + pid.getValue() + " into the index queue on the RabbitMQ service.");
             try {
-                String type = RabbitMQService.DELETE_INDEX_TYPE;
-                RabbitMQService.getInstance().publishToIndexQueue(pid, type, null);
+                String type = IndexGenerator.DELETE_INDEX_TYPE;
+                IndexGenerator.getInstance().publishToIndexQueue(pid, type, null);
                 log.info("MetacatSolrIndex.submitDeleteTask - put the pid " + pid.getValue() + " with the index type " + type + "into the index queue on the RabbitMQ service successfully.");
             } catch (ServiceException e) {
                 log.error("MetacatSolrIndex.submitDeleteTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
@@ -321,12 +321,12 @@ public class MetacatSolrIndex {
                      " will not be submitted into the index queue on the RabbitMQ service.");
             return;
         }
-        String type = RabbitMQService.CREATE_INDEXT_TYPE;
+        String type = IndexGenerator.CREATE_INDEXT_TYPE;
         if (isSysmetaChangeOnly) {
-            type = RabbitMQService.SYSMETA_CHANGE_TYPE;
+            type = IndexGenerator.SYSMETA_CHANGE_TYPE;
         }
         try {
-            RabbitMQService.getInstance().publishToIndexQueue(pid, type, systemMetadata);
+            IndexGenerator.getInstance().publishToIndexQueue(pid, type, systemMetadata);
             log.info("MetacatSolrIndex.submit - put the pid " + pid.getValue() + " with type " + type + " into the index queue on the RabbitMQ service successfully.");
         } catch (ServiceException e) {
             log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());

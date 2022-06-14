@@ -63,7 +63,7 @@ import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.properties.SkinPropertyService;
-import edu.ucsb.nceas.metacat.rabbitmq.RabbitMQService;
+import edu.ucsb.nceas.metacat.rabbitmq.IndexGenerator;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.ServiceService;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -438,7 +438,7 @@ public class MetaCatServlet extends HttpServlet {
 			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
 			
 			// initialize the RabbitMQ service
-			ServiceService.registerService("RabbitMQService", RabbitMQService.getInstance());
+			ServiceService.registerService("RabbitMQService", IndexGenerator.getInstance());
 
 			_fullyInitialized = true;
 			

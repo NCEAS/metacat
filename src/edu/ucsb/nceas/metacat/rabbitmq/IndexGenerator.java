@@ -20,7 +20,7 @@ import edu.ucsb.nceas.metacat.shared.ServiceException;
  * @author tao
  *
  */
-public class RabbitMQService extends BaseService {
+public class IndexGenerator extends BaseService {
     
     public final static String CREATE_INDEXT_TYPE = "create";
     public final static String DELETE_INDEX_TYPE = "delete";
@@ -40,14 +40,14 @@ public class RabbitMQService extends BaseService {
     private static String RabbitMQpassword = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
     private static com.rabbitmq.client.Connection RabbitMQconnection = null;
     private static com.rabbitmq.client.Channel RabbitMQchannel = null;
-    private static RabbitMQService instance = null;
+    private static IndexGenerator instance = null;
     
     private static Log logMetacat = LogFactory.getLog("RabbitMQService");
     
     /**
      * Private constructor
      */
-    private RabbitMQService() {
+    private IndexGenerator() {
         super();
         _serviceName="HazelcastService";
         try {
@@ -104,12 +104,12 @@ public class RabbitMQService extends BaseService {
      *
      * @return a singleton instance of the RabbitMQService class.
      */
-    public static RabbitMQService getInstance() {
+    public static IndexGenerator getInstance() {
         if (instance == null) {
-            synchronized (RabbitMQService.class) {
+            synchronized (IndexGenerator.class) {
                 if (instance == null) {
                     logMetacat.debug("Creating new controller instance");
-                    instance = new RabbitMQService();
+                    instance = new IndexGenerator();
                 }
             }
         }
