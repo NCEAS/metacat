@@ -22,9 +22,13 @@ import edu.ucsb.nceas.metacat.shared.ServiceException;
  */
 public class IndexGenerator extends BaseService {
     
+    //Those strings are the types of the index tasks.
+    //The create is the index task type for the action when a new object was created. So the solr index will be generated.
+    //delete is the index task type for the action when an object was deleted. So the solr index will be deleted
+    //sysmeta is the index task type for the action when the system metadata of an existing object was updated. 
     public final static String CREATE_INDEXT_TYPE = "create";
     public final static String DELETE_INDEX_TYPE = "delete";
-    public final static String SYSMETA_CHANGE_TYPE = "sysmetaChange"; //this handle for resource map only
+    public final static String SYSMETA_CHANGE_TYPE = "sysmeta"; //this handle for resource map only
     
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
@@ -42,19 +46,18 @@ public class IndexGenerator extends BaseService {
     private static com.rabbitmq.client.Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
     
-    private static Log logMetacat = LogFactory.getLog("RabbitMQService");
+    private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
     /**
      * Private constructor
      */
     private IndexGenerator() {
         super();
-        _serviceName="HazelcastService";
+        _serviceName="IndexQueueService";
         try {
           init();
-          
         } catch (ServiceException se) {
-          logMetacat.error("There was a problem creating the HazelcastService. " +
+          logMetacat.error("IndexGenerato.constructor - There was a problem creating the IndexGenerator. " +
                            "The error message was: " + se.getMessage());
         }
     }
@@ -73,8 +76,8 @@ public class IndexGenerator extends BaseService {
         factory.setAutomaticRecoveryEnabled(true);
         // attempt recovery every 10 seconds after a failure
         factory.setNetworkRecoveryInterval(10000);
-        logMetacat.debug("RabbitMQService.init - Set RabbitMQ host to: " + RabbitMQhost);
-        logMetacat.debug("RabbitMQService.init - Set RabbitMQ port to: " + RabbitMQport);
+        logMetacat.debug("IndexGenerator.init - Set RabbitMQ host to: " + RabbitMQhost);
+        logMetacat.debug("IndexGenerator.init - Set RabbitMQ port to: " + RabbitMQport);
 
         // Setup the 'InProcess' queue with a routing key - messages consumed by this queue require that
         // this routine key be used. The routine key INDEX_ROUTING_KEY sends messages to the index worker,
@@ -92,9 +95,9 @@ public class IndexGenerator extends BaseService {
             
             // Channel will only send one request for each worker at a time.
             RabbitMQchannel.basicQos(1);
-            logMetacat.info("RabbitMQService.init - Connected to RabbitMQ queue " + INDEX_QUEUE_NAME);
+            logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue " + INDEX_QUEUE_NAME);
         } catch (Exception e) {
-            logMetacat.error("RabbitMQService.init - Error connecting to RabbitMQ queue " + INDEX_QUEUE_NAME + " since " + e.getMessage());
+            logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue " + INDEX_QUEUE_NAME + " since " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
     }
@@ -108,7 +111,7 @@ public class IndexGenerator extends BaseService {
         if (instance == null) {
             synchronized (IndexGenerator.class) {
                 if (instance == null) {
-                    logMetacat.debug("Creating new controller instance");
+                    logMetacat.debug("IndexGenerator.getInstance - Creating new controller instance");
                     instance = new IndexGenerator();
                 }
             }
@@ -119,15 +122,15 @@ public class IndexGenerator extends BaseService {
     /**
      * Publish the given information to the index queue
      * @param id  the identifier of the object which will be indexed
-     * @param type  the type of indexing, it can be delete, create or updateSysmetaOnly
+     * @param index_type  the type of indexing, it can be delete, create or sysmeta
      * @param sysmeta  the system metadata associated with the id. This is optional
      */
-    public void publishToIndexQueue(Identifier id, String type, SystemMetadata sysmeta) throws ServiceException {
+    public void publishToIndexQueue(Identifier id, String index_type, SystemMetadata sysmeta) throws ServiceException {
         if (id == null || id.getValue() == null || id.getValue().trim().equals("")) {
-            throw new ServiceException("RabbitMQService.publishToIndexQueue - the identifier can't be null or blank.");
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - the identifier can't be null or blank.");
         }
-        if (type == null || type.trim().equals("")) {
-            throw new ServiceException("RabbitMQService.publishToIndexQueue - the index type can't be null or blank.");
+        if (index_type == null || index_type.trim().equals("")) {
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - the index type can't be null or blank.");
         }
         try {
             AMQP.BasicProperties basicProperties = new AMQP.BasicProperties.Builder()
@@ -136,7 +139,7 @@ public class IndexGenerator extends BaseService {
                     .build();
             RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, id.getValue().getBytes());
         } catch (Exception e) {
-            throw new ServiceException("RabbitMQService.publishToIndexQueue - can't publish the index task for " 
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - can't publish the index task for " 
                                         + id.getValue() + " since " + e.getMessage());
         }
     }
@@ -162,6 +165,7 @@ public class IndexGenerator extends BaseService {
         try {
             RabbitMQchannel.close();
             RabbitMQconnection.close();
+            logMetacat.info("IndexGenerator.stop - stop the index queue service.");
         } catch (Exception e) {
             throw new ServiceException(e.getMessage());
         }

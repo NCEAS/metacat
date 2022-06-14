@@ -438,7 +438,7 @@ public class MetaCatServlet extends HttpServlet {
 			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
 			
 			// initialize the RabbitMQ service
-			ServiceService.registerService("RabbitMQService", IndexGenerator.getInstance());
+			ServiceService.registerService("IndexQueueService", IndexGenerator.getInstance());
 
 			_fullyInitialized = true;
 			
