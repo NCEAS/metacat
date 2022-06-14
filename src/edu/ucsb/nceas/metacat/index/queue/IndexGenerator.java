@@ -1,4 +1,4 @@
-package edu.ucsb.nceas.metacat.rabbitmq;
+package edu.ucsb.nceas.metacat.index.queue;
 
 import java.util.Map;
 
