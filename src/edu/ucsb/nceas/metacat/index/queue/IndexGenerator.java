@@ -1,5 +1,25 @@
+/**
+ *  '$RCSfile$'
+ *  Copyright: 2022 Regents of the University of California and the
+ *              National Center for Ecological Analysis and Synthesis
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ */
 package edu.ucsb.nceas.metacat.index.queue;
 
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,11 +34,17 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
+import edu.ucsb.nceas.metacat.IdentifierManager;
+import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
+import edu.ucsb.nceas.metacat.dataone.D1NodeService;
+import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.utilities.FileUtil;
 
 /**
- * The RabbitMQService class will publish (send) the index information
+ * The IndexGenerator class will publish (send) the index information
  * to a RabbitMQ queue. A index worker will consume the information.
  * @author tao
  *
@@ -57,6 +83,8 @@ public class IndexGenerator extends BaseService {
     private static Connection RabbitMQconnection = null;
     private static Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
+    private static String relativeDataPath = null;
+    private static String relativeMetadataPath = null;
     
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
@@ -112,6 +140,30 @@ public class IndexGenerator extends BaseService {
             logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue " + INDEX_QUEUE_NAME + " since " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
+        String dataPath = Settings.getConfiguration().getString("application.datafilepath");
+        relativeDataPath = getLastSubdir(dataPath);
+        String metadataPath = Settings.getConfiguration().getString("application.documentfilepath");
+        relativeMetadataPath = getLastSubdir(metadataPath);
+    }
+    
+    /**
+     * Get the last sub-directory in the path.
+     * If the path is /var/data, data will be returned. 
+     * @param path  the path will be analyzed.
+     * @return  the last part of path
+     */
+    protected static String getLastSubdir(String path) {
+        String lastDir = null;
+        if (path != null) {
+            if (path.endsWith("/")) {
+                //remove the last "/"
+                path = path.substring(0, path.lastIndexOf("/"));
+            }
+            int index = path.lastIndexOf("/");
+            lastDir = path.substring(index+1);
+        }
+        logMetacat.debug("IndexGenerator.getLastSubdir - the last sub-directory is " + lastDir);
+        return lastDir;
     }
     
     /**
@@ -148,7 +200,10 @@ public class IndexGenerator extends BaseService {
             Map<String, Object> headers = new HashMap<String, Object>();
             headers.put(HEADER_ID, id.getValue());
             headers.put(HEADER_INDEX_TYPE, index_type);
-            headers.put(HEADER_PATH, "data/foo");
+            String filePath = getFilePath(id);
+            if (filePath != null) {
+                headers.put(HEADER_PATH, filePath);
+            }
             AMQP.BasicProperties basicProperties = new AMQP.BasicProperties.Builder()
                     .contentType("text/plain")
                     .deliveryMode(2) // set this message to persistent
@@ -160,6 +215,40 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException("IndexGenerator.publishToIndexQueue - can't publish the index task for " 
                                         + id.getValue() + " since " + e.getMessage());
         }
+    }
+    
+    /**
+     * Get the relative file path for the identifier. For example, autogen.1.1 is the docid for guid foo.1 and it is 
+     * a metadata object. And the metadata objects are stored in the path /var/document. The file path will be document/autogen.1.1
+     * Note, the value can be null since cn doesn't store data objects.
+     * @param id  the guid of object
+     * @return  the relative file path
+     * @throws ServiceException
+     */
+    protected static String getFilePath(Identifier id) throws ServiceException {
+        String path = null;
+        if (id == null || id.getValue() == null || id.getValue().trim().equals("")) {
+            throw new ServiceException("IndexGenerator.getFilePath - the identifier can't be null or blank.");
+        }
+        String docid = null;
+        try {
+            docid = IdentifierManager.getInstance().getLocalId(id.getValue());
+        } catch (McdbDocNotFoundException e) {
+            logMetacat.info("IndexGenerator.getFilePath - Metacat can't find the docid for the identifier " + id.getValue() +
+                           ". This is possible since CN doesn't harvest data objects at all.");
+        } catch (SQLException e) {
+           throw new ServiceException(e.getMessage());
+        }
+        if (docid != null) {
+            SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(id);
+            if (!D1NodeService.isScienceMetadata(systemMetadata)) {
+                path  = relativeDataPath + "/" + docid;
+            } else {
+                path = relativeMetadataPath + "/" + docid;
+            }       
+        }
+        logMetacat.debug("IndexGenerator.getFilePath - The relative file path for the identifier " + id.getValue() + " is " + path);
+        return path;
     }
     
     /**
