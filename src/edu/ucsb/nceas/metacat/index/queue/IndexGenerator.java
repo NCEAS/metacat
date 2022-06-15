@@ -211,6 +211,9 @@ public class IndexGenerator extends BaseService {
                     .headers(headers)
                     .build();
             RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, null);
+            logMetacat.info("IndexGenerator.publish - The index task with the object dentifier " + id.getValue() + ", the index type " + index_type + 
+                           ", the file path " + filePath + " (null means Metacat doesn't have the object), the priority " + priority + 
+                           " was push into RabbitMQ with the exchange name " + EXCHANGE_NAME);
         } catch (Exception e) {
             throw new ServiceException("IndexGenerator.publishToIndexQueue - can't publish the index task for " 
                                         + id.getValue() + " since " + e.getMessage());
