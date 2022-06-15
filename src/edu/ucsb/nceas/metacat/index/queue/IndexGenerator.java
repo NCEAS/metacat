@@ -1,5 +1,6 @@
 package edu.ucsb.nceas.metacat.index.queue;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.logging.Log;
@@ -9,6 +10,8 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 
 import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import edu.ucsb.nceas.metacat.shared.BaseService;
@@ -30,6 +33,15 @@ public class IndexGenerator extends BaseService {
     public final static String DELETE_INDEX_TYPE = "delete";
     public final static String SYSMETA_CHANGE_TYPE = "sysmeta"; //this handle for resource map only
     
+    public final static int HIGHEST_PRIORITY = 4; // some special cases
+    public final static int HIGH_PRIORITY = 3; //use for the operations such as create, update
+    public final static int MEDIUM_PRIORITY = 2; //use for the operations such as updateSystem, delete, archive
+    public final static int LOW_PRIORITY = 1; //use for the bulk operations such as reindexing the whole corpus 
+    
+    private final static String HEADER_ID = "id"; //The header name in the message to store the identifier
+    private final static String HEADER_PATH = "path"; //The header name in the message to store the path of the object 
+    private final static String HEADER_INDEX_TYPE = "index_type"; //The header name in the message to store the index type
+    
     private final static String EXCHANGE_NAME = "dataone-index";
     private final static String INDEX_QUEUE_NAME = "index";
     private final static String INDEX_ROUTING_KEY = "index";
@@ -42,8 +54,8 @@ public class IndexGenerator extends BaseService {
     private static int RabbitMQport = Settings.getConfiguration().getInt("index.rabbitmq.hostport", 5672);
     private static String RabbitMQusername = Settings.getConfiguration().getString("index.rabbitmq.username", "guest");
     private static String RabbitMQpassword = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
-    private static com.rabbitmq.client.Connection RabbitMQconnection = null;
-    private static com.rabbitmq.client.Channel RabbitMQchannel = null;
+    private static Connection RabbitMQconnection = null;
+    private static Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
     
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
@@ -123,9 +135,9 @@ public class IndexGenerator extends BaseService {
      * Publish the given information to the index queue
      * @param id  the identifier of the object which will be indexed
      * @param index_type  the type of indexing, it can be delete, create or sysmeta
-     * @param sysmeta  the system metadata associated with the id. This is optional
+     * @param priority  the priority of the index task
      */
-    public void publishToIndexQueue(Identifier id, String index_type, SystemMetadata sysmeta) throws ServiceException {
+    public void publish(Identifier id, String index_type, int priority) throws ServiceException {
         if (id == null || id.getValue() == null || id.getValue().trim().equals("")) {
             throw new ServiceException("IndexGenerator.publishToIndexQueue - the identifier can't be null or blank.");
         }
@@ -133,11 +145,17 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException("IndexGenerator.publishToIndexQueue - the index type can't be null or blank.");
         }
         try {
+            Map<String, Object> headers = new HashMap<String, Object>();
+            headers.put(HEADER_ID, id.getValue());
+            headers.put(HEADER_INDEX_TYPE, index_type);
+            headers.put(HEADER_PATH, "data/foo");
             AMQP.BasicProperties basicProperties = new AMQP.BasicProperties.Builder()
                     .contentType("text/plain")
                     .deliveryMode(2) // set this message to persistent
+                    .priority(priority)
+                    .headers(headers)
                     .build();
-            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, id.getValue().getBytes());
+            RabbitMQchannel.basicPublish(EXCHANGE_NAME, INDEX_ROUTING_KEY, basicProperties, null);
         } catch (Exception e) {
             throw new ServiceException("IndexGenerator.publishToIndexQueue - can't publish the index task for " 
                                         + id.getValue() + " since " + e.getMessage());

@@ -285,7 +285,7 @@ public class MetacatSolrIndex {
             log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid " + pid.getValue() + " into the index queue on the RabbitMQ service.");
             try {
                 String type = IndexGenerator.DELETE_INDEX_TYPE;
-                IndexGenerator.getInstance().publishToIndexQueue(pid, type, null);
+                IndexGenerator.getInstance().publish(pid, type, 1);
                 log.info("MetacatSolrIndex.submitDeleteTask - put the pid " + pid.getValue() + " with the index type " + type + "into the index queue on the RabbitMQ service successfully.");
             } catch (ServiceException e) {
                 log.error("MetacatSolrIndex.submitDeleteTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
@@ -326,7 +326,7 @@ public class MetacatSolrIndex {
             type = IndexGenerator.SYSMETA_CHANGE_TYPE;
         }
         try {
-            IndexGenerator.getInstance().publishToIndexQueue(pid, type, systemMetadata);
+            IndexGenerator.getInstance().publish(pid, type, 1);
             log.info("MetacatSolrIndex.submit - put the pid " + pid.getValue() + " with type " + type + " into the index queue on the RabbitMQ service successfully.");
         } catch (ServiceException e) {
             log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
