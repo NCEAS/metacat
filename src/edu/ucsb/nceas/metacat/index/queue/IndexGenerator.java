@@ -80,6 +80,7 @@ public class IndexGenerator extends BaseService {
     private static int RabbitMQport = Settings.getConfiguration().getInt("index.rabbitmq.hostport", 5672);
     private static String RabbitMQusername = Settings.getConfiguration().getString("index.rabbitmq.username", "guest");
     private static String RabbitMQpassword = Settings.getConfiguration().getString("index.rabbitmq.password", "guest");
+    private static int RabbitMQMaxPriority = Settings.getConfiguration().getInt("index.rabbitmq.max.priority");
     private static Connection RabbitMQconnection = null;
     private static Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
@@ -129,7 +130,9 @@ public class IndexGenerator extends BaseService {
 
             boolean exclusive = false;
             boolean autoDelete = false;
-            Map<String, Object> argus = null;
+            Map<String, Object> argus = new HashMap<String, Object>();
+            argus.put("x-max-priority", RabbitMQMaxPriority);
+            logMetacat.debug("IndexGenerator.init - Set RabbitMQ max priority to: " + RabbitMQMaxPriority);
             RabbitMQchannel.queueDeclare(INDEX_QUEUE_NAME, durable, exclusive, autoDelete, argus);
             RabbitMQchannel.queueBind(INDEX_QUEUE_NAME, EXCHANGE_NAME, INDEX_ROUTING_KEY);
             
