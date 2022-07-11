@@ -1929,7 +1929,7 @@ public class MNodeService extends D1NodeService
             // submit for indexing
             try {
                 boolean isSysmetaChangeOnly = true;
-                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta,  isSysmetaChangeOnly, null, false);
+                MetacatSolrIndex.getInstance().submit(newSysMeta.getIdentifier(), newSysMeta,  isSysmetaChangeOnly, false);
             } catch (Exception e) {
                 logMetacat.error("Could not submit changed systemMetadata for indexing, pid: " + newSysMeta.getIdentifier().getValue(), e);
             }

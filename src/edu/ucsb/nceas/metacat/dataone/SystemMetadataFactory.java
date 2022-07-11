@@ -682,7 +682,7 @@ public class SystemMetadataFactory {
 	                    Thread.sleep(waitingTime);
 	                } 
 	            }
-	            MetacatSolrIndex.getInstance().submit(id, sysmeta, null, false);
+	            MetacatSolrIndex.getInstance().submit(id, sysmeta, false);
 	        }
 	       
         } catch (Exception e) {

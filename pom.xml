@@ -462,6 +462,10 @@
             <groupId>net.sourceforge.plantuml</groupId>
             <artifactId>plantuml</artifactId>
             <version>1.2022.5</version>
+        <dependency>
+            <groupId>com.rabbitmq</groupId>
+            <artifactId>amqp-client</artifactId>
+            <version>5.14.2</version>
         </dependency>
     </dependencies>
 </project>

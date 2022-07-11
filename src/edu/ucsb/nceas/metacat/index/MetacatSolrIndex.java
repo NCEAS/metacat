@@ -69,7 +69,9 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryService;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
+import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
@@ -276,16 +278,18 @@ public class MetacatSolrIndex {
         if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
             //only works for MNs
             log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
-                    " will not be submitted into the index queue on hazelcast service.");
+                    " will not be submitted into the index queue on the RabbitMQ service.");
             return;
         }
-        IndexTask task = new IndexTask();
-        task.setSystemMetadata(sysMeta);
-        task.setIsDeleteing(true);
         if(pid != null) {
-            log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid "+pid.getValue()+" into the index queue on hazelcast service.");
-            HazelcastService.getInstance().getIndexQueue().put(pid, task);
-            log.info("MetacatSolrIndex.submitDeleteTask - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+            log.debug("MetacatSolrIndex.submitDeleteTask - will put the pid " + pid.getValue() + " into the index queue on the RabbitMQ service.");
+            try {
+                String type = IndexGenerator.DELETE_INDEX_TYPE;
+                IndexGenerator.getInstance().publish(pid, type, 1);
+                log.info("MetacatSolrIndex.submitDeleteTask - put the pid " + pid.getValue() + " with the index type " + type + "into the index queue on the RabbitMQ service successfully.");
+            } catch (ServiceException e) {
+                log.error("MetacatSolrIndex.submitDeleteTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
+            }
         }
     }
     
@@ -296,46 +300,43 @@ public class MetacatSolrIndex {
      * @param fields  extra fields which need to be indexed 
      * @param followRevisions .. if the obsoleted version will be indexed
      */
-    public void submit(Identifier pid, SystemMetadata systemMetadata, Map<String, List<Object>> fields, boolean followRevisions) {
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean followRevisions) {
         boolean isSysmetaChangeOnly = false;
-        submit(pid, systemMetadata, isSysmetaChangeOnly, fields, followRevisions);
+        submit(pid, systemMetadata, isSysmetaChangeOnly, followRevisions);
     }
     
     
-    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, Map<String, List<Object>> fields, boolean followRevisions) {
+    /**
+     * Submit a index task into the index queue
+     * @param pid  the pid of the object which will be indexed
+     * @param systemMetadata  the system metadata associated with pid
+     * @param isSysmetaChangeOnly  if this is the event of system metadata change only
+     * @param fields  extra fields which need to be indexed 
+     * @param followRevisions  if the obsoleted version will be indexed
+     */
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, boolean followRevisions) {
         if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
             //only works for MNs
             log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
-                     " will not be submitted into the index queue on hazelcast service.");
+                     " will not be submitted into the index queue on the RabbitMQ service.");
             return;
         }
-        	IndexTask task = new IndexTask();
-        	task.setSystemMetadata(systemMetadata);
-        	task.setFields(fields);
-        	long start = System.currentTimeMillis();
-        	task.setTimeAddToQueque(start);
-        	task.setSysmetaChangeOnly(isSysmetaChangeOnly);
-        	if(pid != null) {
-        	    log.debug("MetacatSolrIndex.submit - will put the pid " + pid.getValue() + " into the index queue on hazelcast service.");
-        	}
-    	
-		HazelcastService.getInstance().getIndexQueue().put(pid, task);
-		
-		if(pid != null) {
-            log.info("MetacatSolrIndex.submit - put the pid "+pid.getValue()+" into the index queue on hazelcast service successfully.");
+        String type = IndexGenerator.CREATE_INDEXT_TYPE;
+        if (isSysmetaChangeOnly) {
+            type = IndexGenerator.SYSMETA_CHANGE_TYPE;
         }
-		
-		// submit older revisions recursively otherwise they stay in the index!
+        try {
+            IndexGenerator.getInstance().publish(pid, type, 1);
+            log.info("MetacatSolrIndex.submit - put the pid " + pid.getValue() + " with type " + type + " into the index queue on the RabbitMQ service successfully.");
+        } catch (ServiceException e) {
+            log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
+        }
+        // submit older revisions recursively otherwise they stay in the index!
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
 			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
 		    Map<String, List<Object>> obsoletedFields = null;
-		    /*obsoletedFields = EventLog.getInstance().getIndexFields(obsoletedPid, Event.READ.xmlValue());
-		    if(obsoletedPid != null && pid != null) {
-	            log.debug("MetacatSolrIndex.submit - We will index the old version  "+obsoletedPid.getValue()+" of the object "+ pid.getValue() +
-	                    " as well. So we put "+obsoletedPid.getValue()+" into the index queue on hazelcast service.");
-	        }*/
-			this.submit(obsoletedPid, obsoletedSysMeta , obsoletedFields, followRevisions);
+			this.submit(obsoletedPid, obsoletedSysMeta , followRevisions);
 		}
     }
     

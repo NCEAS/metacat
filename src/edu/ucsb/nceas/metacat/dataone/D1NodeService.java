@@ -550,7 +550,7 @@ public abstract class D1NodeService {
     
     try {
         // submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, false);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
     } catch (Exception e) {
         logMetacat.warn("Couldn't create solr index for object "+pid.getValue());
     }
@@ -1379,7 +1379,7 @@ public abstract class D1NodeService {
         // note: the calling subclass handles the map hazelcast lock/unlock
       	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
       	// submit for indexing
-        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, null, false);
+        MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
       } catch (Exception e) {
           throw new ServiceFailure("1190", e.getMessage());
       }  
@@ -1470,7 +1470,7 @@ public abstract class D1NodeService {
         try {
             HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
             boolean isSysmetaChangeOnly = true;
-            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, null, false);
+            MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, false);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
             //logMetacat.warn("D1NodeService.updateSystemMetadataWithoutLock - we can't submit the change of the system metadata to the solr index since "+e.getMessage());

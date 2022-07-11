@@ -143,7 +143,7 @@ public class EventLog
     	        
     	        // submit for indexing
     	        if(enableEvenLogIndex) {
-    	            MetacatSolrIndex.getInstance().submit(pid, null, this.getIndexFields(pid, event), false);
+    	            MetacatSolrIndex.getInstance().submit(pid, null, false);
     	        }
     	        
             } catch (Exception e) {
