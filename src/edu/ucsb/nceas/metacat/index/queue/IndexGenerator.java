@@ -203,7 +203,10 @@ public class IndexGenerator extends BaseService {
             Map<String, Object> headers = new HashMap<String, Object>();
             headers.put(HEADER_ID, id.getValue());
             headers.put(HEADER_INDEX_TYPE, index_type);
-            String filePath = getFilePath(id);
+            String filePath = null;
+            if (!index_type.equals(DELETE_INDEX_TYPE)) {
+                filePath = getFilePath(id);//we don't need the file path from the delete type since the path was deleted.
+            }
             if (filePath != null) {
                 headers.put(HEADER_PATH, filePath);
             }
