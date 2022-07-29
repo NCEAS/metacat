@@ -136,8 +136,9 @@ public class IndexGenerator extends BaseService {
             RabbitMQchannel.queueDeclare(INDEX_QUEUE_NAME, durable, exclusive, autoDelete, argus);
             RabbitMQchannel.queueBind(INDEX_QUEUE_NAME, EXCHANGE_NAME, INDEX_ROUTING_KEY);
             
-            // Channel will only send one request for each worker at a time.
-            RabbitMQchannel.basicQos(1);
+            // Channel will only send one request for each worker at a time. This is only for consumer, so we comment it out.
+            //see https://www.rabbitmq.com/consumer-prefetch.html
+            //RabbitMQchannel.basicQos(1);
             logMetacat.info("IndexGenerator.init - Connected to RabbitMQ queue " + INDEX_QUEUE_NAME);
         } catch (Exception e) {
             logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue " + INDEX_QUEUE_NAME + " since " + e.getMessage());
