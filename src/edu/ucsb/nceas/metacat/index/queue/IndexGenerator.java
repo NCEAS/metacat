@@ -84,9 +84,7 @@ public class IndexGenerator extends BaseService {
     private static Connection RabbitMQconnection = null;
     private static Channel RabbitMQchannel = null;
     private static IndexGenerator instance = null;
-    private static String relativeDataPath = null;
-    private static String relativeMetadataPath = null;
-    
+
     private static Log logMetacat = LogFactory.getLog("IndexGenerator");
     
     /**
@@ -144,10 +142,7 @@ public class IndexGenerator extends BaseService {
             logMetacat.error("IndexGenerator.init - Error connecting to RabbitMQ queue " + INDEX_QUEUE_NAME + " since " + e.getMessage());
             throw new ServiceException(e.getMessage());
         }
-        String dataPath = Settings.getConfiguration().getString("application.datafilepath");
-        relativeDataPath = getLastSubdir(dataPath);
-        String metadataPath = Settings.getConfiguration().getString("application.documentfilepath");
-        relativeMetadataPath = getLastSubdir(metadataPath);
+       
     }
     
     /**
@@ -228,8 +223,12 @@ public class IndexGenerator extends BaseService {
     }
     
     /**
-     * Get the relative file path for the identifier. For example, autogen.1.1 is the docid for guid foo.1 and it is 
-     * a metadata object. And the metadata objects are stored in the path /var/document. The file path will be document/autogen.1.1
+     * Get the relative file path for the identifier. 
+     * This relative path is based on application.datafilepath (for data files) 
+     * or application.documentfilepath (for document files)
+     * For example, autogen.1.1 is the docid for guid foo.1 and it is a metadata object. 
+     * The metadata objects are stored in the path /var/metacat/document/autogen.1.1. 
+     * Since the application.documentfilepath is "/var/metacat/document", the relative file path will be autogen.1.1.
      * Note, the value can be null since cn doesn't store data objects.
      * @param id  the guid of object
      * @return  the relative file path
@@ -250,12 +249,7 @@ public class IndexGenerator extends BaseService {
            throw new ServiceException(e.getMessage());
         }
         if (docid != null) {
-            SystemMetadata systemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(id);
-            if (!D1NodeService.isScienceMetadata(systemMetadata)) {
-                path  = relativeDataPath + "/" + docid;
-            } else {
-                path = relativeMetadataPath + "/" + docid;
-            }       
+            path = docid;
         }
         logMetacat.debug("IndexGenerator.getFilePath - The relative file path for the identifier " + id.getValue() + " is " + path);
         return path;
