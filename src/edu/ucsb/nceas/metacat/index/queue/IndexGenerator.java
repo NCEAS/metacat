@@ -91,15 +91,15 @@ public class IndexGenerator extends BaseService {
     /**
      * Private constructor
      */
-    private IndexGenerator() {
+    private IndexGenerator() throws ServiceException{
         super();
         _serviceName="IndexQueueService";
         try {
           init();
         } catch (ServiceException se) {
-          instance = null;
           logMetacat.error("IndexGenerato.constructor - There was a problem creating the IndexGenerator. " +
                            "The error message was: " + se.getMessage());
+          throw se;
         }
     }
     
@@ -177,7 +177,12 @@ public class IndexGenerator extends BaseService {
             synchronized (IndexGenerator.class) {
                 if (instance == null) {
                     logMetacat.debug("IndexGenerator.getInstance - Creating new controller instance");
-                    instance = new IndexGenerator();
+                    try {
+                        instance = new IndexGenerator();
+                    } catch (ServiceException e) {
+                        logMetacat.debug("IndexGenerator.getInstance - failed to create the IndexGenerator instance and set it to null.");
+                        instance = null;
+                    }
                 }
             }
         }
