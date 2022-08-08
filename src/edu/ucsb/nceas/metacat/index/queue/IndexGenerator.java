@@ -26,6 +26,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dataone.configuration.Settings;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v2.SystemMetadata;
 
@@ -96,6 +97,7 @@ public class IndexGenerator extends BaseService {
         try {
           init();
         } catch (ServiceException se) {
+          instance = null;
           logMetacat.error("IndexGenerato.constructor - There was a problem creating the IndexGenerator. " +
                            "The error message was: " + se.getMessage());
         }
@@ -188,12 +190,16 @@ public class IndexGenerator extends BaseService {
      * @param index_type  the type of indexing, it can be delete, create or sysmeta
      * @param priority  the priority of the index task
      */
-    public void publish(Identifier id, String index_type, int priority) throws ServiceException {
+    public void publish(Identifier id, String index_type, int priority) throws ServiceException, InvalidRequest {
         if (id == null || id.getValue() == null || id.getValue().trim().equals("")) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - the identifier can't be null or blank.");
+            throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue - the identifier can't be null or blank.");
         }
         if (index_type == null || index_type.trim().equals("")) {
-            throw new ServiceException("IndexGenerator.publishToIndexQueue - the index type can't be null or blank.");
+            throw new InvalidRequest("0000", "IndexGenerator.publishToIndexQueue - the index type can't be null or blank.");
+        }
+        if (RabbitMQchannel == null) {
+            throw new ServiceException("IndexGenerator.publishToIndexQueue - can't publish the index task for " 
+                    + id.getValue() + " since the RabbitMQ channel is null, which means Metacat cannot connect with RabbitMQ.");
         }
         try {
             Map<String, Object> headers = new HashMap<String, Object>();

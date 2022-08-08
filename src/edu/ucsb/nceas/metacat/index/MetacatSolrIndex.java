@@ -51,6 +51,7 @@ import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 
 import org.apache.solr.servlet.SolrRequestParsers;
+import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
 import org.dataone.service.exceptions.UnsupportedType;
@@ -287,8 +288,8 @@ public class MetacatSolrIndex {
                 String type = IndexGenerator.DELETE_INDEX_TYPE;
                 IndexGenerator.getInstance().publish(pid, type, 1);
                 log.info("MetacatSolrIndex.submitDeleteTask - put the pid " + pid.getValue() + " with the index type " + type + "into the index queue on the RabbitMQ service successfully.");
-            } catch (ServiceException e) {
-                log.error("MetacatSolrIndex.submitDeleteTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
+            } catch (ServiceException | InvalidRequest e) {
+                log.error("MetacatSolrIndex.submitDeleteTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getMessage());
             }
         }
     }
@@ -328,8 +329,8 @@ public class MetacatSolrIndex {
         try {
             IndexGenerator.getInstance().publish(pid, type, 1);
             log.info("MetacatSolrIndex.submit - put the pid " + pid.getValue() + " with type " + type + " into the index queue on the RabbitMQ service successfully.");
-        } catch (ServiceException e) {
-            log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getCoreMessage());
+        } catch (ServiceException | InvalidRequest e) {
+            log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getMessage());
         }
         // submit older revisions recursively otherwise they stay in the index!
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
