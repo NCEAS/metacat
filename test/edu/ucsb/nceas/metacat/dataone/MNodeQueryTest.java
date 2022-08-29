@@ -149,6 +149,9 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testSchemaOrgWithContexts"));
     suite.addTest(new MNodeQueryTest("testUpdateSystemmetadataToMakeObsolescentChain"));
     suite.addTest(new MNodeQueryTest("testEmlWithAnnotation"));
+    suite.addTest(new MNodeQueryTest("testDelete"));
+    suite.addTest(new MNodeQueryTest("testDeletePackage"));
+    suite.addTest(new MNodeQueryTest("testDeletePackage2"));
     return suite;
     
   }
@@ -2016,6 +2019,360 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         //assertTrue(resultStr.contains("http://www.w3.org/2002/07/owl#NamedIndividual"));
         assertTrue(resultStr.contains("http://www.w3.org/2000/01/rdf-schema#Resource"));
       
+    }
+    
+    /**
+     * Test delete an object not in packages
+     * @throws Exception
+     */
+    public void testDelete() throws Exception {
+        //delete a single object
+        Session session = getTestSession();
+        Session mnSession = getMNSession();
+        Identifier guid0 = new Identifier();
+        HashMap<String, String[]> params = null;
+        guid0.setValue("testDelete-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid0.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid0, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid0, object, sysmeta);
+        String query = "q=id:"+guid0.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr == null || !resultStr.contains("checksum"))  {
+            fail("The index of data object failed");
+        }
+        MNodeService.getInstance(request).delete(mnSession, guid0);
+        //make sure the solr doc is gone
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println("the query result is:\n" + resultStr);
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the data object.");
+        }
+    }
+    
+    /**
+     * Delete objects in a package
+     */
+    public void testDeletePackage() throws Exception {
+        Session session = getTestSession();
+        Session mnSession = getMNSession();
+        //insert data
+        Identifier guid = new Identifier();
+        guid.setValue("deletePackage-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //insert metadata
+        Identifier guid2 = new Identifier();
+        guid2.setValue("deletePackage-metadata." + System.currentTimeMillis());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        //create the resourcemap
+        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+        List<Identifier> dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid2, dataIds);
+        Identifier resourceMapId = new Identifier();
+        resourceMapId.setValue("deletePackage-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+resourceMapId.getValue());
+        ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
+        String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        //make sure the metadata and data has the relationship
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains(guid.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        //delete the metadata object
+        MNodeService.getInstance(request).delete(mnSession, guid2);
+        //the metadata object should be gone.
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the metadata object.");
+        }
+        //the data object exists but the documentedBy should be gone.
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("documentedBy"))  {
+            fail("Failed to delete the index of the metadata object.");
+        }
+        assertTrue(resultStr.contains(guid.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        //delete the resource map
+        MNodeService.getInstance(request).delete(mnSession, resourceMapId);
+        query = "q=id:" + resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the resource map.");
+        }
+        
+        //delete the data file
+        MNodeService.getInstance(request).delete(mnSession, guid);
+        query = "q=id:" + guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the data object.");
+        }
+    }
+    
+    /**
+     * Delete objects in a package
+     */
+    public void testDeletePackage2() throws Exception {
+        Session session = getTestSession();
+        Session mnSession = getMNSession();
+        //insert data
+        Identifier guid = new Identifier();
+        guid.setValue("deletePackage-data." + System.currentTimeMillis());
+        System.out.println("the data file id is ==== "+guid.getValue());
+        InputStream object = new ByteArrayInputStream("test".getBytes("UTF-8"));
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        
+        //insert metadata
+        Identifier guid2 = new Identifier();
+        guid2.setValue("deletePackage-metadata." + System.currentTimeMillis());
+        System.out.println("the metadata  file id is ==== "+guid2.getValue());
+        InputStream object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        SystemMetadata sysmeta2 = createSystemMetadata(guid2, session.getSubject(), object2);
+        object2.close();
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("eml://ecoinformatics.org/eml-2.0.1");
+        sysmeta2.setFormatId(formatId);
+        object2 = new FileInputStream(new File(MNodeReplicationTest.replicationSourceFile));
+        MNodeService.getInstance(request).create(session, guid2, object2, sysmeta2);
+        
+        //Make sure both data and metadata objects have been indexed
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        //create the resourcemap
+        Map<Identifier, List<Identifier>> idMap = new HashMap<Identifier, List<Identifier>>();
+        List<Identifier> dataIds = new ArrayList<Identifier>();
+        dataIds.add(guid);
+        idMap.put(guid2, dataIds);
+        Identifier resourceMapId = new Identifier();
+        resourceMapId.setValue("deletePackage-resourcemap." + System.currentTimeMillis());
+        System.out.println("the resource file id is ==== "+resourceMapId.getValue());
+        ResourceMap rm = ResourceMapFactory.getInstance().createResourceMap(resourceMapId, idMap);
+        String resourceMapXML = ResourceMapFactory.getInstance().serializeResourceMap(rm);
+        InputStream object3 = new ByteArrayInputStream(resourceMapXML.getBytes("UTF-8"));
+        SystemMetadata sysmeta3 = createSystemMetadata(resourceMapId, session.getSubject(), object3);
+        ObjectFormatIdentifier formatId3 = new ObjectFormatIdentifier();
+        formatId3.setValue("http://www.openarchives.org/ore/terms");
+        sysmeta3.setFormatId(formatId3);
+        MNodeService.getInstance(request).create(session, resourceMapId, object3, sysmeta3);
+        //make sure the metadata and data has the relationship
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        assertTrue(resultStr.contains("<arr name=\"documents\">"));
+        assertTrue(resultStr.contains(guid.getValue()));
+        assertTrue(resultStr.contains("<arr name=\"resourceMap\">"));
+        assertTrue(resultStr.contains(resourceMapId.getValue()));
+        
+        //delete the resource map
+        MNodeService.getInstance(request).delete(mnSession, resourceMapId);
+        query = "q=id:" + resourceMapId.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the resource map.");
+        }
+        //the metadata object does not have any relationship elements in the solr doc
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("documents"))  {
+            fail("Failed to delete the relationship elements in the metadata object.");
+        }
+        assertTrue(!resultStr.contains("<arr name=\"resourceMap\">"));
+        //the data object does not have any relationship elements in the solr doc
+        query = "q=id:"+guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("documentedBy")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("documentedBy"))  {
+            fail("Failed to delete the relationship elements of the data object.");
+        }
+        assertTrue(!resultStr.contains("<arr name=\"resourceMap\">"));
+        
+        //delete the metadata object
+        MNodeService.getInstance(request).delete(mnSession, guid2);
+        //the metadata object should be gone.
+        query = "q=id:"+guid2.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the metadata object.");
+        }
+       
+        //delete the data file
+        MNodeService.getInstance(request).delete(mnSession, guid);
+        query = "q=id:" + guid.getValue();
+        stream = MNodeService.getInstance(request).query(session, "solr", query);
+        resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr != null && resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        if (resultStr != null && resultStr.contains("checksum"))  {
+            fail("Failed to delete the index of the data object.");
+        }
     }
 
 }
