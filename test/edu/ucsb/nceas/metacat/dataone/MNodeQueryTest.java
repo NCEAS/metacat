@@ -94,6 +94,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String portal110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-portal-1.1.0.txt";
     private static String collection110FilePath = "metacat-index/src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml";
     private static String collection110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt";
+    private static String emlWithAnnotation = "test/eml220withAnnotation.xml";
     private int tryAcccounts = 50;
     
     private static String collectionResult = null;
@@ -147,6 +148,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     suite.addTest(new MNodeQueryTest("testSchemaOrg"));
     suite.addTest(new MNodeQueryTest("testSchemaOrgWithContexts"));
     suite.addTest(new MNodeQueryTest("testUpdateSystemmetadataToMakeObsolescentChain"));
+    suite.addTest(new MNodeQueryTest("testEmlWithAnnotation"));
     return suite;
     
   }
@@ -1959,6 +1961,61 @@ public class MNodeQueryTest extends D1NodeServiceTest {
        }
        assertTrue(resultStr.contains("name=\"obsoletes\">" + guid1.getValue()));
        
+    }
+    
+    /**
+     * Test to index an eml object with annotation
+     * @throws Exception
+     */
+    public void testEmlWithAnnotation() throws Exception {
+        Session session = getTestSession();
+        Identifier guid = new Identifier();
+        HashMap<String, String[]> params = null;
+        guid.setValue("testEmlWithAnnotation." + System.currentTimeMillis());
+        InputStream object = new FileInputStream(emlWithAnnotation);
+        SystemMetadata sysmeta = createSystemMetadata(guid, session.getSubject(), object);
+        ObjectFormatIdentifier formatId = new ObjectFormatIdentifier();
+        formatId.setValue("https://eml.ecoinformatics.org/eml-2.2.0");
+        sysmeta.setFormatId(formatId);
+        object.close();
+        object = new FileInputStream(emlWithAnnotation);
+        Identifier pid = MNodeService.getInstance(request).create(session, guid, object, sysmeta);
+        String query = "q=id:"+guid.getValue();
+        InputStream stream = MNodeService.getInstance(request).query(session, "solr", query);
+        String resultStr = IOUtils.toString(stream, "UTF-8");
+        int account = 0;
+        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
+        resultStr = resultStr.replaceAll("\\s","");
+        System.out.println("the guid is "+guid.getValue());
+        System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
+        
+        assertTrue(resultStr.contains("<strname=\"id\">"+guid.getValue()+"</str>"));
+        //assertTrue(resultStr.contains("http://www.w3.org/2002/07/owl#FunctionalProperty"));
+        assertTrue(resultStr.contains("http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#MeasurementType"));
+        //assertTrue(resultStr.contains("http://purl.dataone.org/odo/ARCRC_00000040"));
+        assertTrue(resultStr.contains("http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#hasUnit"));
+        //assertTrue(resultStr.contains("http://www.w3.org/2000/01/rdf-schema#Class"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00000629"));
+        //assertTrue(resultStr.contains("http://purl.dataone.org/odo/ARCRC_00000048"));
+        assertTrue(resultStr.contains("http://ecoinformatics.org/oboe/oboe.1.2/oboe-core.owl#containsMeasurementsOfType"));
+        //assertTrue(resultStr.contains("http://www.w3.org/2002/07/owl#Class"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00000518"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00000516"));
+        assertTrue(resultStr.contains("http://purl.obolibrary.org/obo/UO_0000301"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00000512"));
+        //assertTrue(resultStr.contains("http://purl.dataone.org/odo/ARCRC_00000500"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00001102"));
+        //assertTrue(resultStr.contains("http://www.w3.org/1999/02/22-rdf-syntax-ns#Property"));
+        assertTrue(resultStr.contains("http://purl.dataone.org/odo/ECSO_00001243"));
+        //assertTrue(resultStr.contains("http://www.w3.org/2002/07/owl#ObjectProperty"));
+        //assertTrue(resultStr.contains("http://www.w3.org/2002/07/owl#NamedIndividual"));
+        assertTrue(resultStr.contains("http://www.w3.org/2000/01/rdf-schema#Resource"));
+      
     }
 
 }
