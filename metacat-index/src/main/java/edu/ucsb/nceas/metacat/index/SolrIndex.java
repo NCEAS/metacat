@@ -733,9 +733,9 @@ public class SolrIndex {
     public void remove(Identifier pid, SystemMetadata sysmeta) {
         if(pid != null && sysmeta != null) {
             try {
-                log.debug("SorIndex.remove - start to remove the solr index for the pid "+pid.getValue());
+                log.info("SorIndex.remove - start to remove the solr index for the pid "+pid.getValue());
                 remove(pid.getValue(), sysmeta);
-                log.debug("SorIndex.remove - finished to remove the solr index for the pid "+pid.getValue());
+                log.info("SorIndex.remove - finished to remove the solr index for the pid "+pid.getValue());
                 EventlogFactory.createIndexEventLog().remove(pid);
             } catch (Exception e) {
                 String error = "SolrIndex.remove - could not remove the solr index for the object "+pid.getValue()+" since " + e.getMessage();
@@ -1114,6 +1114,7 @@ public class SolrIndex {
             identifier.setValue(pid);
             event.setIdentifier(identifier);*/
             try {
+                log.info("SorIndex.deleteDocFromIndex - will delete the solr doc for the pid " + pid);
                 solrServer.deleteById(pid);
                 solrServer.commit();
                 /*event.setType(IndexEvent.SUCCESSDELETE);
