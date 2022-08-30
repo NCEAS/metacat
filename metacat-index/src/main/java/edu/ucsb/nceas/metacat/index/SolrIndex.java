@@ -776,16 +776,27 @@ public class SolrIndex {
      */
     private void removeDataPackage(String pid) throws Exception {
         removeFromIndex(pid);
-        List<SolrDoc> docsToUpdate = getUpdatedSolrDocsByRemovingResourceMap(pid);
-        if (docsToUpdate != null && !docsToUpdate.isEmpty()) {
-            //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
-            //httpService.sendUpdate(solrIndexUri, addCommand);
-            for(SolrDoc doc : docsToUpdate) {
-                removeFromIndex(doc.getIdentifier());
-                insertToIndex(doc);
+        for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
+            try {
+                List<SolrDoc> docsToUpdate = getUpdatedSolrDocsByRemovingResourceMap(pid);
+                if (docsToUpdate != null && !docsToUpdate.isEmpty()) {
+                    //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
+                    //httpService.sendUpdate(solrIndexUri, addCommand);
+                    for(SolrDoc doc : docsToUpdate) {
+                        //removeFromIndex(doc.getIdentifier());
+                        insertToIndex(doc);
+                    }
+                }
+                break;
+            } catch (SolrException e) {
+                if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
+                    log.info("SolrIndex.removeDataPackage - Indexer grabbed an older verion (version conflict) of the solr doc for object" + 
+                            ". It will try " + (VERSION_CONFLICT_MAX_ATTEMPTS - i )+ " to fix the issues");
+                } else {
+                    throw e;
+                }
             }
         }
-
     }
 
     /*
@@ -1039,26 +1050,56 @@ public class SolrIndex {
     private void removeFromDataPackage(String pid) throws Exception  {
         SolrDoc indexedDoc = ResourceMapSubprocessor.getSolrDoc(pid);
         removeFromIndex(pid);
-        List<SolrDoc> docsToUpdate = new ArrayList<SolrDoc>();
-
         List<String> documents = indexedDoc.getAllFieldValues(SolrElementField.FIELD_DOCUMENTS);
-        for (String documentsValue : documents) {
-            SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentsValue);
-            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_ISDOCUMENTEDBY, pid);
-            removeFromIndex(documentsValue);
-            insertToIndex(solrDoc);
+        if (documents != null && !documents.isEmpty())  {
+            for (String documentsValue : documents) {
+                for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
+                    try {
+                        SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentsValue);
+                        if (solrDoc != null) {
+                            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_ISDOCUMENTEDBY, pid);
+                            //removeFromIndex(documentsValue);
+                            insertToIndex(solrDoc);
+                        }
+                        break;
+                    } catch (SolrException e) {
+                        if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
+                            log.info("SolrIndex.removeFromDataPackage - Indexer grabbed an older verion (version conflict) of the solr doc for object " + 
+                                    documentsValue + ". It will try " + (VERSION_CONFLICT_MAX_ATTEMPTS - i )+ " to fix the issues");
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+            }
         }
-
+        
         List<String> documentedBy = indexedDoc
                 .getAllFieldValues(SolrElementField.FIELD_ISDOCUMENTEDBY);
-        for (String documentedByValue : documentedBy) {
-            SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentedByValue);
-            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, pid);
-            //docsToUpdate.add(solrDoc);
-            removeFromIndex(documentedByValue);
-            insertToIndex(solrDoc);
+        if (documentedBy != null && !documentedBy.isEmpty()) {
+            for (String documentedByValue : documentedBy) {
+                for (int i=0; i<VERSION_CONFLICT_MAX_ATTEMPTS; i++) {
+                    try {
+                        SolrDoc solrDoc = ResourceMapSubprocessor.getSolrDoc(documentedByValue);
+                        if (solrDoc != null) {
+                            solrDoc.removeFieldsWithValue(SolrElementField.FIELD_DOCUMENTS, pid);
+                            //docsToUpdate.add(solrDoc);
+                            //removeFromIndex(documentedByValue);
+                            insertToIndex(solrDoc);
+                        }
+                        break;
+                    } catch (SolrException e) {
+                        if (e.getMessage().contains(VERSION_CONFLICT) && VERSION_CONFLICT_MAX_ATTEMPTS > 0) {
+                            log.info("SolrIndex.removeFromDataPackage - Indexer grabbed an older verion (version conflict) of the solr doc for object " + 
+                                    documentedByValue + ". It will try " + (VERSION_CONFLICT_MAX_ATTEMPTS - i )+ " to fix the issues");
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
+            }
         }
-
+        
         //SolrElementAdd addCommand = new SolrElementAdd(docsToUpdate);
         //httpService.sendUpdate(solrIndexUri, addCommand);
     }
