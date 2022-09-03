@@ -99,12 +99,20 @@ public class DBTransform {
 	    }
 		if (!TemplatesMap.containsKey(xslSystemId) ) { 
 		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from disk for the id " + xslSystemId);
-			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));                                                     
-			TemplatesMap.put(xslSystemId,templates);                                                                                                  
+			Templates templates = transformerFactory.newTemplates(new StreamSource(xslSystemId));
+			if (templates != null) {
+			    TemplatesMap.put(xslSystemId,templates);
+			}	                                                                                                  
 		} else {
 		    logMetacat.debug("DBTransform.getTransformer - Load the style sheets from the cache for the id " + xslSystemId);
 		}
-		return TemplatesMap.get(xslSystemId).newTransformer();                                                                                        
+		logMetacat.info("DBTransform.getTransformer -  the tmplate is " + TemplatesMap.get(xslSystemId) + " for " + xslSystemId);
+		if (TemplatesMap.get(xslSystemId) != null) {
+		    return TemplatesMap.get(xslSystemId).newTransformer();
+		} else {
+		    return null;
+		}
+		                                                                                        
 	}                                                                                                                                                 
 	                                                                                                                                                    
 	 
@@ -163,7 +171,14 @@ public class DBTransform {
 			doc = removeDOCTYPE(doc);
 			StreamSource xml = new StreamSource(new StringReader(doc));
 			StreamResult result = new StreamResult(w);
-			doTransform(xml, result, xslSystemId, param, qformat, sessionid);
+			Transformer transformer = DBTransform.getTransformer(xslSystemId);
+			if (transformer == null) {
+			    //Try to get the transformer again. The second time the internal url may change
+			    internalContextURL = SystemUtil.getInternalContextURL();
+			    xslSystemId = getStyleSystemId(qformat, sourceType, targetType);
+			    transformer = DBTransform.getTransformer(xslSystemId);
+			}
+			doTransform(xml, result, transformer, param, qformat, sessionid);
 		  }
 		  else {
 			  // No stylesheet registered form this document type, so just return the
@@ -197,23 +212,19 @@ public class DBTransform {
    */
   protected void doTransform(StreamSource xml, 
           StreamResult resultOutput,
-          String xslSystemId, 
+          Transformer transformer, 
           Hashtable<String, String[]> param,
           String qformat, 
           String sessionid) 
           throws PropertyNotFoundException, TransformerException {
       
       SortedProperties skinOptions;
-      Transformer transformer;
       String key, value;
       Enumeration<String> en;
       Iterator<Map.Entry<String, String>> iterIt;
       Map.Entry<String, String> entry;
       
-      if (xslSystemId != null) {
-    	                                                                                                                                       
-    		transformer = DBTransform.getTransformer(xslSystemId);  // false means use the existing factory template              
-    	              
+      if (transformer != null) {
         transformer.setParameter("qformat", qformat);
         logMetacat.info("DBTransform.doTransform - qformat: " + qformat);
         
@@ -394,7 +405,7 @@ public class DBTransform {
       System.out.println("Error parsing style-set file: " + e.getMessage());
       e.printStackTrace();
     }
-    
+
     //Check if the systemId is relative path, add a postfix - the contextULR to systemID. 
     if (systemId != null && !systemId.startsWith("http"))
     {
