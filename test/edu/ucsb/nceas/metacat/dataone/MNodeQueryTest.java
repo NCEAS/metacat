@@ -95,7 +95,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
     private static String collection110FilePath = "metacat-index/src/test/resources/collection/collection-1.1.0-example-filterGroup-operator.xml";
     private static String collection110ResultFilePath = "metacat-index/src/test/resources/collection/collectionQuery-result-example-filterGroup-operator.txt";
     private static String emlWithAnnotation = "test/eml220withAnnotation.xml";
-    private int tryAcccounts = 50;
+    private int tryAcccounts = 100;
     
     private static String collectionResult = null;
     private static String collectionQueryPortal110 = null;
@@ -567,7 +567,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
         while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
@@ -590,6 +590,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         query = "q=id:"+guid2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains("documents")) && account <= tryAcccounts) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
@@ -609,6 +616,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         query = "q=id:"+resourceMapId.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains(resourceMapId.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId.getValue()+"</str>"));
         //postquery
@@ -638,7 +652,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
         while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
-            Thread.sleep(1000);
+            Thread.sleep(2000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
             resultStr = IOUtils.toString(stream, "UTF-8"); 
@@ -689,6 +703,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         query = "q=id:"+guid4.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(1000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<arr name=\"documents\">"));
         assertTrue(resultStr.contains(guid.getValue()));
@@ -708,6 +729,13 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         query = "q=id:"+resourceMapId2.getValue();
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
+        account = 0;
+        while ( (resultStr == null || !resultStr.contains(resourceMapId2.getValue())) && account <= tryAcccounts) {
+            Thread.sleep(2000);
+            account++;
+            stream = MNodeService.getInstance(request).query(session, "solr", query);
+            resultStr = IOUtils.toString(stream, "UTF-8"); 
+        }
         System.out.println("the string is +++++++++++++++++++++++++++++++++++\n"+resultStr);
         assertTrue(resultStr.contains("<str name=\"id\">"+resourceMapId2.getValue()+"</str>"));
         //postquery
