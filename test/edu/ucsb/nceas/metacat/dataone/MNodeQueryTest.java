@@ -463,7 +463,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("checksum")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains("obsoletes")) && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
@@ -479,7 +479,7 @@ public class MNodeQueryTest extends D1NodeServiceTest {
         stream = MNodeService.getInstance(request).query(session, "solr", query);
         resultStr = IOUtils.toString(stream, "UTF-8");
         account = 0;
-        while ( (resultStr == null || !resultStr.contains("isDocumentedBy")) && account <= tryAcccounts) {
+        while ( (resultStr == null || !resultStr.contains(guid4.getValue())) && account <= tryAcccounts) {
             Thread.sleep(1000);
             account++;
             stream = MNodeService.getInstance(request).query(session, "solr", query);
