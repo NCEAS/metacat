@@ -348,16 +348,56 @@ Physical File Layout
 .. figure:: images/indexing-23.jpg
    :align: center
    
-   Physical file layout.
+For physical file layout, our goal is to provide a consistent 
+directory structure that enables us to store each file once and 
+only once, and that will robust against naming issues such as illegal
+characters. 
+
+**PID-based checksums**: It should be possible to predict a file location based
+solely on the PID of the file. We will use a directory layout based
+on the SHA-256 checksum of the PID, where the checksum is divided into a
+directory tree based on couplets, as shown in the figure.
+
+**Content-based checksums**: Simialr to above, but names are generated from
+the SHA-256 checksum for the content in the file. This provides de-duplication
+of content (each object is always stored only once), and means the identifier for
+the object is always knowable if you have a copy of the object. It has the 
+disadvantage that checksums can be expensive to compute for large objects.
 
 Virtual File Layout
 ~~~~~~~~~~~~~~~~~~~
+
+In both of these cases, the main presentation of the directory layout would be
+via a virtual layout that uses human-readable names and a directory structure
+derived from the `prov:atLocation` metadata in our packages. Because a single 
+file can be a member of multiple packages (both different versions of the same
+package, and totally independent packages), there is a 1:many mapping between
+files and packages. In addition, a file may be in different locations in these
+various packages of which it is a part. So, our 'virtual' view will be derived 
+from the metadata for a package, and will enable us to browse through the 
+contents of the package independently of its physical layout.
+
+Within the virtual package display, the main data directory will be reflected 
+at the root of the tree, with a hidden `.metadata` directroy containing all of
+the metadata files.
 
 .. figure:: images/indexing-22.jpg
    :align: center
    
    Virtual file layout.
 
+This layout will be familair to researchers, but differs somewhat from the BagIt format
+used for laying out data packages. In the BagIt approach, metadata files are stored
+at the root of the folder structure, and files are held in a `data` subdirectory. Ideally, 
+we could hide the BagIt metadata manifests in a hidden directory and keep the main
+files at the root.
+
+Filesystem Mounts
+~~~~~~~~~~~~~~~~~
+
+To support processing these files, we want to mount the data on various virtual 
+machines and nodes in the Kubernetes cluster so that mutliple processors can 
+seamlessly update and access the data. Thus our plan is to use a shared filesystem.
 
 Legacy MN Indexing
 ~~~~~~~~~~~~~~~~~~~
@@ -366,7 +406,7 @@ Legacy MN Indexing
    :align: center
 
    This sequence diagram shows the member node indexing message/data flow as it existed before the Metacat Storage/Indexing subsystem.
-   The red boxes represent compoenents that could be replaced by RabbitMQ messaging.
+   The red boxes represent components that could be replaced by RabbitMQ messaging.
 
 ..
   @startuml images/MN-indexing-hazelcast.png
