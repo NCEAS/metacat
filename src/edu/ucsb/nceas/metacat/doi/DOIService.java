@@ -19,6 +19,7 @@
 package edu.ucsb.nceas.metacat.doi;
 
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.HashMap;
 
 import org.apache.commons.logging.Log;
@@ -37,6 +38,7 @@ import org.dataone.service.types.v1.Identifier;
 import org.dataone.service.types.v1.Session;
 import org.dataone.service.types.v2.SystemMetadata;
 
+import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.SystemUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -164,9 +166,15 @@ public abstract class DOIService {
                     submitDOIMetadata(sysmeta.getIdentifier(), sysmeta);
                 }
                 if (sidIsDOI) {
-                    submitDOIMetadata(sysmeta.getSeriesId(), sysmeta);
+                    Identifier headPid = IdentifierManager.getInstance().getHeadPID(sysmeta.getSeriesId());
+                    //only submit the datacite when the identifier is the head one in the sid chain
+                    if (headPid != null && headPid.getValue() != null && headPid.getValue().equals(identifier)) {
+                        submitDOIMetadata(sysmeta.getSeriesId(), sysmeta);
+                    }
                 }
             } catch (IOException e) {
+                throw new ServiceFailure("1030", e.getMessage());
+            } catch (SQLException e) {
                 throw new ServiceFailure("1030", e.getMessage());
             }
         }
