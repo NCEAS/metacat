@@ -350,19 +350,74 @@ Physical File Layout
    
 For physical file layout, our goal is to provide a consistent 
 directory structure that enables us to store each file once and 
-only once, and that will robust against naming issues such as illegal
-characters. 
+only once, and that will be robust against naming issues such as illegal
+characters. The approach focuses on using a content-based identifier (CID) rather
+than an authority-based identifier. Some considerations:
+
+Good overviews of some of the issues: 
+
+- https://www.nayuki.io/page/designing-better-file-organization-around-tags-not-hierarchies
+- 
 
 **PID-based checksums**: It should be possible to predict a file location based
-solely on the PID of the file. We will use a directory layout based
-on the SHA-256 checksum of the PID, where the checksum is divided into a
-directory tree based on couplets, as shown in the figure.
+solely on the PID of the file. We could use a directory layout based
+on the SHA-256 checksum of the PID, where the files are sharded using the first two 
+or four digits of the checksum, and the files are named using the remaining checksum string.
+This helps shard the filespace to create fewer files in each directory. Further depth 
+in this tree would continue reducing the number of files in each directory.
 
-**Content-based checksums**: Simialr to above, but names are generated from
+**Content-based checksums**: Similar to above, but names are generated from
 the SHA-256 checksum for the content in the file. This provides de-duplication
 of content (each object is always stored only once), and means the identifier for
 the object is always knowable if you have a copy of the object. It has the 
-disadvantage that checksums can be expensive to compute for large objects.
+disadvantage that checksums can be expensive to compute for large objects. Most advantages
+of content-based retrieval systems are derived from the strong link between content and identifier.
+
+**Checksum algorithm and encoding**
+
+We have multiple hash algorithms to choose from, and each has multiple ways of 
+encoding the binary hash into a string representation.
+
+- Option 1: SHA-256 checksum with base64 encoding
+- Option 2: SHA-256 checksum with [Multihash encoding](https://multiformats.io/multihash/)
+- Option 3: SHA3-256 checksum with base64 encoding
+- Option 4: ...
+
+**Merkle trees**
+
+While we can hash whole objects, there also can be benefits of chunking data 
+into smaller blocks and arranging them as a Merkle tree for storage. See https://en.wikipedia.org/wiki/Merkle_tree 
+for an overview. Some of the features that might be useful for us:
+
+- Blocks of files that are closely related would share the same hash, and therefore require less storage
+- Downloads can be fully parallelized across multiple interfaces/hosts for blocks
+- Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
+- Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
+    - Proceeding down the tree and comparing sub-tree hashes can pinpoint where the trees differ
+- In addition to representing a single "object" as a tree, we can also create other composite trees that represent mutli-object collections, such as data packages
+    - All of the benefits at the file level would also apply at the collection level
+
+These features are used within existing systems like Git and IPFS to build fully
+decentralized graphs of versioned content. While generating the CID for a leaf node file
+is straightforward, these systems also provide mechanisms for graph nodes to represent
+directory-level information, which itself is hashed and becomes part of the graph. For example,
+in Git, each object is of type `blob`, `tree`, `commit`, and `tag` (see https://towardsdatascience.com/understanding-the-fundamentals-of-git-25b5b7ded3c4). 
+A `blob` represents the content the content of a file, and is named based on the SHA-1 hash of its contents.
+The actual content of a blob object is the string `blob` followed by a space, the size of the file
+in bytes, a null `\0` character, and then the zlib-compressed content of the original file.
+In contrast, a `tree` object represents metadata about a directory, and contains a
+listing of all of the blobs and other tree objects in that directory, along with their CIDs. That file
+file itself is hashed and added to teh object store, and so incorporates by reference the CIDs
+of the files and directories it contains. Finally, a `commit` object contains a pointer 
+to the root tree object for the directory and metadata about the commit itself, including
+its parent commit, author, date, and message. These commit files are also hashed and
+included in the object store. This simple structure of a graph of hash-derived content 
+identifiers allows a sophisticated and reliable version control system.  
+
+Finally, these blocks can be used within a Distributed Hash Table with hashes as keys 
+and data blocks as values (see https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) 
+to build an efficient search and discovery system for the nodes based on the key values.
+This approach is the core for distributed systems like BitTorrent and IPFS.
 
 Virtual File Layout
 ~~~~~~~~~~~~~~~~~~~
@@ -386,7 +441,7 @@ the metadata files.
    
    Virtual file layout.
 
-This layout will be familair to researchers, but differs somewhat from the BagIt format
+This layout will be familiar to researchers, but differs somewhat from the BagIt format
 used for laying out data packages. In the BagIt approach, metadata files are stored
 at the root of the folder structure, and files are held in a `data` subdirectory. Ideally, 
 we could hide the BagIt metadata manifests in a hidden directory and keep the main
@@ -397,7 +452,10 @@ Filesystem Mounts
 
 To support processing these files, we want to mount the data on various virtual 
 machines and nodes in the Kubernetes cluster so that mutliple processors can 
-seamlessly update and access the data. Thus our plan is to use a shared filesystem.
+seamlessly update and access the data. Thus our plan is to use a shared virtual 
+filesystem. Reading from and writing to the shared virtual filesystem will result 
+in reads and writes against the files in the physical layout using checksums.
+
 
 Legacy MN Indexing
 ~~~~~~~~~~~~~~~~~~~
