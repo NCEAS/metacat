@@ -344,52 +344,110 @@ Design choices include:
 
 Physical File Layout
 ~~~~~~~~~~~~~~~~~~~~
-
-.. figure:: images/indexing-23.jpg
-   :align: center
    
-For physical file layout, our goal is to provide a consistent 
-directory structure that enables us to store each file once and 
-only once, and that will be robust against naming issues such as illegal
-characters. The approach focuses on using a content-based identifier (CID) rather
-than an authority-based identifier. Some considerations:
+For physical file layout, our goal is to provide a consistent directory
+structure that enables us to store each file once and only once, that will be
+robust against naming issues such as illegal characters, and that allows us to
+access both system metadata and the file contents knowing only the PID for an
+object. This approach focuses on using a hash identifier for naming objects,
+rather than an authority-based identifier such as a PID or SID. Some
+considerations:
 
-Good overviews of some of the issues: 
-
-- https://www.nayuki.io/page/designing-better-file-organization-around-tags-not-hierarchies
-- 
-
-**PID-based checksums**: It should be possible to predict a file location based
-solely on the PID of the file. We could use a directory layout based
-on the SHA-256 checksum of the PID, where the files are sharded using the first two 
-or four digits of the checksum, and the files are named using the remaining checksum string.
-This helps shard the filespace to create fewer files in each directory. Further depth 
-in this tree would continue reducing the number of files in each directory.
-
-**Content-based checksums**: Similar to above, but names are generated from
-the SHA-256 checksum for the content in the file. This provides de-duplication
-of content (each object is always stored only once), and means the identifier for
-the object is always knowable if you have a copy of the object. It has the 
-disadvantage that checksums can be expensive to compute for large objects. Most advantages
-of content-based retrieval systems are derived from the strong link between content and identifier.
+**Raw File Storage**: The raw bytes of each object (data, metadata, or resource
+map) are saved in a file that is named using a content identifier (CID) for that
+set of bytes. This content identifier is created using a hashing algorithm such
+that each unique set of bytes produces a unique checksum value. That checksum
+value is then used to name the file. In this way, even when the same file is
+uploaded multiple times, it will only be stored once in the filesystem.
 
 **Checksum algorithm and encoding**
 
-We have multiple hash algorithms to choose from, and each has multiple ways of 
-encoding the binary hash into a string representation.
+We have multiple hash algorithms to choose from, and each has multiple ways of
+encoding the binary hash into a string representation. We will choose the
+simplest, most common configuration which is to use a `SHA-256` hashing
+algorithm, with the binary digest converted to a string value use the `base64`
+encoding algorithm. That makes each hash value 64 characters long (representing
+the 256 bit binary value). For example, here is a base64-encoded SHA-256 value:
 
-- Option 1: SHA-256 checksum with base64 encoding
-- Option 2: SHA-256 checksum with [Multihash encoding](https://multiformats.io/multihash/)
-- Option 3: SHA3-256 checksum with base64 encoding
-- Option 4: ...
+   20eb645c19de5d2c978a0407743cc8e79b0a74aa7fe347e49809eeae85910e0a
 
-**Merkle trees**
+While we chose this common combination, we could also have chosen other hash
+algorithms (e.g., SHA-1, SHA3-256, blake2b-512) and alternate string encodings
+(e.g., base58, Multihash (https://multiformats.io/multihash/)). Multihash may be
+a valuable approach in to future-proof the storage system, because it enables us
+of multiple checksum algorithms.
 
-While we can hash whole objects, there also can be benefits of chunking data 
-into smaller blocks and arranging them as a Merkle tree for storage. See https://en.wikipedia.org/wiki/Merkle_tree 
+**Folder layout**
+
+To reduce the number of files in a given directory, we can use the first several
+characters of the has to create a directory hierarchy and divide the files up to
+make the tree simpler to explore and less likely to exceed operating system
+limits on files. We will store all objects in an `objects` directory, with two
+levels of depth and a 'width' of 2 digits. Because each digit in the hash can
+contain 16 values, the directory structure can contain 65,536 subdirectories
+(256^2).  To accomodate a larger number of files, we could add another level or
+two of depth to the hierarchy.  An example file layout for three files would be:
+
+   objects
+   ├── 20
+   │   └── eb
+   │       └── 645c19de5d2c978a0407743cc8e79b0a74aa7fe347e49809eeae85910e0a
+   ├── 58
+   │   └── c3
+   │       └── 33e88a34bf8573fd9757883c8621b85eb4250da187097fac632f64756ec1
+   └── 78
+      └── 88
+         └── 425114682be439042518123f26a17a05b36739f77be0a6c9eef15a0d102c
+
+Note how the full hash value is obtained by appending the directory names with
+the file name (e.g.,
+`20eb645c19de5d2c978a0407743cc8e79b0a74aa7fe347e49809eeae85910e0a` for the first
+object).
+
+**Storing metadata** With this layout, knowing the hash value for a file allows
+us to retrieve it. But it does not provide a mechanism to store metadata about
+the object, including it's persistent identifier (PID), other system metadata
+for the object, or extended metadata that we might want to include. So, in
+addition to data objects, the system supports storage for metadata documents
+that are associated with particular data objects. These metadata files are
+stored as delimited files with a header and body section. The header contains
+the 64 character hash of the data file described by this metadata, followed by a
+space, then the `formatId` of the metadata format for the metadata in the file,
+and then a NULL (`0x00`). This header is then followed by the content of the
+metadata document in UTF-8 encoding. This metadata file is named using the
+SHA-256 hash of the persistent identifier (PID) of the object that it describes,
+and stored in a `sysmeta` directory structure that is a sibling to the `objects`
+directory described above, and structured analogously.
+
+Figure: Metadata layout
+
+**PID-based access**:  Using the PID, we can discover and access both the system
+metadata for an object and the bytes of the object itself without any further
+store of information. The procedure for this is as follows:
+
+1) given the PID, calculate the SHA-256 hash, and base64-encode it to find the `metadata hash`
+2) Use the `metadata hash` to open and read the metadata file from the `sysmeta` tree
+    - parse the header to extract the content identifier (`cid`) and the `formatId`
+    - read the remaining body of the document to obtain the `sysmeta`, which includes format information about the data object
+3) with the `cid`, open and read the data from the `objects` tree
+
+**Other metdata types**: While we currently only have a need to access system
+metadata for each object, in the future we envision potentially including other
+metadata files that can be used for describing individual data objects. This
+might include package relationships and other annotations that we wish to
+include for each data file. To accomodate this, we would add another metadata
+directory (e.g., `annotations`), and include an additional metadata file using
+the same PID-based annotation approach described above for system metadata. This
+enables the storage system to be used to store arbitrary additional metadata in
+a structured and predictable way but that does not require external database
+access to predict its location and type.
+
+**Aside: Merkle trees** While we plan to hash whole objects as described above,
+there also can be benefits of chunking data into smaller blocks and arranging
+them as a Merkle tree for storage. See https://en.wikipedia.org/wiki/Merkle_tree
 for an overview. Some of the features that might be useful for us:
 
-- Blocks of files that are closely related would share the same hash, and therefore require less storage
+- Blocks of files that are closely related (e.g,, from append-only versioned files) would share the same hash, and therefore require less storage
 - Downloads can be fully parallelized across multiple interfaces/hosts for blocks
 - Given the root hash of a merkle tree, one can download the children blocks from any source (distributed, untrusted)
 - Given a complex set of objects, a single hash comparison of the root hash can quickly deduce whether two hash collections differ 
@@ -398,25 +456,30 @@ for an overview. Some of the features that might be useful for us:
     - All of the benefits at the file level would also apply at the collection level
 
 These features are used within existing systems like Git and IPFS to build fully
-decentralized graphs of versioned content. While generating the CID for a leaf node file
-is straightforward, these systems also provide mechanisms for graph nodes to represent
-directory-level information, which itself is hashed and becomes part of the graph. For example,
-in Git, each object is of type `blob`, `tree`, `commit`, and `tag` (see https://towardsdatascience.com/understanding-the-fundamentals-of-git-25b5b7ded3c4). 
-A `blob` represents the content the content of a file, and is named based on the SHA-1 hash of its contents.
-The actual content of a blob object is the string `blob` followed by a space, the size of the file
-in bytes, a null `\0` character, and then the zlib-compressed content of the original file.
-In contrast, a `tree` object represents metadata about a directory, and contains a
-listing of all of the blobs and other tree objects in that directory, along with their CIDs. That file
-file itself is hashed and added to teh object store, and so incorporates by reference the CIDs
-of the files and directories it contains. Finally, a `commit` object contains a pointer 
-to the root tree object for the directory and metadata about the commit itself, including
-its parent commit, author, date, and message. These commit files are also hashed and
-included in the object store. This simple structure of a graph of hash-derived content 
-identifiers allows a sophisticated and reliable version control system.  
+decentralized graphs of versioned content. While generating the CID for a leaf
+node object is straightforward, these systems also provide mechanisms for graph
+nodes to represent directory-level information, which itself is hashed and
+becomes part of the graph. For example, in Git, each object is of type `blob`,
+`tree`, `commit`, and `tag` (see
+https://towardsdatascience.com/understanding-the-fundamentals-of-git-25b5b7ded3c4).
+A `blob` represents the content the content of a file, and is named based on the
+SHA-1 hash of its contents.  The actual content of a blob object is the string
+`blob` followed by a space, the size of the file in bytes, a null `\0`
+character, and then the zlib-compressed content of the original file.  In
+contrast, a `tree` object represents metadata about a directory, and contains a
+listing of all of the blobs and other tree objects in that directory, along with
+their CIDs. That file file itself is hashed and added to the object store, and
+so incorporates by reference the CIDs of the files and directories it contains.
+Finally, a `commit` object contains a pointer to the root tree object for the
+directory and metadata about the commit itself, including its parent commit,
+author, date, and message. These commit files are also hashed and included in
+the object store. This simple structure of a graph of hash-derived content
+identifiers allows a sophisticated and reliable version control system.
 
-Finally, these blocks can be used within a Distributed Hash Table with hashes as keys 
-and data blocks as values (see https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) 
-to build an efficient search and discovery system for the nodes based on the key values.
+Finally, these blocks can be used within a Distributed Hash Table with hashes as
+keys and data blocks as values (see
+https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) to build an
+efficient search and discovery system for the nodes based on the key values.
 This approach is the core for distributed systems like BitTorrent and IPFS.
 
 Virtual File Layout
