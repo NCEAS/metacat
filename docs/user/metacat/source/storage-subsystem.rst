@@ -385,9 +385,8 @@ limits on files. We will store all objects in an `objects` directory, with two
 levels of depth and a 'width' of 2 digits. Because each digit in the hash can
 contain 16 values, the directory structure can contain 65,536 subdirectories
 (256^2).  To accomodate a larger number of files, we could add another level or
-two of depth to the hierarchy.  An example file layout for six files would be:
+two of depth to the hierarchy.  An example file layout for six files would be::
 
-``
    /var/metacat/
    └── objects
       ├── 15
@@ -408,7 +407,6 @@ two of depth to the hierarchy.  An example file layout for six files would be:
       └── f6
          └── fa
                └── c7b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba
-``
 
 Note how the full hash value is obtained by appending the directory names with
 the file name (e.g.,
