@@ -429,7 +429,7 @@ and stored in the `objects` directory described above, and structured analogousl
 Thus, in the tree pictured above, three of the hashes represent data files, and
 three represent system metadata files named with the hash of the PID they describe.
 
-For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that PID using:
+For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that PID using::
 
    $ echo -n "jtao.1700.1" | shasum -a 256
    a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
