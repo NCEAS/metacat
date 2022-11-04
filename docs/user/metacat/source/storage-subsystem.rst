@@ -345,13 +345,12 @@ Design choices include:
 Physical File Layout
 ~~~~~~~~~~~~~~~~~~~~
    
-For physical file layout, our goal is to provide a consistent directory
+For physical file storage and layout, our goal is to provide a consistent directory
 structure that enables us to store each file once and only once, that will be
 robust against naming issues such as illegal characters, and that allows us to
 access both system metadata and the file contents knowing only the PID for an
 object. This approach focuses on using a hash identifier for naming objects,
-rather than an authority-based identifier such as a PID or SID. Some
-considerations:
+rather than an authority-based identifier such as a PID or SID.
 
 **Raw File Storage**: The raw bytes of each object (data, metadata, or resource
 map) are saved in a file that is named using a content identifier (CID) for that
@@ -364,12 +363,12 @@ uploaded multiple times, it will only be stored once in the filesystem.
 
 We have multiple hash algorithms to choose from, and each has multiple ways of
 encoding the binary hash into a string representation. We will choose the
-simplest, most common configuration which is to use a `SHA-256` hashing
-algorithm, with the binary digest converted to a string value use the `base64`
-encoding algorithm. That makes each hash value 64 characters long (representing
+simplest, most common configuration which is to use a `SHA-256` hash
+algorithm, with the binary digest converted to a string value using `base64`
+encoding. That makes each hash value 64 characters long (representing
 the 256 bit binary value). For example, here is a base64-encoded SHA-256 value:
 
-   20eb645c19de5d2c978a0407743cc8e79b0a74aa7fe347e49809eeae85910e0a
+   4d198171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
 
 While we chose this common combination, we could also have chosen other hash
 algorithms (e.g., SHA-1, SHA3-256, blake2b-512) and alternate string encodings
@@ -386,18 +385,28 @@ limits on files. We will store all objects in an `objects` directory, with two
 levels of depth and a 'width' of 2 digits. Because each digit in the hash can
 contain 16 values, the directory structure can contain 65,536 subdirectories
 (256^2).  To accomodate a larger number of files, we could add another level or
-two of depth to the hierarchy.  An example file layout for three files would be:
+two of depth to the hierarchy.  An example file layout for six files would be:
 
-   objects
-   ├── 20
-   │   └── eb
-   │       └── 645c19de5d2c978a0407743cc8e79b0a74aa7fe347e49809eeae85910e0a
-   ├── 58
-   │   └── c3
-   │       └── 33e88a34bf8573fd9757883c8621b85eb4250da187097fac632f64756ec1
-   └── 78
-      └── 88
-         └── 425114682be439042518123f26a17a05b36739f77be0a6c9eef15a0d102c
+   /var/metacat/
+   └── objects
+      ├── 15
+      │   └── 52
+      │       └── 5dda7121013bc3eba2e2d237a5ae70b291a461ca539053de75f33c9ac44c
+      ├── 4d
+      │   └── 19
+      │       └── 8171eef969d553d4c9537b1811a7b078f9a3804fc978a761bc014c05972c
+      ├── 7f
+      │   └── 5c
+      │       └── c18f0b04e812a3b4c8f686ce34e6fec558804bf61e54b176742a7f6368d6
+      ├── 94
+      │   └── f9
+      │       └── b6c88f1f458e410c30c351c6384ea42ac1b5ee1f8430d3e365e43b78a38a
+      ├── a8
+      │   └── 24
+      │       └── 1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+      └── f6
+         └── fa
+               └── c7b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba
 
 Note how the full hash value is obtained by appending the directory names with
 the file name (e.g.,
@@ -416,17 +425,25 @@ space, then the `formatId` of the metadata format for the metadata in the file,
 and then a NULL (`0x00`). This header is then followed by the content of the
 metadata document in UTF-8 encoding. This metadata file is named using the
 SHA-256 hash of the persistent identifier (PID) of the object that it describes,
-and stored in a `sysmeta` directory structure that is a sibling to the `objects`
-directory described above, and structured analogously.
+and stored in the `objects` directory described above, and structured analogously.
+Thus, in the tree pictured above, three of the hashes represent data files, and
+three represent system metadata files named with the hash of the PID they describe.
 
-Figure: Metadata layout
+For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that PID using:
 
-**PID-based access**:  Using the PID, we can discover and access both the system
+   $ echo -n "jtao.1700.1" | shasum -a 256
+   a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
+
+So, the system metadata file would be stored at
+`objects/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf` using the
+file format described above.
+
+**PID-based access**:  Given a PID, we can discover and access both the system
 metadata for an object and the bytes of the object itself without any further
 store of information. The procedure for this is as follows:
 
 1) given the PID, calculate the SHA-256 hash, and base64-encode it to find the `metadata hash`
-2) Use the `metadata hash` to open and read the metadata file from the `sysmeta` tree
+2) Use the `metadata hash` to locate and read the metadata file from the `objects` tree
     - parse the header to extract the content identifier (`cid`) and the `formatId`
     - read the remaining body of the document to obtain the `sysmeta`, which includes format information about the data object
 3) with the `cid`, open and read the data from the `objects` tree
@@ -435,12 +452,14 @@ store of information. The procedure for this is as follows:
 metadata for each object, in the future we envision potentially including other
 metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
-include for each data file. To accomodate this, we would add another metadata
-directory (e.g., `annotations`), and include an additional metadata file using
-the same PID-based annotation approach described above for system metadata. This
-enables the storage system to be used to store arbitrary additional metadata in
-a structured and predictable way but that does not require external database
-access to predict its location and type.
+include for each data file. To accomodate this, we could add another metadata
+directory (e.g., `annotations`) as a sibling to the `objects` directory, and include
+an additional metadata file using the same PID-based annotation approach described
+above for system metadata. This enables the storage system to be used to store
+arbitrary additional metadata in a structured and predictable way but that does not
+require external database access to predict its location and type. Alternatively, we
+could use mime-multipart or a similar multipart file encoding to include multiple
+metadata files in the PID-encoded metadata file.
 
 **Aside: Merkle trees** While we plan to hash whole objects as described above,
 there also can be benefits of chunking data into smaller blocks and arranging
