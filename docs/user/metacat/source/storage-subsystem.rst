@@ -424,7 +424,7 @@ For example, given the PID `jtao.1700.1`, one can calculate the SHA-256 of that 
    a8241925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf
 
 So, the system metadata file would be stored at
-`objects/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf` using the
+`sysmeta/a8/24/1925740d5dcd719596639e780e0a090c9d55a5d0372b0eaf55ed711d4edf` using the
 file format described above. Extending our diagram from above, we now see the three 
 hashes that represent data files, along with three that represent system metadata files 
 named with the hash of the PID they describe::
@@ -464,7 +464,7 @@ store of information. The procedure for this is as follows:
 The structure of the system metadata document along with it's header is shown in hex
 format below for reference purposes. Note the presence of the NULL `\x00` character in 
 the first line following the format identifier. Parsers can use this first `\x00` NULL 
-to delimit the header from the body of the metadata document. This particicular metadata
+to delimit the header from the body of the metadata document. This particular metadata
 document is for the PID `doi:10.18739_A2901ZH2M`, which is stored in the file 
 `sysmeta/f6/fa/c7b713ca66b61ff1c3c8259a8b98f6ceab30b906e42a24fa447db66fa8ba` 
 based on the SAH-256 of the PID of the data object::
@@ -617,7 +617,7 @@ SHA-1 hash of its contents.  The actual content of a blob object is the string
 character, and then the zlib-compressed content of the original file.  In
 contrast, a `tree` object represents metadata about a directory, and contains a
 listing of all of the blobs and other tree objects in that directory, along with
-their CIDs. That file file itself is hashed and added to the object store, and
+their CIDs. That file itself is hashed and added to the object store, and
 so incorporates by reference the CIDs of the files and directories it contains.
 Finally, a `commit` object contains a pointer to the root tree object for the
 directory and metadata about the commit itself, including its parent commit,
