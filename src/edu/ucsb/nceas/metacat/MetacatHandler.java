@@ -103,6 +103,7 @@ import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.service.SessionService;
@@ -2924,7 +2925,9 @@ public class MetacatHandler {
                     if (sysMeta != null) {
                         // submit for indexing
                         //Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
-                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, false);
+                        boolean isSysmetaChangeOnly = false;
+                        boolean followRevisions = false;
+                        MetacatSolrIndex.getInstance().submit(identifier, sysMeta, isSysmetaChangeOnly, followRevisions, IndexGenerator.LOW_PRIORITY);
                         i++;
                         logMetacat.debug("MetacatHandler.buildIndexFromQuery - queued SystemMetadata for indexing in the buildIndexFromQuery on pid: " + guid);
                     }

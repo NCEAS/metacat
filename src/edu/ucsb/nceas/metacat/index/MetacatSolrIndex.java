@@ -51,6 +51,7 @@ import org.apache.solr.common.params.MultiMapSolrParams;
 import org.apache.solr.common.params.SolrParams;
 
 import org.apache.solr.servlet.SolrRequestParsers;
+import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
@@ -94,10 +95,15 @@ public class MetacatSolrIndex {
     private static Log log = LogFactory.getLog(MetacatSolrIndex.class);
     private static MetacatSolrIndex  solrIndex = null;
     private static String nodeType = null;
+    private static List<String> resourceMapNamespaces = Settings.getConfiguration().getList("index.resourcemap.namespace");
     
     public static MetacatSolrIndex getInstance() throws Exception {
         if (solrIndex == null) {
-            solrIndex = new MetacatSolrIndex();
+            synchronized(MetacatSolrIndex.class) {
+                if (solrIndex == null) {
+                    solrIndex = new MetacatSolrIndex();
+                }
+            }
         }
         return solrIndex;
     }
@@ -303,9 +309,10 @@ public class MetacatSolrIndex {
      */
     public void submit(Identifier pid, SystemMetadata systemMetadata, boolean followRevisions) {
         boolean isSysmetaChangeOnly = false;
-        submit(pid, systemMetadata, isSysmetaChangeOnly, followRevisions);
+        //if it is a resource map, use the resource map priority; otherwise, the regular one
+        int priority = getResourceMapPriority(systemMetadata);
+        submit(pid, systemMetadata, isSysmetaChangeOnly, followRevisions, priority);
     }
-    
     
     /**
      * Submit a index task into the index queue
@@ -316,6 +323,21 @@ public class MetacatSolrIndex {
      * @param followRevisions  if the obsoleted version will be indexed
      */
     public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, boolean followRevisions) {
+        //if it is a resource map, use the resource map priority; otherwise, the regular one
+        int priority = getResourceMapPriority(systemMetadata);
+        submit(pid, systemMetadata, isSysmetaChangeOnly, followRevisions, priority);
+    }
+    
+    /**
+     * Submit a index task into the index queue
+     * @param pid  the pid of the object which will be indexed
+     * @param systemMetadata  the system metadata associated with pid
+     * @param isSysmetaChangeOnly  if this is the event of system metadata change only
+     * @param fields  extra fields which need to be indexed 
+     * @param followRevisions  if the obsoleted version will be indexed
+     * @param priority  the priority of this index task
+     */
+    public void submit(Identifier pid, SystemMetadata systemMetadata, boolean isSysmetaChangeOnly, boolean followRevisions, int priority) {
         if (nodeType == null || !nodeType.equalsIgnoreCase("mn")) {
             //only works for MNs
             log.info("MetacatSolrIndex.submit - The node is not configured as a member node. So the object  " + pid.getValue() +
@@ -327,7 +349,7 @@ public class MetacatSolrIndex {
             type = IndexGenerator.SYSMETA_CHANGE_TYPE;
         }
         try {
-            IndexGenerator.getInstance().publish(pid, type, 1);
+            IndexGenerator.getInstance().publish(pid, type, priority);
             log.info("MetacatSolrIndex.submit - put the pid " + pid.getValue() + " with type " + type + " into the index queue on the RabbitMQ service successfully.");
         } catch (ServiceException | InvalidRequest e) {
             log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getMessage());
@@ -341,6 +363,21 @@ public class MetacatSolrIndex {
 		}
     }
     
-    
+    /**
+     * If this is a resource map object, we should use a special priority for it.
+     * @param sysmeta
+     * @return  resourceMap medium priority if it is a resource map object; otherwise, 
+     *          regular medium priority
+     */
+    private int getResourceMapPriority(SystemMetadata sysmeta) {
+        int priority = IndexGenerator.MEDIUM_PRIORITY;
+        if (sysmeta != null && resourceMapNamespaces != null && sysmeta.getFormatId() != null) {
+            if (resourceMapNamespaces.contains(sysmeta.getFormatId().getValue())) {
+                priority = IndexGenerator.MEDIUM_RESOURCEMAP_PRIORITY;
+            }
+        }
+        log.debug("MetacatSolrIndex.getResourceMapPriority - the priority is " + priority);
+        return priority;
+    }
 
 }

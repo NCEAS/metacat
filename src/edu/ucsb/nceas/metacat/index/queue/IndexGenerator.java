@@ -60,9 +60,10 @@ public class IndexGenerator extends BaseService {
     public final static String DELETE_INDEX_TYPE = "delete";
     public final static String SYSMETA_CHANGE_TYPE = "sysmeta"; //this handle for resource map only
     
-    public final static int HIGHEST_PRIORITY = 4; // some special cases
-    public final static int HIGH_PRIORITY = 3; //use for the operations such as create, update
-    public final static int MEDIUM_PRIORITY = 2; //use for the operations such as updateSystem, delete, archive
+    public final static int HIGHEST_PRIORITY = 10; // some special cases
+    public final static int HIGH_PRIORITY = 6; //use for the special cases
+    public final static int MEDIUM_PRIORITY = 4; //use for the operations such as create, update, updateSystem, delete, archive
+    public final static int MEDIUM_RESOURCEMAP_PRIORITY = 3; //use for resource map objects in the operations such as create, update, updateSystem, delete, archive
     public final static int LOW_PRIORITY = 1; //use for the bulk operations such as reindexing the whole corpus 
     
     private final static String HEADER_ID = "id"; //The header name in the message to store the identifier
