@@ -1632,7 +1632,7 @@ public class MetacatHandler {
                              this.ERROR +
                              "User '" + 
                              user + 
-                             "' is not allowed to insert and update" +
+                             "' is not allowed to insert or update. Check the Allowed and Denied Submitters lists" +
                              this.ERRORCLOSE;
                 if(out != null)
                 {
