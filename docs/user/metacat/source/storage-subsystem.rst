@@ -578,7 +578,7 @@ based on the SAH-256 of the PID of the data object::
    │00000690│ 73 74 65 6d 4d 65 74 61 ┊ 64 61 74 61 3e 0a       │stemMeta┊data>_  │
    └────────┴─────────────────────────┴─────────────────────────┴────────┴────────┘
 
-**Other metdata types**: While we currently only have a need to access system
+**Other metadata types**: While we currently only have a need to access system
 metadata for each object, in the future we envision potentially including other
 metadata files that can be used for describing individual data objects. This
 might include package relationships and other annotations that we wish to
@@ -630,6 +630,37 @@ keys and data blocks as values (see
 https://en.wikipedia.org/wiki/Distributed_hash_table#Structure) to build an
 efficient search and discovery system for the nodes based on the key values.
 This approach is the core for distributed systems like BitTorrent and IPFS.
+
+Public API
+~~~~~~~~~~~~~~~~~~~
+
+While Metacat will primarily handle read/write operations, other services like MetaDig and DataONE MNs may interact with the hashstore directly. Below are the public methods proposed and are in the process of being or have been completed.
+
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| **Method**             | **Args**           | **Return Type**             | **Notes**                                                   |
++========================+====================+=============================+=============================================================+
+| store                  | pid, sysmeta, data | string (s_cid)              |                                                             |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| retrieve               | pid/s_cid          | bytes                       | In Progress                                                 |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| delete                 | pid                |                             | New Issue/Feature                                           |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| get_sysmeta            | s_cid              | bytes                       | In Progress                                                 |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| hash_string            | input              | string (base64 hex encoded) |                                                             |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| hash_blob_string       | data               | string (base64 hex encoded) |                                                             |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| abs_path               | cid/s_cid          | string                      |                                                             |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| rel_path               | hash               | string                      | ex. 0d/55/5e/d7/7052d7e166017f779cbc1933...                 |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| count                  |                    | number                      |                                                             |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| upload_object_stream   |                    | string (s_cid)              | New Issue/Feature                                           |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
+| download_object_stream |                    | bytes                       | New Issue/Feature                                           |
++------------------------+--------------------+-----------------------------+-------------------------------------------------------------+
 
 Virtual File Layout
 ~~~~~~~~~~~~~~~~~~~
