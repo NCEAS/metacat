@@ -13,26 +13,9 @@ volumes:
     driver: local
 
 services:
-  proxy:
-    hostname: apache
-    build: ./apache-le-proxy
-    image: apache-le-proxy:0.1.2
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - lecerts:/etc/letsencrypt
-    depends_on:
-      - webapp
-    networks:
-      - mcnet
-    env_file:
-      - metacat.env
-    links:
-      - webapp:proxied
   webapp:
     hostname: metacat
-    image: metacat:2.8.7
+    image: metacat:2.12.0
     depends_on:
       - postgres
     networks:

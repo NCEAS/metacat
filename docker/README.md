@@ -7,7 +7,7 @@ This is a [Docker](https://www.docker.com/) image for configuring and running
 Metacat in a lightweight container.  Metacat requires access to an existing
 postgres database, which is configured to be accessed by Metacat. It also assumes
 that secure https access to the metacat instance is handled via an external
-proxy server, and an example is shown below for configuring that access.
+proxy server.
 
 # How to build the Metacat image
 
@@ -19,26 +19,25 @@ building the docker image based on that:
     ...
     ... a very long build process ensues, resulting in a tar.gz file
     $ cd docker
-    $ ./build 2.8.7
+    $ ./build 2.12.0
     $ docker image ls
     REPOSITORY    TAG      IMAGE ID        CREATED           SIZE
-    metacat       2.8.7    8da92210dfc4    39 minutes ago    1.02GB
+    metacat       2.12.0    8da92210dfc4    39 minutes ago    1.02GB
 
 Each metacat release will also have a version of the image pushed to
 [Docker Hub](https://hub.docker.com) for public use.
 
 # How to use this image
 
-This example will start and link a postgres database, a secure apache web server
-with Let's Encrypt certificates installed, and a Metacat instance. The
-`docker-compose.yaml` file in the docker directory shows how these three
+This example will start and link a postgres database, and a Metacat instance. The
+`docker-compose.yaml` file in the docker directory shows how these two
 containers are composed to create a functioning Metacat application, but other
-arrangements are possible.  Configuration is through the included environment
+arrangements are possible. Configuration is through the included environment
 file `metacat.env`, which must be configured with defaults for your environment.
 
 
     # The version of metacat to build and deploy
-    METACAT_VERSION=2.8.7
+    METACAT_VERSION=2.12.0
 
     # The host is the address at which the server will respond (you must configure this in your DNS)
     HOST=metacat.example.com
@@ -46,14 +45,8 @@ file `metacat.env`, which must be configured with defaults for your environment.
     # The port at which the tomcat webapp is running (generally not changed)
     PORT=8080
 
-    # The email for registering SSL certificates
-    EMAIL=mbjones.89@gmail.com
-
-    # Turn on production mode for SSL certificates (uncomment only once you want a real certificate assigned)
-    #MODE=PRODUCTION
-
     # The administrative user, in DN format
-    ADMIN=jones@localhost
+    ADMIN=admin@localhost
 
     # The password to be used to log into the administrative account
     ADMINPASS=choose-an-admin-pw-here
@@ -81,9 +74,8 @@ Finally, to launch metacat, run the command:
 
     $ docker-compose -p metacat up -d
 
-This will create three running containers, `metacat_webapp_1` containing the running Metacat
-process in Apache Tomcat, `metacat_proxy_1` containining the Apache HTTPD server configured
-to use SSL, and `metacat_postgres_1` containing the running Postgres database.  You can then
+This will create two running containers: `metacat_webapp_1` containing the running Metacat
+process in Apache Tomcat, and `metacat_postgres_1` containing the running Postgres database.  You can
 then visit the running Metacat instance at:
 
     https://metacat.example.com/metacatui
