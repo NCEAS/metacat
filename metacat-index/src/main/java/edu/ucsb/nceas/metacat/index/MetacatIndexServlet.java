@@ -43,11 +43,6 @@ import org.dataone.cn.indexer.IndexWorker;
  *
  */
 public class MetacatIndexServlet extends HttpServlet {
-    
-    // Use the file prefix to indicate this is a absolute path.
-    // see http://www.docjar.com/docs/api/org/springframework/context/support/FileSystemXmlApplicationContext.html
-    //private static final String FILEPREFIX = "file:";
-    
 	private static Log log = LogFactory.getLog(MetacatIndexServlet.class);
 
     /**
@@ -55,11 +50,13 @@ public class MetacatIndexServlet extends HttpServlet {
      */
     public void init(ServletConfig config) throws ServletException {
         try {
-            System.out.println("before starting the index worker");
-            IndexWorker worker =  new IndexWorker();
-            String[] argus = null;
-            worker.main(argus);
-            System.out.println("after starting the working main method ===========");
+            //add the metacat.properties file as the dataone indexer property file
+            String metacatPropertiesFilePath = config.getServletContext().getInitParameter("metacat.properties.path");
+            File contextDeploymentDir = new File(config.getServletContext().getRealPath("/"));
+            String fullMetacatPropertiesFilePath = contextDeploymentDir.getParent()  + metacatPropertiesFilePath;
+            IndexWorker.loadExternalPropertiesFile(fullMetacatPropertiesFilePath);
+            IndexWorker worker = new IndexWorker();
+            worker.start();
         } catch (Exception e) {
             throw new ServletException(e.getMessage());
         }
