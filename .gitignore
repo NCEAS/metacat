@@ -29,6 +29,7 @@ hs_err_pid*
 # Build artifacts
 build
 lib/dtd
+lib/maven
 lib/schema/eml-*
 lib/style/common/eml-2*
 lib/style/common/emlb6toeml2
