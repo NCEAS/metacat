@@ -36,11 +36,11 @@
 	<xsl:import href="../../common/resultset-table.xsl"/>
     <xsl:import href="../../common/resultset-table-solr.xsl"/>
     <xsl:import href="./fgdc/fgdc-root.xsl"/>
+    <xsl:import href="../../common/dcx/onedcx-common.xsl"/>
     <xsl:import href="./eml-2/emlroot.xsl"/>
     <xsl:import href="./iso19115/isoroot.xsl"/>
     <xsl:import href="metacatui-common.xsl"/>
-    <xsl:import href="../../common/dcx/onedcx-common.xsl"/>
-    
+
     <!-- default the pid parameter to the docid in cases where pid is not given -->
     <xsl:param name="pid"><xsl:value-of select="$docid"/></xsl:param>
     <xsl:param name="d1BaseURI"><xsl:value-of select="$contextURL" /><![CDATA[/d1/mn/v1]]></xsl:param>
