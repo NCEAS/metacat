@@ -642,13 +642,13 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    |                                             |
+| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | In Progress                                 |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   |                                             |
+| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Progress                                 |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | retrieve           | pid                          | list(sysmeta, io.BufferedIOBase) |                                             |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve_sysmeta   | pid                          | string (sysmeta)                 | In Progress                                 |
+| retrieve_sysmeta   | pid                          | string (sysmeta)                 |                                             |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The proposed public methods below require further discussion to determine their inclusion in the public API:
@@ -658,7 +658,7 @@ The proposed public methods below require further discussion to determine their 
 +====================+==============================+==================================+=============================================+
 | delete             | pid                          |                                  | New Issue/Feature                           |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| update_sysmeta     | sysmeta, pid                 | string (s_cid)                   |                                             |
+| update_sysmeta     | sysmeta, pid                 | string (s_cid)                   | New Issue/Feature                           |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The following methods are to be made private and/or removed:
@@ -666,17 +666,17 @@ The following methods are to be made private and/or removed:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| hash_string        | input                        | string (base64 hex encoded)      |                                             |
+| _hash_string       | input                        | string (base64 hex encoded)      | Private Method                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| calculate_checksum | cid                          | list(alg, base64_cid)            | NOT NEEDED, CAN BE DONE in METACAT          |
+| _abs_path          | cid/s_cid                    | string                           | Private Method, Pending Removal             |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| hash_blob_string   | data                         | string (base64 hex encoded)      | NOT NEEDED                                  |
+| _rel_path          | hash                         | string                           | Private Method, Pending Removal             |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| abs_path           | cid/s_cid                    | string                           | PRIVATE?                                    |
+| count              |                              | number                           | Removed                                     |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| rel_path           | hash                         | string                           | PRIVATE? ex. 0d/55/5e/d7/7052d7e166017cb... |
+| calculate_checksum | cid                          | list(alg, base64_cid)            | Removed                                     |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| count              |                              | number                           | NOT NEEDED?                                 |
+| hash_blob_string   | data                         | string (base64 hex encoded)      | Removed                                     |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 Virtual File Layout
