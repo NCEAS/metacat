@@ -178,6 +178,14 @@
       <div class="control-group">
 		<label class="control-label">Sampling Citation</label>
         <div class="controls">
+            <strong>
+                <xsl:for-each select="./title">
+                    <xsl:call-template name="i18n">
+                        <xsl:with-param name="i18nElement" select="."/>
+                    </xsl:call-template>
+                    <xsl:text> </xsl:text>
+                </xsl:for-each>
+            </strong>
            <xsl:call-template name="citation">
             <xsl:with-param name="citationfirstColStyle" select="$methodfirstColStyle"/>
             <xsl:with-param name="citationsubHeaderStyle" select="$methodsubHeaderStyle"/>

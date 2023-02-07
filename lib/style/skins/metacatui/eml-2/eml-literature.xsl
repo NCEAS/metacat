@@ -176,6 +176,23 @@
       </td>
      </tr>
    </xsl:if>
+
+   <xsl:if test="creator">
+       <tr><td class="{$citationsubHeaderStyle}" colspan="2"><xsl:text>CREATORS:</xsl:text></td></tr>
+       <tr><td colspan="2">
+          <xsl:for-each select="creator">
+            <xsl:call-template name="party">
+               <xsl:with-param name="partyfirstColStyle" select="$firstColStyle"/>
+            </xsl:call-template>
+          </xsl:for-each>
+       </td></tr>
+   </xsl:if>
+
+   <xsl:if test="pubDate and normalize-space(pubDate)!=''">
+       <tr><td class="{$citationfirstColStyle}">
+           PUBLICATION DATE:</td><td class="{$secondColStyle}">
+           <xsl:value-of select="./pubDate"/></td></tr>
+   </xsl:if>
   </xsl:template>
 
 
