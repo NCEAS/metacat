@@ -1,7 +1,7 @@
 FROM tomcat:8.0-jre8
 MAINTAINER Matthew B. Jones <jones@nceas.ucsb.edu>
 
-ARG METACAT_VERSION=2.12.0
+ARG METACAT_VERSION=2.18.0
 ENV METACAT_APP_CONTEXT=metacat
 
 ADD metacat-bin-${METACAT_VERSION}.tar.gz /tmp

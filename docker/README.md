@@ -19,10 +19,10 @@ building the docker image based on that:
     ...
     ... a very long build process ensues, resulting in a tar.gz file
     $ cd docker
-    $ ./build 2.12.0
+    $ ./build 2.18.0
     $ docker image ls
     REPOSITORY    TAG      IMAGE ID        CREATED           SIZE
-    metacat       2.12.0    8da92210dfc4    39 minutes ago    1.02GB
+    metacat       2.18.0    8da92210dfc4    39 minutes ago    1.02GB
 
 Each metacat release will also have a version of the image pushed to
 [Docker Hub](https://hub.docker.com) for public use.
@@ -37,7 +37,7 @@ file `metacat.env`, which must be configured with defaults for your environment.
 
 
     # The version of metacat to build and deploy
-    METACAT_VERSION=2.12.0
+    METACAT_VERSION=2.18.0
 
     # The host is the address at which the server will respond (you must configure this in your DNS)
     HOST=metacat.example.com

@@ -15,7 +15,7 @@ volumes:
 services:
   webapp:
     hostname: metacat
-    image: metacat:2.12.0
+    image: metacat:2.18.0
     depends_on:
       - postgres
     networks:
