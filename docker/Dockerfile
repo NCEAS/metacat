@@ -7,7 +7,7 @@ ENV METACAT_APP_CONTEXT=metacat
 ADD metacat-bin-${METACAT_VERSION}.tar.gz /tmp
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        vim \
+        vim procps lsof \ # needed for dev only
         python-bcrypt \
     && rm -rf /var/lib/apt/lists/* \
     && cp /tmp/metacat.war /tmp/metacat-index.war /tmp/metacatui.war /usr/local/tomcat/webapps
@@ -25,6 +25,7 @@ COPY app.properties /app.properties
 ENV PATH /usr/local/bin:$PATH
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN ln -s usr/local/bin/docker-entrypoint.sh / # backwards compat
+
 ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 EXPOSE 8080

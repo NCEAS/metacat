@@ -1,17 +1,18 @@
 #!/bin/bash
 
 set -e
+VERSION=$1
 
-if [ -z $1 ] ;
+if [ -z "$1" ] ;
   then
     echo "Usage: $0 <version>"
-    exit
+    echo "setting to default"
+    VERSION="2.18.0"
+    # exit
 fi
-
+echo "VERSION = $VERSION"
 #
-VERSION=$1
 RELEASE="metacat-bin-${VERSION}.tar.gz"
-DIST="https://knb.ecoinformatics.org/software/dist"
 
 # Grab the Metacat release
 if [ !  -f "../${RELEASE}" ]
@@ -20,5 +21,5 @@ if [ !  -f "../${RELEASE}" ]
 fi
 
 # Launch docker
-cp ../${RELEASE} .
-docker build --build-arg METACAT_VERSION=$VERSION -t metacat:$VERSION .
+cp ../"${RELEASE}" .
+docker image build --build-arg METACAT_VERSION="$VERSION" --tag metacat:"$VERSION" .
