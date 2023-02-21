@@ -40,7 +40,7 @@ import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 public class SystemMetadataManager {
     private static Log logMetacat = LogFactory.getLog(SystemMetadataManager.class);
     
-    private SystemMetadataManager manager = null;
+    private static SystemMetadataManager manager = null;
     
     /**
      * Private constructor
@@ -53,7 +53,7 @@ public class SystemMetadataManager {
      * Get the singleton SystemMetadataManager instance
      * @return  the instance of SystemMetadataManager
      */
-    public SystemMetadataManager getInstance() {
+    public static SystemMetadataManager getInstance() {
         if (manager == null) {
             synchronized (SystemMetadataManager.class) {
                 if (manager == null) {
