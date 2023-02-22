@@ -65,7 +65,8 @@ public class SystemMetadataManager {
     }
     
     /**
-     * Get the system metadata associated with the given identifier from the store
+     * Get the system metadata associated with the given identifier from the store.
+     * If the returned value is null, this means the system metadata is not found
      * @param pid  the identifier to determine the system metadata
      * @return  the system metadata associated with the given identifier
      * @throws NotFound
@@ -75,18 +76,14 @@ public class SystemMetadataManager {
     public SystemMetadata get(Identifier pid) throws NotFound, ServiceFailure, InvalidRequest {
         SystemMetadata sm = null;
         try {
-            if (pid != null) {
+            if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
                 logMetacat.debug("SystemMetadataManager.get - loading from store: " + pid.getValue());
                 sm = IdentifierManager.getInstance().getSystemMetadata(pid.getValue());
-            } else {
-                
-            }
-            
+            } 
         } catch (McdbDocNotFoundException e) {
             logMetacat.warn("could not load system metadata for: " +  pid.getValue());
             return null;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
         return sm;
@@ -100,20 +97,20 @@ public class SystemMetadataManager {
      * @throws ServiceFailure
      */
     public void store(SystemMetadata sysmeta) throws InvalidRequest, ServiceFailure {
-        try {
-            if (sysmeta != null) {
-                Identifier pid = sysmeta.getIdentifier();
-                if (pid != null && pid.getValue() != null & !pid.getValue().trim().equals("")) {
+        if (sysmeta != null) {
+            Identifier pid = sysmeta.getIdentifier();
+            if (pid != null && pid.getValue() != null & !pid.getValue().trim().equals("")) {
+                try {
                     logMetacat.debug("SystemMetadataManager.store - storing System Metadata to store: " + pid.getValue());
                     IdentifierManager.getInstance().insertOrUpdateSystemMetadata(sysmeta);
+                } catch (McdbDocNotFoundException e) {
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
+                } catch (SQLException e) {
+                    throw new ServiceFailure("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
+                } catch (InvalidSystemMetadata e) {
+                    throw new InvalidRequest("0000", "SystemMetadataManager.store - can't store the system metadata for pid " + pid.getValue() + " since " + e.getMessage());
                 }
             }
-        } catch (McdbDocNotFoundException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } catch (SQLException e) {
-            throw new RuntimeException(e.getMessage(), e);
-        } catch (InvalidSystemMetadata e) {
-            throw new RuntimeException(e.getMessage(), e);
         }
     }
     
@@ -128,9 +125,25 @@ public class SystemMetadataManager {
             logMetacat.debug("SystemMetadataManager.delete - delete the identifier" + id.getValue());
             boolean success = IdentifierManager.getInstance().deleteSystemMetadata(id.getValue());
             if(!success) {
-                throw new RuntimeException("SystemMetadataManager.delete - the system metadata of guid - " + id.getValue()+" can't be removed successfully.");
+                throw new ServiceFailure("0000", "SystemMetadataManager.delete - the system metadata of guid - " + id.getValue()+" can't be removed successfully.");
             }
         }
+    }
+    
+    /**
+     * Lock the system metadata for the given id
+     * @param id  the identifier of the system metadata will be locked
+     */
+    public void lock(Identifier id) {
+        
+    }
+    
+    /**
+     * unlock the system metadata for the given id
+     * @param id  the identifier of the system metadata will be unlocked
+     */
+    public void unlock(Identifier id) {
+        
     }
 
 }
