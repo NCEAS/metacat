@@ -642,13 +642,13 @@ The methods below will be included in the public API:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | In Progress                                 |
+| store_object       | io.BufferedIOBase, checksums | array (list(alg, base64_cid))    | Pending Review                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Progress                                 |
+| store_sysmeta      | cid, sysmeta, pid            | string (s_cid)                   | In Progress (update_sysmeta adjustments)    |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve           | pid                          | list(sysmeta, io.BufferedIOBase) |                                             |
+| retrieve           | pid                          | list(sysmeta, io.BufferedIOBase) | Review Method & Tests                       |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| retrieve_sysmeta   | pid                          | string (sysmeta)                 |                                             |
+| retrieve_sysmeta   | pid                          | string (sysmeta)                 | Review Method & Tests                       |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The proposed public methods below require further discussion to determine their inclusion in the public API:
@@ -656,9 +656,7 @@ The proposed public methods below require further discussion to determine their 
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
-| delete             | pid                          |                                  | New Issue/Feature                           |
-+--------------------+------------------------------+----------------------------------+---------------------------------------------+
-| update_sysmeta     | sysmeta, pid                 | string (s_cid)                   | New Issue/Feature                           |
+| delete             | pid                          |                                  | To Do - method exists in HashFS             |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 
 The following methods are to be made private and/or removed:
@@ -666,6 +664,8 @@ The following methods are to be made private and/or removed:
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 |     **Method**     |           **Args**           |         **Return Type**          |                  **Notes**                  |
 +====================+==============================+==================================+=============================================+
+| update_sysmeta     | sysmeta, pid                 | string (s_cid)                   | Same as "store_sysmeta"                     |
++--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | _add_object        | data                         | array (list(alg, base64_cid))    | Pending Update                              |
 +--------------------+------------------------------+----------------------------------+---------------------------------------------+
 | _set_sysmeta       | pid, sysmeta, obj_cid        | string (s_cid)                   | Private Method                              |
