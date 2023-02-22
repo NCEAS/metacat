@@ -4,42 +4,49 @@ networks:
   mcnet:
     driver: bridge
 
-volumes:
-  pgdata:
-    driver: local
-  webdata:
-    driver: local
-  lecerts:
-    driver: local
+#volumes:
+#  pgdata:
+#    driver: local
+#  webdata:
+#    driver: local
+#  lecerts:
+#    driver: local
 
 services:
   webapp:
     hostname: metacat
     image: metacat:2.18.0
-    depends_on:
-      - postgres
-    networks:
-      - mcnet
+#    depends_on:
+#      - postgres
+#    networks:
+#      - mcnet
     ports:
       - '8080:8080'
       - '8009:8009'
       - '5701:5701'
+      - '5005:5005'
     volumes:
-      - webdata:/var/metacat
+      - type: bind
+        source: /Users/brooke/metacat
+        target: /var/metacat
+      
+#    volumes:
+#      - webdata:/var/metacat
     env_file:
       - metacat.env
-    links:
-      - postgres
-  postgres:
-    hostname: postgres
-    image: postgres
-    networks:
-      - mcnet
-    ports:
-      - '5432:5432'
-    volumes:
-      - pgdata:/pgdata
-    env_file:
-      - metacat.env
-    environment:
-      PGDATA: '/pgdata'
+#    links:
+#      - postgres
+#  postgres:
+#    hostname: postgres
+#    image: postgres:14.6.PASSWD #postgres:14.6
+#    networks:
+#      - mcnet
+#    ports:
+#      - '5432:5432'
+#    volumes:
+#      - pgdata:/pgdata
+#    env_file:
+#      - metacat.env
+#    environment:
+#      PGDATA: '/pgdata'
+
