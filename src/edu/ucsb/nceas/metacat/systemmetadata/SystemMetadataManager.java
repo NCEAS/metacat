@@ -69,11 +69,9 @@ public class SystemMetadataManager {
      * If the returned value is null, this means the system metadata is not found
      * @param pid  the identifier to determine the system metadata
      * @return  the system metadata associated with the given identifier
-     * @throws NotFound
      * @throws ServiceFailure
-     * @throws InvalidRequest
      */
-    public SystemMetadata get(Identifier pid) throws NotFound, ServiceFailure, InvalidRequest {
+    public SystemMetadata get(Identifier pid) throws ServiceFailure {
         SystemMetadata sm = null;
         try {
             if (pid != null && pid.getValue() != null && !pid.getValue().trim().equals("")) {
@@ -84,7 +82,7 @@ public class SystemMetadataManager {
             logMetacat.warn("could not load system metadata for: " +  pid.getValue());
             return null;
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage(), e);
+            throw new ServiceFailure("0000", e.getMessage());
         }
         return sm;
     }

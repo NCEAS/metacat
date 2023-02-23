@@ -1798,9 +1798,7 @@ public class MNodeService extends D1NodeService
                 ServiceFailure sf = new ServiceFailure("1333", msg);
                 sf.initCause(e);
                 throw sf; 
-            } catch (NotFound e) {
-                throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
-            }
+            } 
             
             if(currentLocalSysMeta == null) {
                 throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
@@ -3018,13 +3016,7 @@ public class MNodeService extends D1NodeService
 	          //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
 	          SystemMetadataManager.getInstance().lock(pid);
 	          //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-	          SystemMetadata currentSysmeta = null;
-	          try {
-	              currentSysmeta = SystemMetadataManager.getInstance().get(pid);
-	          } catch (NotFound e) {
-	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
-	          }
-	          
+	          SystemMetadata currentSysmeta = SystemMetadataManager.getInstance().get(pid);
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
 	          }
@@ -3307,13 +3299,7 @@ public class MNodeService extends D1NodeService
         boolean isAuthoritativeNode = false;
         if(pid != null && pid.getValue() != null) {
             //SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-            SystemMetadata sys = null;
-            try {
-                sys = SystemMetadataManager.getInstance().get(pid);
-            } catch (NotFound e) {
-                throw new InvalidRequest("4869", "Coudn't find the system metadata associated with the pid "+pid.getValue());
-            } 
-            
+            SystemMetadata sys = SystemMetadataManager.getInstance().get(pid);
             if(sys != null) {
                 NodeReference node = sys.getAuthoritativeMemberNode();
                 if(node != null) {

@@ -126,6 +126,7 @@ import edu.ucsb.nceas.metacat.replication.ForceReplicationHandler;
 import edu.ucsb.nceas.metacat.restservice.multipart.DetailedFileInputStream;
 import edu.ucsb.nceas.metacat.restservice.multipart.StreamingMultipartRequestResolver;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -279,16 +280,19 @@ public abstract class D1NodeService {
       } catch (McdbDocNotFoundException e) {
           //throw new NotFound("1340", "The object with the provided " + "identifier was not found.");
           logMetacat.warn("D1NodeService.delete - the object itself with the provided identifier "+pid.getValue()+" doesn't exist in the system. But we will continute to delete the system metadata of the object.");
-          Lock lock = null;
+          //Lock lock = null;
           try {
-              lock = HazelcastService.getInstance().getLock(pid.getValue());
-              lock.lock();
+              //lock = HazelcastService.getInstance().getLock(pid.getValue());
+              //lock.lock();
+              SystemMetadataManager.getInstance().lock(pid);
               logMetacat.debug("Locked identifier " + pid.getValue());
-              SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+              //SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+              SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(pid);
               if ( sysMeta != null ) {
-                HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
-                HazelcastService.getInstance().getIdentifiers().remove(pid);
                 try {
+                    //HazelcastService.getInstance().getSystemMetadataMap().remove(pid);
+                    SystemMetadataManager.getInstance().delete(pid);
+                    //HazelcastService.getInstance().getIdentifiers().remove(pid);
                     //MetacatSolrIndex.getInstance().submit(pid, sysMeta, null, false);
                     MetacatSolrIndex.getInstance().submitDeleteTask(pid, sysMeta);
                 } catch (Exception ee ) {
@@ -308,10 +312,8 @@ public abstract class D1NodeService {
                   ". The error message was: " + re.getMessage());
               
           } finally {
-              if(lock != null) {
-                  lock.unlock();
-                  logMetacat.debug("Unlocked identifier " + pid.getValue());
-              }
+              SystemMetadataManager.getInstance().unlock(pid);
+              logMetacat.debug("Unlocked identifier " + pid.getValue());
           }
           return pid;
       } catch (SQLException e) {
@@ -450,8 +452,8 @@ public abstract class D1NodeService {
     // save the sysmeta
     try {
         // lock and unlock of the pid happens in the subclass
-        HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
-
+        //HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
+        SystemMetadataManager.getInstance().store(sysmeta);
     } catch (Exception e) {
         logMetacat.error("D1Node.create - There was problem to save the system metadata: " + pid.getValue(), e);
         throw new ServiceFailure("1190", "There was problem to save the system metadata: " + pid.getValue()+" since "+e.getMessage());
@@ -601,10 +603,10 @@ public abstract class D1NodeService {
    */
   protected void removeSystemMetaAndIdentifier(Identifier id){
       if(id != null) {
-          logMetacat.debug("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" will removed from both hazelcast and db tables since the object creation failed");
-          HazelcastService.getInstance().getSystemMetadataMap().remove(id);
-          logMetacat.info("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" has been removed from both hazelcast and db tables since the object creation failed");
           try {
+              //HazelcastService.getInstance().getSystemMetadataMap().remove(id);
+              SystemMetadataManager.getInstance().delete(id);
+              logMetacat.info("D1NodeService.removeSystemMeta - the system metadata of object "+id.getValue()+" has been removed from both hazelcast and db tables since the object creation failed");
               if(IdentifierManager.getInstance().mappingExists(id.getValue())) {
                  String localId = IdentifierManager.getInstance().getLocalId(id.getValue());
                  IdentifierManager.getInstance().removeMapping(id.getValue(), localId);
@@ -793,7 +795,8 @@ public abstract class D1NodeService {
 
       // if the person is authorized, perform the read
       if (allowed) {
-          SystemMetadata sm = HazelcastService.getInstance().getSystemMetadataMap().get(pid);;
+          //SystemMetadata sm = HazelcastService.getInstance().getSystemMetadataMap().get(pid);;
+          SystemMetadata sm = SystemMetadataManager.getInstance().get(pid);
           ObjectFormat objectFormat = null;
           String type = null;
           try {
@@ -1377,7 +1380,8 @@ public abstract class D1NodeService {
       //insert the system metadata
       try {
         // note: the calling subclass handles the map hazelcast lock/unlock
-      	HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
+      	//HazelcastService.getInstance().getSystemMetadataMap().put(sysmeta.getIdentifier(), sysmeta);
+      	SystemMetadataManager.getInstance().store(sysmeta);
       	// submit for indexing
         MetacatSolrIndex.getInstance().submit(sysmeta.getIdentifier(), sysmeta, false);
       } catch (Exception e) {
@@ -1441,14 +1445,15 @@ public abstract class D1NodeService {
         throws ServiceFailure {
         logMetacat.debug("D1NodeService.updateSystemMetadata() called.");
         try {
-            HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
+            //HazelcastService.getInstance().getSystemMetadataMap().lock(sysMeta.getIdentifier());
+            SystemMetadataManager.getInstance().lock(sysMeta.getIdentifier());
             boolean needUpdateModificationDate = true;
             updateSystemMetadataWithoutLock(sysMeta, needUpdateModificationDate);
         } catch (Exception e) {
             throw new ServiceFailure("4862", e.getMessage());
         } finally {
-            HazelcastService.getInstance().getSystemMetadataMap().unlock(sysMeta.getIdentifier());
-
+            //HazelcastService.getInstance().getSystemMetadataMap().unlock(sysMeta.getIdentifier());
+            SystemMetadataManager.getInstance().unlock(sysMeta.getIdentifier());
         }
 
     }
@@ -1468,7 +1473,8 @@ public abstract class D1NodeService {
         
         // submit for indexing
         try {
-            HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+            //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+            SystemMetadataManager.getInstance().store(sysMeta);
             boolean isSysmetaChangeOnly = true;
             MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, isSysmetaChangeOnly, false);
         } catch (Exception e) {
@@ -1740,7 +1746,7 @@ public abstract class D1NodeService {
 	 * @param sys
 	 * @throws InvalidRequest
 	 */
-	private void checkCircularObsoletesChain(SystemMetadata sys) throws InvalidRequest {
+	private void checkCircularObsoletesChain(SystemMetadata sys) throws InvalidRequest, ServiceFailure {
 	    if(sys != null && sys.getObsoletes() != null && sys.getObsoletes().getValue() != null && !sys.getObsoletes().getValue().trim().equals("")) {
 	        logMetacat.debug("D1NodeService.checkCircularObsoletesChain - the object "+sys.getIdentifier().getValue() +" obsoletes "+sys.getObsoletes().getValue());
 	        if(sys.getObsoletes().getValue().equals(sys.getIdentifier().getValue())) {
@@ -1750,7 +1756,8 @@ public abstract class D1NodeService {
 	        } else {
 	            Vector <Identifier> pidList = new Vector<Identifier>();
 	            pidList.add(sys.getIdentifier());
-	            SystemMetadata obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletes());
+	            //SystemMetadata obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletes());
+	            SystemMetadata obsoletesSym = SystemMetadataManager.getInstance().get(sys.getObsoletes());
 	            while (obsoletesSym != null && obsoletesSym.getObsoletes() != null && obsoletesSym.getObsoletes().getValue() != null && !obsoletesSym.getObsoletes().getValue().trim().equals("")) {
 	                pidList.add(obsoletesSym.getIdentifier());
 	                logMetacat.debug("D1NodeService.checkCircularObsoletesChain - the object "+obsoletesSym.getIdentifier().getValue() +" obsoletes "+obsoletesSym.getObsoletes().getValue());
@@ -1763,7 +1770,8 @@ public abstract class D1NodeService {
 	                    throw new InvalidRequest("4869", "When Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletes field value "+sys.getObsoletes().getValue()+
                                 " in its new system metadata creating a circular chain at the object "+obsoletesSym.getObsoletes().getValue()+". This is illegal");
 	                } else {
-	                    obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletesSym.getObsoletes());
+	                    //obsoletesSym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletesSym.getObsoletes());
+	                    obsoletesSym = SystemMetadataManager.getInstance().get(obsoletesSym.getObsoletes());
 	                }
 	            }
 	        }
@@ -1779,7 +1787,7 @@ public abstract class D1NodeService {
      * @param sys
      * @throws InvalidRequest
      */
-    private void checkCircularObsoletedByChain(SystemMetadata sys) throws InvalidRequest {
+    private void checkCircularObsoletedByChain(SystemMetadata sys) throws InvalidRequest, ServiceFailure {
         if(sys != null && sys.getObsoletedBy() != null && sys.getObsoletedBy().getValue() != null && !sys.getObsoletedBy().getValue().trim().equals("")) {
             logMetacat.debug("D1NodeService.checkCircularObsoletedByChain - the object "+sys.getIdentifier().getValue() +" is obsoletedBy "+sys.getObsoletedBy().getValue());
             if(sys.getObsoletedBy().getValue().equals(sys.getIdentifier().getValue())) {
@@ -1789,7 +1797,8 @@ public abstract class D1NodeService {
             } else {
                 Vector <Identifier> pidList = new Vector<Identifier>();
                 pidList.add(sys.getIdentifier());
-                SystemMetadata obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletedBy());
+                //SystemMetadata obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(sys.getObsoletedBy());
+                SystemMetadata obsoletedBySym = SystemMetadataManager.getInstance().get(sys.getObsoletedBy());
                 while (obsoletedBySym != null && obsoletedBySym.getObsoletedBy() != null && obsoletedBySym.getObsoletedBy().getValue() != null && !obsoletedBySym.getObsoletedBy().getValue().trim().equals("")) {
                     pidList.add(obsoletedBySym.getIdentifier());
                     logMetacat.debug("D1NodeService.checkCircularObsoletedByChain - the object "+obsoletedBySym.getIdentifier().getValue() +" is obsoletedBy "+obsoletedBySym.getObsoletedBy().getValue());
@@ -1802,7 +1811,8 @@ public abstract class D1NodeService {
                         throw new InvalidRequest("4869",  "When Metacat updated the system metadata of object "+sys.getIdentifier().getValue()+", it found the obsoletedBy field value "+sys.getObsoletedBy().getValue()+
                                 " in its new system metadata creating a circular chain at the object "+obsoletedBySym.getObsoletedBy().getValue()+". This is illegal");
                     } else {
-                        obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBySym.getObsoletedBy());
+                        //obsoletedBySym = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedBySym.getObsoletedBy());
+                        obsoletedBySym = SystemMetadataManager.getInstance().get(obsoletedBySym.getObsoletedBy());
                     }
                 }
             }
@@ -2051,7 +2061,8 @@ public abstract class D1NodeService {
                   sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                   sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
               }
-              HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+              //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+              SystemMetadataManager.getInstance().store(sysMeta);
               
               // submit for indexing
               // DocumentImpl call above should do this.
@@ -2074,7 +2085,12 @@ public abstract class D1NodeService {
                           sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                           sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
                       }
-                      HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                      //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                      try {
+                          SystemMetadataManager.getInstance().store(sysMeta);
+                      } catch (InvalidRequest ee) {
+                          throw new InvalidToken("1340", "Can't archive the identifier "+ pid.getValue()+" since " + ee.getMessage());
+                      }
                   } else {
                       throw new NotFound("1340", "The provided identifier "+ pid.getValue()+" is invalid");
                   }
@@ -2135,8 +2151,13 @@ public abstract class D1NodeService {
                         sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
                         sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                     }
-                    HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
-                      
+                    //HazelcastService.getInstance().getSystemMetadataMap().put(pid, sysMeta);
+                    try {
+                        SystemMetadataManager.getInstance().store(sysMeta);  
+                    } catch (InvalidRequest ee) {
+                        throw new InvalidToken("4972", "Couldn't archive the object " + pid.getValue() +
+                                ". Couldn't obtain the system metadata record.");
+                    }
                   } else {
                       throw new ServiceFailure("4972", "Couldn't archive the object " + pid.getValue() +
                           ". Couldn't obtain the system metadata record.");
@@ -2204,17 +2225,20 @@ public abstract class D1NodeService {
       Identifier id = null;
       String serviceFailureMessage = "The PID couldn't be identified for the sid " + sid.getValue();
       // first to try if we can find the given identifier in the system metadata map. If it is in the map (meaning this is not sid), null will be returned.
-      if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) { 
+      //if(sid != null && sid.getValue() != null && !HazelcastService.getInstance().getSystemMetadataMap().containsKey(sid)) {
+      if(sid != null && sid.getValue() != null) { 
           try {
-              //determine if the given pid is a sid or not.
-              if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
-                  try {
-                      //set the header pid for the sid if the identifier is a sid.
-                      id = IdentifierManager.getInstance().getHeadPID(sid);
-                  } catch (SQLException sqle) {
-                      throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+              if (!IdentifierManager.getInstance().systemMetadataPIDExists(sid)) {
+                  //determine if the given pid is a sid or not.
+                  if(IdentifierManager.getInstance().systemMetadataSIDExists(sid)) {
+                      try {
+                          //set the header pid for the sid if the identifier is a sid.
+                          id = IdentifierManager.getInstance().getHeadPID(sid);
+                      } catch (SQLException sqle) {
+                          throw new ServiceFailure(serviceFailureCode, serviceFailureMessage+" since "+sqle.getMessage());
+                      }
+    
                   }
-
               }
           } catch (SQLException e) {
               throw new ServiceFailure(serviceFailureCode, serviceFailureMessage + " since "+e.getMessage());
@@ -2239,7 +2263,8 @@ public abstract class D1NodeService {
           throw new InvalidRequest(invalidRequestCode, "The passed-in Identifier cannot be null or blank!!");
       }
       try {
-          sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          //sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+          sysmeta = SystemMetadataManager.getInstance().get(pid);
       } catch (Exception e) {
           // convert Hazelcast RuntimeException to NotFound
           logMetacat.error("An error occurred while getting system metadata for identifier " +
@@ -2297,7 +2322,8 @@ public abstract class D1NodeService {
               if (IdentifierManager.getInstance().identifierExists(sid.getValue())) {
                   //the sid exists in system
                   if(sysmeta.getObsoletes() != null) {
-                      SystemMetadata obsoletesSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletes());
+                      //SystemMetadata obsoletesSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletes());
+                      SystemMetadata obsoletesSysmeta = SystemMetadataManager.getInstance().get(sysmeta.getObsoletes());
                       if(obsoletesSysmeta != null) {
                           Identifier obsoletesSid = obsoletesSysmeta.getSeriesId();
                           if(obsoletesSid != null && obsoletesSid.getValue() != null && !obsoletesSid.getValue().trim().equals("")) {
@@ -2313,7 +2339,8 @@ public abstract class D1NodeService {
                   if(!pass) {
                       // the sid doesn't match the sid of the obsoleting identifier. So we check the obsoletedBy
                       if(sysmeta.getObsoletedBy() != null) {
-                          SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletedBy());
+                          //SystemMetadata obsoletedBySysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(sysmeta.getObsoletedBy());
+                          SystemMetadata obsoletedBySysmeta = SystemMetadataManager.getInstance().get(sysmeta.getObsoletedBy());
                           if(obsoletedBySysmeta != null) {
                               Identifier obsoletedBySid = obsoletedBySysmeta.getSeriesId();
                               if(obsoletedBySid != null && obsoletedBySid.getValue() != null && !obsoletedBySid.getValue().trim().equals("")) {
