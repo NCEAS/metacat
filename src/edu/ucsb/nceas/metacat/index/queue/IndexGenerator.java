@@ -293,5 +293,13 @@ public class IndexGenerator extends BaseService {
             throw new ServiceException(e.getMessage());
         }
     }
+    
+    /**
+     * Get the number of messages in the index queue
+     * @return  the number of messages
+     */
+    public int size() {
+       return 0;
+    }
 
 }

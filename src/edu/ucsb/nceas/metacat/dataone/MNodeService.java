@@ -179,10 +179,12 @@ import edu.ucsb.nceas.metacat.download.PackageDownloaderV1;
 import edu.ucsb.nceas.metacat.download.PackageDownloaderV2;
 import edu.ucsb.nceas.metacat.index.MetacatSolrEngineDescriptionHandler;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
+import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.SkinUtil;
@@ -1782,12 +1784,12 @@ public class MNodeService extends D1NodeService
         D1AuthHelper authDel = new D1AuthHelper(request, pid, "1331", serviceFailureCode);
         authDel.doCNOnlyAuthorization(session);
         try {
-            HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-        
+            //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+            SystemMetadataManager.getInstance().lock(pid);
             // compare what we have locally to what is sent in the change notification
             try {
-                currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
-                 
+                //currentLocalSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+                currentLocalSysMeta = SystemMetadataManager.getInstance().get(pid);
             } catch (RuntimeException e) {
                 String msg = "SystemMetadata for pid " + pid.getValue() +
                   " couldn't be updated because it couldn't be found locally: " +
@@ -1796,6 +1798,8 @@ public class MNodeService extends D1NodeService
                 ServiceFailure sf = new ServiceFailure("1333", msg);
                 sf.initCause(e);
                 throw sf; 
+            } catch (NotFound e) {
+                throw new InvalidRequest("1334", "We can't find the system metadata in the node for the id "+pid.getValue());
             }
             
             if(currentLocalSysMeta == null) {
@@ -1879,7 +1883,8 @@ public class MNodeService extends D1NodeService
                             }
                         }
                     }
-                    HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
+                    //HazelcastService.getInstance().getSystemMetadataMap().put(newSysMeta.getIdentifier(), newSysMeta);
+                    SystemMetadataManager.getInstance().store(newSysMeta);
                     logMetacat.info("Updated local copy of system metadata for pid " +
                         pid.getValue() + " after change notification from the CN.");
                     
@@ -1922,7 +1927,8 @@ public class MNodeService extends D1NodeService
                
             }
         } finally {
-            HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+            //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+            SystemMetadataManager.getInstance().unlock(pid);
         }
         
         if (currentLocalSysMeta.getSerialVersion().longValue() <= serialVersion ) {
@@ -2953,9 +2959,11 @@ public class MNodeService extends D1NodeService
 
 	      if (allowed) {
 	          try {
-	              HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+	              //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+	              SystemMetadataManager.getInstance().lock(pid);
 	              logMetacat.debug("MNodeService.archive - lock the identifier "+pid.getValue()+" in the system metadata map.");
-	              SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	              //SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	              SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(pid);
 	              //check the if it has enough quota if th quota service is enabled
 	              String quotaSubject = request.getHeader(QuotaServiceManager.QUOTASUBJECTHEADER);
 	              QuotaServiceManager.getInstance().enforce(quotaSubject, session.getSubject(), sysmeta, QuotaServiceManager.ARCHIVEMETHOD);
@@ -2967,7 +2975,8 @@ public class MNodeService extends D1NodeService
 	          } catch (InvalidRequest ee) {
                   throw new InvalidToken("2913", "The request is invalid - " + ee.getMessage());
 	          } finally {
-	              HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+	              //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+	              SystemMetadataManager.getInstance().unlock(pid);
 	              logMetacat.debug("MNodeService.archive - unlock the identifier "+pid.getValue()+" in the system metadata map.");
 	          }
 
@@ -3006,8 +3015,16 @@ public class MNodeService extends D1NodeService
 	      //update the system metadata locally
 	      boolean success = false;
 	      try {
-	          HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
-	          SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	          //HazelcastService.getInstance().getSystemMetadataMap().lock(pid);
+	          SystemMetadataManager.getInstance().lock(pid);
+	          //SystemMetadata currentSysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+	          SystemMetadata currentSysmeta = null;
+	          try {
+	              currentSysmeta = SystemMetadataManager.getInstance().get(pid);
+	          } catch (NotFound e) {
+	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
+	          }
+	          
 	          if(currentSysmeta == null) {
 	              throw  new InvalidRequest("4869", "We can't find the current system metadata on the member node for the id "+pid.getValue());
 	          }
@@ -3057,7 +3074,8 @@ public class MNodeService extends D1NodeService
 	          boolean fromCN = false;
 	          success = updateSystemMetadata(session, pid, sysmeta, needUpdateModificationDate, currentSysmeta, fromCN);
 	      } finally {
-	          HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+	          //HazelcastService.getInstance().getSystemMetadataMap().unlock(pid);
+	          SystemMetadataManager.getInstance().unlock(pid);
 	      }
 	      
 	      if (success) {
@@ -3126,7 +3144,8 @@ public class MNodeService extends D1NodeService
 	   * @return the input stream which is the xml presentation of the status report
 	   */
 	  public InputStream getStatus(Session session) throws NotAuthorized, ServiceFailure {
-	      int size = HazelcastService.getInstance().getIndexQueue().size();
+	      //int size = HazelcastService.getInstance().getIndexQueue().size();
+	      int size = IndexGenerator.getInstance().size();
 	      StringBuffer result = new StringBuffer();
 	      result.append("<?xml version=\"1.0\"?>");
 	      result.append("<status>");
@@ -3284,10 +3303,17 @@ public class MNodeService extends D1NodeService
      * Determine if the current node is the authoritative node for the given pid.
      * (uses HZsysmeta map)
      */
-    protected boolean isAuthoritativeNode(Identifier pid) throws InvalidRequest {
+    protected boolean isAuthoritativeNode(Identifier pid) throws InvalidRequest, ServiceFailure {
         boolean isAuthoritativeNode = false;
         if(pid != null && pid.getValue() != null) {
-            SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+            //SystemMetadata sys = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+            SystemMetadata sys = null;
+            try {
+                sys = SystemMetadataManager.getInstance().get(pid);
+            } catch (NotFound e) {
+                throw new InvalidRequest("4869", "Coudn't find the system metadata associated with the pid "+pid.getValue());
+            } 
+            
             if(sys != null) {
                 NodeReference node = sys.getAuthoritativeMemberNode();
                 if(node != null) {
