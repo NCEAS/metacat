@@ -160,7 +160,7 @@ public class ReplicationAdmin extends MetacatAdmin {
 		} else if (action.equals("servercontrol")) {
 			ReplicationService.handleServerControlRequest(params, request, response);
 		} else if (action.equals("resynchSystemMetadata")) {
-			HazelcastService.getInstance().resynchInThread();
+			//HazelcastService.getInstance().resynchInThread();
 			response.setContentType("text/html");
 			out = response.getWriter();
 			out.println("<html><body>SystemMetadata resynch has been started</body></html>");

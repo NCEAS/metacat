@@ -40,6 +40,7 @@ import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 
 
@@ -84,14 +85,16 @@ public class UpdateDOI implements UpgradeUtilityInterface {
 				//Create an identifier and retrieve the SystemMetadata for this guid
 				Identifier identifier = new Identifier();
 				identifier.setValue(pid);
-				SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+				//SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+				SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
 				if(sysMeta == null) {
 				    //The identifier can be a sid, so the sysMeta can be null. we need to check if it is a sid.
 				    Identifier sid = new Identifier();
 				    sid.setValue(pid);
 				    Identifier head = IdentifierManager.getInstance().getHeadPID(sid);
 				    if(head != null) {
-				        sysMeta= HazelcastService.getInstance().getSystemMetadataMap().get(head);
+				        //sysMeta= HazelcastService.getInstance().getSystemMetadataMap().get(head);
+				        sysMeta= SystemMetadataManager.getInstance().get(head);
 				    }
 				}
 				

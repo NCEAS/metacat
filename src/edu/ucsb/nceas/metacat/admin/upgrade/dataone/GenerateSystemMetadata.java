@@ -137,7 +137,7 @@ public class GenerateSystemMetadata implements UpgradeUtilityInterface {
 
             // init HZ
             log.debug("Making sure Hazelcast is up");
-            HazelcastService.getInstance();
+            //HazelcastService.getInstance();
             
             // chunk into groups
 			int fromIndex = 0;

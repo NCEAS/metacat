@@ -183,7 +183,7 @@ public class RemoveInvalidReplicas implements UpgradeUtilityInterface {
 						}
 						
 						// purge from Hz map
-						HazelcastService.getInstance().getSystemMetadataMap().evict(pid);
+						//HazelcastService.getInstance().getSystemMetadataMap().evict(pid);
 						log.debug("Evicted identifier from HZ map: " + pid.getValue());
 
 					}
