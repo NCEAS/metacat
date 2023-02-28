@@ -114,6 +114,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.ReplicationUtil;
@@ -704,8 +705,8 @@ public class ReplicationService extends BaseService {
 		      		IdentifierManager.getInstance().createMapping(sysMeta.getIdentifier().getValue(), docid);
 		      	}
 				// save the system metadata
-				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-				
+				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+		      	SystemMetadataManager.getInstance().store(sysMeta);
 			}
       
 			// dates
@@ -737,7 +738,8 @@ public class ReplicationService extends BaseService {
 	                    MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
                     }
 	            } catch (Exception e) {
-	                HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+	                //HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+	                SystemMetadataManager.getInstance().delete(sysMeta.getIdentifier());
 	                throw e;
 	            }
 	        } else {
@@ -1051,7 +1053,8 @@ public class ReplicationService extends BaseService {
 	      		  IdentifierManager.getInstance().createMapping(sysMeta.getIdentifier().getValue(), docid);
 	      	  }
 	      	  // save the system metadata
-	      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+	      	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+	      	  SystemMetadataManager.getInstance().store(sysMeta);
 	      	  // submit for indexing
               MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 	        }
@@ -1323,7 +1326,8 @@ public class ReplicationService extends BaseService {
 					TypeMarshaller.unmarshalTypeFromStream(
 							SystemMetadata.class,
 							new ByteArrayInputStream(systemMetadataXML.getBytes("UTF-8")));
-				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				SystemMetadataManager.getInstance().store(sysMeta);
 				// submit for indexing
                 MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}

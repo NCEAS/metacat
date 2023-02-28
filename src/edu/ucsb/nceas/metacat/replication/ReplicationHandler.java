@@ -78,6 +78,7 @@ import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandler;
 import edu.ucsb.nceas.metacat.object.handler.NonXMLMetadataHandlers;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
 import edu.ucsb.nceas.metacat.util.ReplicationUtil;
@@ -427,8 +428,8 @@ public class ReplicationHandler extends TimerTask
     	  }
       	  // save the system metadata
     	  logReplication.debug("Saving SystemMetadata to shared map: " + sysMeta.getIdentifier().getValue());
-      	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
-      	  
+      	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+    	  SystemMetadataManager.getInstance().store(sysMeta);
       }
    	  
       docinfoParser.parse(new InputSource(new StringReader(docInfoStr)));
@@ -468,7 +469,8 @@ public class ReplicationHandler extends TimerTask
                   MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
               }
           } catch (Exception e) {
-              HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+              //HazelcastService.getInstance().getSystemMetadataMap().remove(sysMeta.getIdentifier());
+              SystemMetadataManager.getInstance().delete(sysMeta.getIdentifier());
               throw e;
           }
       } else {
@@ -647,7 +649,8 @@ public class ReplicationHandler extends TimerTask
 	      	  IdentifierManager.getInstance().createMapping(sysMeta.getIdentifier().getValue(), accNumber);
     	  }
     	  // save the system metadata
-    	  HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+    	  //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+    	  SystemMetadataManager.getInstance().store(sysMeta);
     	  // submit for indexing
           MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 
@@ -949,7 +952,8 @@ public class ReplicationHandler extends TimerTask
 				SystemMetadata sysMeta = TypeMarshaller.unmarshalTypeFromStream(SystemMetadata.class,
 								new ByteArrayInputStream(systemMetadataXML
 										.getBytes("UTF-8")));
-				HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				//HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+				SystemMetadataManager.getInstance().store(sysMeta);
 				// submit for indexing
                 MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
 			}

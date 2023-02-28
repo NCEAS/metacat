@@ -55,6 +55,7 @@ import org.dataone.configuration.Settings;
 import org.dataone.service.exceptions.InvalidRequest;
 import org.dataone.service.exceptions.NotFound;
 import org.dataone.service.exceptions.NotImplemented;
+import org.dataone.service.exceptions.ServiceFailure;
 import org.dataone.service.exceptions.UnsupportedType;
 import org.dataone.service.types.v1.Event;
 import org.dataone.service.types.v1.Identifier;
@@ -74,6 +75,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
 
 
@@ -357,9 +359,14 @@ public class MetacatSolrIndex {
         // submit older revisions recursively otherwise they stay in the index!
 		if (followRevisions && systemMetadata != null && systemMetadata.getObsoletes() != null) {
 			Identifier obsoletedPid = systemMetadata.getObsoletes();
-			SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
-		    Map<String, List<Object>> obsoletedFields = null;
-			this.submit(obsoletedPid, obsoletedSysMeta , followRevisions);
+			//SystemMetadata obsoletedSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(obsoletedPid);
+			try {
+			    SystemMetadata obsoletedSysMeta = SystemMetadataManager.getInstance().get(obsoletedPid);
+	            Map<String, List<Object>> obsoletedFields = null;
+	            this.submit(obsoletedPid, obsoletedSysMeta , followRevisions);
+			} catch (ServiceFailure e) {
+	            log.error("MetacatSolrIndex.submitTask - can NOT put the pid " +  pid.getValue() + " into the index queue on the RabbitMQ service since: " + e.getMessage());
+	        }
 		}
     }
     
