@@ -113,6 +113,7 @@ import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
 import edu.ucsb.nceas.metacat.spatial.SpatialQuery;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -1843,7 +1844,8 @@ public class MetacatHandler {
                    sysMeta = SystemMetadataFactory.createSystemMetadata(reindexDataObject, newdocid, true, false);
                     
                     // save it to the map
-                    HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+                    //HazelcastService.getInstance().getSystemMetadataMap().put(sysMeta.getIdentifier(), sysMeta);
+                    SystemMetadataManager.getInstance().store(sysMeta);
                     
                     // submit for indexing
                     MetacatSolrIndex.getInstance().submit(sysMeta.getIdentifier(), sysMeta, true);
@@ -1852,14 +1854,16 @@ public class MetacatHandler {
                     // see: https://projects.ecoinformatics.org/ecoinfo/issues/6520
                     Identifier potentialOreIdentifier = new Identifier();
         			potentialOreIdentifier.setValue(SystemMetadataFactory.RESOURCE_MAP_PREFIX + sysMeta.getIdentifier().getValue());
-        			SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
+        			//SystemMetadata oreSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(potentialOreIdentifier);
+        			SystemMetadata oreSystemMetadata = SystemMetadataManager.getInstance().get(potentialOreIdentifier);
         			if (oreSystemMetadata != null) {
                         MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getIdentifier(), oreSystemMetadata, false);
                         if (oreSystemMetadata.getObsoletes() != null) {
                             logMetacat.debug("MetacatHandler.handleInsertOrUpdateAction - submit the index task to reindex the obsoleted resource map " + 
                                               oreSystemMetadata.getObsoletes().getValue());
                             boolean isSysmetaChangeOnly = true;
-                            SystemMetadata obsoletedOresysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(oreSystemMetadata.getObsoletes());
+                            //SystemMetadata obsoletedOresysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(oreSystemMetadata.getObsoletes());
+                            SystemMetadata obsoletedOresysmeta = SystemMetadataManager.getInstance().get(oreSystemMetadata.getObsoletes());
                             MetacatSolrIndex.getInstance().submit(oreSystemMetadata.getObsoletes(), obsoletedOresysmeta, isSysmetaChangeOnly, true);
                         }
         			}
@@ -2705,7 +2709,8 @@ public class MetacatHandler {
                     logMetacat.info("queueing doc index for pid " + id);
                     Identifier identifier = new Identifier();
                     identifier.setValue(id);
-					SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+					//SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+					SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
 					if (sysMeta == null) {
 					     failedList.add(id);
 					     logMetacat.info("no system metadata was found for pid " + id);
@@ -2921,7 +2926,8 @@ public class MetacatHandler {
                     guid = rs.getString(1);
                     Identifier identifier = new Identifier();
                     identifier.setValue(guid);
-                    SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                    //SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                    SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(identifier);
                     if (sysMeta != null) {
                         // submit for indexing
                         //Map<String, List<Object>> fields = EventLog.getInstance().getIndexFields(identifier, Event.READ.xmlValue());
@@ -3442,8 +3448,8 @@ public class MetacatHandler {
                                 SystemMetadata sm = SystemMetadataFactory.createSystemMetadata(docid, false, false);
                                 
                                 // manage it in the store
-                                HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
-                                
+                                //HazelcastService.getInstance().getSystemMetadataMap().put(sm.getIdentifier(), sm);
+                                SystemMetadataManager.getInstance().store(sm);
                                 // submit for indexing
                                 MetacatSolrIndex.getInstance().submit(sm.getIdentifier(), sm, true);
                                 
@@ -3602,7 +3608,7 @@ public class MetacatHandler {
                 		               docList[0]);
                 
                 // force hazelcast to update system metadata
-                HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
+                //HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
          
                 // Update the CN with the modified access policy
                 logMetacat.debug("Setting CN access policy for pid: " + guid);
@@ -3753,7 +3759,7 @@ public class MetacatHandler {
                     }
                     
             		// force hazelcast to refresh system metadata
-                    HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
+                    //HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
                     
                     logMetacat.debug("Synching CN access policy for pid: " + guid);
 

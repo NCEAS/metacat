@@ -1652,8 +1652,8 @@ public class Eml210SAXHandler extends DBSAXHandler implements AccessControlInter
 		}// finally
 		
 		// for D1, refresh the entries
-		HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
-		HazelcastService.getInstance().refreshSystemMetadataEntry(referencedGuid);
+		//HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
+		//HazelcastService.getInstance().refreshSystemMetadataEntry(referencedGuid);
 
 	}// writeGivenAccessRuleIntoDB
 

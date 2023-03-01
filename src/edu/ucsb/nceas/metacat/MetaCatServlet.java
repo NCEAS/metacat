@@ -435,7 +435,7 @@ public class MetaCatServlet extends HttpServlet {
 			MetacatHandlerPluginManager.getInstance();
 			
 			// initialize the HazelcastService
-			ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
+			//ServiceService.registerService("HazelcastService", HazelcastService.getInstance());
 			
 			// initialize the RabbitMQ service
 			ServiceService.registerService("IndexQueueService", IndexGenerator.getInstance());

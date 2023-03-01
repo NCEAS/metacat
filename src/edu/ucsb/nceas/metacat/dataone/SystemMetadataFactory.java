@@ -101,6 +101,7 @@ import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.HandlerException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.utilities.ParseLSIDException;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;
@@ -200,7 +201,8 @@ public class SystemMetadataFactory {
 		identifier.setValue(guid);
 		try {
 			logMetacat.debug("Using hazelcast to get system metadata");
-			sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+			//sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+			sysMeta = SystemMetadataManager.getInstance().get(identifier);
 			// TODO: if this is the case, we could return here -- what else do we gain?
 			if (!updateExisting ) {
 				return sysMeta;
@@ -327,7 +329,8 @@ public class SystemMetadataFactory {
 			if (obsoletedBySysMeta != null) {
 				obsoletedBySysMeta.setObsoletes(identifier);
 				obsoletedBySysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-				HazelcastService.getInstance().getSystemMetadataMap().put(obsoletedBy, obsoletedBySysMeta);
+				//HazelcastService.getInstance().getSystemMetadataMap().put(obsoletedBy, obsoletedBySysMeta);
+				SystemMetadataManager.getInstance().store(obsoletedBySysMeta);
 			}
 		}
 		if (obsoletes != null) {
@@ -343,7 +346,8 @@ public class SystemMetadataFactory {
 				// DO NOT set archived to true -- it will have unintended consequences if the CN sees this.
 				//obsoletesSysMeta.setArchived(true);
 				obsoletesSysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
-				HazelcastService.getInstance().getSystemMetadataMap().put(obsoletes, obsoletesSysMeta);
+				//HazelcastService.getInstance().getSystemMetadataMap().put(obsoletes, obsoletesSysMeta);
+				SystemMetadataManager.getInstance().store(obsoletesSysMeta);
 			}
 		}
 		
@@ -510,7 +514,8 @@ public class SystemMetadataFactory {
 								dataGuid.setValue(dataGuidString);
 								// look up the system metadata
 								try {
-									dataSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(dataGuid);
+									//dataSysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(dataGuid);
+									dataSysMeta = SystemMetadataManager.getInstance().get(dataGuid);
 								} catch (Exception e) {
 									// probably not in the system
 									dataSysMeta = null;
@@ -556,8 +561,8 @@ public class SystemMetadataFactory {
 							dataSysMeta.setFormatId(fmt);
 
 							// update the values
-							HazelcastService.getInstance().getSystemMetadataMap().put(dataSysMeta.getIdentifier(), dataSysMeta);
-							
+							//HazelcastService.getInstance().getSystemMetadataMap().put(dataSysMeta.getIdentifier(), dataSysMeta);
+							SystemMetadataManager.getInstance().store(dataSysMeta);
 							// reindex data file if need it.
 							logMetacat.debug("do we need to reindex guid "+dataGuid.getValue()+"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~?"+indexDataFile);
 							if(indexDataFile) {
@@ -607,11 +612,13 @@ public class SystemMetadataFactory {
 								Identifier resourceMapObsoletes = new Identifier();
 								resourceMapObsoletes.setValue(RESOURCE_MAP_PREFIX + obsoletesLocalId );
 								resourceMapSysMeta.setObsoletes(resourceMapObsoletes);
-								SystemMetadata resourceMapObsoletesSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletes);
+								//SystemMetadata resourceMapObsoletesSystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletes);
+								SystemMetadata resourceMapObsoletesSystemMetadata = SystemMetadataManager.getInstance().get(resourceMapObsoletes);
 								if (resourceMapObsoletesSystemMetadata != null) {
 									resourceMapObsoletesSystemMetadata.setObsoletedBy(resourceMapId);
 									//resourceMapObsoletesSystemMetadata.setArchived(true);
-									HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapObsoletes, resourceMapObsoletesSystemMetadata);
+									//HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapObsoletes, resourceMapObsoletesSystemMetadata);
+									SystemMetadataManager.getInstance().store(resourceMapObsoletesSystemMetadata);
 								}
 							}
 							// look up the resource map that this one is obsoletedBy
@@ -622,10 +629,12 @@ public class SystemMetadataFactory {
 								resourceMapObsoletedBy.setValue(RESOURCE_MAP_PREFIX + obsoletedByLocalId);
 								resourceMapSysMeta.setObsoletedBy(resourceMapObsoletedBy);
 								//resourceMapSysMeta.setArchived(true);
-								SystemMetadata resourceMapObsoletedBySystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletedBy);
+								//SystemMetadata resourceMapObsoletedBySystemMetadata = HazelcastService.getInstance().getSystemMetadataMap().get(resourceMapObsoletedBy);
+								SystemMetadata resourceMapObsoletedBySystemMetadata = SystemMetadataManager.getInstance().get(resourceMapObsoletedBy);
 								if (resourceMapObsoletedBySystemMetadata != null) {
 									resourceMapObsoletedBySystemMetadata.setObsoletes(resourceMapId);
-									HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapObsoletedBy, resourceMapObsoletedBySystemMetadata);
+									//HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapObsoletedBy, resourceMapObsoletedBySystemMetadata);
+									SystemMetadataManager.getInstance().store(resourceMapObsoletedBySystemMetadata);
 								}
 							}
 				            
@@ -633,7 +642,8 @@ public class SystemMetadataFactory {
 							if (!IdentifierManager.getInstance().identifierExists(resourceMapId.getValue())) {
 								MNodeService.getInstance(request).insertDataObject(IOUtils.toInputStream(resourceMapXML, MetaCatServlet.DEFAULT_ENCODING), resourceMapId, session, resourceMapSysMeta.getChecksum());
 								//MNodeService.getInstance(request).insertSystemMetadata(resourceMapSysMeta);
-								HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapId, resourceMapSysMeta);
+								//HazelcastService.getInstance().getSystemMetadataMap().put(resourceMapId, resourceMapSysMeta);
+								SystemMetadataManager.getInstance().store(resourceMapSysMeta);
 								logMetacat.info("Inserted ORE package: " + resourceMapId.getValue());
 							}
 			        	}

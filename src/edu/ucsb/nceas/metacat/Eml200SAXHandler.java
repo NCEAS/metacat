@@ -2236,8 +2236,8 @@ public class Eml200SAXHandler extends DBSAXHandler implements
        }//finally
        
        // for D1, refresh the entries
-       HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
-       HazelcastService.getInstance().refreshSystemMetadataEntry(dataId);
+       //HazelcastService.getInstance().refreshSystemMetadataEntry(guid);
+       //HazelcastService.getInstance().refreshSystemMetadataEntry(dataId);
 
     }//writeGivenAccessRuleIntoDB
 

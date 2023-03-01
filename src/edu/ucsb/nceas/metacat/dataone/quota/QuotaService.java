@@ -41,6 +41,7 @@ import org.dataone.service.types.v2.SystemMetadata;
 
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 
 /**
  * A class represents an abstract quota service. Its child classes, such as PortalQuotqService and StorageQuotaService
@@ -90,7 +91,8 @@ public abstract class QuotaService {
                     if (!guid.equals(pid)) {
                         Identifier identifier = new Identifier();
                         identifier.setValue(guid);
-                        SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                        //SystemMetadata sysmeta = HazelcastService.getInstance().getSystemMetadataMap().get(identifier);
+                        SystemMetadata sysmeta = SystemMetadataManager.getInstance().get(identifier);
                         if(sysmeta.getArchived() == null || !sysmeta.getArchived()) {
                             lastOne = false;//found one which is not archived and its guid doesn't equals the pid
                             logMetacat.debug("QuotaService.isLastUnarchivedInChain - found the guid " + guid + " in the chain with sid " + sid +" hasn't been archived. So the whole chain hasn't been archived.");

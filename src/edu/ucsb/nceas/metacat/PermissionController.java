@@ -52,6 +52,7 @@ import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -155,7 +156,8 @@ public class PermissionController
 		Identifier pid = new Identifier();
 		pid.setValue(guid);
 		//isOwner = D1NodeService.userHasPermission(userSession, pid, Permission.CHANGE_PERMISSION);
-		SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+		//SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(pid);
+		SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(pid);
 		isOwner = (sysMeta.getRightsHolder().equals(subject));
 		if(!isOwner) {
 		    isOwner = D1AuthHelper.expandRightsHolder(sysMeta.getRightsHolder(), subject);

@@ -81,6 +81,7 @@ import edu.ucsb.nceas.metacat.service.XMLSchema;
 import edu.ucsb.nceas.metacat.service.XMLSchemaService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.spatial.SpatialHarvester;
+import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;
 import edu.ucsb.nceas.metacat.util.MetacatUtil;
@@ -3688,19 +3689,22 @@ public class DocumentImpl
             }
             
             //update systemmetadata table and solr index
-            SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+            //SystemMetadata sysMeta = HazelcastService.getInstance().getSystemMetadataMap().get(guid);
+            SystemMetadata sysMeta = SystemMetadataManager.getInstance().get(guid);
             if (sysMeta != null) {
     				sysMeta.setSerialVersion(sysMeta.getSerialVersion().add(BigInteger.ONE));
     				sysMeta.setArchived(true);
                 	sysMeta.setDateSysMetadataModified(Calendar.getInstance().getTime());
                 	if(!removeAll) {
-                		HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
+                		//HazelcastService.getInstance().getSystemMetadataMap().put(guid, sysMeta);
+                		SystemMetadataManager.getInstance().store(sysMeta);
                 		MetacatSolrIndex.getInstance().submit(guid, sysMeta, false);
                 	} else { 
                 		try {
-                			logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
-                			HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
-                			logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                			//logMetacat.debug("the system metadata contains the key - guid "+guid.getValue()+" before removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
+                			//HazelcastService.getInstance().getSystemMetadataMap().remove(guid);
+                			SystemMetadataManager.getInstance().delete(guid);
+                			//logMetacat.debug("the system metadata contains the guid "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getSystemMetadataMap().containsKey(guid));
                 			MetacatSolrIndex.getInstance().submitDeleteTask(guid, sysMeta);
                 		} catch (RuntimeException ee) {
                 			logMetacat.warn("we catch the run time exception in deleting system metadata "+ee.getMessage());
@@ -3716,9 +3720,9 @@ public class DocumentImpl
             
             // remove the file if called for
             if (removeAll) {
-            	logMetacat.debug("the identifier set contains "+guid.getValue()+" is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
-            	HazelcastService.getInstance().getIdentifiers().remove(guid);
-            	logMetacat.debug("the identifier set contains "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
+            	//logMetacat.debug("the identifier set contains "+guid.getValue()+" is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
+            	//HazelcastService.getInstance().getIdentifiers().remove(guid);
+            	//logMetacat.debug("the identifier set contains "+guid.getValue()+" after removing is "+HazelcastService.getInstance().getIdentifiers().contains(guid));
             	deleteFromFileSystem(accnum, isXML);
             }
                         
