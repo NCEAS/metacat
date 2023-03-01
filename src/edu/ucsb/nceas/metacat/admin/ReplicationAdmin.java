@@ -39,7 +39,6 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;
 import edu.ucsb.nceas.metacat.service.SessionService;
 import edu.ucsb.nceas.metacat.shared.MetacatUtilException;

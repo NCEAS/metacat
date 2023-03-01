@@ -58,7 +58,6 @@ import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPlugin;
 import edu.ucsb.nceas.metacat.plugin.MetacatHandlerPluginManager;

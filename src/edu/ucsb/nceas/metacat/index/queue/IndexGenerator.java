@@ -38,7 +38,6 @@ import com.rabbitmq.client.ConnectionFactory;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.BaseService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;

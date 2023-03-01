@@ -64,7 +64,6 @@ import edu.ucsb.nceas.metacat.accesscontrol.XMLAccessAccess;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.database.DatabaseService;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.AccessException;
 import edu.ucsb.nceas.metacat.shared.ServiceException;

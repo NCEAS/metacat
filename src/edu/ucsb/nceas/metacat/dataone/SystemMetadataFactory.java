@@ -95,7 +95,6 @@ import edu.ucsb.nceas.metacat.MetaCatServlet;
 import edu.ucsb.nceas.metacat.MetacatHandler;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessControlException;
 import edu.ucsb.nceas.metacat.client.InsufficientKarmaException;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.MetacatSolrIndex;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.replication.ReplicationService;

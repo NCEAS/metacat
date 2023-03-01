@@ -71,7 +71,6 @@ import edu.ucsb.nceas.metacat.common.query.SolrQueryResponseWriterFactory;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryService;
 import edu.ucsb.nceas.metacat.common.query.SolrQueryServiceController;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.index.queue.IndexGenerator;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.shared.ServiceException;

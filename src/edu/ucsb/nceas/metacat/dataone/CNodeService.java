@@ -95,7 +95,6 @@ import edu.ucsb.nceas.metacat.DBUtil;
 import edu.ucsb.nceas.metacat.EventLog;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.McdbDocNotFoundException;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.utilities.PropertyNotFoundException;

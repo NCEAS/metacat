@@ -58,7 +58,6 @@ import edu.ucsb.nceas.metacat.accesscontrol.AccessRule;
 import edu.ucsb.nceas.metacat.accesscontrol.AccessSection;
 import edu.ucsb.nceas.metacat.database.DBConnection;
 import edu.ucsb.nceas.metacat.database.DBConnectionPool;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.metacat.util.AuthUtil;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;

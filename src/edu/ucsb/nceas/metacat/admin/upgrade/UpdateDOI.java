@@ -38,7 +38,6 @@ import edu.ucsb.nceas.metacat.DocumentImpl;
 import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.dataone.MNodeService;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.doi.DOIServiceFactory;
 import edu.ucsb.nceas.metacat.systemmetadata.SystemMetadataManager;
 import edu.ucsb.nceas.metacat.util.DocumentUtil;

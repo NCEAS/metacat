@@ -98,7 +98,6 @@ import edu.ucsb.nceas.metacat.database.DBConnectionPool;
 import edu.ucsb.nceas.metacat.dataone.D1NodeService;
 import edu.ucsb.nceas.metacat.dataone.SyncAccessPolicy;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataquery.DataQuery;
 import edu.ucsb.nceas.metacat.event.MetacatDocumentEvent;
 import edu.ucsb.nceas.metacat.event.MetacatEventService;

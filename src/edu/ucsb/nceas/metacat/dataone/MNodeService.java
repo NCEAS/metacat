@@ -169,7 +169,6 @@ import edu.ucsb.nceas.metacat.MetacatVersion;
 import edu.ucsb.nceas.metacat.ReadOnlyChecker;
 import edu.ucsb.nceas.metacat.common.query.EnabledQueryEngines;
 import edu.ucsb.nceas.metacat.common.query.stream.ContentTypeByteArrayInputStream;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.dataone.quota.QuotaServiceManager;
 import edu.ucsb.nceas.metacat.dataone.resourcemap.ResourceMapModifier;
 import edu.ucsb.nceas.metacat.doi.DOIException;

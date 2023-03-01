@@ -40,7 +40,6 @@ import edu.ucsb.nceas.metacat.IdentifierManager;
 import edu.ucsb.nceas.metacat.admin.AdminException;
 import edu.ucsb.nceas.metacat.admin.upgrade.UpgradeUtilityInterface;
 import edu.ucsb.nceas.metacat.dataone.SystemMetadataFactory;
-import edu.ucsb.nceas.metacat.dataone.hazelcast.HazelcastService;
 import edu.ucsb.nceas.metacat.properties.PropertyService;
 import edu.ucsb.nceas.utilities.SortedProperties;
 
